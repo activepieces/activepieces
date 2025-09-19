@@ -33,7 +33,7 @@ const config = defineConfig({
     /* Global configuration option for Playwright-powered checks. See https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration */
     playwrightConfig: {
       use: {
-        baseURL: 'https://pre-prod.activepieces.com',
+        baseURL: 'https://cloud.activepieces.com',
         viewport: { width: 1280, height: 720 },
       }
     },

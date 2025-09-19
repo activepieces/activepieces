@@ -1,6 +1,6 @@
 import { OtpType } from '@activepieces/ee-shared'
-import { cryptoUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { AppSystemProp, cryptoUtils } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -217,18 +217,25 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     })
 
     const cloudEdition = system.getEdition()
-    switch (cloudEdition) {
-        case ApEdition.CLOUD:
-            await otpService(log).createAndSend({
-                platformId: platform.id,
-                email: userIdentity.email,
-                type: OtpType.EMAIL_VERIFICATION,
-            })
-            break
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-            await userIdentityService(log).verify(userIdentity.id)
-            break
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
+    
+    if (environment === ApEnvironment.TESTING) {
+        await userIdentityService(log).verify(userIdentity.id)
+    }
+    else {
+        switch (cloudEdition) {
+            case ApEdition.CLOUD:
+                await otpService(log).createAndSend({
+                    platformId: platform.id,
+                    email: userIdentity.email,
+                    type: OtpType.EMAIL_VERIFICATION,
+                })
+                break
+            case ApEdition.COMMUNITY:
+            case ApEdition.ENTERPRISE:
+                await userIdentityService(log).verify(userIdentity.id)
+                break
+        }
     }
 
     await flagService.save({

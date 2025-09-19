@@ -18,6 +18,7 @@ export class ApMemoryQueue<T extends JobData> {
     private queue: ApJob<T>[]
     private lock: ApSemaphore
     private isConsuming = false
+    private concurrency = 0
     private log: FastifyBaseLogger
     private queueName: QueueName
     private consumer: ReturnType<typeof jobConsumer>
@@ -70,13 +71,13 @@ export class ApMemoryQueue<T extends JobData> {
     }
 
     private async startConsuming(): Promise<void> {
-        if (this.isConsuming) {
+        if (this.isConsuming || this.concurrency === 0) {
             return
         }
         
         this.isConsuming = true
         
-        while (this.isConsuming) {
+        while (this.isConsuming && this.concurrency > 0) {
             let currentJob: ApJob<T> | undefined
             try {
                 currentJob = await this.poll()
@@ -112,6 +113,17 @@ export class ApMemoryQueue<T extends JobData> {
 
     async stopConsuming(): Promise<void> {
         this.isConsuming = false
+    }
+
+    async setConcurrency(concurrency: number): Promise<void> {
+        this.concurrency = concurrency
+        
+        if (concurrency > 0 && !this.isConsuming) {
+            await this.startConsuming()
+        }
+        else if (concurrency === 0 && this.isConsuming) {
+            await this.stopConsuming()
+        }
     }
 }
 

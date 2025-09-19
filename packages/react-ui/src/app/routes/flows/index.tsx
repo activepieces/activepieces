@@ -206,6 +206,7 @@ export const CreateFlowDropdown = ({
                 size={variant === 'small' ? 'icon' : 'default'}
                 loading={isCreateFlowPending}
                 onClick={(e) => e.stopPropagation()}
+                data-testid="new-flow-button"
               >
                 {variant === 'small' ? (
                   <Plus className="h-4 w-4" />
@@ -229,6 +230,7 @@ export const CreateFlowDropdown = ({
               createFlow();
             }}
             disabled={isCreateFlowPending}
+            data-testid="new-flow-from-scratch-button"
           >
             <Plus className="h-4 w-4 me-2" />
             <span>{t('From scratch')}</span>
