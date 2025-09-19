@@ -57,11 +57,11 @@ export const findConversation = createAction({
     const token = context.auth;
     const queryParts: string[] = [];
 
-    if (inbox_id) queryParts.push(`inbox:${inbox_id}`);
-    if (assignee_id) queryParts.push(`assignee:${assignee_id}`);
+    if (inbox_id) queryParts.push(`inbox_id:${inbox_id}`);
+    if (assignee_id) queryParts.push(`assignee_id:${assignee_id}`);
     if (subject) queryParts.push(subject);
     if (custom_query) queryParts.push(custom_query);
-    if (tags) tags.forEach((tagId) => queryParts.push(`tag:${tagId}`));
+    if (tags) tags.forEach((tagId) => queryParts.push(`tag_id:${tagId}`));
     if (statuses) statuses.forEach((status) => queryParts.push(`is:${status}`));
 
     if (queryParts.length === 0) {

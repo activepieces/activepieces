@@ -1,5 +1,5 @@
 import { Property, DropdownState } from '@activepieces/pieces-framework';
-import { makeRequest } from './client';
+import { makeRequest, makeRequestFirstPage } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 interface FrontLink {
@@ -215,20 +215,25 @@ export const frontProps = {
         }
 
         const query =
-          searchValue && typeof searchValue === 'string'
-            ? `q=${encodeURIComponent(searchValue)}`
+          typeof searchValue === 'string' && searchValue.trim() !== ''
+            ? `?q[any]=${encodeURIComponent(searchValue)}`
             : '';
 
-        const response = await makeRequest<{ _results: FrontConversation[] }>(
+        const response = await makeRequestFirstPage<{
+          _results: FrontConversation[];
+        }>( 
           auth as string,
           HttpMethod.GET,
-          `/conversations/search?${query}`
+          `/conversations${query}`
         );
 
         return {
           disabled: false,
           options: response._results.map((convo) => ({
-            label: convo.subject || convo.last_message.blurb,
+            label:
+              convo.subject ||
+              convo.last_message?.blurb ||
+              'Unnamed Conversation',
             value: convo.id,
           })),
         };
@@ -296,6 +301,37 @@ export const frontProps = {
           options: response._results.map((link) => ({
             label: `${link.name || 'Untitled Link'} (${link.external_url})`,
             value: link.id,
+          })),
+        };
+      },
+    }),
+  inbox: (props?: {
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+  }) =>
+    Property.Dropdown({
+      displayName: props?.displayName ?? 'Inbox',
+      description:
+        props?.description ?? 'Select the inbox to move the conversation to.',
+      required: props?.required ?? true,
+      refreshers: [],
+      options: async ({ auth }): Promise<DropdownState<string>> => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first.',
+          };
+        }
+        const response = await makeRequest<{
+          _results: { id: string; name: string }[];
+        }>(auth as string, HttpMethod.GET, '/inboxes');
+        return {
+          disabled: false,
+          options: response._results.map((inbox) => ({
+            label: inbox.name,
+            value: inbox.id,
           })),
         };
       },
