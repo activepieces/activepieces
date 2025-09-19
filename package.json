@@ -63,6 +63,7 @@
     "@google/generative-ai": "0.21.0",
     "@hookform/resolvers": "3.9.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
+    "@logtail/pino": "0.5.6",
     "@mailchimp/mailchimp_marketing": "3.0.80",
     "@mailerlite/mailerlite-nodejs": "1.1.0",
     "@microsoft/microsoft-graph-client": "3.0.7",
