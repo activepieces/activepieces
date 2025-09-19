@@ -949,6 +949,9 @@
       "@activepieces/piece-simpliroute": [
         "packages/pieces/community/simpliroute/src/index.ts"
       ],
+      "@activepieces/piece-sitespeakai": [
+        "packages/pieces/community/sitespeakai/src/index.ts"
+      ],
       "@activepieces/piece-skyvern": [
         "packages/pieces/community/skyvern/src/index.ts"
       ],
