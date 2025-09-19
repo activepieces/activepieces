@@ -7,6 +7,7 @@ import { MagicSlidesAuth } from './lib/common/auth';
 export const magicslides = createPiece({
   displayName: 'MagicSlides',
   auth: MagicSlidesAuth,
+  description: 'Create PowerPoint presentations from topics, summaries, or YouTube videos using AI.',
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/magicslides.png',
   authors: ['Niket2035'],
