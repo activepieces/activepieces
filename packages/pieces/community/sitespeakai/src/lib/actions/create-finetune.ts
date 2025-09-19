@@ -2,6 +2,7 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { SiteSpeakAuth } from "../common/auth";
 import { makeRequest } from "../common/client";
 import { HttpMethod } from "@activepieces/pieces-common";
+import { chatbotIdDropdown } from "../common/dropdown";
 
 export const createFinetune = createAction({
   auth: SiteSpeakAuth,
@@ -9,11 +10,7 @@ export const createFinetune = createAction({
   displayName: 'Create Finetune Entry (Echo)',
   description: 'Adds a new fine-tune (question + suggested answer) for the specified chatbot in SiteSpeakAI.',
   props: {
-    chatbotId: Property.ShortText({
-      displayName: 'Chatbot ID',
-      required: true,
-      description: 'ID of the chatbot for which to create the finetune (from your SiteSpeakAI account).',
-    }),
+    chatbotId: chatbotIdDropdown,
     question: Property.LongText({
       displayName: 'Question',
       required: true,

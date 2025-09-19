@@ -2,6 +2,43 @@ import { Property } from "@activepieces/pieces-framework";
 import { makeRequest } from "./client";
 import { HttpMethod } from "@activepieces/pieces-common";
 
+export const chatbotIdDropdown = Property.Dropdown({
+  displayName: 'chatbotId',
+  description: 'Chat bot ID ',
+  required: false,
+  refreshers: ['auth'],
+  async options({ auth, }) {
+    if (!auth ) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Select a chatbot first',
+      };
+    }
+
+    try {
+      const response = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        `/me/chatbots`
+      );
+
+      return {
+        disabled: false,
+        options: response.map((chatbot: any) => ({
+          label: chatbot.name || chatbot.id,
+          value: chatbot.id,
+        })),
+      };
+    } catch (e: any) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Failed to fetch conversations',
+      };
+    }
+  },
+});
 export const conversationIdDropdown = Property.Dropdown<string>({
     displayName: 'Conversation',
     description: 'Pick a conversation for context, or leave empty to start a new one.',
@@ -27,7 +64,7 @@ export const conversationIdDropdown = Property.Dropdown<string>({
             return {
                 disabled: false,
                 options: response.map((conv: any) => ({
-                    label: conv.title || conv.id,
+                    label: `Speaker: ${conv.speaker}, Started: ${new Date(conv.created_at).toLocaleDateString()}` || conv.id,
                     value: conv.id,
                 })),
             };
@@ -47,8 +84,6 @@ export const finetuneIdDropdown = Property.Dropdown<string>({
   refreshers: ['chatbotId'],
   async options({ auth, chatbotId }) {
     
-    console.log("fwyutgfuwgfy")
-    console.log(chatbotId)
     if (!auth || !chatbotId) {
       return {
         disabled: true,

@@ -1,16 +1,13 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, StaticPropsValue } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { makeRequest } from '../common/client';
 import { SiteSpeakAuth } from '../common/auth';
+import { chatbotIdDropdown } from '../common/dropdown';
 const props = {
-    chatbotId: Property.ShortText({
-        displayName: 'Chatbot ID',
-        required: true,
-        description: 'ID of the chatbot for which to create the finetune (from your SiteSpeakAI account).',
-    }),
+    chatbotId: chatbotIdDropdown,
 }
-const polling: Polling<PiecePropValueSchema<typeof SiteSpeakAuth>, { chatbotId: string }> = {
+const polling: Polling<string, StaticPropsValue<typeof props>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
         if (!propsValue.chatbotId) {
@@ -25,7 +22,7 @@ const polling: Polling<PiecePropValueSchema<typeof SiteSpeakAuth>, { chatbotId: 
                 Accept: 'application/json',
             }
         );
-
+        console.log(response);
         const leads = response || [];
 
         return leads

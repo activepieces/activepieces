@@ -2,19 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { SiteSpeakAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { conversationIdDropdown } from '../common/dropdown';
+import { chatbotIdDropdown, conversationIdDropdown } from '../common/dropdown';
 
 export const sendQuery = createAction({
   auth: SiteSpeakAuth,
   name: 'sendQuery',
   displayName: 'Send Query',
-  description: '',
+  description:
+    'Sends a query to the specified chatbot and retrieves a response.',
   props: {
-    chatbotId: Property.ShortText({
-      displayName: 'Chatbot ID',
-      required: true,
-      description: 'The ID of the chatbot you want to query (find in your SiteSpeakAI dashboard).',
-    }),
+    chatbotId: chatbotIdDropdown,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
