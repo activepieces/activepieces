@@ -1,38 +1,25 @@
 import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from 'async-mutex'
 
-const memoryLocks = new Map<string, MutexLockWrapper>()
-class MutexLockWrapper {
-    private lock: MutexInterface
-
-    constructor(timeout?: number) {
-        if (timeout) {
-            this.lock = withTimeout(new Mutex(), timeout)
-        }
-        else {
-            this.lock = new Mutex()
-        }
-    }
-
-    async acquire(): Promise<void> {
-        await this.lock.acquire()
-    }
-
-    async release(): Promise<void> {
-        this.lock.release()
-    }
-}
-
-
+const memoryLocks = new Map<string, MutexInterface>()
 
 export const memoryLock = {
     acquire: async (key: string, timeout?: number): Promise<ApLock> => {
         let lock = memoryLocks.get(key)
         if (!lock) {
-            lock = new MutexLockWrapper(timeout)
+            if (timeout) {
+                lock = withTimeout(new Mutex(), timeout)
+            }
+            else {
+                lock = new Mutex()
+            }
             memoryLocks.set(key, lock)
         }
-        await lock.acquire()
-        return lock
+        const release = await lock.acquire()
+        return {
+            release: async () => {
+                release()
+            },
+        }
     },
     isTimeoutError: (e: unknown): boolean => {
         return e === E_TIMEOUT

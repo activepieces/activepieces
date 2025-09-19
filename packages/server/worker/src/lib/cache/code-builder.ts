@@ -1,12 +1,13 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { cryptoUtils, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { cacheState } from './cache-state'
 import { PackageInfo, packageManager } from './package-manager'
+import { GLOBAL_CACHE_PATH_LATEST_VERSION } from './worker-cache'
 
 const TS_CONFIG_CONTENT = `
 
@@ -57,51 +58,49 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
-        try {
-            const cache = cacheState(codePath)
-            const cachedHash = await cache.cacheCheckState(codePath)
-            const currentHash = await cryptoUtils.hashObject(sourceCode)
-            if (cachedHash === currentHash) {
-                return
+        return fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `code-builder-${flowVersionId}-${name}`, async () => {
+            try {
+                const cache = cacheState(codePath)
+                const cachedHash = await cache.cacheCheckState(codePath)
+                const currentHash = await cryptoUtils.hashObject(sourceCode)
+                if (cachedHash === currentHash) {
+                    return
+                }
+                const { code, packageJson } = sourceCode
+
+                const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
+                if (codeNeedCleanUp) {
+                    await rm(codePath, { recursive: true })
+                }
+
+                await fileSystemUtils.threadSafeMkdir(codePath)
+
+
+                const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
+
+                await installDependencies({
+                    path: codePath,
+                    packageJson: isPackagesAllowed ? packageJson : '{"dependencies":{}}',
+                    log,
+                })
+
+                await compileCode({
+                    path: codePath,
+                    code,
+                    log,
+                })
+
+                await cache.setCache(codePath, currentHash)
             }
-            const { code, packageJson } = sourceCode
+            catch (error: unknown) {
+                log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
 
-            const codeNeedCleanUp = await fileExists(codePath)
-            if (codeNeedCleanUp) {
-                await rm(codePath, { recursive: true })
+                await handleCompilationError({
+                    codePath,
+                    error,
+                })
             }
-
-            await threadSafeMkdir(codePath)
-
-
-            const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
-
-            await installDependencies({
-                path: codePath,
-                packageJson: isPackagesAllowed ? packageJson : '{"dependencies":{}}',
-                log,
-            })
-
-            await compileCode({
-                path: codePath,
-                code,
-                log,
-            })
-
-            await cache.setCache(codePath, currentHash)
-        }
-        catch (error: unknown) {
-            log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
-
-            await handleCompilationError({
-                codePath,
-                error,
-            })
-        }
-        finally {
-            await lock.release()
-        }
+        })
     },
 })
 
