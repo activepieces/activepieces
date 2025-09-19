@@ -16,10 +16,11 @@ type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
 const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue }) => {
+  items: async ({ auth, propsValue, lastItemId }) => {
     const { website_url, username, password } = (auth as DrupalAuthType);
     const body: any = {
       name: propsValue['name'],
+      id: lastItemId,
     };
     const response = await httpClient.sendRequest<DrupalPollIdItem[]>({
       method: HttpMethod.POST,
