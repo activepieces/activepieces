@@ -309,3 +309,42 @@ export const linkIdDropdown = Property.Dropdown({
     }
   },
 });
+
+
+export const linkidsDropdown = Property.MultiSelectDropdown({
+  displayName: 'Link IDs',
+  description: 'Select one or more links',
+  required: false,
+  refreshers: [],
+  options: async (propsValue: Record<string, unknown>) => {
+    const auth = propsValue['auth'] as { access_token: string } | undefined;
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+    try {
+      const response = await makeRequest(
+        auth.access_token,
+        HttpMethod.GET,
+        '/links'
+      );
+      const links = response._results || [];
+      return {
+        disabled: false,
+        options: links.map((link: any) => ({
+          label: link.name || link.id,
+          value: link.id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading links',
+      };
+    }
+  },
+});

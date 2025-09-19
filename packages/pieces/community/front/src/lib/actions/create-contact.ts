@@ -30,10 +30,21 @@ export const createContact = createAction({
           description: 'The value of the handle (e.g., email address).',
           required: true,
         }),
-        source: Property.ShortText({
-          displayName: 'Source',
-          description: 'The type of handle (e.g., email, phone).',
+        source: Property.StaticDropdown({
+          displayName: 'Handle Type',
+          description: 'Type of handle to add.',
           required: true,
+          options: {
+            options: [
+              { label: 'Email', value: 'email' },
+              { label: 'Phone', value: 'phone' },
+              { label: 'Twitter', value: 'twitter' },
+              { label: 'Facebook', value: 'facebook' },
+              { label: 'Intercom', value: 'intercom' },
+              { label: 'front_chat', value: 'front_chat' },
+              { label: 'custom', value: 'custom' },
+            ],
+          },
         }),
       },
     }),
@@ -48,7 +59,7 @@ export const createContact = createAction({
       description: 'List of URLs associated with the contact.',
       required: false,
       properties: {
-        item: Property.ShortText({
+        link: Property.ShortText({
           displayName: 'Link',
           required: true,
         }),
@@ -59,7 +70,7 @@ export const createContact = createAction({
       description: 'List of group names to associate with the contact.',
       required: false,
       properties: {
-        item: Property.ShortText({
+        group_names: Property.ShortText({
           displayName: 'Group Name',
           required: true,
         }),

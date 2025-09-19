@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { contactIdDropdown } from '../common/dropdown';
 
 export const removeContactHandle = createAction({
   auth: frontAuth,
@@ -10,11 +11,7 @@ export const removeContactHandle = createAction({
   description:
     'Remove a handle (email, phone number, etc.) from an existing Contact.',
   props: {
-    contact_id: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'The ID of the contact.',
-      required: true,
-    }),
+    contact_id: contactIdDropdown,
     handle: Property.ShortText({
       displayName: 'Handle ID',
       description: 'The ID of the handle to remove.',

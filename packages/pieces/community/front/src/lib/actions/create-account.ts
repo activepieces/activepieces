@@ -25,7 +25,7 @@ export const createAccount = createAction({
       description: 'List of domains associated with the account.',
       required: false,
       properties: {
-        item: Property.ShortText({
+        domain : Property.ShortText({
           displayName: 'Domain',
           description: 'A domain associated with the account.',
           required: true,
