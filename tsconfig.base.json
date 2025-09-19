@@ -426,6 +426,9 @@
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
       ],
+      "@activepieces/piece-front": [
+        "packages/pieces/community/front/src/index.ts"
+      ],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
       ],
