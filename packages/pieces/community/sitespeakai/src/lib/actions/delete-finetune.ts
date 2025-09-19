@@ -1,12 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { SiteSpeakAuth } from "../common/auth";
-import { makeRequest } from "../common/client";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { chatbotIdDropdown, finetuneIdDropdown } from "../common/dropdown";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { SiteSpeakAuth } from '../common/auth';
+import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { chatbotIdDropdown, finetuneIdDropdown } from '../common/dropdown';
 
 export const deleteFinetune = createAction({
   name: 'delete_finetune',
-  displayName: 'Delete Finetune Entry',
+  displayName: 'Delete Finetune',
   description: 'Deletes a fine-tune entry from the selected chatbot.',
   auth: SiteSpeakAuth,
   props: {
