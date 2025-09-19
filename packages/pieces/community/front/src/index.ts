@@ -5,7 +5,7 @@ import { addContactHandle } from "./lib/actions/add-contact-handle";
 import { addConversationLinks } from "./lib/actions/add-conversation-links";
 import { addConversationTags } from "./lib/actions/add-conversation-tags";
 import { assignUnassignConversation } from "./lib/actions/assign-unassign-conversation";
-import { createAccount } from "./lib/actions/remove-conversation-tags";
+import { createAccount } from "./lib/actions/create-account";
 import { createContact } from "./lib/actions/create-contact";
 import { createDraft } from "./lib/actions/create-draft";
 import { createDraftReply } from "./lib/actions/create-draft-reply";
@@ -19,9 +19,9 @@ import { updateContact } from "./lib/actions/update-contact";
 import { updateConversation } from "./lib/actions/update-conversation";
 import { updateLink } from "./lib/actions/update-link";
 import { newComment } from "./lib/triggers/new-comment";
-// import { newInboundMessage } from "./lib/triggers/new-inbound-message";
-// import { newOutboundMessage } from "./lib/triggers/new-outbound-message";
-// import { newTagAddedToMessage } from "./lib/triggers/new-tag-added-to-message";
+import { newInboundMessage } from "./lib/triggers/new-inbound-message";
+import { newOutboundMessage } from "./lib/triggers/new-outbound-message";
+import { newTagAddedToMessage } from "./lib/triggers/new-tag-added-to-message";
 import { findAccount } from "./lib/actions/find-account";
 import { findContact } from "./lib/actions/find-contact";
 import { findConversation } from "./lib/actions/find-conversation";
@@ -60,9 +60,9 @@ export const front = createPiece({
   ],
   triggers: [
     newComment,
-    // newInboundMessage,
-    // newOutboundMessage,
-    // newTagAddedToMessage,
+    newInboundMessage,
+    newOutboundMessage,
+    newTagAddedToMessage,
     newConversationStateChange
   ],
 });

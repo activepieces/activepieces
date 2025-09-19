@@ -19,23 +19,31 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const allComments: any[] = [];
-    const comments = await makeRequest(
+    const params: string[] = ['q[types]=comment', 'limit=50'];
+    if (propsValue.conversation_id) {
+      params.push(
+        `q[conversations]=${encodeURIComponent(propsValue.conversation_id)}`
+      );
+    }
+    const query = params.join('&');
+    const response = await makeRequest(
       auth.access_token,
       HttpMethod.GET,
-      `/conversations/${propsValue.conversation_id}/comments`
+      `/events?${query}`
     );
-    for (const comment of comments._results || comments.results || []) {
-      // Use posted_at (UNIX seconds, can be float) for dedupe
-      const postedAtMs = Math.floor(Number(comment.posted_at) * 1000);
-      if (!lastFetchEpochMS || postedAtMs > lastFetchEpochMS) {
-        allComments.push({
-          epochMilliSeconds: postedAtMs,
-          data: { ...comment, conversation_id: propsValue.conversation_id },
+    const events = response._results || [];
+    const comments: any[] = [];
+
+    for (const event of events) {
+      const createdAtMs = Math.floor(Number(event.created_at) * 1000);
+      if (!lastFetchEpochMS || createdAtMs > lastFetchEpochMS) {
+        comments.push({
+          epochMilliSeconds: createdAtMs,
+          data: event,
         });
       }
     }
-    return allComments;
+    return comments;
   },
 };
 

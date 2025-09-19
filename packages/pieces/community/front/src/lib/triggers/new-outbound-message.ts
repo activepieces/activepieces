@@ -1,43 +1,69 @@
+import { createTrigger, TriggerStrategy, Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { frontAuth } from '../common/auth';
+import { makeRequest } from '../common/client';
 
-// import { createTrigger, TriggerStrategy, PiecePropValueSchema  } from '@activepieces/pieces-framework';
-// import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-// import dayjs from 'dayjs';
+const polling: Polling<
+    PiecePropValueSchema<typeof frontAuth>,
+    Record<string, never>
+> = {
+    strategy: DedupeStrategy.TIMEBASED,
+    items: async ({ auth, lastFetchEpochMS }) => {
+        // Fetch outbound and out_reply message events
+        const query = `q[types]=outbound`;
+        const limit = 50;
+        const response = await makeRequest(
+            auth.access_token,
+            HttpMethod.GET,
+            `/events?${query}&limit=${limit}`
+        );
+        const events = response._results || [];
+        const outboundMessages: any[] = [];
 
-// // replace auth with piece auth variable
-// const polling: Polling< PiecePropValueSchema<typeof auth>, Record<string, never> > = {
-//     strategy: DedupeStrategy.TIMEBASED,
-//     items: async ({ propsValue, lastFetchEpochMS }) => {
-//         // implement the logic to fetch the items
-//         const items = [ {id: 1, created_date: '2021-01-01T00:00:00Z'}, {id: 2, created_date: '2021-01-01T00:00:00Z'}];
-//         return items.map((item) => ({
-//             epochMilliSeconds: dayjs(item.created_date).valueOf(),
-//             data: item,
-//             }));
-//         }
-// }
+        for (const event of events) {
+            // Only include new events since last fetch
+            const createdAtMs = Math.floor(Number(event.created_at) * 1000);
+            if (!lastFetchEpochMS || createdAtMs > lastFetchEpochMS) {
+                outboundMessages.push({
+                    epochMilliSeconds: createdAtMs,
+                    data: event,
+                });
+            }
+        }
+        return outboundMessages;
+    },
+};
 
-// export const newOutboundMessage = createTrigger({
-// // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-// name: 'newOutboundMessage',
-// displayName: 'New Outbound Message',
-// description: '',
-// props: {},
-// sampleData: {},
-// type: TriggerStrategy.POLLING,
-// async test(context) {
-//     return await pollingHelper.test(polling, context);
-// },
-// async onEnable(context) {
-//     const { store, auth, propsValue } = context;
-//     await pollingHelper.onEnable(polling, { store, auth, propsValue });
-// },
-
-// async onDisable(context) {
-//     const { store, auth, propsValue } = context;
-//     await pollingHelper.onDisable(polling, { store, auth, propsValue });
-// },
-
-// async run(context) {
-//     return await pollingHelper.poll(polling, context);
-// },
-// });
+export const newOutboundMessage = createTrigger({
+    auth: frontAuth,
+    name: 'newOutboundMessage',
+    displayName: 'New Outbound Message',
+    description: 'Fires when a message is sent or replied to in Front.',
+    props: {},
+    sampleData: {
+        id: 'evt_123',
+        type: 'outbound',
+        message: {
+            id: 'msg_456',
+            subject: 'Re: Welcome to Dunder Mifflin!',
+            body: 'Thank you for your message.',
+            created_at: 1701806790.536,
+        },
+        created_at: 1701806790.536,
+    },
+    type: TriggerStrategy.POLLING,
+    async test(context) {
+        return await pollingHelper.test(polling, context);
+    },
+    async onEnable(context) {
+        const { store, auth, propsValue } = context;
+        await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    },
+    async onDisable(context) {
+        const { store, auth, propsValue } = context;
+        await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    },
+    async run(context) {
+        return await pollingHelper.poll(polling, context);
+    },
+});
