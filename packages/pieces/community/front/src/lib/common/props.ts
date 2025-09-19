@@ -31,6 +31,21 @@ interface FrontTag {
   id: string;
   name: string;
 }
+interface FrontContact {
+  id: string;
+  name: string;
+}
+
+interface FrontContactHandle {
+  source: string;
+  handle: string;
+}
+
+interface FrontContact {
+  id: string;
+  name: string;
+  handles: FrontContactHandle[]; 
+}
 
 export const frontProps = {
   account: (props?: { required?: boolean }) =>
@@ -330,6 +345,71 @@ export const frontProps = {
           options: response._results.map((inbox) => ({
             label: inbox.name,
             value: inbox.id,
+          })),
+        };
+      },
+    }),
+  contact: (props?: {
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+  }) =>
+    Property.Dropdown({
+      displayName: props?.displayName ?? 'Contact',
+      description: props?.description ?? 'Select a contact.',
+      required: props?.required ?? true,
+      refreshers: [],
+      options: async ({ auth, searchValue }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first.',
+          };
+        }
+        const response = await makeRequest<{ _results: FrontContact[] }>(
+          auth as string,
+          HttpMethod.GET,
+          `/contacts?q=${searchValue}`
+        );
+        return {
+          disabled: false,
+          options: response._results.map((contact) => ({
+            label: contact.name || 'Unnamed Contact',
+            value: contact.id,
+          })),
+        };
+      },
+    }),
+  contact_handles: (props?: {
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+  }) =>
+    Property.Dropdown({
+      displayName: props?.displayName ?? 'Handle',
+      description: props?.description ?? 'Select the handle to remove.',
+      required: props?.required ?? true,
+      refreshers: ['contact_id'],
+      options: async ({ auth, contact_id }): Promise<DropdownState<string>> => {
+        if (!auth || !contact_id) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder:
+              'Please connect your account and select a contact first.',
+          };
+        }
+        const response = await makeRequest<FrontContact>(
+          auth as string,
+          HttpMethod.GET,
+          `/contacts/${contact_id}`
+        );
+        return {
+          disabled: false,
+          options: response.handles.map((handle) => ({
+            label: `${handle.handle} (${handle.source})`,
+            value: handle.handle,
           })),
         };
       },

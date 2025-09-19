@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { frontProps } from '../common/props'; 
 
 export const removeContactHandle = createAction({
   auth: frontAuth,
@@ -9,12 +10,8 @@ export const removeContactHandle = createAction({
   displayName: 'Remove Contact Handle',
   description: 'Remove a handle (email, phone number, etc.) from a contact.',
   props: {
-    contact_id: Property.ShortText({
-      displayName: 'Contact ID or Handle',
-      description:
-        "The contact's unique ID (e.g., crd_123) or a resource alias (e.g., email:john.doe@example.com).",
-      required: true,
-    }),
+    contact_id: frontProps.contact({ required: true }),
+    handle: frontProps.contact_handles({ required: true }),
     source: Property.StaticDropdown({
       displayName: 'Source',
       description: 'The type of the handle to remove.',
@@ -31,11 +28,6 @@ export const removeContactHandle = createAction({
         ],
       },
     }),
-    handle: Property.ShortText({
-      displayName: 'Handle',
-      description: 'The exact handle to remove (e.g., "john.doe@example.com").',
-      required: true,
-    }),
     force: Property.Checkbox({
       displayName: 'Delete Contact if Last Handle',
       description:
@@ -45,8 +37,9 @@ export const removeContactHandle = createAction({
     }),
   },
   async run(context) {
-    const { contact_id, ...body } = context.propsValue;
+    const { contact_id, handle, source, force } = context.propsValue;
     const token = context.auth;
+    const body = { handle, source, force };
 
     await makeRequest(
       token,

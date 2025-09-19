@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { frontProps } from '../common/props'; 
 
 export const addContactHandle = createAction({
   auth: frontAuth,
@@ -10,12 +11,7 @@ export const addContactHandle = createAction({
   description:
     'Add a handle (email, phone number, etc.) to an existing contact.',
   props: {
-    contact_id: Property.ShortText({
-      displayName: 'Contact ID or Handle',
-      description:
-        "The contact's unique ID (e.g., crd_123) or a resource alias (e.g., email:john.doe@example.com).",
-      required: true,
-    }),
+    contact_id: frontProps.contact({ required: true }), 
     source: Property.StaticDropdown({
       displayName: 'Source',
       description: 'The type of the handle.',
