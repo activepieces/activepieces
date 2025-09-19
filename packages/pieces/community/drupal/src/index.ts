@@ -14,7 +14,8 @@ import { drupalListEntitiesAction } from './lib/actions/list_entities';
 import { drupalGetEntityAction } from './lib/actions/get_entity';
 import { drupalUpdateEntityAction } from './lib/actions/update_entity';
 import { drupalDeleteEntityAction } from './lib/actions/delete_entity';
-import { drupalPolling } from './lib/triggers/polling';
+import { drupalPollingId } from './lib/triggers/polling-id';
+import { drupalPollingTimestamp } from './lib/triggers/polling-timestamp';
 import { drupalWebhook } from './lib/triggers/webhook';
 
 const markdownPropertyDescription = `
@@ -102,7 +103,7 @@ export const drupal = createPiece({
     PieceCategory.FORMS_AND_SURVEYS,
     PieceCategory.MARKETING,
   ],
-  authors: ['jurgenhaas'],
+  authors: ['dbuytaert', 'jurgenhaas'],
   actions: [
     drupalCallToolAction,
     drupalCreateEntityAction,
@@ -111,5 +112,5 @@ export const drupal = createPiece({
     drupalUpdateEntityAction,
     drupalDeleteEntityAction
   ],
-  triggers: [drupalPolling, drupalWebhook],
+  triggers: [drupalPollingId, drupalPollingTimestamp, drupalWebhook],
 });

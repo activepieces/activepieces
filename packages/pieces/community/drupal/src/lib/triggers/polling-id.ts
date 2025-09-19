@@ -14,15 +14,14 @@ import {
 import { drupalAuth } from '../../';
 type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
-const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { id: string }> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth, propsValue }) => {
     const { website_url, username, password } = (auth as DrupalAuthType);
     const body: any = {
-      id: propsValue['id'],
-      timestamp: lastFetchEpochMS,
+      name: propsValue['name'],
     };
-    const response = await httpClient.sendRequest<DrupalPollItem[]>({
+    const response = await httpClient.sendRequest<DrupalPollIdItem[]>({
       method: HttpMethod.POST,
       url: website_url + `/orchestration/poll`,
       body: body,
@@ -33,19 +32,19 @@ const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { id: string }> 
     });
     console.debug('Poll response', response);
     return response.body.map((item) => ({
-      epochMilliSeconds: item.timestamp,
+      id: item.id,
       data: item,
     }));
   },
 };
 
-export const drupalPolling = createTrigger({
+export const drupalPollingId = createTrigger({
   auth: drupalAuth,
-  name: 'drupalPolling',
-  displayName: 'Polling',
-  description: 'A trigger that polls the Drupal site.',
+  name: 'drupalPollingId',
+  displayName: 'Polling by ID',
+  description: 'A trigger that polls the Drupal site by ID.',
   props: {
-    id: Property.ShortText({
+    name: Property.ShortText({
       displayName: 'Name',
       description: 'The name identifies the poll. It must be unique. It will be used to identify the poll in the Drupal site, e.g. if you use ECA to respond to this poll, you need to use the same name in the configuration of its poll event.',
       required: true,
@@ -71,7 +70,7 @@ export const drupalPolling = createTrigger({
   },
 });
 
-interface DrupalPollItem {
+interface DrupalPollIdItem {
   data: any;
-  timestamp: number;
+  id: string;
 }
