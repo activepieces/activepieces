@@ -7,20 +7,20 @@ import { In, IsNull } from 'typeorm'
 import { agentRepo } from '../../agents/agents-service'
 import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
 import { repoFactory } from '../../core/db/repo-factory'
-import { getRedisConnection } from '../../database/redis-connection'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { apDayjs } from '../../helper/dayjs-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
-import { systemJobsSchedule } from '../../helper/system-jobs'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { mcpRepo } from '../../mcp/mcp-service'
 import { projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
+import { redisConnections } from '../../database/redis'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 
@@ -70,7 +70,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             return { projectTasksUsage: 0, platformTasksUsage: 0 }
         }
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const today = dayjs()
         const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
@@ -88,7 +88,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     },
 
     async resetPlatformUsage(platformId: string): Promise<void> {
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const today = dayjs()
         const startOfMonth = today.startOf('month')
 
@@ -120,7 +120,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         const incrementBy = roundToDecimals(calculateCredits(cost), 3)
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const today = dayjs()
         const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
@@ -238,7 +238,7 @@ async function getUsage(
         return 0
     }
 
-    const redisConnection = getRedisConnection()
+    const redisConnection = await redisConnections.useExisting()
     let totalUsage = 0
 
     let currentDay = dayjs.unix(startDate).startOf('day')

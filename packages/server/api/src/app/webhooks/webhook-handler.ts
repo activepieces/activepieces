@@ -8,8 +8,8 @@ import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
-import { jobQueue } from '../workers/queue'
 import { JobType } from '../workers/queue/queue-manager'
+import { jobQueue } from '../workers/queue/job-queue'
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export enum WebhookFlowVersionToRun {
