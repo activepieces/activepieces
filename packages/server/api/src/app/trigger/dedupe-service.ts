@@ -1,13 +1,9 @@
 
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
-import { getRedisConnection } from '../database/redis-connection'
-import { QueueMode, system } from '../helper/system/system'
+import { redisConnections } from '../database/redis'
 
 const DUPLICATE_RECORD_EXPIRATION_SECONDS = 30
-
-const MEMORY_QUEUE = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 
 export const dedupeService = {
     filterUniquePayloads: async (flowVersionId: string, payloads: unknown[]): Promise<unknown[]> => {
@@ -22,16 +18,8 @@ const isDuplicated = async (flowVersionId: string, payload: unknown) => {
         return false
     }
     const key = `${flowVersionId}:${dedupeKeyValue}`
-    switch (MEMORY_QUEUE) {
-        case QueueMode.REDIS: {
-            const value = await incrementInRedis(key, DUPLICATE_RECORD_EXPIRATION_SECONDS)
-            return value > 1
-        }
-        case QueueMode.MEMORY: {
-            const value = await incrementInMemory(key, DUPLICATE_RECORD_EXPIRATION_SECONDS)
-            return value > 1
-        }
-    }
+    const value = await incrementInRedis(key, DUPLICATE_RECORD_EXPIRATION_SECONDS)
+    return value > 1
 }
 
 function removeDedupeKey(payload: unknown): unknown {
@@ -51,23 +39,12 @@ function extractDedupeKey(payload: unknown): unknown {
 
 
 async function incrementInRedis(key: string, expireySeconds: number): Promise<number> {
-    const value = await getRedisConnection().incrby(key, 1)
+    const redisConnection = await redisConnections.useExisting()
+    const value = await redisConnection.incrby(key, 1)
     if (value > 1) {
         return value
     }
-    await getRedisConnection().expire(key, expireySeconds)
+    await redisConnection.expire(key, expireySeconds)
     return value
 }
-
-const memoryCache: Record<string, number> = {}
-
-async function incrementInMemory(key: string, expireySeconds: number): Promise<number> {
-    memoryCache[key] = memoryCache[key] ? memoryCache[key] + 1 : 1
-    setTimeout(() => {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete memoryCache[key]
-    }, expireySeconds * 1000)
-    return memoryCache[key]
-}
-
 

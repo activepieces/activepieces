@@ -5,12 +5,12 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { getRedisConnection } from '../../../database/redis-connection'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { userService } from '../../../user/user-service'
 import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, BUSINESS_PLAN_PRICE_ID, BUSINESS_PLAN_PRICE_IDS, PLUS_PLAN_PRICE_ID, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_ID, USER_SEAT_PRICE_ID } from './platform-plan-helper'
 import { platformPlanService } from './platform-plan.service'
+import { redisConnections } from '../../../database/redis'
 
 export const stripeWebhookSecret = system.get(AppSystemProp.STRIPE_WEBHOOK_SECRET)!
 const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
@@ -45,7 +45,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const key = `trial-gift-${platformId}-${customerId}`
         const redisValue = await redisConnection.get(key)
         const parsedGiftTrial = redisValue 
@@ -101,7 +101,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 isNil(platformPlan.stripeSubscriptionId) || 
                 platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.CANCELED
             ) {
-                const redisConnection = getRedisConnection()
+                const redisConnection = await redisConnections.useExisting()
                 const key = `trial-gift-${platformPlan.platformId}-${platformPlan.stripeCustomerId}`
                 await platformPlanService(log).update({
                     platformId: platformPlan.platformId,

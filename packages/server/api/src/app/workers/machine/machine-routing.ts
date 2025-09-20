@@ -1,14 +1,12 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { getRedisConnection } from '../../../database/redis-connection'
-import { MachineRouting } from './type'
+import { redisConnections } from '../../database/redis'
 
 const MACHINE_SANDBOXES_KEY = 'machine:sandboxes'
 
-const redisConnection = getRedisConnection
-
-export const distributedRouting: MachineRouting = {
-    onHeartbeat: async (request) => {
-        await redisConnection().zadd(MACHINE_SANDBOXES_KEY, request.freeSandboxes, request.workerId)
+export const machineRouting = {
+    onHeartbeat: async (request: OnHeartbeatParams) => {
+        const redisConnection = await redisConnections.useExisting()
+        await redisConnection.zadd(MACHINE_SANDBOXES_KEY, request.freeSandboxes, request.workerId)
     },
     acquire: async (): Promise<string> => {
         const luaScript = `
@@ -33,8 +31,8 @@ export const distributedRouting: MachineRouting = {
                 
                 return selectedMachine
             `
-
-        const selectedMachine = await redisConnection().eval(
+        const redisConnection = await redisConnections.useExisting()
+        const selectedMachine = await redisConnection.eval(
             luaScript,
             1,
             MACHINE_SANDBOXES_KEY,
@@ -50,10 +48,22 @@ export const distributedRouting: MachineRouting = {
         }
         return selectedMachine
     },
-    release: async (workerId) => {
-        await redisConnection().zincrby(MACHINE_SANDBOXES_KEY, 1, workerId)
+    release: async (workerId: string): Promise<void> => {
+        const redisConnection = await redisConnections.useExisting()
+        await redisConnection.zincrby(MACHINE_SANDBOXES_KEY, 1, workerId)
     },
-    onDisconnect: async (request) => {
-        await redisConnection().zrem(MACHINE_SANDBOXES_KEY, request.workerId)
+    onDisconnect: async (request: OnDisconnectParams): Promise<void> => {
+        const redisConnection = await redisConnections.useExisting()
+        await redisConnection.zrem(MACHINE_SANDBOXES_KEY, request.workerId)
     },
+}
+
+type OnHeartbeatParams = {
+    workerId: string
+    totalSandboxes: number
+    freeSandboxes: number
+}
+
+type OnDisconnectParams = {
+    workerId: string
 }

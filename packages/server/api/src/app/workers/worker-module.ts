@@ -1,12 +1,12 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyInstance } from 'fastify'
-import { flowConsumer } from './consumer'
+import { jobQueueWorker } from './queue/job-queue-worker'
 import { flowEngineWorker } from './engine-controller'
 import { workerMachineController } from './machine/machine-controller'
-import { jobQueue } from './queue'
 import { queueMigration } from './queue/migration'
-import { setupBullMQBoard } from './redis/redis-bullboard'
+import { setupBullMQBoard } from './queue/redis-bullboard'
 import { flowWorkerController } from './worker-controller'
+import { jobQueue } from './queue/job-queue'
 
 export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, {
@@ -20,12 +20,12 @@ export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
     })
     await jobQueue(app.log).init()
     await setupBullMQBoard(app)
-    await flowConsumer(app.log).init()
+    await jobQueueWorker(app.log).init()
 }
 
 
 // This should be called after the app is booted, to ensure no plugin timeout
 export const migrateQueuesAndRunConsumers = async (app: FastifyInstance) => {
     await queueMigration(app.log).run()
-    await flowConsumer(app.log).run()
+    await jobQueueWorker(app.log).run()
 }

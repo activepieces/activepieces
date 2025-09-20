@@ -2,10 +2,10 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import { DelayedJobData, ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { jobQueue } from '..'
-import { createRedisClient, getRedisConnection } from '../../../database/redis-connection'
+import { redisConnections } from '../../../database/redis'
 import { QueueMode, system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
+import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
 const queueMode = system.getOrThrow(AppSystemProp.QUEUE_MODE)
@@ -42,14 +42,14 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
 })
 
 async function isMigrated(): Promise<boolean> {
-    const redisConnection = getRedisConnection()
-    const migrated = await redisConnection.get(migratedKey)
+    const redisConnectionInstance = await redisConnections.useExisting()
+    const migrated = await redisConnectionInstance.get(migratedKey)
     return migrated === 'true'
 }
 
 async function markAsMigrated(): Promise<void> {
-    const redisConnection = getRedisConnection()
-    await redisConnection.set(migratedKey, 'true')
+    const redisConnectionInstance = await redisConnections.useExisting()
+    await redisConnectionInstance.set(migratedKey, 'true')
 }
 
 async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
@@ -145,7 +145,7 @@ async function migrateDelayedJobs(log: FastifyBaseLogger): Promise<boolean> {
 
 async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promise<void>): Promise<boolean> {
     const legacyQueue = new Queue<T>(name, {
-        connection: createRedisClient(),
+        connection: await redisConnections.createNew(),
     })
 
     const waitingJobs = await legacyQueue.getJobs(['waiting', 'delayed', 'active', 'prioritized'])
@@ -163,7 +163,7 @@ async function cleanQueue(name: string) {
         return
     }
     const queue = new Queue(name, {
-        connection: createRedisClient(),
+        connection: await redisConnections.createNew(),
     })
     await queue.obliterate({
         force: true,

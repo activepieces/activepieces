@@ -21,6 +21,7 @@ export enum CopilotInstanceTypes {
 
 export enum RedisType {
     SENTINEL = 'SENTINEL',
+    MEMORY = 'MEMORY',
     DEFAULT = 'DEFAULT',
 }
 

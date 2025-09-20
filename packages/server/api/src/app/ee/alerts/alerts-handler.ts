@@ -1,13 +1,13 @@
 import { NotificationStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { getRedisConnection } from '../../database/redis-connection'
-import { systemJobsSchedule } from '../../helper/system-jobs'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
+import { redisConnections } from '../../database/redis'
 
 const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400
@@ -26,13 +26,14 @@ async function scheduleSendingReminder(params: IssueRemindersParams, log: Fastif
         const project = await projectService.getOneOrThrow(projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
         const reminderKey = `reminder:${projectId}`
-        const isEmailScheduled = await getRedisConnection().get(reminderKey)
+        const redisConnection = await redisConnections.useExisting()
+        const isEmailScheduled = await redisConnection.get(reminderKey)
         if (isEmailScheduled) {
             return
         }
 
         const endOfDay = dayjs().endOf('day')
-        await getRedisConnection().set(reminderKey, 0, 'EXAT', endOfDay.unix())
+        await redisConnection.set(reminderKey, 0, 'EXAT', endOfDay.unix())
         
         await systemJobsSchedule(log).upsertJob({
             job: {
@@ -101,7 +102,7 @@ async function sendAlertOnFlowRun(params: IssueParams, log: FastifyBaseLogger): 
 }
 
 async function incrementAndExpire(key: string, expiryTime: number): Promise<number> {
-    const redis = getRedisConnection()
+    const redis = await redisConnections.useExisting()
     const count = await redis.incr(key)
     if (count === 1) {
         await redis.expire(key, expiryTime)

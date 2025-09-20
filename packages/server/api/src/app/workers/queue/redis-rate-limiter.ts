@@ -5,11 +5,11 @@ import dayjs from 'dayjs'
 
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
-import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { AddJobParams, JobType, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
-import { redisQueue } from './redis-queue'
+import { jobQueue } from '../queue/job-queue'
+import { redisConnections } from '../../database/redis'
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
@@ -31,11 +31,11 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         assertNull(queue, 'queue is not null')
         assertNull(worker, 'worker is not null')
-        redis = getRedisConnection()
+        redis = await redisConnections.useExisting()
         queue = new Queue(
             RATE_LIMIT_QUEUE_NAME,
             {
-                connection: createRedisClient(),
+                connection: await redisConnections.createNew(),
                 defaultJobOptions: {
                     attempts: 5,
                     backoff: {
@@ -49,12 +49,12 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         await queue.waitUntilReady()
 
         worker = new Worker<AddJobParams<JobType>>(RATE_LIMIT_QUEUE_NAME,
-            async (job) => redisQueue(log).add({
+            async (job) => jobQueue(log).add({
                 ...job.data,
                 priority: RATE_LIMIT_PRIORITY,
             })
             , {
-                connection: createRedisClient(),
+                connection: await redisConnections.createNew(),
                 maxStalledCount: 5,
                 concurrency: 5,
             })
