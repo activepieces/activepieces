@@ -17,6 +17,10 @@ type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    if (lastFetchEpochMS === undefined || lastFetchEpochMS === null) {
+      lastFetchEpochMS = 0;
+    }
+    console.debug('Polling by timestamp', propsValue['name'], lastFetchEpochMS);
     const { website_url, username, password } = (auth as DrupalAuthType);
     const body: any = {
       name: propsValue['name'],
