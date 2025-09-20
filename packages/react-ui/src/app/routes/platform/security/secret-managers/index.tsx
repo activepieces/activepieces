@@ -22,16 +22,29 @@ const SecretMangersPage = () => {
 export type SecretManagerMetaData = {
   name: string
   logo: string
-  fields: string[]
+  fields: {
+    displayName: string
+    id: string
+    placeholder: string
+  }[]
   connected: boolean
 }
 
 const managers: SecretManagerMetaData[] = [
   {
     name: "AWS",
-    logo: "https://icon2.cleanpng.com/20180705/bvy/kisspng-amazon-com-amazon-web-services-cloud-computing-ama-api-gateway-5b3e194ad5c4c6.0629943915307963628756.jpg",
+    logo: "https://d1yjjnpx0p53s8.cloudfront.net/styles/logo-thumbnail/s3/102017/logo_0.png?17TK91b1B6OvV2MFrCLfukw1c8oEaNr6&itok=vsanFiUj",
     fields: [
-      "accessKey", "secretKey"
+      {
+        displayName: "Access Key",
+        id: "accessKey",
+        placeholder: "YOUR_ACCESS_KEY"
+      },
+      {
+        displayName: "Secret Key",
+        id: "secretKey",
+        placeholder: "YOUR_SECRET_KEY"
+      }
     ],
     connected: false
   }

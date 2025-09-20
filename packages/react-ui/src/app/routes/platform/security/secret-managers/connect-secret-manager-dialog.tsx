@@ -42,9 +42,11 @@ const ConnectSecretManagerDialog = ({
       form.reset();
       setOpen(false);
       toast({
-        title: t("Success")
+        title: t("Success"),
+        description: t("Connected successfully"),
       })
     },
+    
     onError: () => {
       setOpen(false);
     },
@@ -72,17 +74,17 @@ const ConnectSecretManagerDialog = ({
             {
               manager.fields.map((fieldName)=> (
                 <FormField
-                  name={fieldName}
+                  rules={{ required: true }}
+                  name={fieldName.displayName}
                   render={({ field }) => (
                     <FormItem className="grid space-y-3">
-                      <Label htmlFor="fieldName">{fieldName}</Label>
+                      <Label htmlFor="fieldName">{fieldName.displayName}</Label>
                       <div className="flex gap-2 items-center justify-center">
                         <Input
-                          autoFocus
                           {...field}
                           required
-                          id={fieldName}
-                          placeholder={t('************************')}
+                          id={fieldName.id}
+                          placeholder={fieldName.placeholder}
                           className="rounded-sm"
                         />
                       </div>
