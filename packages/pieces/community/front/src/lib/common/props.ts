@@ -1,51 +1,15 @@
 import { Property, DropdownState } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
-
-interface FrontLink {
-  id: string;
-  name: string;
-  external_url: string;
-}
-interface FrontConversation {
-  id: string;
-  subject: string;
-  last_message: { blurb: string };
-}
-interface FrontAccount {
-  id: string;
-  name: string;
-}
-interface FrontChannel {
-  id: string;
-  name: string;
-  address: string;
-}
-interface FrontTeammate {
-  id: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-}
-interface FrontTag {
-  id: string;
-  name: string;
-}
-interface FrontContact {
-  id: string;
-  name: string;
-}
-
-interface FrontContactHandle {
-  source: string;
-  handle: string;
-}
-
-interface FrontContact {
-  id: string;
-  name: string;
-  handles: FrontContactHandle[]; 
-}
+import {
+  FrontAccount,
+  FrontChannel,
+  FrontConversation,
+  FrontLink,
+  FrontTag,
+  FrontTeammate,
+  FrontContact,
+} from './types';
 
 export const frontProps = {
   account: (props?: { required?: boolean }) =>
