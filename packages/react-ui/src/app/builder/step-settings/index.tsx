@@ -11,6 +11,12 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
@@ -19,6 +25,8 @@ import {
   FlowOperationType,
   FlowTrigger,
   FlowTriggerType,
+  PieceActionSettings,
+  PieceTriggerSettings,
   debounce,
   isNil,
 } from '@activepieces/shared';
@@ -36,6 +44,8 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
+import { Separator } from '@/components/ui/separator';
+import { ConnectionSelect } from './piece-settings/connection-select';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -145,6 +155,21 @@ const StepSettingsContainer = () => {
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
+  
+  const actionName = (modifiedStep.settings as PieceActionSettings).actionName;
+  const selectedAction = actionName
+    ? pieceModel?.actions[actionName]
+    : undefined;
+  const triggerName = (modifiedStep.settings as PieceTriggerSettings).triggerName;
+  const selectedTrigger = triggerName
+    ? pieceModel?.triggers[triggerName]
+    : undefined;
+
+  const showAuthForAction =
+    !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
+  const showAuthForTrigger =
+    !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
+  
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
@@ -201,49 +226,69 @@ const StepSettingsContainer = () => {
                 <div className="flex flex-col gap-4 px-4 pb-6">
                   <StepCard step={modifiedStep}></StepCard>
 
-                  {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
-                    <LoopsSettings readonly={readonly}></LoopsSettings>
-                  )}
-                  {modifiedStep.type === FlowActionType.CODE && (
-                    <CodeSettings readonly={readonly}></CodeSettings>
-                  )}
-                  {modifiedStep.type === FlowActionType.PIECE &&
-                    modifiedStep && (
-                      <PieceSettings
-                        step={modifiedStep}
-                        flowId={flowVersion.flowId}
-                        readonly={readonly}
-                      ></PieceSettings>
-                    )}
-                  {modifiedStep.type === FlowActionType.ROUTER &&
-                    modifiedStep && (
-                      <RouterSettings readonly={readonly}></RouterSettings>
-                    )}
-                  {modifiedStep.type === FlowTriggerType.PIECE &&
-                    modifiedStep && (
-                      <PieceSettings
-                        step={modifiedStep}
-                        flowId={flowVersion.flowId}
-                        readonly={readonly}
-                      ></PieceSettings>
-                    )}
-                  {showActionErrorHandlingForm && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        stepMetadata.type === FlowActionType.PIECE
-                          ? stepMetadata.errorHandlingOptions?.continueOnFailure
-                              ?.hide
-                          : false
-                      }
+                  {pieceModel?.auth && (showAuthForAction || showAuthForTrigger) && (
+                    <ConnectionSelect
+                      isTrigger={!isNil(selectedTrigger)}
+                      piece={pieceModel}
                       disabled={readonly}
-                      hideRetryOnFailure={
-                        stepMetadata.type === FlowActionType.PIECE
-                          ? stepMetadata.errorHandlingOptions?.retryOnFailure
-                              ?.hide
-                          : false
-                      }
-                    ></ActionErrorHandlingForm>
+                    ></ConnectionSelect>
                   )}
+                  
+                  <Accordion type="single" collapsible defaultValue="settings" className="border-0">
+                    <AccordionItem value="settings">
+                    <Separator />
+
+                      <AccordionTrigger className="px-0 text-md">Settings</AccordionTrigger>
+                      <AccordionContent className="px-0 py-2">
+
+                        <div className='flex flex-col gap-6'>
+                          {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
+                            <LoopsSettings readonly={readonly}></LoopsSettings>
+                          )}
+                          {modifiedStep.type === FlowActionType.CODE && (
+                            <CodeSettings readonly={readonly}></CodeSettings>
+                          )}
+                          {modifiedStep.type === FlowActionType.PIECE &&
+                            modifiedStep && (
+                              <PieceSettings
+                                step={modifiedStep}
+                                flowId={flowVersion.flowId}
+                                readonly={readonly}
+                              ></PieceSettings>
+                            )}
+                          {modifiedStep.type === FlowActionType.ROUTER &&
+                            modifiedStep && (
+                              <RouterSettings readonly={readonly}></RouterSettings>
+                            )}
+                          {modifiedStep.type === FlowTriggerType.PIECE &&
+                            modifiedStep && (
+                              <PieceSettings
+                                step={modifiedStep}
+                                flowId={flowVersion.flowId}
+                                readonly={readonly}
+                              ></PieceSettings>
+                            )}
+                          {showActionErrorHandlingForm && (
+                            <ActionErrorHandlingForm
+                              hideContinueOnFailure={
+                                stepMetadata.type === FlowActionType.PIECE
+                                  ? stepMetadata.errorHandlingOptions?.continueOnFailure
+                                      ?.hide
+                                  : false
+                              }
+                              disabled={readonly}
+                              hideRetryOnFailure={
+                                stepMetadata.type === FlowActionType.PIECE
+                                  ? stepMetadata.errorHandlingOptions?.retryOnFailure
+                                      ?.hide
+                                  : false
+                              }
+                            ></ActionErrorHandlingForm>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
               </ScrollArea>
             </ResizablePanel>

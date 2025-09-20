@@ -142,7 +142,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                         <Button
                           variant="ghost"
                           size="xs"
-                          className="z-50 absolute right-8 top-2 "
+                          className="z-50 absolute right-8 top-1/2 transform -translate-y-1/2"
                           onClick={(e) => {
                             e.stopPropagation();
                             setReconnectConnection(selectedConnection ?? null);
@@ -156,7 +156,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     </>
                   )}
 
-                  <SelectTrigger className="flex gap-2 items-center">
+                  <SelectTrigger className="flex gap-2 items-center h-14">
                     <SelectValue
                       className="truncate flex-grow flex-shrink"
                       placeholder={t('Select a connection')}
@@ -169,21 +169,26 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                             removeBrackets(field.value),
                         ),
                       ) ? (
-                        <div className="truncate flex-grow flex-shrink flex items-center gap-2">
-                          {connections?.data?.find(
-                            (connection) =>
-                              connection.externalId ===
-                              removeBrackets(field.value),
-                          )?.scope === AppConnectionScope.PLATFORM && (
-                            <Globe size={16} className="shrink-0" />
-                          )}
-                          {
-                            connections?.data?.find(
+                        <div className="flex flex-col items-start">
+                          <span className="text-xs text-muted-foreground">
+                            Connection
+                          </span>
+                          <div className="truncate flex-grow flex-shrink flex gap-2">
+                            {connections?.data?.find(
                               (connection) =>
                                 connection.externalId ===
                                 removeBrackets(field.value),
-                            )?.displayName
-                          }
+                            )?.scope === AppConnectionScope.PLATFORM && (
+                              <Globe size={16} className="shrink-0" />
+                            )}
+                            {
+                              connections?.data?.find(
+                                (connection) =>
+                                  connection.externalId ===
+                                  removeBrackets(field.value),
+                              )?.displayName
+                            }
+                          </div>
                         </div>
                       ) : null}
                     </SelectValue>

@@ -22,9 +22,7 @@ import {
   isNil,
   spreadIfDefined,
   RouterActionSchema,
-  RouterBranchesSchema,
   SampleDataSetting,
-  RouterExecutionType,
   UpsertOAuth2Request,
   UpsertCloudOAuth2Request,
   UpsertPlatformOAuth2Request,
@@ -39,6 +37,7 @@ import {
   PropertyExecutionType,
   PropertySettings,
   PieceTriggerSettings,
+  RouterActionSettingsValidation,
 } from '@activepieces/shared';
 
 const addAuthToPieceProps = (
@@ -425,11 +424,12 @@ export const formUtils = {
         return Type.Intersect([
           Type.Omit(RouterActionSchema, ['settings']),
           Type.Object({
-            settings: Type.Object({
-              branches: RouterBranchesSchema(true),
-              executionType: Type.Enum(RouterExecutionType),
-              sampleData: SampleDataSetting,
-            }),
+            settings: Type.Intersect([
+              RouterActionSettingsValidation,
+              Type.Object({
+                sampleData: SampleDataSetting,
+              }),
+            ]),
           }),
         ]);
       case FlowActionType.CODE:

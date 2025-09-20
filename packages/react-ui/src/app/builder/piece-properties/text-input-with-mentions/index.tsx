@@ -22,6 +22,7 @@ type TextInputWithMentionsProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  rightContent?: React.ReactNode;
 };
 const extensions = (placeholder?: string) => {
   return [
@@ -68,6 +69,7 @@ export const TextInputWithMentions = ({
   onChange,
   disabled,
   placeholder,
+  rightContent,
 }: TextInputWithMentionsProps) => {
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
@@ -115,6 +117,7 @@ export const TextInputWithMentions = ({
           textMentionUtils.inputWithMentionsCssClass,
           {
             'cursor-not-allowed opacity-50': disabled,
+            'pr-20': rightContent,
           },
         ),
       },
@@ -132,5 +135,14 @@ export const TextInputWithMentions = ({
     },
   });
 
-  return <EditorContent editor={editor} />;
+  return (
+    <div className="relative">
+      <EditorContent editor={editor} />
+      {rightContent && (
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center z-10">
+          {rightContent}
+        </div>
+      )}
+    </div>
+  );
 };

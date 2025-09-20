@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, PropertyExecutionType, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -9,10 +9,12 @@ import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
+import { toolInputsResolver } from '../services/tool-inputs-resolver'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { ExecutionVerdict } from './context/flow-execution-context'
+import { EngineConstants } from './context/engine-constants'
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -47,18 +49,28 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             pieceSource: constants.piecesSource,
         })
 
-        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
 
-        stepOutput.input = censoredInput
+        const aiProcessedInput = await resolveInputsUsingAI({ resolvedInput, constants, action, executionState })
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
+        const inputToProcess = {
+            ...aiProcessedInput,
+            ...(resolvedInput['auth'] ? { auth: resolvedInput['auth'] } : {}),
+        }
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(inputToProcess, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
+
+        const { censoredInput: aiCensoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
+            unresolvedInput: aiProcessedInput,
+            executionState,
+        })
+
+        stepOutput.input = aiCensoredInput
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
         }
-
 
         const params: {
             hookResponse: HookResponse
@@ -190,6 +202,36 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
     }
 }
 
+async function resolveInputsUsingAI({ resolvedInput, constants, action, executionState }: ResolveInputsUsingAIParams) {
+    if (constants.edition === ApEdition.COMMUNITY) {
+        return resolvedInput
+    }
+    const preDefinedInputs: Record<string, unknown> = {
+        ...resolvedInput,
+        ...(action.settings.input['auth'] ? { auth: action.settings.input['auth'] } : {}),
+        previousStepsResults: executionState.steps,
+    }
+    Object.entries(action.settings.propertySettings ?? {}).forEach(([key, value]) => {
+        if (value.type === PropertyExecutionType.AUTO) {
+            preDefinedInputs[key] = undefined
+        }
+    })
+    assertNotNullOrUndefined(action.settings.actionName, 'actionName')
+    const aiResolvedInput = await toolInputsResolver.resolve(constants, {
+        pieceName: action.settings.pieceName,
+        pieceVersion: action.settings.pieceVersion,
+        actionName: action.settings.actionName,
+        preDefinedInputs,
+        flowVersionId: constants.flowVersionId,
+    })
+    if (isNil(aiResolvedInput)) {
+        return resolvedInput
+    }
+    aiResolvedInput['previousStepsResults'] = undefined
+    return aiResolvedInput
+    
+}
+
 function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
     switch (hookResponse.type) {
         case 'stopped':
@@ -292,4 +334,11 @@ function createPauseHook(params: CreatePauseHookParams, pauseId: string, request
 
 type CreatePauseHookParams = {
     hookResponse: HookResponse
+}
+
+type ResolveInputsUsingAIParams = {
+    resolvedInput: StaticPropsValue<PiecePropertyMap>
+    constants: EngineConstants
+    action: PieceAction
+    executionState: FlowExecutorContext
 }

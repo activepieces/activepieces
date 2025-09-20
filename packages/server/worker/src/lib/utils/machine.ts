@@ -50,6 +50,7 @@ export const workerMachine = {
                 ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
+                ...spreadIfDefined('EDITION', settings?.EDITION),
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
@@ -213,5 +214,6 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
         AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
         AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
         AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
+        AP_EDITION: workerMachine.getSettings().EDITION,
     }
 }

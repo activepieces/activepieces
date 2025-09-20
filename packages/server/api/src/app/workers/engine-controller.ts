@@ -1,9 +1,10 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, ResolveAIConditionRequest, ResolveToolInputsRequest, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
@@ -13,6 +14,11 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from './engine-response-watcher'
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai'
+import { openai } from '@ai-sdk/openai'
+import { LanguageModelV2 } from '@ai-sdk/provider'
+import { toolInputsResolver } from '../mcp/tool/tool-inputs-resolver'
+import { aiConditionsResolver } from '../ee/router/ai-conditions-resolver'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -183,8 +189,58 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             .send(data)
     })
 
+    app.post('/resolve-tool-inputs', ResolveToolInputsParams, async (request) => {
+        const { pieceName, pieceVersion, actionName, auth, preDefinedInputs, flowVersionId } = request.body
+        const flowVersion = await flowVersionService(request.log).getOne(flowVersionId)
+        if (isNil(flowVersion)) {
+            return null
+        }
 
+        const model = await getAIModel({
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+            providerName: 'openai',
+            modelDisplayName: 'GPT-4.1',
+            modelName: 'gpt-4.1',
+        })
 
+        if (isNil(model)) {
+            return null
+        }
+
+        return toolInputsResolver.resolve({
+            pieceName,
+            pieceVersion,
+            actionName,
+            auth,
+            userInstructions: flowVersion.flowContext ?? '',
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            aiModel: model,
+            preDefinedInputs,
+        })
+    })
+
+    app.post('/resolve-ai-condition', ResolveAIConditionParams, async (request) => {
+        const { previousStepsResults, prompts } = request.body
+        const model = await getAIModel({
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+            providerName: 'openai',
+            modelDisplayName: 'GPT-4.1',
+            modelName: 'gpt-4.1',
+        })
+        
+        if (isNil(model)) {
+            return null
+        }
+
+        return aiConditionsResolver.resolve({
+            previousStepsResults,
+            prompts,
+            aiModel: model,
+        })
+    })
 }
 
 async function getFlowResponse(
@@ -238,6 +294,34 @@ async function getFlow(projectId: string, request: GetFlowVersionForWorkerReques
     })
 }
 
+async function getAIModel({platformId, projectId, providerName, modelDisplayName, modelName}: GetAIModelParams): Promise<LanguageModelV2 | null> {
+    const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName)
+    const modelInstance = supportedProvider?.languageModels.find(m => m.displayName === modelDisplayName)
+    if (isNil(modelInstance)) {
+        return null
+    }
+
+    const baseURL = await domainHelper.getPublicApiUrl({
+        path: `/v1/ai-providers/proxy/${providerName}`,
+        platformId,
+    })
+    const engineToken = await accessTokenManager.generateEngineToken({
+        platformId,
+        projectId,
+    })
+
+    const model = createAIModel({
+        providerName,
+        modelInstance: openai(modelName),
+        engineToken,
+        baseURL,
+        metadata: {
+            feature: AIUsageFeature.TEXT_AI,
+        },
+    })
+
+    return model
+}
 
 async function markParentRunAsFailed({
     parentRunId,
@@ -263,6 +347,14 @@ async function markParentRunAsFailed({
             link: childRunUrl,
         },
     })
+}
+
+type GetAIModelParams = {
+    platformId: string
+    projectId: string
+    providerName: string
+    modelDisplayName: string
+    modelName: string
 }
 
 type MarkParentRunAsFailedParams = {
@@ -331,5 +423,23 @@ const UpdateFlowResponseParams = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const ResolveToolInputsParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: ResolveToolInputsRequest,
+    },
+}
+
+const ResolveAIConditionParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: ResolveAIConditionRequest,
     },
 }
