@@ -93,6 +93,72 @@ export const AirtableEnterpriseFields = [
   'aiText',
 ];
 
+export interface AirtableCommentRequest {
+  personalToken: string;
+  baseId: string;
+  tableId: string;
+  recordId: string;
+  commentText: string;
+}
+
+export interface AirtableCreateBaseRequest {
+  personalToken: string;
+  workspaceId: string;
+  name: string;
+  tables?: AirtableCreateTableSpec[];
+}
+
+export interface AirtableCreateTableSpec {
+  name: string;
+  primaryFieldName: string;
+  primaryFieldType: string;
+  description?: string;
+  fields?: AirtableFieldSpec[];
+}
+
+export interface AirtableFieldSpec {
+  name: string;
+  type: string;
+  description?: string;
+  options?: {
+    choices?: { id: string; name: string }[];
+  };
+
+}
+export interface AirtableCreateTableRequest {
+  personalToken: string;
+  baseId: string;
+  name: string;
+  primaryFieldName: string;
+  primaryFieldType: string;
+  description?: string;
+  fields?: AirtableFieldSpec[];
+}
+export interface AirtableFindRecordRequest {
+  personalToken: string;
+  baseId: string;
+  tableId: string;
+  recordId: string;
+}
+export interface AirtableFindTableRequest {
+  personalToken: string;
+  baseId: string;
+  tableName?: string;
+}
+export interface AirtableFindTableByIdRequest {
+  personalToken: string;
+  baseId: string;
+  tableId: string;
+}
+export interface AirtableFindBaseRequest {
+  personalToken: string;
+  baseName: string;
+}
+export interface AirtableGetBaseSchemaRequest {
+  personalToken: string;
+  baseId: string;
+}
+
 export const AirtableFieldMapping = {
   singleLineText: Property.ShortText,
   email: Property.ShortText,

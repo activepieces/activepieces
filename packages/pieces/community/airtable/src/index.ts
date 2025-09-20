@@ -13,6 +13,13 @@ import { airtableUpdateRecordAction } from './lib/actions/update-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
 import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
 import { airtableUploadFileToColumnAction } from './lib/actions/upload-file-to-column';
+import { airtableAddCommentAction } from './lib/actions/add-comment-to-record';
+import { airtableCreateBaseAction } from './lib/actions/create-base';
+import { airtableCreateTableAction } from './lib/actions/create-table';
+import { airtableFindTableByIdAction } from './lib/actions/find-table-by-id';
+import { airtableFindRecordByIdAction } from './lib/actions/find-record-by-id';
+import { airtableFindBaseAction } from './lib/actions/find-base';
+import { airtableGetBaseSchemaAction } from './lib/actions/get-base-schema';
 
 export const airtableAuth = PieceAuth.SecretText({
   displayName: 'Personal Access Token',
@@ -67,6 +74,14 @@ export const airtable = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   auth: airtableAuth,
   actions: [
+    airtableAddCommentAction,
+    airtableCreateBaseAction,
+    airtableCreateTableAction,
+    airtableFindRecordAction,
+    airtableFindTableByIdAction,
+    airtableFindRecordByIdAction,
+    airtableFindBaseAction,
+    airtableGetBaseSchemaAction,
     airtableCreateRecordAction,
     airtableFindRecordAction,
     airtableUpdateRecordAction,
