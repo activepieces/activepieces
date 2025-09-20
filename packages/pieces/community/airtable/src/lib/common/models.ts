@@ -93,6 +93,46 @@ export const AirtableEnterpriseFields = [
   'aiText',
 ];
 
+export interface AirtableComment {
+  id: string;
+  createdTime: string;
+  lastUpdatedTime: string | null;
+  text: string;
+  parentCommentId?: string;
+  author: {
+    id: string;
+    email: string;
+    name?: string;
+  };
+  mentioned?: Record<
+    string,
+    {
+      id: string;
+      type: 'user' | 'userGroup';
+      displayName: string;
+      email?: string;
+    }
+  >;
+}
+
+export interface AirtableFieldConfig {
+  name: string;
+  description?: string;
+  type: AirtableFieldType;
+  options?: any;
+}
+
+export interface AirtableTableConfig {
+  name: string;
+  description?: string;
+  fields: AirtableFieldConfig[];
+}
+
+export interface AirtableCreateBaseResponse {
+  id: string;
+  tables: AirtableTable[];
+}
+
 export const AirtableFieldMapping = {
   singleLineText: Property.ShortText,
   email: Property.ShortText,
