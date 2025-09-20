@@ -1,0 +1,22 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { frontAuth } from '../common/auth';
+import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { conversationIdDropdown, linkidsDropdown } from '../common/dropdown';
+
+export const addConversationLinks = createAction({
+  auth: frontAuth,
+  name: 'addConversationLinks',
+  displayName: 'Add Conversation Links',
+  description: 'Link external references (URLs) to a conversation.',
+  props: {
+    conversation_id: conversationIdDropdown,
+    links: linkidsDropdown,
+  },
+  async run({ auth, propsValue }) {
+    const { conversation_id, links } = propsValue;
+    const path = `/conversations/${conversation_id}/links`;
+    const body = { links };
+    return await makeRequest(auth.access_token, HttpMethod.POST, path, body);
+  },
+});
