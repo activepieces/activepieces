@@ -1,8 +1,8 @@
 import { ProjectId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 
 export const platformProjectSideEffects = (log: FastifyBaseLogger) => ({
     async onSoftDelete({ id }: OnSoftDeleteParams): Promise<void> {

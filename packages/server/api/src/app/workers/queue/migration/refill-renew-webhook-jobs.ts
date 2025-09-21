@@ -5,8 +5,8 @@ import { IsNull } from 'typeorm'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { projectService } from '../../../project/project-service'
 import { triggerSourceRepo } from '../../../trigger/trigger-source/trigger-source-service'
-import { JobType } from '../queue-manager'
 import { jobQueue } from '../job-queue'
+import { JobType } from '../queue-manager'
 
 export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {

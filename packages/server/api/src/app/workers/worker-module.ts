@@ -1,12 +1,12 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyInstance } from 'fastify'
-import { jobQueueWorker } from './queue/job-queue-worker'
 import { flowEngineWorker } from './engine-controller'
 import { workerMachineController } from './machine/machine-controller'
+import { jobQueue } from './queue/job-queue'
+import { jobQueueWorker } from './queue/job-queue-worker'
 import { queueMigration } from './queue/migration'
 import { setupBullMQBoard } from './queue/redis-bullboard'
 import { flowWorkerController } from './worker-controller'
-import { jobQueue } from './queue/job-queue'
 
 export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, {

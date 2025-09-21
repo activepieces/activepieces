@@ -1,25 +1,18 @@
 import { AppSystemProp } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
+import { Mutex } from 'async-mutex'
+import Redis from 'ioredis'
 import { QueueMode, RedisType, system } from '../../helper/system/system'
 import { createDefaultRedisConnection } from './default-redis'
 import { createMemoryRedisConnection } from './memory-redis'
 import { createSentinelRedisConnection } from './sentinel-redis'
-import Redis from 'ioredis'
-import { Mutex } from 'async-mutex'
-import { isNil } from '@activepieces/shared'
 
 let redisConnectionInstance: Redis | null = null
-let mutexLock = new Mutex()
-function getRedisType(): RedisType {
-    const checkIfUserHasDeprecatedQueueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY
-    if (checkIfUserHasDeprecatedQueueMode) {
-        return RedisType.MEMORY
-    }
-    return system.getOrThrow<RedisType>(AppSystemProp.REDIS_TYPE)
-}
+const mutexLock = new Mutex()
 
 export const redisConnections = {
     createNew: async (): Promise<Redis> => {
-        const redisType = getRedisType()
+        const redisType = redisConnections.getRedisType()
         switch (redisType) {
             case RedisType.MEMORY:
                 return createMemoryRedisConnection()
@@ -41,6 +34,13 @@ export const redisConnections = {
             redisConnectionInstance = await redisConnections.createNew()
             return redisConnectionInstance
         })
-    }
+    },
+    getRedisType: (): RedisType => {
+        const checkIfUserHasDeprecatedQueueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY
+        if (checkIfUserHasDeprecatedQueueMode) {
+            return RedisType.MEMORY
+        }
+        return system.getOrThrow<RedisType>(AppSystemProp.REDIS_TYPE)
+    },
 
 }

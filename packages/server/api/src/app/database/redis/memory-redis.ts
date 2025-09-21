@@ -1,4 +1,4 @@
-import Redis, { RedisOptions } from 'ioredis'
+import Redis from 'ioredis'
 import { RedisMemoryServer } from 'redis-memory-server'
 import { system } from '../../helper/system/system'
 

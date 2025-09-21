@@ -5,12 +5,12 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
+import { redisConnections } from '../../../database/redis'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { userService } from '../../../user/user-service'
 import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, BUSINESS_PLAN_PRICE_ID, BUSINESS_PLAN_PRICE_IDS, PLUS_PLAN_PRICE_ID, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_ID, USER_SEAT_PRICE_ID } from './platform-plan-helper'
 import { platformPlanService } from './platform-plan.service'
-import { redisConnections } from '../../../database/redis'
 
 export const stripeWebhookSecret = system.get(AppSystemProp.STRIPE_WEBHOOK_SECRET)!
 const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)

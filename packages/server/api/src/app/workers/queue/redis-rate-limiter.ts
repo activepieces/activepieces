@@ -5,11 +5,11 @@ import dayjs from 'dayjs'
 
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
+import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
-import { AddJobParams, JobType, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
 import { jobQueue } from '../queue/job-queue'
-import { redisConnections } from '../../database/redis'
+import { AddJobParams, JobType, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]

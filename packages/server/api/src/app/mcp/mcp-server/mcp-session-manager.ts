@@ -2,8 +2,8 @@ import { apId, isNil } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger } from 'fastify'
-import { pubsub } from '../../helper/pubsub'
 import { distributedStore } from '../../helper/key-value'
+import { pubsub } from '../../helper/pubsub'
 
 type SessionData = {
     server: McpServer

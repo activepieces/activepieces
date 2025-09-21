@@ -1,8 +1,8 @@
 import { DelayedJobData, FlowStatus, isNil, JobData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../flows/flow/flow.service'
-import { JobPreHandler, PreHandlerResult } from './index'
 import { jobQueue } from '../../queue/job-queue'
+import { JobPreHandler, PreHandlerResult } from './index'
 
 
 export const scheduledJobPreHandler: JobPreHandler = {

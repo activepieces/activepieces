@@ -1,13 +1,13 @@
 import { NotificationStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { redisConnections } from '../../database/redis'
 import { SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
-import { redisConnections } from '../../database/redis'
 
 const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400

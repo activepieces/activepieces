@@ -1,10 +1,10 @@
 import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisConnections } from '../../database/redis'
 import { apDayjs, apDayjsDuration } from '../dayjs-helper'
 import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
-import { redisConnections } from '../../database/redis'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()

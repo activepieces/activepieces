@@ -1,14 +1,11 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { DelayedJobData, ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis'
-import { QueueMode, system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
-const queueMode = system.getOrThrow(AppSystemProp.QUEUE_MODE)
 
 type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
 type LegacyWebhookJobData = Pick<WebhookJobData, 'projectId' | 'schemaVersion' | 'requestId' | 'payload' | 'runEnvironment' | 'flowId' | 'saveSampleData' | 'flowVersionIdToRun' | 'execute' | 'parentRunId' | 'failParentOnFailure'>
@@ -17,10 +14,6 @@ const migratedKey = 'unified_queue_migrated'
 
 export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
-        if (queueMode === QueueMode.MEMORY) {
-            return
-        }
-
         if (await isMigrated()) {
             log.info('[unifyOldQueuesIntoOne] Already migrated, skipping')
             return
@@ -159,9 +152,6 @@ async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promi
 }
 
 async function cleanQueue(name: string) {
-    if (queueMode == QueueMode.MEMORY) {
-        return
-    }
     const queue = new Queue(name, {
         connection: await redisConnections.createNew(),
     })

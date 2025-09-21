@@ -1,11 +1,11 @@
-import Redis from "ioredis"
-import { redisConnections } from "../database/redis"
-import { Mutex } from "async-mutex"
-import { isNil } from "@activepieces/shared"
+import { isNil } from '@activepieces/shared'
+import { Mutex } from 'async-mutex'
+import Redis from 'ioredis'
+import { redisConnections } from '../database/redis'
 
 let redisClientSubscriber: Redis | null = null
 let redisClientPublisher: Redis | null = null
-let mutexLock = new Mutex()
+const mutexLock = new Mutex()
 
 export const pubsub = {
     async subscribe(
@@ -27,10 +27,10 @@ export const pubsub = {
 }
 
 async function getRedisClientSubscriber(): Promise<Redis> {
-    if(!isNil(redisClientSubscriber)) {
+    if (!isNil(redisClientSubscriber)) {
         return redisClientSubscriber
     }
-    return await mutexLock.runExclusive(async () => {
+    return mutexLock.runExclusive(async () => {
         if (!redisClientSubscriber) {
             redisClientSubscriber = await redisConnections.createNew()
         }
@@ -39,10 +39,10 @@ async function getRedisClientSubscriber(): Promise<Redis> {
 }
 
 async function getRedisClientPublisher(): Promise<Redis> {
-    if(!isNil(redisClientPublisher)) {
+    if (!isNil(redisClientPublisher)) {
         return redisClientPublisher
     }
-    return  await mutexLock.runExclusive(async () => {
+    return  mutexLock.runExclusive(async () => {
         if (!redisClientPublisher) {
             redisClientPublisher = await redisConnections.createNew()
         }
