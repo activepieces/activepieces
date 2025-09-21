@@ -1,5 +1,6 @@
 import {
     apId,
+    DATA_TYPE_KEY_IN_FILE_METADATA,
     FileCompression,
     FileType,
     FlowAction,
@@ -10,6 +11,7 @@ import {
     FlowVersionId,
     isNil,
     ProjectId,
+    SampleDataDataType,
     SampleDataFileType,
     SaveSampleDataResponse,
     Step,
@@ -18,9 +20,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
-
 export const sampleDataService = (log: FastifyBaseLogger) => ({
-    async modifyStep(params: SaveSampleDataParams): Promise<Step> {
+    async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<Step> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(params.flowVersionId)
         const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion.trigger)
         const sampleDataFile = await saveSampleData(params, log)
@@ -55,10 +56,10 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             if (isNil(response)) {
                 return undefined
             }
+            if (response.metadata?.[DATA_TYPE_KEY_IN_FILE_METADATA] === SampleDataDataType.STRING) {
+                return response.data.toString('utf-8')
+            }
             return JSON.parse(response.data.toString('utf-8'))
-        }
-        if (fileType === FileType.SAMPLE_DATA_INPUT) {
-            return undefined
         }
         return undefined
 
@@ -98,6 +99,7 @@ export async function saveSampleData({
     stepName,
     payload,
     type,
+    dataType,
 }: SaveSampleDataParams, log: FastifyBaseLogger): Promise<SaveSampleDataResponse> {
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
     const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
@@ -115,6 +117,7 @@ export async function saveSampleData({
             flowId: flowVersion.flowId,
             flowVersionId,
             stepName,
+            [DATA_TYPE_KEY_IN_FILE_METADATA]: dataType,
         },
     })
 }
@@ -164,4 +167,5 @@ type SaveSampleDataParams = {
     stepName: string
     payload: unknown
     type: SampleDataFileType
+    dataType: SampleDataDataType
 }

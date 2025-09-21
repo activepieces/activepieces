@@ -1,5 +1,4 @@
 {
-  "Airtable": "Airtable",
   "Low‒code platform to build apps.": "Plataforma de bajo código para construir aplicaciones.",
   "\n    To obtain your personal token, follow these steps:\n\n    1. Log in to your Airtable account.\n    2. Visit https://airtable.com/create/tokens/ to create one\n    3. Click on \"+ Add a base\" and select the base you want to use or all bases.\n    4. Click on \"+ Add a scope\" and select \"data.records.read\", \"data.records.write\" and \"schema.bases.read\".\n    5. Click on \"Create token\" and copy the token.\n    ": "\n    Para obtener tu token personal, sigue estos pasos:\n\n    1. Inicie sesión en su cuenta Airtable.\n    2. Visita https://airtable.com/create/tokens/ para crear una\n    3. Haga clic en \"+ Añadir una base\" y seleccione la base que desea utilizar o todas las bases.\n    4. Haga clic en \"+ Añadir un ámbito de aplicación\" y seleccione \"datos. ecords.read\", \"data.records.write\" y \"schema.bases.read\".\n    5. Haga clic en \"Crear token\" y copie el token.\n    ",
   "Create Airtable Record": "Crear registro Airtable",

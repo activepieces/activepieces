@@ -1,5 +1,4 @@
 {
-  "Missive": "Misivo",
   "\n    To get your API token:\n    \n    1. Go to your Missive preferences\n    2. Click the API tab  \n    3. Click \"Create a new token\"\n    4. Copy the generated token (starts with 'missive_pat-')\n    \n    Note: You need to be part of an organization subscribed to the Productive plan to generate API tokens.\n    ": "\n    To get your API token:\n    \n    1. Go to your Missive preferences\n    2. Click the API tab  \n    3. Click \"Create a new token\"\n    4. Copy the generated token (starts with 'missive_pat-')\n    \n    Note: You need to be part of an organization subscribed to the Productive plan to generate API tokens.\n    ",
   "Create Contact": "Crear contacto",
   "Update Contact": "Actualizar contacto",

@@ -1,5 +1,4 @@
 {
-  "Fireflies.ai": "Fireflies.ai",
   "Meeting assistant that automatically records, transcribes, and analyzes conversations": "Meeting-Assistent, der Gespräche automatisch aufzeichnet, transkribiert und analysiert",
   "\nTo use Fireflies.ai, you need to get an API key:\n1. Login to your account at https://fireflies.ai.\n2. Navigate to Settings > Developer Settings in the left sidebar.\n3. Copy the API key from the API Key section.\n": "\nUm Fireflies.ai nutzen zu können, musst du einen API-Schlüssel erhalten:\n1. Logge dich bei deinem Konto unter https://fireflies.ai ein.\n2. Navigieren Sie zu Einstellungen > Entwicklereinstellungen in der linken Seitenleiste.\n3. Kopieren Sie den API-Schlüssel aus dem Abschnitt API-Schlüssel.\n",
   "Find Meeting by ID": "Besprechung über ID finden",

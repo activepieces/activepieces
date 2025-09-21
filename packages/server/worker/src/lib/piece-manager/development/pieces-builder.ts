@@ -1,13 +1,14 @@
 import { spawn } from 'child_process'
 import fs from 'fs/promises'
-import { Server } from 'http'
 import { resolve } from 'path'
-import { ApLock, CacheState, filePiecesUtils, GLOBAL_CACHE_COMMON_PATH, memoryLock, PiecesSource } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock, PiecesSource } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { Server } from 'socket.io'
 import { cacheState } from '../../cache/cache-state'
+import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../cache/worker-cache'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -45,13 +46,6 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const startTime = Date.now()
         await runCommandWithLiveOutput(cmd)
-        log.info(
-            chalk.blueBright.bold(
-                '👀 Generating translation file. Waiting... 👀 ' + pieceProjectName,
-            ),
-        )
-        // TODO disable until we have a way to build with shared version bumped
-        //  await runCommandWithLiveOutput(postBuildCommand)
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000

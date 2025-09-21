@@ -1,9 +1,9 @@
 {
-  "Saleor": "Vendedor",
   "Saleor API URL": "Saleor API URL",
   "Saleor token": "Token de venta",
   "Your Saleor GraphQL API endpoint": "Su terminal API de Saleor GraphQL",
   "Your token": "Tu token",
+  "Saleor": "Vendedor",
   "Raw GraphQL query": "Consulta GraphQL Raw",
   "Get an order": "Obtener un pedido",
   "Add Order Note": "Añadir nota de pedido",

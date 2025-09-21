@@ -1,5 +1,4 @@
 {
-  "Mollie": "Mollie",
   "Automate Mollie payments, orders, refunds, customers, and invoices. Triggers on payment events and statuses.": "Automatiseren Mollie betalingen, bestellingen, terugbetalingen, klanten en facturen. Activeert betalingsgebeurtenissen en statussen.",
   "Enter your Mollie API key (starts with live_ or test_)": "Voer uw Mollie API-sleutel in (begint met live_ of test_)",
   "Create Order": "Bestelling aanmaken",

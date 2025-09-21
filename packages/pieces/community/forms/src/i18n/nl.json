@@ -1,5 +1,4 @@
 {
-  "Human Input": "Menselijke Invoer",
   "Trigger a flow through human input.": "Trigger een stroom door menselijke input.",
   "Respond on UI": "Reageer op UI",
   "Return a file or text (markdown) as a response.": "Geeft als reactie een bestand of tekst (markdown) als antwoord.",

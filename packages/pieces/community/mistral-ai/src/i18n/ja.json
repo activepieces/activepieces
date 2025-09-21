@@ -1,5 +1,4 @@
 {
-  "Mistral AI": "Mistral AI",
   "Mistral AI provides state-of-the-art open-weight and hosted language models for text generation, embeddings, and reasoning tasks.": "ミストラルAIは、テキスト生成、埋め込み、推論タスクのための最先端のオープンウェイトおよびホスト言語モデルを提供します。",
   "You can obtain your API key from the Mistral AI dashboard. Go to https://console.mistral.ai, generate an API key, and paste it here.": "Mistral AIダッシュボードからAPIキーを取得することができます。https://console.mistral.aiに移動し、APIキーを生成し、ここに貼り付けてください。",
   "Ask Mistral": "ミストラルに聞く",

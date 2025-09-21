@@ -134,10 +134,10 @@ export async function searchIssuesByJql({
 	maxResults: number;
 	sanitizeJql: boolean;
 }) {
-	return (
+	const respJql = (
 		(await executeJql({
 			auth,
-			url: 'search',
+			url: 'search/jql',
 			method: HttpMethod.POST,
 			jql,
 			body: {
@@ -146,6 +146,22 @@ export async function searchIssuesByJql({
 			sanitizeJql,
 		})) as { issues: any[] }
 	).issues;
+
+	const issueIds = respJql.map(issue => issue['id']);
+	if (issueIds.length === 0) {
+		return [];
+	}
+
+	return (
+    (await sendJiraRequest({
+      auth,
+      url: 'issue/bulkfetch',
+      method: HttpMethod.POST,
+      body: {
+        issueIdsOrKeys: issueIds,
+      },
+    })).body as any as { issues: any[] }
+  ).issues;
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {

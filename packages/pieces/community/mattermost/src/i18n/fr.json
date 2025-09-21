@@ -1,5 +1,4 @@
 {
-  "Mattermost": "Le plus important",
   "Open-source, self-hosted Slack alternative": "Source ouverte, alternative Slack auto-hébergée",
   "Workspace URL": "URL de l'espace de travail",
   "Bot Token": "Bot Token",
@@ -28,5 +27,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "HEAD"
 }

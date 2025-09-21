@@ -1,5 +1,4 @@
 {
-  "Mixpanel": "Mixpanel",
   "Simple and powerful product analytics that helps everyone make better decisions": "Análise de produto simples e poderosa que ajuda todos a tomarem melhores decisões",
   "\n      The Mixpanel token associated with your project. You can find your Mixpanel token in the project settings dialog in the Mixpanel app.\n    ": "\n      O token do Mixpanel associado ao seu projeto. Você pode encontrar seu token do Mixpanel na caixa de diálogo de configurações do projeto no aplicativo do Mixpainel.\n    ",
   "Track Event": "Rastrear evento",
