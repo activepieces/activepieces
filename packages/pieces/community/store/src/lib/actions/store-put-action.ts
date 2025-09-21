@@ -6,6 +6,24 @@ import { common, getScopeAndKey } from './common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
+async function executeStoragePut(context: any, isTestMode: boolean = false) {
+  await propsValidation.validateZod(context.propsValue, {
+    key: z.string().max(128),
+  });
+
+  const { key, scope } = getScopeAndKey({
+    runId: context.run.id,
+    key: context.propsValue['key'],
+    scope: context.propsValue.store_scope,
+    isTestMode,
+  });
+  return await context.store.put(
+    key,
+    context.propsValue['value'],
+   scope
+  );
+}
+
 export const storagePutAction = createAction({
   name: 'put',
   displayName: 'Put',
@@ -30,20 +48,9 @@ export const storagePutAction = createAction({
     store_scope: common.store_scope,
   },
   async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      key: z.string().max(128),
-    });
-
-    const { key, scope } = getScopeAndKey({
-      runId: context.run.id,
-      key: context.propsValue['key'],
-      scope: context.propsValue.store_scope,
-      isTestMode: context.executionType === 'BEGIN' && context.run.id.startsWith('test-'),
-    });
-    return await context.store.put(
-      key,
-      context.propsValue['value'],
-     scope
-    );
+    return await executeStoragePut(context, false);
+  },
+  async test(context) {
+    return await executeStoragePut(context, true);
   },
 });
