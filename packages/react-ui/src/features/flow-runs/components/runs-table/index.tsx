@@ -41,9 +41,9 @@ type SelectedRow = {
   id: string;
   status: FlowRunStatus;
 };
-
+const RUN_IDS_QUERY_PARAM = 'runIds';
 export const RunsTable = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams,setSearchParams] = useSearchParams();
   const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
   const [selectedAll, setSelectedAll] = useState(false);
   const [excludedRows, setExcludedRows] = useState<Set<string>>(new Set());
@@ -58,10 +58,12 @@ export const RunsTable = () => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const runIds = searchParams.getAll(RUN_IDS_QUERY_PARAM);
       const failedStepName = searchParams.get('failedStepName') || undefined;
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
+
       const createdAfter = searchParams.get('createdAfter');
       const createdBefore = searchParams.get('createdBefore');
 
@@ -74,7 +76,17 @@ export const RunsTable = () => {
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
         failedStepName: failedStepName,
+        runIds,
       });
+    },
+    refetchInterval: (query) => {
+      const allRuns = query.state.data?.data;
+      const runningRuns = allRuns?.filter(
+        (run) =>
+          run.status === FlowRunStatus.RUNNING ||
+          run.status === FlowRunStatus.QUEUED,
+      );
+      return runningRuns?.length ? 15 * 1000 : false;
     },
   });
 
@@ -157,12 +169,15 @@ export const RunsTable = () => {
         failedStepName,
       });
     },
-    onSuccess: () => {
+    onSuccess: (runs) => {
       toast({
         title: t('Runs retried successfully'),
         variant: 'default',
       });
       navigate(window.location.pathname);
+      setSearchParams({
+        [RUN_IDS_QUERY_PARAM]: runs.map((run) => run.id),
+      }, { replace: true });
     },
   });
 

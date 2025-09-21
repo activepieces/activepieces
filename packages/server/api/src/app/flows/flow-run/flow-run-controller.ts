@@ -36,6 +36,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
+            runIds: request.query.runIds,
         })
     })
 

@@ -55,7 +55,7 @@ const RunsList = React.memo(() => {
         cursor: pageParam as string | undefined,
       }),
     refetchOnMount: true,
-    staleTime: 15 * 1000,
+    staleTime: 0,
     refetchInterval: (query) => {
       const allRuns = query.state.data?.pages.flatMap((page) => page.data);
       const runningRuns = allRuns?.filter(
