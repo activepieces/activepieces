@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { whatConvertsAuth } from '../common/auth';
 import { whatConvertsClient } from '../common/client';
+import { profileDropdown } from '../common/props'; 
 
 export const createLead = createAction({
   auth: whatConvertsAuth,
@@ -8,11 +9,7 @@ export const createLead = createAction({
   displayName: 'Create Lead',
   description: 'Create a new lead in WhatConverts.',
   props: {
-    profile_id: Property.Number({
-      displayName: 'Profile ID',
-      description: 'The ID of the profile to add the lead to. Not required if using a Profile API Key.',
-      required: false,
-    }),
+    profile_id: profileDropdown(),
     lead_type: Property.StaticDropdown({
       displayName: 'Lead Type',
       description: 'The type of lead to create.',
