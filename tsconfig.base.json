@@ -1141,6 +1141,9 @@
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
       ],
+      "@activepieces/piece-whatconverts": [
+        "packages/pieces/community/whatconverts/src/index.ts"
+      ],
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
       ],
