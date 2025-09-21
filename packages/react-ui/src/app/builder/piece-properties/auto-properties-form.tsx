@@ -29,6 +29,7 @@ import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property'
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
 import { AutoDynamicFields } from './auto-dynamic-fields';
+import { Separator } from '@/components/ui/separator';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -200,13 +201,16 @@ const selectFormComponentForProperty = ({
             placeholder={property.options.placeholder ?? t('Select an option')}
             showDeselect={!property.required}
             rightContent={
-              <AutoDynamicFields
-                allowDynamicValues={allowDynamicValues}
-                propertyName={propertyName}
-                inputName={inputName}
-                property={property}
-                disabled={disabled}
-              />
+              <div className="flex items-center gap-3"> 
+                <Separator orientation="vertical" className='h-6'/>
+                <AutoDynamicFields
+                  allowDynamicValues={allowDynamicValues}
+                  propertyName={propertyName}
+                  inputName={inputName}
+                  property={property}
+                  disabled={disabled}
+                />
+            </div>
             }
           ></SearchableSelect>
         </AutoFormFieldWrapper>

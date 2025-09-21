@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Sparkles, X, FormInput, Wand2 } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { propertyUtils } from './property-utils';
 import { PropertyExecutionType } from '@activepieces/shared';
@@ -20,6 +19,7 @@ type AutoFieldsAccordionProps = {
 
 const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFieldsAccordionProps) => {
   const form = useFormContext();
+  const [isOpen, setIsOpen] = useState(false);
   
   const autoFields = Object.entries(props).filter(([propertyName]) => {
     const property = props[propertyName];
@@ -31,7 +31,7 @@ const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFi
     Object.entries(props).forEach(([propertyName]) => {
       propertyUtils.handleDynamicValueToggleChange(
         form,
-        autoPropertiesUtils.determinePropertyExecutionType(props[propertyName]),
+        autoPropertiesUtils.determinePropertyExecutionType(propertyName, props[propertyName], props),
         propertyName,
         `${prefixValue}.${propertyName}`
       );
@@ -57,39 +57,47 @@ const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFi
         borderRadius: '8px',
         padding: '1px',
       }}>
-        <Accordion type="single" collapsible style={{
-          background: 'linear-gradient(180deg, #FFFFFF 58.17%, #F5F2FA 100%)',
-          borderRadius: '7px',
-          border: 'none',
-        }}>
+        <Accordion 
+          type="single" 
+          collapsible 
+          value={isOpen ? "auto" : ""}
+          onValueChange={(value) => setIsOpen(value === "auto")}
+          style={{
+            background: 'linear-gradient(180deg, #FFFFFF 58.17%, #F5F2FA 100%)',
+            borderRadius: '7px',
+            border: 'none',
+          }}
+        >
           <AccordionItem value="auto" className="border-none">
             <AccordionTrigger>
               <div className="flex items-center gap-3 w-full">
                <Sparkles className="size-4 text-purple-700" />
                 <div className="flex flex-col gap-1">
                   <span className="text-purple-700">{t('Auto filled by AI')}</span>
-                  {autoFields.length > 0 ? (
-                  (() => {
-                    const firstFourFields = autoFields.slice(0, 4);
-                    const remainingCount = autoFields.length - 4;
-                    const fullFieldNames = firstFourFields.map(([propertyName]) => t(propertyName)).join(', ');
-                    const maxLength = remainingCount > 0 ? 30 : 45;
-                    const fieldNames = fullFieldNames.length > maxLength 
-                      ? fullFieldNames.slice(0, maxLength - 3) + '...'
-                      : fullFieldNames;
-                    
-                    return (
-                      <div className="text-[10px] text-purple-900">
-                        {fieldNames}
-                        {remainingCount > 0 && ` + ${remainingCount} more`}
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <div className="text-xs text-muted-foreground">
-                    {t('No fields are filled with AI')}
-                  </div>
-                )}
+                  {!isOpen && (
+                    autoFields.length > 0 ? (
+                    (() => {
+                      const firstFourFields = autoFields.slice(0, 4);
+                      const remainingCount = autoFields.length - 4;
+                      const fullFieldNames = firstFourFields.map(([propertyName]) => t(propertyName)).join(', ');
+                      const maxLength = remainingCount > 0 ? 30 : 45;
+                      const fieldNames = fullFieldNames.length > maxLength 
+                        ? fullFieldNames.slice(0, maxLength - 3) + '...'
+                        : fullFieldNames;
+                      
+                      return (
+                        <div className="text-[10px] text-purple-900">
+                          {fieldNames}
+                          {remainingCount > 0 && ` + ${remainingCount} more`}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      {t('No fields are filled with AI')}
+                    </div>
+                  )
+                  )}
                 </div>
 
               </div>
@@ -102,15 +110,15 @@ const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFi
                     handleClearAll();
                   }}
                   disabled={disabled}
-                  className="h-6 px-2 text-xs mr-1"
+                  className="h-6 px-2 text-xs mr-1 text-slate-500"
                 >
                   {t('Clear all')}
                 </Button>
               )}
             </AccordionTrigger>
-            <AccordionContent>
+            <AccordionContent className="pt-4">
               {autoFields.length > 0 ? (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-6">
                   {autoFields.map(([propertyName]) => {
                     return (
                       <Tooltip>

@@ -1,9 +1,7 @@
 import { t } from 'i18next';
 import {
   Calendar,
-  SquareFunction,
   File,
-  Sparkles,
 } from 'lucide-react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
@@ -14,18 +12,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import {
   PropertyExecutionType,
-  ApFlagId,
 } from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
-import { Toggle } from '@/components/ui/toggle';
-import { cn } from '@/lib/utils';
-import { propertyUtils } from './property-utils';
 import { AutoDynamicFields } from './auto-dynamic-fields';
 
 
@@ -41,6 +34,10 @@ type AutoFormFieldWrapperProps = {
   inputName: string;
 };
 
+const hideAutoDynamicFields = (property: PieceProperty) => {
+  return property.type === PropertyType.DYNAMIC || property.type === PropertyType.STATIC_DROPDOWN || property.type === PropertyType.MULTI_SELECT_DROPDOWN || property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN;
+}
+
 const AutoFormFieldWrapper = ({
   placeBeforeLabelText = false,
   children,
@@ -53,14 +50,12 @@ const AutoFormFieldWrapper = ({
   field,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext();
-  const { data: flags } = flagsHooks.useFlags();
   const inputMode =
     form.getValues().settings?.propertySettings?.[propertyName]?.type;
-  const isManuallyMode = inputMode === PropertyExecutionType.MANUAL;
+  const isManuallyMode = inputMode === PropertyExecutionType.MANUAL || inputMode === undefined;
   const isDynamicMode = inputMode === PropertyExecutionType.DYNAMIC;
   const isAutoMode = inputMode === PropertyExecutionType.AUTO;
   const isAuthProperty = property.type === PropertyType.OAUTH2 || property.type === PropertyType.CUSTOM_AUTH || property.type === PropertyType.BASIC_AUTH;
-  const edition = flags?.[ApFlagId.EDITION];
 
   const isArrayProperty = property.type === PropertyType.ARRAY;
 
@@ -98,7 +93,7 @@ const AutoFormFieldWrapper = ({
         )}
         <div className="flex items-center gap-3">
           {placeBeforeLabelText && isManuallyMode && children}
-          {property.type !== PropertyType.DROPDOWN && (
+          {!hideAutoDynamicFields(property) && (
             <AutoDynamicFields
               allowDynamicValues={allowDynamicValues}
               propertyName={propertyName}

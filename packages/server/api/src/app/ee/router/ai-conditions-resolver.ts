@@ -11,8 +11,6 @@ type ConditionsResult = z.infer<typeof conditionsSchema>
 export const aiConditionsResolver = {
     async resolve(params: ResolveAIConditionParams): Promise<boolean[]> {
         const { previousStepsResults, prompts, aiModel } = params
-        console.log('HAHAHAHAHAH previousStepsResults', JSON.stringify(previousStepsResults))
-        console.log('HAHAHAHAHAH prompts', JSON.stringify(prompts))
         
         const { object: result } = await generateObject({
             model: aiModel,
@@ -35,7 +33,6 @@ export const aiConditionsResolver = {
             - Each boolean should represent whether that specific condition is true or false
             `,
         })
-        console.log('HAHAHAHAHAH result', result)
         return (result as ConditionsResult).conditions
     },
 }

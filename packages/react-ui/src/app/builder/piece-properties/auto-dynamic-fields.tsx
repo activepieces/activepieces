@@ -13,12 +13,14 @@ import {
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import {
   PropertyExecutionType,
+  ApFlagId,
+  ApEdition,
 } from '@activepieces/shared';
 
 import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
 import { propertyUtils } from './property-utils';
-import { Separator } from '@/components/ui/separator';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 
 type AutoDynamicFieldsProps = {
@@ -37,11 +39,13 @@ const AutoDynamicFields = ({
   disabled,
 }: AutoDynamicFieldsProps) => {
   const form = useFormContext();
+  const { data: flags } = flagsHooks.useFlags();
   const inputMode =
     form.getValues().settings?.propertySettings?.[propertyName]?.type;
   const isDynamicMode = inputMode === PropertyExecutionType.DYNAMIC;
   const isAutoMode = inputMode === PropertyExecutionType.AUTO;
   const isAuthProperty = property.type === PropertyType.OAUTH2 || property.type === PropertyType.CUSTOM_AUTH || property.type === PropertyType.BASIC_AUTH;
+  const edition = flags?.[ApFlagId.EDITION];
 
   if (isAuthProperty) {
     return null;
@@ -81,38 +85,40 @@ const AutoDynamicFields = ({
                 </TooltipContent>
             </Tooltip>
         )}
-        <Tooltip>
-            <TooltipTrigger asChild>
-            <Toggle
-                pressed={isAutoMode}
-                onPressedChange={(e) => {
-                const newMode = e
-                    ? PropertyExecutionType.AUTO
-                    : isDynamicMode
-                    ? PropertyExecutionType.DYNAMIC
-                    : PropertyExecutionType.MANUAL;
-                propertyUtils.handleDynamicValueToggleChange(
-                    form,
-                    newMode,
-                    propertyName,
-                    inputName,
-                );
-                }}
-                disabled={disabled}
-                className='p-0 hover:bg-transparent'
-            >
-                <Sparkles
-                className={cn('size-4 hover:text-black transition-colors', {
-                    'text-primary': isAutoMode,
-                    'text-muted-foreground': !isAutoMode,
-                })}
-                />
-            </Toggle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-background">
-            {t('Auto filled by AI')}
-            </TooltipContent>
-        </Tooltip>
+        {edition !== ApEdition.COMMUNITY && (
+          <Tooltip>
+              <TooltipTrigger asChild>
+              <Toggle
+                  pressed={isAutoMode}
+                  onPressedChange={(e) => {
+                  const newMode = e
+                      ? PropertyExecutionType.AUTO
+                      : isDynamicMode
+                      ? PropertyExecutionType.DYNAMIC
+                      : PropertyExecutionType.MANUAL;
+                  propertyUtils.handleDynamicValueToggleChange(
+                      form,
+                      newMode,
+                      propertyName,
+                      inputName,
+                  );
+                  }}
+                  disabled={disabled}
+                  className='p-0 hover:bg-transparent'
+              >
+                  <Sparkles
+                  className={cn('size-4 hover:text-black transition-colors', {
+                      'text-primary': isAutoMode,
+                      'text-muted-foreground': !isAutoMode,
+                  })}
+                  />
+              </Toggle>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-background">
+              {t('Auto filled by AI')}
+              </TooltipContent>
+          </Tooltip>
+        )}
         </div>
     );
 };

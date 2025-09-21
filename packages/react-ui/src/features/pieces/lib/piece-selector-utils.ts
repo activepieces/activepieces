@@ -241,7 +241,7 @@ const getDefaultStepValues = ({
       const getDefaultPropertySettings = (props: PiecePropertyMap) => {
         return Object.fromEntries(
           Object.entries(props).map(([key, property]) => {
-            const executionType = autoPropertiesUtils.determinePropertyExecutionType(property);
+            const executionType = autoPropertiesUtils.determinePropertyExecutionType(key, property, props);
             return [
               key,
               {
@@ -278,8 +278,7 @@ const getDefaultStepValues = ({
       const getDefaultPropertySettings = (props: PiecePropertyMap) => {
         return Object.fromEntries(
           Object.entries(props).map(([key, property]) => {
-            const executionType = autoPropertiesUtils.determinePropertyExecutionType(property);
-            
+            const executionType = autoPropertiesUtils.determinePropertyExecutionType(key, property, props);
             return [
               key,
               {
