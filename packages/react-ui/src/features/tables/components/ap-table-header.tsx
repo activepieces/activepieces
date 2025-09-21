@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -47,6 +49,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
     state.renameTable,
     state.deleteRecords,
   ]);
+  const { embedState } = useEmbedding();
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
   const userHasTableWritePermission = useAuthorization().checkAccess(
@@ -63,15 +66,19 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   return (
     <>
       <div className="flex items-center gap-1 justify-between p-4 w-full">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="basic"
-            size={'icon'}
-            className="text-foreground"
-            onClick={onBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center gap-2">
+          {!embedState.isEmbedded && <ApSidebarToggle />}
+          {embedState.isEmbedded && (
+            <Button
+              variant="basic"
+              size={'icon'}
+              className="text-foreground"
+              onClick={onBack}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+
           <div className="flex items-center gap-1">
             <EditableText
               className="text-lg font-semibold hover:cursor-text"

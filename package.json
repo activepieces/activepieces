@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.68.3",
-  "rcVersion": "0.68.4-rc.0",
+  "version": "0.69.0",
+  "rcVersion": "0.69.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -434,7 +434,7 @@
     "ts-node": "10.9.1",
     "typescript": "5.5.4",
     "verdaccio": "6.1.6",
-    "vite": "6.3.5",
+    "vite": "6.3.6",
     "vite-plugin-checker": "0.7.2",
     "vite-plugin-html": "3.2.2",
     "vitest": "3.0.8",

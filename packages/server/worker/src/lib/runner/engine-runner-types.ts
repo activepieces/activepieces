@@ -79,7 +79,10 @@ export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
         if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXECUTION_TIMEOUT,
-                params: {},
+                params: {
+                    standardOutput: sandboxResponse.standardOutput,
+                    standardError: sandboxResponse.standardError,
+                },
             })
         }
         if (sandboxResponse.verdict === EngineResponseStatus.MEMORY_ISSUE) {
