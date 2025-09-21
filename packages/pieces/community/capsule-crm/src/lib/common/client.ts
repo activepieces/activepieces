@@ -20,7 +20,6 @@ import {
   User,
   CreateNoteParams,
   Note,
-  FindContactParams,
   FindProjectParams,
   FindOpportunityParams,
   Webhook, 
@@ -63,16 +62,25 @@ export const capsuleCrmClient = {
   },
 
   async searchContacts(auth: string, searchTerm: string): Promise<Party[]> {
+    const isSearch = searchTerm && searchTerm.length > 0;
+    const url = isSearch
+      ? `https://api.capsulecrm.com/api/v2/parties/search`
+      : `https://api.capsulecrm.com/api/v2/parties`;
+
+    const queryParams: Record<string, string> = {};
+
+    if (isSearch) {
+      queryParams['q'] = searchTerm;
+    }
+
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `https://api.capsulecrm.com/api/v2/parties/search`,
+      url: url,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth,
       },
-      queryParams: {
-        q: searchTerm,
-      },
+      queryParams: queryParams,
     };
     const response = await httpClient.sendRequest<{ parties: Party[] }>(
       request
@@ -112,7 +120,7 @@ export const capsuleCrmClient = {
   async listMilestones(auth: string): Promise<Milestone[]> {
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `https://api.capsulecrm.com/api/v2/opportunities/milestones`,
+      url: `https://api.capsulecrm.com/api/v2/milestones`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth,
@@ -211,6 +219,28 @@ export const capsuleCrmClient = {
     return response.body;
   },
 
+  async getOpportunity(
+    auth: string,
+    opportunityId: number
+  ): Promise<Opportunity | null> {
+    try {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `https://api.capsulecrm.com/api/v2/opportunities/${opportunityId}`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth,
+        },
+      };
+      const response = await httpClient.sendRequest<{
+        opportunity: Opportunity;
+      }>(request);
+      return response.body.opportunity;
+    } catch (e) {
+      return null;
+    }
+  },
+
   async createProject(
     auth: string,
     params: CreateProjectParams
@@ -219,26 +249,23 @@ export const capsuleCrmClient = {
       party: { id: params.partyId },
       name: params.name,
     };
-
     if (params.description) {
       projectData['description'] = params.description;
     }
     if (params.opportunityId) {
       projectData['opportunity'] = { id: params.opportunityId };
     }
-
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: 'https://api.capsulecrm.com/api/v2/projects',
+      url: 'https://api.capsulecrm.com/api/v2/kases',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth,
       },
       body: {
-        project: projectData,
+        kase: projectData,
       },
     };
-
     const response = await httpClient.sendRequest<Project>(request);
     return response.body;
   },
@@ -246,16 +273,16 @@ export const capsuleCrmClient = {
   async listProjects(auth: string): Promise<Project[]> {
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `https://api.capsulecrm.com/api/v2/projects`,
+      url: `https://api.capsulecrm.com/api/v2/kases`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth,
       },
     };
-    const response = await httpClient.sendRequest<{ projects: Project[] }>(
+    const response = await httpClient.sendRequest<{ kases: Project[] }>(
       request
     );
-    return response.body.projects;
+    return response.body.kases;
   },
 
   async listCases(auth: string): Promise<Case[]> {
@@ -285,28 +312,39 @@ export const capsuleCrmClient = {
   },
 
   async createTask(auth: string, params: CreateTaskParams): Promise<Task> {
-    const entryData: { [key: string]: unknown } = {
-      type: 'Task',
+    const taskData: { [key: string]: unknown } = {
       description: params.description,
     };
 
-    if (params.partyId) entryData['party'] = { id: params.partyId };
-    if (params.opportunityId)
-      entryData['opportunity'] = { id: params.opportunityId };
-    if (params.caseId) entryData['case'] = { id: params.caseId };
-    if (params.projectId) entryData['project'] = { id: params.projectId };
-    if (params.ownerId) entryData['owner'] = { id: params.ownerId };
-    if (params.dueOn) entryData['dueOn'] = params.dueOn;
+    if (params.partyId) {
+      taskData['party'] = { id: params.partyId };
+    }
+    if (params.opportunityId) {
+      taskData['opportunity'] = { id: params.opportunityId };
+    }
+    if (params.projectId) {
+      taskData['kase'] = { id: params.projectId };
+    }
+    if (params.caseId) {
+      taskData['kase'] = { id: params.caseId };
+    }
+
+    if (params.ownerId) {
+      taskData['owner'] = { id: params.ownerId };
+    }
+    if (params.dueOn) {
+      taskData['dueOn'] = params.dueOn;
+    }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: 'https://api.capsulecrm.com/api/v2/entries',
+      url: 'https://api.capsulecrm.com/api/v2/tasks',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth,
       },
       body: {
-        entry: entryData,
+        task: taskData,
       },
     };
 
@@ -342,28 +380,21 @@ export const capsuleCrmClient = {
     return response.body;
   },
 
-  async findContact(auth: string, params: FindContactParams): Promise<Party[]> {
-    const queryParams: Record<string, string> = {};
-
-    if (params.email) {
-      queryParams['email'] = params.email;
-    } else if (params.searchTerm) {
-      queryParams['q'] = params.searchTerm;
+  async getContact(auth: string, contactId: number): Promise<Party | null> {
+    try {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `https://api.capsulecrm.com/api/v2/parties/${contactId}`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth,
+        },
+      };
+      const response = await httpClient.sendRequest<{ party: Party }>(request);
+      return response.body.party;
+    } catch (e) {
+      return null;
     }
-
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `https://api.capsulecrm.com/api/v2/parties/search`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth,
-      },
-      queryParams: queryParams,
-    };
-    const response = await httpClient.sendRequest<{ parties: Party[] }>(
-      request
-    );
-    return response.body.parties;
   },
 
   async findProject(
@@ -385,6 +416,23 @@ export const capsuleCrmClient = {
       request
     );
     return response.body.kases;
+  },
+
+  async getProject(auth: string, projectId: number): Promise<Project | null> {
+    try {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `https://api.capsulecrm.com/api/v2/kases/${projectId}`,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth,
+        },
+      };
+      const response = await httpClient.sendRequest<{ kase: Project }>(request);
+      return response.body.kase;
+    } catch (e) {
+      return null;
+    }
   },
 
   async findOpportunity(

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { CreatePartyParams } from '../common/types';
 
 export const createContactAction = createAction({
   auth: capsuleCrmAuth,
@@ -22,18 +23,19 @@ export const createContactAction = createAction({
     firstName: Property.ShortText({
       displayName: 'First Name',
       description:
-        'The first name of the person. Required if type is "Person".',
+        'The first name of the person. Only used if type is "Person".',
       required: false,
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
-      description: 'The last name of the person. Required if type is "Person".',
+      description:
+        'The last name of the person. Only used if type is "Person".',
       required: false,
     }),
     organisationName: Property.ShortText({
       displayName: 'Organisation Name',
       description:
-        'The name of the organisation. Required if type is "Organisation".',
+        'The name of the organisation. Only used if type is "Organisation".',
       required: false,
     }),
     email: Property.ShortText({
@@ -50,23 +52,29 @@ export const createContactAction = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    if (propsValue.type === 'person') {
+    const type = propsValue.type as 'person' | 'organisation';
+    const contactData: Partial<CreatePartyParams> = {
+      type: type,
+      email: propsValue.email,
+      phone: propsValue.phone,
+    };
+
+    if (type === 'person') {
       if (!propsValue.firstName || !propsValue.lastName) {
         throw new Error('First Name and Last Name are required for a Person.');
       }
-    } else {
+      contactData.firstName = propsValue.firstName;
+      contactData.lastName = propsValue.lastName;
+    } else if (type === 'organisation') {
       if (!propsValue.organisationName) {
         throw new Error('Organisation Name is required for an Organisation.');
       }
+      contactData.name = propsValue.organisationName;
     }
 
-    return await capsuleCrmClient.createContact(auth, {
-      type: propsValue.type as 'person' | 'organisation',
-      firstName: propsValue.firstName,
-      lastName: propsValue.lastName,
-      name: propsValue.organisationName,
-      email: propsValue.email,
-      phone: propsValue.phone,
-    });
+    return await capsuleCrmClient.createContact(
+      auth,
+      contactData as CreatePartyParams
+    );
   },
 });

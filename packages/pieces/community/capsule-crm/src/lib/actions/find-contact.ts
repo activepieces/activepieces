@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
+import { capsuleCrmProps } from '../common/props';
 
 export const findContactAction = createAction({
   auth: capsuleCrmAuth,
@@ -8,31 +9,31 @@ export const findContactAction = createAction({
   displayName: 'Find Contact',
   description: 'Find a person or organisation by email or search term.',
   props: {
-    email: Property.ShortText({
-      displayName: 'Email',
-      description: 'The email address of the person to find.',
-      required: false,
-    }),
+    contact_id: capsuleCrmProps.contact_id(false),
     search_term: Property.ShortText({
-      displayName: 'Search Term',
+      displayName: 'Email or Search Term',
       description:
-        'A generic search term to find a contact by name, phone, etc. (Used if Email is not provided).',
+        'The email address or a generic term (like a name) to search for. (Used if Contact ID is not selected).',
       required: false,
     }),
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const { email, search_term } = propsValue;
+    const { contact_id, search_term } = propsValue;
 
-    if (!email && !search_term) {
-      throw new Error('Either Email or Search Term must be provided.');
+    if (contact_id) {
+      const contact = await capsuleCrmClient.getContact(
+        auth,
+        contact_id as number
+      );
+      return contact ? [contact] : [];
     }
 
-    const contacts = await capsuleCrmClient.findContact(auth, {
-      email: email,
-      searchTerm: search_term,
-    });
+    if (search_term) {
+      const contacts = await capsuleCrmClient.searchContacts(auth, search_term);
+      return contacts;
+    }
 
-    return contacts;
+    throw new Error('One of Contact ID or Email/Search Term must be provided.');
   },
 });

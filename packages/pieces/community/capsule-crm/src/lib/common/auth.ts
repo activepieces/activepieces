@@ -20,7 +20,7 @@ export const capsuleCrmAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: 'https://api.capsulecrm.com/api/v2/users/me',
+        url: 'https://api.capsulecrm.com/api/v2/site',
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth,

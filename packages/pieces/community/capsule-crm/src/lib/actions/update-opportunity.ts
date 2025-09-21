@@ -10,7 +10,7 @@ export const updateOpportunityAction = createAction({
   description: 'Update fields on an existing opportunity.',
   props: {
     opportunity_id: capsuleCrmProps.opportunity_id(),
-    milestone_id: capsuleCrmProps.milestone_id(false), 
+    milestone_id: capsuleCrmProps.milestone_id(false),
     name: Property.ShortText({
       displayName: 'Name',
       description: 'Update the name of the opportunity.',
@@ -21,14 +21,27 @@ export const updateOpportunityAction = createAction({
       description: 'Update the details of the opportunity.',
       required: false,
     }),
-    currency: Property.ShortText({
+    currency: Property.StaticDropdown({
       displayName: 'Currency',
-      description: 'Update the currency of the value (e.g., USD, EUR).',
+      description: 'Select the currency for the opportunity value.',
       required: false,
+      options: {
+        options: [
+          { label: 'USD - US Dollar', value: 'USD' },
+          { label: 'EUR - Euro', value: 'EUR' },
+          { label: 'GBP - British Pound', value: 'GBP' },
+          { label: 'JPY - Japanese Yen', value: 'JPY' },
+          { label: 'AUD - Australian Dollar', value: 'AUD' },
+          { label: 'CAD - Canadian Dollar', value: 'CAD' },
+          { label: 'CHF - Swiss Franc', value: 'CHF' },
+          { label: 'CNY - Chinese Yuan', value: 'CNY' },
+          { label: 'INR - Indian Rupee', value: 'INR' },
+        ],
+      },
     }),
     amount: Property.Number({
       displayName: 'Amount',
-      description: 'Update the monetary value of the opportunity.',
+      description: 'The numerical value of the opportunity. (e.g., 450.50)',
       required: false,
     }),
     expectedCloseOn: Property.ShortText({

@@ -28,14 +28,34 @@ export const createTaskAction = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    return await capsuleCrmClient.createTask(auth, {
+    const taskIdParams: {
+      description: string;
+      partyId: number | undefined;
+      opportunityId: number | undefined;
+      projectId: number | undefined;
+      caseId: number | undefined;
+      ownerId: number | undefined;
+      dueOn: string | undefined;
+    } = {
       description: propsValue.description,
-      partyId: propsValue.party_id as number | undefined,
-      opportunityId: propsValue.opportunity_id as number | undefined,
-      projectId: propsValue.project_id as number | undefined,
-      caseId: propsValue.case_id as number | undefined,
+      partyId: undefined,
+      opportunityId: undefined,
+      projectId: undefined,
+      caseId: undefined,
       ownerId: propsValue.owner_id as number | undefined,
       dueOn: propsValue.dueOn,
-    });
+    };
+
+    if (propsValue.party_id) {
+      taskIdParams.partyId = propsValue.party_id as number;
+    } else if (propsValue.opportunity_id) {
+      taskIdParams.opportunityId = propsValue.opportunity_id as number;
+    } else if (propsValue.project_id) {
+      taskIdParams.projectId = propsValue.project_id as number;
+    } else if (propsValue.case_id) {
+      taskIdParams.caseId = propsValue.case_id as number;
+    }
+
+    return await capsuleCrmClient.createTask(auth, taskIdParams);
   },
 });

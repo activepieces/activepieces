@@ -22,21 +22,29 @@ export const addNoteToEntityAction = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-
-    const { party_id, opportunity_id, project_id, case_id } = propsValue;
-
-    if (!party_id && !opportunity_id && !project_id && !case_id) {
+    const relatedEntity: {
+      partyId?: number;
+      opportunityId?: number;
+      projectId?: number;
+      caseId?: number;
+    } = {};
+    if (propsValue.party_id) {
+      relatedEntity.partyId = propsValue.party_id as number;
+    } else if (propsValue.opportunity_id) {
+      relatedEntity.opportunityId = propsValue.opportunity_id as number;
+    } else if (propsValue.project_id) {
+      relatedEntity.projectId = propsValue.project_id as number;
+    } else if (propsValue.case_id) {
+      relatedEntity.caseId = propsValue.case_id as number;
+    }
+    if (Object.keys(relatedEntity).length === 0) {
       throw new Error(
         'At least one entity (Contact, Opportunity, Project, or Case) must be selected to add a note.'
       );
     }
-
     return await capsuleCrmClient.createNote(auth, {
       content: propsValue.content,
-      partyId: party_id as number | undefined,
-      opportunityId: opportunity_id as number | undefined,
-      projectId: project_id as number | undefined,
-      caseId: case_id as number | undefined,
+      ...relatedEntity,
     });
   },
 });
