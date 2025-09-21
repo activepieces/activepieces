@@ -8,11 +8,11 @@ import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, FlowTriggerType } from '@activepieces/shared';
 
-import ViewOnlyWidget from '../view-only-widget';
+import ViewOnlyWidget from '../../../flow-canvas/widgets/view-only-widget';
 
-import { TestButton } from './test-button';
+import { TestButtonWithTooltip } from './test-button-with-tooltip';
 
-const TestFlowWidget = () => {
+const TestFlowButton = () => {
   const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
     useBuilderStateContext((state) => [
       state.setChatDrawerOpenSource,
@@ -43,12 +43,13 @@ const TestFlowWidget = () => {
 
   if (isChatTrigger) {
     return (
-      <TestButton
+      <TestButtonWithTooltip
         onClick={() => {
           setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
         }}
         text={t('Open Chat')}
         loading={isPending}
+        showKeyboardShortcut={false}
       />
     );
   }
@@ -58,17 +59,18 @@ const TestFlowWidget = () => {
   }
 
   return (
-    <TestButton
+    <TestButtonWithTooltip
       onClick={() => {
         runFlow();
       }}
       text={t('Test Flow')}
       disabled={!triggerHasSampleData}
       loading={isPending}
+      showKeyboardShortcut={false}
     />
   );
 };
 
-TestFlowWidget.displayName = 'TestFlowWidget';
+TestFlowButton.displayName = 'TestFlowButton';
 
-export { TestFlowWidget };
+export { TestFlowButton };

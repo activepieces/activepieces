@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { FlowVersionState, Permission } from '@activepieces/shared';
 
-import { useBuilderStateContext, useSwitchToDraft } from '../builder-hooks';
+import { useBuilderStateContext, useSwitchToDraft } from '../../builder-hooks';
 
 const EditFlowOrViewDraftButton = () => {
   const location = useLocation();

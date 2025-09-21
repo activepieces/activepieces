@@ -96,15 +96,9 @@ const AutoFormFieldWrapper = ({
             </TooltipContent>
           </Tooltip>
         )}
-        {placeBeforeLabelText && isManuallyMode && children}
-      </FormLabel>
-
-      {isDynamicMode && !isArrayProperty && (
-        <TextInputWithMentions
-          disabled={disabled}
-          onChange={field.onChange}
-          initialValue={field.value ?? property.defaultValue ?? null}
-          rightContent={
+        <div className="flex items-center gap-3">
+          {placeBeforeLabelText && isManuallyMode && children}
+          {property.type !== PropertyType.DROPDOWN && (
             <AutoDynamicFields
               allowDynamicValues={allowDynamicValues}
               propertyName={propertyName}
@@ -112,7 +106,15 @@ const AutoFormFieldWrapper = ({
               property={property}
               disabled={disabled}
             />
-          }
+          )}
+        </div>
+      </FormLabel>
+
+      {isDynamicMode && !isArrayProperty && (
+        <TextInputWithMentions
+          disabled={disabled}
+          onChange={field.onChange}
+          initialValue={field.value ?? property.defaultValue ?? null}
         />
       )}
 

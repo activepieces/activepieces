@@ -14,6 +14,7 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
 import { AutoDynamicFields } from './auto-dynamic-fields';
+import { Separator } from '@/components/ui/separator';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
@@ -162,13 +163,16 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
         cachedOptions={firstDropdownState.current?.options ?? []}
         rightContent={
-          <AutoDynamicFields
-            allowDynamicValues={props.allowDynamicValues}
-            propertyName={props.propertyName}
-            inputName={props.inputName}
-            property={props.property}
-            disabled={props.disabled}
-          />
+          <div className="flex items-center gap-3"> 
+            <Separator orientation="vertical" className='h-6'/>
+            <AutoDynamicFields
+              allowDynamicValues={props.allowDynamicValues}
+              propertyName={props.propertyName}
+              inputName={props.inputName}
+              property={props.property}
+              disabled={props.disabled}
+            />
+          </div>
         }
       />
     );

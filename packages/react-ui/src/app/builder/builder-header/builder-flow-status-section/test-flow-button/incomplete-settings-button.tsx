@@ -11,7 +11,7 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 
-import { flowCanvasUtils } from '../utils/flow-canvas-utils';
+import { flowCanvasUtils } from '../../../flow-canvas/utils/flow-canvas-utils';
 
 type IncompleteSettingsButtonProps = {
   flowVersion: FlowVersion;
@@ -50,7 +50,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
     !flowVersion.valid && (
       <Button
         variant="ghost"
-        className="h-8 bg-warning-100 text-warning-300 hover:!bg-warning-100 hover:!border-warning hover:!text-warning-300 border border-solid border-warning/50 rounded-full animate-fade"
+        className="h-8 bg-warning-100 text-warning-300 hover:!bg-warning-100 hover:!border-warning hover:!text-warning-300 border border-solid border-warning/50  animate-fade"
         key={'complete-flow-button'}
         onClick={(e) => {
           onClick();
@@ -65,4 +65,4 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 };
 
 IncompleteSettingsButton.displayName = 'IncompleteSettingsButton';
-export default IncompleteSettingsButton;
+export { IncompleteSettingsButton };

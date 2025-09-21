@@ -46,6 +46,7 @@ import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
 import { Separator } from '@/components/ui/separator';
 import { ConnectionSelect } from './piece-settings/connection-select';
+import { AutoFieldsAccordion } from '../piece-properties/auto-fields-accordion';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -176,6 +177,17 @@ const StepSettingsContainer = () => {
     [FlowActionType.CODE, FlowActionType.PIECE].includes(
       modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
+
+  const actionPropsWithoutAuth = selectedAction ? (() => {
+    const { auth, ...rest } = selectedAction.props ?? {};
+    return rest;
+  })() : {};
+  
+  const triggerPropsWithoutAuth = selectedTrigger ? (() => {
+    const { auth, ...rest } = selectedTrigger.props ?? {};
+    return rest;
+  })() : {};
+
   return (
     <Form {...form}>
       <form
@@ -290,7 +302,20 @@ const StepSettingsContainer = () => {
                     </AccordionItem>
                   </Accordion>
                 </div>
+                {((selectedAction && Object.keys(actionPropsWithoutAuth).length > 0) || 
+                  (selectedTrigger && Object.keys(triggerPropsWithoutAuth).length > 0)) && (
+                  <div className="h-32" />
+                )}
               </ScrollArea>
+              
+              {((selectedAction && Object.keys(actionPropsWithoutAuth).length > 0) || 
+                (selectedTrigger && Object.keys(triggerPropsWithoutAuth).length > 0)) && (
+                <AutoFieldsAccordion
+                  props={selectedAction ? actionPropsWithoutAuth : triggerPropsWithoutAuth}
+                  prefixValue="settings.input"
+                  disabled={readonly}
+                />
+              )}
             </ResizablePanel>
             {!readonly && (
               <>

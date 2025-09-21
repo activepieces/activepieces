@@ -11,7 +11,8 @@ import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { FlowVersionState, Permission } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
+import { Send } from 'lucide-react';
 
 const PublishButton = () => {
   const { checkAccess } = useAuthorization();
@@ -57,7 +58,12 @@ const PublishButton = () => {
             loading={isSaving || isPublishing}
             disabled={isPublishedVersion}
             onClick={() => publish()}
+            className=''
+            style={{
+              background: 'radial-gradient(47.57% 136.11% at 2.91% 6.94%, #9B5CFD 0%, #5305CC 100%)'
+            }}
           >
+            <Send />
             {t('Publish')}
           </Button>
         </TooltipTrigger>

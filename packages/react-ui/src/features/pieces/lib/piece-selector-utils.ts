@@ -30,6 +30,7 @@ import {
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';
+import { autoPropertiesUtils } from './auto-properties-utils';
 const defaultCode = `export const code = async (inputs) => {
   return true;
 };`;
@@ -236,6 +237,22 @@ const getDefaultStepValues = ({
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
         );
       }
+      
+      const getDefaultPropertySettings = (props: PiecePropertyMap) => {
+        return Object.fromEntries(
+          Object.entries(props).map(([key, property]) => {
+            const executionType = autoPropertiesUtils.determinePropertyExecutionType(property);
+            return [
+              key,
+              {
+                type: executionType,
+                schema: undefined,
+              },
+            ];
+          }),
+        );
+      };
+
       return deepMergeAndCast<PieceAction>(
         {
           type: FlowActionType.PIECE,
@@ -245,15 +262,7 @@ const getDefaultStepValues = ({
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
             errorHandlingOptions,
-            propertySettings: Object.fromEntries(
-              Object.entries(input).map(([key]) => [
-                key,
-                {
-                  type: PropertyExecutionType.MANUAL,
-                  schema: undefined,
-                },
-              ]),
-            ),
+            propertySettings: getDefaultPropertySettings(pieceSelectorItem.actionOrTrigger.props),
           },
         },
         common,
@@ -265,6 +274,22 @@ const getDefaultStepValues = ({
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
         );
       }
+
+      const getDefaultPropertySettings = (props: PiecePropertyMap) => {
+        return Object.fromEntries(
+          Object.entries(props).map(([key, property]) => {
+            const executionType = autoPropertiesUtils.determinePropertyExecutionType(property);
+            
+            return [
+              key,
+              {
+                type: executionType,
+              },
+            ];
+          }),
+        );
+      };
+      
       return deepMergeAndCast<PieceTrigger>(
         {
           type: FlowTriggerType.PIECE,
@@ -273,14 +298,7 @@ const getDefaultStepValues = ({
             triggerName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
-            propertySettings: Object.fromEntries(
-              Object.entries(input).map(([key]) => [
-                key,
-                {
-                  type: PropertyExecutionType.MANUAL,
-                },
-              ]),
-            ),
+            propertySettings: getDefaultPropertySettings(pieceSelectorItem.actionOrTrigger.props),
           },
         },
         common,

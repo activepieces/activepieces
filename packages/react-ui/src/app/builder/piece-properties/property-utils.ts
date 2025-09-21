@@ -1,4 +1,4 @@
-import { FlowAction, FlowTrigger, PropertyExecutionType } from "@activepieces/shared";
+import { PropertyExecutionType } from "@activepieces/shared";
 import { UseFormReturn } from "react-hook-form";
 
 type inputNameLiteral = `settings.input.${string}`;
@@ -22,9 +22,11 @@ function handleDynamicValueToggleChange(form: UseFormReturn, mode: PropertyExecu
       },
     );
     if (isInputNameLiteral(inputName)) {
-      form.setValue(inputName, null, {
-        shouldValidate: true,
-      });
+      if (mode === PropertyExecutionType.DYNAMIC) {
+        form.setValue(inputName, null, {
+            shouldValidate: true,
+        });
+      } 
     } else {
       throw new Error(
         'inputName is not a member of step settings input, you might be using dynamic properties where you should not',

@@ -49,7 +49,6 @@ const AutoDynamicFields = ({
 
   return (
         <div className="flex items-center gap-3">
-        <Separator orientation="vertical" className='h-6'/>
         {allowDynamicValues && (
             <Tooltip>
                 <TooltipTrigger asChild>
@@ -70,7 +69,7 @@ const AutoDynamicFields = ({
                     className='p-0 hover:bg-transparent'
                 >
                     <SquareFunction
-                    className={cn('size-4', {
+                    className={cn('size-4 hover:text-black transition-colors', {
                         'text-foreground': isDynamicMode,
                         'text-muted-foreground': !isDynamicMode,
                     })}
@@ -103,7 +102,7 @@ const AutoDynamicFields = ({
                 className='p-0 hover:bg-transparent'
             >
                 <Sparkles
-                className={cn('size-4', {
+                className={cn('size-4 hover:text-black transition-colors', {
                     'text-primary': isAutoMode,
                     'text-muted-foreground': !isAutoMode,
                 })}

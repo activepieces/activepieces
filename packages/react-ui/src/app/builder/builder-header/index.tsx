@@ -1,7 +1,7 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
+import { ChevronDown, History, ListChecks } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   createSearchParams,
@@ -22,8 +22,8 @@ import { HomeButton } from '@/components/ui/home-button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
+  TooltipProvider,
 } from '@/components/ui/tooltip';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
@@ -41,7 +41,11 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
-import { BuilderFlowStatusSection } from '../builder-flow-status-section';
+import { BuilderFlowStatusSection } from './builder-flow-status-section';
+import { PublishButton } from './builder-flow-status-section/publish-button';
+import { EditFlowOrViewDraftButton } from './builder-flow-status-section/view-draft-or-edit-flow-button';
+import { TestFlowButton } from './builder-flow-status-section/test-flow-button';
+import { IncompleteSettingsButton } from './builder-flow-status-section/test-flow-button/incomplete-settings-button';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -65,12 +69,16 @@ export const BuilderHeader = () => {
     setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
+    readonly,
+    selectStepByName,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
+    state.readonly,
+    state.selectStepByName,
   ]);
 
   const { embedState } = useEmbedding();
@@ -169,39 +177,51 @@ export const BuilderHeader = () => {
 
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
-          {showSupport && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => openNewWindow(supportUrl)}
-            >
-              <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
-              {t('Support')}
-            </Button>
-          )}
-          {hasPermissionToReadRuns && (
-            <Button
-              variant="ghost"
-              onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
-              className="gap-2 px-2"
-            >
-              <Logs className="w-4 h-4" />
-              {t('Runs')}
-            </Button>
-          )}
+          <BuilderFlowStatusSection/>
+          <div className="flex items-center justify-center gap-5"> 
+            {showSupport && (
+              <Tooltip>
+                <TooltipTrigger asChild> 
+                   <QuestionMarkCircledIcon className="w-5 h-5 cursor-pointer hover:text-primary text-slate-600" onClick={() => openNewWindow(supportUrl)}/>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('Community Support')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {hasPermissionToReadRuns && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ListChecks className="w-5 h-5 cursor-pointer hover:text-primary text-slate-600" onClick={() => setLeftSidebar(LeftSideBarType.RUNS)} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('Runs')}
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-          {!isInRunsPage && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-            >
-              <History className="w-4 h-4" />
-              {t('Versions')}
-            </Button>
-          )}
+            {!isInRunsPage && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <History className="w-5 h-5 cursor-pointer hover:text-primary text-slate-600" onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)} />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('Versions')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
 
-          <BuilderFlowStatusSection></BuilderFlowStatusSection>
+          <EditFlowOrViewDraftButton />
+          {!readonly && (
+            <IncompleteSettingsButton
+              flowVersion={flowVersion}
+              selectStepByName={selectStepByName}
+            ></IncompleteSettingsButton>
+          )}
+          <TestFlowButton />
+          <PublishButton />
+
         </div>
       </div>
     </div>

@@ -39,7 +39,7 @@ import {
 
 import { cn, useElementSize } from '../../lib/utils';
 
-import { BuilderHeader } from './builder-header/builder-header';
+import { BuilderHeader } from './builder-header';
 import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { LEFT_SIDEBAR_ID } from './flow-canvas/utils/consts';
