@@ -22,7 +22,7 @@ export const capsuleCrm = createPiece({
     minimumSupportedRelease: '0.36.1',
     logoUrl: 'https://cdn.activepieces.com/pieces/capsule-crm.png',
     categories: [PieceCategory.SALES_AND_CRM, PieceCategory.BUSINESS_INTELLIGENCE],
-    authors: ['your-username'],
+    authors: ['owuzo'],
     auth: capsuleAuth,
     actions: [
         createContact,
