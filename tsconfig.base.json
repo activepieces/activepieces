@@ -196,6 +196,9 @@
       "@activepieces/piece-campaign-monitor": [
         "packages/pieces/community/campaign-monitor/src/index.ts"
       ],
+      "@activepieces/piece-capsule-crm": [
+        "packages/pieces/community/capsule-crm/src/index.ts"
+      ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
       ],
