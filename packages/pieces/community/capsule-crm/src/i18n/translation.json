@@ -1,0 +1,18 @@
+{
+  "\n    To obtain your OAuth2 credentials:\n    \n    1. Go to Capsule CRM Developer Settings (https://capsulecrm.com/user/myAccount)\n    2. Navigate to API & Webhooks section\n    3. Create a new OAuth2 application\n    4. Set the redirect URI to: \`https://cloud.activepieces.com/redirect\`\n    5. Copy the Client ID and Client Secret\n    ": "\n    To obtain your OAuth2 credentials:\n    \n    1. Go to Capsule CRM Developer Settings (https://capsulecrm.com/user/myAccount)\n    2. Navigate to API & Webhooks section\n    3. Create a new OAuth2 application\n    4. Set the redirect URI to: \`https://cloud.activepieces.com/redirect\`\n    5. Copy the Client ID and Client Secret\n    ",
+  "Create Contact": "Create Contact",
+  "Update Contact": "Update Contact",
+  "Create Opportunity": "Create Opportunity",
+  "Update Opportunity": "Update Opportunity",
+  "Create Project": "Create Project",
+  "Create Task": "Create Task",
+  "Add Note to Entity": "Add Note to Entity",
+  "Find Contact": "Find Contact",
+  "Find Project": "Find Project",
+  "Find Opportunity": "Find Opportunity",
+  "Custom API Call": "Custom API Call",
+  "New Cases": "New Cases",
+  "New Opportunities": "New Opportunities",
+  "New Tasks": "New Tasks",
+  "New Projects": "New Projects"
+}
