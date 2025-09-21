@@ -32,7 +32,6 @@ export const findContact = createAction({
             }
         });
 
-        // Return the first contact if found, or empty array
         const contacts = response.body?.data || [];
         return contacts.length > 0 ? contacts[0] : null;
     },

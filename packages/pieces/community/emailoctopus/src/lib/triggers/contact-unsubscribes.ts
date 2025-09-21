@@ -28,7 +28,7 @@ export const contactUnsubscribes = createTrigger({
     const webhookUrl = context.webhookUrl;
     const listId = context.propsValue.list_id;
 
-    const response = await emailoctopusCommon.apiCall({
+    await emailoctopusCommon.apiCall({
       auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: '/webhooks',
@@ -38,15 +38,9 @@ export const contactUnsubscribes = createTrigger({
         list_id: listId
       }
     });
-
-    if (response.status !== 201) {
-      throw new Error(`Failed to register webhook. Status: ${response.status}, Body: ${JSON.stringify(response.body)}`);
-    }
   },
 
   onDisable: async (context) => {
-    // Note: EmailOctopus doesn't have a direct way to unregister webhooks by URL
-    console.warn('EmailOctopus webhook unregister not implemented - webhooks need to be manually removed from dashboard');
   },
 
   run: async (context) => {

@@ -29,7 +29,7 @@ export const emailBounced = createTrigger({
     const webhookUrl = context.webhookUrl;
     const campaignId = context.propsValue.campaign_id;
 
-    const response = await emailoctopusCommon.apiCall({
+    await emailoctopusCommon.apiCall({
       auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: '/webhooks',
@@ -39,15 +39,9 @@ export const emailBounced = createTrigger({
         campaign_id: campaignId
       }
     });
-
-    if (response.status !== 201) {
-      throw new Error(`Failed to register webhook. Status: ${response.status}, Body: ${JSON.stringify(response.body)}`);
-    }
   },
 
   onDisable: async (context) => {
-    // Note: EmailOctopus doesn't have a direct way to unregister webhooks by URL
-    console.warn('EmailOctopus webhook unregister not implemented - webhooks need to be manually removed from dashboard');
   },
 
   run: async (context) => {
