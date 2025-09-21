@@ -1,0 +1,58 @@
+{
+  "name": "pieces-capsule-crm",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/capsule-crm/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/capsule-crm",
+        "tsConfig": "packages/pieces/community/capsule-crm/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/capsule-crm/package.json",
+        "main": "packages/pieces/community/capsule-crm/src/index.ts",
+        "assets": [
+          "packages/pieces/community/capsule-crm/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": ["prebuild", "^build"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/capsule-crm",
+        "command": "npm ci"
+      }
+    },
+    "build-with-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run pieces-capsule-crm:prebuild",
+          "nx run pieces-capsule-crm:build",
+          "nx run pieces-capsule-crm:postbuild"
+        ],
+        "parallel": false
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/capsule-crm",
+        "command": "npm install"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}
