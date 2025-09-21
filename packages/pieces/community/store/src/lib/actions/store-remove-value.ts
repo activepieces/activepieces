@@ -35,6 +35,7 @@ export const storageRemoveValue = createAction({
       runId: context.run.id,
       key: context.propsValue['key'],
       scope: context.propsValue.store_scope,
+      isTestMode: context.executionType === 'BEGIN' && context.run.id.startsWith('test-'),
     });
     await context.store.delete(key, scope);
     return {

@@ -38,6 +38,7 @@ export const storageAddtoList = createAction({
 			runId: context.run.id,
 			key: context.propsValue['key'],
 			scope: context.propsValue.store_scope,
+			isTestMode: context.executionType === 'BEGIN' && context.run.id.startsWith('test-'),
 		});
 		const inputItems = context.propsValue.value ?? [];
 		let parsedInputItems: unknown[] = [];

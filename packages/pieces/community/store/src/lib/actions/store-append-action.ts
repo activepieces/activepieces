@@ -44,6 +44,7 @@ export const storageAppendAction = createAction({
       runId: context.run.id,
       key: context.propsValue['key'],
       scope: context.propsValue.store_scope,
+      isTestMode: context.executionType === 'BEGIN' && context.run.id.startsWith('test-'),
     });
     const oldValue = (await context.store.get(key, scope)) || '';
     if (typeof oldValue !== 'string') {
