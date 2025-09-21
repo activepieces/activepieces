@@ -4,7 +4,6 @@ import { EllipsisVertical, Folder, FolderOpen, Shapes } from 'lucide-react';
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { CreateFlowDropdown } from '@/app/routes/flows';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -24,6 +23,7 @@ import {
   SidebarGroupContent,
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
+import { CreateFlowDropdown } from '@/features/flows/lib/create-flow-dropdown';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
@@ -230,7 +230,7 @@ function DefaultFolder({
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
-           <Shapes className="!size-3.5" />
+            <Shapes className="!size-3.5" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
               <CreateFlowDropdown
