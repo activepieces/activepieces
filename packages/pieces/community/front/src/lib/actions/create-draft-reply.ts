@@ -2,9 +2,10 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { frontAuth } from '../common/auth';
 import { frontProps } from '../common/props';
+import { makeRequest } from '../common/client';
 
 export const createDraftReply = createAction({
   auth: frontAuth,
@@ -58,16 +59,11 @@ export const createDraftReply = createAction({
       quote_body: props.quote_body,
     };
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api2.frontapp.com/conversations/${conversation_id}/drafts`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: body,
-    });
-
-    return response.body;
+    return await makeRequest(
+      token,
+      HttpMethod.POST,
+      `/conversations/${conversation_id}/drafts`,
+      body
+    );
   },
 });
