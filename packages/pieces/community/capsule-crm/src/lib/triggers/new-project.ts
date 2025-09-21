@@ -6,7 +6,7 @@ export const newProjectTrigger = createTrigger({
   auth: capsuleCrmAuth,
   name: 'new_project',
   displayName: 'New Project',
-  description: 'Fires when a new project (case) is created in Capsule CRM.',
+  description: 'Fires when a new project is created in Capsule CRM.',
   props: {},
   sampleData: {
     event: 'kase-created',

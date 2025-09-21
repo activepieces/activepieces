@@ -5,8 +5,8 @@ import { capsuleCrmClient } from '../common/client';
 export const newCaseTrigger = createTrigger({
   auth: capsuleCrmAuth,
   name: 'new_case',
-  displayName: 'New Project (Case)',
-  description: 'Fires when a new project (case) is created in Capsule CRM.',
+  displayName: 'New Cases',
+  description: 'Fires when a new case is created in Capsule CRM.',
   props: {},
   sampleData: {
     event: 'kase-created',
@@ -27,7 +27,7 @@ export const newCaseTrigger = createTrigger({
     const webhook = await capsuleCrmClient.subscribeWebhook(
       context.auth,
       context.webhookUrl,
-      'kase-created' 
+      'kase-created'
     );
     await context.store.put('webhookId', webhook.id);
   },
