@@ -798,7 +798,7 @@
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
-        "@activepieces/piece-retell-ai": [
+      "@activepieces/piece-retell-ai": [
         "packages/pieces/community/retell-ai/src/index.ts"
       ],
       "@activepieces/piece-retune": [
@@ -1041,6 +1041,9 @@
       ],
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
+      ],
+      "@activepieces/piece-what-converts": [
+        "packages/pieces/community/what-converts/src/index.ts"
       ],
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
