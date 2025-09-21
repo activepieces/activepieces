@@ -53,6 +53,7 @@ export const platformService = {
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
+            externalId,
         } = params
 
         const newPlatform: NewPlatform = {
@@ -63,6 +64,7 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
+            externalId,
             emailAuthEnabled: true,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
@@ -180,6 +182,19 @@ export const platformService = {
             id,
         })
     },
+    async getOneByExternalId(externalId: string): Promise<Platform | null> {
+        return platformRepo().findOneBy({
+            externalId,
+        })
+    },
+    async getLastUsedPlatformForUser(userId: UserId): Promise<Platform | null> {
+        // Get the user's current platform (which represents their last used workspace)
+        const user = await userService.getOneOrThrow(userId)
+        if (isNil(user.platformId)) {
+            return null
+        }
+        return this.getOne(user.platformId)
+    },
 }
 
 async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
@@ -210,6 +225,7 @@ type AddParams = {
     logoIconUrl?: string
     fullLogoUrl?: string
     favIconUrl?: string
+    externalId?: string
 }
 
 type NewPlatform = Omit<Platform, 'created' | 'updated'>

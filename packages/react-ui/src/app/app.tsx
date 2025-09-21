@@ -32,6 +32,9 @@ import {
 
 import { ChangelogProvider } from './components/changelog-provider';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
+import { EmbedModeAutoLogin } from './components/embed-mode-auto-login';
+import { EmbedModeLayout } from './components/embed-mode-layout';
+import { EmbedModeRouteGuard } from './components/embed-mode-route-guard';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
 
@@ -74,7 +77,13 @@ export function App() {
                 <TooltipProvider>
                   <React.Fragment key={i18n.language}>
                     <ThemeProvider storageKey="vite-ui-theme">
-                      <ApRouter />
+                      <EmbedModeAutoLogin>
+                        <EmbedModeRouteGuard>
+                          <EmbedModeLayout>
+                            <ApRouter />
+                          </EmbedModeLayout>
+                        </EmbedModeRouteGuard>
+                      </EmbedModeAutoLogin>
                       <Toaster />
                       <ChangelogProvider />
                     </ThemeProvider>

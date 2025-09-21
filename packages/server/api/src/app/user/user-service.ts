@@ -36,6 +36,8 @@ export const userService = {
             platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
             externalId: params.externalId,
+            externalIss: params.externalIss,
+            externalSub: params.externalSub,
             platformId: params.platformId,
         }
         return userRepo().save(user)
@@ -140,6 +142,12 @@ export const userService = {
             externalId,
         })
     },
+    async getOneByExternalIssuerAndSubject(iss: string, sub: string): Promise<User | null> {
+        return userRepo().findOneBy({
+            externalIss: iss,
+            externalSub: sub,
+        })
+    },
     async getMetaInformation({ id }: IdParams): Promise<UserWithMetaInformation> {
         const user = await userRepo().findOneByOrFail({ id })
         const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
@@ -226,6 +234,8 @@ type CreateParams = {
     identityId: string
     platformId: string | null
     externalId?: string
+    externalIss?: string
+    externalSub?: string
     platformRole: PlatformRole
 }
 

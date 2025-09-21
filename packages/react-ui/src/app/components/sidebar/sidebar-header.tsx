@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -53,6 +54,9 @@ export const AppSidebarHeader = () => {
           </Link>
         )}
       </SidebarMenu>
+      <div className="px-2 py-1">
+        <WorkspaceSwitcher />
+      </div>
     </SidebarHeader>
   );
 };

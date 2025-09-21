@@ -8,6 +8,7 @@ import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { useEmbedMode } from '@/hooks/use-embed-mode';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
@@ -36,6 +37,7 @@ export function ProjectDashboardLayout({
   children: React.ReactNode;
 }) {
   const [isAlertClosed, setIsAlertClosed] = useState(false);
+  const { isEmbedMode } = useEmbedMode();
 
   const currentProjectId = authenticationSession.getProjectId();
   const { data: showBilling } = flagsHooks.useFlag<boolean>(
@@ -46,6 +48,25 @@ export function ProjectDashboardLayout({
     return <Navigate to="/sign-in" replace />;
   }
 
+  // In embed mode, render without sidebar
+  if (isEmbedMode) {
+    return (
+      <ProjectChangedRedirector currentProjectId={currentProjectId}>
+        <CloseTaskLimitAlertContext.Provider
+          value={{
+            isAlertClosed,
+            setIsAlertClosed,
+          }}
+        >
+          <div className="h-full w-full">
+            {children}
+          </div>
+        </CloseTaskLimitAlertContext.Provider>
+      </ProjectChangedRedirector>
+    );
+  }
+
+  // Normal mode with sidebar
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
       <CloseTaskLimitAlertContext.Provider

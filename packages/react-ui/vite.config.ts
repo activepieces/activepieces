@@ -16,6 +16,8 @@ export default defineConfig(({ command, mode }) => {
     ? 'https://activepieces.com/favicon.ico'
     : '${AP_FAVICON_URL}';
 
+  const SWS_EMBED_MODE = process.env.SWS_EMBED_MODE || 'false';
+
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/packages/react-ui',
@@ -61,6 +63,9 @@ export default defineConfig(({ command, mode }) => {
           '../../packages/pieces/community/framework/src',
         ),
       },
+    },
+    define: {
+      'import.meta.env.VITE_SWS_EMBED_MODE': JSON.stringify(SWS_EMBED_MODE),
     },
     plugins: [
       react(),

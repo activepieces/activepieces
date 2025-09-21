@@ -30,6 +30,14 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: String,
             nullable: true,
         },
+        externalIss: {
+            type: String,
+            nullable: true,
+        },
+        externalSub: {
+            type: String,
+            nullable: true,
+        },
         platformId: {
             type: String,
             nullable: true,
@@ -44,6 +52,11 @@ export const UserEntity = new EntitySchema<UserSchema>({
         {
             name: 'idx_user_platform_id_external_id',
             columns: ['platformId', 'externalId'],
+            unique: true,
+        },
+        {
+            name: 'idx_user_external_iss_sub',
+            columns: ['externalIss', 'externalSub'],
             unique: true,
         },
     ],

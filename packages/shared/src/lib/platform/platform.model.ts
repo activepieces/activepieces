@@ -145,6 +145,7 @@ export const Platform = Type.Object({
     logoIconUrl: Type.String(),
     fullLogoUrl: Type.String(),
     favIconUrl: Type.String(),
+    externalId: Nullable(Type.String()),
     /**
     * @deprecated Use projects filter instead.
     */
@@ -181,6 +182,7 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     'logoIconUrl',
     'fullLogoUrl',
     'favIconUrl',
+    'externalId',
     'filteredPieceNames',
     'filteredPieceBehavior',
     'cloudAuthEnabled',

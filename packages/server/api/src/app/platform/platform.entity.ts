@@ -40,6 +40,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
+        externalId: {
+            type: String,
+            nullable: true,
+        },
         smtp: {
             type: JSONB_COLUMN_TYPE,    
             nullable: true,
@@ -85,7 +89,13 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: true,
         },
     },
-    indices: [],
+    indices: [
+        {
+            name: 'idx_platform_external_id',
+            columns: ['externalId'],
+            unique: true,
+        },
+    ],
     relations: {
         owner: {
             type: 'one-to-one',

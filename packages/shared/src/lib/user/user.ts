@@ -44,6 +44,8 @@ export const User = Type.Object({
     status: Type.Enum(UserStatus),
     identityId: Type.String(),
     externalId: Nullable(Type.String()),
+    externalIss: Nullable(Type.String()),
+    externalSub: Nullable(Type.String()),
     platformId: Nullable(Type.String()),
     lastChangelogDismissed: Nullable(Type.String()),
 })

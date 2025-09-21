@@ -30,7 +30,24 @@ export const authenticationSession = {
     }
   },
   getToken(): string | null {
+    // First try to get from cookie (for external JWT auth)
+    const cookieToken = this.getTokenFromCookie();
+    if (cookieToken) {
+      return cookieToken;
+    }
+    // Fallback to localStorage/sessionStorage
     return ApStorage.getInstance().getItem(tokenKey) ?? null;
+  },
+
+  getTokenFromCookie(): string | null {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'ap_token') {
+        return value;
+      }
+    }
+    return null;
   },
 
   getProjectId(): string | null {

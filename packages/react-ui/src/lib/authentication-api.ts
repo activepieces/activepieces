@@ -65,4 +65,21 @@ export const authenticationApi = {
       request,
     );
   },
+  externalJwtAuth(request: { token: string }) {
+    return api.post<AuthenticationResponse>(
+      `/v1/authentication/external`,
+      request,
+    );
+  },
+  getWorkspaces() {
+    return api.get<{ workspaces: Array<{ id: string; name: string; externalId?: string }> }>(
+      `/v1/authentication/workspaces`,
+    );
+  },
+  switchWorkspace(request: { workspaceId: string }) {
+    return api.post<AuthenticationResponse>(
+      `/v1/authentication/switch-workspace`,
+      request,
+    );
+  },
 };
