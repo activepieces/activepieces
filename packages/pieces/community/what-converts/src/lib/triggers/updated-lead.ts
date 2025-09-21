@@ -1,12 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { whatConvertsAuth } from '../common/auth';
-
-const WHATCONVERTS_API_URL = 'https://app.whatconverts.com/api/v1';
+import { whatConvertsClient } from '../common/client'; 
 
 export const updatedLeadTrigger = createTrigger({
   auth: whatConvertsAuth,
@@ -46,34 +40,18 @@ export const updatedLeadTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/webhooks/subscribe`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: context.auth.api_token,
-        password: context.auth.api_secret as string,
-      },
-      body: {
-        event: 'lead_update',
-        target_url: context.webhookUrl,
-      },
-    });
+    await whatConvertsClient.subscribeWebhook(
+      context.auth,
+      'lead_update', 
+      context.webhookUrl
+    );
   },
 
   async onDisable(context) {
-    await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/webhooks/unsubscribe`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: context.auth.api_token,
-        password: context.auth.api_secret as string,
-      },
-      body: {
-        target_url: context.webhookUrl,
-      },
-    });
+    await whatConvertsClient.unsubscribeWebhook(
+      context.auth,
+      context.webhookUrl
+    );
   },
 
   async run(context) {

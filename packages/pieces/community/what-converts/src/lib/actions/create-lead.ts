@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { whatConvertsAuth } from '../common/auth';
-
-const WHATCONVERTS_API_URL = 'https://app.whatconverts.com/api/v1';
+import { whatConvertsProps } from '../common/props';
+import { whatConvertsClient } from '../common/client';
 
 export const createLeadAction = createAction({
   auth: whatConvertsAuth,
@@ -14,11 +9,7 @@ export const createLeadAction = createAction({
   displayName: 'Create Lead',
   description: 'Create a new lead in WhatConverts.',
   props: {
-    profile_id: Property.Number({
-      displayName: 'Profile ID',
-      description: 'The ID of the Profile to add the lead to.',
-      required: true,
-    }),
+    profile_id: whatConvertsProps.profile_id(),
     lead_type: Property.StaticDropdown({
       displayName: 'Lead Type',
       description: 'The type of the lead.',
@@ -67,20 +58,6 @@ export const createLeadAction = createAction({
       description: 'The medium of the lead (e.g., "cpc").',
       required: false,
     }),
-    referring_campaign: Property.ShortText({
-      displayName: 'Referring Campaign',
-      required: false,
-    }),
-    form_name: Property.ShortText({
-      displayName: 'Form Name',
-      description: 'The name of the form that was submitted.',
-      required: false,
-    }),
-    form_url: Property.ShortText({
-      displayName: 'Form URL',
-      description: 'The URL where the form was submitted.',
-      required: false,
-    }),
     send_notification: Property.Checkbox({
       displayName: 'Send Notification',
       description: 'Set to true to send a new lead notification email.',
@@ -92,42 +69,32 @@ export const createLeadAction = createAction({
   async run(context) {
     const { auth, propsValue } = context;
 
-    const leadDetails: { [key: string]: string | undefined } = {
-      first_name: propsValue.first_name,
-      last_name: propsValue.last_name,
-      email: propsValue.email,
-      phone_number: propsValue.phone_number,
-      company_name: propsValue.company_name,
-      notes: propsValue.notes,
+    if (propsValue.profile_id === undefined) {
+      throw new Error('Profile ID is required.');
+    }
+
+    const leadDetails: { [key: string]: unknown } = {};
+
+    const addDetailIfExists = (key: string, value: unknown) => {
+      if (value !== undefined && value !== null && value !== '') {
+        leadDetails[key] = value;
+      }
     };
 
-    Object.keys(leadDetails).forEach(
-      (key) => leadDetails[key] === undefined && delete leadDetails[key]
-    );
+    addDetailIfExists('first_name', propsValue.first_name);
+    addDetailIfExists('last_name', propsValue.last_name);
+    addDetailIfExists('email', propsValue.email);
+    addDetailIfExists('phone_number', propsValue.phone_number);
+    addDetailIfExists('company_name', propsValue.company_name);
+    addDetailIfExists('notes', propsValue.notes);
 
-    const body = {
-      profile_id: propsValue.profile_id,
+    return await whatConvertsClient.createLead(auth, {
+      profile_id: propsValue.profile_id, 
       lead_type: propsValue.lead_type,
       referring_source: propsValue.referring_source,
       referring_medium: propsValue.referring_medium,
-      referring_campaign: propsValue.referring_campaign,
-      form_name: propsValue.form_name,
-      form_url: propsValue.form_url,
       send_notification: propsValue.send_notification,
       lead_details: leadDetails,
-    };
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/leads`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret as string,
-      },
-      body: body,
     });
-
-    return response.body;
   },
 });

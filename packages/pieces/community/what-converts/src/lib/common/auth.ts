@@ -1,4 +1,8 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import {
+  PieceAuth,
+  Property,
+  StaticPropsValue,
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -6,6 +10,19 @@ import {
 } from '@activepieces/pieces-common';
 
 const WHATCONVERTS_API_URL = 'https://app.whatconverts.com/api/v1';
+
+const whatConvertsAuthProps = {
+  api_token: Property.ShortText({
+    displayName: 'API Token',
+    description: 'Your WhatConverts API Token.',
+    required: true,
+  }),
+  api_secret: PieceAuth.SecretText({
+    displayName: 'API Secret',
+    description: 'Your WhatConverts API Secret.',
+    required: true,
+  }),
+};
 
 export const whatConvertsAuth = PieceAuth.CustomAuth({
   description: `
@@ -17,19 +34,7 @@ export const whatConvertsAuth = PieceAuth.CustomAuth({
   5. Click **Generate API Key** to get your Token and Secret.
   `,
   required: true,
-  props: {
-    api_token: Property.ShortText({
-      displayName: 'API Token',
-      description: 'Your WhatConverts API Token.',
-      required: true,
-    }),
-    api_secret: PieceAuth.SecretText({
-      displayName: 'API Secret',
-      description: 'Your WhatConverts API Secret.',
-      required: true,
-    }),
-  },
-
+  props: whatConvertsAuthProps,
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({
@@ -56,3 +61,5 @@ export const whatConvertsAuth = PieceAuth.CustomAuth({
     }
   },
 });
+
+export type WhatConvertsAuth = StaticPropsValue<typeof whatConvertsAuthProps>;

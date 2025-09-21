@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { whatConvertsAuth } from '../common/auth';
-
-const WHATCONVERTS_API_URL = 'https://app.whatconverts.com/api/v1';
+import { whatConvertsClient } from '../common/client';
+import { whatConvertsProps } from '../common/props';
 
 export const updateLeadAction = createAction({
   auth: whatConvertsAuth,
@@ -14,11 +9,8 @@ export const updateLeadAction = createAction({
   displayName: 'Update Lead',
   description: "Update an existing lead's attributes by its ID.",
   props: {
-    lead_id: Property.Number({
-      displayName: 'Lead ID',
-      description: 'The unique identifier of the lead to update.',
-      required: true,
-    }),
+    profile_id: whatConvertsProps.profile_id(false),
+    lead_id: whatConvertsProps.lead_id(),
     lead_type: Property.StaticDropdown({
       displayName: 'Lead Type',
       description: 'The type of the lead.',
@@ -85,10 +77,11 @@ export const updateLeadAction = createAction({
 
   async run(context) {
     const { auth, propsValue } = context;
-
+    if (propsValue.lead_id === undefined) {
+      throw new Error('Lead ID is required to update a lead.');
+    }
     const body: { [key: string]: unknown } = {};
-    const leadDetails: { [key: string]: string | undefined } = {};
-
+    const leadDetails: { [key: string]: unknown } = {};
     const addIfExists = (
       obj: { [key: string]: unknown },
       key: string,
@@ -116,17 +109,6 @@ export const updateLeadAction = createAction({
       body['lead_details'] = leadDetails;
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/leads/${propsValue.lead_id}`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret as string,
-      },
-      body: body,
-    });
-
-    return response.body;
+    return await whatConvertsClient.updateLead(auth, propsValue.lead_id, body);
   },
 });
