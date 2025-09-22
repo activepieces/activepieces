@@ -73,9 +73,9 @@ jobs:
     if: needs.check-label.outputs.should-run-e2e == 'true'
     uses: ./.github/workflows/tests-e2e-ce.yml
 
-  notify-discord-on-failure:
+  notify-on-completion:
     needs: [test-e2e-cloud, test-e2e-ee, test-e2e-ce]
-    if: always() && (needs.test-e2e-cloud.result == 'failure' || needs.test-e2e-ee.result == 'failure' || needs.test-e2e-ce.result == 'failure')
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -86,6 +86,7 @@ jobs:
           merge-multiple: false
 
       - name: Send Discord notification on E2E failure
+        if: needs.test-e2e-cloud.result == 'failure' || needs.test-e2e-ee.result == 'failure' || needs.test-e2e-ce.result == 'failure'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -155,3 +156,72 @@ jobs:
           name: e2e-test-artifacts-all
           path: ./artifacts/
           retention-days: 30
+
+      - name: Comment on PR with test results
+        if: always() && github.event_name == 'pull_request_target'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Determine which tests failed
+            const results = {
+              cloud: '${{ needs.test-e2e-cloud.result }}',
+              ee: '${{ needs.test-e2e-ee.result }}',
+              ce: '${{ needs.test-e2e-ce.result }}'
+            };
+            
+            const failed = Object.entries(results).filter(([_, status]) => status === 'failure');
+            const passed = Object.entries(results).filter(([_, status]) => status === 'success');
+            const skipped = Object.entries(results).filter(([_, status]) => status === 'skipped');
+            
+            // Build status summary
+            let summary = "## 🧪 E2E Test Results\n\n";
+            
+            if (failed.length > 0) {
+              summary += "### ❌ Failed Tests\n";
+              failed.forEach(([edition, _]) => {
+                summary += `- **${edition.toUpperCase()} Edition**\n`;
+              });
+              summary += "\n";
+            }
+            
+            if (passed.length > 0) {
+              summary += "### ✅ Passed Tests\n";
+              passed.forEach(([edition, _]) => {
+                summary += `- **${edition.toUpperCase()} Edition**\n`;
+              });
+              summary += "\n";
+            }
+            
+            if (skipped.length > 0) {
+              summary += "### ⏭️ Skipped Tests\n";
+              skipped.forEach(([edition, _]) => {
+                summary += `- **${edition.toUpperCase()} Edition**\n`;
+              });
+              summary += "\n";
+            }
+            
+            // Add artifacts section
+            summary += "### 📊 Test Artifacts\n\n";
+            summary += `[**📥 Download All Test Reports & Results**](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n`;
+            summary += "**Individual Reports:**\n";
+            
+            if (results.cloud !== 'skipped') {
+              summary += `- [Cloud Edition Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (playwright-report-cloud)\n`;
+            }
+            if (results.ee !== 'skipped') {
+              summary += `- [Enterprise Edition Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (playwright-report-ee)\n`;
+            }
+            if (results.ce !== 'skipped') {
+              summary += `- [Community Edition Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) (playwright-report-ce)\n`;
+            }
+            
+            summary += "\n---\n";
+            summary += `<sub>🤖 Automated E2E test results from [workflow run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>`;
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
