@@ -68,7 +68,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
         }, log)
 
-        const encryptedConnectionValue = encryptUtils.encryptObject({
+        const encryptedConnectionValue = await encryptUtils.encryptObject({
             ...validatedConnectionValue,
             ...value,
         })
@@ -292,7 +292,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
         const promises = data.map(async (encryptedConnection) => {
-            const apConnection: AppConnection = appConnectionHandler(log).decryptConnection(encryptedConnection)
+            const apConnection: AppConnection = await appConnectionHandler(log).decryptConnection(encryptedConnection)
             const owner = isNil(apConnection.ownerId) ? null : await userService.getMetaInformation({
                 id: apConnection.ownerId,
             })
@@ -333,7 +333,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         projectId: ProjectId,
         log: FastifyBaseLogger,
     ): Promise<AppConnection | null> {
-        const appConnection = appConnectionHandler(log).decryptConnection(encryptedAppConnection)
+        const appConnection = await appConnectionHandler(log).decryptConnection(encryptedAppConnection)
         if (!appConnectionHandler(log).needRefresh(appConnection, log)) {
             return oauth2Util(log).removeRefreshTokenAndClientSecret(appConnection)
         }
