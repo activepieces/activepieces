@@ -47,6 +47,7 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         concurrency: 60,
         autorun: false,
         stalledInterval: 30000,
+        maxStalledCount: 5,
     })
 
     await consumer[queueName].waitUntilReady()
