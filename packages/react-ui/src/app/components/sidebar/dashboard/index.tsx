@@ -174,50 +174,54 @@ export function ProjectDashboardSidebar() {
                 {otherItems.map((item) => (
                   <ApSidebarItem key={item.label} {...item} />
                 ))}
-                <SidebarMenuItem>
-                  <DropdownMenu
-                    open={isMoreMenuOpen}
-                    onOpenChange={setIsMoreMenuOpen}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <div>
-                        <SidebarMenuButton className="px-2 py-5">
-                          <MoreHorizontal className="size-5" />
-                          <span className="grow">{t('More')}</span>
-                        </SidebarMenuButton>
-                      </div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="center"
-                      side="bottom"
-                      className="w-64"
+                {!embedState.isEmbedded && (
+                  <SidebarMenuItem>
+                    <DropdownMenu
+                      open={isMoreMenuOpen}
+                      onOpenChange={setIsMoreMenuOpen}
                     >
-                      {moreItems
-                        .filter((item) => item.show)
-                        .map((item) => {
-                          const isActive = location.pathname.includes(item.to);
+                      <DropdownMenuTrigger asChild>
+                        <div>
+                          <SidebarMenuButton className="px-2 py-5">
+                            <MoreHorizontal className="size-5" />
+                            <span className="grow">{t('More')}</span>
+                          </SidebarMenuButton>
+                        </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="center"
+                        side="bottom"
+                        className="w-64"
+                      >
+                        {moreItems
+                          .filter((item) => item.show)
+                          .map((item) => {
+                            const isActive = location.pathname.includes(
+                              item.to,
+                            );
 
-                          return (
-                            <DropdownMenuItem
-                              key={item.to}
-                              onClick={() => {
-                                navigate(item.to);
-                              }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <item.icon
-                                  className={cn('size-4', {
-                                    'text-primary': isActive,
-                                  })}
-                                />
-                                <span>{item.label}</span>
-                              </div>
-                            </DropdownMenuItem>
-                          );
-                        })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
+                            return (
+                              <DropdownMenuItem
+                                key={item.to}
+                                onClick={() => {
+                                  navigate(item.to);
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <item.icon
+                                    className={cn('size-4', {
+                                      'text-primary': isActive,
+                                    })}
+                                  />
+                                  <span>{item.label}</span>
+                                </div>
+                              </DropdownMenuItem>
+                            );
+                          })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

@@ -2,7 +2,7 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineProcessManager } from '../runner/process/engine-process-manager'
@@ -136,8 +136,8 @@ async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
 
-    const memLimitExists = await fileExists(memLimitPath)
-    const memUsageExists = await fileExists(memUsagePath)
+    const memLimitExists = await fileSystemUtils.fileExists(memLimitPath)
+    const memUsageExists = await fileSystemUtils.fileExists(memUsagePath)
 
     const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
     const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.totalmem() - os.freemem()

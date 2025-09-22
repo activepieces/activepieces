@@ -29,7 +29,7 @@
   "Form Data": "Données du formulaire",
   "JSON": "JSON",
   "Raw": "Brute",
-  "Retry on all errors (4xx, 5xx)": "Réessayer sur toutes les erreurs (4xx, 5xx)",
+  "Retry on all errors (4xx, 5xx)": "Réessayer pour toutes les erreurs (4xx, 5xx)",
   "Retry on internal errors (5xx)": "Réessayez en cas d'erreurs internes (5xx)",
   "Do not retry": "Ne pas réessayer",
   "Continue flow on all errors": "Continuer le flux sur toutes les erreurs",

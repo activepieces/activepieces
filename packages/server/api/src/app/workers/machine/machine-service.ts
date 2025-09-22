@@ -11,14 +11,12 @@ import { Socket } from 'socket.io'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { QueueMode, system } from '../../helper/system/system'
+import { system } from '../../helper/system/system'
 import { app } from '../../server'
-import { jobQueue } from '../queue'
+import { jobQueue } from '../queue/job-queue'
 import { WorkerMachineEntity } from './machine-entity'
-import { distributedRouting } from './routing/distributed-routing'
-import { simpleRouting } from './routing/simple-routing'
+import { machineRouting } from './machine-routing'
 
-const machineRouting = system.getOrThrow(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY ? simpleRouting : distributedRouting
 const workerRepo = repoFactory(WorkerMachineEntity)
 const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
 

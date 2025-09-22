@@ -159,6 +159,20 @@ const ApTablesPage = () => {
   const bulkActions: BulkAction<Table>[] = useMemo(
     () => [
       {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
+      {
         render: (_, resetSelection) => (
           <div onClick={(e) => e.stopPropagation()}>
             <ConfirmationDeleteDialog
@@ -231,18 +245,7 @@ const ApTablesPage = () => {
           )}
           title={t('Tables')}
           tutorialTab="tables"
-        >
-          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Button
-              onClick={() => createTable({ name: t('New Table') })}
-              className="flex items-center gap-2"
-              disabled={!userHasTableWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New Table')}
-            </Button>
-          </PermissionNeededTooltip>
-        </DashboardPageHeader>
+        ></DashboardPageHeader>
         <DataTable
           filters={[
             {
