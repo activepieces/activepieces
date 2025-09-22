@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { conversationIdDropdown } from '../common/dropdown';
+import { channelIdDropdown, conversationIdDropdown, teammateIdDropdown } from '../common/dropdown';
 
 export const createDraftReply = createAction({
   auth: frontAuth,
@@ -22,16 +22,40 @@ export const createDraftReply = createAction({
       description: 'The subject of the draft reply (for email channels).',
       required: false,
     }),
-    author_id: Property.ShortText({
-      displayName: 'Author ID',
-      description: 'The ID of the teammate creating the draft reply.',
-      required: false,
+    author_id: teammateIdDropdown,
+    channel_id: channelIdDropdown,
+    to: Property.Array({
+      displayName: 'To',
+      description: 'List of recipient handles (email addresses, etc.).',
+      required: true,
+      properties: {
+        item: Property.ShortText({
+          displayName: 'Recipient',
+          required: true,
+        }),
+      },
     }),
-    channel_id: Property.ShortText({
-      displayName: 'Channel ID',
-      description:
-        'The channel to send the draft reply from (required for some channels).',
+    cc: Property.Array({
+      displayName: 'CC',
+      description: 'List of CC recipient handles.',
       required: false,
+      properties: {
+        item: Property.ShortText({
+          displayName: 'CC Recipient',
+          required: true,
+        }),
+      },
+    }),
+    bcc: Property.Array({
+      displayName: 'BCC',
+      description: 'List of BCC recipient handles.',
+      required: false,
+      properties: {
+        item: Property.ShortText({
+          displayName: 'BCC Recipient',
+          required: true,
+        }),
+      },
     }),
     attachments: Property.Array({
       displayName: 'Attachments',
@@ -77,6 +101,9 @@ export const createDraftReply = createAction({
       subject,
       author_id,
       channel_id,
+      to,
+      cc,
+      bcc,
       attachments,
       mode,
       signature_id,
@@ -87,6 +114,9 @@ export const createDraftReply = createAction({
     if (subject) requestBody['subject'] = subject;
     if (author_id) requestBody['author_id'] = author_id;
     if (channel_id) requestBody['channel_id'] = channel_id;
+    if (to) requestBody['to'] = to;
+    if (cc) requestBody['cc'] = cc;
+    if (bcc) requestBody['bcc'] = bcc;
     if (attachments) requestBody['attachments'] = attachments;
     if (mode) requestBody['mode'] = mode;
     if (signature_id) requestBody['signature_id'] = signature_id;

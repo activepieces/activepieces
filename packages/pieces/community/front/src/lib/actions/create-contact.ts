@@ -76,9 +76,20 @@ export const createContact = createAction({
         }),
       },
     }),
+    list_names: Property.Array({
+      displayName: 'Contact Lists',
+      description: 'List of contact list names this contact belongs to. Front will create any that do not exist.',
+      required: false,
+    }),
+    custom_fields: Property.Json({
+      displayName: 'Custom Fields',
+      description: 'Custom fields for this contact, as a JSON object (e.g., {"CRM ID": "12345"}).',
+      required: false,
+      defaultValue: {},
+    }),
   },
   async run({ auth, propsValue }) {
-    const { description, handles, name, avatar_url, links, group_names } = propsValue;
+    const { description, handles, name, avatar_url, links, group_names,list_names,custom_fields } = propsValue;
     const body: Record<string, unknown> = {
       handles,
     };
@@ -87,6 +98,8 @@ export const createContact = createAction({
     if (avatar_url) body['avatar_url'] = avatar_url;
     if (links) body['links'] = links;
     if (group_names) body['group_names'] = group_names;
+    if(list_names) body['list_names']=list_names;
+    if(custom_fields) body['custom_fields']=custom_fields;
     return await makeRequest(
       auth.access_token,
       HttpMethod.POST,

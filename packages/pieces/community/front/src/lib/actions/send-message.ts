@@ -80,6 +80,6 @@ export const sendMessage = createAction({
     if (attachments) requestBody['attachments'] = attachments;
     if (tag_ids) requestBody['tag_ids'] = tag_ids;
 
-    return await makeRequest(auth.access_token, HttpMethod.POST, '/messages', requestBody);
+    return await makeRequest(auth.access_token, HttpMethod.POST, `/channels/${channel_id}/messages`, requestBody);
   },
 });

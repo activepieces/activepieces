@@ -17,15 +17,33 @@ export const removeContactHandle = createAction({
       description: 'The ID of the handle to remove.',
       required: true,
     }),
-    source: Property.ShortText({
+    source: Property.StaticDropdown({
       displayName: 'Source',
-      description: 'The source of the handle (e.g., email, phone).',
+      description: 'The type of the handle to remove.',
       required: true,
+      options: {
+        options: [
+          { label: 'Email', value: 'email' },
+          { label: 'Phone', value: 'phone' },
+          { label: 'Twitter', value: 'twitter' },
+          { label: 'Facebook', value: 'facebook' },
+          { label: 'Intercom', value: 'intercom' },
+          { label: 'Front Chat', value: 'front_chat' },
+          { label: 'Custom', value: 'custom' },
+        ],
+      },
+    }),
+    force: Property.Checkbox({
+      displayName: 'Delete Contact if Last Handle',
+      description:
+        'If true, the entire contact will be deleted if this is their last handle.',
+      required: false,
+      defaultValue: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const { contact_id, handle, source } = propsValue;
-    const body: Record<string, unknown> = { handle, source };
+    const { contact_id, handle, source, force } = propsValue;
+    const body: Record<string, unknown> = { handle, source, force };
     const path = `/contacts/${contact_id}/handles`;
     return await makeRequest(auth.access_token, HttpMethod.DELETE, path, body);
   },
