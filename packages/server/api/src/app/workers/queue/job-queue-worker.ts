@@ -1,12 +1,13 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { isNil, JobData } from '@activepieces/shared'
-import { Worker } from 'bullmq'
+import { assertNotNullOrUndefined, isNil, JobData } from '@activepieces/shared'
+import { DelayedError, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis'
 import { system } from '../../helper/system/system'
 import { jobConsumer } from '../consumer'
-import { redisRateLimiter } from './redis-rate-limiter'
+import { workerJobRateLimiter } from './worker-job-rate-limiter'
 
 const consumer: Record<string, Worker> = {}
 
@@ -32,14 +33,19 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         return consumer[queueName]
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-    consumer[queueName] = new Worker<JobData>(queueName, async (job) => {
+    consumer[queueName] = new Worker<JobData>(queueName, async (job, token) => {
         try {
-            if (!isNil(job.id)) {
-                await jobConsumer(log).consume(job.id, queueName, job.data, job.attemptsStarted)
+            const jobId = job.id
+            assertNotNullOrUndefined(jobId, 'jobId')
+            const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
+            if (shouldRateLimit) {
+                await job.moveToDelayed(dayjs().add(20, 'seconds').valueOf(), token)
+                throw new DelayedError('Thie job is rate limited and will be retried in 15 seconds')
             }
+            await jobConsumer(log).consume(jobId, queueName, job.data, job.attemptsStarted)
         }
         finally {
-            await redisRateLimiter(log).onCompleteOrFailedJob(job.data, job.id)
+            await workerJobRateLimiter(log).onCompleteOrFailedJob(job.data, job.id)
         }
     }, {
         connection: await redisConnections.createNew(),
