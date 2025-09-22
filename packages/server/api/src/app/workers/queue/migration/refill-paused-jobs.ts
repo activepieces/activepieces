@@ -1,20 +1,20 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { FlowRunStatus, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, ProgressUpdateType, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { jobQueue } from '..'
+import { redisConnections } from '../../../database/redis'
 import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
-import { QueueMode, system } from '../../../helper/system/system'
+import { RedisType } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
+import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
-const queueMode = system.getOrThrow(AppSystemProp.QUEUE_MODE)
 
 
 export const refillPausedRuns = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
-        if (queueMode === QueueMode.REDIS) {
-            log.info('[pausedRunsMigration] Skipping migration because they are migrated from legacy queue')
+        const redisType = redisConnections.getRedisType()
+        if (redisType !== RedisType.MEMORY) {
+            log.info('[pausedRunsMigration] Skipping migration because they are migrated from persistent queue')
             return
         }
         

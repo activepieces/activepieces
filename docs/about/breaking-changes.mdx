@@ -4,6 +4,18 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+
+## 0.70.0
+
+### What has changed?
+- `AP_QUEUE_MODE` is now deprecated and replaced with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
+### When is action necessary?
+
+- If you are using `AP_QUEUE_MODE`, you should replace it with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
 ## 0.69.0
 
 ### What has changed?
