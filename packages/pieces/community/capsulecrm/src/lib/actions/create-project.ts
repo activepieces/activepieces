@@ -7,8 +7,8 @@ import { opportunityIdDropdown, partyIdDropdown } from '../common/dropdown';
 export const createProject = createAction({
   auth: CapsuleCRMAuth,
   name: 'createProject',
-  displayName: 'Create Project',
-  description: 'Create a new Project associated with a contact or opportunity in Capsule CRM',
+  displayName: 'Create Project (Case)',
+  description: 'Create a new Case (Project) associated with a contact or opportunity in Capsule CRM',
   props: {
     name: Property.ShortText({
       displayName: 'Project Title',
@@ -27,12 +27,8 @@ export const createProject = createAction({
         ],
       },
     }),
-    stage: Property.ShortText({
-      displayName: 'Stage',
-      required: false,
-    }),
     expectedCloseOn: Property.ShortText({
-      displayName: 'Expected Close Date',
+      displayName: 'Expected Close Date (YYYY-MM-DD)',
       required: false,
     }),
     tags: Property.ShortText({
@@ -42,19 +38,18 @@ export const createProject = createAction({
   },
   async run({ auth, propsValue }) {
     const body: any = {
-      project: {
-        title: propsValue.name,
-        party: { id: propsValue.partyId },
-        ...(propsValue.opportunityId && { opportunity: { id: propsValue.opportunityId } }),
+      kase: {
+        name: propsValue.name, // Capsule API uses "name" for case title
         status: propsValue.status,
-        ...(propsValue.stage && { stage: { id: propsValue.stage } }),
-        ...(propsValue.expectedCloseOn && { expectedCloseOn: propsValue.expectedCloseOn }),
-        ...(propsValue.tags && {
-          tags: propsValue.tags
+        party: propsValue.partyId ? { id: propsValue.partyId } : undefined,
+        opportunity: propsValue.opportunityId ? { id: propsValue.opportunityId } : undefined,
+        expectedCloseOn: propsValue.expectedCloseOn || undefined,
+        tags: propsValue.tags
+          ? propsValue.tags
             .split(',')
             .map((t: string) => t.trim())
-            .filter(Boolean),
-        }),
+            .filter(Boolean)
+          : undefined,
       },
     };
 
@@ -68,3 +63,4 @@ export const createProject = createAction({
     return response;
   },
 });
+

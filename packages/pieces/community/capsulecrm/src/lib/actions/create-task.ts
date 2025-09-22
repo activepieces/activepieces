@@ -15,12 +15,15 @@ export const createTask = createAction({
       required: true,
     }),
     partyId: partyIdDropdown,
-    dueOn: Property.ShortText({
+    dueOn: Property.DateTime({
       displayName: 'Due Date',
-      required: true,
+      description: 'Pick a due date (Capsule requires YYYY-MM-DD format)',
+      required: false,
     }),
+
     dueTime: Property.ShortText({
       displayName: 'Due Time',
+      description: 'Format: HH:mm (24h)',
       required: false,
     }),
 

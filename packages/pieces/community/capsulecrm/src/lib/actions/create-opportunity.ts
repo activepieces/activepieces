@@ -25,10 +25,23 @@ export const createOpportunity = createAction({
       displayName: 'Value Amount',
       required: false,
     }),
-    valueCurrency: Property.ShortText({
+   valueCurrency: Property.StaticDropdown({
       displayName: 'Currency',
-      description: 'Currency code (e.g. USD, EUR, INR)',
+      description: 'Select the currency for the opportunity value.',
       required: false,
+      options: {
+        options: [
+          { label: 'USD - US Dollar', value: 'USD' },
+          { label: 'EUR - Euro', value: 'EUR' },
+          { label: 'GBP - British Pound', value: 'GBP' },
+          { label: 'JPY - Japanese Yen', value: 'JPY' },
+          { label: 'AUD - Australian Dollar', value: 'AUD' },
+          { label: 'CAD - Canadian Dollar', value: 'CAD' },
+          { label: 'CHF - Swiss Franc', value: 'CHF' },
+          { label: 'CNY - Chinese Yuan', value: 'CNY' },
+          { label: 'INR - Indian Rupee', value: 'INR' },
+        ],
+      },
     }),
     expectedCloseOn: Property.ShortText({
       displayName: 'Expected Close Date',
