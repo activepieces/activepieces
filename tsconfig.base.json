@@ -1048,6 +1048,9 @@
       "@activepieces/piece-teamleader": [
         "packages/pieces/community/teamleader/src/index.ts"
       ],
+      "@activepieces/piece-teamwork": [
+        "packages/pieces/community/teamwork/src/index.ts"
+      ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
       ],
