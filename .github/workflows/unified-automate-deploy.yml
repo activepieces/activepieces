@@ -125,7 +125,7 @@ jobs:
 
   Pre-Prod-E2E-Tests:
     needs: Deploy-Pre-Prod
-    uses: ./.github/workflows/e2e-tests.yml
+    uses: ./.github/workflows/e2e-tests-checkly.yml
     with:
       environment: Pre-Prod
     secrets:
@@ -134,7 +134,7 @@ jobs:
 
   Community-E2E-Tests:
     needs: Deploy-Community
-    uses: ./.github/workflows/e2e-tests.yml
+    uses: ./.github/workflows/e2e-tests-checkly.yml
     with:
       environment: Community
     secrets:
@@ -143,7 +143,7 @@ jobs:
 
   Enterprise-E2E-Tests:
     needs: Deploy-Enterprise
-    uses: ./.github/workflows/e2e-tests.yml
+    uses: ./.github/workflows/e2e-tests-checkly.yml
     with:
       environment: Enterprise
     secrets:

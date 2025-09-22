@@ -1,4 +1,4 @@
-import { test, expect } from '../../fixtures';
+import { test, expect } from '../../../fixtures';
 
 test.describe('Webhooks', () => {
   test('should handle webhook with return response', async ({ page, flowsPage, builderPage, users }) => {

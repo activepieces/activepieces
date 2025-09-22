@@ -5,11 +5,11 @@ export class FlowsPage extends BasePage {
   async navigate() {
     await this.page.getByRole('link', { name: 'Flows' }).click();
     await this.closeTrialDialogIfPresent();
-    await this.page.waitForSelector('tbody tr', { timeout: 10000 });
+    await this.page.waitForSelector('tbody tr');
   }
 
   async waitFor() {
-    await this.page.waitForSelector('tbody tr', { timeout: 10000 });
+    await this.page.waitForSelector('tbody tr');
   }
 
   async closeTrialDialogIfPresent() {
