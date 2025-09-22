@@ -1,9 +1,8 @@
-import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { capsuleCrmAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-
 
 interface CapsuleKase {
     id: number;
@@ -11,10 +10,10 @@ interface CapsuleKase {
     [key: string]: any;
 }
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+// The polling type is now correctly set to use a string for authentication
+const polling: Polling<string, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
-        
         const since = new Date(lastFetchEpochMS - 5000).toISOString();
         const allKases: CapsuleKase[] = [];
         let page = 1;
@@ -67,6 +66,7 @@ export const newProjects = createTrigger({
         "name": "Consulting"
     },
     type: TriggerStrategy.POLLING,
+    // The context passed to pollingHelper now matches the polling object's auth type.
     async test(context) {
         return await pollingHelper.test(polling, context);
     },

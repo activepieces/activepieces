@@ -1,9 +1,8 @@
-import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { capsuleCrmAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-
 
 interface CapsuleTask {
     id: number;
@@ -11,22 +10,19 @@ interface CapsuleTask {
     [key: string]: any;
 }
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<string, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, lastFetchEpochMS }) => {
-        
+    items: async ({ auth }) => {
         const response = await makeRequest<{ tasks: CapsuleTask[] }>(
             auth,
             HttpMethod.GET,
             `/tasks?status=open&perPage=100&embed=party,opportunity,kase,owner`
         );
 
-        
         const items = response.tasks.map((task) => ({
             epochMilliSeconds: new Date(task.createdAt).getTime(),
             data: task,
         }));
-
         
         items.sort((a, b) => a.epochMilliSeconds - b.epochMilliSeconds);
         

@@ -1,7 +1,6 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
-
 
 interface CapsuleParty {
     id: number;
@@ -33,12 +32,14 @@ interface CapsuleTaskCategory {
     name: string;
 }
 
+type CapsuleAuth = string;
+
 export const partyDropdown = Property.Dropdown({
     displayName: 'Party (Contact)',
     description: 'Select the person or organisation.',
     required: false,
-    refreshers: [],
-    options: async ({ auth }) => {
+    refreshers: ['auth', 'searchValue'],
+    options: async ({ auth, searchValue }) => {
         if (!auth) {
             return {
                 disabled: true,
@@ -46,10 +47,14 @@ export const partyDropdown = Property.Dropdown({
                 options: [],
             };
         }
+
+        const searchTerm = typeof searchValue === 'string' ? searchValue : '';
         const response = await makeRequest<{ parties: CapsuleParty[] }>(
-            auth as OAuth2PropertyValue,
+            auth as CapsuleAuth,
             HttpMethod.GET,
-            '/parties'
+            '/parties/search',
+            undefined,
+            { q: searchTerm }
         );
         return {
             disabled: false,
@@ -65,9 +70,9 @@ export const organisationDropdown = Property.Dropdown({
     displayName: 'Link to Organisation',
     description: "Select the organisation to link this person to. (Only used for 'Person' type).",
     required: false,
-    refreshers: ['type'],
+    refreshers: ['auth', 'type'],
     options: async (props) => {
-        const { auth, type } = props as { auth: OAuth2PropertyValue, type: string | undefined };
+        const { auth, type } = props as { auth: CapsuleAuth, type: string | undefined };
 
         if (!auth || type !== 'person') {
             return {
@@ -96,13 +101,13 @@ export const milestoneDropdown = Property.Dropdown({
     displayName: 'Milestone',
     description: 'The current stage of the opportunity.',
     required: true,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
         if (!auth) {
             return { disabled: true, placeholder: 'Connect your account first', options: [] };
         }
         const response = await makeRequest<{ milestones: CapsuleMilestone[] }>(
-            auth as OAuth2PropertyValue,
+            auth as CapsuleAuth,
             HttpMethod.GET,
             '/milestones'
         );
@@ -120,13 +125,13 @@ export const projectStageDropdown = Property.Dropdown({
     displayName: 'Project Stage',
     description: 'The current stage of the project.',
     required: false,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
         if (!auth) {
             return { disabled: true, placeholder: 'Connect your account first', options: [] };
         }
         const response = await makeRequest<{ stages: CapsuleProjectStage[] }>(
-            auth as OAuth2PropertyValue,
+            auth as CapsuleAuth,
             HttpMethod.GET,
             '/project-stages'
         );
@@ -144,13 +149,13 @@ export const taskCategoryDropdown = Property.Dropdown({
     displayName: 'Category',
     description: 'The category for the task.',
     required: false,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
         if (!auth) {
             return { disabled: true, placeholder: 'Connect your account first', options: [] };
         }
         const response = await makeRequest<{ categories: CapsuleTaskCategory[] }>(
-            auth as OAuth2PropertyValue,
+            auth as CapsuleAuth,
             HttpMethod.GET,
             '/task-categories'
         );
@@ -168,13 +173,13 @@ export const opportunityDropdown = Property.Dropdown({
     displayName: 'Opportunity',
     description: 'Select the opportunity.',
     required: false,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
         if (!auth) {
             return { disabled: true, placeholder: 'Connect your account first', options: [] };
         }
         const response = await makeRequest<{ opportunities: CapsuleOpportunity[] }>(
-            auth as OAuth2PropertyValue,
+            auth as CapsuleAuth,
             HttpMethod.GET,
             '/opportunities'
         );
@@ -192,13 +197,13 @@ export const kaseDropdown = Property.Dropdown({
     displayName: 'Project',
     description: 'Select the project.',
     required: false,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
         if (!auth) {
             return { disabled: true, placeholder: 'Connect your account first', options: [] };
         }
         const response = await makeRequest<{ kases: CapsuleKase[] }>(
-            auth as OAuth2PropertyValue,
+            auth as CapsuleAuth,
             HttpMethod.GET,
             '/kases'
         );
@@ -216,13 +221,13 @@ export const tagsMultiSelectDropdown = (props?: { displayName?: string, descript
     displayName: props?.displayName ?? 'Tags',
     description: props?.description ?? 'Select the tags.',
     required: props?.required ?? false,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
         if (!auth) {
             return { disabled: true, placeholder: 'Connect your account first', options: [] };
         }
         const response = await makeRequest<{ tags: CapsuleTag[] }>(
-            auth as OAuth2PropertyValue,
+            auth as CapsuleAuth,
             HttpMethod.GET,
             '/tags'
         );

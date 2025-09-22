@@ -1,29 +1,21 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { PieceAuth } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  AuthenticationType,
+} from '@activepieces/pieces-common';
 
-export const capsuleCrmAuth = PieceAuth.OAuth2({
+export const capsuleCrmAuth = PieceAuth.SecretText({
+  displayName: 'Personal Access Token',
   description: `
-  To get your Client ID and Secret:
+  To get your Personal Access Token:
   1. Log in to your Capsule CRM account.
-  2. Go to your **Account Settings** > **Integrations** > **Registered Applications**.
-  3. Click **Register new application**.
-  4. Fill in the details. For the **Redirect URL**, you'll get it from the Activepieces connection dialog.
-  5. Once registered, copy your **Client ID** and **Client Secret**.
+  2. Click on your name in the top right corner and go to **My Preferences**.
+  3. Select **API & Webhooks** from the left-hand menu.
+  4. Under **Personal Access Tokens**, click **Generate new API token**.
+  5. Give the token a descriptive name (e.g., "Activepieces") and copy the generated token.
   `,
-  authUrl: "https://api.capsulecrm.com/oauth/authorise",
-  tokenUrl: "https://api.capsulecrm.com/oauth/token",
   required: true,
-  scope: ['read', 'write'],
-  props: {
-    client_id: Property.ShortText({
-      displayName: 'Client ID',
-      required: true,
-    }),
-    client_secret: PieceAuth.SecretText({
-      displayName: 'Client Secret',
-      required: true,
-    }),
-  },
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({
@@ -31,7 +23,7 @@ export const capsuleCrmAuth = PieceAuth.OAuth2({
         url: 'https://api.capsulecrm.com/api/v2/users',
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: auth,
         },
       });
       return {
@@ -40,7 +32,8 @@ export const capsuleCrmAuth = PieceAuth.OAuth2({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API credentials. Please check your Client ID and Secret.',
+        error:
+          'Invalid Personal Access Token. Please check your token and try again.',
       };
     }
   },
