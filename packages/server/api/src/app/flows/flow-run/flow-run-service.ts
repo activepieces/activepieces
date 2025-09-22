@@ -370,38 +370,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             pauseMetadata: pauseMetadata as any,
         })
-        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
-
-
-
-        switch (pauseMetadata.type) {
-            case PauseType.DELAY: {
-                const platformId = await projectService.getPlatformId(flowRun.projectId)
-                // Todo(@amrdb): please make this not hacky
-                const MINIMUM_DELAY_IN_MILLISECONDS_UNTIL_FIRST_JOB_IS_MARKED_AS_COMPLETED = dayjs.duration(60, 'seconds').asMilliseconds()
-                await jobQueue(log).add({
-                    id: 'delayed_' + flowRun.id,
-                    type: JobType.ONE_TIME,
-                    data: {
-                        jobType: WorkerJobType.DELAYED_FLOW,
-                        platformId,
-                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                        runId: flowRun.id,
-                        flowId: flowRun.flowId,
-                        synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
-                        progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
-                        projectId: flowRun.projectId,
-                        environment: flowRun.environment,
-                        flowVersionId: flowRun.flowVersionId,
-                    },
-                    delay: Math.max(MINIMUM_DELAY_IN_MILLISECONDS_UNTIL_FIRST_JOB_IS_MARKED_AS_COMPLETED, dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
-                })
-                break
-            }
-            case PauseType.WEBHOOK:
-                break
-        }
-
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
         return flowRunRepo().findOneBy({

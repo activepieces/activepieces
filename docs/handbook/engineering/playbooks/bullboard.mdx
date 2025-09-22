@@ -38,16 +38,13 @@ Checks external services for new data at regular intervals.
 ### Medium Priority Jobs
 
 #### EXECUTE_FLOW
-Runs flows when they're triggered.
+Runs flows when they're triggered, they can also be delayed by rater limiter or paused flows.
 
 #### EXECUTE_WEBHOOK
 Processes incoming webhook requests that start flow runs.
 
 #### EXECUTE_AGENT
 Runs AI agent tasks within flows.
-
-#### DELAYED_FLOW
-Runs flows that were scheduled for later, like paused flows or delayed executions.
 
 ### High Priority Jobs
 

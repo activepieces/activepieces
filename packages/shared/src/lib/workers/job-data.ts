@@ -13,7 +13,6 @@ export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 export enum WorkerJobType {
     RENEW_WEBHOOK = 'RENEW_WEBHOOK',
     EXECUTE_POLLING = 'EXECUTE_POLLING',
-    DELAYED_FLOW = 'DELAYED_FLOW',
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_AGENT = 'EXECUTE_AGENT',
@@ -47,21 +46,6 @@ export const PollingJobData = Type.Object({
 })
 export type PollingJobData = Static<typeof PollingJobData>
 
-// Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
-export const DelayedJobData = Type.Object({
-    projectId: Type.String(),
-    platformId: Type.String(),
-    environment: Type.Enum(RunEnvironment),
-    schemaVersion: Type.Number(),
-    flowVersionId: Type.String(),
-    flowId: Type.String(),
-    runId: Type.String(),
-    httpRequestId: Type.Optional(Type.String()),
-    synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
-    jobType: Type.Literal(WorkerJobType.DELAYED_FLOW),
-})
-export type DelayedJobData = Static<typeof DelayedJobData>
 
 export const ExecuteFlowJobData = Type.Object({
     projectId: Type.String(),
@@ -196,7 +180,6 @@ export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof Use
 
 export const JobData = Type.Union([
     PollingJobData,
-    DelayedJobData,
     RenewWebhookJobData,
     ExecuteFlowJobData,
     WebhookJobData,

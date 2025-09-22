@@ -1,4 +1,4 @@
-import { DelayedJobData, ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis'
@@ -116,6 +116,7 @@ async function migrateDelayedJobs(log: FastifyBaseLogger): Promise<boolean> {
                 migratedDelayedJobs,
             }, '[unifyOldQueuesIntoOne] Migrated delayed jobs')
         }
+     
         await jobQueue(log).add({
             id: job.id!,
             type: JobType.ONE_TIME,

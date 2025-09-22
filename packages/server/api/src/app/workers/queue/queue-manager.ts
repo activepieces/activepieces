@@ -1,7 +1,7 @@
 import {
     QueueName,
 } from '@activepieces/server-shared'
-import { AgentJobData, ApId, DelayedJobData, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { AgentJobData, ApId, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 
 export const JOB_PRIORITY = {
     high: 2,
@@ -21,7 +21,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_FLOW:
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_AGENT:
-        case WorkerJobType.DELAYED_FLOW:
             return 'medium'
         case WorkerJobType.EXECUTE_TOOL:
         case WorkerJobType.EXECUTE_PROPERTY:

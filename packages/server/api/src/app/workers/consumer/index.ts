@@ -72,7 +72,6 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                 case WorkerJobType.RENEW_WEBHOOK:
                     return dayjs.duration(triggerHooksTimeoutSandbox, 'seconds').asMilliseconds()
                 case WorkerJobType.EXECUTE_WEBHOOK:
-                case WorkerJobType.DELAYED_FLOW:
                 case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                 case WorkerJobType.EXECUTE_TOOL:
                 case WorkerJobType.EXECUTE_PROPERTY:

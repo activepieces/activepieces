@@ -27,7 +27,8 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
             if (pausedRun.pauseMetadata?.type != PauseType.DELAY) {
                 continue
             }
-            await jobQueue(log).add({
+            // TODO URGENT
+         /*   await jobQueue(log).add({
                 id: 'delayed_' + pausedRun.id,
                 type: JobType.ONE_TIME,
                 data: {
@@ -44,7 +45,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     jobType: WorkerJobType.DELAYED_FLOW,
                 },
                 delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
-            })
+            })*/
         }
         log.info({
             count: pausedRuns.length,

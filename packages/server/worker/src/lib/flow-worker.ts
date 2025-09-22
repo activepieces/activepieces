@@ -157,9 +157,6 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                 engineToken,
                 timeoutInSeconds,
             })
-        case WorkerJobType.DELAYED_FLOW: {
-            throw new Error('Delayed flow is handled by the app')
-        }
         case WorkerJobType.EXECUTE_WEBHOOK: {
             return webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
         }
