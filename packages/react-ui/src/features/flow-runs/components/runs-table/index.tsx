@@ -31,6 +31,7 @@ import {
   FlowRun,
   FlowRunStatus,
   isFailedState,
+  isFlowRunStateTerminal,
   Permission,
 } from '@activepieces/shared';
 
@@ -85,8 +86,10 @@ export const RunsTable = () => {
       const allRuns = query.state.data?.data;
       const runningRuns = allRuns?.filter(
         (run) =>
-          run.status === FlowRunStatus.RUNNING ||
-          run.status === FlowRunStatus.QUEUED,
+          !isFlowRunStateTerminal({
+            status: run.status,
+            ignoreInternalError: false,
+          }),
       );
       return runningRuns?.length ? 15 * 1000 : false;
     },
