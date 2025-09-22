@@ -1,7 +1,8 @@
 import { emailoctopusAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger, Property } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { emailoctopusCommon } from '../common/client';
+import { listDropdown } from '../common/properties';
 
 export const newContact = createTrigger({
   name: 'new_contact',
@@ -10,11 +11,7 @@ export const newContact = createTrigger({
   auth: emailoctopusAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {
-    list_id: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The ID of the list to monitor for new contacts',
-      required: true,
-    }),
+    list_id: listDropdown({ required: true }),
   },
   sampleData: {
     id: '00000000-0000-0000-0000-000000000000',
@@ -33,7 +30,7 @@ export const newContact = createTrigger({
     const webhookUrl = context.webhookUrl;
     const listId = context.propsValue.list_id;
 
-    await emailoctopusCommon.apiCall({
+    const response = await emailoctopusCommon.apiCall({
       auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: '/webhooks',
@@ -43,10 +40,19 @@ export const newContact = createTrigger({
         list_id: listId
       }
     });
+
+    await context.store.put('webhookId', response.body.id);
   },
 
   onDisable: async (context) => {
-    const webhookUrl = context.webhookUrl;
+    const webhookId = await context.store.get('webhookId');
+    if (webhookId) {
+      await emailoctopusCommon.apiCall({
+        auth: context.auth,
+        method: HttpMethod.DELETE,
+        resourceUri: `/webhooks/${webhookId}`,
+      });
+    }
   },
 
   run: async (context) => {

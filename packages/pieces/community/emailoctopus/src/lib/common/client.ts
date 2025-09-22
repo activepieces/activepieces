@@ -29,13 +29,11 @@ export const emailoctopusCommon = {
             }
         });
 
-        // Handle EmailOctopus API errors according to RFC 7807 format
         if (response.status >= 400) {
             const errorBody = response.body;
             let errorMessage = `HTTP ${response.status}`;
 
             if (errorBody && typeof errorBody === 'object') {
-                // RFC 7807 error format
                 if (errorBody.title && errorBody.detail) {
                     errorMessage = `${errorBody.title}: ${errorBody.detail}`;
                 } else if (errorBody.message) {
@@ -44,7 +42,6 @@ export const emailoctopusCommon = {
                     errorMessage = errorBody.error;
                 }
 
-                // Add error type if available
                 if (errorBody.type) {
                     errorMessage += ` (Type: ${errorBody.type})`;
                 }
@@ -55,4 +52,16 @@ export const emailoctopusCommon = {
 
         return response;
     }
+};
+
+
+import * as schemas from './schemas';
+export const emailoctopusSchemas = {
+    addUpdateContact: schemas.addUpdateContact,
+    findContact: schemas.findContact,
+    unsubscribeContact: schemas.unsubscribeContact,
+    updateContactEmail: schemas.updateContactEmail,
+    addTagToContact: schemas.addTagToContact,
+    removeTagFromContact: schemas.removeTagFromContact,
+    createList: schemas.createList,
 };

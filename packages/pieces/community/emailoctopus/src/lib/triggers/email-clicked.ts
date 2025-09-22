@@ -30,7 +30,7 @@ export const emailClicked = createTrigger({
     const webhookUrl = context.webhookUrl;
     const campaignId = context.propsValue.campaign_id;
 
-    await emailoctopusCommon.apiCall({
+    const response = await emailoctopusCommon.apiCall({
       auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: '/webhooks',
@@ -40,9 +40,19 @@ export const emailClicked = createTrigger({
         campaign_id: campaignId
       }
     });
+
+    await context.store.put('webhookId', response.body.id);
   },
 
   onDisable: async (context) => {
+    const webhookId = await context.store.get('webhookId');
+    if (webhookId) {
+      await emailoctopusCommon.apiCall({
+        auth: context.auth,
+        method: HttpMethod.DELETE,
+        resourceUri: `/webhooks/${webhookId}`,
+      });
+    }
   },
 
   run: async (context) => {

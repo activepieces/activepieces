@@ -1,7 +1,9 @@
+import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { emailoctopusAuth } from '../common/auth';
-import { emailoctopusCommon } from '../common/client';
+import { emailoctopusCommon, emailoctopusSchemas } from '../common/client';
+import { listDropdown, contactDropdown } from '../common/properties';
 
 export const unsubscribeContact = createAction({
     name: 'unsubscribe_contact',
@@ -9,18 +11,11 @@ export const unsubscribeContact = createAction({
     description: 'Remove a contact from a list (unsubscribe)',
     auth: emailoctopusAuth,
     props: {
-        list_id: Property.ShortText({
-            displayName: 'List ID',
-            description: 'The ID of the list containing the contact',
-            required: true,
-        }),
-        contact_id: Property.ShortText({
-            displayName: 'Contact ID',
-            description: 'The ID of the contact to unsubscribe',
-            required: true,
-        }),
+        list_id: listDropdown({ required: true }),
+        contact_id: contactDropdown({ required: true }),
     },
     async run(context) {
+        await propsValidation.validateZod(context.propsValue, emailoctopusSchemas.unsubscribeContact);
         const { list_id, contact_id } = context.propsValue;
 
         const response = await emailoctopusCommon.apiCall({
