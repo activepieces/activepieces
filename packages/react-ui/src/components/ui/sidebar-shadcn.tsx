@@ -338,7 +338,7 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        'relative flex w-full flex-1 flex-col bg-background',
+        'relative flex w-full flex-1 flex-col bg-background max-h-[calc(100vh-1rem)]',
         'md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow',
         className,
       )}

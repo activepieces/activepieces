@@ -51,6 +51,9 @@
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
+      "@activepieces/piece-aidbase": [
+        "packages/pieces/community/aidbase/src/index.ts"
+      ],
       "@activepieces/piece-aircall": [
         "packages/pieces/community/aircall/src/index.ts"
       ],
@@ -402,6 +405,9 @@
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
       ],
+      "@activepieces/piece-foreplay-co": [
+        "packages/pieces/community/foreplay-co/src/index.ts"
+      ],
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
       ],
@@ -420,8 +426,14 @@
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
       ],
+      "@activepieces/piece-front": [
+        "packages/pieces/community/front/src/index.ts"
+      ],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
+      ],
+      "@activepieces/piece-gamma": [
+        "packages/pieces/community/gamma/src/index.ts"
       ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
@@ -534,6 +546,9 @@
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
       ],
+      "@activepieces/piece-insighto-ai": [
+        "packages/pieces/community/insighto-ai/src/index.ts"
+      ],
       "@activepieces/piece-instagram-business": [
         "packages/pieces/community/instagram-business/src/index.ts"
       ],
@@ -602,6 +617,12 @@
       ],
       "@activepieces/piece-lusha": [
         "packages/pieces/community/lusha/src/index.ts"
+      ],
+      "@activepieces/piece-magical-api": [
+        "packages/pieces/community/magical-api/src/index.ts"
+      ],
+      "@activepieces/piece-magicslides": [
+        "packages/pieces/community/magicslides/src/index.ts"
       ],
       "@activepieces/piece-mailchain": [
         "packages/pieces/community/mailchain/src/index.ts"
@@ -931,11 +952,17 @@
       "@activepieces/piece-simpliroute": [
         "packages/pieces/community/simpliroute/src/index.ts"
       ],
+      "@activepieces/piece-sitespeakai": [
+        "packages/pieces/community/sitespeakai/src/index.ts"
+      ],
       "@activepieces/piece-skyvern": [
         "packages/pieces/community/skyvern/src/index.ts"
       ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
+      ],
+      "@activepieces/piece-slidespeak": [
+        "packages/pieces/community/slidespeak/src/index.ts"
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
@@ -1089,6 +1116,9 @@
       ],
       "@activepieces/piece-village": [
         "packages/pieces/community/village/src/index.ts"
+      ],
+      "@activepieces/piece-vlm-run": [
+        "packages/pieces/community/vlm-run/src/index.ts"
       ],
       "@activepieces/piece-vtex": [
         "packages/pieces/community/vtex/src/index.ts"

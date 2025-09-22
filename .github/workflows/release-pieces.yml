@@ -9,6 +9,10 @@ on:
       - 'packages/pieces/**'
       - 'packages/shared/**'
 
+concurrency:
+  group: release-pieces
+  cancel-in-progress: false
+
 jobs:
   Release-Pieces:
     if: github.repository == 'activepieces/activepieces'

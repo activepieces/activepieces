@@ -47,7 +47,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "New Document": "Nouveau document",
   "Triggers when a new document is added to a specific folder(optional).": "Déclenche lorsqu'un nouveau document est ajouté à un dossier spécifique (optionnel)."
 }

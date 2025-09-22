@@ -7,13 +7,15 @@ import {
     isNil,
     spreadIfDefined,
 } from '@activepieces/shared'
+import { Mutex } from 'async-mutex'
 import jwtLibrary, {
     DecodeOptions,
     SignOptions,
     VerifyOptions,
 } from 'jsonwebtoken'
+import { redisConnections } from '../database/redis'
 import { localFileStore } from './local-store'
-import { QueueMode, system } from './system/system'
+import { RedisType, system } from './system/system'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',
@@ -25,48 +27,7 @@ const KEY_ID = '1'
 const ISSUER = 'activepieces'
 const ALGORITHM = JwtSignAlgorithm.HS256
 
-let secret: string | null = null
-const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-
-const getSecret = async (): Promise<string> => {
-    if (secret !== null) {
-        return secret
-    }
-    secret = system.get(AppSystemProp.JWT_SECRET) ?? null
-
-    if (queueMode === QueueMode.MEMORY) {
-        if (isNil(secret)) {
-            secret = await getSecretFromStore()
-        }
-        if (isNil(secret)) {
-            secret = await generateAndStoreSecret()
-        }
-    }
-    if (isNil(secret)) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: AppSystemProp.JWT_SECRET,
-                },
-            },
-            `System property AP_${AppSystemProp.JWT_SECRET} must be defined`,
-        )
-    }
-    return secret
-}
-
-const getSecretFromStore = async (): Promise<string | null> => {
-    return localFileStore.load(AppSystemProp.JWT_SECRET)
-}
-
-const generateAndStoreSecret = async (): Promise<string> => {
-    const secretLengthInBytes = 32
-    const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
-    const secret = secretBuffer.toString('base64')
-    await localFileStore.save(AppSystemProp.JWT_SECRET, secret)
-    return secret
-}
+const redisType = redisConnections.getRedisType()
 
 export const jwtUtils = {
     async sign({
@@ -101,14 +62,25 @@ export const jwtUtils = {
             })
         })
     },
-    getJwtSecret: getSecret,
-    async decodeAndVerify<T>({
-        jwt,
-        key,
-        algorithm = ALGORITHM,
-        issuer = ISSUER,
-        audience,
-    }: VerifyParams): Promise<T> {
+    getJwtSecret: async (): Promise<string> => {
+        const secret = system.get(AppSystemProp.JWT_SECRET) ?? null
+        if (!isNil(secret)) {
+            return secret
+        }
+        if (redisType === RedisType.MEMORY) {
+            return getOrGenerateAndStoreSecret()
+        }
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.SYSTEM_PROP_INVALID,
+                params: {
+                    prop: AppSystemProp.JWT_SECRET,
+                },
+            },
+            `System property AP_${AppSystemProp.JWT_SECRET} must be defined`,
+        )
+    },
+    async decodeAndVerify<T>({ jwt, key, algorithm = ALGORITHM, issuer = ISSUER, audience }: VerifyParams): Promise<T> {
         const verifyOptions: VerifyOptions = {
             algorithms: [algorithm],
             ...spreadIfDefined('issuer', issuer),
@@ -132,6 +104,22 @@ export const jwtUtils = {
 
         return jwtLibrary.decode(jwt, decodeOptions) as DecodedJwt<T>
     },
+}
+
+const mutexLock = new Mutex()
+
+const getOrGenerateAndStoreSecret = async (): Promise<string> => {
+    return mutexLock.runExclusive(async () => {
+        const currentSecret = await localFileStore.load(AppSystemProp.JWT_SECRET)
+        if (!isNil(currentSecret)) {
+            return currentSecret
+        }
+        const secretLengthInBytes = 32
+        const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
+        const secret = secretBuffer.toString('base64')
+        await localFileStore.save(AppSystemProp.JWT_SECRET, secret)
+        return secret
+    })
 }
 
 type SignParams = {
