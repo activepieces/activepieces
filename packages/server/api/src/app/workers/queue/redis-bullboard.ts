@@ -8,7 +8,6 @@ import { FastifyInstance } from 'fastify'
 import { system } from '../../helper/system/system'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
 import { bullMqGroups } from './job-queue'
-import { redisRateLimiter } from './redis-rate-limiter'
 
 const QUEUE_BASE_PATH = '/ui'
 
@@ -38,8 +37,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     })
 
     const allQueues = [...Object.values(bullMqGroups).map((queue) => new BullMQAdapter(queue)),
-        new BullMQAdapter(systemJobsQueue),
-        new BullMQAdapter(await redisRateLimiter(app.log).getQueue())]
+        new BullMQAdapter(systemJobsQueue)]
 
     const serverAdapter = new FastifyAdapter()
     createBullBoard({
