@@ -7,6 +7,7 @@ import {
 import { standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { chunk } from '@activepieces/shared';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -71,18 +72,29 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			return [];
 		}
 
-		// Fetch companies with property history
-		const updatedCompaniesWithPropertyHistory = await client.crm.companies.batchApi.read({
-			propertiesWithHistory: [propertyToCheck],
-			properties: propertiesToRetrieve,
-			inputs: updatedCompanies.map((company) => {
-				return {
-					id: company.id,
-				};
-			}),
-		});
+    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
+    const batchApiChunks = chunk(updatedCompanies, 50);
 
-		for (const company of updatedCompaniesWithPropertyHistory.results) {
+    // Fetch companies with property history
+    const batchApiResps = await Promise.all(
+      batchApiChunks.map((batch) => {
+        return client.crm.companies.batchApi.read({
+          propertiesWithHistory: [propertyToCheck],
+          properties: propertiesToRetrieve,
+          inputs: batch.map((company) => {
+            return {
+              id: company.id,
+            };
+          }),
+        });
+      })
+    );
+
+    const updatedCompaniesWithPropertyHistory = batchApiResps.flatMap(
+      (resp) => resp.results
+    );
+
+		for (const company of updatedCompaniesWithPropertyHistory) {
 			const history = company.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;
