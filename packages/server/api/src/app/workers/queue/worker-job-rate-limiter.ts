@@ -91,8 +91,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             redis.call('SREM', setKey, member)
         -- Check if the job already exists in the set
         elseif existingJobId == jobIdToCheck then
-            local sizeNow = redis.call('SCARD', setKey)
-            return { 0, sizeNow }  -- fixed
+            return 0  -- fixed
         end
     end
     
@@ -100,14 +99,14 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
     local currentSize = redis.call('SCARD', setKey)
     
     if currentSize >= maxJobs then
-        return { 1, currentSize }  -- Should rate limit
+        return 1  -- Should rate limit
     end
     
     -- Add new job with timestamp
     redis.call('SADD', setKey, newJobEntry)
     redis.call('EXPIRE', setKey, math.ceil(timeoutMs / 1000))
     
-    return { 0, currentSize + 1 }  -- Should not rate limit
+    return 0  -- Should not rate limit
 `,
             1,
             setKey,
@@ -115,12 +114,10 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             FLOW_TIMEOUT_IN_MILLISECONDS.toString(),
             MAX_CONCURRENT_JOBS_PER_PROJECT.toString(),
             jobWithTimestamp,
-        ) as [number, number]
-
-        const [shouldRateLimit] = result
+        ) as number
 
         return {
-            shouldRateLimit: shouldRateLimit === 1,
+            shouldRateLimit: result === 1,
         }
     },
 
