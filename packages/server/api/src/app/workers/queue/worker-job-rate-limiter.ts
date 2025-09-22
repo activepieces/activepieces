@@ -21,7 +21,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return
         }
         const castedJob = data as ExecuteFlowJobData
-        if(castedJob.environment === RunEnvironment.TESTING) {
+        if (castedJob.environment === RunEnvironment.TESTING) {
             return
         }
 
@@ -58,7 +58,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             }
         }
         const castedJob = data as ExecuteFlowJobData
-        if(castedJob.environment === RunEnvironment.TESTING) {
+        if (castedJob.environment === RunEnvironment.TESTING) {
             return {
                 shouldRateLimit: false,
             }
