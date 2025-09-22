@@ -88,13 +88,13 @@ const updatePackageJson = async (
     packagePath: string,
     frameworkPackages: Record<string, string>,
 ): Promise<void> => {
-    const packageJsonForPiece = join(directoryPath, 'package.json')
+    const packageJsonForPiece = join(packagePath, 'package.json')
 
     const packageJsonExists = await fileSystemUtils.fileExists(packageJsonForPiece)
     if (!packageJsonExists) {
         return
     }
-    const packageJson = await readFile(packageDotJsonPath, 'utf-8').then(
+    const packageJson = await readFile(packageJsonForPiece, 'utf-8').then(
         JSON.parse,
     )
     for (const [key, value] of Object.entries(frameworkPackages)) {
@@ -105,7 +105,7 @@ const updatePackageJson = async (
             packageJson.dependencies[key] = value
         }
     }
-    await writeFile(packageDotJsonPath, JSON.stringify(packageJson, null, 2))
+    await writeFile(packageJsonForPiece, JSON.stringify(packageJson, null, 2))
 }
 
 type InstallParams = {
