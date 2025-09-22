@@ -798,7 +798,7 @@
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
-        "@activepieces/piece-retell-ai": [
+      "@activepieces/piece-retell-ai": [
         "packages/pieces/community/retell-ai/src/index.ts"
       ],
       "@activepieces/piece-retune": [
@@ -1017,6 +1017,9 @@
       ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
+      ],
+      "@activepieces/piece-vadoo-ai": [
+        "packages/pieces/community/vadoo-ai/src/index.ts"
       ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
