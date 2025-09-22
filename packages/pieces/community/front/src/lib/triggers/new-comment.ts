@@ -22,14 +22,8 @@ const props = {
 const polling: Polling<string, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const params: string[] = ['q[types]=comment', 'limit=50'];
-    if (propsValue.conversation_id) {
-      params.push(
-        `q[conversations]=${encodeURIComponent(
-          propsValue.conversation_id as string
-        )}`
-      );
-    }
+    const params: string[] = ['q[types]=comment', 'limit=15'];
+
     const query = params.join('&');
     const response = await makeRequest(
       auth as string,
@@ -40,12 +34,18 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
     const comments: any[] = [];
 
     for (const event of events) {
-      const emittedATMs = Math.floor(Number(event.emitted_at) * 1000);
-      if (!lastFetchEpochMS || emittedATMs > lastFetchEpochMS) {
-        comments.push({
-          epochMilliSeconds: emittedATMs,
-          data: event,
-        });
+      if (
+        event.conversation &&
+        event.conversation.id === propsValue.conversation_id &&
+        event.type === 'comment'
+      ) {
+        const emittedATMs = Math.floor(Number(event.emitted_at) * 1000);
+        if (!lastFetchEpochMS || emittedATMs > lastFetchEpochMS) {
+          comments.push({
+            epochMilliSeconds: emittedATMs,
+            data: event,
+          });
+        }
       }
     }
     return comments;
@@ -60,50 +60,48 @@ export const newComment = createTrigger({
   props,
   sampleData: {
     _links: {
-      self: 'https://example.api.frontapp.com/events/evt_67rwcqp4',
+      self: 'https://api.example.com/events/evt_dummy1234',
     },
-    id: 'evt_67rwcqp4',
-    type: 'archive',
-    emitted_at: 1758533084,
+    id: 'evt_dummy1234',
+    type: 'comment',
+    emitted_at: 1700000000,
     conversation: {
       _links: {
-        self: 'https://example.api.frontapp.com/conversations/cnv_1jm05qco',
+        self: 'https://api.example.com/conversations/cnv_dummy5678',
         related: {
-          events:
-            'https://example.api.frontapp.com/conversations/cnv_1jm05qco/events',
+          events: 'https://api.example.com/conversations/cnv_dummy5678/events',
           followers:
-            'https://example.api.frontapp.com/conversations/cnv_1jm05qco/followers',
+            'https://api.example.com/conversations/cnv_dummy5678/followers',
           messages:
-            'https://example.api.frontapp.com/conversations/cnv_1jm05qco/messages',
+            'https://api.example.com/conversations/cnv_dummy5678/messages',
           comments:
-            'https://example.api.frontapp.com/conversations/cnv_1jm05qco/comments',
+            'https://api.example.com/conversations/cnv_dummy5678/comments',
           inboxes:
-            'https://example.api.frontapp.com/conversations/cnv_1jm05qco/inboxes',
+            'https://api.example.com/conversations/cnv_dummy5678/inboxes',
           last_message:
-            'https://example.api.frontapp.com/messages/msg_326rsp60?referer=conversation',
+            'https://api.example.com/messages/msg_dummy9012?referer=conversation',
         },
       },
-      id: 'cnv_1jm05qco',
+      id: 'cnv_dummy5678',
       subject: 'Re: test',
-      status: 'archived',
-      status_id: 'sts_695a7c',
-      status_category: 'resolved',
+      status: 'assigned',
+      status_id: 'sts_dummy0001',
+      status_category: 'open',
       ticket_ids: ['SU-2'],
       assignee: {
         _links: {
-          self: 'https://example.api.frontapp.com/teammates/tea_mfoko',
+          self: 'https://api.example.com/teammates/tea_dummy1',
           related: {
-            inboxes:
-              'https://example.api.frontapp.com/teammates/tea_mfoko/inboxes',
+            inboxes: 'https://api.example.com/teammates/tea_dummy1/inboxes',
             conversations:
-              'https://example.api.frontapp.com/teammates/tea_mfoko/conversations',
+              'https://api.example.com/teammates/tea_dummy1/conversations',
           },
         },
-        id: 'tea_mfoko',
-        email: 'sanket@example.com',
-        username: 'sanket',
-        first_name: 'sanket',
-        last_name: 'Nannaware',
+        id: 'tea_dummy1',
+        email: 'dummy.sender@example.com',
+        username: 'dummyuser',
+        first_name: 'Dummy',
+        last_name: 'User',
         is_admin: true,
         is_available: true,
         is_blocked: false,
@@ -113,83 +111,81 @@ export const newComment = createTrigger({
       recipient: {
         _links: {
           related: {
-            contact:
-              'https://example.api.frontapp.com/contacts/crd_4x1iwyw',
+            contact: 'https://api.example.com/contacts/crd_dummy2222',
           },
         },
-        name: 'Sanket Nannaware',
-        handle: 'sanketnannaware96@gmail.com',
+        name: 'Dummy Recipient',
+        handle: 'recipient@example.com',
         role: 'to',
       },
       tags: [
         {
           _links: {
-            self: 'https://example.api.frontapp.com/tags/tag_6958vc',
+            self: 'https://api.example.com/tags/tag_dummy1',
             related: {
               conversations:
-                'https://example.api.frontapp.com/tags/tag_6958vc/conversations',
-              owner:
-                'https://example.api.frontapp.com/teammates/tea_mfoko',
+                'https://api.example.com/tags/tag_dummy1/conversations',
+              owner: 'https://api.example.com/teammates/tea_dummy1',
               parent_tag: null,
               children: null,
             },
           },
-          id: 'tag_6958vc',
+          id: 'tag_dummy1',
           name: 'Inbox',
           highlight: null,
           description: null,
           is_private: true,
           is_visible_in_conversation_lists: false,
-          updated_at: 1758518633.403,
-          created_at: 1758518633.403,
+          updated_at: 1700000100,
+          created_at: 1700000100,
         },
         {
           _links: {
-            self: 'https://example.api.frontapp.com/tags/tag_695n8o',
+            self: 'https://api.example.com/tags/tag_dummy2',
             related: {
               conversations:
-                'https://example.api.frontapp.com/tags/tag_695n8o/conversations',
-              owner: 'https://example.api.frontapp.com/teams/tim_8t9ew',
+                'https://api.example.com/tags/tag_dummy2/conversations',
+              owner: 'https://api.example.com/teams/team_dummy1',
               parent_tag: null,
               children: null,
             },
           },
-          id: 'tag_695n8o',
+          id: 'tag_dummy2',
           name: 'YELLOW_STAR',
           highlight: null,
           description: null,
           is_private: false,
           is_visible_in_conversation_lists: false,
-          updated_at: 1758532572.491,
-          created_at: 1758531672.777,
+          updated_at: 1700000200,
+          created_at: 1700000150,
         },
         {
           _links: {
-            self: 'https://example.api.frontapp.com/tags/tag_695n6w',
+            self: 'https://api.example.com/tags/tag_dummy3',
             related: {
               conversations:
-                'https://example.api.frontapp.com/tags/tag_fffff/conversations',
-              owner: 'https://example.api.frontapp.com/teams/tim_8t9ew',
+                'https://api.example.com/tags/tag_dummy3/conversations',
+              owner: 'https://api.example.com/teams/team_dummy1',
               parent_tag: null,
               children: null,
             },
           },
-          id: 'tag_fffff',
+          id: 'tag_dummy3',
           name: 'CHAT',
           highlight: null,
           description: null,
           is_private: false,
           is_visible_in_conversation_lists: false,
-          updated_at: 1758532572.5,
-          created_at: 1758531672.726,
+          updated_at: 1700000250,
+          created_at: 1700000150,
         },
       ],
       links: [
         {
           _links: {
-            self: 'https://example.api.frontapp.com/links/top_isetpk',
+            self: 'https://api.example.com/links/link_dummy1',
           },
-          id: 'top_isetpk',
+          id: 'link_dummy1',
           name: 'test update link',
           type: 'web',
           external_url: 'https://example.com/',
@@ -197,8 +193,8 @@ export const newComment = createTrigger({
         },
       ],
       custom_fields: {},
-      created_at: 1758531757.285,
-      waiting_since: 1758531945.646,
+      created_at: 1700000050,
+      waiting_since: 1700000500,
       is_private: false,
       scheduled_reminders: [],
       metadata: {},
@@ -208,6 +204,45 @@ export const newComment = createTrigger({
         type: 'api',
       },
       data: null,
+    },
+    target: {
+      _meta: {
+        type: 'comment',
+      },
+      data: {
+        _links: {
+          self: 'https://api.example.com/comments/com_dummy1',
+          related: {
+            conversation: 'https://api.example.com/conversations/cnv_dummy5678',
+            mentions: 'https://api.example.com/comments/com_dummy1/mentions',
+          },
+        },
+        id: 'com_dummy1',
+        body: 'This is a dummy comment for testing purposes.',
+        posted_at: 1700000000,
+        author: {
+          _links: {
+            self: 'https://api.example.com/teammates/tea_dummy1',
+            related: {
+              inboxes: 'https://api.example.com/teammates/tea_dummy1/inboxes',
+              conversations:
+                'https://api.example.com/teammates/tea_dummy1/conversations',
+            },
+          },
+          id: 'tea_dummy1',
+          email: 'dummy.sender@example.com',
+          username: 'dummyuser',
+          first_name: 'Dummy',
+          last_name: 'User',
+          is_admin: true,
+          is_available: true,
+          is_blocked: false,
+          type: 'user',
+          custom_fields: {},
+        },
+        attachments: [],
+        is_pinned: false,
+      },
     },
   },
   type: TriggerStrategy.POLLING,
