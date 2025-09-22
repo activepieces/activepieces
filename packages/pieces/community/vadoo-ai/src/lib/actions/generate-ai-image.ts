@@ -1,12 +1,47 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { vadooAiAuth } from '../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { makeRequest } from '../common/client';
 
 export const generateAiImage = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-  name: 'generateAiImage',
+  auth: vadooAiAuth,
+  name: 'generate_character_image',
   displayName: 'Generate AI Image',
-  description: 'Generates Ai generated image based on prompt.',
-  props: {},
-  async run() {
-    // Action logic here
+  description: 'Generates an AI-generated image based on a prompt.',
+  props: {
+    id: Property.Number({
+        displayName: 'Character ID',
+        description: 'The ID of the character for whom to generate an image.',
+        required: true,
+    }),
+    prompt: Property.LongText({
+        displayName: 'Prompt',
+        description: 'A detailed description of the image to generate.',
+        required: true,
+    }),
+    ratio: Property.StaticDropdown({
+        displayName: 'Aspect Ratio',
+        description: 'The desired aspect ratio for the generated image.',
+        required: true,
+        options: {
+            options: [
+                { label: 'Portrait (9:16)', value: '9:16' },
+                { label: 'Square (1:1)', value: '1:1' },
+                { label: 'Landscape (16:9)', value: '16:9' },
+                { label: 'Portrait (3:4)', value: '3:4' },
+                { label: 'Landscape (4:3)', value: '4:3' },
+            ]
+        }
+    }),
+  },
+  async run(context) {
+    const body = context.propsValue;
+
+    return await makeRequest<{ id: number }>(
+      context.auth,
+      HttpMethod.POST,
+      '/generate_character_image',
+      body
+    );
   },
 });
