@@ -22,7 +22,7 @@ export enum CopilotInstanceTypes {
 export enum RedisType {
     SENTINEL = 'SENTINEL',
     MEMORY = 'MEMORY',
-    DEFAULT = 'DEFAULT',
+    STANDALONE = 'STANDALONE',
 }
 
 
@@ -71,7 +71,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
-    [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
+    [AppSystemProp.REDIS_TYPE]: RedisType.STANDALONE,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
         'https://cloud.activepieces.com/api/v1/flow-templates',
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
