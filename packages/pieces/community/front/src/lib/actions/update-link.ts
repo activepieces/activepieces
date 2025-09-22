@@ -28,6 +28,10 @@ export const updateLink = createAction({
     const body: Record<string, unknown> = {};
     if (name) body['name'] = name;
     if (external_url) body['external_url'] = external_url;
-    return await makeRequest(auth.access_token, HttpMethod.PATCH, path, body);
+    await makeRequest(auth, HttpMethod.PATCH, path, body);
+    return {
+      success: true,
+      message: `Link ${link_id} updated successfully`,
+    };
   },
 });

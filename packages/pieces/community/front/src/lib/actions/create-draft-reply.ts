@@ -2,7 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { channelIdDropdown, conversationIdDropdown, teammateIdDropdown } from '../common/dropdown';
+import {
+  channelIdDropdown,
+  conversationIdDropdown,
+  teammateIdDropdown,
+} from '../common/dropdown';
 
 export const createDraftReply = createAction({
   auth: frontAuth,
@@ -27,46 +31,22 @@ export const createDraftReply = createAction({
     to: Property.Array({
       displayName: 'To',
       description: 'List of recipient handles (email addresses, etc.).',
-      required: true,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Recipient',
-          required: true,
-        }),
-      },
+      required: false,
     }),
     cc: Property.Array({
       displayName: 'CC',
       description: 'List of CC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'CC Recipient',
-          required: true,
-        }),
-      },
     }),
     bcc: Property.Array({
       displayName: 'BCC',
       description: 'List of BCC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'BCC Recipient',
-          required: true,
-        }),
-      },
     }),
     attachments: Property.Array({
       displayName: 'Attachments',
       description: 'List of attachment URLs.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Attachment URL',
-          required: true,
-        }),
-      },
     }),
     mode: Property.StaticDropdown({
       displayName: 'Mode',
@@ -123,11 +103,6 @@ export const createDraftReply = createAction({
     if (should_add_default_signature !== undefined)
       requestBody['should_add_default_signature'] =
         should_add_default_signature;
-    return await makeRequest(
-      auth.access_token,
-      HttpMethod.POST,
-      path,
-      requestBody
-    );
+    return await makeRequest(auth, HttpMethod.POST, path, requestBody);
   },
 });

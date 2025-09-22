@@ -39,7 +39,7 @@ export const findContact = createAction({
     const { email, phone, custom_query, limit, page_token } = propsValue;
     const params: string[] = [];
 
-    if (email) params.push(`q[handles]=${encodeURIComponent(email)}`);
+    if (email) params.push(`q[type]=${encodeURIComponent(email)}`);
     if (phone) params.push(`q[handles]=${encodeURIComponent(phone)}`);
     if (custom_query) params.push(`q=${encodeURIComponent(custom_query)}`);
     if (limit) params.push(`limit=${limit}`);
@@ -47,7 +47,7 @@ export const findContact = createAction({
 
     const queryString = params.length ? `?${params.join('&')}` : '';
     const path = `/contacts${queryString}`;
-
-    return await makeRequest(auth.access_token, HttpMethod.GET, path);
+    console.log("Request Path:", path);
+    return await makeRequest(auth, HttpMethod.GET, path);
   },
 });

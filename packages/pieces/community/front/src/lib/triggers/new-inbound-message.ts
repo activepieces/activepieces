@@ -9,11 +9,11 @@ const polling: Polling<
     { inbox_id: string }
 > = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    items: async ({ auth,  lastFetchEpochMS }) => {
         const query = `q[types]=inbound`;
         const limit = 50;
         const response = await makeRequest(
-            auth.access_token,
+            auth as string,
             HttpMethod.GET,
             `/events?${query}&limit=${limit}`
         );

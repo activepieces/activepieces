@@ -27,6 +27,6 @@ export const removeConversationLinks = createAction({
     const { conversation_id, links } = propsValue;
     const path = `/conversations/${conversation_id}/links`;
     const body = { links };
-    return await makeRequest(auth.access_token, HttpMethod.DELETE, path, body);
+    return await makeRequest(auth, HttpMethod.DELETE, path, body);
   },
 });

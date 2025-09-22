@@ -21,6 +21,10 @@ export const assignUnassignConversation = createAction({
       body['assignee_id'] = assignee_id;
     }
 
-    return await makeRequest(auth.access_token, HttpMethod.PATCH, path, body);
+    await makeRequest(auth, HttpMethod.PUT, path, body);
+    return {
+      success: true,
+      message: `Conversation ${conversation_id} assignee changed successfully`,
+    };
   },
 });

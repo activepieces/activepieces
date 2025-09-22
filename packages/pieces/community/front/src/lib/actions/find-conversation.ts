@@ -33,6 +33,6 @@ export const findConversation = createAction({
     if (page_token) params.push(`page_token=${encodeURIComponent(page_token)}`);
     const queryString = params.length ? `?${params.join('&')}` : '';
     const path = `/conversations/search${queryString}`;
-    return await makeRequest(auth.access_token, HttpMethod.GET, path);
+    return await makeRequest(auth, HttpMethod.GET, path);
   },
 });

@@ -11,12 +11,16 @@ export const addConversationLinks = createAction({
   description: 'Link external references (URLs) to a conversation.',
   props: {
     conversation_id: conversationIdDropdown,
-    links: linkidsDropdown,
+    link_ids: linkidsDropdown,
   },
   async run({ auth, propsValue }) {
-    const { conversation_id, links } = propsValue;
+    const { conversation_id, link_ids } = propsValue;
     const path = `/conversations/${conversation_id}/links`;
-    const body = { links };
-    return await makeRequest(auth.access_token, HttpMethod.POST, path, body);
+    const body = { link_ids };
+    await makeRequest(auth, HttpMethod.POST, path, body);
+    return {
+      success: true,
+      message: `Links added to conversation ${conversation_id} successfully`,
+    };
   },
 });

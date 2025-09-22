@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export const BASE_URL = `https://api.ninox.com/v1`;
+export const BASE_URL = `https://api2.frontapp.com`;
 
 export async function makeRequest(
     access_token: string,

@@ -15,34 +15,16 @@ export const createDraft = createAction({
       displayName: 'To',
       description: 'List of recipient handles (email addresses, etc.).',
       required: true,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Recipient',
-          required: true,
-        }),
-      },
     }),
     cc: Property.Array({
       displayName: 'CC',
       description: 'List of CC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'CC Recipient',
-          required: true,
-        }),
-      },
     }),
     bcc: Property.Array({
       displayName: 'BCC',
       description: 'List of BCC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'BCC Recipient',
-          required: true,
-        }),
-      },
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
@@ -58,12 +40,6 @@ export const createDraft = createAction({
       displayName: 'Attachments',
       description: 'List of attachment URLs.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Attachment URL',
-          required: true,
-        }),
-      },
     }),
     mode: Property.StaticDropdown({
       displayName: 'Mode',
@@ -92,7 +68,18 @@ export const createDraft = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { channel_id, to, cc, bcc, subject, body, attachments, mode, signature_id, should_add_default_signature } = propsValue;
+    const {
+      channel_id,
+      to,
+      cc,
+      bcc,
+      subject,
+      body,
+      attachments,
+      mode,
+      signature_id,
+      should_add_default_signature,
+    } = propsValue;
     const requestBody: Record<string, unknown> = {
       channel_id,
       to,
@@ -109,7 +96,7 @@ export const createDraft = createAction({
         should_add_default_signature;
 
     return await makeRequest(
-      auth.access_token,
+      auth,
       HttpMethod.POST,
       `/channels/${channel_id}/drafts`,
       requestBody

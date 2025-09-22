@@ -39,14 +39,14 @@ export const addContactHandle = createAction({
     const { contact_id, handle_type, handle_value } = propsValue;
     const path = `/contacts/${contact_id}/handles`;
     const body = {
-      handles: [
-        {
-          source: handle_type,
-          handle: handle_value,
-        },
-      ],
+      source: handle_type,
+      handle: handle_value,
     };
 
-    return await makeRequest(auth.access_token, HttpMethod.POST, path, body);
+    await makeRequest(auth, HttpMethod.POST, path, body);
+    return {
+      success: true,
+      message: `Handle added successfully to ${contact_id}`,
+    };
   },
 });

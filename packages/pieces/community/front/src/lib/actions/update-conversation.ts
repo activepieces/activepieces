@@ -2,13 +2,19 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { conversationIdDropdown, inboxIdDropdown, tagIdsDropdown, teammateIdDropdown } from '../common/dropdown';
+import {
+  conversationIdDropdown,
+  inboxIdDropdown,
+  tagIdsDropdown,
+  teammateIdDropdown,
+} from '../common/dropdown';
 
 export const updateConversation = createAction({
   auth: frontAuth,
   name: 'updateConversation',
   displayName: 'Update Conversation',
-  description: 'Modify conversation properties: status, assignee, inbox, tags, etc.',
+  description:
+    'Modify conversation properties: status, assignee, inbox, tags, etc.',
   props: {
     conversation_id: conversationIdDropdown,
     status: Property.StaticDropdown({
@@ -28,7 +34,8 @@ export const updateConversation = createAction({
     tag_ids: tagIdsDropdown,
   },
   async run({ auth, propsValue }) {
-    const { conversation_id, status, assignee_id, inbox_id, tag_ids } = propsValue;
+    const { conversation_id, status, assignee_id, inbox_id, tag_ids } =
+      propsValue;
     const path = `/conversations/${conversation_id}`;
     const body: Record<string, unknown> = {};
     if (status) body['status'] = status;
@@ -36,6 +43,10 @@ export const updateConversation = createAction({
     if (inbox_id) body['inbox_id'] = inbox_id;
     if (tag_ids) body['tag_ids'] = tag_ids;
 
-    return await makeRequest(auth.access_token, HttpMethod.PATCH, path, body);
+    await makeRequest(auth, HttpMethod.PATCH, path, body);
+    return {
+      success: true,
+      message: `Conversation ${conversation_id} updated successfully`,
+    };
   },
 });

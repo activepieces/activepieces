@@ -2,7 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { channelIdDropdown, conversationIdDropdown, teammateIdDropdown } from '../common/dropdown';
+import {
+  channelIdDropdown,
+  conversationIdDropdown,
+  teammateIdDropdown,
+} from '../common/dropdown';
 
 export const sendReply = createAction({
   auth: frontAuth,
@@ -25,51 +29,37 @@ export const sendReply = createAction({
     to: Property.Array({
       displayName: 'To',
       description: 'List of recipient handles (email addresses, etc.).',
-      required: true,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Recipient',
-          required: true,
-        }),
-      },
+      required: false,
     }),
     cc: Property.Array({
       displayName: 'CC',
       description: 'List of CC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'CC Recipient',
-          required: true,
-        }),
-      },
     }),
     bcc: Property.Array({
       displayName: 'BCC',
       description: 'List of BCC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'BCC Recipient',
-          required: true,
-        }),
-      },
     }),
     channel_id: channelIdDropdown,
     attachments: Property.Array({
       displayName: 'Attachments',
       description: 'List of attachment URLs.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Attachment URL',
-          required: true,
-        }),
-      },
     }),
   },
   async run({ auth, propsValue }) {
-    const { conversation_id, body, author_id, subject, channel_id, attachments, to, cc, bcc } = propsValue;
+    const {
+      conversation_id,
+      body,
+      author_id,
+      subject,
+      channel_id,
+      attachments,
+      to,
+      cc,
+      bcc,
+    } = propsValue;
     const path = `/conversations/${conversation_id}/messages`;
     const requestBody: Record<string, unknown> = { body };
 
@@ -81,6 +71,6 @@ export const sendReply = createAction({
     if (channel_id) requestBody['channel_id'] = channel_id;
     if (attachments) requestBody['attachments'] = attachments;
 
-    return await makeRequest(auth.access_token, HttpMethod.POST, path, requestBody);
+    return await makeRequest(auth, HttpMethod.POST, path, requestBody);
   },
 });

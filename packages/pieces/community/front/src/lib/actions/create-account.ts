@@ -60,6 +60,6 @@ export const createAccount = createAction({
     if(custom_fields){
       body['custom_fields']=custom_fields;
     }
-    return await makeRequest(auth.access_token, HttpMethod.POST, `/accounts`, body);
+    return await makeRequest(auth, HttpMethod.POST, `/accounts`, body);
   },
 });

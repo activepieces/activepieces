@@ -24,6 +24,6 @@ export const removeConversationTags = createAction({
     const { conversation_id, tag_ids } = propsValue;
     const path = `/conversations/${conversation_id}/tags`;
     const body = { tag_ids };
-    return await makeRequest(auth.access_token, HttpMethod.DELETE, path, body);
+    return await makeRequest(auth, HttpMethod.DELETE, path, body);
   },
 });

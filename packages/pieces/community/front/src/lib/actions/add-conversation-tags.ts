@@ -17,6 +17,10 @@ export const addConversationTags = createAction({
     const { conversation_id, tag_ids } = propsValue;
     const path = `/conversations/${conversation_id}/tags`;
     const body = { tag_ids };
-    return await makeRequest(auth.access_token, HttpMethod.POST, path, body);
+    await makeRequest(auth, HttpMethod.POST, path, body);
+    return {
+      success: true,
+      message: `Tags added to conversation ${conversation_id} successfully`,
+    };
   },
 });

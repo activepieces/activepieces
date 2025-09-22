@@ -47,6 +47,10 @@ export const updateContact = createAction({
     if (avatar_url) body['avatar_url'] = avatar_url;
     if (links) body['links'] = links;
 
-    return await makeRequest(auth.access_token, HttpMethod.PATCH, path, body);
+    await makeRequest(auth, HttpMethod.PATCH, path, body);
+    return {
+      success: true,
+      message: `Contact ${contact_id} updated successfully`,
+    };
   },
 });

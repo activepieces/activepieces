@@ -11,12 +11,12 @@ export const findAccount = createAction({
   props: {
     email_domain: Property.ShortText({
       displayName: 'Email Domain',
-      description: 'Filter accounts by email domain (done in code, not via API).',
+      description: 'Filter accounts by email domain ',
       required: false,
     }),
     external_id: Property.ShortText({
       displayName: 'External ID',
-      description: 'Filter accounts by external ID (done in code, not via API).',
+      description: 'Filter accounts by external ID',
       required: false,
     }),
     limit: Property.Number({
@@ -63,7 +63,7 @@ export const findAccount = createAction({
     // const queryString = params.length ? `?${params.join('&')}` : '';
     const path = `/accounts`;
 
-    const response = await makeRequest(auth.access_token, HttpMethod.GET, path);
+    const response = await makeRequest(auth, HttpMethod.GET, path);
 
     let accounts = response._results || response.results || response.accounts || [];
     if (email_domain) {

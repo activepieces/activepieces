@@ -13,7 +13,7 @@ const polling: Polling<
         const query = `q[types]=outbound`;
         const limit = 50;
         const response = await makeRequest(
-            auth.access_token,
+            auth as string,
             HttpMethod.GET,
             `/events?${query}&limit=${limit}`
         );

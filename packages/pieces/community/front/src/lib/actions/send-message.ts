@@ -8,41 +8,24 @@ export const sendMessage = createAction({
   auth: frontAuth,
   name: 'sendMessage',
   displayName: 'Send Message',
-  description: 'Send a new message (starts a conversation) with subject, recipients, body, attachments, tags, etc.',
+  description:
+    'Send a new message (starts a conversation) with subject, recipients, body, attachments, tags, etc.',
   props: {
     channel_id: channelIdDropdown,
     to: Property.Array({
       displayName: 'To',
       description: 'List of recipient handles (email addresses, etc.).',
       required: true,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Recipient',
-          required: true,
-        }),
-      },
     }),
     cc: Property.Array({
       displayName: 'CC',
       description: 'List of CC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'CC Recipient',
-          required: true,
-        }),
-      },
     }),
     bcc: Property.Array({
       displayName: 'BCC',
       description: 'List of BCC recipient handles.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'BCC Recipient',
-          required: true,
-        }),
-      }
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
@@ -58,17 +41,12 @@ export const sendMessage = createAction({
       displayName: 'Attachments',
       description: 'List of attachment URLs.',
       required: false,
-      properties: {
-        item: Property.ShortText({
-          displayName: 'Attachment URL',
-          required: true,
-        }),
-      },
     }),
     tag_ids: tagIdsDropdown,
   },
   async run({ auth, propsValue }) {
-    const { channel_id, to, cc, bcc, subject, body, attachments, tag_ids } = propsValue;
+    const { channel_id, to, cc, bcc, subject, body, attachments, tag_ids } =
+      propsValue;
     const requestBody: Record<string, unknown> = {
       channel_id,
       to,
@@ -80,6 +58,11 @@ export const sendMessage = createAction({
     if (attachments) requestBody['attachments'] = attachments;
     if (tag_ids) requestBody['tag_ids'] = tag_ids;
 
-    return await makeRequest(auth.access_token, HttpMethod.POST, `/channels/${channel_id}/messages`, requestBody);
+    return await makeRequest(
+      auth,
+      HttpMethod.POST,
+      `/channels/${channel_id}/messages`,
+      requestBody
+    );
   },
 });

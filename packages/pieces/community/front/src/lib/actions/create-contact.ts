@@ -101,7 +101,7 @@ export const createContact = createAction({
     if(list_names) body['list_names']=list_names;
     if(custom_fields) body['custom_fields']=custom_fields;
     return await makeRequest(
-      auth.access_token,
+      auth,
       HttpMethod.POST,
       '/contacts',
       body

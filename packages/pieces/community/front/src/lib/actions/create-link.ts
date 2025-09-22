@@ -28,6 +28,6 @@ export const createLink = createAction({
   async run({ auth, propsValue }) {
     const { name, external_url, pattern } = propsValue;
     const body = { name, external_url, pattern };
-    return await makeRequest(auth.access_token, HttpMethod.POST, '/links', body);
+    return await makeRequest(auth, HttpMethod.POST, '/links', body);
   },
 });

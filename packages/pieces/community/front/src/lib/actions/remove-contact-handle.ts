@@ -13,8 +13,8 @@ export const removeContactHandle = createAction({
   props: {
     contact_id: contactIdDropdown,
     handle: Property.ShortText({
-      displayName: 'Handle ID',
-      description: 'The ID of the handle to remove.',
+      displayName: 'Handle',
+      description: 'The handle to remove.',
       required: true,
     }),
     source: Property.StaticDropdown({
@@ -45,6 +45,10 @@ export const removeContactHandle = createAction({
     const { contact_id, handle, source, force } = propsValue;
     const body: Record<string, unknown> = { handle, source, force };
     const path = `/contacts/${contact_id}/handles`;
-    return await makeRequest(auth.access_token, HttpMethod.DELETE, path, body);
+    await makeRequest(auth, HttpMethod.DELETE, path, body);
+    return {
+      success: true,
+      message: `Handle ${handle} removed from contact ${contact_id}`,
+    };
   },
 });

@@ -7,8 +7,7 @@ export const conversationIdDropdown = Property.Dropdown({
   description: 'Select the conversation',
   required: true,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -19,11 +18,12 @@ export const conversationIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
-        '/conversations?limit=50'
+        '/conversations'
       );
       const conversations = response._results || [];
+      console.log(response);
       return {
         disabled: false,
         options: conversations.map((conv: any) => ({
@@ -46,8 +46,7 @@ export const contactIdDropdown = Property.Dropdown({
   description: 'Select the contact',
   required: true,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -58,7 +57,7 @@ export const contactIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/contacts?limit=50'
       );
@@ -85,8 +84,7 @@ export const tagIdsDropdown = Property.MultiSelectDropdown({
   description: 'Select one or more tags',
   required: false,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -96,7 +94,7 @@ export const tagIdsDropdown = Property.MultiSelectDropdown({
     }
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/tags?limit=50'
       );
@@ -118,14 +116,12 @@ export const tagIdsDropdown = Property.MultiSelectDropdown({
   },
 });
 
-
 export const teammateIdDropdown = Property.Dropdown({
   displayName: 'Teammate ID',
   description: 'Select the teammate',
   required: true,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -135,7 +131,7 @@ export const teammateIdDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/teammates?limit=50'
       );
@@ -143,7 +139,7 @@ export const teammateIdDropdown = Property.Dropdown({
       return {
         disabled: false,
         options: teammates.map((teammate: any) => ({
-          label: teammate.name || teammate.id,
+          label: teammate.username || teammate.first_name + ' ' + teammate.last_name || teammate.id,
           value: teammate.id,
         })),
       };
@@ -157,13 +153,12 @@ export const teammateIdDropdown = Property.Dropdown({
   },
 });
 
-export const channelIdDropdown = Property.Dropdown({
+export const channelIdDropdown  = Property.Dropdown({
   displayName: 'Channel ID',
   description: 'Select the channel',
-  required: false,
+  required: true,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -173,7 +168,7 @@ export const channelIdDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/channels'
       );
@@ -195,14 +190,12 @@ export const channelIdDropdown = Property.Dropdown({
   },
 });
 
-
 export const accountIdDropdown = Property.Dropdown({
   displayName: 'Account ID',
   description: 'Select the account',
   required: true,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -212,7 +205,7 @@ export const accountIdDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/accounts'
       );
@@ -239,8 +232,7 @@ export const inboxIdDropdown = Property.Dropdown({
   description: 'Select the inbox',
   required: false,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -250,7 +242,7 @@ export const inboxIdDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/inboxes'
       );
@@ -277,8 +269,7 @@ export const linkIdDropdown = Property.Dropdown({
   description: 'Select the link',
   required: false,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -288,7 +279,7 @@ export const linkIdDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/links'
       );
@@ -310,14 +301,12 @@ export const linkIdDropdown = Property.Dropdown({
   },
 });
 
-
 export const linkidsDropdown = Property.MultiSelectDropdown({
   displayName: 'Link IDs',
   description: 'Select one or more links',
   required: false,
   refreshers: [],
-  options: async (propsValue: Record<string, unknown>) => {
-    const auth = propsValue['auth'] as { access_token: string } | undefined;
+  options: async ({ auth }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -327,7 +316,7 @@ export const linkidsDropdown = Property.MultiSelectDropdown({
     }
     try {
       const response = await makeRequest(
-        auth.access_token,
+        auth as unknown as string,
         HttpMethod.GET,
         '/links'
       );

@@ -23,6 +23,6 @@ export const addComment = createAction({
     const path = `/conversations/${conversation_id}/comments`;
     const requestBody: Record<string, unknown> = { body };
     if (author_id) requestBody['author_id'] = author_id;
-    return await makeRequest(auth.access_token, HttpMethod.POST, path, requestBody);
+    return await makeRequest(auth as string, HttpMethod.POST, path, requestBody);
   },
 });

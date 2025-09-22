@@ -13,7 +13,7 @@ const polling: Polling<PiecePropValueSchema<typeof frontAuth>, { inbox_id?: stri
     }
     const query = params.join('&');
     const response = await makeRequest(
-      auth.access_token,
+      auth as string,
       HttpMethod.GET,
       `/events?${query}`
     );
