@@ -25,7 +25,7 @@ export const createAccount = createAction({
       description: 'List of domains associated with the account.',
       required: false,
       properties: {
-        domain : Property.ShortText({
+        domain: Property.ShortText({
           displayName: 'Domain',
           description: 'A domain associated with the account.',
           required: true,
@@ -37,9 +37,15 @@ export const createAccount = createAction({
       description: 'An external identifier for the account.',
       required: false,
     }),
+    custom_fields: Property.Json({
+      displayName: 'Custom Fields',
+      description: 'Custom fields for this account, as a JSON object.',
+      required: false,
+      defaultValue: {}
+    })
   },
   async run({ auth, propsValue }) {
-    const { name, description, domains, external_id } = propsValue;
+    const { name, description, domains, external_id,custom_fields } = propsValue;
 
     const body: Record<string, unknown> = { name };
     if (description) {
@@ -50,6 +56,9 @@ export const createAccount = createAction({
     }
     if (external_id) {
       body['external_id'] = external_id;
+    }
+    if(custom_fields){
+      body['custom_fields']=custom_fields;
     }
     return await makeRequest(auth.access_token, HttpMethod.POST, `/accounts`, body);
   },

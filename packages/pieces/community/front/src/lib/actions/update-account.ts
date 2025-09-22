@@ -21,13 +21,19 @@ export const updateAccount = createAction({
       description: 'The new description for the account.',
       required: false,
     }),
+    custom_fields: Property.Json({
+      displayName: 'Custom Fields',
+      description: 'Custom fields to add or update. Existing fields will be preserved.',
+      required: false,
+    })
   },
   async run({ auth, propsValue }) {
-    const { account_id, name, description } = propsValue;
+    const { account_id, name, description, custom_fields } = propsValue;
     const path = `/accounts/${account_id}`;
     const body: Record<string, unknown> = {};
     if (name) body['name'] = name;
     if (description) body['description'] = description;
+    if (custom_fields) body['custom_fields'] = custom_fields;
     return await makeRequest(auth.access_token, HttpMethod.PATCH, path, body);
   },
 });
