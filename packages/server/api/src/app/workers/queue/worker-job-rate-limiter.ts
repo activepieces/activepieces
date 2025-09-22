@@ -87,10 +87,11 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             redis.call('SREM', setKey, member)
         -- Check if the job already exists in the set
         elseif existingJobId == jobIdToCheck then
-            return { 0, currentSize }  -- Job already exists, should not rate limit
+            local sizeNow = redis.call('SCARD', setKey)
+            return { 0, sizeNow }  -- fixed
         end
     end
-
+    
     -- Check current size after cleanup
     local currentSize = redis.call('SCARD', setKey)
     
