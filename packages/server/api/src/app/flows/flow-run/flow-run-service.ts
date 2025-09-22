@@ -117,6 +117,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
+                await flowRunRepo().update({
+                    id: oldFlowRun.id,
+                    projectId: oldFlowRun.projectId,
+                }, {
+                    status: FlowRunStatus.QUEUED,
+                })
                 return flowRunService(log).resume({
                     flowRunId: oldFlowRun.id,
                     executionType: ExecutionType.RESUME,
@@ -128,9 +134,17 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     oldFlowRun.flowId,
                 )
                 const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                await flowRunRepo().update({
+                    id: oldFlowRun.id,
+                    projectId: oldFlowRun.projectId,
+                }, {
+                    flowVersionId: latestFlowVersion.id,
+                    status: FlowRunStatus.QUEUED,
+                })
+                const updatedFlowRun = await flowRunRepo().findOneByOrFail({ id: oldFlowRun.id })
                 return addToQueue({
                     payload,
-                    flowRun: oldFlowRun,
+                    flowRun: updatedFlowRun,
                     synchronousHandlerId: undefined,
                     httpRequestId: undefined,
                     progressUpdateType: ProgressUpdateType.NONE,

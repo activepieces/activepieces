@@ -20,17 +20,15 @@ const migrations: Migration[] = [
     migrateAgentPieceV4,
     migrateHttpToWebhookV5,
     migratePropertySettingsV6,
-]
-
-const apply = (flowVersion: FlowVersion) => {
-    return migrations.reduce((acc, migration) => {
-        if (acc.schemaVersion === migration.targetSchemaVersion) {
-            return migration.migrate(acc)
-        }
-        return acc
-    }, flowVersion)
-}
+] as const
 
 export const flowMigrations = {
-    apply,
+    apply: (flowVersion: FlowVersion): FlowVersion => {
+        return migrations.reduce((acc, migration: Migration) => {
+            if (acc.schemaVersion === migration.targetSchemaVersion) {
+                return migration.migrate(acc)
+            }
+            return acc
+        }, flowVersion)
+    },
 }

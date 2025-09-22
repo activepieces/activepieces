@@ -330,7 +330,10 @@ ErrorCode.INVALID_CUSTOM_DOMAIN,
 
 export type ExecutionTimeoutErrorParams = BaseErrorParams<
 ErrorCode.EXECUTION_TIMEOUT,
-Record<string, never>
+{
+    standardOutput: string
+    standardError: string
+}
 >
 
 export type ValidationErrorParams = BaseErrorParams<

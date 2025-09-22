@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, assertNull, isNil, JobData, OneTimeJobData, WorkerJobType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, assertNull, ExecuteFlowJobData, isNil, JobData, WorkerJobType } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 
@@ -64,7 +64,6 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
     async rateLimitJob(params: AddJobParams<JobType>): Promise<void> {
         assertNotNullOrUndefined(queue, 'Queue is not initialized')
         await queue.add(params.id, params, {
-            jobId: params.id,
             delay: dayjs.duration(15, 'seconds').asMilliseconds(),
         })
     },
@@ -73,7 +72,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         if (!RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId)) {
             return
         }
-        const castedJob = data as OneTimeJobData
+        const castedJob = data as ExecuteFlowJobData
 
         const setKey = projectSetKey(castedJob.projectId)
 
