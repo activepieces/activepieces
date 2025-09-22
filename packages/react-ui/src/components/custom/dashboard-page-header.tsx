@@ -2,6 +2,7 @@ import { VideoIcon } from 'lucide-react';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
 
+import { useEmbedding } from '../embed-provider';
 import { Button } from '../ui/button';
 
 import TutorialsDialog, { TabType } from './tutorials-dialog';
@@ -19,6 +20,10 @@ export const DashboardPageHeader = ({
   beta?: boolean;
   tutorialTab?: TabType;
 }) => {
+  const { embedState } = useEmbedding();
+  if (embedState.hidePageHeader) {
+    return null;
+  }
   return (
     <div className="flex items-center justify-between border-b mb-4 py-2 min-w-full px-4 z-30 -mx-4">
       <div>
