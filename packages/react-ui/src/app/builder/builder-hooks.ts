@@ -98,7 +98,6 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
-  canExitRun: boolean;
   activeDraggingStep: string | null;
   saving: boolean;
   /** change this value to trigger the step form to set its values from the step */
@@ -187,13 +186,7 @@ export type BuilderState = {
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  | 'flow'
-  | 'flowVersion'
-  | 'readonly'
-  | 'run'
-  | 'canExitRun'
-  | 'sampleData'
-  | 'sampleDataInput'
+  'flow' | 'flowVersion' | 'readonly' | 'run' | 'sampleData' | 'sampleDataInput'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -233,7 +226,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       run: initialState.run,
       saving: false,
       selectedStep: initiallySelectedStep,
-      canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       rightSidebar:
         initiallySelectedStep && !isEmptyTriggerInitiallySelected

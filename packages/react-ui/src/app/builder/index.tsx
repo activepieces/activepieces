@@ -89,23 +89,15 @@ const constructContainerKey = ({
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [
-    setRun,
-    flowVersion,
-    leftSidebar,
-    rightSidebar,
-    run,
-    canExitRun,
-    selectedStep,
-  ] = useBuilderStateContext((state) => [
-    state.setRun,
-    state.flowVersion,
-    state.leftSidebar,
-    state.rightSidebar,
-    state.run,
-    state.canExitRun,
-    state.selectedStep,
-  ]);
+  const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep] =
+    useBuilderStateContext((state) => [
+      state.setRun,
+      state.flowVersion,
+      state.leftSidebar,
+      state.rightSidebar,
+      state.run,
+      state.selectedStep,
+    ]);
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
@@ -185,17 +177,6 @@ const BuilderPage = () => {
 
   return (
     <div className="flex h-full w-full flex-col relative">
-      {run && (
-        <RunDetailsBar
-          canExitRun={canExitRun}
-          run={run}
-          isLoading={isSwitchingToDraftPending}
-          exitRun={() => {
-            socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-            switchToDraft();
-          }}
-        />
-      )}
       <div className="z-50">
         <BuilderHeader />
       </div>
@@ -234,6 +215,17 @@ const BuilderPage = () => {
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
+
+            <RunDetailsBar
+              run={run}
+              isLoading={isSwitchingToDraftPending}
+              exitRun={() => {
+                socket.removeAllListeners(
+                  WebsocketClientEvent.FLOW_RUN_PROGRESS,
+                );
+                switchToDraft();
+              }}
+            />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls

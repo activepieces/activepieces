@@ -57,7 +57,6 @@ const FlowRunPage = () => {
           flow={data.flow}
           flowVersion={data.flow.version}
           readonly={true}
-          canExitRun={false}
           run={data.run}
           sampleData={sampleData ?? {}}
           sampleDataInput={sampleDataInput ?? {}}
