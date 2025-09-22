@@ -3,16 +3,15 @@ import { isNil, JobData } from '@activepieces/shared'
 import { Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { createRedisClient } from '../../database/redis-connection'
+import { redisConnections } from '../../database/redis'
 import { system } from '../../helper/system/system'
-import { jobConsumer } from '../consumer/job-consumer'
-import { ConsumerManager } from '../consumer/types'
+import { jobConsumer } from '../consumer'
 import { redisRateLimiter } from './redis-rate-limiter'
 
 const consumer: Record<string, Worker> = {}
 
 
-export const redisConsumer = (log: FastifyBaseLogger): ConsumerManager => ({
+export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         const sharedConsumers = Object.values(QueueName).map((queueName) => ensureWorkerExists(queueName, log))
         await Promise.all(sharedConsumers)
@@ -43,7 +42,7 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
             await redisRateLimiter(log).onCompleteOrFailedJob(job.data, job.id)
         }
     }, {
-        connection: createRedisClient(),
+        connection: await redisConnections.createNew(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
         concurrency: 60,
         autorun: false,

@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
-import { distributedLock, initializeLock } from './app/helper/lock'
+import { distributedLock } from './app/helper/lock'
 import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
@@ -59,7 +59,7 @@ function setupTimeZone(): void {
 const main = async (): Promise<void> => {
     setupTimeZone()
     if (system.isApp()) {
-        initializeLock()
+        await distributedLock.init()
         let lock: ApLock | undefined
         try {
             lock = await distributedLock.acquireLock({
