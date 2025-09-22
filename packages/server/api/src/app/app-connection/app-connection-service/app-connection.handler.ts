@@ -90,7 +90,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             if (isNil(encryptedAppConnection)) {
                 return encryptedAppConnection
             }
-            appConnection = this.decryptConnection(encryptedAppConnection)
+            appConnection = await this.decryptConnection(encryptedAppConnection)
             if (!this.needRefresh(appConnection, log)) {
                 return appConnection
             }
@@ -98,7 +98,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
             await appConnectionsRepo().update(refreshedAppConnection.id, {
                 status: AppConnectionStatus.ACTIVE,
-                value: encryptUtils.encryptObject(refreshedAppConnection.value),
+                value: await encryptUtils.encryptObject(refreshedAppConnection.value),
             })
             return refreshedAppConnection
         }
@@ -117,10 +117,10 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         }
         return appConnection
     },
-    decryptConnection(
+    async decryptConnection(
         encryptedConnection: AppConnectionSchema,
-    ): AppConnection {
-        const value = encryptUtils.decryptObject<AppConnectionValue>(encryptedConnection.value)
+    ): Promise<AppConnection> {
+        const value = await encryptUtils.decryptObject<AppConnectionValue>(encryptedConnection.value)
         const connection: AppConnection = {
             ...encryptedConnection,
             value,
