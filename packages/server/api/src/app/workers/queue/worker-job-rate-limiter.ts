@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ExecuteFlowJobData, isNil, JobData, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, isNil, JobData, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
@@ -21,6 +21,9 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return
         }
         const castedJob = data as ExecuteFlowJobData
+        if(castedJob.environment === RunEnvironment.TESTING) {
+            return
+        }
 
         const setKey = projectSetKey(castedJob.projectId)
         const redisConnection = await redisConnections.useExisting()
@@ -50,6 +53,12 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         shouldRateLimit: boolean
     }> {
         if (isNil(data.projectId) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
+            return {
+                shouldRateLimit: false,
+            }
+        }
+        const castedJob = data as ExecuteFlowJobData
+        if(castedJob.environment === RunEnvironment.TESTING) {
             return {
                 shouldRateLimit: false,
             }
