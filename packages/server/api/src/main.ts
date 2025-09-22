@@ -59,7 +59,6 @@ function setupTimeZone(): void {
 const main = async (): Promise<void> => {
     setupTimeZone()
     if (system.isApp()) {
-        await distributedLock.init()
         let lock: ApLock | undefined
         try {
             lock = await distributedLock.acquireLock({

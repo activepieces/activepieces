@@ -71,6 +71,10 @@ const linkPackages = async (
     packages: Record<string, string>,
     log: FastifyBaseLogger,
 ): Promise<void> => {
+    const pathExists = await fileSystemUtils.fileExists(linkPath)
+    if (!pathExists) {
+        return
+    }
     const cache = cacheState(projectPath)
     if (await cache.cacheCheckState(packageName) === CacheState.READY) {
         return

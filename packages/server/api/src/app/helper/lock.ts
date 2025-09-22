@@ -1,25 +1,16 @@
 import { ApLock, exceptionHandler } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
+import { Mutex } from 'async-mutex'
 import { FastifyBaseLogger } from 'fastify'
-import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { redisConnections } from '../database/redis'
 
-let redLock: RedLock
-let redisConnection: Redis
+const lockMutex = new Mutex()
 
 export const distributedLock = {
-    init: async (): Promise<void> => {
-        redisConnection = await redisConnections.createNew()
-        redLock = new RedLock([redisConnection], {
-            driftFactor: 0.01,
-            retryCount: 30,
-            retryDelay: 2000,
-            retryJitter: 200,
-            automaticExtensionThreshold: 500,
-        })
-    },
     acquireLock: async ({ key, timeout = 3000, log }: AcquireLockParams): Promise<ApLock> => {
         try {
+            const redLock = await getOrCreateRedLock()
             return await redLock.acquire([key], timeout, {
                 retryCount: Math.ceil(timeout / 2000) * 2,
                 retryDelay: 2000,
@@ -30,6 +21,22 @@ export const distributedLock = {
             throw e
         }
     },
+}
+
+let _redLock: RedLock
+
+function getOrCreateRedLock(): Promise<RedLock> {
+    return lockMutex.runExclusive(async () => {
+        if (!isNil(_redLock)) {
+            return _redLock
+        }
+        const redisConnection = await redisConnections.createNew()
+        _redLock = new RedLock([redisConnection], {
+            driftFactor: 0.01,
+            retryCount: 30,
+        })
+        return _redLock
+    })
 }
 
 

@@ -1,82 +1,33 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, assertNull, ExecuteFlowJobData, isNil, JobData, WorkerJobType } from '@activepieces/shared'
-import { Queue, Worker } from 'bullmq'
-import dayjs from 'dayjs'
-
+import { ExecuteFlowJobData, isNil, JobData, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Redis } from 'ioredis'
 import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
-import { jobQueue } from '../queue/job-queue'
-import { AddJobParams, JobType, RATE_LIMIT_PRIORITY } from '../queue/queue-manager'
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 
-const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
-const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const FLOW_TIMEOUT_IN_MILLISECONDS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
 
-let redis: Redis
-let worker: Worker | null = null
-let queue: Queue | null = null
 
 const projectSetKey = (projectId: string): string => `active_jobs_set:${projectId}`
 
-export const redisRateLimiter = (log: FastifyBaseLogger) => ({
-
-    async init(): Promise<void> {
-        assertNull(queue, 'queue is not null')
-        assertNull(worker, 'worker is not null')
-        redis = await redisConnections.useExisting()
-        queue = new Queue(
-            RATE_LIMIT_QUEUE_NAME,
-            {
-                connection: await redisConnections.createNew(),
-                defaultJobOptions: {
-                    attempts: 5,
-                    backoff: {
-                        type: 'exponential',
-                        delay: EIGHT_MINUTES_IN_MILLISECONDS,
-                    },
-                    removeOnComplete: true,
-                },
-            },
-        )
-        await queue.waitUntilReady()
-
-        worker = new Worker<AddJobParams<JobType>>(RATE_LIMIT_QUEUE_NAME,
-            async (job) => jobQueue(log).add({
-                ...job.data,
-                priority: RATE_LIMIT_PRIORITY,
-            })
-            , {
-                connection: await redisConnections.createNew(),
-                maxStalledCount: 5,
-                concurrency: 5,
-            })
-        await worker.waitUntilReady()
-    },
-
-    async rateLimitJob(params: AddJobParams<JobType>): Promise<void> {
-        assertNotNullOrUndefined(queue, 'Queue is not initialized')
-        await queue.add(params.id, params, {
-            delay: dayjs.duration(15, 'seconds').asMilliseconds(),
-        })
-    },
-
+export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
     async onCompleteOrFailedJob(data: JobData, jobId: string | undefined): Promise<void> {
         if (!RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId)) {
             return
         }
         const castedJob = data as ExecuteFlowJobData
+        if(castedJob.environment === RunEnvironment.TESTING) {
+            return
+        }
 
         const setKey = projectSetKey(castedJob.projectId)
-
-        await redis.eval(`
+        const redisConnection = await redisConnections.useExisting()
+        await redisConnection.eval(`
         local setKey = KEYS[1]
         local jobId = ARGV[1]
         
@@ -98,26 +49,26 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         jobId,
         )
     },
-
-    async getQueue(): Promise<Queue> {
-        assertNotNullOrUndefined(queue, 'Queue is not initialized')
-        return queue
-    },
-
-    async shouldBeLimited(projectId: string | undefined, jobId: string): Promise<{
+    async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
     }> {
-        if (isNil(projectId) || !PROJECT_RATE_LIMITER_ENABLED) {
+        if (isNil(data.projectId) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
+            return {
+                shouldRateLimit: false,
+            }
+        }
+        const castedJob = data as ExecuteFlowJobData
+        if(castedJob.environment === RunEnvironment.TESTING) {
             return {
                 shouldRateLimit: false,
             }
         }
 
-        const setKey = projectSetKey(projectId)
+        const setKey = projectSetKey(data.projectId)
         const currentTime = Date.now()
         const jobWithTimestamp = `${jobId}:${currentTime}`
-
-        const result = await redis.eval(
+        const redisConnection = await redisConnections.useExisting()
+        const result = await redisConnection.eval(
             `
     local setKey = KEYS[1]
     local currentTime = tonumber(ARGV[1])
@@ -128,12 +79,19 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
     -- Get all members of the set
     local members = redis.call('SMEMBERS', setKey)
     
-    -- Clean up old jobs
+    -- Clean up old jobs and check if job already exists
+    local jobIdToCheck = string.match(newJobEntry, '^([^:]+):')
     for i = 1, #members do
         local member = members[i]
         local timestamp = string.match(member, ':(%d+)$')
+        local existingJobId = string.match(member, '^([^:]+):')
+        
+        -- Clean up old jobs
         if timestamp and (currentTime - tonumber(timestamp)) > timeoutMs then
             redis.call('SREM', setKey, member)
+        -- Check if the job already exists in the set
+        elseif existingJobId == jobIdToCheck then
+            return 0  -- fixed
         end
     end
     
@@ -141,14 +99,14 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
     local currentSize = redis.call('SCARD', setKey)
     
     if currentSize >= maxJobs then
-        return { 1, currentSize }  -- Should rate limit
+        return 1  -- Should rate limit
     end
     
     -- Add new job with timestamp
     redis.call('SADD', setKey, newJobEntry)
     redis.call('EXPIRE', setKey, math.ceil(timeoutMs / 1000))
     
-    return { 0, currentSize + 1 }  -- Should not rate limit
+    return 0  -- Should not rate limit
 `,
             1,
             setKey,
@@ -156,12 +114,10 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             FLOW_TIMEOUT_IN_MILLISECONDS.toString(),
             MAX_CONCURRENT_JOBS_PER_PROJECT.toString(),
             jobWithTimestamp,
-        ) as [number, number]
-
-        const [shouldRateLimit] = result
+        ) as number
 
         return {
-            shouldRateLimit: shouldRateLimit === 1,
+            shouldRateLimit: result === 1,
         }
     },
 
