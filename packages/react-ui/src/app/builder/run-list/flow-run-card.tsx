@@ -1,7 +1,7 @@
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Eye, Redo, RefreshCcw, RotateCw } from 'lucide-react';
+import { Eye, Repeat } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
@@ -18,6 +18,11 @@ import {
   DropdownMenuContent,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -98,7 +103,7 @@ const FlowRunCard = React.memo(
             strategy: retryStrategy,
           });
           const populatedFlow = await flowsApi.get(run.flowId, {
-            versionId: run.flowVersionId,
+            versionId: updatedRun.flowVersionId,
           });
           return {
             run: updatedRun,
@@ -162,12 +167,10 @@ const FlowRunCard = React.memo(
         </div>
         <div className="ml-auto font-medium">
           {(isFetchingRun || isRetryingRun) && (
-            <Button variant="ghost">
-              <LoadingSpinner className="size-4"></LoadingSpinner>
-            </Button>
+            <LoadingSpinner className="size-4"></LoadingSpinner>
           )}
 
-          {!isFetchingRun && !isRetryingRun && isFailedState(run.status) && (
+          {!isFetchingRun && !isRetryingRun && (
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToRetryRun}
             >
@@ -176,24 +179,29 @@ const FlowRunCard = React.memo(
                 open={isRetryDropdownOpen}
                 onOpenChange={setIsRetryDropdownOpen}
               >
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="ghost"
-                    size={'icon'}
-                    className={cn(
-                      'group-hover:opacity-100 opacity-0 rounded-full bg-accent drop-shadow-md',
-                      {
-                        'opacity-100': isRetryDropdownOpen,
-                      },
-                    )}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                  >
-                    <RefreshCcw className="w-4 h-4"></RefreshCcw>
-                  </Button>
-                </DropdownMenuTrigger>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <DropdownMenuTrigger>
+                      <Button
+                        variant="ghost"
+                        size={'icon'}
+                        className={cn(
+                          'group-hover:opacity-100 opacity-0 rounded-full bg-accent drop-shadow-md',
+                          {
+                            'opacity-100': isRetryDropdownOpen,
+                          },
+                        )}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Repeat className="w-4 h-4"></Repeat>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('Retry run')}</TooltipContent>
+                </Tooltip>
                 <DropdownMenuContent>
                   <DropdownMenuItem
                     disabled={!userHasPermissionToRetryRun}
@@ -208,29 +216,29 @@ const FlowRunCard = React.memo(
                     className="cursor-pointer"
                   >
                     <div className="flex flex-row gap-2 items-center">
-                      <RotateCw className="h-4 w-4" />
-                      <span>{t('on latest version')}</span>
+                      <span>{t('On latest version')}</span>
                     </div>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!isRetryingRun) {
-                        retryRun({
-                          run,
-                          retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                        });
-                      }
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex flex-row gap-2 items-center">
-                      <Redo className="h-4 w-4" />
-                      <span>{t('from failed step')}</span>
-                    </div>
-                  </DropdownMenuItem>
+                  {isFailedState(run.status) && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!isRetryingRun) {
+                          retryRun({
+                            run,
+                            retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                          });
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <span>{t('From failed step')}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </PermissionNeededTooltip>

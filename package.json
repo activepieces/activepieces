@@ -279,6 +279,7 @@
     "react-textarea-autosize": "8.5.5",
     "react-use": "17.5.1",
     "recharts": "2.12.7",
+    "redis-memory-server": "0.13.0",
     "redlock": "5.0.0-beta.2",
     "remark-breaks": "4.0.0",
     "remark-gfm": "4.0.0",

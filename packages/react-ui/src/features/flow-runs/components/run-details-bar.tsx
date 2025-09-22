@@ -9,6 +9,7 @@ import {
   ApFlagId,
   FlowRun,
   FlowRunStatus,
+  isNil,
   Permission,
 } from '@activepieces/shared';
 
@@ -96,7 +97,7 @@ const RunDetailsBar = React.memo(
                       memoryLimit ?? -1,
                     )}
                   </span>
-                  {run.tasks && (
+                  {!isNil(run.tasks) && run.tasks > 0 && (
                     <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium flex-shrink-0">
                       {run.tasks} {t('tasks')}
                     </span>
