@@ -78,6 +78,25 @@ async function fetchAllBases({
   return allBases;
 }
 
+async function fetchBase({
+  token,
+  baseId,
+}: {
+  token: string;
+  baseId: string;
+}): Promise<AirtableBase> {
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `https://api.airtable.com/v0/meta/bases/${baseId}`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token,
+    },
+  };
+  const response = await httpClient.sendRequest<AirtableBase>(request);
+  return response.body;
+}
+
 async function listRecords({
   token,
   baseId,
@@ -320,7 +339,7 @@ async function addCommentToRecord({
 
   const response = await httpClient.sendRequest<AirtableComment>(request);
 
-  if (response.status === 200) {
+  if (response.status === 200 || response.status === 201) {
     return response.body;
   }
   return response;
@@ -354,7 +373,7 @@ async function createBase({
   const response =
     await httpClient.sendRequest<AirtableCreateBaseResponse>(request);
 
-  if (response.status === 200) {
+  if (response.status === 200 || response.status === 201) {
     return response.body;
   }
   return response;
@@ -395,7 +414,7 @@ async function createTable({
 
   const response = await httpClient.sendRequest<AirtableTable>(request);
 
-  if (response.status === 200) {
+  if (response.status === 200 || response.status === 201) {
     return response.body;
   }
   return response;
@@ -433,6 +452,47 @@ export const airtableCommon = {
           placeholder: 'Please check your permission scope',
         };
       }
+    },
+  }),
+
+  workspaceId: Property.Dropdown<string>({
+    displayName: 'Workspace',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account',
+        };
+      }
+      // Although there is no direct way to get a list of workspaces,
+      // we can get a list of bases and then fetch each base to get the workspace id.
+      const bases = await fetchAllBases({
+        token: auth as string,
+      });
+
+      const workspacePromises = bases.map((base) =>
+        fetchBase({ token: auth as string, baseId: base.id })
+      );
+      const basesWithWorkspaces = await Promise.all(workspacePromises);
+
+      const workspaces = basesWithWorkspaces.reduce((acc, base) => {
+        if (base.workspaceId) {
+          // Since we don't have the workspace name, we will use the ID as the name.
+          acc[base.workspaceId] = base.workspaceId;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+
+      return {
+        disabled: false,
+        options: Object.entries(workspaces).map(([id, name]) => ({
+          label: name,
+          value: id,
+        })),
+      };
     },
   }),
 
@@ -526,8 +586,7 @@ export const airtableCommon = {
   recordId: Property.ShortText({
     displayName: 'Record ID',
     required: true,
-    description:
-      'The ID of the record you want to update. You can find the record ID by clicking on the record and then clicking on the share button. The ID will be in the URL.',
+    description: 'The ID of the record.',
   }),
 
   fields: Property.DynamicProperties({
@@ -758,4 +817,5 @@ export const airtableCommon = {
   createBase,
   createTable,
   listRecords,
+  fetchBase,
 };

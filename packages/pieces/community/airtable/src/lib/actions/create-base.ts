@@ -9,12 +9,7 @@ export const airtableCreateBaseAction = createAction({
   displayName: 'Create Base',
   description: 'Create a new base with a specified table structure.',
   props: {
-    workspaceId: Property.ShortText({
-      displayName: 'Workspace ID',
-      description:
-        "You can find the Workspace ID by navigating to the workspace's page; the ID starts with 'wsp' in the URL.",
-      required: true,
-    }),
+    workspaceId: airtableCommon.workspaceId,
     name: Property.ShortText({
       displayName: 'Base Name',
       description: 'The name for the new base.',
@@ -23,7 +18,7 @@ export const airtableCreateBaseAction = createAction({
     tables: Property.Json({
       displayName: 'Tables',
       description:
-        'A JSON array of tables to create in the new base. At least one table and one field are required.',
+        'Define the tables for the new base. Use the default value as a template. The first field for each table will be its primary field.',
       required: true,
       defaultValue: [
         {

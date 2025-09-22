@@ -4,6 +4,7 @@ export interface AirtableBase {
   id: string;
   name: string;
   permissionLevel: AirtablePermissionLevel;
+  workspaceId?: string;
 }
 
 export interface AirtableRecord {
@@ -113,6 +114,16 @@ export interface AirtableComment {
       email?: string;
     }
   >;
+  reactions?: Array<{
+    emoji: {
+      unicodeCharacter: string;
+    };
+    reactingUser: {
+      userId: string;
+      email: string;
+      name?: string;
+    };
+  }>;
 }
 
 export interface AirtableFieldConfig {
