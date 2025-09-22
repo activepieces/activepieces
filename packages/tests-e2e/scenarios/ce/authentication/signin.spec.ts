@@ -1,4 +1,4 @@
-import { test, expect } from '../../fixtures';
+import { test, expect } from '../../../fixtures';
 
 test.describe('Authentication - Sign In', () => {
   test('should successfully sign in with existing user and redirect to flows page', async ({ page, authenticationPage, flowsPage, users }) => {

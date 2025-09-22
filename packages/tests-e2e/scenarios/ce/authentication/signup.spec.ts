@@ -1,4 +1,4 @@
-import { test, expect } from '../../fixtures';
+import { test, expect } from '../../../fixtures';
 
 test.describe('Authentication - Sign Up', () => {
   test('should successfully sign up with valid data and redirect to flows page', async ({ page, authenticationPage, flowsPage }) => {

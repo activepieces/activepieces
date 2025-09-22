@@ -1,0 +1,157 @@
+name: E2E Tests
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled]
+    branches:
+      - main
+      - gh-actions-test-branch
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-label:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run-e2e: ${{ steps.check-if-pr-has-label.outputs.run-e2e }}
+    steps:
+      - name: Check if PR exists with ready-for-e2e label for this SHA
+        id: check-if-pr-has-label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Always run on manual workflow dispatch
+            if (context.eventName === 'workflow_dispatch') {
+              core.setOutput('run-e2e', true);
+              return;
+            }
+            
+            let labels = [];
+            if (context.payload.pull_request) {
+              labels = context.payload.pull_request.labels;
+            } else {
+              try {
+                const sha = context.sha;
+                const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  commit_sha: sha
+                });
+                if (prs.length === 0) {
+                  core.setOutput('run-e2e', false);
+                  return;
+                }
+                const pr = prs[0];
+                labels = pr.labels;
+              } catch (e) {
+                core.setOutput('run-e2e', false);
+                return;
+              }
+            }
+            const labelFound = labels.map(l => l.name).includes('ready-for-e2e');
+            core.setOutput('run-e2e', labelFound);
+
+  test-e2e-cloud:
+    needs: check-label
+    if: needs.check-label.outputs.should-run-e2e == 'true'
+    uses: ./.github/workflows/tests-e2e-cloud.yml
+
+  test-e2e-ee:
+    needs: check-label
+    if: needs.check-label.outputs.should-run-e2e == 'true'
+    uses: ./.github/workflows/tests-e2e-ee.yml
+
+  test-e2e-ce:
+    needs: check-label
+    if: needs.check-label.outputs.should-run-e2e == 'true'
+    uses: ./.github/workflows/tests-e2e-ce.yml
+
+  notify-discord-on-failure:
+    needs: [test-e2e-cloud, test-e2e-ee, test-e2e-ce]
+    if: always() && (needs.test-e2e-cloud.result == 'failure' || needs.test-e2e-ee.result == 'failure' || needs.test-e2e-ce.result == 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          pattern: "*"
+          merge-multiple: false
+
+      - name: Send Discord notification on E2E failure
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          # Determine which tests failed
+          failed_tests=""
+          if [[ "${{ needs.test-e2e-cloud.result }}" == "failure" ]]; then
+            failed_tests="${failed_tests}• Cloud Edition\n"
+          fi
+          if [[ "${{ needs.test-e2e-ee.result }}" == "failure" ]]; then
+            failed_tests="${failed_tests}• Enterprise Edition\n"
+          fi
+          if [[ "${{ needs.test-e2e-ce.result }}" == "failure" ]]; then
+            failed_tests="${failed_tests}• Community Edition\n"
+          fi
+          # Remove trailing newline
+          failed_tests=$(echo -e "$failed_tests" | sed 's/\\n$//')
+          
+          # Get PR information
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            pr_link="https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+            pr_title="${{ github.event.pull_request.title }}"
+            pr_author="${{ github.event.pull_request.user.login }}"
+            context="**PR:** [$pr_title]($pr_link) by @$pr_author"
+          else
+            pr_link="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            context="**Manual run:** [View workflow run]($pr_link)"
+          fi
+          
+          # Create Discord embed
+          cat << EOF > discord_payload.json
+          {
+            "embeds": [
+              {
+                "title": "🚨 E2E Tests Failed",
+                "description": "$context",
+                "color": 15158332,
+                "fields": [
+                  {
+                    "name": "Failed Tests",
+                    "value": "$failed_tests",
+                    "inline": false
+                  },
+                  {
+                    "name": "Artifacts",
+                    "value": "[Download test reports and results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                    "inline": false
+                  }
+                ],
+                "footer": {
+                  "text": "ActivePieces E2E Tests"
+                },
+                "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+              }
+            ]
+          }
+          EOF
+          
+          # Send to Discord
+          curl -H "Content-Type: application/json" \
+               -d @discord_payload.json \
+               "$DISCORD_WEBHOOK_URL"
+      
+      - name: Re-upload consolidated artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-artifacts-all
+          path: ./artifacts/
+          retention-days: 30
