@@ -27,7 +27,7 @@ import {
 } from 'server-worker'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { jobQueue } from '../../workers/queue'
+import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'

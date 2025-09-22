@@ -3,11 +3,11 @@ import { ApId, isNil } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { createRedisClient } from '../../database/redis-connection'
+import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { machineService } from '../machine/machine-service'
-import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager } from '../queue/queue-manager'
+import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager } from './queue-manager'
 import { RATE_LIMIT_WORKER_JOB_TYPES, redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
@@ -16,7 +16,7 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 
 export const bullMqGroups: Record<string, Queue> = {}
 
-export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
+export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
         const queue = await ensureQueueExists(queueName)
         await queue.setGlobalConcurrency(concurrency)
@@ -84,7 +84,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
         queueName,
         {
             telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
-            connection: createRedisClient(),
+            connection: await redisConnections.createNew(),
             defaultJobOptions: {
                 attempts: 5,
                 backoff: {
