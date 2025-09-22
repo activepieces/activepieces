@@ -1,5 +1,4 @@
 {
-  "Acumbamail": "Acumbamail",
   "Easily send email and SMS campaigns and boost your business": "Envíe fácilmente campañas de correo electrónico y SMS e impulse su negocio",
   "\n  To obtain your Auth Token, follow these steps:\n  1. Login to your Acumbamail account.\n  2. Go to **https://acumbamail.com/apidoc/**.\n  3. Under **Customer identifier**, you can find auth token;\n  ": "\n  Para obtener tu token de identificación, sigue estos pasos:\n  1. Inicia sesión en tu cuenta de Acumbamail.\n  2. Vaya a **https://acumbamail.com/apidoc/**.\n  3. Bajo **identificador de cliente**, puede encontrar el token de auth;\n  ",
   "Add/Update Subscriber": "Añadir/Actualizar suscriptor",

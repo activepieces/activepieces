@@ -1,5 +1,4 @@
 {
-  "Twilio": "Twilio",
   "Cloud communications platform for building SMS, Voice & Messaging applications": "SMS、音声およびメッセージングアプリケーションを構築するためのクラウド通信プラットフォーム",
   "Account SID": "アカウント SID",
   "The account SID to use to connect to Twilio": "Twilio に接続するために使用するアカウント SID",

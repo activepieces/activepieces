@@ -1,5 +1,4 @@
 {
-  "Twilio": "Twilio",
   "Cloud communications platform for building SMS, Voice & Messaging applications": "Plataforma de comunicações na nuvem para construir aplicativos de SMS, voz e mensagens",
   "Account SID": "SID da Conta",
   "The account SID to use to connect to Twilio": "O SID da conta a ser usada para conectar ao Twilio",

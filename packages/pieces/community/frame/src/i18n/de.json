@@ -1,5 +1,4 @@
 {
-  "Frame": "Frame",
   "Collaborative workspace platform": "Kollaborative Workspace-Plattform",
   "\n**Enable Basic Authentication:**\n\n1. Go to https://developer.frame.io/app/tokens\n2. Click on 'Create a Token'\n3. Provide a Description for your use.\n4. Depending on your usage, you may 'Select all scopes'\n5. Submit the form\n6. The token will be created. Copy the token and paste it in the 'Token' input\n": "\n**Aktiviere Basic Authentication:**\n\n1. Gehe zu https://developer.frame.io/app/tokens\n2. Klicke auf 'Neues Token'\n3. Gib eine Beschreibung für deine Verwendung an.\n4. Abhängig von Ihrer Nutzung können Sie \"Alle Bereiche auswählen\"\n5 senden. Senden Sie das Formular\nab. Der Token wird erstellt. Kopieren Sie das Token und fügen Sie es in die 'Token' Eingabe\n ein",
   "Custom API Call": "Eigener API-Aufruf",

@@ -1,5 +1,4 @@
 {
-  "Netlify": "Red",
   "Netlify is a platform for building and deploying websites and apps.": "Netlify es una plataforma para construir y desplegar sitios web y aplicaciones.",
   "\nTo authenticate with Netlify:\n\n1. Go to your Netlify user settings\n2. Navigate to \"Applications\" → \"OAuth applications\"\n3. Click \"New OAuth application\"\n4. Add https://cloud.activepieces.com/redirect to authorized redirect URIs\n5. Copy the Client ID and Client Secret\n6. Use the OAuth2 flow below\n\n**Note:** If your team uses SAML SSO, you must grant access to the team when generating your token.\n": "\nTo authenticate with Netlify:\n\n1. Go to your Netlify user settings\n2. Navigate to \"Applications\" → \"OAuth applications\"\n3. Click \"New OAuth application\"\n4. Add https://cloud.activepieces.com/redirect to authorized redirect URIs\n5. Copy the Client ID and Client Secret\n6. Use the OAuth2 flow below\n\n**Note:** If your team uses SAML SSO, you must grant access to the team when generating your token.\n",
   "Start Deploy": "Iniciar despliegue",

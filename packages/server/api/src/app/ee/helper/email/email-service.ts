@@ -65,6 +65,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
+        if (emails.length === 0) {
+            return
+        }
+
         await emailSender(log).send({
             emails,
             platformId,
@@ -92,9 +96,12 @@ export const emailService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        // TODO remove the hardcoded limit
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+
+        if (emails.length === 0) {
+            return
+        }
 
         await emailSender(log).send({
             emails,
@@ -180,6 +187,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
             lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
         }))
 
+        if (emails.length === 0) {
+            return
+        }
+
         await emailSender(log).send({
             emails,
             platformId: job.platformId,
@@ -214,7 +225,11 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         const project = await projectService.getOneOrThrow(projectId)
-        
+
+        if (emails.length === 0) {
+            return
+        }
+
         await emailSender(log).send({
             emails,
             platformId: project.platformId,

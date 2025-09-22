@@ -1,5 +1,4 @@
 {
-  "Help Scout": "Hilfe Späher",
   "\n  1. Click on your profile icon at the top right and select **Your Profile**.\n  2. Go to **My Apps** and click on **Create App**.\n  3. Provide **App Name** and use below redirect URL.\n  4. Copy the **App ID** and **App Secret**, and provide them as the **Client ID** and **Client Secret**, respectively.": "\n  1. Klicke auf dein Profilsymbol oben rechts und wähle **Dein Profil**.\n  2. Gehen Sie zu **Meine Apps** und klicken Sie auf **App erstellen**.\n  3. Geben Sie **App Name** ein und verwenden Sie unten die Weiterleitungs-URL.\n  4. Kopiere die **App ID** und **App Secret** und gib sie als **Client ID** bzw. **Client Secret** an.",
   "Create Conversation": "Unterhaltung erstellen",
   "Send Reply": "Antwort senden",

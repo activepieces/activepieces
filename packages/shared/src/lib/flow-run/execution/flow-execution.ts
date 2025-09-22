@@ -97,17 +97,23 @@ export const FlowRunResponse = Type.Union([
 export type FlowRunResponse = Static<typeof FlowRunResponse>
 
 
-export const isFlowUserTerminalState = (status: FlowRunStatus): boolean => {
-    return status === FlowRunStatus.SUCCEEDED
-        || status === FlowRunStatus.TIMEOUT
-        || status === FlowRunStatus.FAILED
-        || status === FlowRunStatus.QUOTA_EXCEEDED
-        || status === FlowRunStatus.MEMORY_LIMIT_EXCEEDED
+export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status: FlowRunStatus, ignoreInternalError: boolean }): boolean => {
+    switch (status) {
+        case FlowRunStatus.SUCCEEDED:
+        case FlowRunStatus.TIMEOUT:
+        case FlowRunStatus.FAILED:
+        case FlowRunStatus.QUOTA_EXCEEDED:
+        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
+            return true
+        case FlowRunStatus.INTERNAL_ERROR:
+            return !ignoreInternalError
+        case FlowRunStatus.QUEUED:
+        case FlowRunStatus.RUNNING:
+        case FlowRunStatus.PAUSED:
+            return false  
+    }
 }
 
-export const isFlowStateTerminal = (status: FlowRunStatus): boolean => {
-    return isFlowUserTerminalState(status) || status === FlowRunStatus.INTERNAL_ERROR
-}
 
 export const FAILED_STATES = [
     FlowRunStatus.FAILED,

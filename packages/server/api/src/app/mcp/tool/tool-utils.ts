@@ -1,10 +1,10 @@
 import { ActionBase, PieceProperty, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 
-import { UserInteractionJobType } from '@activepieces/server-shared'
-import { isNil, PiecePackage } from '@activepieces/shared'
+import { isNil, PiecePackage, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { z } from 'zod' 
+import { projectService } from '../../project/project-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpUtils } from '../mcp-utils'
 
@@ -143,9 +143,11 @@ async function buildZodSchemaForPieceProperty({ property, logger, input, project
         }
     }
 
+    const platformId = await projectService.getPlatformId(projectId)
     const resolvedPropertyData = await userInteractionWatcher(logger)
         .submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
-        jobType: UserInteractionJobType.EXECUTE_PROPERTY,
+        jobType: WorkerJobType.EXECUTE_PROPERTY,
+        platformId,
         projectId,
         propertyName,
         actionOrTriggerName: actionMetadata.name,

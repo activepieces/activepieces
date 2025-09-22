@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-assemblyai",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "scripts": {
     "generate": "tsx ./scripts/generateFromSpec.ts"
   },

@@ -1,5 +1,4 @@
 {
-  "Queue": "File d'attente",
   "A piece that allows you to push items into a queue, providing a way to throttle requests or process data in a First-In-First-Out (FIFO) manner.": "Une pièce qui vous permet de pousser des éléments dans une file d’attente, fournissant un moyen de régulariser les requêtes ou de traiter les données d’une manière première entrée dans la première sortie (FIFO).",
   "Push to Queue": "Envoyer à la file d'attente",
   "Pull items from queue": "Tirer des éléments de la file d'attente",

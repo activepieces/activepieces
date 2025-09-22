@@ -1,5 +1,4 @@
 {
-  "Avoma": "Avoma",
   "Avoma is an AI Meeting Assistant that automatically records, transcribes, and summarizes your meetings.": "Avoma est un assistant de réunion d’AI qui enregistre automatiquement, transcrit et résume vos réunions.",
   "Your Avoma API Key (Bearer token). Generate it from your Avoma API Integration settings: https://help.avoma.com/api-integration-for-avoma": "Votre clé d'API Avoma (jeton Bearer Token). Générez-la à partir de vos paramètres d'intégration d'API Avoma : https://help.avoma.com/api-integration-for-avoma",
   "Create Call": "Créer un appel",
