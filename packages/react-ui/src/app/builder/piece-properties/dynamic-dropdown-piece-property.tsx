@@ -44,7 +44,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
     const newRefreshers = [...props.refreshers, 'auth'];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
       disabled: false,
-      placeholder: t('Select an option asc'),
+      placeholder: t('Select an option'),
       options: [],
     });
     const { propertyLoadingFinished, propertyLoadingStarted } = useContext(

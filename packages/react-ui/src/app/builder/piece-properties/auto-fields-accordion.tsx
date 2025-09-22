@@ -29,23 +29,25 @@ const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFi
 
   const handleAutoFillAll = () => {
     Object.entries(props).forEach(([propertyName]) => {
-      propertyUtils.handleDynamicValueToggleChange(
+      propertyUtils.handleDynamicValueToggleChange({
         form,
-        autoPropertiesUtils.determinePropertyExecutionType(propertyName, props[propertyName], props),
+        mode: autoPropertiesUtils.determinePropertyExecutionType(propertyName, props[propertyName], props),
+        property: props[propertyName],
         propertyName,
-        `${prefixValue}.${propertyName}`
-      );
+        inputName: `${prefixValue}.${propertyName}`,
+      });
     });
   };
 
   const handleClearAll = () => {
     Object.entries(props).forEach(([propertyName]) => {
-      propertyUtils.handleDynamicValueToggleChange(
+      propertyUtils.handleDynamicValueToggleChange({
         form,
-        PropertyExecutionType.MANUAL,
+        mode: PropertyExecutionType.MANUAL,
+        property: props[propertyName],
         propertyName,
-        `${prefixValue}.${propertyName}`
-      );
+        inputName: `${prefixValue}.${propertyName}`,  
+      });
     });
   };
 
@@ -125,12 +127,13 @@ const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFi
                         <TooltipTrigger asChild>
                           <div className="flex items-center gap-2 w-full" onClick={(e) => {
                               e.stopPropagation();
-                              propertyUtils.handleDynamicValueToggleChange(
+                              propertyUtils.handleDynamicValueToggleChange({
                                 form,
-                                PropertyExecutionType.MANUAL,
+                                mode: PropertyExecutionType.MANUAL,
                                 propertyName,
-                                `${prefixValue}.${propertyName}`
-                              );
+                                inputName: `${prefixValue}.${propertyName}`,
+                                property: props[propertyName],
+                              });
                             }}>
                             <div key={propertyName} className="w-full flex items-center justify-between text-xs hover:bg-white transition-all duration-300 py-1 px-2 rounded-sm cursor-pointer border border-slate-300 hover:border-slate-400">
                               <div className="flex items-center gap-2">

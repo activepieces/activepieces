@@ -62,12 +62,13 @@ const AutoDynamicFields = ({
                     const newMode = e
                         ? PropertyExecutionType.DYNAMIC
                         : PropertyExecutionType.MANUAL;
-                    propertyUtils.handleDynamicValueToggleChange(
+                    propertyUtils.handleDynamicValueToggleChange({
                         form,
-                        newMode,
+                        mode: newMode,
+                        property,
                         propertyName,
                         inputName,
-                    );
+                    });
                     }}
                     disabled={disabled}
                     className='p-0 hover:bg-transparent'
@@ -96,12 +97,13 @@ const AutoDynamicFields = ({
                       : isDynamicMode
                       ? PropertyExecutionType.DYNAMIC
                       : PropertyExecutionType.MANUAL;
-                  propertyUtils.handleDynamicValueToggleChange(
+                  propertyUtils.handleDynamicValueToggleChange({
                       form,
-                      newMode,
+                      mode: newMode,
+                      property,
                       propertyName,
                       inputName,
-                  );
+                    });
                   }}
                   disabled={disabled}
                   className='p-0 hover:bg-transparent'

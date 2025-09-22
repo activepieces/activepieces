@@ -20,6 +20,7 @@ import {
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
 import { AutoDynamicFields } from './auto-dynamic-fields';
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 
 type AutoFormFieldWrapperProps = {
@@ -49,7 +50,7 @@ const AutoFormFieldWrapper = ({
   disabled,
   field,
 }: AutoFormFieldWrapperProps) => {
-  const form = useFormContext();
+  const form = useFormContext<FlowAction | FlowTrigger>();
   const inputMode =
     form.getValues().settings?.propertySettings?.[propertyName]?.type;
   const isManuallyMode = inputMode === PropertyExecutionType.MANUAL || inputMode === undefined;
