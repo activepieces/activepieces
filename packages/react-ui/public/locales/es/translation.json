@@ -1181,7 +1181,7 @@
   "Permission Needed": "Se necesita permiso",
   "Draft": "",
   "Published": "",
-  "flowsImported": "flujos importados",
+  "flowsImported": "{flowsCount, plural, =0 {0 flows imported} =1 {1 flow imported} other {# flows imported}}",
   "Template file is invalid": "El archivo de plantilla no es válido",
   "No valid templates found. The following files failed to import: ": "No se encontraron plantillas válidas. Los siguientes archivos fallaron al importar: ",
   "Please select a file first": "Por favor, seleccione un archivo primero",

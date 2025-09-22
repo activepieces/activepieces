@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MessageTooltip } from '@/components/ui/message-tooltip';
-import { toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
@@ -36,20 +35,23 @@ import {
 } from '@activepieces/shared';
 
 import { runsTableColumns } from './columns';
+import {
+  RetriedRunsSnackbar,
+  RUN_IDS_QUERY_PARAM,
+} from './retried-runs-snackbar';
 
 type SelectedRow = {
   id: string;
   status: FlowRunStatus;
 };
-const RUN_IDS_QUERY_PARAM = 'runIds';
 export const RunsTable = () => {
-  const [searchParams,setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
   const [selectedAll, setSelectedAll] = useState(false);
   const [excludedRows, setExcludedRows] = useState<Set<string>>(new Set());
 
   const projectId = authenticationSession.getProjectId()!;
-
+  const [retriedRunsIds, setRetriedRunsIds] = useState<string[]>([]);
   const { data, isLoading } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     staleTime: 0,
@@ -170,14 +172,16 @@ export const RunsTable = () => {
       });
     },
     onSuccess: (runs) => {
-      toast({
-        title: t('Runs retried successfully'),
-        variant: 'default',
-      });
-      navigate(window.location.pathname);
-      setSearchParams({
-        [RUN_IDS_QUERY_PARAM]: runs.map((run) => run.id),
-      }, { replace: true });
+      const runsIds = runs.map((run) => run.id);
+      setRetriedRunsIds(runsIds);
+      const isAlreadyViewingRetriedRuns = searchParams.get(RUN_IDS_QUERY_PARAM);
+      if (isAlreadyViewingRetriedRuns) {
+        navigate(authenticationSession.appendProjectRoutePrefix(`/runs`));
+        setSearchParams({
+          [RUN_IDS_QUERY_PARAM]: runsIds,
+          [LIMIT_QUERY_PARAM]: runsIds.length.toString(),
+        });
+      }
     },
   });
 
@@ -289,18 +293,24 @@ export const RunsTable = () => {
   );
 
   return (
-    <DataTable
-      emptyStateTextTitle={t('No flow runs found')}
-      emptyStateTextDescription={t(
-        'Come back later when your automations start running',
-      )}
-      emptyStateIcon={<History className="size-14" />}
-      columns={columns}
-      page={data}
-      isLoading={isLoading || isFetchingFlows}
-      filters={filters}
-      bulkActions={bulkActions}
-      onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
-    />
+    <div className="relative">
+      <DataTable
+        emptyStateTextTitle={t('No flow runs found')}
+        emptyStateTextDescription={t(
+          'Come back later when your automations start running',
+        )}
+        emptyStateIcon={<History className="size-14" />}
+        columns={columns}
+        page={data}
+        isLoading={isLoading || isFetchingFlows}
+        filters={filters}
+        bulkActions={bulkActions}
+        onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
+      />
+      <RetriedRunsSnackbar
+        retriedRunsIds={retriedRunsIds}
+        clearRetriedRuns={() => setRetriedRunsIds([])}
+      />
+    </div>
   );
 };
