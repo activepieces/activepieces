@@ -12,4 +12,5 @@
     "typescript.tsdk": "node_modules/typescript/lib",
     "javascript.preferences.importModuleSpecifier": "relative",
     "nxConsole.generateAiAgentRules": true,
+    "kiroAgent.configureMCP": "Disabled",
 }
