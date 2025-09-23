@@ -157,6 +157,7 @@ jobs:
           name: e2e-test-artifacts-all
           path: ./artifacts/
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Comment on PR with test results
         if: always() && github.event_name == 'pull_request_target'
