@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
 
@@ -44,6 +45,15 @@ export const findContact = createAction({
     },
     async run(context) {
         const { searchQuery, email, type, tag, limit } = context.propsValue;
+
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            searchQuery: z.string().optional(),
+            email: z.string().email('Invalid email address').optional(),
+            type: z.enum(['person', 'organisation']).optional(),
+            tag: z.string().optional(),
+            limit: z.number().min(1, 'Limit must be at least 1').max(100, 'Limit must be at most 100').optional(),
+        });
 
         const queryParams: Record<string, string> = {};
 

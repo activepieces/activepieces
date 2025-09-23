@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
+import { partyDropdown } from '../common/properties';
 
 export const updateContact = createAction({
     name: 'update_contact',
@@ -9,9 +11,8 @@ export const updateContact = createAction({
     description: 'Update an existing Person or Organisation contact',
     auth: capsuleAuth,
     props: {
-        partyId: Property.ShortText({
-            displayName: 'Party ID',
-            description: 'The ID of the party (person or organisation) to update',
+        partyId: partyDropdown({
+            refreshers: ['auth'],
             required: true,
         }),
         firstName: Property.ShortText({
@@ -149,7 +150,50 @@ export const updateContact = createAction({
         })
     },
     async run(context) {
-        const { partyId, firstName, lastName, organisationName, title, emails, phoneNumbers, addresses, websites, about } = context.propsValue;
+        const props = context.propsValue as {
+            partyId: string;
+            firstName?: string;
+            lastName?: string;
+            organisationName?: string;
+            title?: string;
+            emails?: any[];
+            phoneNumbers?: any[];
+            addresses?: any[];
+            websites?: any[];
+            about?: string;
+        };
+
+        const { partyId, firstName, lastName, organisationName, title, emails, phoneNumbers, addresses, websites, about } = props;
+
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            partyId: z.string().min(1, 'Party ID is required'),
+            firstName: z.string().optional(),
+            lastName: z.string().optional(),
+            organisationName: z.string().optional(),
+            title: z.string().optional(),
+            emails: z.array(z.object({
+                type: z.string().min(1, 'Email type is required'),
+                address: z.string().email('Invalid email address')
+            })).optional(),
+            phoneNumbers: z.array(z.object({
+                type: z.string().min(1, 'Phone type is required'),
+                number: z.string().min(1, 'Phone number is required')
+            })).optional(),
+            addresses: z.array(z.object({
+                type: z.string().min(1, 'Address type is required'),
+                street: z.string().min(1, 'Street is required'),
+                city: z.string().min(1, 'City is required'),
+                state: z.string().optional(),
+                country: z.string().optional(),
+                zip: z.string().optional()
+            })).optional(),
+            websites: z.array(z.object({
+                type: z.string().min(1, 'Website type is required'),
+                url: z.string().url('Invalid URL')
+            })).optional(),
+            about: z.string().optional(),
+        });
 
         const party: Record<string, any> = {};
 

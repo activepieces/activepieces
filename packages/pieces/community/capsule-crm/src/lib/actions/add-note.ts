@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
 
@@ -49,25 +50,33 @@ export const addNote = createAction({
     async run(context) {
         const { entityType, entityId, content, type } = context.propsValue;
 
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            entityType: z.enum(['party', 'opportunity', 'project', 'kase'], { required_error: 'Entity type is required' }),
+            entityId: z.string().min(1, 'Entity ID is required'),
+            content: z.string().min(1, 'Note content cannot be empty'),
+            type: z.enum(['note', 'email', 'phone_call', 'meeting']).optional(),
+        });
+
         const entry: Record<string, any> = {
             content
         };
 
-        if (type) entry.type = type;
+        if (type) entry['type'] = type;
 
         // Associate with the appropriate entity
         switch (entityType) {
             case 'party':
-                entry.party = { id: parseInt(entityId) };
+                entry['party'] = { id: parseInt(entityId) };
                 break;
             case 'opportunity':
-                entry.opportunity = { id: parseInt(entityId) };
+                entry['opportunity'] = { id: parseInt(entityId) };
                 break;
             case 'project':
-                entry.project = { id: parseInt(entityId) };
+                entry['project'] = { id: parseInt(entityId) };
                 break;
             case 'kase':
-                entry.kase = { id: parseInt(entityId) };
+                entry['kase'] = { id: parseInt(entityId) };
                 break;
         }
 

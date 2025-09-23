@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
+import { partyDropdown, milestoneDropdown } from '../common/properties';
 
 export const createOpportunity = createAction({
     name: 'create_opportunity',
@@ -19,14 +21,12 @@ export const createOpportunity = createAction({
             description: 'Detailed description of the opportunity',
             required: false,
         }),
-        partyId: Property.ShortText({
-            displayName: 'Party ID',
-            description: 'ID of the associated party (person or organisation)',
+        partyId: partyDropdown({
+            refreshers: ['auth'],
             required: true,
         }),
-        milestoneId: Property.ShortText({
-            displayName: 'Milestone ID',
-            description: 'ID of the opportunity milestone/stage',
+        milestoneId: milestoneDropdown({
+            refreshers: ['auth'],
             required: true,
         }),
         value: Property.Number({
@@ -69,6 +69,19 @@ export const createOpportunity = createAction({
         })
     },
     async run(context) {
+        const props = context.propsValue as {
+            name: string;
+            description?: string;
+            partyId: string;
+            milestoneId: string;
+            value?: number;
+            currency?: string;
+            expectedCloseDate?: string;
+            probability?: number;
+            durationBasis?: string;
+            duration?: number;
+        };
+
         const {
             name,
             description,
@@ -80,7 +93,18 @@ export const createOpportunity = createAction({
             probability,
             durationBasis,
             duration
-        } = context.propsValue;
+        } = props;
+
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            name: z.string().min(1, 'Opportunity name cannot be empty'),
+            partyId: z.string().min(1, 'Party ID is required'),
+            milestoneId: z.string().min(1, 'Milestone ID is required'),
+            value: z.number().min(0, 'Value must be greater than or equal to 0').optional(),
+            currency: z.string().optional(),
+            probability: z.number().min(0, 'Probability must be between 0 and 100').max(100, 'Probability must be between 0 and 100').optional(),
+            duration: z.number().min(1, 'Duration must be greater than 0').optional(),
+        });
 
         const opportunity: Record<string, any> = {
             name,

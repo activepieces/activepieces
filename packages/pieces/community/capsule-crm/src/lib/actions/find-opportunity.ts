@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
+import { partyDropdown, milestoneDropdown } from '../common/properties';
 
 export const findOpportunity = createAction({
     name: 'find_opportunity',
@@ -14,14 +16,12 @@ export const findOpportunity = createAction({
             description: 'Search term to find opportunities by name or description',
             required: false,
         }),
-        partyId: Property.ShortText({
-            displayName: 'Party ID',
-            description: 'Find opportunities associated with a specific party',
+        partyId: partyDropdown({
+            refreshers: ['auth'],
             required: false,
         }),
-        milestoneId: Property.ShortText({
-            displayName: 'Milestone ID',
-            description: 'Find opportunities at a specific milestone/stage',
+        milestoneId: milestoneDropdown({
+            refreshers: ['auth'],
             required: false,
         }),
         status: Property.StaticDropdown({
@@ -45,13 +45,28 @@ export const findOpportunity = createAction({
         })
     },
     async run(context) {
-        const { searchQuery, partyId, milestoneId, status, limit } = context.propsValue;
+        const { searchQuery, partyId, milestoneId, status, limit } = context.propsValue as {
+            searchQuery?: string;
+            partyId?: string;
+            milestoneId?: string;
+            status?: string;
+            limit?: number;
+        };
+
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            searchQuery: z.string().optional(),
+            partyId: z.string().optional(),
+            milestoneId: z.string().optional(),
+            status: z.enum(['OPEN', 'WON', 'LOST', 'ABANDONED']).optional(),
+            limit: z.number().min(1, 'Limit must be at least 1').max(100, 'Limit must be at most 100').optional(),
+        });
 
         const queryParams: Record<string, string> = {};
 
         if (searchQuery) queryParams['q'] = searchQuery;
-        if (partyId) queryParams['partyId'] = partyId;
-        if (milestoneId) queryParams['milestoneId'] = milestoneId;
+        if (partyId && partyId.trim()) queryParams['partyId'] = partyId.trim();
+        if (milestoneId && milestoneId.trim()) queryParams['milestoneId'] = milestoneId.trim();
         if (status) queryParams['status'] = status;
         if (limit) queryParams['perPage'] = limit.toString();
 

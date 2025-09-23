@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
+import { partyDropdown, opportunityDropdown } from '../common/properties';
 
 export const createProject = createAction({
     name: 'create_project',
@@ -19,14 +21,12 @@ export const createProject = createAction({
             description: 'Detailed description of the project',
             required: false,
         }),
-        partyId: Property.ShortText({
-            displayName: 'Party ID',
-            description: 'ID of the associated party (person or organisation)',
+        partyId: partyDropdown({
+            refreshers: ['auth'],
             required: false,
         }),
-        opportunityId: Property.ShortText({
-            displayName: 'Opportunity ID',
-            description: 'ID of the associated opportunity (optional, but recommended to link with a party)',
+        opportunityId: opportunityDropdown({
+            refreshers: ['auth'],
             required: false,
         }),
         status: Property.StaticDropdown({
@@ -41,11 +41,6 @@ export const createProject = createAction({
                 ]
             }
         }),
-        category: Property.ShortText({
-            displayName: 'Category',
-            description: 'Category or type of the project',
-            required: false,
-        }),
         expectedCloseDate: Property.DateTime({
             displayName: 'Expected Close Date',
             description: 'Expected completion date of the project',
@@ -58,16 +53,36 @@ export const createProject = createAction({
         })
     },
     async run(context) {
+        const props = context.propsValue as {
+            name: string;
+            description?: string;
+            partyId?: string;
+            opportunityId?: string;
+            status?: string;
+            expectedCloseDate?: string;
+            actualCloseDate?: string;
+        };
+
         const {
             name,
             description,
             partyId,
             opportunityId,
             status,
-            category,
             expectedCloseDate,
             actualCloseDate
-        } = context.propsValue;
+        } = props;
+
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            name: z.string().min(1, 'Project name cannot be empty'),
+            description: z.string().optional(),
+            partyId: z.string().optional(),
+            opportunityId: z.string().optional(),
+            status: z.enum(['OPEN', 'COMPLETED', 'CANCELLED']).optional(),
+            expectedCloseDate: z.string().optional(),
+            actualCloseDate: z.string().optional(),
+        });
 
         const project: Record<string, any> = {
             name
@@ -77,17 +92,37 @@ export const createProject = createAction({
         if (partyId) project['party'] = { id: parseInt(partyId) };
         if (opportunityId) project['opportunity'] = { id: parseInt(opportunityId) };
         if (status) project['status'] = status;
-        if (category) project['category'] = category;
         if (expectedCloseDate) project['expectedCloseDate'] = expectedCloseDate;
         if (actualCloseDate) project['actualCloseDate'] = actualCloseDate;
 
-        const response = await capsuleCommon.apiCall({
-            auth: context.auth,
-            method: HttpMethod.POST,
-            resourceUri: '/projects',
-            body: { project }
-        });
+        try {
+            const response = await capsuleCommon.apiCall({
+                auth: context.auth,
+                method: HttpMethod.POST,
+                resourceUri: '/projects',
+                body: { project }
+            });
 
-        return response.body;
+            return response.body;
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                // Check if the error is due to invalid party or opportunity
+                let errorMessage = 'Failed to create project. ';
+
+                if (partyId) {
+                    errorMessage += 'The specified party may not exist or you may not have access to it. ';
+                }
+                if (opportunityId) {
+                    errorMessage += 'The specified opportunity may not exist or you may not have access to it. ';
+                }
+
+                errorMessage += 'Please verify that the selected party and opportunity exist in your Capsule CRM account.';
+
+                throw new Error(errorMessage);
+            }
+
+            // Re-throw other errors as-is
+            throw error;
+        }
     },
 });

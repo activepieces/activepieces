@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
 
@@ -155,23 +156,68 @@ export const createContact = createAction({
         })
     },
     async run(context) {
-        const { type, firstName, lastName, organisationName, title, emails, phoneNumbers, addresses, websites, about } = context.propsValue;
+        const props = context.propsValue as {
+            type: 'person' | 'organisation';
+            firstName?: string;
+            lastName?: string;
+            organisationName?: string;
+            title?: string;
+            emails?: any[];
+            phoneNumbers?: any[];
+            addresses?: any[];
+            websites?: any[];
+            about?: string;
+        };
+
+        const { type, firstName, lastName, organisationName, title, emails, phoneNumbers, addresses, websites, about } = props;
+
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            type: z.enum(['person', 'organisation'], { required_error: 'Contact type is required' }),
+            firstName: z.string().optional(),
+            lastName: z.string().optional(),
+            organisationName: z.string().optional(),
+            title: z.string().optional(),
+            emails: z.array(z.object({
+                type: z.string().min(1, 'Email type is required'),
+                address: z.string().email('Invalid email address')
+            })).optional(),
+            phoneNumbers: z.array(z.object({
+                type: z.string().min(1, 'Phone type is required'),
+                number: z.string().min(1, 'Phone number is required')
+            })).optional(),
+            addresses: z.array(z.object({
+                type: z.string().min(1, 'Address type is required'),
+                street: z.string().min(1, 'Street is required'),
+                city: z.string().min(1, 'City is required'),
+                state: z.string().optional(),
+                country: z.string().optional(),
+                zip: z.string().optional()
+            })).optional(),
+            websites: z.array(z.object({
+                type: z.string().min(1, 'Website type is required'),
+                url: z.string().url('Invalid URL')
+            })).optional(),
+            about: z.string().optional(),
+        });
+
+        // Additional validation for required fields based on type
+        if (type === 'person' && (!firstName || !lastName)) {
+            throw new Error('First name and last name are required for persons');
+        }
+        if (type === 'organisation' && !organisationName) {
+            throw new Error('Organisation name is required for organisations');
+        }
 
         const party: Record<string, any> = {
             type: type
         };
 
         if (type === 'person') {
-            if (!firstName || !lastName) {
-                throw new Error('First name and last name are required for persons');
-            }
             party['firstName'] = firstName;
             party['lastName'] = lastName;
             if (title) party['title'] = title;
         } else if (type === 'organisation') {
-            if (!organisationName) {
-                throw new Error('Organisation name is required for organisations');
-            }
             party['name'] = organisationName;
         }
 

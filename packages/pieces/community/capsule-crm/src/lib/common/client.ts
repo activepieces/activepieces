@@ -1,5 +1,4 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 const CAPSULE_API_BASE_URL = 'https://api.capsulecrm.com/api/v2';
 
@@ -13,7 +12,7 @@ export const capsuleCommon = {
         body = undefined,
         queryParams = undefined,
     }: {
-        auth: OAuth2PropertyValue;
+        auth: string;
         method: HttpMethod;
         resourceUri: string;
         body?: any;
@@ -26,7 +25,7 @@ export const capsuleCommon = {
             queryParams,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: auth.access_token,
+                token: auth,
             }
         });
     }

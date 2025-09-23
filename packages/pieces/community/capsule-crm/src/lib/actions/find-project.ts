@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
+import { partyDropdown, opportunityDropdown } from '../common/properties';
 
 export const findProject = createAction({
     name: 'find_project',
@@ -14,14 +16,12 @@ export const findProject = createAction({
             description: 'Search term to find projects by name or description',
             required: false,
         }),
-        partyId: Property.ShortText({
-            displayName: 'Party ID',
-            description: 'Find projects associated with a specific party',
+        partyId: partyDropdown({
+            refreshers: ['auth'],
             required: false,
         }),
-        opportunityId: Property.ShortText({
-            displayName: 'Opportunity ID',
-            description: 'Find projects associated with a specific opportunity',
+        opportunityId: opportunityDropdown({
+            refreshers: ['auth'],
             required: false,
         }),
         status: Property.StaticDropdown({
@@ -36,11 +36,6 @@ export const findProject = createAction({
                 ]
             }
         }),
-        category: Property.ShortText({
-            displayName: 'Category',
-            description: 'Find projects by category',
-            required: false,
-        }),
         limit: Property.Number({
             displayName: 'Limit',
             description: 'Maximum number of results to return (default: 10)',
@@ -49,15 +44,29 @@ export const findProject = createAction({
         })
     },
     async run(context) {
-        const { searchQuery, partyId, opportunityId, status, category, limit } = context.propsValue;
+        const { searchQuery, partyId, opportunityId, status, limit } = context.propsValue as {
+            searchQuery?: string;
+            partyId?: string;
+            opportunityId?: string;
+            status?: string;
+            limit?: number;
+        };
+
+        // Zod validation
+        await propsValidation.validateZod(context.propsValue, {
+            searchQuery: z.string().optional(),
+            partyId: z.string().optional(),
+            opportunityId: z.string().optional(),
+            status: z.enum(['OPEN', 'COMPLETED', 'CANCELLED']).optional(),
+            limit: z.number().min(1, 'Limit must be at least 1').max(100, 'Limit must be at most 100').optional(),
+        });
 
         const queryParams: Record<string, string> = {};
 
         if (searchQuery) queryParams['q'] = searchQuery;
-        if (partyId) queryParams['partyId'] = partyId;
-        if (opportunityId) queryParams['opportunityId'] = opportunityId;
+        if (partyId && partyId.trim()) queryParams['partyId'] = partyId.trim();
+        if (opportunityId && opportunityId.trim()) queryParams['opportunityId'] = opportunityId.trim();
         if (status) queryParams['status'] = status;
-        if (category) queryParams['category'] = category;
         if (limit) queryParams['perPage'] = limit.toString();
 
         const response = await capsuleCommon.apiCall({

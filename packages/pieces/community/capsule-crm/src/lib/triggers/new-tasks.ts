@@ -51,7 +51,7 @@ export const newTasks = createTrigger({
         },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token
+          token: context.auth
         }
       };
 
@@ -77,7 +77,7 @@ export const newTasks = createTrigger({
         },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.access_token
+          token: context.auth
         }
       };
 

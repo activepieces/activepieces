@@ -39,7 +39,7 @@ export const capsuleCrm = createPiece({
             baseUrl: () => 'https://api.capsulecrm.com/api/v2',
             auth: capsuleAuth,
             authMapping: async (auth) => ({
-                Authorization: `Bearer ${(auth as any).access_token}`,
+                Authorization: `Bearer ${auth}`,
             }),
         }),
     ],
