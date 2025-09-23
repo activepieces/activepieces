@@ -1,50 +1,36 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth } from '../common/auth';
-import { capsuleCrmClient } from '../common/client';
+import { capsuleCrmCreateTrigger } from '../common/trigger';
 
-export const newTaskTrigger = createTrigger({
-  auth: capsuleCrmAuth,
+export const newTaskTrigger = capsuleCrmCreateTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Fires when a new task is created.',
-  props: {},
+  event: 'task/created',
   sampleData: {
-    event: 'task-created',
-    task: {
-      id: 401,
-      description: 'Follow up with Jane Doe',
-      dueOn: '2024-12-15',
-      party: {
-        id: 101,
-        type: 'person',
-        name: 'Jane Doe',
+    event: 'task/created',
+    payload: [
+      {
+        id: 530,
+        description: 'Email product details',
+        dueTime: '18:00:00',
+        status: 'OPEN',
+        party: {
+          id: 11587,
+          type: 'person',
+          firstName: 'Scott',
+          lastName: 'Spacey',
+          pictureURL:
+            'https://capsulecrm.com/theme/default/images/person_avatar_70.png',
+        },
+        owner: {
+          id: 1,
+          username: 'john',
+          name: 'John Spacey',
+        },
+        createdAt: '2015-12-21T13:51:38Z',
+        updatedAt: '2015-12-21T13:51:38Z',
+        dueOn: '2014-05-20',
+        hasTrack: false,
       },
-      owner: {
-        id: 1,
-        username: 'johntest',
-      },
-    },
-  },
-  type: TriggerStrategy.WEBHOOK,
-
-  async onEnable(context) {
-    const webhook = await capsuleCrmClient.subscribeWebhook(
-      context.auth,
-      context.webhookUrl,
-      'task-created' 
-    );
-    await context.store.put('webhookId', webhook.id);
-  },
-
-  async onDisable(context) {
-    const webhookId = await context.store.get<number>('webhookId');
-    if (webhookId) {
-      await capsuleCrmClient.unsubscribeWebhook(context.auth, webhookId);
-    }
-  },
-
-  async run(context) {
-    const payload = context.payload.body as { task: unknown };
-    return [payload.task];
+    ],
   },
 });

@@ -1,61 +1,189 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth } from '../common/auth';
+import {
+  createAction,
+  Property,
+  DynamicPropsValue,
+} from '@activepieces/pieces-framework';
+import { capsuleCrmAuth, CapsuleCrmAuthType } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
-import { capsuleCrmProps } from '../common/props';
+import { CreateTaskParams } from '../common/types';
 
 export const createTaskAction = createAction({
   auth: capsuleCrmAuth,
   name: 'create_task',
   displayName: 'Create Task',
-  description: 'Create a new task and optionally link it to other items.',
+  description: 'Create a new Task in Capsule CRM.',
   props: {
-    description: Property.LongText({
+    description: Property.ShortText({
       displayName: 'Description',
-      description: 'What needs to be done?',
+      description: 'A short description of the task.',
       required: true,
     }),
-    party_id: capsuleCrmProps.contact_id(false),
-    opportunity_id: capsuleCrmProps.opportunity_id(false),
-    project_id: capsuleCrmProps.project_id(false),
-    case_id: capsuleCrmProps.case_id(false),
-    owner_id: capsuleCrmProps.owner_id(false),
-    dueOn: Property.ShortText({
+    dueOn: Property.DateTime({
       displayName: 'Due Date',
-      description: 'The date the task is due in YYYY-MM-DD format.',
+      description: 'The date when this task is due.',
+      required: true,
+    }),
+    detail: Property.LongText({
+      displayName: 'Details',
+      description: 'More details about the task.',
       required: false,
+    }),
+    dueTime: Property.ShortText({
+      displayName: 'Due Time',
+      description:
+        "The time when this task is due (e.g., 18:00:00). Note: The time is in the user's timezone.",
+      required: false,
+    }),
+    linkTo: Property.StaticDropdown({
+      displayName: 'Link To',
+      description:
+        'The entity this task is linked to. Only one can be selected.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Party (Contact)', value: 'party' },
+          { label: 'Opportunity', value: 'opportunity' },
+          { label: 'Project', value: 'project' },
+        ],
+      },
+    }),
+    linkedEntityId: Property.DynamicProperties({
+      displayName: 'Linked Entity',
+      required: false,
+      refreshers: ['linkTo'],
+      props: async ({ auth, linkTo }) => {
+        const fields: DynamicPropsValue = {};
+        const linkToType = linkTo as unknown as string;
+        if (!auth || !linkToType) return fields;
+
+        if (linkToType === 'party') {
+          const contacts = await capsuleCrmClient.searchContacts(
+            auth as CapsuleCrmAuthType,
+            ''
+          );
+          const contactOptions = contacts.map((contact) => ({
+            label:
+              contact.type === 'person'
+                ? `${contact.firstName} ${contact.lastName}`
+                : contact.name || `Unnamed ${contact.type}`,
+            value: contact.id,
+          }));
+          fields['partyId'] = Property.StaticDropdown({
+            displayName: 'Party',
+            required: true,
+            options: {
+              options: contactOptions,
+            },
+          });
+        } else if (linkToType === 'opportunity') {
+          const opportunities = await capsuleCrmClient.searchOpportunities(
+            auth as CapsuleCrmAuthType
+          );
+          const opportunityOptions = opportunities.map((opportunity) => ({
+            label: opportunity.name,
+            value: opportunity.id,
+          }));
+          fields['opportunityId'] = Property.StaticDropdown({
+            displayName: 'Opportunity',
+            required: true,
+            options: {
+              options: opportunityOptions,
+            },
+          });
+        } else if (linkToType === 'project') {
+          const projects = await capsuleCrmClient.searchProjects(
+            auth as CapsuleCrmAuthType
+          );
+          const projectOptions = projects.map((project) => ({
+            label: project.name,
+            value: project.id,
+          }));
+          fields['projectId'] = Property.StaticDropdown({
+            displayName: 'Project',
+            required: true,
+            options: {
+              options: projectOptions,
+            },
+          });
+        }
+        return fields;
+      },
+    }),
+    categoryId: Property.Dropdown({
+      displayName: 'Category',
+      description: 'The category of this task.',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth)
+          return {
+            options: [],
+            disabled: true,
+            placeholder: 'Please connect your Capsule CRM account first',
+          };
+        const categories = await capsuleCrmClient.listCategories(
+          auth as CapsuleCrmAuthType
+        );
+        return {
+          options: categories.map((category) => ({
+            label: category.name,
+            value: category.id,
+          })),
+        };
+      },
+    }),
+    ownerId: Property.Dropdown({
+      displayName: 'Owner',
+      description: 'The user this task is assigned to.',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth)
+          return {
+            options: [],
+            disabled: true,
+            placeholder: 'Please connect your Capsule CRM account first',
+          };
+        const users = await capsuleCrmClient.listUsers(
+          auth as CapsuleCrmAuthType
+        );
+        return {
+          options: users.map((user) => ({
+            label: user.name,
+            value: user.id,
+          })),
+        };
+      },
     }),
   },
   async run(context) {
     const { auth, propsValue } = context;
 
-    const taskIdParams: {
-      description: string;
-      partyId: number | undefined;
-      opportunityId: number | undefined;
-      projectId: number | undefined;
-      caseId: number | undefined;
-      ownerId: number | undefined;
-      dueOn: string | undefined;
-    } = {
+    const taskData: CreateTaskParams = {
       description: propsValue.description,
-      partyId: undefined,
-      opportunityId: undefined,
-      projectId: undefined,
-      caseId: undefined,
-      ownerId: propsValue.owner_id as number | undefined,
       dueOn: propsValue.dueOn,
+      detail: propsValue.detail,
+      dueTime: propsValue.dueTime,
     };
 
-    if (propsValue.party_id) {
-      taskIdParams.partyId = propsValue.party_id as number;
-    } else if (propsValue.opportunity_id) {
-      taskIdParams.opportunityId = propsValue.opportunity_id as number;
-    } else if (propsValue.project_id) {
-      taskIdParams.projectId = propsValue.project_id as number;
-    } else if (propsValue.case_id) {
-      taskIdParams.caseId = propsValue.case_id as number;
+    if (propsValue.categoryId) {
+      taskData.category = { id: propsValue.categoryId };
+    }
+    if (propsValue.ownerId) {
+      taskData.owner = { id: propsValue.ownerId };
     }
 
-    return await capsuleCrmClient.createTask(auth, taskIdParams);
+    const linkedEntity = propsValue.linkedEntityId as DynamicPropsValue;
+    if (linkedEntity) {
+      if (linkedEntity['partyId']) {
+        taskData.party = { id: linkedEntity['partyId'] as number };
+      } else if (linkedEntity['opportunityId']) {
+        taskData.opportunity = { id: linkedEntity['opportunityId'] as number };
+      } else if (linkedEntity['projectId']) {
+        taskData.kase = { id: linkedEntity['projectId'] as number };
+      }
+    }
+
+    return await capsuleCrmClient.createTask(auth, taskData);
   },
 });

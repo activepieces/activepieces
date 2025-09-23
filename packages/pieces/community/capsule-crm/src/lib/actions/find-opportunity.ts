@@ -1,38 +1,35 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { capsuleCrmAuth } from '../common/auth';
 import { capsuleCrmClient } from '../common/client';
-import { capsuleCrmProps } from '../common/props';
+import { Filter } from '../common/types';
 
 export const findOpportunityAction = createAction({
   auth: capsuleCrmAuth,
   name: 'find_opportunity',
   displayName: 'Find Opportunity',
-  description: 'Find an opportunity by its name or other criteria.',
+  description: 'Find an Opportunity by search criteria.',
   props: {
-    opportunity_id: capsuleCrmProps.opportunity_id(false),
-    search_term: Property.ShortText({
-      displayName: 'Search Term',
+    filter: Property.Json({
+      displayName: 'Filter',
       description:
-        'The text to search for in the opportunity name. (Used if Opportunity ID is not selected).',
-      required: false,
+        'The structured filter query. See the [documentation](https://capsulecrm.com/developer/api-v2/filters/) for examples.',
+      required: true,
+      defaultValue: {
+        conditions: [
+          {
+            field: 'name',
+            operator: 'is',
+            value: 'example',
+          },
+        ],
+      },
     }),
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const { opportunity_id, search_term } = propsValue;
-    if (opportunity_id) {
-      const opportunity = await capsuleCrmClient.getOpportunity(
-        auth,
-        opportunity_id as number
-      );
-      return opportunity ? [opportunity] : [];
-    }
-    if (search_term) {
-      const opportunities = await capsuleCrmClient.findOpportunity(auth, {
-        searchTerm: search_term,
-      });
-      return opportunities;
-    }
-    throw new Error('One of Opportunity ID or Search Term must be provided.');
+    return await capsuleCrmClient.filterOpportunities(
+      auth,
+      propsValue.filter as unknown as Filter
+    );
   },
 });

@@ -1,53 +1,46 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth } from '../common/auth';
-import { capsuleCrmClient } from '../common/client';
+import { capsuleCrmCreateTrigger } from '../common/trigger';
 
-export const newOpportunityTrigger = createTrigger({
-  auth: capsuleCrmAuth,
+export const newOpportunityTrigger = capsuleCrmCreateTrigger({
   name: 'new_opportunity',
   displayName: 'New Opportunity',
   description: 'Fires when a new opportunity is created.',
-  props: {},
+  event: 'opportunity/created',
   sampleData: {
-    event: 'opportunity-created',
-    opportunity: {
-      id: 205,
-      name: 'New Website Redesign Project',
-      milestone: {
-        id: 1,
-        name: 'Lead',
+    event: 'opportunity/created',
+    payload: [
+      {
+        id: 83948362,
+        updatedAt: '2015-10-29T12:55:12Z',
+        description: 'Scope and design web site shopping cart',
+        owner: {
+          id: 6,
+          username: 'scottspacey',
+          name: 'Scott Spacey',
+        },
+        party: {
+          id: 581,
+          pictureURL:
+            'https://capsulecrm.com/theme/default/images/person_avatar_70.png',
+          type: 'organisation',
+          name: 'Capsule',
+        },
+        lostReason: null,
+        milestone: {
+          id: 14,
+          name: 'Bid',
+        },
+        value: {
+          amount: 500,
+          currency: 'GBP',
+        },
+        expectedCloseOn: '2015-10-31',
+        probability: 50,
+        durationBasis: 'FIXED',
+        duration: null,
+        closedOn: null,
+        createdAt: '2015-10-29T12:55:12Z',
+        name: 'Consulting',
       },
-      party: {
-        id: 101,
-        type: 'organisation',
-        name: 'Global Corp Inc.',
-      },
-      value: {
-        currency: 'USD',
-        amount: 7500,
-      },
-    },
-  },
-  type: TriggerStrategy.WEBHOOK,
-
-  async onEnable(context) {
-    const webhook = await capsuleCrmClient.subscribeWebhook(
-      context.auth,
-      context.webhookUrl,
-      'opportunity-created' 
-    );
-    await context.store.put('webhookId', webhook.id);
-  },
-
-  async onDisable(context) {
-    const webhookId = await context.store.get<number>('webhookId');
-    if (webhookId) {
-      await capsuleCrmClient.unsubscribeWebhook(context.auth, webhookId);
-    }
-  },
-
-  async run(context) {
-    const payload = context.payload.body as { opportunity: unknown };
-    return [payload.opportunity];
+    ],
   },
 });

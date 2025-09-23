@@ -1,46 +1,38 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { capsuleCrmAuth } from '../common/auth';
-import { capsuleCrmClient } from '../common/client';
+import { capsuleCrmCreateTrigger } from '../common/trigger';
 
-export const newProjectTrigger = createTrigger({
-  auth: capsuleCrmAuth,
+export const newProjectTrigger = capsuleCrmCreateTrigger({
   name: 'new_project',
   displayName: 'New Project',
-  description: 'Fires when a new project is created in Capsule CRM.',
-  props: {},
+  description: 'Fires when a project is created.',
+  event: 'kase/created',
   sampleData: {
-    event: 'kase-created',
-    kase: {
-      id: 301,
-      name: 'Q1 Marketing Campaign',
-      description: 'Launch campaign for the new product line.',
-      party: {
-        id: 101,
-        type: 'organisation',
-        name: 'Global Corp Inc.',
+    event: 'kase/created',
+    payload: [
+      {
+        id: 12,
+        party: {
+          id: 892,
+          type: 'organisation',
+          name: 'Zestia',
+          pictureURL:
+            'https://capsulecrm.com/theme/default/images/org_avatar_70.png',
+        },
+        owner: {
+          id: 61,
+          username: 'ted',
+          name: 'Ted Danson',
+        },
+        status: 'OPEN',
+        stage: {
+          name: 'Project Brief',
+          id: 149,
+        },
+        createdAt: '2015-12-07T16:54:27Z',
+        updatedAt: '2015-12-07T16:54:27Z',
+        expectedCloseOn: '2015-12-09',
+        description: 'Scope and design web site shopping cart',
+        name: 'Consulting',
       },
-    },
-  },
-  type: TriggerStrategy.WEBHOOK,
-
-  async onEnable(context) {
-    const webhook = await capsuleCrmClient.subscribeWebhook(
-      context.auth,
-      context.webhookUrl,
-      'kase-created' 
-    );
-    await context.store.put('webhookId', webhook.id);
-  },
-
-  async onDisable(context) {
-    const webhookId = await context.store.get<number>('webhookId');
-    if (webhookId) {
-      await capsuleCrmClient.unsubscribeWebhook(context.auth, webhookId);
-    }
-  },
-
-  async run(context) {
-    const payload = context.payload.body as { kase: unknown };
-    return [payload.kase];
+    ],
   },
 });

@@ -17,11 +17,11 @@
     import { newProjectTrigger } from "../src/lib/triggers/new-project";
 
     export const capsuleCrm = createPiece({
-      displayName: 'Capsule-crm',
+      displayName: 'Capsule CRM',
       auth: capsuleCrmAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: 'https://cdn.activepieces.com/pieces/capsule-crm.png',
-      authors: ['Prabhukiran161'],
+      authors: ['Prabhukiran161', 'onyedikachi-david'],
       actions: [
         createContactAction,
         updateContactAction,
