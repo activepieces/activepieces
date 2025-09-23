@@ -11,7 +11,6 @@ on:
 permissions:
   actions: write
   contents: read
-  issues: write  
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -157,7 +156,6 @@ jobs:
           name: e2e-test-artifacts-all
           path: ./artifacts/
           retention-days: 30
-          if-no-files-found: ignore
 
       - name: Comment on PR with test results
         if: always() && github.event_name == 'pull_request_target'
