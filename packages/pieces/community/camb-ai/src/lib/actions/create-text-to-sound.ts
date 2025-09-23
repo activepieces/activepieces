@@ -55,11 +55,10 @@ export const createTextToSound = createAction({
 
         const taskId = initialResponse.body.task_id;
         let attempts = 0;
-
+        let run_id: string | null = null;
         while (attempts < MAX_POLLING_ATTEMPTS) {
             const statusResponse = await httpClient.sendRequest<{
-                status: string;
-                [key: string]: unknown;
+                status: string, run_id?: string
             }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/text-to-sound/${taskId}`,
@@ -72,7 +71,8 @@ export const createTextToSound = createAction({
 
             if (status === 'SUCCESS') {
 
-                return statusResponse.body;
+                run_id = statusResponse.body.run_id ?? null;
+                break;
             }
 
             if (status === 'FAILED') {
@@ -86,6 +86,17 @@ export const createTextToSound = createAction({
         }
 
 
-        throw new Error("Sound generation timed out after 5 minutes.");
+        if (!run_id) {
+            throw new Error("Sound generation task timed out or failed to return a run_id.");
+        }
+        const audioResponse = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${API_BASE_URL}/text-to-sound-result/${run_id}`,
+            headers: { 'x-api-key': auth },
+            responseType: 'arraybuffer',
+        });
+
+        return { audio: audioResponse.body };
+
     },
 });

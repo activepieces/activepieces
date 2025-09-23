@@ -72,19 +72,20 @@ export const createTranslation = createAction({
             body: payload,
         });
         const taskId = initialResponse.body.task_id;
-
-
+        let run_id: string | null = null;
+        
         let attempts = 0;
         while (attempts < MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{ status: string, [key: string]: unknown }>({
+            const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/translate/${taskId}`,
                 headers: { 'x-api-key': auth },
             });
-
+          
             if (statusResponse.body.status === 'SUCCESS') {
 
-                return statusResponse.body;
+                run_id = statusResponse.body.run_id ?? null;
+                break;
             }
             if (statusResponse.body.status === 'ERROR' || statusResponse.body.status === 'FAILED') {
 
@@ -95,7 +96,18 @@ export const createTranslation = createAction({
         }
         
 
-        const timeoutMinutes = (MAX_POLLING_ATTEMPTS * POLLING_INTERVAL_MS) / (1000 * 60);
-        throw new Error(`Translation task timed out after ${timeoutMinutes} minutes.`);
+        if (!run_id) {
+            throw new Error("Translation task timed out or failed to return a task_id.");
+        }
+
+        const resultResponse = await httpClient.sendRequest<{ translations: string[] }>({
+            method: HttpMethod.GET,
+            url: `${API_BASE_URL}/translation-result/${run_id}`,
+            headers: { 'x-api-key': auth },
+        }); 
+
+        return resultResponse.body;
+
+        
     },
 });

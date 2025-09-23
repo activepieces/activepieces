@@ -5,7 +5,7 @@ import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 export const API_BASE_URL = "https://client.camb.ai/apis";
 export const POLLING_INTERVAL_MS = 5000;
 export const LONG_POLLING_INTERVAL_MS = 10000;
-export const MAX_POLLING_ATTEMPTS = 180;
+export const MAX_POLLING_ATTEMPTS = 10;
 export const LONG_MAX_POLLING_ATTEMPTS = 120;
 
 type Voice = {
