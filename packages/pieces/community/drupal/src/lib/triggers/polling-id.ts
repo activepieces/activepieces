@@ -26,7 +26,7 @@ const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }
       name: propsValue['name'],
       id: lastItemId,
     };
-    const response = await httpClient.sendRequest<DrupalPollIdItem[]>({
+    const response = await httpClient.sendRequest<DrupalPollItemId[]>({
       method: HttpMethod.POST,
       url: website_url + `/orchestration/poll`,
       body: body,
@@ -76,7 +76,7 @@ export const drupalPollingId = createTrigger({
   },
 });
 
-interface DrupalPollIdItem {
+interface DrupalPollItemId {
   data: any;
   id: string;
 }

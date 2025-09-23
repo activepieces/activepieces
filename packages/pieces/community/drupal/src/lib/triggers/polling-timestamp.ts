@@ -26,7 +26,7 @@ const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }
       name: propsValue['name'],
       timestamp: lastFetchEpochMS / 1000,
     };
-    const response = await httpClient.sendRequest<DrupalPollItem[]>({
+    const response = await httpClient.sendRequest<DrupalPollItemTimestamp[]>({
       method: HttpMethod.POST,
       url: website_url + `/orchestration/poll`,
       body: body,
@@ -76,7 +76,7 @@ export const drupalPollingTimestamp = createTrigger({
   },
 });
 
-interface DrupalPollItem {
+interface DrupalPollItemTimestamp {
   data: any;
   timestamp: number;
 }
