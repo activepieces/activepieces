@@ -1,0 +1,103 @@
+name: E2E Tests - Cloud Edition
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  AP_EDITION: cloud
+  AP_DB_TYPE: POSTGRES
+  AP_POSTGRES_HOST: localhost
+  AP_POSTGRES_PORT: 5432
+  AP_POSTGRES_USERNAME: postgres
+  AP_POSTGRES_PASSWORD: postgres
+  AP_POSTGRES_DATABASE: activepieces
+  AP_POSTGRES_USE_SSL: "false"
+  AP_ENCRYPTION_KEY: ${{ secrets.CLOUD_ENCRYPTION_KEY }}
+  AP_JWT_SECRET: ${{ secrets.CLOUD_JWT_SECRET }}
+  AP_FRONTEND_URL: http://localhost:4200
+  AP_REDIS_URL: redis://localhost:6379
+  AP_QUEUE_MODE: REDIS
+  AP_S3_ACCESS_KEY_ID: ${{ secrets.CLOUD_S3_ACCESS_KEY_ID }}
+  AP_S3_SECRET_ACCESS_KEY: ${{ secrets.CLOUD_S3_SECRET_ACCESS_KEY }}
+  AP_S3_BUCKET: ${{ secrets.CLOUD_S3_BUCKET }}
+  AP_S3_REGION: ${{ secrets.CLOUD_S3_REGION }}
+  AP_FILE_STORAGE_LOCATION: S3
+  AP_WEBHOOK_TIMEOUT_SECONDS: "30"
+  AP_TRIGGER_DEFAULT_POLL_INTERVAL: "5"
+  AP_EXECUTION_MODE: SANDBOXED
+  AP_TELEMETRY_ENABLED: "true"
+  NODE_ENV: test
+
+jobs:
+  test-e2e-cloud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: activepieces
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        
+      - name: Run E2E tests
+        run: |
+          cd packages/tests-e2e
+          npx playwright test
+        env:
+          CI: true
+          
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-cloud
+          path: packages/tests-e2e/playwright-report/
+          retention-days: 30
+          
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-cloud
+          path: packages/tests-e2e/test-results/
+          retention-days: 30
+          
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Cloud Edition E2E tests failed. Check the artifacts for details."

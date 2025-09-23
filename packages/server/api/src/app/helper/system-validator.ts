@@ -224,8 +224,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
             docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
         }))
     }
-    const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-    const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
+    const encryptionKey = await encryptUtils.getEncryptionKey()
     const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
