@@ -3,11 +3,12 @@ import { generateVideo } from './lib/actions/generate-video';
 import { generatePodcast } from './lib/actions/generate-podcast';
 import { generateAiImage } from './lib/actions/generate-ai-image';
 import { generateAiCaptions } from './lib/actions/generate-ai-captions';
+import { PieceCategory } from '@activepieces/shared';
 
 export const vadooAiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description: 'Enter your Vadoo AI API key'
+  description: `You can create API key from [Profile Settings](https://ai.vadoo.tv/profile).`,
 });
 
 export const vadooAi = createPiece({
@@ -15,7 +16,13 @@ export const vadooAi = createPiece({
   auth: vadooAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/vadoo-ai.png',
-  authors: [],
-  actions: [generateVideo, generatePodcast, generateAiImage, generateAiCaptions],
-  triggers: []
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  authors: ['fortunamide'],
+  actions: [
+    generateVideo,
+    generatePodcast,
+    generateAiImage,
+    generateAiCaptions,
+  ],
+  triggers: [],
 });

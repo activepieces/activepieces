@@ -1108,6 +1108,9 @@
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
+      "@activepieces/piece-vadoo-ai":[
+        "packages/pieces/community/vadoo-ai/src/index.ts"
+      ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
       ],

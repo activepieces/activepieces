@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vadooAiAuth } from '../../index';
-import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  propsValidation,
+} from '@activepieces/pieces-common';
 import { generateVideoSchema } from '../schemas';
+import { isEmpty } from '@activepieces/shared';
 
 export const generateVideo = createAction({
   auth: vadooAiAuth,
@@ -19,7 +24,7 @@ export const generateVideo = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please authenticate first'
+            placeholder: 'Please authenticate first',
           };
         }
 
@@ -28,37 +33,37 @@ export const generateVideo = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_topics',
             headers: {
-              'X-API-KEY': auth as string
-            }
+              'X-API-KEY': auth as string,
+            },
           });
 
           const topics = response.body as string[];
-          const options = topics.map(topic => ({
+          const options = topics.map((topic) => ({
             label: topic,
-            value: topic
+            value: topic,
           }));
-          
+
           // Add Custom option
           options.push({ label: 'Custom', value: 'Custom' });
-          
+
           return {
             disabled: false,
-            options: options
+            options: options,
           };
         } catch (error) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Failed to load topics'
+            placeholder: 'Failed to load topics',
           };
         }
-      }
+      },
     }),
     prompt: Property.LongText({
       displayName: 'Custom Prompt',
       description:
         "Prompt to generate a custom script (required when topic is 'Custom')",
-      required: false
+      required: false,
     }),
     voice: Property.Dropdown({
       displayName: 'Voice',
@@ -70,7 +75,7 @@ export const generateVideo = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please authenticate first'
+            placeholder: 'Please authenticate first',
           };
         }
 
@@ -79,19 +84,19 @@ export const generateVideo = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_voices',
             headers: {
-              'X-API-KEY': auth as string
+              'X-API-KEY': auth as string,
             },
-            timeout: 10000 // 10 second timeout
+            timeout: 10000, // 10 second timeout
           });
 
           if (response.body && Array.isArray(response.body)) {
             const voices = response.body as string[];
             return {
               disabled: false,
-              options: voices.map(voice => ({
+              options: voices.map((voice) => ({
                 label: voice,
-                value: voice
-              }))
+                value: voice,
+              })),
             };
           } else {
             // Fallback to default voices if API response is unexpected
@@ -103,8 +108,8 @@ export const generateVideo = createAction({
                 { label: 'Callum', value: 'Callum' },
                 { label: 'Sarah', value: 'Sarah' },
                 { label: 'Laura', value: 'Laura' },
-                { label: 'Charlotte', value: 'Charlotte' }
-              ]
+                { label: 'Charlotte', value: 'Charlotte' },
+              ],
             };
           }
         } catch (error) {
@@ -117,11 +122,11 @@ export const generateVideo = createAction({
               { label: 'Callum', value: 'Callum' },
               { label: 'Sarah', value: 'Sarah' },
               { label: 'Laura', value: 'Laura' },
-              { label: 'Charlotte', value: 'Charlotte' }
-            ]
+              { label: 'Charlotte', value: 'Charlotte' },
+            ],
           };
         }
-      }
+      },
     }),
     theme: Property.Dropdown({
       displayName: 'Theme',
@@ -133,7 +138,7 @@ export const generateVideo = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please authenticate first'
+            placeholder: 'Please authenticate first',
           };
         }
 
@@ -142,32 +147,32 @@ export const generateVideo = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_themes',
             headers: {
-              'X-API-KEY': auth as string
-            }
+              'X-API-KEY': auth as string,
+            },
           });
 
           const themes = response.body as string[];
           return {
             disabled: false,
-            options: themes.map(theme => ({
+            options: themes.map((theme) => ({
               label: theme,
-              value: theme
-            }))
+              value: theme,
+            })),
           };
         } catch (error) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Failed to load themes'
+            placeholder: 'Failed to load themes',
           };
         }
-      }
+      },
     }),
     style: Property.ShortText({
       displayName: 'Style',
       description: 'AI image style',
       required: false,
-      defaultValue: 'None'
+      defaultValue: 'None',
     }),
     language: Property.Dropdown({
       displayName: 'Language',
@@ -179,7 +184,7 @@ export const generateVideo = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please authenticate first'
+            placeholder: 'Please authenticate first',
           };
         }
 
@@ -188,26 +193,26 @@ export const generateVideo = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_languages',
             headers: {
-              'X-API-KEY': auth as string
-            }
+              'X-API-KEY': auth as string,
+            },
           });
 
           const languages = response.body as string[];
           return {
             disabled: false,
-            options: languages.map(language => ({
+            options: languages.map((language) => ({
               label: language,
-              value: language
-            }))
+              value: language,
+            })),
           };
         } catch (error) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Failed to load languages'
+            placeholder: 'Failed to load languages',
           };
         }
-      }
+      },
     }),
     duration: Property.StaticDropdown({
       displayName: 'Duration',
@@ -220,9 +225,9 @@ export const generateVideo = createAction({
           { label: '60-90 seconds', value: '60-90' },
           { label: '90-120 seconds', value: '90-120' },
           { label: '5 minutes', value: '5 min' },
-          { label: '10 minutes', value: '10 min' }
-        ]
-      }
+          { label: '10 minutes', value: '10 min' },
+        ],
+      },
     }),
     aspect_ratio: Property.StaticDropdown({
       displayName: 'Aspect Ratio',
@@ -233,15 +238,15 @@ export const generateVideo = createAction({
         options: [
           { label: '9:16 (Portrait)', value: '9:16' },
           { label: '1:1 (Square)', value: '1:1' },
-          { label: '16:9 (Landscape)', value: '16:9' }
-        ]
-      }
+          { label: '16:9 (Landscape)', value: '16:9' },
+        ],
+      },
     }),
     custom_instruction: Property.LongText({
       displayName: 'Custom Instructions',
       description:
         'Custom instructions to guide AI (character descriptions, image visuals, background styles, etc.)',
-      required: false
+      required: false,
     }),
     use_ai: Property.StaticDropdown({
       displayName: 'Use AI to Modify Script',
@@ -251,9 +256,9 @@ export const generateVideo = createAction({
       options: {
         options: [
           { label: 'Yes', value: '1' },
-          { label: 'No', value: '0' }
-        ]
-      }
+          { label: 'No', value: '0' },
+        ],
+      },
     }),
     include_voiceover: Property.StaticDropdown({
       displayName: 'Include Voiceover',
@@ -263,25 +268,25 @@ export const generateVideo = createAction({
       options: {
         options: [
           { label: 'Yes', value: '1' },
-          { label: 'No', value: '0' }
-        ]
-      }
+          { label: 'No', value: '0' },
+        ],
+      },
     }),
     size: Property.ShortText({
       displayName: 'Caption Size',
       description: 'Size of captions (take reference values from dashboard)',
-      required: false
+      required: false,
     }),
     ypos: Property.ShortText({
       displayName: 'Caption Position',
       description:
         'Position of captions (take reference values from dashboard)',
-      required: false
+      required: false,
     }),
     url: Property.ShortText({
       displayName: 'Blog URL',
       description: 'URL input for Blog to Video',
-      required: false
+      required: false,
     }),
     bg_music: Property.Dropdown({
       displayName: 'Background Music',
@@ -293,7 +298,7 @@ export const generateVideo = createAction({
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please authenticate first'
+            placeholder: 'Please authenticate first',
           };
         }
 
@@ -302,32 +307,32 @@ export const generateVideo = createAction({
             method: HttpMethod.GET,
             url: 'https://viralapi.vadoo.tv/api/get_background_music',
             headers: {
-              'X-API-KEY': auth as string
-            }
+              'X-API-KEY': auth as string,
+            },
           });
 
           const music = response.body as string[];
           return {
             disabled: false,
-            options: music.map(track => ({
+            options: music.map((track) => ({
               label: track,
-              value: track
-            }))
+              value: track,
+            })),
           };
         } catch (error) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Failed to load background music'
+            placeholder: 'Failed to load background music',
           };
         }
-      }
+      },
     }),
     bg_music_volume: Property.Number({
       displayName: 'Background Music Volume',
       description: 'Background music volume (1-100)',
-      required: false
-    })
+      required: false,
+    }),
   },
   async run(context) {
     // Validate props with Zod schema
@@ -349,7 +354,7 @@ export const generateVideo = createAction({
       ypos,
       url,
       bg_music,
-      bg_music_volume
+      bg_music_volume,
     } = context.propsValue;
 
     // Validate custom prompt when topic is "Custom"
@@ -370,7 +375,8 @@ export const generateVideo = createAction({
     if (language) requestBody['language'] = language;
     if (duration) requestBody['duration'] = duration;
     if (aspect_ratio) requestBody['aspect_ratio'] = aspect_ratio;
-    if (custom_instruction) requestBody['custom_instruction'] = custom_instruction;
+    if (custom_instruction)
+      requestBody['custom_instruction'] = custom_instruction;
     if (use_ai) requestBody['use_ai'] = use_ai;
     if (include_voiceover) requestBody['include_voiceover'] = include_voiceover;
     if (size) requestBody['size'] = size;
@@ -380,16 +386,45 @@ export const generateVideo = createAction({
     if (bg_music_volume)
       requestBody['bg_music_volume'] = bg_music_volume.toString();
 
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<{ vid: number }>({
       method: HttpMethod.POST,
       url: 'https://viralapi.vadoo.tv/api/generate_video',
       headers: {
         'X-API-KEY': context.auth,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: requestBody
+      body: requestBody,
     });
 
-    return response.body;
-  }
+    if (isEmpty(response.body) || isEmpty(response.body.vid)) {
+      throw new Error('Failed to generate video.');
+    }
+
+    const videoId = response.body.vid;
+    let status = 'pending';
+    const timeoutAt = Date.now() + 5 * 60 * 1000;
+
+    do {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      const pollRes = await httpClient.sendRequest<{
+        url: string;
+        status: string;
+      }>({
+        method: HttpMethod.GET,
+        url: 'https://viralapi.vadoo.tv/api/get_video_url',
+        headers: {
+          'X-API-KEY': context.auth,
+          'Content-Type': 'application/json',
+        },
+        queryParams: {
+          id: videoId.toString(),
+        },
+      });
+
+      status = pollRes.body.status;
+      if (status === 'complete') return pollRes.body;
+    } while (status !== 'complete' && Date.now() < timeoutAt);
+
+    throw new Error('Generate Video timed out or failed.');
+  },
 });
