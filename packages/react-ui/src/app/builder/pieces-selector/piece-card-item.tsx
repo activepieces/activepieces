@@ -71,6 +71,7 @@ const PieceCardListItem = ({
           isMouseOver.current = false;
         }}
         id={pieceMetadata.displayName}
+        data-testid={pieceMetadata.displayName}
       >
         <div className="flex gap-2 items-center h-full">
           <PieceIcon
