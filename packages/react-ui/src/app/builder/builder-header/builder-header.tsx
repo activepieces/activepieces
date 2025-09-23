@@ -25,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -114,9 +115,7 @@ export const BuilderHeader = () => {
                         {folderName}
                       </TooltipTrigger>
                       <TooltipContent>
-                        <span>
-                          {t('Go to folder')} {folderName}
-                        </span>
+                        <span>{t('Go to...')}</span>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -128,17 +127,22 @@ export const BuilderHeader = () => {
                 className="font-semibold hover:cursor-text"
                 value={flowVersion.displayName}
                 readonly={!isLatestVersion}
-                onValueChange={(value) =>
-                  applyOperation({
-                    type: FlowOperationType.CHANGE_NAME,
-                    request: {
-                      displayName: value,
+                onValueChange={(value) => {
+                  applyOperation(
+                    {
+                      type: FlowOperationType.CHANGE_NAME,
+                      request: {
+                        displayName: value,
+                      },
                     },
-                  })
-                }
+                    () => {
+                      flowsHooks.invalidateFlowsQuery(queryClient);
+                    },
+                  );
+                }}
                 isEditing={isEditingFlowName}
                 setIsEditing={setIsEditingFlowName}
-                tooltipContent={isLatestVersion ? t('Edit Flow Name') : ''}
+                tooltipContent={isLatestVersion ? t('Edit') : ''}
               />
             )}
           </div>
@@ -149,13 +153,7 @@ export const BuilderHeader = () => {
               flowVersion={flowVersion}
               readonly={!isLatestVersion}
               onDelete={() => {
-                queryClient.invalidateQueries({
-                  queryKey: [
-                    'flow',
-                    flow.id,
-                    authenticationSession.getProjectId(),
-                  ],
-                });
+                flowsHooks.invalidateFlowsQuery(queryClient);
               }}
               onRename={() => {
                 setIsEditingFlowName(true);

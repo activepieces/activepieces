@@ -5,6 +5,7 @@ import {
   LogOut,
   Settings,
   Shield,
+  UserCogIcon,
   UserPlus,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -36,12 +37,14 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 
+import AccountSettingsDialog from '../account-settings';
 import { ProjectSettingsDialog } from '../project-settings';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function SidebarUser() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [projectSettingsOpen, setProjectSettingsOpen] = useState(false);
+  const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
   const location = useLocation();
   const { project } = projectHooks.useCurrentProject();
@@ -126,8 +129,12 @@ export function SidebarUser() {
             )}
 
             <DropdownMenuGroup>
-              {!embedState.hideProjectSettings && !isInPlatformAdmin && (
-                <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+              {/*<DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
+                <UserCogIcon className="w-4 h-4 mr-2" />
+                {t('Account Settings')}
+              </DropdownMenuItem>*/}
+              {!isInPlatformAdmin && (
+                <DropdownMenuItem onClick={() => setProjectSettingsOpen(true)}>
                   <Settings className="w-4 h-4 mr-2" />
                   {t('Project Settings')}
                 </DropdownMenuItem>
@@ -148,14 +155,18 @@ export function SidebarUser() {
 
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        open={projectSettingsOpen}
+        onClose={() => setProjectSettingsOpen(false)}
         projectId={project?.id}
         initialValues={{
           projectName: project?.displayName,
           tasks: project?.plan?.tasks?.toString() ?? '',
           aiCredits: project?.plan?.aiCredits?.toString() ?? '',
         }}
+      />
+      <AccountSettingsDialog
+        open={accountSettingsOpen}
+        onClose={() => setAccountSettingsOpen(false)}
       />
     </SidebarMenu>
   );

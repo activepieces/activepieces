@@ -1,4 +1,4 @@
-import { ApEdition, FlowRun, isFailedState, isFlowUserTerminalState, isNil, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, FlowRun, isFailedState, isFlowRunStateTerminal, isNil, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 // import { alertsService } from '../../ee/alerts/alerts-service'
@@ -12,7 +12,10 @@ import { system } from '../../helper/system/system'
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
-        if (!isFlowUserTerminalState(flowRun.status)) {
+        if (!isFlowRunStateTerminal({
+            status: flowRun.status,
+            ignoreInternalError: true,
+        })) {
             return
         }
         if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStepName)) {

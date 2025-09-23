@@ -22,7 +22,7 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
-import { getRedisConnection } from './database/redis-connection'
+import { redisConnections } from './database/redis'
 // import { alertsModule } from './ee/alerts/alerts-module'
 // import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 // import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -72,10 +72,10 @@ import { communityFlowTemplateModule } from './flows/templates/community-flow-te
 // import { eventsHooks } from './helper/application-events'
 import { flowTemplateModule } from './flows/templates/flow-template.module'
 import { openapiModule } from './helper/openapi/openapi.module'
-import { QueueMode, system } from './helper/system/system'
-import { systemJobsSchedule } from './helper/system-jobs'
+import { system } from './helper/system/system'
 // import { SystemJobName } from './helper/system-jobs/common'
 // import { systemJobHandlers } from './helper/system-jobs/job-handlers'
+import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { globalOAuthAppModule } from './oauth-apps/global-oauth-app.module'
 import { oauthAppModule } from './oauth-apps/oauth-app.module'
@@ -99,8 +99,8 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
-import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
+import { jobQueueWorker } from './workers/queue/job-queue-worker'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -353,7 +353,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
-        await flowConsumer(app.log).close()
+        await jobQueueWorker(app.log).close()
         await systemJobsSchedule(app.log).close()
         await engineResponseWatcher(app.log).shutdown()
     })
@@ -364,19 +364,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 async function getAdapter() {
-    const queue = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-    switch (queue) {
-        case QueueMode.MEMORY: {
-            return undefined
-        }
-        case QueueMode.REDIS: {
-            const sub = getRedisConnection().duplicate()
-            const pub = getRedisConnection().duplicate()
-            return createAdapter(pub, sub, {
-                requestsTimeout: 30000,
-            })
-        }
-    }
+    const redisConnectionInstance = await redisConnections.useExisting()
+    const sub = redisConnectionInstance.duplicate()
+    const pub = redisConnectionInstance.duplicate()
+    return createAdapter(pub, sub, {
+        requestsTimeout: 30000,
+    })
 }
 
 

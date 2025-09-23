@@ -123,7 +123,7 @@ export const BikaCommon = {
 								required: false,
 							});
 							break;
-						case BikaFieldType.TEXT:
+						case BikaFieldType.LONG_TEXT:
 							props[field.name] = Property.LongText({
 								displayName: field.name,
 								required: false,

@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
-import { distributedStore } from '../../../helper/keyvalue'
+import { distributedStore } from '../../../helper/key-value'
 import { BaseSecurityHandler } from '../security-handler'
 
 export class AccessTokenAuthnHandler extends BaseSecurityHandler {
@@ -41,7 +41,7 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
     }
 
     private async checkIfAccessTokenIsRevokedAndThrow(accessToken: string): Promise<void> {
-        const revokedJwt = await distributedStore().get(`revoked:${accessToken}`)
+        const revokedJwt = await distributedStore.get(`revoked:${accessToken}`)
         if (!isNil(revokedJwt)) {
             throw new ActivepiecesError({
                 code: ErrorCode.SESSION_EXPIRED,
