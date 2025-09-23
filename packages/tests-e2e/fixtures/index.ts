@@ -1,11 +1,10 @@
-import { AuthenticationResponse } from '@activepieces/shared';
 import { test as base } from '@playwright/test';
 import {
   AuthenticationPage,
   FlowsPage,
   BuilderPage,
 } from '../pages';
-import { signUp } from './users';
+import { signUp, AuthenticationResponse } from './users';
 
 type CustomFixtures = {
   authenticationPage: AuthenticationPage;
@@ -14,7 +13,7 @@ type CustomFixtures = {
   authenticatedPage: AuthenticationPage;
   users: {
     apiSignUp: () => Promise<AuthenticationResponse>;
-  };
+  }
 };
 
 export const test = base.extend<CustomFixtures>({

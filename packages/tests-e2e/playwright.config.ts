@@ -55,7 +55,7 @@ const editionConfigs = {
 const webServerConfig = {
   command: process.env.CI
     ? 'npm run start'
-    : 'export $(cat .env.e2e | xargs) && npm run start',
+    : 'export $(cat .env.e2e | xargs) && npm run dev',
   url: 'http://localhost:4200/api/v1/flags',
   reuseExistingServer: !process.env.CI,
   timeout: 100000,
