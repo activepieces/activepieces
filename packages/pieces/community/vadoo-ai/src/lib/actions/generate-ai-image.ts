@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vadooAiAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+const BASE_URL = "https://viralapi.vadoo.tv/api";
 
 export const generateAiImage = createAction({
   auth: vadooAiAuth,
@@ -37,11 +38,15 @@ export const generateAiImage = createAction({
   async run(context) {
     const body = context.propsValue;
 
-    return await makeRequest<{ id: number }>(
-      context.auth,
-      HttpMethod.POST,
-      '/generate_character_image',
-      body
-    );
+    const response = await httpClient.sendRequest<{ id: number }>({
+        method: HttpMethod.POST,
+        url: `${BASE_URL}/generate_character_image`,
+        headers: {
+            'X-API-KEY': context.auth.apiKey,
+        },
+        body: body,
+    });
+
+    return response.body;
   },
 });

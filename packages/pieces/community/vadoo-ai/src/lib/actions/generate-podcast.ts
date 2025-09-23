@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vadooAiAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+const BASE_URL = "https://viralapi.vadoo.tv/api";
 
 export const generatePodcast = createAction({
   auth: vadooAiAuth,
@@ -67,14 +68,17 @@ export const generatePodcast = createAction({
     }),
   },
   async run(context) {
-    // The props are directly compatible with the API body, so we can pass them as is.
     const body = context.propsValue;
 
-    return await makeRequest<{ vid: number }>(
-      context.auth,
-      HttpMethod.POST,
-      '/generate_podcast',
-      body
-    );
+    const response = await httpClient.sendRequest<{ vid: number }>({
+        method: HttpMethod.POST,
+        url: `${BASE_URL}/generate_podcast`,
+        headers: {
+            'X-API-KEY': context.auth.apiKey,
+        },
+        body: body,
+    });
+
+    return response.body;
   },
 });

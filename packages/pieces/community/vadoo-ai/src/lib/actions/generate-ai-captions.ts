@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vadooAiAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+const BASE_URL = "https://viralapi.vadoo.tv/api";
 
 export const generateAiCaptions = createAction({
   auth: vadooAiAuth,
@@ -26,13 +27,24 @@ export const generateAiCaptions = createAction({
     }),
   },
   async run(context) {
-    const body = context.propsValue;
+    const { url, theme, language } = context.propsValue;
+    const { apiKey } = context.auth;
 
-    return await makeRequest<{ vid: number }>(
-      context.auth,
-      HttpMethod.POST,
-      '/add_captions',
-      body
-    );
+    // This body is built conditionally to prevent server errors.
+    // Optional fields (theme, language) are only added if they have a value.
+    const body: Record<string, unknown> = { url };
+    if (theme) body['theme'] = theme;
+    if (language) body['language'] = language;
+
+    const response = await httpClient.sendRequest<{ vid: number }>({
+        method: HttpMethod.POST,
+        url: `${BASE_URL}/add_captions`,
+        headers: {
+            'X-API-KEY': apiKey,
+        },
+        body: body,
+    });
+
+    return response.body;
   },
 });

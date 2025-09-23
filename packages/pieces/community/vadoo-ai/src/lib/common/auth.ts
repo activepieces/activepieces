@@ -1,39 +1,51 @@
 import { PieceAuth } from "@activepieces/pieces-framework";
-import { makeRequest } from "./client";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { HttpError, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-// The Vadoo AI API does not provide a simple "me" or "ping" endpoint to test the key.
-// We will call the `get_video_url` endpoint with a dummy video ID.
-// A successful call (even if it returns a 'not found' error for the video) means the key is valid.
-// A 401/403 authentication error will be caught, indicating an invalid key.
-export const vadooAiAuth = PieceAuth.SecretText({
-  displayName: "API Key",
-  description: "Get your API key from your Vadoo AI profile page: https://ai.vadoo.tv/profile",
+const markdownDescription = `
+Follow these steps to get your Vadoo AI API Key:
+1. Go to your Vadoo AI profile page at **[https://ai.vadoo.tv/profile](https://ai.vadoo.tv/profile)**.
+2. Click **Generate API Key** and copy the generated key.
+3. Paste the API key into the field below.
+`;
+
+export const vadooAiAuth = PieceAuth.CustomAuth({
+  description: markdownDescription,
   required: true,
-  validate: async ({ auth }) => {
-    if (!auth) {
-      return {
-        valid: false,
-        error: "API Key is required.",
-      };
-    }
+  props: {
+    apiKey: PieceAuth.SecretText({
+      displayName: "API Key",
+      description: "Paste your Vadoo AI API key here.",
+      required: true,
+    }),
+  },
+  validate: async (auth) => {
+    const { apiKey } = auth.auth;
+
     try {
-      await makeRequest(
-        auth as string,
-        HttpMethod.GET,
-        "/get_video_url",
-        undefined,
-        { vid: 'activepieces_validation' }
-      );
-      // If the request does not throw an authorization error, we consider the key valid.
-      // The API might return a 404 or a specific message for the dummy video ID,
-      // but it won't be a 401/403 Unauthorized if the key is correct.
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: 'https://viralapi.vadoo.tv/api/get_video_url',
+        queryParams: {
+            vid: 'activepieces_validation'
+        },
+        headers: {
+          'X-API-KEY': apiKey,
+        },
+      });
       return { valid: true };
-    } catch (e: any) {
-      return {
-        valid: false,
-        error: `Authentication failed. Please ensure your API Key is correct.`,
-      };
+    } catch (e) {
+      if (e instanceof HttpError) {
+        // SUCCESS: For Vadoo, a 400 on this endpoint proves the key was accepted.
+        if (e.response.status === 400) {
+          return { valid: true };
+        }
+        // FAILURE: 401/403 means the key is invalid.
+        if (e.response.status === 401 || e.response.status === 403) {
+          return { valid: false, error: 'Invalid API Key' };
+        }
+      }
+      // Handle other issues like network errors.
+      return { valid: false, error: 'Failed to connect to Vadoo AI API.' };
     }
   },
 });

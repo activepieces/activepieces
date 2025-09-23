@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { vadooAiAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+const BASE_URL = "https://viralapi.vadoo.tv/api";
 
 export const generateVideo = createAction({
   auth: vadooAiAuth,
@@ -97,13 +98,17 @@ export const generateVideo = createAction({
     }),
   },
   async run(context) {
-    const { ...body } = context.propsValue;
+    const body = context.propsValue;
 
-    return await makeRequest<{ vid: number }>(
-      context.auth,
-      HttpMethod.POST,
-      '/generate_video',
-      body
-    );
+    const response = await httpClient.sendRequest<{ vid: number }>({
+        method: HttpMethod.POST,
+        url: `${BASE_URL}/generate_video`,
+        headers: {
+            'X-API-KEY': context.auth.apiKey,
+        },
+        body: body,
+    });
+
+    return response.body;
   },
 });
