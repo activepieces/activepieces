@@ -146,7 +146,7 @@ jobs:
           }
           EOF
           
-          # Send to Discord
+          # Send it to Discord
           curl -H "Content-Type: application/json" \
                -d @discord_payload.json \
                "$DISCORD_WEBHOOK_URL"
