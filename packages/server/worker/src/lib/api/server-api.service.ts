@@ -1,8 +1,7 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, Agent, AgentRun, CreateTriggerRunRequestBody, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PlatformUsageMetric, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { GetRunForWorkerRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
@@ -17,36 +16,6 @@ export const workerApiService = (workerToken: string) => {
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
-        async heartbeat(): Promise<WorkerMachineHealthcheckResponse | null> {
-            const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-            try {
-                return await client.post<WorkerMachineHealthcheckResponse>('/v1/worker-machines/heartbeat', request)
-            }
-            catch (error) {
-                if (ApAxiosClient.isApAxiosError(error) && error.error.code === 'ECONNREFUSED') {
-                    return null
-                }
-                throw error
-            }
-        },
-        async poll(queueName: QueueName): Promise<ApQueueJob | null> {
-            try {
-                const request: PollJobRequest = {
-                    queueName,
-                }
-                const response = await client.get<ApQueueJob | null>('/v1/workers/poll', {
-                    params: request,
-                })
-                return response
-            }
-            catch (error) {
-                await new Promise((resolve) => setTimeout(resolve, 2000))
-                return null
-            }
-        },
-        async resumeRun(request: ResumeRunRequest): Promise<void> {
-            await client.post<unknown>('/v1/workers/resume-run', request)
-        },
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
         },
@@ -102,7 +71,7 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
 
 
 
-export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
+export const engineApiService = (engineToken: string) => {
     const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
@@ -111,9 +80,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
             return client.get<Buffer>(`/v1/engine/files/${fileId}`, {
                 responseType: 'arraybuffer',
             })
-        },
-        async updateJobStatus(request: UpdateJobRequest): Promise<void> {
-            await client.post('/v1/engine/update-job', request)
         },
         async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
             return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})
@@ -128,22 +94,6 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
             })
-        },
-        async checkTaskLimit(): Promise<void> {
-            try {
-                await client.get<unknown>('/v1/engine/check-task-limit', {})
-            }
-            catch (e) {
-                if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === StatusCodes.PAYMENT_REQUIRED) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.QUOTA_EXCEEDED,
-                        params: {
-                            metric: PlatformUsageMetric.TASKS,
-                        },
-                    })
-                }
-                exceptionHandler.handle(e, log)
-            }
         },
         async getFlow(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             return client.get<PopulatedFlow | null>('/v1/engine/flows', {

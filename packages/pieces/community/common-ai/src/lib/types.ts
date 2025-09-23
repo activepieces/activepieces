@@ -38,6 +38,7 @@ export enum AIUsageFeature {
     TEXT_AI = 'Text AI',
     IMAGE_AI = 'Image AI',
     UTILITY_AI = 'Utility AI',
+    VIDEO_AI = 'Video AI',
     UNKNOWN = 'Unknown',
 }
 
@@ -51,7 +52,12 @@ const mcpMetadata = Type.Object({
     mcpid: Type.String(),
 })
 
-const simpleFeatures = [AIUsageFeature.TEXT_AI, AIUsageFeature.IMAGE_AI, AIUsageFeature.UTILITY_AI, AIUsageFeature.UNKNOWN] as const
+const videoMetadata = Type.Object({
+    feature: Type.Literal(AIUsageFeature.VIDEO_AI),
+    videoOperationId: Type.String(),
+})
+
+const simpleFeatures = [AIUsageFeature.TEXT_AI, AIUsageFeature.IMAGE_AI, AIUsageFeature.UTILITY_AI, AIUsageFeature.VIDEO_AI, AIUsageFeature.UNKNOWN] as const
 const simpleMetadataVariants = simpleFeatures.map(feature => 
     Type.Object({
         feature: Type.Literal(feature),
@@ -61,6 +67,7 @@ const simpleMetadataVariants = simpleFeatures.map(feature =>
 export const AIUsageMetadata = DiscriminatedUnion('feature', [
     agentMetadata,
     mcpMetadata,
+    videoMetadata,
     ...simpleMetadataVariants,
 ])
 

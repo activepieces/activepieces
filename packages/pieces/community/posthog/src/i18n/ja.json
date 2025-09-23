@@ -1,5 +1,4 @@
 {
-  "PostHog": "PostHog",
   "Open-source product analytics": "オープンソースの製品分析",
   "\n[Click here](https://posthog.com/docs/api/overview#personal-api-keys-recommended) to learn how to obtain your Personal API key.\n": "\n[Click here](https://posthog.com/docs/api/overview#personal-api-keys-recommended) で、個人用APIキーの取得方法を学びます。\n",
   "Create Event": "イベントを作成",

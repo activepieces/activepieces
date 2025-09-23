@@ -1,66 +1,64 @@
-import { mailchimpCommon } from '../common';
-import crypto from 'crypto';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { mailchimpCommon } from '../common';
+import { MailchimpClient } from '../common/types';
 import { mailchimpAuth } from '../..';
+import mailchimp from '@mailchimp/mailchimp_marketing';
 
 export const addSubscriberToTag = createAction({
   auth: mailchimpAuth,
   name: 'add_subscriber_to_tag',
-  displayName: 'Add Subscriber to a tag',
-  description:
-    'Adds a subscriber to a tag. This will fail if the user is not subscribed to the audience.',
+  displayName: 'Add Subscriber to Tag',
+  description: 'Add a subscriber to a specific tag in your Mailchimp audience.',
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
-      displayName: 'Email',
-      description: 'Email of the subscriber',
+      displayName: 'Email Address',
+      description: 'The email address of the subscriber to add to the tag',
       required: true,
     }),
-    tag_names: Property.Array({
+    tag_name: Property.ShortText({
       displayName: 'Tag Name',
-      description: 'Tag name to add to the subscriber',
+      description: 'The name of the tag to add the subscriber to',
       required: true,
     }),
   },
   async run(context) {
-    const { list_id, email, tag_names } = context.propsValue;
-    const { access_token } = context.auth;
+    const { list_id, email, tag_name } = context.propsValue;
+    const accessToken = getAccessTokenOrThrow(context.auth);
 
-    const subscriberHash = crypto
-      .createHash('md5')
-      .update(email.toLowerCase())
-      .digest('hex');
-    const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(
-      access_token
-    );
-    const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/tags`;
+    try {
+      const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
+      const subscriberHash = mailchimpCommon.getMD5EmailHash(email);
 
-    console.log('HELLO ' + url);
-    const tags = tag_names.map((tag_name) => ({
-      name: tag_name,
-      status: 'active',
-    }));
+      mailchimp.setConfig({
+        accessToken: accessToken,
+        server: serverPrefix,
+      });
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: access_token,
-      },
-      body: { tags },
-    };
+      const client = mailchimp as unknown as MailchimpClient;
 
-    await httpClient.sendRequest(request);
+      const result = await client.lists.updateListMemberTags(
+        list_id as string,
+        subscriberHash,
+        {
+          tags: [
+            {
+              name: tag_name,
+              status: 'active',
+            },
+          ],
+        }
+      );
 
-    return {
-      success: true,
-    };
+      return {
+        success: true,
+        message: `Successfully added subscriber ${email} to tag ${tag_name}`,
+        data: result,
+      };
+    } catch (error: any) {
+      console.error('Error adding subscriber to tag:', error);
+      throw new Error(`Failed to add subscriber to tag: ${error.message}`);
+    }
   },
 });

@@ -23,69 +23,55 @@ To enable the Bull Board UI in your self-hosted installation:
 For cloud installations, please ask your team for access to the internal documentation that explains how to access BullBoard.
 </Tip>
 
-## Common Issues
-
-### Scheduling Issues
-
-If a scheduled flow is not triggering as expected:
-
-1. Check the `repeatableJobs` queue in BullBoard to verify the job exists
-2. Verify the job status is not "failed" or "delayed"
-3. Check that the cron expression or interval is configured correctly
-4. Look for any error messages in the job details
-
-### Flow Stuck in "Running" State
-
-If a flow appears stuck in the running state:
-
-1. Check the `oneTimeJobs` queue for the corresponding job
-2. Look for:
-   - Jobs in "delayed" state (indicates retry attempts)
-   - Jobs in "failed" state (indicates execution errors)
-3. Review the job logs for error messages or timeouts
-4. If needed, you can manually remove stuck jobs through the BullBoard UI
-
 ## Queue Overview
 
-We maintain four main queues in our system:
+We have one main queue called `workerJobs` that handles all job types. Each job has a `jobType` field that tells us what it does:
 
-#### Scheduled Queue (`repeatableJobs`)
+### Low Priority Jobs
 
-Contains both polling and delayed jobs.
+#### RENEW_WEBHOOK
+Renews webhooks for pieces that need to stay connected to external services like Google Sheets.
+
+#### EXECUTE_POLLING
+Checks external services for new data at regular intervals.
+
+### Medium Priority Jobs
+
+#### EXECUTE_FLOW
+Runs flows when they're triggered.
+
+#### EXECUTE_WEBHOOK
+Processes incoming webhook requests that start flow runs.
+
+#### EXECUTE_AGENT
+Runs AI agent tasks within flows.
+
+#### DELAYED_FLOW
+Runs flows that were scheduled for later, like paused flows or delayed executions.
+
+### High Priority Jobs
+
+#### EXECUTE_TOOL
+Runs tool operations in flows, usually for AI-powered features.
+
+#### EXECUTE_PROPERTY
+Loads dynamic properties for pieces that need them at runtime.
+
+#### EXECUTE_EXTRACT_PIECE_INFORMATION
+Gets information about pieces when they're being installed or set up.
+
+#### EXECUTE_VALIDATION
+Checks that flow settings, inputs, or data are correct before running.
+
+#### EXECUTE_TRIGGER_HOOK
+Runs special logic before or after triggers fire.
+
 
 <Info>
-Failed jobs are not normal and need to be checked right away to find and fix what's causing them.
+Failed jobs are not normal and need to be checked right away to find and fix what's causing them. 
+They require immediate investigation as they represent executions that failed for unknown reasons that could indicate system issues.
 </Info>
 
 <Tip>
-Delayed jobs represent either paused flows scheduled for future execution or upcoming polling job iterations.
+Delayed jobs represent either paused flows scheduled for future execution, upcoming polling job iterations, or jobs being retried due to temporary failures. They indicate an internal system error occurred and the job will be retried automatically according to the backoff policy.
 </Tip>
-
-#### One-Time Queue (`oneTimeJobs`)
-Handles immediate flow executions that run only once
-
-<Info>
-- Delayed jobs indicate an internal system error occurred and the job will be retried automatically according to the backoff policy
-- Failed jobs require immediate investigation as they represent executions that failed for unknown reasons that could indicate system issues
-</Info>
-
-#### Webhook Queue (`webhookJobs`)
-
-Handles incoming webhook triggers
-
-<Info>
-- Delayed jobs indicate an internal system error occurred and the job will be retried automatically according to the backoff policy
-- Failed jobs require immediate investigation as they represent executions that failed for unknown reasons that could indicate system issues
-</Info>
-
-#### Users Interaction Queue (`usersInteractionJobs`)
-
-Handles operations that are directly initiated by users, including:
-• Installing pieces
-• Testing flows
-• Loading dropdown options
-• Executing triggers
-• Executing actions
-<Info>
-Failed jobs in this queue are not retried since they represent real-time user actions that should either succeed or fail immediately
-</Info>

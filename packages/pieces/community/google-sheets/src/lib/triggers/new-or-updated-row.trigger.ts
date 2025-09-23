@@ -146,7 +146,13 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const webhook = await context.store.get<WebhookInformation>('google-sheets-new-or-updated-row');
 
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
+			try
+			{
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
+			}
+			catch(err){
+  				console.debug("deleteFileNotification failed :",JSON.stringify(err));
+			}
 		}
 	},
 

@@ -10,11 +10,16 @@ import { userInvitationsService } from '../user-invitations/user-invitation.serv
 import { accessTokenManager } from './lib/access-token-manager'
 import { userIdentityService } from './user-identity/user-identity-service'
 
+const isTesting = system.getOrThrow(AppSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
+
 export const authenticationUtils = {
     async assertUserIsInvitedToPlatformOrProject(log: FastifyBaseLogger, {
         email,
         platformId,
     }: AssertUserIsInvitedToPlatformOrProjectParams): Promise<void> {
+        if (isTesting) {
+            return
+        }
         const isInvited = await userInvitationsService(log).hasAnyAcceptedInvitations({
             platformId,
             email,
@@ -35,14 +40,24 @@ export const authenticationUtils = {
             platformId: params.platformId,
             userId: params.userId,
         })
-        const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
+        let project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
         if (isNil(project)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVITATION_ONLY_SIGN_UP,
-                params: {
-                    message: 'No project found for user',
-                },
-            })
+            if (isTesting) {
+                const newProject = await projectService.create({
+                    displayName: user.id + '\'s Project',
+                    ownerId: user.id,
+                    platformId: params.platformId,
+                })
+                project = newProject
+            }
+            else {
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVITATION_ONLY_SIGN_UP,
+                    params: {
+                        message: 'No project found for user',
+                    },
+                })
+            }
         }
         const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
         if (!identity.verified) {

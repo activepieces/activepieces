@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-simpliroute",
+  "version": "0.0.3",
+  "description": "SimpliRoute piece for Activepieces - Last mile delivery optimization platform integration",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}

@@ -1,5 +1,4 @@
 {
-  "HTTP": "HTTP",
   "Sends HTTP requests and return responses": "Envoie des requêtes HTTP et retourne des réponses",
   "Send HTTP request": "Envoyer une requête HTTP",
   "Method": "Méthode",
@@ -15,6 +14,7 @@
   "Proxy Settings": "Paramètres du proxy",
   "Timeout(in seconds)": "Délai d'attente (en secondes)",
   "On Failure": "En cas d'échec",
+  "Stop the flow on Failure ?": "Arrêter le flux en cas d'échec ?",
   "Enable for files like PDFs, images, etc. A base64 body will be returned.": "Activer pour les fichiers comme les PDFs, les images, etc. Un corps base64 sera retourné.",
   "Use a proxy for this request": "Utiliser un proxy pour cette requête",
   "GET": "OBTENIR",
@@ -29,7 +29,10 @@
   "Form Data": "Données du formulaire",
   "JSON": "JSON",
   "Raw": "Brute",
-  "Retry on all errors (4xx, 5xx)": "Réessayer sur toutes les erreurs (4xx, 5xx)",
-  "Continue flow": "Continuer le flux",
-  "Retry on internal errors (5xx)": "Réessayez en cas d'erreurs internes (5xx)"
+  "Retry on all errors (4xx, 5xx)": "Réessayer pour toutes les erreurs (4xx, 5xx)",
+  "Retry on internal errors (5xx)": "Réessayez en cas d'erreurs internes (5xx)",
+  "Do not retry": "Ne pas réessayer",
+  "Continue flow on all errors": "Continuer le flux sur toutes les erreurs",
+  "Continue flow on 4xx errors": "Continuer le flux sur les erreurs 4xx",
+  "Do not continue (stop the flow)": "Ne pas continuer (arrêter le débit)"
 }

@@ -15,7 +15,7 @@ export const TriggerSourceEntity = new EntitySchema<TriggerSourceSchema>({
             type: TIMESTAMP_COLUMN_TYPE,
             deleteDate: true,
             nullable: true,
-        }, 
+        },
         flowId: {
             type: String,
             nullable: false,
@@ -24,9 +24,9 @@ export const TriggerSourceEntity = new EntitySchema<TriggerSourceSchema>({
             type: String,
             nullable: false,
         },
-        handshakeConfiguration: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
+        triggerName: {
+            type: String,
+            nullable: false,
         },
         projectId: {
             type: String,
@@ -65,6 +65,16 @@ export const TriggerSourceEntity = new EntitySchema<TriggerSourceSchema>({
             name: 'idx_trigger_flow_id_simulate',
             where: 'deleted IS NULL',
             unique: true,
+        },
+        {
+            columns: ['flowId'],
+            name: 'idx_trigger_flow_id',
+            unique: false,
+        },
+        {
+            columns: ['projectId'],
+            name: 'idx_trigger_project_id',
+            unique: false,
         },
     ],
     relations: {

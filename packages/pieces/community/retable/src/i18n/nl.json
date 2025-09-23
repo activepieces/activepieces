@@ -1,5 +1,4 @@
 {
-  "Retable": "Wisselbaar",
   "Turn your spreadsheets into smart database apps": "Verander uw spreadsheets in slimme database apps",
   "\nTo obtain your API key, follow these steps:\n\n1. Go to Account Overview by clicking your profile-pic (top-right).\n2. Go to API section and enable API key.\n3. Copy API key.": "\nOm uw API-sleutel te verkrijgen, volg deze stappen:\n\n1. Ga naar Accountoverzicht door op uw profiel-pic (rechtsboven) te klikken.\n2. Ga naar de API sectie en schakel API key in.\n3. Kopieer API key.",
   "Create Retable Record": "Retour Record aanmaken",
@@ -18,6 +17,7 @@
   "Make a custom API call to a specific endpoint": "Maak een aangepaste API call naar een specifiek eindpunt",
   "Workspace": "werkruimte",
   "Project": "Project",
+  "Retable": "Wisselbaar",
   "Fields": "Velden",
   "Workspace Name": "Naam werkruimte",
   "Workspace Description": "Werkruimte Beschrijving",

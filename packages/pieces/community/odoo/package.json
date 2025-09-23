@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-odoo",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "dependencies": {
     "url": "^0.11.3",
     "xmlrpc": "^1.3.2"

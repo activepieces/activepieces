@@ -1,5 +1,4 @@
 {
-  "Google Docs": "Google Docs",
   "Create and edit documents online": "Créer et éditer des documents en ligne",
   "Create Document": "Créer un document",
   "Edit template file": "Modifier le fichier modèle",
@@ -48,7 +47,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "New Document": "Nouveau document",
   "Triggers when a new document is added to a specific folder(optional).": "Déclenche lorsqu'un nouveau document est ajouté à un dossier spécifique (optionnel)."
 }

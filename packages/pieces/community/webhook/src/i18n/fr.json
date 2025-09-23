@@ -7,9 +7,9 @@
   "return a response and wait for the next webhook to resume the flow": "renvoyer une réponse et attendre que le prochain webhook reprenne le flow",
   "Response Type": "Type de réponse",
   "Response": "Réponse",
-  "Flow Execution": "Exécution en flux",
+  "Flow Execution": "Exécution du Flow",
   "Markdown": "Markdown",
-  "**Respond and Wait for Next Webhook**<br> \n            Check the response header (x-activepieces-resume-webhook-url) for the next webhook URL and call it to resume the flow. <br>\n            ": "**Répondre et attendre le prochain Webhook**<br> \n            Vérifiez l'en-tête de réponse (x-activepieces-resume-webhook-url) pour le prochain webhook URL et appelez-le pour reprendre le flow. <br>\n            ",
+  "**Respond and Wait for Next Webhook**<br> \n            Check the response header (x-activepieces-resume-webhook-url) for the next webhook URL and call it to resume the flow. <br>\n            ": "**Répondre et attendre le prochain Webhook**<br> \n            Vérifier le Header de réponse (x-activepieces-resume-webhook-url) pour le prochain webhook URL et appelez-le pour reprendre le Flow. <br>\n            ",
   "JSON": "JSON",
   "Raw": "Brute",
   "Redirect": "Rediriger",
@@ -19,10 +19,10 @@
   "Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.": "Recevoir les HTTP/webhooks entrants en utilisant n'importe quelle méthode HTTP telle que GET, POST, PUT, DELETE, etc.",
   "Authentication": "Authentification",
   "Authentication Fields": "Champs d'authentification",
-  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**URL en direct:**\n```text\n{{webhookUrl}}\n```\ngénérer des exemples de données et des triggers publiés flux.\n\n",
-  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Requêtes synchrones :**\n\nSi vous attendez une réponse de ce webhook, ajoutez `/sync` à la fin de l'URL. \nSi cela prend plus de 30 secondes, cela renverra une réponse 408 Request Timeout.\n\nPour renvoyer des données, ajoutez une étape Webhook à votre flow avec l'action Retour de réponse.\n",
-  "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**URL de Test:**\n\nsi vous souhaitez générer un échantillon de données sans déclencher le flow, ajoutez `/test` à votre URL de webhook.\n\n",
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**URL en direct:**\n```text\n{{webhookUrl}}\n```\ngénérer des exemples de données et déclencher le Flow publié.\n\n",
+  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Requêtes synchrones :**\n\nSi vous attendez une réponse de ce webhook, ajoutez `/sync` à la fin de l'URL. \nSi cela prend plus de 30 secondes, cela renverra une réponse 408 Request Timeout.\n\nPour renvoyer des données, ajoutez une étape Webhook à votre Flow avec l'action Retour de réponse.\n",
+  "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**URL de Test:**\n\nsi vous souhaitez générer un échantillon de données sans déclencher le Flow, ajoutez `/test` à votre URL de webhook.\n\n",
   "None": "Aucun",
   "Basic Auth": "Authentification basique",
-  "Header Auth": "Authentification de l'en-tête"
+  "Header Auth": "Authentification du Header"
 }

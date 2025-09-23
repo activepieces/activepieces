@@ -1,5 +1,4 @@
 {
-  "GraphQL": "GraphQL",
   "Send Request": "Envoyer la demande",
   "Makes a GraphQL request.": "Fait une requête GraphQL.",
   "Method": "Méthode",
@@ -18,5 +17,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "HEAD"
 }

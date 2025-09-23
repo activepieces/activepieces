@@ -1,5 +1,4 @@
 {
-  "Deepgram": "ディープグラム",
   "Deepgram is an AI-powered speech recognition platform that provides real-time transcription, text-to-speech, and audio analysis capabilities.": "Deepgramは、リアルタイムの書き起こし、テキスト読み上げ、およびオーディオ分析機能を提供するAIを搭載した音声認識プラットフォームです。",
   "You can obtain your API key from [Deepgram Console](https://console.deepgram.com/).": "[Deepgram Console](https://console.deepgram.com/)からAPIキーを取得できます。",
   "Create Summary": "サマリーを作成",

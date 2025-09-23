@@ -1,8 +1,8 @@
 {
-  "Agent": "Agent",
   "Let an AI assistant help you with tasks using tools.": "Laat een AI-assistent je helpen met taken met het gebruik van hulpmiddelen.",
   "Run Agent": "Agent uitvoeren",
   "Run the AI assistant to complete your task.": "Voer de AI assistent uit om uw taak te volbrengen.",
+  "Agent": "Agent",
   "Prompt": "Prompt",
   "Select agent created": "Selecteer medewerker aangemaakt",
   "Describe what you want the assistant to do.": "Beschrijf wat u wilt dat de assistent doet."

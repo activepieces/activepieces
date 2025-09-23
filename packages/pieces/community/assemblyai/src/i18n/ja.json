@@ -1,5 +1,4 @@
 {
-  "AssemblyAI": "AssemblyAI",
   "Transcribe and extract data from audio using AssemblyAI's Speech AI.": "AssemblyAIのSpeech AIを使用してオーディオからデータを書き換えて抽出します。",
   "You can retrieve your AssemblyAI API key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces).": "AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces)からAssemblyAI APIキーを取得できます。",
   "Upload File": "ファイルをアップロード",

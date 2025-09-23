@@ -5,17 +5,15 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.18.4",
+    "@activepieces/pieces-framework": "0.20.1",
     "@activepieces/server-shared": "0.0.2",
-    "@activepieces/shared": "0.20.0",
+    "@activepieces/shared": "0.22.0",
     "write-file-atomic": "5.0.1",
     "tslib": "2.6.2",
     "axios": "1.8.3",
     "axios-retry": "4.4.1",
-    "http-status-codes": "2.2.0",
     "fastify": "5.4.0",
     "p-limit": "2.3.0",
-    "async-mutex": "0.4.0",
     "chalk": "4.1.2",
     "chokidar": "3.6.0",
     "ws": "8.18.3",
@@ -24,6 +22,8 @@
     "@ai-sdk/openai": "2.0.12",
     "ai": "5.0.12",
     "zod": "3.25.76",
-    "@activepieces/common-ai": "0.0.2"
+    "socket.io-client": "4.7.5",
+    "socket.io": "4.8.1",
+    "@activepieces/common-ai": "0.2.1"
   }
 }
