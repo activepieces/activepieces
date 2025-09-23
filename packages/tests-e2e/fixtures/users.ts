@@ -1,4 +1,3 @@
-import { AuthenticationResponse, UserIdentityProvider } from '@activepieces/shared';
 import { faker } from '@faker-js/faker';
 import type { APIRequestContext, Page } from '@playwright/test';
 
@@ -26,3 +25,26 @@ export async function signUp(request: APIRequestContext, page: Page): Promise<Au
   return authResponse;
 }
 
+// cant import from shared: https://www.checklyhq.com/docs/runtimes/#why-cant-i-import-any-npm-package-or-other-3rd-party-dependencies
+export enum UserIdentityProvider {
+  EMAIL = 'EMAIL',
+  GOOGLE = 'GOOGLE',
+  SAML = 'SAML',
+  JWT = 'JWT',
+}
+
+export type AuthenticationResponse = {
+  id: string;
+  platformRole: string;
+  status: string;
+  externalId: string;
+  platformId: string;
+  verified: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
+  trackEvents: boolean;
+  newsLetter: boolean;
+  token: string;
+  projectId: string;
+}
