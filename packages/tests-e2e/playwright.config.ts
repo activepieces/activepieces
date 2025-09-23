@@ -10,11 +10,24 @@ if (!process.env.CI) {
 
 const AP_EDITION = process.env.AP_EDITION || 'ce';
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
-const baseConfig: PlaywrightTestConfig = {
-  testDir: './scenarios',
+// Edition-specific configurations
+const editionConfigs = {
+  ce: {
+    testDir: './scenarios/ce',
+  },
+  cloud: {
+    testDir: './scenarios/cloud',
+  },
+  ee: {
+    testDir: './scenarios/ee',
+  },
+};
+
+const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
+
+const config: PlaywrightTestConfig = {
+  testDir: editionConfig.testDir,
+
   testMatch: '**/*.spec.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -37,36 +50,6 @@ const baseConfig: PlaywrightTestConfig = {
     /* Run in headless mode for environments without display server */
     headless: true,
   },
-};
-
-// Edition-specific configurations
-const editionConfigs = {
-  ce: {
-    testDir: './scenarios/ce',
-  },
-  cloud: {
-    testDir: './scenarios/cloud',
-  },
-  ee: {
-    testDir: './scenarios/ee',
-  },
-};
-
-const webServerConfig = {
-  command: process.env.CI
-    ? 'npm run dev'
-    : 'export $(cat .env.e2e | xargs) && npm run dev',
-  url: 'http://localhost:4200/api/v1/flags',
-  reuseExistingServer: !process.env.CI,
-  timeout: 100000,
-  stdout: 'ignore' as const,
-};
-
-const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
-
-const config: PlaywrightTestConfig = {
-  ...baseConfig,
-  testDir: editionConfig.testDir,
 
   /* Configure projects for major browsers */
   projects: [
@@ -81,7 +64,15 @@ const config: PlaywrightTestConfig = {
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: webServerConfig,
+  webServer: {
+    command: process.env.CI
+      ? 'npm run dev'
+      : 'export $(cat .env.e2e | xargs) && npm run dev',
+    url: 'http://localhost:4200/api/v1/flags',
+    reuseExistingServer: !process.env.CI,
+    timeout: 100000,
+    stdout: 'pipe',
+  },
 };
 
 export default defineConfig(config);
