@@ -5,6 +5,7 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "form-data": "^4.0.4",
     "tslib": "^2.3.0"
   }
 }

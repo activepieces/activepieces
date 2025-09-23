@@ -3,8 +3,6 @@ import { HttpMethod, httpClient, HttpResponse } from '@activepieces/pieces-commo
 import { cambaiAuth } from '../../index';
 import { API_BASE_URL, listSourceLanguagesDropdown, listVoicesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS } from '../common';
 
-
-
 export const createTextToSpeech = createAction({
     auth: cambaiAuth,
     name: 'create_text_to_speech',
@@ -63,7 +61,7 @@ export const createTextToSpeech = createAction({
         if (project_description) payload['project_description'] = project_description;
         if (folder_id) payload['folder_id'] = folder_id;
 
-        // Step 1: Submit the initial request to create the task
+
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/tts`,
@@ -72,7 +70,6 @@ export const createTextToSpeech = createAction({
         });
         const taskId = initialResponse.body.task_id;
 
-        // Step 2: Poll the status endpoint until the task is complete
         let attempts = 0;
         let run_id: string | null = null;
         while (attempts < MAX_POLLING_ATTEMPTS) {
@@ -83,21 +80,25 @@ export const createTextToSpeech = createAction({
             });
 
             if (statusResponse.body.status === 'SUCCESS') {
+
                 run_id = statusResponse.body.run_id ?? null;
                 break;
             }
             if (statusResponse.body.status === 'FAILED') {
+
                 throw new Error(`Text-to-Speech task failed: ${JSON.stringify(statusResponse.body)}`);
             }
+
             await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
             attempts++;
         }
+
 
         if (!run_id) {
             throw new Error("Text-to-Speech task timed out or failed to return a run_id.");
         }
 
-        // Step 3: Download the audio file
+
         const audioResponse: HttpResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/tts-result/${run_id}`,

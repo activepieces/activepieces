@@ -1,10 +1,8 @@
 import { createAction, Property, ApFile, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, HttpMessageBody } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient, HttpMessageBody, HttpHeaders } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../../index';
-import { API_BASE_URL, listSourceLanguagesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS} from '../common';
-
-// Define polling constants
- // 10 minutes timeout for potentially long media files
+import { API_BASE_URL, listSourceLanguagesDropdown, POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS } from '../common';
+import FormData from 'form-data';
 
 export const createTranscription = createAction({
     auth: cambaiAuth,
@@ -30,10 +28,8 @@ export const createTranscription = createAction({
             required: true,
             refreshers: ['source_type'],
             props: async (context) => {
-                // FIX: Use a two-step cast (as unknown as string) to resolve the type error.
                 const sourceType = (context['source_type'] as unknown as string);
                 const fields: DynamicPropsValue = {};
-
                 if (sourceType === 'file') {
                     fields['media_file'] = Property.File({
                         displayName: 'Media File',
@@ -70,41 +66,40 @@ export const createTranscription = createAction({
         const { auth } = context;
         const { language, source_type, media, project_name, project_description, folder_id } = context.propsValue;
 
-        const formData: Record<string, unknown> = {
-            language: Number(language),
-        };
-        if (project_name) formData['project_name'] = project_name;
-        if (project_description) formData['project_description'] = project_description;
-        if (folder_id) formData['folder_id'] = folder_id;
-
-        let requestBody: HttpMessageBody;
+        const formData = new FormData();
+        
+        formData.append('language', Number(language).toString());
+        if (project_name) formData.append('project_name', project_name);
+        if (project_description) formData.append('project_description', project_description);
+        if (folder_id) formData.append('folder_id', folder_id.toString());
 
         if (source_type === 'url') {
             if (!media['media_url']) throw new Error("Media URL is required when source is 'File URL'.");
-            formData['media_url'] = media['media_url'];
-            requestBody = formData;
+            formData.append('media_url', media['media_url'] as string);
         } else {
             if (!media['media_file']) throw new Error("Media File is required when source is 'Upload File'.");
             const fileData = media['media_file'] as ApFile;
-            formData['media_file'] = {
-                filename: fileData.filename,
-                data: fileData.data,
-            };
-            requestBody = formData;
+            formData.append('media_file', fileData.data, fileData.filename);
         }
+        
 
-        // Step 1: Submit the initial request to create the task
+        const requestBody = await formData.getBuffer();
+        const headers: HttpHeaders = {
+            'x-api-key': auth,
+            ...formData.getHeaders(),
+        };
+
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/transcribe`,
-            headers: { 'x-api-key': auth },
-            body: requestBody,
+            headers: headers,
+            body: requestBody, 
         });
         const taskId = initialResponse.body.task_id;
 
-        // Step 2: Poll the status endpoint until the task is complete
+
         let attempts = 0;
-        while (attempts < MAX_POLLING_ATTEMPTS) {
+        while (attempts < LONG_MAX_POLLING_ATTEMPTS) {
             const statusResponse = await httpClient.sendRequest<{ status: string, [key: string]: unknown }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/transcribe/${taskId}`,
@@ -121,6 +116,7 @@ export const createTranscription = createAction({
             attempts++;
         }
 
-        throw new Error("Transcription task timed out after 10 minutes.");
+        const timeoutMinutes = (LONG_MAX_POLLING_ATTEMPTS * POLLING_INTERVAL_MS) / (1000 * 60);
+        throw new Error(`Transcription task timed out after ${timeoutMinutes} minutes.`);
     },
 });

@@ -45,7 +45,7 @@ export const createTextToSound = createAction({
         if (project_description) payload['project_description'] = project_description;
         if (folder_id) payload['folder_id'] = folder_id;
 
-        // Step 1: Submit the initial request to create the sound generation task.
+
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/text-to-sound`,
@@ -59,7 +59,6 @@ export const createTextToSound = createAction({
         const taskId = initialResponse.body.task_id;
         let attempts = 0;
 
-        // Step 2: Poll the status endpoint until the task is complete or fails.
         while (attempts < MAX_POLLING_ATTEMPTS) {
             const statusResponse = await httpClient.sendRequest<{
                 status: string;
@@ -75,18 +74,20 @@ export const createTextToSound = createAction({
             const status = statusResponse.body.status;
 
             if (status === 'SUCCESS') {
-                // Return the full success response, which includes the audio_url.
+
                 return statusResponse.body;
             }
 
             if (status === 'FAILED') {
+
                 throw new Error(`Sound generation task failed: ${JSON.stringify(statusResponse.body)}`);
             }
 
-            // Wait for the defined interval before checking again.
+
             await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
             attempts++;
         }
+
 
         throw new Error("Sound generation timed out after 5 minutes.");
     },

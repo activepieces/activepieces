@@ -2,7 +2,7 @@ import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { createTextToSound } from "./lib/actions/create-text-to-sound";
 import { createTextToSpeech } from "./lib/actions/create-text-to-speech";
 import { createTranslation } from "./lib/actions/create-translation";
-import { createTranscription } from "./lib/actions/create-transcription"; // Import the new action
+import { createTranscription } from "./lib/actions/create-transcription"; 
 
 export const cambaiAuth = PieceAuth.SecretText({
     displayName: "API Key",
@@ -21,12 +21,12 @@ export const cambAi = createPiece({
     auth: cambaiAuth,
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/camb-ai.png",
-    authors: ['kishanprmr'],
+    authors: [],
     actions: [
         createTextToSound,
         createTextToSpeech,
         createTranslation,
-        createTranscription // Add the new action here
+        createTranscription 
     ],
     triggers: [],
 });

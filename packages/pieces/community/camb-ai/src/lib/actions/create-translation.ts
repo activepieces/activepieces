@@ -3,8 +3,6 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../../index';
 import { API_BASE_URL, listSourceLanguagesDropdown, listTargetLanguagesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS} from '../common';
 
-
-
 export const createTranslation = createAction({
     auth: cambaiAuth,
     name: 'create_translation',
@@ -67,7 +65,6 @@ export const createTranslation = createAction({
         if (age) payload['age'] = age;
         if (project_name) payload['project_name'] = project_name;
 
-        // Step 1: Submit the initial request to create the task
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/translate`,
@@ -76,7 +73,7 @@ export const createTranslation = createAction({
         });
         const taskId = initialResponse.body.task_id;
 
-        // Step 2: Poll the status endpoint until the task is complete
+
         let attempts = 0;
         while (attempts < MAX_POLLING_ATTEMPTS) {
             const statusResponse = await httpClient.sendRequest<{ status: string, [key: string]: unknown }>({
@@ -86,15 +83,19 @@ export const createTranslation = createAction({
             });
 
             if (statusResponse.body.status === 'SUCCESS') {
+
                 return statusResponse.body;
             }
             if (statusResponse.body.status === 'ERROR' || statusResponse.body.status === 'FAILED') {
+
                 throw new Error(`Translation task failed: ${JSON.stringify(statusResponse.body)}`);
             }
             await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
             attempts++;
         }
+        
 
-        throw new Error("Translation task timed out after 5 minutes.");
+        const timeoutMinutes = (MAX_POLLING_ATTEMPTS * POLLING_INTERVAL_MS) / (1000 * 60);
+        throw new Error(`Translation task timed out after ${timeoutMinutes} minutes.`);
     },
 });

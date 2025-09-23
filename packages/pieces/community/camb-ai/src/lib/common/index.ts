@@ -1,11 +1,11 @@
 import { Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-// Define constants for the API
+
 export const API_BASE_URL = "https://client.camb.ai/apis";
-export const POLLING_INTERVAL_MS = 5000; // 5 seconds
-export const LONG_POLLING_INTERVAL_MS = 10000; // 10 seconds for longer tasks
-export const MAX_POLLING_ATTEMPTS = 60; // 5 minutes timeout (60 * 5s)
+export const POLLING_INTERVAL_MS = 5000;
+export const LONG_POLLING_INTERVAL_MS = 10000;
+export const MAX_POLLING_ATTEMPTS = 180;
 export const LONG_MAX_POLLING_ATTEMPTS = 120;
 
 type Voice = {
@@ -19,7 +19,7 @@ type Language = {
     short_name: string;
 };
 
-// Function to fetch available voices for a dropdown property
+
 export const listVoicesDropdown = Property.Dropdown({
     displayName: 'Voice',
     description: 'Select the voice to generate the speech.',
@@ -51,7 +51,7 @@ export const listVoicesDropdown = Property.Dropdown({
     },
 });
 
-// RENAMED for clarity
+
 export const listSourceLanguagesDropdown = Property.Dropdown({
     displayName: 'Source Language',
     description: 'Select the original language of the input text.',
@@ -83,7 +83,7 @@ export const listSourceLanguagesDropdown = Property.Dropdown({
     },
 });
 
-// NEW function for target languages
+
 export const listTargetLanguagesDropdown = Property.Dropdown({
     displayName: 'Target Language',
     description: 'Select the language to translate the text into.',
