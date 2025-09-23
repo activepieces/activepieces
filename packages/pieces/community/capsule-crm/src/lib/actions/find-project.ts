@@ -64,15 +64,15 @@ export const findProject = createAction({
         const queryParams: Record<string, string> = {};
 
         if (searchQuery) queryParams['q'] = searchQuery;
-        if (partyId && partyId.trim()) queryParams['partyId'] = partyId.trim();
-        if (opportunityId && opportunityId.trim()) queryParams['opportunityId'] = opportunityId.trim();
+        if (partyId && partyId.trim()) queryParams['party_id'] = partyId.trim();
+        if (opportunityId && opportunityId.trim()) queryParams['opportunity_id'] = opportunityId.trim();
         if (status) queryParams['status'] = status;
         if (limit) queryParams['perPage'] = limit.toString();
 
         const response = await capsuleCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.GET,
-            resourceUri: '/projects',
+            resourceUri: '/kases',
             queryParams
         });
 

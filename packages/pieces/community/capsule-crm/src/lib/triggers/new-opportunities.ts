@@ -35,7 +35,7 @@ export const newOpportunities = createTrigger({
       name: 'Qualified'
     },
     probability: 75,
-    expectedCloseDate: '2023-08-27',
+    expected_close_date: '2023-08-27',
     createdAt: '2023-07-27T10:00:00Z',
     updatedAt: '2023-07-27T10:00:00Z'
   },

@@ -14,11 +14,20 @@ export const partyDropdown = ({
     description: 'Select a party (person or organization)',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth, entityType }: any) {
       if (!auth) {
         return {
           disabled: true,
           placeholder: 'Connect your Capsule CRM account first',
+          options: [],
+        };
+      }
+
+      // Only show options if party is selected as entity type
+      if (entityType !== 'party') {
+        return {
+          disabled: true,
+          placeholder: 'Select "Party (Contact)" in "Associate With" field first',
           options: [],
         };
       }
@@ -108,7 +117,7 @@ export const projectDropdown = ({
     description: 'Select a project',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth, entityType }: any) {
       if (!auth) {
         return {
           disabled: true,
@@ -117,15 +126,24 @@ export const projectDropdown = ({
         };
       }
 
+      // Only show options if project is selected as entity type
+      if (entityType !== 'project') {
+        return {
+          disabled: true,
+          placeholder: 'Select "Project" in "Associate With" field first',
+          options: [],
+        };
+      }
+
       try {
         const response = await capsuleCommon.apiCall({
           auth,
           method: HttpMethod.GET,
-          resourceUri: '/projects',
+          resourceUri: '/kases',
           queryParams: { perPage: '100' }
         });
 
-        const projects = response.body.projects || [];
+        const projects = response.body.kases || [];
 
         return {
           options: projects.map((project: any) => ({
@@ -155,11 +173,20 @@ export const opportunityDropdown = ({
     description: 'Select an opportunity',
     required,
     refreshers,
-    async options({ auth }: any) {
+    async options({ auth, entityType }: any) {
       if (!auth) {
         return {
           disabled: true,
           placeholder: 'Connect your Capsule CRM account first',
+          options: [],
+        };
+      }
+
+      // Only show options if opportunity is selected as entity type
+      if (entityType !== 'opportunity') {
+        return {
+          disabled: true,
+          placeholder: 'Select "Opportunity" in "Associate With" field first',
           options: [],
         };
       }

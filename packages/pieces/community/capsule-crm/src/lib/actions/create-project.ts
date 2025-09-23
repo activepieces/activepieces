@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { z } from 'zod';
+import dayjs from 'dayjs';
 import { capsuleAuth } from '../common/auth';
 import { capsuleCommon } from '../common/client';
 import { partyDropdown, opportunityDropdown } from '../common/properties';
@@ -41,12 +42,12 @@ export const createProject = createAction({
                 ]
             }
         }),
-        expectedCloseDate: Property.DateTime({
+        expected_close_date: Property.DateTime({
             displayName: 'Expected Close Date',
             description: 'Expected completion date of the project',
             required: false,
         }),
-        actualCloseDate: Property.DateTime({
+        actual_close_date: Property.DateTime({
             displayName: 'Actual Close Date',
             description: 'Actual completion date of the project',
             required: false,
@@ -59,8 +60,8 @@ export const createProject = createAction({
             partyId?: string;
             opportunityId?: string;
             status?: string;
-            expectedCloseDate?: string;
-            actualCloseDate?: string;
+            expected_close_date?: string;
+            actual_close_date?: string;
         };
 
         const {
@@ -69,8 +70,8 @@ export const createProject = createAction({
             partyId,
             opportunityId,
             status,
-            expectedCloseDate,
-            actualCloseDate
+            expected_close_date,
+            actual_close_date
         } = props;
 
         // Zod validation
@@ -80,8 +81,8 @@ export const createProject = createAction({
             partyId: z.string().optional(),
             opportunityId: z.string().optional(),
             status: z.enum(['OPEN', 'COMPLETED', 'CANCELLED']).optional(),
-            expectedCloseDate: z.string().optional(),
-            actualCloseDate: z.string().optional(),
+            expected_close_date: z.string().optional(),
+            actual_close_date: z.string().optional(),
         });
 
         const project: Record<string, any> = {
@@ -92,18 +93,18 @@ export const createProject = createAction({
         if (partyId) project['party'] = { id: parseInt(partyId) };
         if (opportunityId) project['opportunity'] = { id: parseInt(opportunityId) };
         if (status) project['status'] = status;
-        if (expectedCloseDate) project['expectedCloseDate'] = expectedCloseDate;
-        if (actualCloseDate) project['actualCloseDate'] = actualCloseDate;
+        if (expected_close_date) project['expectedCloseOn'] = dayjs(expected_close_date).format('YYYY-MM-DD');
+        if (actual_close_date) project['actualCloseOn'] = dayjs(actual_close_date).format('YYYY-MM-DD');
 
         try {
-            const response = await capsuleCommon.apiCall({
-                auth: context.auth,
-                method: HttpMethod.POST,
-                resourceUri: '/projects',
-                body: { project }
-            });
+        const response = await capsuleCommon.apiCall({
+            auth: context.auth,
+            method: HttpMethod.POST,
+            resourceUri: '/kases',
+            body: { kase: project }
+        });
 
-            return response.body;
+            return response.body.kase || response.body;
         } catch (error: any) {
             if (error.response?.status === 404) {
                 // Check if the error is due to invalid party or opportunity

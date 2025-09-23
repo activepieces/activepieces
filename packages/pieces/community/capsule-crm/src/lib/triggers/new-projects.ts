@@ -22,7 +22,7 @@ export const newProjects = createTrigger({
     id: 12345,
     name: 'Website Redesign Project',
     description: 'Complete redesign of company website',
-    status: 'OPEN',
+    status: 'open',
     party: {
       id: 67890,
       name: 'ABC Company'
@@ -31,8 +31,7 @@ export const newProjects = createTrigger({
       id: 111,
       name: 'Website Redesign Deal'
     },
-    category: 'Development',
-    expectedCloseDate: '2023-12-31',
+    expected_close_date: '2023-12-31',
     createdAt: '2023-07-27T10:00:00Z',
     updatedAt: '2023-07-27T10:00:00Z'
   },
@@ -102,10 +101,10 @@ export const newProjects = createTrigger({
         const projectDetails = await capsuleCommon.apiCall({
           auth: context.auth,
           method: HttpMethod.GET,
-          resourceUri: `/projects/${projectId}`
+          resourceUri: `/kases/${projectId}`
         });
 
-        return [projectDetails.body.project || projectDetails.body];
+        return [projectDetails.body.kase || projectDetails.body];
       } catch (error) {
         console.warn('Failed to fetch project details:', error);
         return [payload];
