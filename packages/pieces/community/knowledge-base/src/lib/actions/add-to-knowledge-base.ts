@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import FormData from 'form-data';
 import crypto from 'crypto';
-import { knowledgeBaseAuth } from '../..';
-import { getMasterData, getAccessToken, getUserMe } from './search-knowledge-base';
 import fetch from 'node-fetch';
+import { promptxAuth } from '../auth';
+import { PromptXAuth } from '../types';
+import { fetchUrls, getAccessToken, getUserMe } from '../helper';
 
 const CHUNK_SIZE = 5 * 1024 * 1024;
 
@@ -14,14 +15,18 @@ async function getFileBufferFromHumanInput(fileUrl?: string): Promise<{
 }> {
   if (fileUrl) {
     const res = await fetch(fileUrl);
-    if (!res.ok) throw new Error(`Download failed: ${res.status} ${await res.text()}`);
+    if (!res.ok)
+      throw new Error(`Download failed: ${res.status} ${await res.text()}`);
     const arrayBuf = await res.arrayBuffer();
     const buffer = Buffer.from(arrayBuf);
-    const mimeType = res.headers.get('content-type') ?? 'application/octet-stream';
+    const mimeType =
+      res.headers.get('content-type') ?? 'application/octet-stream';
     return { buffer, mimeType };
   }
 
-  throw new Error('No file input. Please map a File from Human Input or provide a fileUrl.');
+  throw new Error(
+    'No file input. Please map a File from Human Input or provide a fileUrl.'
+  );
 }
 
 function sha256Hex(buf: Buffer): string {
@@ -36,7 +41,7 @@ async function uploadChunk(
   total: number,
   index: number,
   size: number,
-  hash: string,
+  hash: string
 ) {
   const form = new FormData();
   form.append('file', chunk, { filename: `${name}.part.${index}` });
@@ -52,16 +57,20 @@ async function uploadChunk(
     body: form as any,
   });
   if (!resp.ok) {
-    throw new Error(`uploadSplit failed (chunk ${index}/${total}): ${resp.status} ${await resp.text()}`);
+    throw new Error(
+      `uploadSplit failed (chunk ${index}/${total}): ${
+        resp.status
+      } ${await resp.text()}`
+    );
   }
 }
 
 export const addToKnowledgeBase = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'addToKnowledgeBase',
   displayName: 'Add to Knowledge Base',
   description:
-    'Upload a file to a Knowledge Base collection. Supports normal upload or split-chunk upload to KnowledgeBaseFileService/uploadSplit.', auth: knowledgeBaseAuth,
+    'Upload a file to a Knowledge Base collection. Supports normal upload or split-chunk upload',
+  auth: promptxAuth,
   props: {
     fileUrl: Property.ShortText({
       displayName: 'File URL',
@@ -77,23 +86,28 @@ export const addToKnowledgeBase = createAction({
       defaultValue: '',
       refreshers: [],
       options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Enter your connection first',
-            options: [],
-          };
-        }
+        const promptxAuth = auth as PromptXAuth;
         try {
-          const masterData = await getMasterData(auth);
-          const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
-          const userMe = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
+          const urls = fetchUrls(
+            promptxAuth.server ?? 'production',
+            promptxAuth.customAuthUrl,
+            promptxAuth.customAppUrl
+          );
+          const accessToken = await getAccessToken(
+            urls.CENTER_AUTH_LOGIN_URL,
+            promptxAuth.username,
+            promptxAuth.password
+          );
+          const userMe = await getUserMe(
+            urls.CENTER_API_USERS_ME_URL,
+            accessToken
+          );
 
           const response = await axios.get(
-            masterData.KNOWLEDGE_BASE_URL + `/getFiles?userId=` + userMe.id + `&offset=0&limitOfset=30&parentFolderId=&tag=search&keyword=$$_EMPTY_$$&searchDir=Y&type=DIRECTORY`,
+            `${urls.KNOWLEDGE_BASE_URL}/getFiles?userId=${userMe.id}&offset=0&limitOfset=30&parentFolderId=&tag=search&keyword=$$_EMPTY_$$&searchDir=Y&type=DIRECTORY`,
             {
               headers: {
-                'Authorization': `Bearer ` + accessToken,
+                Authorization: `Bearer ` + accessToken,
                 'Content-Type': 'application/json',
               },
             }
@@ -101,12 +115,17 @@ export const addToKnowledgeBase = createAction({
 
           return {
             disabled: false,
-            options: response.data.data.map((knowledgebaseResult: any) => {
-              return {
-                label: knowledgebaseResult.file_name,
-                value: knowledgebaseResult.file_app_id,
-              };
-            }),
+            options: response.data.data.map(
+              (knowledgeBaseResult: {
+                file_name: string;
+                file_app_id: string;
+              }) => {
+                return {
+                  label: knowledgeBaseResult.file_name,
+                  value: knowledgeBaseResult.file_app_id,
+                };
+              }
+            ),
           };
         } catch (error) {
           return {
@@ -128,16 +147,24 @@ export const addToKnowledgeBase = createAction({
       defaultValue: 5,
     }),
   },
-  async run(ctx) {
-    const { fileUrl, fileName, parentFolderId, tagNames, chunkSizeMB, } = ctx.propsValue;
+  async run({ auth, propsValue }) {
+    const { fileUrl, fileName, parentFolderId, tagNames, chunkSizeMB } =
+      propsValue;
 
     try {
-      const auth = ctx.auth;
-      const masterData = await getMasterData(auth);
-      const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
-      const userMe = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
+      const {
+        server = 'production',
+        username,
+        password,
+        customAuthUrl,
+        customAppUrl,
+      } = auth;
+      const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+      const accessToken = await getAccessToken(server, username, password);
+      const userMe = await getUserMe(urls.CENTER_API_USERS_ME_URL, accessToken);
 
-      const { buffer, mimeType: detectedMime } = await getFileBufferFromHumanInput(fileUrl);
+      const { buffer, mimeType: detectedMime } =
+        await getFileBufferFromHumanInput(fileUrl);
 
       const size = buffer.length;
       const mimeType = detectedMime;
@@ -145,14 +172,26 @@ export const addToKnowledgeBase = createAction({
 
       const hash = sha256Hex(buffer);
 
-      const actualChunkSize = Math.max(1, Math.floor((chunkSizeMB ?? (CHUNK_SIZE / (1024 * 1024))) * 1024 * 1024));
+      const actualChunkSize = Math.max(
+        1,
+        Math.floor((chunkSizeMB ?? CHUNK_SIZE / (1024 * 1024)) * 1024 * 1024)
+      );
       const total = Math.ceil(size / actualChunkSize) || 1;
 
       for (let i = 0; i < total; i++) {
         const start = i * actualChunkSize;
         const end = Math.min(start + actualChunkSize, size);
         const chunk = buffer.subarray(start, end);
-        await uploadChunk(accessToken, masterData.KNOWLEDGE_BASE_URL, chunk, fileName, total, i, size, hash);
+        await uploadChunk(
+          accessToken,
+          urls.KNOWLEDGE_BASE_URL,
+          chunk,
+          fileName,
+          total,
+          i,
+          size,
+          hash
+        );
       }
 
       const mergeBody = {
@@ -171,7 +210,7 @@ export const addToKnowledgeBase = createAction({
         detail: '',
       };
 
-      const mergeResp = await fetch(`${masterData.KNOWLEDGE_BASE_URL}/merge_chunks`, {
+      const mergeResp = await fetch(`${urls.KNOWLEDGE_BASE_URL}/merge_chunks`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -181,21 +220,27 @@ export const addToKnowledgeBase = createAction({
       });
 
       if (!mergeResp.ok) {
-        throw new Error(`merge_chunks failed: ${mergeResp.status} ${await mergeResp.text()}`);
+        throw new Error(
+          `merge_chunks failed: ${mergeResp.status} ${await mergeResp.text()}`
+        );
       }
 
       return await mergeResp.json();
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const axiosError: any = error as AxiosError;
         throw new Error(
-          `Knowledgebase API Error: ${axiosError.response?.data?.message ||
-          axiosError.message ||
-          'Unknown error occurred'
+          `KnowledgeBase API Error: ${
+            error.response?.data?.message ||
+            error.message ||
+            'Unknown error occurred'
           }`
         );
       }
-      throw new Error(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Unexpected error: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   },
 });

@@ -1,70 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import axios, { AxiosError } from 'axios';
-import { knowledgeBaseAuth, Test } from '../..';
-
-export const getMasterData = async (auth: any) => {
-  try {
-    const server = auth.server;
-    const isTest = server === Test;
-    const masterData: any = {};
-    if (isTest) {
-      masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
-      masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
-      masterData.KNOWLEDGE_BASE_URL = "https://test.oneweb.tech/KnowledgeBaseFileService";
-      masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
-      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://test.oneweb.tech/KnowledgeBaseFileService/collections";
-    } else {
-      masterData.CENTER_AUTH_LOGIN_URL = "https://centerapp.io/center/auth/login";
-      masterData.CENTER_API_USERS_ME_URL = "https://centerapp.io/center/api/v1/users/me";
-      masterData.KNOWLEDGE_BASE_URL = "https://promptxai.com/KnowledgeBaseFileService";
-      masterData.KNOWLEDGE_BASE_RUN_URL = "https://centerapp.io/knowledge/retrieval";
-      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://promptxai.com/KnowledgeBaseFileService/collections";
-    }
-    return masterData;
-  } catch (error) {
-    const masterData: any = {};
-    masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
-    masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
-    masterData.KNOWLEDGE_BASE_URL = "https://test.oneweb.tech/KnowledgeBaseFileService";
-    masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
-    masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://test.oneweb.tech/KnowledgeBaseFileService/collections";
-    return masterData;
-  }
-};
-
-export const getAccessToken = async (CENTER_AUTH_LOGIN_URL: string, auth: any): Promise<string | null> => {
-  const response = await fetch(CENTER_AUTH_LOGIN_URL, {
-    method: 'POST',
-    body: JSON.stringify({
-      username: auth.username,
-      password: auth.password,
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-  const data = await response.json();
-  return data.token;
-};
-
-export const getUserMe = async (CENTER_API_USERS_ME_URL: string, accessToken: string) => {
-  const response = await fetch(CENTER_API_USERS_ME_URL, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ` + accessToken,
-      'Content-Type': 'application/json'
-    }
-  });
-  const data = await response.json();
-  return data;
-}
+import axios from 'axios';
+import { fetchUrls, getAccessToken, getUserMe } from '../helper';
+import { promptxAuth } from '../auth';
+import { PromptXAuth } from '../types';
 
 export const searchKnowledgeBase = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'searchKnowledgeBase',
   displayName: 'Search Knowledge Base',
-  description: "Search for any information in Avalant's knowledge base",
-  auth: knowledgeBaseAuth,
+  description: 'Search for any information in PromptX knowledge base',
+  auth: promptxAuth,
   props: {
     knowledgeBaseId: Property.Dropdown({
       displayName: 'Knowledge Base ID',
@@ -72,23 +16,28 @@ export const searchKnowledgeBase = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Enter your connection first',
-            options: [],
-          };
-        }
+        const promptxAuth = auth as PromptXAuth;
         try {
-          const masterData = await getMasterData(auth);
-          const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
-          const userMe = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
+          const urls = fetchUrls(
+            promptxAuth.server ?? 'production',
+            promptxAuth.customAuthUrl,
+            promptxAuth.customAppUrl
+          );
+          const accessToken = await getAccessToken(
+            urls.CENTER_AUTH_LOGIN_URL,
+            promptxAuth.username,
+            promptxAuth.password
+          );
+          const userMe = await getUserMe(
+            urls.CENTER_API_USERS_ME_URL,
+            accessToken
+          );
 
           const response = await axios.get(
-            masterData.KNOWLEDGE_BASE_COLLECTIONS_URL + `/` + userMe.iam2ID,
+            `${urls.KNOWLEDGE_BASE_COLLECTIONS_URL}/${userMe.iam2ID}`,
             {
               headers: {
-                'Authorization': `Bearer ` + accessToken,
+                Authorization: `Bearer ` + accessToken,
                 'Content-Type': 'application/json',
               },
             }
@@ -96,12 +45,17 @@ export const searchKnowledgeBase = createAction({
 
           return {
             disabled: false,
-            options: response.data.data.map((knowledgebaseResult: any) => {
-              return {
-                label: knowledgebaseResult.collection_name,
-                value: knowledgebaseResult.collection_id,
-              };
-            }),
+            options: response.data.data.map(
+              (knowledgeBaseResult: {
+                collection_name: string;
+                collection_id: string;
+              }) => {
+                return {
+                  label: knowledgeBaseResult.collection_name,
+                  value: knowledgeBaseResult.collection_id,
+                };
+              }
+            ),
           };
         } catch (error) {
           return {
@@ -155,16 +109,35 @@ export const searchKnowledgeBase = createAction({
       defaultValue: 0.5,
     }),
   },
-  async run(context) {
-    const { query, knowledgeBaseId, fetchOption, filterTags, topK, scoreThreshold } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const {
+      query,
+      knowledgeBaseId,
+      fetchOption,
+      filterTags,
+      topK,
+      scoreThreshold,
+    } = propsValue;
 
     try {
-      const auth = context.auth;
-      const masterData = await getMasterData(auth);
-      const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
-      const userMe = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
+      const {
+        server = 'production',
+        username,
+        password,
+        customAuthUrl,
+        customAppUrl,
+      } = auth;
+      const urls = fetchUrls(server, customAuthUrl, customAppUrl);
+      const accessToken = await getAccessToken(server, username, password);
+      const userMe = await getUserMe(urls.CENTER_API_USERS_ME_URL, accessToken);
 
-      const tagArray: string[] = Array.isArray(filterTags) ? filterTags.map((t: any) => (t && typeof t.tag === 'string' ? t.tag.trim() : '')).filter((t: string) => t.length > 0) : [];
+      const tagArray = Array.isArray(filterTags)
+        ? filterTags
+            .map((t: any) =>
+              t && typeof t.tag === 'string' ? t.tag.trim() : ''
+            )
+            .filter((t: string) => t.length > 0)
+        : [];
 
       const payload = {
         knowledge_id: knowledgeBaseId,
@@ -177,32 +150,33 @@ export const searchKnowledgeBase = createAction({
         },
       };
 
-      const response = await axios.post(
-        masterData.KNOWLEDGE_BASE_RUN_URL, payload,
-        {
-          headers: {
-            'Authorization': `Bearer ` + accessToken,
-            'userId': userMe.iam2ID,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
+      const response = await axios.post(urls.KNOWLEDGE_BASE_RUN_URL, payload, {
+        headers: {
+          Authorization: `Bearer ` + accessToken,
+          userId: userMe.iam2ID,
+          'Content-Type': 'application/json',
+        },
+      });
       return {
         success: true,
         data: response.data,
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const axiosError: any = error as AxiosError;
         throw new Error(
-          `Knowledgebase API Error: ${axiosError.response?.data?.message ||
-          axiosError.message ||
-          'Unknown error occurred'
+          `KnowledgeBase API Error: ${
+            error.response?.data?.message ||
+            error.message ||
+            'Unknown error occurred'
           }` + query
         );
+      } else {
+        throw new Error(
+          `Unexpected error: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
       }
-      throw new Error(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
     }
   },
 });
