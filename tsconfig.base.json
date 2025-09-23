@@ -822,6 +822,9 @@
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
+      "@activepieces/piece-prompthub": [
+        "packages/pieces/community/prompthub/src/index.ts"
+      ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],
