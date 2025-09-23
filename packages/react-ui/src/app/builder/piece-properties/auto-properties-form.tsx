@@ -30,6 +30,7 @@ import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
 import { AutoDynamicFields } from './auto-dynamic-fields';
 import { Separator } from '@/components/ui/separator';
+import { autoPropertiesUtils } from '@/features/pieces/lib/auto-properties-utils';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -56,9 +57,12 @@ const AutoPropertiesFormComponent = React.memo(
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-6 w-full">
           {Object.entries(props).filter(([propertyName]) => {
-            const property = props[propertyName];
             const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
-            return property && propertySettings?.type !== PropertyExecutionType.AUTO;
+            if (isNil(propertySettings?.type)) {
+              const propertyExecutionType = autoPropertiesUtils.determinePropertyExecutionType(propertyName, propertySettings?.schema ?? props[propertyName], props);
+              form.setValue(`settings.propertySettings.${propertyName}.type`, propertyExecutionType);
+            }
+            return propertySettings?.type !== PropertyExecutionType.AUTO;
           }).map(([propertyName]) => {
             return (
               <FormField

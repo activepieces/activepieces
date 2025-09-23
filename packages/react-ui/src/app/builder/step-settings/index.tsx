@@ -319,7 +319,7 @@ const StepSettingsContainer = () => {
             </ResizablePanel>
             {!readonly && (
               <>
-                <ResizableHandle withHandle={true} />
+                <ResizableHandle withHandle={true} style={{ zIndex: 100 }}/>
                 <ResizablePanel defaultSize={45} className="min-h-[130px]">
                   <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
                     {modifiedStep.type && (

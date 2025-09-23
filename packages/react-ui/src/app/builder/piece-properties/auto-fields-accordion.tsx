@@ -6,8 +6,8 @@ import { Sparkles, X, FormInput, Wand2 } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { propertyUtils } from './property-utils';
-import { PropertyExecutionType } from '@activepieces/shared';
-import { PiecePropertyMap, OAuth2Props, ArraySubProps, PropertyType } from '@activepieces/pieces-framework';
+import { isNil, PropertyExecutionType, PropertySettings } from '@activepieces/shared';
+import { PiecePropertyMap, OAuth2Props, ArraySubProps } from '@activepieces/pieces-framework';
 import { autoPropertiesUtils } from '@/features/pieces/lib/auto-properties-utils';
 import { TooltipContent, Tooltip, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -20,40 +20,51 @@ type AutoFieldsAccordionProps = {
 const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFieldsAccordionProps) => {
   const form = useFormContext();
   const [isOpen, setIsOpen] = useState(false);
+  const propertySettings = form.getValues().settings?.propertySettings;
   
-  const autoFields = Object.entries(props).filter(([propertyName]) => {
-    const property = props[propertyName];
-    const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
-    return property && propertySettings?.type === PropertyExecutionType.AUTO;
-  });
+  const autoProperties = Object.entries(propertySettings || {}).filter(([, data]) => (data as PropertySettings)?.type === PropertyExecutionType.AUTO);
+  const autoFields = autoProperties;
 
   const handleAutoFillAll = () => {
-    Object.entries(props).forEach(([propertyName]) => {
-      propertyUtils.handleDynamicValueToggleChange({
-        form,
-        mode: autoPropertiesUtils.determinePropertyExecutionType(propertyName, props[propertyName], props),
-        property: props[propertyName],
-        propertyName,
-        inputName: `${prefixValue}.${propertyName}`,
-      });
+    Object.entries(propertySettings).forEach(([propertyName]) => {
+      const currentProperty = propertySettings[propertyName].schema ?? props[propertyName];
+      const mode = isNil(props[propertyName]) && propertyName !== 'auth' ? PropertyExecutionType.AUTO : autoPropertiesUtils.determinePropertyExecutionType(propertyName, currentProperty, props);
+
+      switch (mode) {
+        case PropertyExecutionType.DYNAMIC:
+          propertyUtils.handleDynamicValueToggleChange({
+            form,
+            mode: PropertyExecutionType.DYNAMIC,
+            propertyName,
+            property: currentProperty,
+            inputName: `${prefixValue}.${propertyName}`,
+          });
+          break;
+        case PropertyExecutionType.AUTO: 
+        case PropertyExecutionType.MANUAL:
+          propertyUtils.handleDynamicValueToggleChange({
+            form,
+            mode,
+            propertyName,
+          });
+          break;
+      }
     });
   };
 
   const handleClearAll = () => {
-    Object.entries(props).forEach(([propertyName]) => {
+    Object.entries(propertySettings).forEach(([propertyName]) => {
       propertyUtils.handleDynamicValueToggleChange({
         form,
         mode: PropertyExecutionType.MANUAL,
-        property: props[propertyName],
         propertyName,
-        inputName: `${prefixValue}.${propertyName}`,  
       });
     });
   };
 
   return (
-    <div className="sticky bottom-0 px-4 pb-4 bg-white">
-      <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+    <div className="sticky bottom-0 px-4 pb-4 bg-white z-50">
+     <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       <div style={{
         background: 'conic-gradient(from 180deg at 50% 50%, #6217D6 0deg, #6217D6 50.19deg, #3DA8FF 95.19deg, #3DA8FF 202.56deg, rgba(61, 168, 255, 0.2) 236.33deg, rgba(198, 23, 214, 0.2) 281.26deg, #C617D6 286.94deg, #C617D6 335.39deg, #6217D6 360deg)',
         borderRadius: '8px',
@@ -125,23 +136,21 @@ const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFi
                     return (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 w-full" onClick={(e) => {
+                          <div className="flex items-center gap-2 w-full group" onClick={(e) => {
                               e.stopPropagation();
                               propertyUtils.handleDynamicValueToggleChange({
                                 form,
                                 mode: PropertyExecutionType.MANUAL,
                                 propertyName,
-                                inputName: `${prefixValue}.${propertyName}`,
-                                property: props[propertyName],
                               });
                             }}>
-                            <div key={propertyName} className="w-full flex items-center justify-between text-xs hover:bg-white transition-all duration-300 py-1 px-2 rounded-sm cursor-pointer border border-slate-300 hover:border-slate-400">
+                            <div key={propertyName} className="w-full flex items-center justify-between text-xs transition-all duration-300 py-1 px-2 rounded-sm cursor-pointer border border-slate-300 group-hover:bg-white group-hover:border-slate-400">
                               <div className="flex items-center gap-2">
                                 <FormInput className="h-4 w-4 text-muted-foreground" />
-                                <p>{t(props[propertyName].displayName)}</p>
+                                <p>{t(props[propertyName]?.displayName ?? propertyName)}</p>
                               </div>
                             </div>
-                            <X className="h-4 w-4 text-slate-300 hover:text-slate-400 shrink-0 cursor-pointer" />
+                            <X className="h-4 w-4 text-slate-300 transition-all duration-300 group-hover:text-slate-400 shrink-0 cursor-pointer" />
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="bottom">

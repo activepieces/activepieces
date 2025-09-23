@@ -1,10 +1,10 @@
 import { PropertyType, PieceProperty, PiecePropertyMap } from "@activepieces/pieces-framework";
-import { PropertyExecutionType } from "@activepieces/shared";
+import { isNil, PropertyExecutionType } from "@activepieces/shared";
 
 
-function determinePropertyExecutionType(key: string, property: PieceProperty, props: PiecePropertyMap): PropertyExecutionType {
+function determinePropertyExecutionType(key: string, property: PieceProperty | undefined, props: PiecePropertyMap): PropertyExecutionType {
     const isDependentProperty = Object.entries(props).filter(([_, pProperty]) => 'refreshers' in pProperty && pProperty.refreshers?.includes(key)).length > 0;
-    if (isDependentProperty) {
+    if (isDependentProperty || isNil(property)) {
         return PropertyExecutionType.MANUAL;
     }
 
@@ -20,9 +20,7 @@ function determinePropertyExecutionType(key: string, property: PieceProperty, pr
     const alwaysManualTypes = [
         PropertyType.MARKDOWN
     ];
-    
-    const requiresManualExecution = (property.required && manualExecutionTypes.includes(property.type)) || alwaysManualTypes.includes(property.type);
-
+    const requiresManualExecution = alwaysManualTypes.includes(property.type) || (property.required && manualExecutionTypes.includes(property.type));
     return requiresManualExecution ? PropertyExecutionType.MANUAL : PropertyExecutionType.AUTO;
 }
 

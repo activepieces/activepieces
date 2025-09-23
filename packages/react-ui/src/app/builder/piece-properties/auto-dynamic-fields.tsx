@@ -46,6 +46,7 @@ const AutoDynamicFields = ({
   const isAutoMode = inputMode === PropertyExecutionType.AUTO;
   const isAuthProperty = property.type === PropertyType.OAUTH2 || property.type === PropertyType.CUSTOM_AUTH || property.type === PropertyType.BASIC_AUTH;
   const edition = flags?.[ApFlagId.EDITION];
+  const propertySettings = form.getValues().settings?.propertySettings;
 
   if (isAuthProperty) {
     return null;
@@ -65,7 +66,7 @@ const AutoDynamicFields = ({
                     propertyUtils.handleDynamicValueToggleChange({
                         form,
                         mode: newMode,
-                        property,
+                        property: propertySettings?.[propertyName]?.schema ?? property,
                         propertyName,
                         inputName,
                     });
@@ -100,7 +101,7 @@ const AutoDynamicFields = ({
                   propertyUtils.handleDynamicValueToggleChange({
                       form,
                       mode: newMode,
-                      property,
+                      property: propertySettings?.[propertyName]?.schema ?? property,
                       propertyName,
                       inputName,
                     });

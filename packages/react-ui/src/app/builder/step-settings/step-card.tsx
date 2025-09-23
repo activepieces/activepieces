@@ -8,13 +8,12 @@ import {
   FlowAction,
   FlowActionType,
   flowStructureUtil,
-  isNil,
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
 
 import { EditAgentInFlowBuilderButton } from './edit-agent-inside-flow-builder-button';
-import { Info } from 'lucide-react';
+import { Info, ChevronRight } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -38,11 +37,6 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
     : undefined;
   const actionOrTriggerDisplayName =
     stepMetadata?.actionOrTriggerOrAgentDisplayName;
-  const modifiedTitle = stepMetadata
-    ? `${stepMetadata?.displayName} ${
-        actionOrTriggerDisplayName ? ` > ${actionOrTriggerDisplayName}` : ''
-      }`
-    : null;
   const externalAgentId = flowStructureUtil.getExternalAgentId(step);
 
   return (
@@ -51,7 +45,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
         {stepMetadata?.logoUrl && (
           <ImageWithFallback
             src={stepMetadata.logoUrl}
-            alt={modifiedTitle ?? ''}
+            alt={stepMetadata?.displayName ?? ''}
             className="w-5 h-5"
           />
         )}
@@ -59,9 +53,15 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
       <div className="flex h-full grow justify-center gap-2 text-start">
         <div className="text-base flex flex-col grow gap-1">
           <div className="flex-grow">
-            {!isNil(modifiedTitle) ? (
+            {stepMetadata ? (
               <div className="text-sm flex items-center gap-1">
-                {modifiedTitle}
+                <span>{stepMetadata.displayName}</span>
+                {actionOrTriggerDisplayName && (
+                  <>
+                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                    <span>{actionOrTriggerDisplayName}</span>
+                  </>
+                )}
                 {stepMetadata?.description && (
                   <Tooltip>
                     <TooltipTrigger asChild>
