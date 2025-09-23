@@ -58,11 +58,15 @@ export const PlatformPlanHelper = {
             return
         }
 
+        const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
+
+        if (plan.licenseKey && plan.licenseKey !== '' && edition === ApEdition.CLOUD) {
+            return
+        }
         if (!isNil(projectId)) {
             await projectLimitsService(system.globalLogger()).ensureProjectUnlockedAndGetPlatformPlan(projectId)
         }
 
-        const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
         const platformUsage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
 
         const limitKey = METRIC_TO_LIMIT_MAPPING[metric]
