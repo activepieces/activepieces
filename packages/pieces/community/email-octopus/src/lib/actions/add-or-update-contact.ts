@@ -18,16 +18,6 @@ export const addOrUpdateContact = createAction({
       description: 'The email address of the contact',
       required: true,
     }),
-    firstName: Property.ShortText({
-      displayName: 'First Name',
-      description: 'The first name of the contact',
-      required: false,
-    }),
-    lastName: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'The last name of the contact',
-      required: false,
-    }),
     status: Property.StaticDropdown({
       displayName: 'Status',
       description: 'The status of the contact',
@@ -40,19 +30,68 @@ export const addOrUpdateContact = createAction({
         ],
       },
     }),
+    customFields: Property.DynamicProperties({
+      displayName: 'Custom Fields',
+      description: 'Available fields for this list',
+      required: false,
+      refreshers: ['listId'],
+      props: async (propsValue) =>{
+        const authentication = propsValue['auth'];
+        const listId = propsValue['listId'];
+
+        if(!authentication || !listId){
+          return {};
+        }
+
+        try {
+          // Fetch list details to get available fields
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `https://api.emailoctopus.com/lists/${listId}`,
+            headers: {
+              'Authorization': `Bearer ${authentication}`,
+            },
+          });
+
+          const listData = response.body;
+          const fields = listData?.fields || [];
+          
+          const dynamicProps: any = {};
+          
+          // Create dynamic properties for each field
+          fields.forEach((field: any) => {
+            dynamicProps[field.tag] = Property.ShortText({
+              displayName: field.label,
+              description: `Enter value for ${field.label}`,
+              required: false,
+            });
+          });
+
+          return dynamicProps;
+        } catch (error) {
+          console.error('Error fetching list fields:', error);
+          return {};
+        }
+
+      }
+    }),
   },
   async run({ auth, propsValue }) {
-    const { listId, email, firstName, lastName, status } = propsValue;
+    const { listId, email, customFields, status } = propsValue;
     
     const body: any = {
       email_address: email,
       status: status || 'SUBSCRIBED',
     };
 
-    if (firstName || lastName) {
+    // Add custom fields if they exist
+    if (customFields && Object.keys(customFields).length > 0) {
       body.fields = {};
-      if (firstName) body.fields.FirstName = firstName;
-      if (lastName) body.fields.LastName = lastName;
+      Object.keys(customFields).forEach(fieldTag => {
+        if (customFields[fieldTag]) {
+          body.fields[fieldTag] = customFields[fieldTag];
+        }
+      });
     }
 
     try {

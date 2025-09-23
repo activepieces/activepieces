@@ -9,10 +9,44 @@ export const updateContactEmailAddress = createAction({
   displayName: 'Update Contact Email Address',
   description: 'Change the email address of a contact',
   props: {
-    listId: Property.ShortText({
+    listId: Property.Dropdown({
       displayName: 'List ID',
       description: 'The ID of the list to search in',
       required: true,
+      refreshers: [],
+      options: async ({auth}) =>{
+        if(!auth){
+          return{
+            disabled:true,
+            options: [],
+            placeholder: 'Please authenticate first!',
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: 'https://api.emailoctopus.com/lists',
+            headers: {
+              'Authorization': `Bearer ${auth}`,
+            },
+          });
+
+          const lists = response.body.data || [];
+          return {
+            options: lists.map((list: any) => ({
+              label: list.name,
+              value: list.id
+            }))
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load lists'
+          };
+        }
+      }
     }),
     currentEmail: Property.ShortText({
       displayName: 'Current Email Address',
