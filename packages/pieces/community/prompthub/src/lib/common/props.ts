@@ -1,5 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import z from 'zod';
+import { PromptHubClient } from './client';
 
 export const listProjectsProps = {
   teamId: Property.Number({ 
@@ -12,10 +13,48 @@ export const listProjectsProps = {
     description: 'Filter projects from a specific group. Must be URL-encoded if the group name contains spaces.',
     required: false 
   }),
-  model: Property.ShortText({ 
-    displayName: 'Model', 
-    description: 'Filter projects where the head uses a specific model (e.g., gpt-4o-mini, claude-3-opus-20240229).',
-    required: false 
+  model: Property.Dropdown({
+    displayName: 'Model',
+    description: 'Filter projects where the head uses a specific model.',
+    required: false,
+    refreshers: ['auth', 'teamId', 'provider', 'group'],
+    options: async ({ auth, propsValue }) => {
+      if (!auth) {
+        return { disabled: true, placeholder: 'Connect PromptHub to load models', options: [] };
+      }
+      const pv = (propsValue ?? {}) as Record<string, any>;
+      const teamId = pv['teamId'];
+      if (!teamId) {
+        return { disabled: true, placeholder: 'Select a Team ID to load models', options: [] };
+      }
+      try {
+        const client = new PromptHubClient(auth as string);
+        const res = await client.listProjects(teamId, {
+          group: pv['group'],
+          provider: pv['provider'],
+        });
+        const data = res?.data ?? res;
+        const set = new Map<string, string>();
+        if (Array.isArray(data)) {
+          for (const p of data) {
+            const model = p?.head?.model;
+            const provider = p?.head?.provider;
+            if (model && typeof model === 'string') {
+              const label = provider ? `${provider} · ${model}` : model;
+              if (!set.has(model)) set.set(model, label);
+            }
+          }
+        }
+        const options = Array.from(set.entries()).map(([value, label]) => ({ label, value }));
+        return {
+          disabled: options.length === 0,
+          placeholder: options.length ? undefined : 'No models found for this team/filter',
+          options,
+        };
+      } catch {
+        return { disabled: true, placeholder: 'Failed to load models', options: [] };
+      }
+    },
   }),
   provider: Property.Dropdown({
     displayName: 'Provider',
