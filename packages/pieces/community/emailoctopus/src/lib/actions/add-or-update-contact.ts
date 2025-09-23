@@ -27,9 +27,9 @@ export const addOrUpdateContact = createAction({
             required: false,
             options: {
                 options: [
-                    { label: 'Subscribed', value: 'SUBSCRIBED' },
-                    { label: 'Unsubscribed', value: 'UNSUBSCRIBED' },
-                    { label: 'Pending', value: 'PENDING' },
+                    { label: 'Subscribed', value: 'subscribed' },
+                    { label: 'Unsubscribed', value: 'unsubscribed' },
+                    { label: 'Pending', value: 'pending' },
                 ],
             },
         }),
@@ -50,9 +50,13 @@ export const addOrUpdateContact = createAction({
         if (status) {
             body['status'] = status;
         }
-        if (tags && (tags as string[]).length > 0) {
+
+
+        const validTags = (tags as string[] | undefined)?.filter(tag => tag && tag.trim().length > 0);
+
+        if (validTags && validTags.length > 0) {
             body['tags'] = Object.fromEntries(
-                (tags as string[]).map(tag => [tag, true])
+                validTags.map(tag => [tag.trim(), true])
             );
         }
 

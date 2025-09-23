@@ -1,17 +1,9 @@
 import {
     Property,
     DynamicPropsValue,
-    DropdownState,
     InputPropertyMap,
-    PropertyContext, 
 } from "@activepieces/pieces-framework";
 import { EmailOctopusClient } from "./client";
-
-
-type AuthAndProps = {
-    auth: string | undefined;
-    propsValue: Record<string, unknown>;
-}
 
 export const emailOctopusProps = {
     listId: (required = true) => Property.Dropdown({
@@ -20,7 +12,7 @@ export const emailOctopusProps = {
         required: required,
         refreshers: [],
         options: async (context) => {
-            const { auth } = context as AuthAndProps;
+            const auth = context['auth'] as unknown as string;
             if (!auth) {
                 return {
                     disabled: true,
@@ -46,7 +38,7 @@ export const emailOctopusProps = {
         required: required,
         refreshers: [],
         options: async (context) => {
-            const { auth } = context as AuthAndProps;
+            const auth = context['auth'] as unknown as string;
             if (!auth) {
                 return {
                     disabled: true,
@@ -66,14 +58,15 @@ export const emailOctopusProps = {
         },
     }),
     
-    fields: () => Property.DynamicProperties({
+     fields: () => Property.DynamicProperties({
         displayName: 'Fields',
         description: 'The contact\'s custom fields.',
         required: true,
         refreshers: ['list_id'],
-        props: async (dynamicPropsValue: Record<string, DynamicPropsValue>, context: PropertyContext): Promise<InputPropertyMap> => {
-            const { auth, propsValue } = context as unknown as AuthAndProps;
-            const listId = propsValue['list_id'] as string;
+        props: async (context: Record<string, unknown>): Promise<InputPropertyMap> => {
+            // FIX: Reading 'auth' and 'list_id' directly from the context object
+            const auth = context['auth'] as unknown as string;
+            const listId = context['list_id'] as string | undefined;
 
             if (!auth || !listId) {
                 return {};
@@ -84,29 +77,26 @@ export const emailOctopusProps = {
 
             const fields: DynamicPropsValue = {};
             for (const field of listDetails.fields) {
-                switch(field.type) {
-                    case 'NUMBER':
-                        fields[field.tag] = Property.Number({
-                            displayName: field.label,
-                            required: false,
-                        });
-                        break;
-                    case 'DATE':
-                        fields[field.tag] = Property.ShortText({
-                            displayName: field.label,
-                            description: 'Date in YYYY-MM-DD format.',
-                            required: false,
-                        });
-                        break;
-                    default: // TEXT
-                        fields[field.tag] = Property.ShortText({
-                            displayName: field.label,
-                            required: false,
-                        });
-                        break;
+                const fieldType = field.type.toLowerCase();
+                if (fieldType === 'number') {
+                    fields[field.tag] = Property.Number({
+                        displayName: field.label,
+                        required: false,
+                    });
+                } else if (fieldType === 'date') {
+                    fields[field.tag] = Property.ShortText({
+                        displayName: field.label,
+                        description: 'Date in YYYY-MM-DD format.',
+                        required: false,
+                    });
+                } else { // 'text' and any other types
+                    fields[field.tag] = Property.ShortText({
+                        displayName: field.label,
+                        required: false,
+                    });
                 }
             }
             return fields;
         },
-    }),
+    }), 
 };
