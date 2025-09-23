@@ -51,15 +51,15 @@ export const webhookService = {
             })
         }
 
-        const trigger = await triggerSourceService(pinoLogger).getByFlowId({
+        const triggerSource = await triggerSourceService(pinoLogger).getByFlowId({
             flowId: flow.id,
             projectId: flow.projectId,
             simulate: saveSampleData,
         })
-        const response = await handshakeHandler.handleHandshakeRequest({
+
+        const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
             payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-            handshakeConfiguration: trigger?.handshakeConfiguration ?? null,
-            log: pinoLogger,
+            handshakeConfiguration: await handshakeHandler(pinoLogger).getWebhookHandshakeConfiguration(triggerSource),
             flowId: flow.id,
             flowVersionId: flowVersionIdToRun,
             projectId: flow.projectId,

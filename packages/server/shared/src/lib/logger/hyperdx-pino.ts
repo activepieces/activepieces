@@ -24,6 +24,7 @@ export const createHyperDXTransport = (level: Level, targets: TransportTargetOpt
             targets: [
                 HyperDX.getPinoTransport(level, {
                     detectResources: true,
+                    queueSize: 1000,
                 }),
                 ...targets,
             ],

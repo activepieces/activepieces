@@ -14,7 +14,7 @@ import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 // import { eventsHooks } from '../helper/application-events'
 import dayjs from 'dayjs'
-import { distributedStore } from '../helper/keyvalue'
+import { distributedStore } from '../helper/key-value'
 import { system } from '../helper/system/system'
 import { mcpService } from '../mcp/mcp-service'
 import { platformUtils } from '../platform/platform.utils'
@@ -87,7 +87,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         const jwt = request.body.token
         const expiresIn = dayjs.duration(7, 'day').asSeconds()
         // Note that the key expiry is set as same as JWT expiry (7 days)
-        await distributedStore().put(`revoked:${jwt}`, 1, expiresIn)
+        await distributedStore.put(`revoked:${jwt}`, 1, expiresIn)
     })
 
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {

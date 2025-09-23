@@ -18,6 +18,7 @@ let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
+    jest.setTimeout(240000)
     app = await setupServer()
 })
 

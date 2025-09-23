@@ -18,7 +18,6 @@ import {
     ScheduleOptions,
     TriggerHookType,
     TriggerSourceScheduleType,
-    WebhookHandshakeConfiguration,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -28,7 +27,7 @@ import {
 } from 'server-worker'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { jobQueue } from '../../workers/queue'
+import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
@@ -41,7 +40,6 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             if (environment === ApEnvironment.TESTING) {
                 return {
                     scheduleOptions: undefined,
-                    webhookHandshakeConfiguration: undefined,
                 }
             }
             const { flowVersion, projectId, simulate, pieceTrigger } = params
@@ -135,7 +133,6 @@ async function handleAppWebhookTrigger({ engineHelperResponse, flowVersion, proj
     }
     return {
         scheduleOptions: undefined,
-        webhookHandshakeConfiguration: undefined,
     }
 }
 
@@ -168,7 +165,6 @@ async function handleWebhookTrigger({ flowVersion, projectId, pieceTrigger, log 
     }
     return {
         scheduleOptions: undefined,
-        webhookHandshakeConfiguration: pieceTrigger.handshakeConfiguration,
     }
 }
 
@@ -199,7 +195,6 @@ async function handlePollingTrigger({ engineHelperResponse, flowVersion, project
     })
     return {
         scheduleOptions: engineHelperResponse.result.scheduleOptions,
-        webhookHandshakeConfiguration: undefined,
     }
 }
 
@@ -237,5 +232,4 @@ type ActiveTriggerParams = EnableFlowTriggerParams & {
 
 type ActiveTriggerReturn = {
     scheduleOptions?: ScheduleOptions
-    webhookHandshakeConfiguration?: WebhookHandshakeConfiguration
 }

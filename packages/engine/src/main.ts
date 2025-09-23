@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import {
     assertNotNullOrUndefined,
     EngineOperation,
@@ -7,13 +8,15 @@ import {
     EngineSocketEvent,
     EngineStderr,
     EngineStdout,
-    isNil } from '@activepieces/shared'
+    isNil,
+} from '@activepieces/shared'
 import WebSocket from 'ws'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
 
 const WORKER_ID = process.env.WORKER_ID
 const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
+
 
 process.title = `engine-${WORKER_ID}`
 let socket: WebSocket | undefined
@@ -88,4 +91,23 @@ function setupSocket() {
 
 if (!isNil(WORKER_ID)) {
     setupSocket()
+}
+
+
+process.on('uncaughtException', (error) => sendToErrorSocket(error))
+process.on('unhandledRejection', (reason) => sendToErrorSocket(reason))
+
+function sendToErrorSocket(error: unknown) {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        const engineStderr: EngineStderr = {
+            message: inspect(error),
+        }
+        socket.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_STDERR,
+            data: engineStderr,
+        }))
+    }
+    setTimeout(() => {
+        process.exit(1)
+    }, 3000)
 }

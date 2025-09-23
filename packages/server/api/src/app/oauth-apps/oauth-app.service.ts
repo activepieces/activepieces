@@ -30,7 +30,7 @@ export const oauthAppService = {
             {
                 platformId,
                 ...request,
-                clientSecret: encryptUtils.encryptString(request.clientSecret),
+                clientSecret: await encryptUtils.encryptString(request.clientSecret),
                 id: apId(),
             },
             ['platformId', 'pieceName'],
@@ -57,7 +57,7 @@ export const oauthAppService = {
         })
         return {
             ...oauthApp,
-            clientSecret: encryptUtils.decryptString(oauthApp.clientSecret),
+            clientSecret: await encryptUtils.decryptString(oauthApp.clientSecret),
         }
     },
     async list({
