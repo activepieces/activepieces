@@ -193,6 +193,9 @@
       "@activepieces/piece-call-rounded": [
         "packages/pieces/community/call-rounded/src/index.ts"
       ],
+      "@activepieces/piece-camb-ai": [
+        "packages/pieces/community/camb-ai/src/index.ts"
+      ],
       "@activepieces/piece-campaign-monitor": [
         "packages/pieces/community/campaign-monitor/src/index.ts"
       ],
@@ -429,6 +432,9 @@
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
       ],
+      "@activepieces/piece-front": [
+        "packages/pieces/community/front/src/index.ts"
+      ],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
       ],
@@ -620,6 +626,9 @@
       ],
       "@activepieces/piece-magical-api": [
         "packages/pieces/community/magical-api/src/index.ts"
+      ],
+      "@activepieces/piece-magicslides": [
+        "packages/pieces/community/magicslides/src/index.ts"
       ],
       "@activepieces/piece-mailchain": [
         "packages/pieces/community/mailchain/src/index.ts"
@@ -948,6 +957,9 @@
       ],
       "@activepieces/piece-simpliroute": [
         "packages/pieces/community/simpliroute/src/index.ts"
+      ],
+      "@activepieces/piece-sitespeakai": [
+        "packages/pieces/community/sitespeakai/src/index.ts"
       ],
       "@activepieces/piece-skyvern": [
         "packages/pieces/community/skyvern/src/index.ts"

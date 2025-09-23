@@ -46,7 +46,7 @@ import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { jobQueue } from '../../workers/queue'
+import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -117,6 +117,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
+                await flowRunRepo().update({
+                    id: oldFlowRun.id,
+                    projectId: oldFlowRun.projectId,
+                }, {
+                    status: FlowRunStatus.QUEUED,
+                })
                 return flowRunService(log).resume({
                     flowRunId: oldFlowRun.id,
                     executionType: ExecutionType.RESUME,
@@ -128,9 +134,17 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     oldFlowRun.flowId,
                 )
                 const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                await flowRunRepo().update({
+                    id: oldFlowRun.id,
+                    projectId: oldFlowRun.projectId,
+                }, {
+                    flowVersionId: latestFlowVersion.id,
+                    status: FlowRunStatus.QUEUED,
+                })
+                const updatedFlowRun = await flowRunRepo().findOneByOrFail({ id: oldFlowRun.id })
                 return addToQueue({
                     payload,
-                    flowRun: oldFlowRun,
+                    flowRun: updatedFlowRun,
                     synchronousHandlerId: undefined,
                     httpRequestId: undefined,
                     progressUpdateType: ProgressUpdateType.NONE,

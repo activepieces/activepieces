@@ -41,12 +41,15 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             }), request.log),
         )
         rejectedPromiseHandler(Promise.all(savePayloads), request.log)
-        await triggerSourceService(request.log).disable({
-            flowId,
-            projectId,
-            simulate: true,
-            ignoreError: true,
-        })
+        const hasValidPayloads = payloads.length > 0
+        if (hasValidPayloads) {
+            await triggerSourceService(request.log).disable({
+                flowId,
+                projectId,
+                simulate: true,
+                ignoreError: true,
+            })
+        }
         return {}
     })
 
@@ -68,8 +71,8 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             flowVersionId,
             payloads,
         )
-        const createFlowRuns = filterPayloads.map((payload) =>{
-            return  flowRunService(request.log).start({
+        const createFlowRuns = filterPayloads.map((payload) => {
+            return flowRunService(request.log).start({
                 environment,
                 flowVersionId,
                 payload,
