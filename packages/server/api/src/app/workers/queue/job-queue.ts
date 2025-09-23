@@ -7,8 +7,8 @@ import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { machineService } from '../machine/machine-service'
-import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager } from './queue-manager'
-import { RATE_LIMIT_WORKER_JOB_TYPES, redisRateLimiter } from './redis-rate-limiter'
+import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
+import { workerJobRateLimiter } from './worker-job-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -22,7 +22,6 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         await queue.setGlobalConcurrency(concurrency)
     },
     async init(): Promise<void> {
-        await redisRateLimiter(log).init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
         await machineService(log).updateConcurrency()
@@ -31,14 +30,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { data, type } = params
 
-        if (RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
-            const { shouldRateLimit } = await redisRateLimiter(log).shouldBeLimited(data.projectId, params.id)
-            if (shouldRateLimit) {
-                await redisRateLimiter(log).rateLimitJob(params)
-                return
-            }
-        }
-
+        const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
         const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
 
         switch (type) {
@@ -57,7 +49,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
             case JobType.ONE_TIME: {
                 await queue.add(params.id, data, {
-                    priority: JOB_PRIORITY[params.priority ?? getDefaultJobPriority(data)],
+                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[params.priority ?? getDefaultJobPriority(data)],
                     delay: params.delay,
                     jobId: params.id,
                 })

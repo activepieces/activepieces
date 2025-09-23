@@ -193,6 +193,9 @@
       "@activepieces/piece-call-rounded": [
         "packages/pieces/community/call-rounded/src/index.ts"
       ],
+      "@activepieces/piece-camb-ai": [
+        "packages/pieces/community/camb-ai/src/index.ts"
+      ],
       "@activepieces/piece-campaign-monitor": [
         "packages/pieces/community/campaign-monitor/src/index.ts"
       ],
@@ -425,6 +428,9 @@
       ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
+      ],
+      "@activepieces/piece-front": [
+        "packages/pieces/community/front/src/index.ts"
       ],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
