@@ -115,7 +115,7 @@ const AutoFormFieldWrapper = ({
         />
       )}
 
-      {isDynamicMode && isArrayProperty && (
+      {isArrayProperty && isDynamicMode && (
         <ArrayPiecePropertyInInlineItemMode
           disabled={disabled}
           arrayProperties={property.properties}

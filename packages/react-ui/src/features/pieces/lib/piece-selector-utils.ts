@@ -23,7 +23,6 @@ import {
   flowStructureUtil,
   StepSettings,
   FlowTriggerType,
-  PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
   ConditionType,
   RouterActionSettingsValidation,

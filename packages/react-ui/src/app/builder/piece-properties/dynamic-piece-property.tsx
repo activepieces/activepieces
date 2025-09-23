@@ -69,6 +69,7 @@ const DynamicPropertiesImplementation = React.memo(
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
+
       if (
         !isFirstRender.current &&
         !deepEqual(previousValues.current, refresherValues)

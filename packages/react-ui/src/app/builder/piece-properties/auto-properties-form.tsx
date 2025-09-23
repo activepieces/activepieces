@@ -52,7 +52,6 @@ const AutoPropertiesFormComponent = React.memo(
     onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
-
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-6 w-full">
@@ -72,6 +71,7 @@ const AutoPropertiesFormComponent = React.memo(
                       ...field,
                       onChange: (value) => {
                         field.onChange(value);
+                        //must come after because the form value won't be updated yet otherwise
                         onValueChange?.({
                           value,
                           propertyName,

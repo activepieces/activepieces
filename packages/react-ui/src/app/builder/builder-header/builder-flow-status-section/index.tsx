@@ -6,10 +6,6 @@ import { FlowVersionStateDot } from '@/features/flows/components/flow-version-st
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { FlowVersionState, Permission } from '@activepieces/shared';
 
-import { PublishButton } from './publish-button';
-import { EditFlowOrViewDraftButton } from './view-draft-or-edit-flow-button';
-import { TestFlowButton } from './test-flow-button';
-
 const BuilderFlowStatusSection = React.memo(() => {
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlowStatus = checkAccess(
