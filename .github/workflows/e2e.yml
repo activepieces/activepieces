@@ -11,6 +11,8 @@ on:
 permissions:
   actions: write
   contents: read
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -74,8 +76,8 @@ jobs:
     uses: ./.github/workflows/tests-e2e-ce.yml
 
   notify-on-completion:
-    needs: [test-e2e-cloud, test-e2e-ee, test-e2e-ce]
-    if: always()
+    needs: [check-label, test-e2e-cloud, test-e2e-ee, test-e2e-ce]
+    if: always() && needs.check-label.outputs.should-run-e2e == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -88,7 +90,7 @@ jobs:
       - name: Send Discord notification on E2E failure
         if: needs.test-e2e-cloud.result == 'failure' || needs.test-e2e-ee.result == 'failure' || needs.test-e2e-ce.result == 'failure'
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
         run: |
           # Determine which tests failed
           failed_tests=""
