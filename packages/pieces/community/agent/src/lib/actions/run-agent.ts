@@ -1,9 +1,9 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { agentCommon } from '../common';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AgentRun, RunAgentRequestBody } from '@activepieces/shared';
-import { StatusCodes } from 'http-status-codes';
-
+import {  AgentRun } from '@activepieces/shared';
+import { openai } from '@ai-sdk/openai';
+import { stepCountIs, streamText } from 'ai';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -45,45 +45,93 @@ export const runAgent = createAction({
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
+    maxSteps: Property.Number({
+      displayName: 'Max steps',
+      description: 'The numbder of interations the agent can do',
+      required: true,
+      defaultValue: 20,
+    })
   },
   async run(context) {
-    const { agentId, prompt } = context.propsValue
-    const serverToken = context.server.token;
+    const { agentId, prompt, maxSteps } = context.propsValue
+    const { server } = context
 
-    const body: RunAgentRequestBody = {
-      externalId: agentId,
-      prompt,
-    }
-
-    const response = await httpClient.sendRequest<AgentRun>({
-      method: HttpMethod.POST,
-      url: `${context.server.publicUrl}v1/agent-runs`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: serverToken,
-      },
-      body
+    const agentRun = await agentCommon.createAgentRun({
+      token: server.token,
+      agentId,
+      apiUrl: server.publicUrl,
+      prompt 
     })
 
-    if (response.status !== StatusCodes.OK) {
-      throw new Error(response.body.message)
+    const agentResult = agentCommon.createInitialAgentResult(agentRun.projectId)
+
+    await agentCommon.updateAgentRun({
+      agentRunId: agentRun.id,
+      apiUrl: server.publicUrl,
+      token: server.token,
+      agentResult
+    }) 
+
+    const baseURL = `${server.apiUrl}v1/ai-providers/proxy/openai`
+    const model = createAIModel({
+      providerName: 'openai',
+      modelInstance: openai('gpt-4.1'),
+      engineToken: server.token,
+      baseURL,
+      metadata: {
+        feature: AIUsageFeature.AGENTS,
+        agentid: agentId,
+      },
+    })
+
+    const systemPrompt = agentCommon.constructSystemPrompt(prompt)
+    const { fullStream } = streamText({
+      model,
+      system: systemPrompt,
+      prompt: prompt,
+      stopWhen: stepCountIs(maxSteps),
+    })
+
+    let currentText = ''
+
+    for await (const chunk of fullStream) {
+      if (chunk.type === 'text-delta') {
+        currentText += chunk.text
+      }
+      else if (chunk.type === 'error') {
+        agentCommon.handleStreamError(chunk, agentResult)
+        
+        await agentCommon.updateAgentRun({
+          agentRunId: agentRun.id,
+          apiUrl: server.publicUrl,
+          token: server.token,
+          agentResult
+        }) 
+        return
+      }
+
+      if (agentResult.steps.length > 0) {
+        await agentCommon.updateAgentRun({
+          agentRunId: agentRun.id,
+          apiUrl: server.publicUrl,
+          token: server.token,
+          agentResult
+        })
+      }
     }
 
-    const agentRun = await agentCommon.pollAgentRunStatus({
-      publicUrl: context.server.publicUrl,
-      token: serverToken,
-      agentRunId: response.body.id,
-      update: async (data: AgentRun) => {
-        await context.output.update({
-          data: mapAgentRunToOutput(data),
-        })
-      },
-    });
+    const finalizedResult = agentCommon.finalizeAgentResult(agentResult, currentText)
+    
+    const lastAgentRun = await agentCommon.updateAgentRun({
+      agentRunId: agentRun.id,
+      apiUrl: server.publicUrl,
+      token: server.token,
+      agentResult: finalizedResult
+    })
 
-    return mapAgentRunToOutput(agentRun)
+    return mapAgentRunToOutput(lastAgentRun)
   },
 });
-
 
 function mapAgentRunToOutput(agentRun: AgentRun): Record<string, unknown> {
   return {

@@ -1,7 +1,8 @@
+import { AIErrorResponse } from "@activepieces/common-ai";
 import { httpClient, AuthenticationType, HttpMethod } from "@activepieces/pieces-common";
-import { Agent, SeekPage, AgentRun, AgentTaskStatus } from "@activepieces/shared"
+import { Agent, SeekPage, ContentBlockType, agentbuiltInToolsNames, RunAgentRequestBody, AgentRun, UpdateAgentRunRequestBody, AgentStepBlock, AgentTaskStatus, isNil, ToolCallContentBlock } from "@activepieces/shared"
+import { APICallError } from "ai";
 import { StatusCodes } from "http-status-codes";
-
 
 export const agentCommon = {
   listAgents(params: ListAgents) {
@@ -14,49 +15,115 @@ export const agentCommon = {
       },
     })
   },
-  async pollAgentRunStatus(params: PollAgentRunParams): Promise<AgentRun> {
-    const { publicUrl, token, agentRunId, update, intervalSeconds = 2, maxAttempts = 300 } = params;
+
+  async createAgentRun(params: CreateAgentRun) {
+    const { agentId, apiUrl, prompt, token } = params;
+    const body: RunAgentRequestBody = {
+      externalId: agentId,
+      prompt,
+    }
     
-    let lastAgentRun: AgentRun;
+    const response = await httpClient.sendRequest<AgentRun>({
+      method: HttpMethod.POST,
+      url: `${apiUrl}v1/agent-runs`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      body
+    })
+    
+    if (response.status !== StatusCodes.OK) {
+      throw new Error(response.body.message)
+    }
+      
+    return response.body
+  },
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const response = await httpClient.sendRequest<AgentRun>({
-        method: HttpMethod.GET,
-        url: `${publicUrl}v1/agent-runs/${agentRunId}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: token,
-        },
-      });
+  async updateAgentRun(params: UpdateAgentRunParams) {
+    const { apiUrl, token, agentRunId, agentResult } = params;
+    
+    const response = await httpClient.sendRequest<AgentRun>({
+      method: HttpMethod.POST,
+      url: `${apiUrl}v1/agent-runs/${agentRunId}/update`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      body: agentResult
+    })
+    
+    return response.body
+  },
 
-      if (response.status !== StatusCodes.OK) {
-        throw new Error(response.body.message);
-      }
+  createInitialAgentResult(projectId: string): UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } {
+    return {
+      projectId,
+      startTime: new Date().toISOString(),
+      steps: [],
+      message: '',
+      status: AgentTaskStatus.IN_PROGRESS,
+      output: undefined,
+    }
+  },
 
-      lastAgentRun = response.body;
+  handleStreamError(chunk: any, agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] }): void {
+    agentResult.status = AgentTaskStatus.FAILED
+    
+    if (APICallError.isInstance(chunk.error)) {
+      const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
+      agentResult.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
+    } else {
+      agentResult.message = this.concatMarkdown(agentResult.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
+    }
+    
+    agentResult.finishTime = new Date().toISOString()
+  },
 
-      await update(lastAgentRun)
-
-      // Check if the agent run is completed
-      if (lastAgentRun.status === AgentTaskStatus.COMPLETED || lastAgentRun.status === AgentTaskStatus.FAILED) {
-        return lastAgentRun;
-      }
-
-      // If not the last attempt, wait before polling again
-      if (attempt < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, intervalSeconds * 1000));
-      }
+  finalizeAgentResult(
+    agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] }, 
+    currentText: string
+  ): UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } {
+    if (currentText.length > 0) {
+      agentResult.steps.push({
+        type: ContentBlockType.MARKDOWN,
+        markdown: currentText,
+      })
     }
 
-    // Return the last fetched agent run
-    return lastAgentRun!
-  }
-}
+    const markAsComplete = agentResult.steps.find(this.isMarkAsComplete) as ToolCallContentBlock | undefined
+    
+    return {
+      ...agentResult,
+      output: markAsComplete?.input,
+      status: !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
+      message: this.concatMarkdown(agentResult.steps),
+      finishTime: new Date().toISOString(),
+    }
+  },
 
-type GetAgent = {
-  publicUrl: string
-  token: string
-  id: string
+  isMarkAsComplete(block: any): boolean {
+    return block.type === ContentBlockType.TOOL_CALL && block.toolName === agentbuiltInToolsNames.markAsComplete
+  },
+
+  concatMarkdown(blocks: AgentStepBlock[]): string {
+    return blocks
+      .filter((block) => block.type === ContentBlockType.MARKDOWN)
+      .map((block) => block.markdown)
+      .join('\n')
+  },
+
+  constructSystemPrompt(systemPrompt: string): string {
+    return `
+You are an autonomous assistant designed to efficiently achieve the user's goal.
+YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
+You MUST ALWAYS do the requested task before calling the mark as complete tool.
+**Today's Date**: ${new Date().toISOString()}  
+Use this to interpret time-based queries like "this week" or "due tomorrow."
+---
+${systemPrompt}
+    `.trim()
+  },
 }
 
 type ListAgents = {
@@ -64,17 +131,16 @@ type ListAgents = {
   token: string
 }
 
-type InitOpenAI = {
-  publicUrl: string
+type CreateAgentRun = {
+  agentId: string;
+  prompt: string;
+  apiUrl: string;
   token: string
-  agentId: string
 }
 
-type PollAgentRunParams = {
-  publicUrl: string;
+type UpdateAgentRunParams = {
+  apiUrl: string;
   token: string;
   agentRunId: string;
-  update: (data: AgentRun) => Promise<void>;
-  intervalSeconds?: number;
-  maxAttempts?: number;
-};
+  agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] };
+}

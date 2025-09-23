@@ -82,6 +82,6 @@ const UpdateAgentRunRequest = {
         body: UpdateAgentRunRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
     },
 }
