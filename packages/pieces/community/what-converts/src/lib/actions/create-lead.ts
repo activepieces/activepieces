@@ -106,14 +106,13 @@ export const createLeadAction = createAction({
       .join(' ')
       .trim();
 
-    return await whatConvertsClient.createLead(auth, {
+    return await whatConvertsClient.createLead(auth, propsValue.account_id, {
       profile_id: propsValue.profile_id,
       lead_type: propsValue.lead_type,
       send_notification: propsValue.send_notification,
-
       referring_source: propsValue.referring_source,
       referring_medium: propsValue.referring_medium,
-      caller_name: callerName || undefined,
+      contact_name: contactName || undefined,
       email_address: propsValue.email,
       phone_number: propsValue.phone_number,
     });

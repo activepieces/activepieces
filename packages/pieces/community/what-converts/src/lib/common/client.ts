@@ -66,6 +66,9 @@ export const whatConvertsClient = {
         password: auth.api_secret,
       },
       body: params,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     };
     const response = await httpClient.sendRequest(request);
     return response.body;
