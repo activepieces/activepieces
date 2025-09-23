@@ -13,7 +13,11 @@ export interface CreateLeadParams {
   referring_source?: string;
   referring_medium?: string;
   send_notification?: boolean;
-  lead_details: { [key: string]: unknown };
+  contact_name?: string;
+  email_address?: string;
+  phone_number?: string;
+  company_name?: string;
+  notes?: string;
 }
 
 export interface FindLeadParams {
@@ -54,4 +58,13 @@ export interface Lead {
 
 export interface LeadsResponse {
   leads: Lead[];
+}
+
+export interface Account {
+  account_id: number;
+  account_name: string;
+}
+
+export interface AccountsResponse {
+  accounts: Account[];
 }

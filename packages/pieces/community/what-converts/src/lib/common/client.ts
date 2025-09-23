@@ -14,15 +14,34 @@ import {
   Profile,
   ProfilesResponse,
   UpdateLeadParams,
+  AccountsResponse,
+  Account,
 } from './types';
 
 const WHATCONVERTS_API_URL = 'https://app.whatconverts.com/api/v1';
 
 export const whatConvertsClient = {
-  async getProfiles(auth: WhatConvertsAuth): Promise<Profile[]> {
+  async getAccounts(auth: WhatConvertsAuth): Promise<Account[]> {
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${WHATCONVERTS_API_URL}/profiles`,
+      url: `${WHATCONVERTS_API_URL}/accounts`,
+      authentication: {
+        type: AuthenticationType.BASIC,
+        username: auth.api_token,
+        password: auth.api_secret,
+      },
+    };
+    const response = await httpClient.sendRequest<AccountsResponse>(request);
+    return response.body.accounts;
+  },
+
+  async getProfiles(
+    auth: WhatConvertsAuth,
+    accountId: number
+  ): Promise<Profile[]> {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `${WHATCONVERTS_API_URL}/accounts/${accountId}/profiles`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: auth.api_token,
@@ -33,10 +52,14 @@ export const whatConvertsClient = {
     return response.body.profiles;
   },
 
-  async createLead(auth: WhatConvertsAuth, params: CreateLeadParams) {
+  async createLead(
+    auth: WhatConvertsAuth,
+    accountId: number, 
+    params: CreateLeadParams
+  ) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/leads`,
+      url: `${WHATCONVERTS_API_URL}/accounts/${accountId}/leads`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: auth.api_token,

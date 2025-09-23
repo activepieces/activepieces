@@ -1,13 +1,13 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property} from '@activepieces/pieces-framework';
 import { WhatConvertsAuth } from './auth';
 import { whatConvertsClient } from './client';
 
 export const whatConvertsProps = {
-  profile_id: (required = true) =>
+  account_id: () =>
     Property.Dropdown({
-      displayName: 'Profile',
-      description: 'The profile to search for leads in.',
-      required: required,
+      displayName: 'Account',
+      description: 'The account to select a profile from.',
+      required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) {
@@ -17,19 +17,44 @@ export const whatConvertsProps = {
             options: [],
           };
         }
+        const accounts = await whatConvertsClient.getAccounts(
+          auth as WhatConvertsAuth
+        );
+        return {
+          disabled: false,
+          options: accounts.map((account) => ({
+            label: account.account_name,
+            value: account.account_id,
+          })),
+        };
+      },
+    }),
+  profile_id: (required = true) =>
+    Property.Dropdown({
+      displayName: 'Profile',
+      description: 'The profile to search for leads in.',
+      required: required,
+      refreshers: ['auth', 'account_id'],
+      options: async ({ auth, account_id }) => {
+        if (!auth || !account_id) {
+          return {
+            disabled: true,
+            placeholder: 'Please select an account first.',
+            options: [],
+          };
+        }
 
         const profiles = await whatConvertsClient.getProfiles(
-          auth as WhatConvertsAuth
+          auth as WhatConvertsAuth,
+          account_id as number
         );
 
         return {
           disabled: false,
-          options: profiles.map((profile) => {
-            return {
-              label: profile.profile_name,
-              value: profile.profile_id,
-            };
-          }),
+          options: profiles.map((profile) => ({
+            label: profile.profile_name,
+            value: profile.profile_id,
+          })),
         };
       },
     }),
@@ -48,12 +73,13 @@ export const whatConvertsProps = {
           };
         }
 
-        const authValue = auth as WhatConvertsAuth;
-        const response = await whatConvertsClient.findLeads(authValue, {
-          profile_id: profile_id as number,
-          per_page: 2500, 
-        });
-
+        const response = await whatConvertsClient.findLeads(
+          auth as WhatConvertsAuth,
+          {
+            profile_id: profile_id as number,
+            per_page: 2500,
+          }
+        );
         return {
           disabled: false,
           options: response.leads.map((lead) => {
