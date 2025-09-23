@@ -14,17 +14,85 @@ export const generateAiCaptions = createAction({
       description: 'URL of the input video to add captions to',
       required: true
     }),
-    theme: Property.ShortText({
+    theme: Property.Dropdown({
       displayName: 'Theme',
       description: 'To display captions with style',
       required: false,
-      defaultValue: 'Hormozi_1'
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: 'https://viralapi.vadoo.tv/api/get_themes',
+            headers: {
+              'X-API-KEY': auth as string
+            }
+          });
+
+          const themes = response.body as string[];
+          return {
+            disabled: false,
+            options: themes.map(theme => ({
+              label: theme,
+              value: theme
+            }))
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load themes'
+          };
+        }
+      }
     }),
-    language: Property.ShortText({
+    language: Property.Dropdown({
       displayName: 'Language',
       description: 'To generate captions in language you want',
       required: false,
-      defaultValue: 'English'
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: 'https://viralapi.vadoo.tv/api/get_languages',
+            headers: {
+              'X-API-KEY': auth as string
+            }
+          });
+
+          const languages = response.body as string[];
+          return {
+            disabled: false,
+            options: languages.map(language => ({
+              label: language,
+              value: language
+            }))
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load languages'
+          };
+        }
+      }
     })
   },
   async run(context) {

@@ -9,10 +9,51 @@ export const generateAiImage = createAction({
   displayName: 'Generate AI Image',
   description: 'Generates AI generated image based on prompt for a character',
   props: {
-    id: Property.Number({
-      displayName: 'Character ID',
-      description: 'The ID of the character to generate an image for',
-      required: true
+    id: Property.Dropdown({
+      displayName: 'Character',
+      description: 'Select the character to generate an image for',
+      required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: 'https://viralapi.vadoo.tv/api/get_all_characters',
+            headers: {
+              'X-API-KEY': auth as string
+            }
+          });
+
+          const characters = response.body as Array<{
+            id: number;
+            name: string;
+            url: string;
+            createdAt: string;
+          }>;
+
+          return {
+            disabled: false,
+            options: characters.map(character => ({
+              label: `${character.name} (ID: ${character.id})`,
+              value: character.id.toString()
+            }))
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load characters'
+          };
+        }
+      }
     }),
     ratio: Property.StaticDropdown({
       displayName: 'Aspect Ratio',
@@ -28,6 +69,46 @@ export const generateAiImage = createAction({
         ]
       }
     }),
+    style: Property.Dropdown({
+      displayName: 'Image Style',
+      description: 'AI image style/theme for the generated image',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first'
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: 'https://viralapi.vadoo.tv/api/get_styles',
+            headers: {
+              'X-API-KEY': auth as string
+            }
+          });
+
+          const styles = response.body as string[];
+          return {
+            disabled: false,
+            options: styles.map(style => ({
+              label: style,
+              value: style
+            }))
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load styles'
+          };
+        }
+      }
+    }),
     prompt: Property.LongText({
       displayName: 'Image Prompt',
       description: 'Prompt to generate a character image',
@@ -38,14 +119,16 @@ export const generateAiImage = createAction({
     // Validate props with Zod schema
     await propsValidation.validateZod(context.propsValue, generateAiImageSchema);
 
-    const { id, ratio, prompt } = context.propsValue;
+    const { id, ratio, style, prompt } = context.propsValue;
 
     // Build request body
-    const requestBody = {
-      id: id,
+    const requestBody: Record<string, any> = {
+      id: parseInt(id as string, 10),
       ratio: ratio,
       prompt: prompt
     };
+
+    if (style) requestBody['style'] = style;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

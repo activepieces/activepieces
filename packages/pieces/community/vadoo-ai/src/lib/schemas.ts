@@ -72,8 +72,9 @@ export const generatePodcastSchema = {
 };
 
 export const generateAiImageSchema = {
-  id: z.number().int().positive(),
+  id: z.string().min(1),
   ratio: z.enum(['9:16', '1:1', '16:9', '3:4', '4:3']),
+  style: z.string().optional(),
   prompt: z.string().min(1)
 };
 
