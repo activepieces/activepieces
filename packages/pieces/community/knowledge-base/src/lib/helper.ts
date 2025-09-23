@@ -20,10 +20,7 @@ export const fetchUrls = (
     CENTER_AUTH_LOGIN_URL: `${authUrl}/center/auth/login`,
     CENTER_API_USERS_ME_URL: `${authUrl}/center/api/v1/users/me`,
     KNOWLEDGE_BASE_URL: `${appUrl}/KnowledgeBaseFileService`,
-    KNOWLEDGE_BASE_RUN_URL:
-      server === 'staging'
-        ? 'https://mlsandbox.oneweb.tech/px/retrieval'
-        : 'https://centerapp.io/knowledge/retrieval',
+    KNOWLEDGE_BASE_RUN_URL: `${authUrl}/knowledge/retrieval`,
     KNOWLEDGE_BASE_COLLECTIONS_URL: `${appUrl}/KnowledgeBaseFileService/collections`,
   };
 };

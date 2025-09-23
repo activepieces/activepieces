@@ -157,6 +157,7 @@ export const searchKnowledgeBase = createAction({
           'Content-Type': 'application/json',
         },
       });
+
       return {
         success: true,
         data: response.data,
