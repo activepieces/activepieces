@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { ApLock, fileExists, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
@@ -71,6 +71,10 @@ const linkPackages = async (
     packages: Record<string, string>,
     log: FastifyBaseLogger,
 ): Promise<void> => {
+    const pathExists = await fileSystemUtils.fileExists(linkPath)
+    if (!pathExists) {
+        return
+    }
     const cache = cacheState(projectPath)
     if (await cache.cacheCheckState(packageName) === CacheState.READY) {
         return
@@ -88,12 +92,13 @@ const updatePackageJson = async (
     packagePath: string,
     frameworkPackages: Record<string, string>,
 ): Promise<void> => {
-    const packageDotJsonPath = join(packagePath, 'package.json')
-    const packageDotJsonExists = await fileExists(packageDotJsonPath)
-    if (!packageDotJsonExists) {
+    const packageJsonForPiece = join(packagePath, 'package.json')
+
+    const packageJsonExists = await fileSystemUtils.fileExists(packageJsonForPiece)
+    if (!packageJsonExists) {
         return
     }
-    const packageJson = await readFile(packageDotJsonPath, 'utf-8').then(
+    const packageJson = await readFile(packageJsonForPiece, 'utf-8').then(
         JSON.parse,
     )
     for (const [key, value] of Object.entries(frameworkPackages)) {
@@ -104,7 +109,7 @@ const updatePackageJson = async (
             packageJson.dependencies[key] = value
         }
     }
-    await writeFile(packageDotJsonPath, JSON.stringify(packageJson, null, 2))
+    await writeFile(packageJsonForPiece, JSON.stringify(packageJson, null, 2))
 }
 
 type InstallParams = {

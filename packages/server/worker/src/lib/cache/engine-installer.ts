@@ -1,7 +1,7 @@
 import { PathLike } from 'fs'
 import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { memoryLock, systemConstants } from '@activepieces/server-shared'
+import { fileSystemUtils, systemConstants } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -17,10 +17,9 @@ const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
  */
 export const engineInstaller = (log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<void> {
-        const lock = await memoryLock.acquire(`engineInstaller#${path}`)
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
 
-        try {
+        return fileSystemUtils.runExclusive(path, 'engineInstaller', async () => {
             log.debug({ path }, '[engineInstaller#install]')
             const cache = cacheState(path)
             const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
@@ -31,10 +30,7 @@ export const engineInstaller = (log: FastifyBaseLogger) => ({
                 await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
             }
             await cache.setCache(ENGINE_INSTALLED, ENGINE_CACHE_ID)
-        }
-        finally {
-            await lock.release()
-        }
+        })
     },
 })
 

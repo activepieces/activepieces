@@ -50,7 +50,7 @@ jobs:
         id: setup
         if: steps.check-label.outputs.should-setup == 'true'
         run: |
-          ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js setup ${{ github.head_ref }}; exit"'
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js setup ${{ github.head_ref }}; exit"'
           echo "environment_url=https://$(echo '${{ github.head_ref }}' | sed 's|/|-|g').preview.activepieces.dev" >> $GITHUB_OUTPUT
 
       - name: Comment on PR

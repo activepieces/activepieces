@@ -164,6 +164,20 @@ const McpServersPage = () => {
   const bulkActions: BulkAction<McpWithTools>[] = useMemo(
     () => [
       {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
+            <Button
+              className="flex items-center gap-2"
+              onClick={() => createMcp('Untitled')}
+              disabled={!userHasMcpWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New MCP Server')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
+      {
         render: (_, resetSelection) => (
           <ConfirmationDeleteDialog
             title={t('Delete MCP Servers')}
@@ -185,8 +199,8 @@ const McpServersPage = () => {
             }}
           >
             {selectedRows.length > 0 && (
-              <Button className="w-full mr-2" size="sm" variant="destructive">
-                <Trash2 className="mr-2 w-4" />
+              <Button variant="destructive">
+                <Trash2 className="w-4" />
                 {`${t('Delete')} (${selectedRows.length})`}
               </Button>
             )}
@@ -213,18 +227,7 @@ const McpServersPage = () => {
           title={t('MCP Servers')}
           description={t('Create and manage your MCP servers')}
           tutorialTab="mcpServers"
-        >
-          <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
-            <Button
-              className="flex items-center gap-2"
-              onClick={() => createMcp('Untitled')}
-              disabled={!userHasMcpWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New MCP Server')}
-            </Button>
-          </PermissionNeededTooltip>
-        </DashboardPageHeader>
+        ></DashboardPageHeader>
 
         <DataTable
           filters={[]}
