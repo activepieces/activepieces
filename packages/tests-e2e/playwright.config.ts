@@ -8,7 +8,7 @@ if (!process.env.CI) {
   dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 }
 
-const AP_EDITION = process.env.AP_EDITION || 'ce'; // Default to Community Edition
+const AP_EDITION = process.env.AP_EDITION || 'ce';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -55,7 +55,7 @@ const editionConfigs = {
 const webServerConfig = {
   command: process.env.CI
     ? 'npm run start'
-    : 'export $(cat .env.e2e | xargs) && npm run start',
+    : 'export $(cat .env.e2e | xargs) && npm run dev',
   url: 'http://localhost:4200/api/v1/flags',
   reuseExistingServer: !process.env.CI,
   timeout: 100000,
