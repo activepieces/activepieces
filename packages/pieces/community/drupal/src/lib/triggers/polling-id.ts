@@ -36,9 +36,10 @@ const polling: Polling<PiecePropValueSchema<typeof drupalAuth>, { name: string }
       },
     });
     console.debug('Poll response', response);
-    return response.body.map((item) => ({
+    console.debug('Poll response', JSON.stringify(response.body));
+    return response.body.reverse().map((item) => ({
       id: item.id,
-      data: item,
+      data: item.data,
     }));
   },
 };

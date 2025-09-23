@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-drupal",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
