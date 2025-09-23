@@ -160,7 +160,7 @@ export const addToKnowledgeBase = createAction({
         customAppUrl,
       } = auth;
       const urls = fetchUrls(server, customAuthUrl, customAppUrl);
-      const accessToken = await getAccessToken(server, username, password);
+      const accessToken = await getAccessToken(urls.CENTER_AUTH_LOGIN_URL, username, password);
       const userMe = await getUserMe(urls.CENTER_API_USERS_ME_URL, accessToken);
 
       const { buffer, mimeType: detectedMime } =
