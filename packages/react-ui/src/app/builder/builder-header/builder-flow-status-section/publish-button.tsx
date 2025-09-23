@@ -56,7 +56,7 @@ const PublishButton = () => {
           <Button
             size={'sm'}
             loading={isSaving || isPublishing}
-            disabled={isPublishedVersion}
+            disabled={isPublishedVersion || !flowVersion.valid}
             onClick={() => publish()}
             className=''
             style={{

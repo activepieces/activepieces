@@ -13,7 +13,6 @@ import { FlowOperationType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { projectHooks } from '@/hooks/project-hooks';
 import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
 import { useToast } from '@/components/ui/use-toast';
 
 const FlowContextWidget = () => {
@@ -21,7 +20,7 @@ const FlowContextWidget = () => {
     flowVersion: state.flowVersion,
     applyOperation: state.applyOperation,
   }));
-  const [open, setOpen] = useState(flowVersion.flowContext === '');
+  const [open, setOpen] = useState(false);
   const [context, setContext] = useState(flowVersion.flowContext ?? '');
   const { project } = projectHooks.useCurrentProject();
   const aiCreditsRemaining = (project?.plan?.aiCredits ?? 0) - (project?.usage?.aiCredits ?? 0);

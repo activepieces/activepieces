@@ -8,9 +8,13 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { flowUtilConsts } from '../utils/consts';
 
 import { FlowContextWidget } from './flow-context-widget';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 const AboveFlowWidgets = React.memo(() => {
   const { data: flags } = flagsHooks.useFlags();
+  const { flowVersion } = useBuilderStateContext((state) => ({
+    flowVersion: state.flowVersion,
+  }));
   return (
     <ViewportPortal>
       <div
@@ -24,7 +28,7 @@ const AboveFlowWidgets = React.memo(() => {
       >
         <div className="justify-center items-center flex w-[260px] relative">
           {flags?.[ApFlagId.EDITION] !== ApEdition.COMMUNITY && (
-            <FlowContextWidget></FlowContextWidget>
+            <FlowContextWidget key={flowVersion.id}></FlowContextWidget>
           )}
         </div>
       </div>

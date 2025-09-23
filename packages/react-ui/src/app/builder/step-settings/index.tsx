@@ -251,7 +251,7 @@ const StepSettingsContainer = () => {
                     <Separator />
 
                       <AccordionTrigger className="px-0 text-md">Settings</AccordionTrigger>
-                      <AccordionContent className="px-0 py-2">
+                      <AccordionContent className="px-0 py-1">
 
                         <div className='flex flex-col gap-6'>
                           {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (

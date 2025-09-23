@@ -36,7 +36,8 @@ type AutoFormFieldWrapperProps = {
 };
 
 const hideAutoDynamicFields = (property: PieceProperty) => {
-  return property.type === PropertyType.DYNAMIC || property.type === PropertyType.STATIC_DROPDOWN || property.type === PropertyType.MULTI_SELECT_DROPDOWN || property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN;
+  const hiddenTypes = [PropertyType.DYNAMIC, PropertyType.DROPDOWN, PropertyType.STATIC_DROPDOWN, PropertyType.MULTI_SELECT_DROPDOWN, PropertyType.STATIC_MULTI_SELECT_DROPDOWN, PropertyType.MARKDOWN];
+  return hiddenTypes.includes(property.type);
 }
 
 const AutoFormFieldWrapper = ({
