@@ -1,6 +1,7 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { emailOctopusProps } from '../common/props';
 import { emailOctopusAuth } from '../common/auth';
+import { MarkdownVariant } from '@activepieces/shared';
 
 interface EmailOctopusEvent {
   type: string;
@@ -16,9 +17,17 @@ export const emailClicked = createTrigger({
   auth: emailOctopusAuth,
   name: 'emailClicked',
   displayName: 'Email Clicked',
-  description: 'Fires when a link inside a specific campaign email is clicked.',
+  description: 'Triggers when a link inside a specific campaign email is clicked.',
   props: {
     campaign_id: emailOctopusProps.campaignId(),
+     liveMarkdown: Property.MarkDown({
+          value: `
+          **Live URL:**
+    \`\`\`text
+    {{webhookUrl}}
+    \`\`\``,
+          variant: MarkdownVariant.BORDERLESS,
+        }),
     instructions: Property.MarkDown({
       value: `
       **Manual Setup Required**
@@ -26,11 +35,8 @@ export const emailClicked = createTrigger({
       1. Go to your EmailOctopus Dashboard.
       2. Navigate to **API & Integrations** → **Webhooks**.
       3. Click **Add webhook**.
-      4. Paste the URL below into the **URL** field:
-         \`\`\`
-         {{webhookUrl}}
-         \`\`\`
-      5. Select the **Contact clicked** event.
+      4. Paste the Above URL into the **URL** field:
+      5. Select the **Email clicked** event.
       6. (Optional) Choose the campaign you want to filter on in this trigger.
       7. Save the webhook.
       `,

@@ -1,13 +1,14 @@
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
-const emailOctopusApiUrl = 'https://emailoctopus.com/api/1.6';
+export const emailOctopusApiUrl = 'https://api.emailoctopus.com';
 
 
 export interface EmailOctopusListDetails extends EmailOctopusList {
     fields: {
         tag: string;
-        type: 'TEXT' | 'NUMBER' | 'DATE';
+        type: 'text' | 'number' | 'date'|'choice_single'|'choice_multiple'
         label: string;
+        choices:string[]
     }[];
 }
 
@@ -17,11 +18,12 @@ export class EmailOctopusClient {
     async makeRequest<T>(method: HttpMethod, url: string, body?: object): Promise<T> {
         const request: HttpRequest<object> = {
             method,
-            url: `${emailOctopusApiUrl}${url}?api_key=${this.apiKey}`,
+            url: `${emailOctopusApiUrl}${url}`,
             body: body,
             headers: {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
+                "Authorization":`Bearer ${this.apiKey}`
             },
         };
 

@@ -17,6 +17,8 @@ import { emailOpened } from "./lib/triggers/email-opened";
 import { emailClicked } from "./lib/triggers/email-Clicked";
 import { newContact } from "./lib/triggers/new-Contact";
 import { contactUnsubscribes } from "./lib/triggers/contact-Unsubscribes";
+import { createCustomApiCallAction } from "@activepieces/pieces-common";
+import { emailOctopusApiUrl } from "./lib/common/client";
 
 export const emailoctopus = createPiece({
     displayName: "EmailOctopus",
@@ -33,7 +35,17 @@ export const emailoctopus = createPiece({
         addTagToContact,
         removeTagFromContact,
         createList,
-        findContact 
+        findContact ,
+        createCustomApiCallAction({
+          auth:emailOctopusAuth,
+          baseUrl:()=>emailOctopusApiUrl,
+          authMapping:async (auth)=>{
+            return{
+              Authorization:`Bearer ${auth}`
+            }
+          }
+          
+        })
     ],
     triggers: [
       emailBounced,

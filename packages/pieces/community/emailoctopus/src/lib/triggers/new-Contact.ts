@@ -1,6 +1,11 @@
-import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  Property,
+  createTrigger,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../common/auth';
 import { emailOctopusProps } from '../common/props';
+import { MarkdownVariant } from '@activepieces/shared';
 
 interface EmailOctopusEvent {
   type: string;
@@ -17,20 +22,26 @@ export const newContact = createTrigger({
   auth: emailOctopusAuth,
   name: 'newContact',
   displayName: 'New Contact',
-  description: 'Fires when a new contact is added to a particular list.',
+  description: 'Triggers when a new contact is added to a particular list.',
   props: {
     list_id: emailOctopusProps.listId(true),
+    liveMarkdown: Property.MarkDown({
+      value: `
+      **Live URL:**
+\`\`\`text
+{{webhookUrl}}
+\`\`\``,
+      variant: MarkdownVariant.BORDERLESS,
+    }),
     instructions: Property.MarkDown({
+      variant: MarkdownVariant.INFO,
       value: `
       **Manual Setup Required**
 
       1. Go to your EmailOctopus Dashboard.
       2. Navigate to **API & Integrations → Webhooks**.
       3. Click **Add webhook**.
-      4. Paste the following URL:
-         \`\`\`
-         {{webhookUrl}}
-         \`\`\`
+      4. Paste the Above URL.
       5. Select the **Contact created** event.
       6. (Optional) Restrict to the specific list chosen above.
       7. Save the webhook.

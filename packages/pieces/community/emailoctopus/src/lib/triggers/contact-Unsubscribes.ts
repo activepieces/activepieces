@@ -1,6 +1,7 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../common/auth';
 import { emailOctopusProps } from '../common/props';
+import { MarkdownVariant } from '@activepieces/shared';
 
 interface EmailOctopusEvent {
   type: string;
@@ -17,9 +18,17 @@ export const contactUnsubscribes = createTrigger({
   auth: emailOctopusAuth,
   name: 'contactUnsubscribes',
   displayName: 'Contact Unsubscribes',
-  description: 'Fires when a contact unsubscribes from a list.',
+  description: 'Triggers when a contact unsubscribes from a list.',
   props: {
     list_id: emailOctopusProps.listId(true),
+        liveMarkdown: Property.MarkDown({
+          value: `
+          **Live URL:**
+    \`\`\`text
+    {{webhookUrl}}
+    \`\`\``,
+          variant: MarkdownVariant.BORDERLESS,
+        }),
     instructions: Property.MarkDown({
       value: `
       **Manual Setup Required**
@@ -27,11 +36,8 @@ export const contactUnsubscribes = createTrigger({
       1. Go to your EmailOctopus Dashboard.
       2. Navigate to **API & Integrations → Webhooks**.
       3. Click **Add webhook**.
-      4. Paste the following URL:
-         \`\`\`
-         {{webhookUrl}}
-         \`\`\`
-      5. Select the **Contact unsubscribed** event.
+      4. Paste the Above URL:
+      5. Select the **Email unsubscribed** event.
       6. (Optional) Restrict to the specific list chosen above.
       7. Save the webhook.
       `,

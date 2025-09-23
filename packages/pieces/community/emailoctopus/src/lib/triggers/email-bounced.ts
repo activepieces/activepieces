@@ -1,14 +1,23 @@
 import { Property, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { emailOctopusAuth } from "../common/auth";
 import { emailOctopusProps } from "../common/props";
+import { MarkdownVariant } from "@activepieces/shared";
 
 export const emailBounced = createTrigger({
     auth: emailOctopusAuth,
     name: 'email_bounced',
     displayName: 'Email Bounced',
-    description: 'Fires when an email to a recipient bounces from a specific campaign.',
+    description: 'Triggers when an email to a recipient bounces from a specific campaign.',
     props: {
         campaign_id: emailOctopusProps.campaignId(),
+            liveMarkdown: Property.MarkDown({
+              value: `
+              **Live URL:**
+        \`\`\`text
+        {{webhookUrl}}
+        \`\`\``,
+              variant: MarkdownVariant.BORDERLESS,
+            }),
         instructions: Property.MarkDown({
             value: `
             **Manual Setup Required**
@@ -16,11 +25,8 @@ export const emailBounced = createTrigger({
             1. Go to your EmailOctopus Dashboard.
             2. Navigate to **API & Integrations**, then select the **Webhooks** tab.
             3. Click **Add webhook**.
-            4. Paste the URL below into the **URL** field:
-               \`\`\`
-               {{webhookUrl}}
-               \`\`\`
-            5. Select the **Contact bounced** event.
+            4. Paste the Above URL below into the **URL** field:
+            5. Select the **Email bounced** event.
             6. Click **Add webhook**.
             `,
         }),

@@ -27,9 +27,9 @@ export const addOrUpdateContact = createAction({
             required: false,
             options: {
                 options: [
-                    { label: 'Subscribed', value: 'SUBSCRIBED' },
-                    { label: 'Unsubscribed', value: 'UNSUBSCRIBED' },
-                    { label: 'Pending', value: 'PENDING' },
+                    { label: 'Subscribed', value: 'subscribed' },
+                    { label: 'Unsubscribed', value: 'unsubscribed' },
+                    { label: 'Pending', value: 'pending' },
                 ],
             },
         }),

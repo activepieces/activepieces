@@ -10,7 +10,7 @@ export const findContact = createAction({
     auth: emailOctopusAuth,
     name: 'find_contact',
     displayName: 'Find Contact',
-    description: 'Look up a contact by email address within a given list.',
+    description: 'Finds a contact by email address within a given list.',
     props: {
         list_id: emailOctopusProps.listId(),
         email_address: Property.ShortText({
@@ -29,14 +29,22 @@ export const findContact = createAction({
             .digest('hex');
 
         try {
-            return await client.makeRequest(
+            const response =  await client.makeRequest(
                 HttpMethod.GET,
                 `/lists/${list_id}/contacts/${contactId}`
             );
+
+            return {
+                found:true,
+                result:response
+            }
         } catch (error) {
             
             if (error instanceof HttpError && error.response.status === 404) {
-                return null;
+                return {
+                    found:false,
+                    result:{}
+                };
             }
             throw error;
         }
