@@ -2,6 +2,15 @@ import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common
 
 const emailOctopusApiUrl = 'https://emailoctopus.com/api/1.6';
 
+
+export interface EmailOctopusListDetails extends EmailOctopusList {
+    fields: {
+        tag: string;
+        type: 'TEXT' | 'NUMBER' | 'DATE';
+        label: string;
+    }[];
+}
+
 export class EmailOctopusClient {
     constructor(private apiKey: string) {}
 
@@ -26,6 +35,14 @@ export class EmailOctopusClient {
             '/lists'
         );
         return response.data;
+    }
+    
+
+    async getList(listId: string): Promise<EmailOctopusListDetails> {
+        return await this.makeRequest<EmailOctopusListDetails>(
+            HttpMethod.GET,
+            `/lists/${listId}`
+        );
     }
 
     async getCampaigns(): Promise<EmailOctopusCampaign[]> {

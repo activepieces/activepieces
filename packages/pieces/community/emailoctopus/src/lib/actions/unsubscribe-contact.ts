@@ -29,7 +29,7 @@ export const unsubscribeContact = createAction({
             .digest('hex');
 
         const body = {
-            status: 'UNSUBSCRIBED',
+            status: 'unsubscribed',
         };
 
         

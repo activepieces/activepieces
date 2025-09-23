@@ -9,6 +9,7 @@ import { addTagToContact } from "./lib/actions/add-tag-to-contact";
 import { removeTagFromContact } from "./lib/actions/remove-tag-from-contact";
 import { createList } from "./lib/actions/create-list";
 import { findContact } from "./lib/actions/find-contact"; 
+import { PieceCategory } from '@activepieces/shared';
 
 
 import { emailBounced } from "./lib/triggers/email-bounced";
@@ -19,11 +20,12 @@ import { contactUnsubscribes } from "./lib/triggers/contact-Unsubscribes";
 
 export const emailoctopus = createPiece({
     displayName: "EmailOctopus",
+    description: 'Email marketing platform for list management, campaign sending, tagging & unsubscribes. Automate contact management and campaign engagement tracking.',
     auth: emailOctopusAuth,
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/emailoctopus.png",
-    authors: [
-    ],
+    categories: [PieceCategory.MARKETING],
+    authors: ['Pranith124'],
     actions: [
         addOrUpdateContact,
         unsubscribeContact,
