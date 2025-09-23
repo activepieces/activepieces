@@ -368,6 +368,9 @@
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
+      "@activepieces/piece-email-octopus": [
+        "packages/pieces/community/email-octopus/src/index.ts"
+      ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
