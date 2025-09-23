@@ -8,7 +8,7 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { drupalCallToolAction } from './lib/actions/tools';
+import { drupalCallServiceAction } from './lib/actions/services';
 import { drupalCreateEntityAction } from './lib/actions/create_entity';
 import { drupalListEntitiesAction } from './lib/actions/list_entities';
 import { drupalGetEntityAction } from './lib/actions/get_entity';
@@ -105,7 +105,7 @@ export const drupal = createPiece({
   ],
   authors: ['dbuytaert', 'jurgenhaas'],
   actions: [
-    drupalCallToolAction,
+    drupalCallServiceAction,
     drupalCreateEntityAction,
     drupalListEntitiesAction,
     drupalGetEntityAction,

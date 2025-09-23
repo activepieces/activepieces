@@ -11,15 +11,15 @@ import {
 import { drupalAuth } from '../../';
 type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
 
-export const drupalCallToolAction = createAction({
+export const drupalCallServiceAction = createAction({
   auth: drupalAuth,
-  name: 'drupal-call-tool',
-  displayName: 'Call Tool',
-  description: 'Call a tool on the Drupal site',
+  name: 'drupal-call-service',
+  displayName: 'Call Service',
+  description: 'Call a service on the Drupal site',
   props: {
-    tool: Property.Dropdown({
-      displayName: 'Tool',
-      description: 'The tool to call.',
+    service: Property.Dropdown({
+      displayName: 'Service',
+      description: 'The service to call.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -33,45 +33,45 @@ export const drupalCallToolAction = createAction({
         }
 
         try {
-          const response = await httpClient.sendRequest<DrupalTool[]>({
+          const response = await httpClient.sendRequest<DrupalService[]>({
             method: HttpMethod.GET,
-            url: website_url + `/orchestration/tools`,
+            url: website_url + `/orchestration/services`,
             headers: {
               'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
               'Accept': 'application/vnd.api+json',
             },
           });
-          console.debug('Tool response', response);
+          console.debug('Service response', response);
           if (response.status === 200) {
             return {
               disabled: false,
-              options: response.body.map((tool) => {
+              options: response.body.map((service) => {
                 return {
-                  label: tool.label,
-                  description: tool.description,
-                  value: tool,
+                  label: service.label,
+                  description: service.description,
+                  value: service,
                 };
               }),
             };
           }
         } catch (e: any) {
-          console.debug('Tool error', e);
+          console.debug('Service error', e);
         }
         return {
           disabled: true,
           options: [],
-          placeholder: 'Error processing tools',
+          placeholder: 'Error processing services',
         };
       },
     }),
     config: Property.DynamicProperties({
-      displayName: 'Tool configuration',
-      refreshers: ['tool'],
+      displayName: 'Service configuration',
+      refreshers: ['service'],
       required: true,
-      props: async ({ tool }) => {
-        console.debug('Tool config input', tool);
+      props: async ({ service }) => {
+        console.debug('Service config input', service);
         const fields: Record<string, any> = {};
-        const items = tool['config'] as DrupalToolConfig[];
+        const items = service['config'] as DrupalServiceConfig[];
         items.forEach((config: any) => {
           if (config.type === 'boolean') {
             fields[config.key] = Property.Checkbox({
@@ -116,7 +116,7 @@ export const drupalCallToolAction = createAction({
             });
           }
         });
-        console.debug('Field for this tool', fields);
+        console.debug('Field for this service', fields);
         return fields;
       },
     }),
@@ -125,9 +125,9 @@ export const drupalCallToolAction = createAction({
     const { website_url, username, password } = (auth as DrupalAuthType);
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: website_url + `/orchestration/tool/execute`,
+      url: website_url + `/orchestration/service/execute`,
       body: {
-        id: propsValue.tool.id,
+        id: propsValue.service.id,
         config: propsValue.config,
       },
       headers: {
@@ -136,8 +136,8 @@ export const drupalCallToolAction = createAction({
       },
     };
 
-    const result = await httpClient.sendRequest<DrupalTool>(request);
-    console.debug('Tool call completed', result);
+    const result = await httpClient.sendRequest<DrupalService>(request);
+    console.debug('Service call completed', result);
 
     if (result.status === 200 || result.status === 202) {
       return result.body;
@@ -147,14 +147,14 @@ export const drupalCallToolAction = createAction({
   },
 });
 
-interface DrupalTool {
+interface DrupalService {
   id: string;
   label: string;
   description: string;
-  config: DrupalToolConfig[];
+  config: DrupalServiceConfig[];
 }
 
-interface DrupalToolConfig {
+interface DrupalServiceConfig {
   key: string;
   label: string;
   description: string;
