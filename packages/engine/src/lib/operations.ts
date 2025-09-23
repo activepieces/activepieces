@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import {
     BeginExecuteFlowOperation,
     EngineOperation,
@@ -5,7 +6,7 @@ import {
     EngineResponse,
     EngineResponseStatus,
     ExecuteActionResponse,
-    ExecuteExtractPieceMetadata,
+    ExecuteExtractPieceMetadataOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteToolOperation,
@@ -33,7 +34,6 @@ import { flowExecutor } from './handler/flow-executor'
 import { pieceHelper } from './helper/piece-helper'
 import { triggerHelper } from './helper/trigger-helper'
 import { progressService } from './services/progress.service'
-import { utils } from './utils'
 
 const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
@@ -195,10 +195,9 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
     try {
-
         switch (operationType) {
             case EngineOperationType.EXTRACT_PIECE_METADATA: {
-                const input = operation as ExecuteExtractPieceMetadata
+                const input = operation as ExecuteExtractPieceMetadataOperation
                 const output = await pieceHelper.extractPieceMetadata({
                     params: input,
                     pieceSource: EngineConstants.PIECE_SOURCES,
@@ -265,13 +264,20 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     response: output,
                 }
             }
+            default: {
+                return {
+                    status: EngineResponseStatus.INTERNAL_ERROR,
+                    response: {},
+                    error: `Unsupported operation type: ${operationType}`,
+                }
+            }
         }
     }
     catch (e) {
-        console.error(e)
         return {
-            status: EngineResponseStatus.ERROR,
-            response: utils.tryParseJson((e as Error).message),
+            status: EngineResponseStatus.INTERNAL_ERROR,
+            response: {},
+            error: inspect(e),
         }
     }
 }

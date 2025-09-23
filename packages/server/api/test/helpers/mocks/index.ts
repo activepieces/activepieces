@@ -67,8 +67,8 @@ import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/p
 import { apDayjs } from '../../../src/app/helper/dayjs-helper'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
-import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
-import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
+import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
+import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -104,9 +104,9 @@ export const createMockUser = (user?: Partial<User>): User => {
     }
 }
 
-export const createMockOAuthApp = (
+export const createMockOAuthApp = async (
     oAuthApp?: Partial<OAuthApp>,
-): OAuthAppWithEncryptedSecret => {
+): Promise<OAuthAppWithEncryptedSecret> => {
     return {
         id: oAuthApp?.id ?? apId(),
         created: oAuthApp?.created ?? faker.date.recent().toISOString(),
@@ -114,7 +114,7 @@ export const createMockOAuthApp = (
         platformId: oAuthApp?.platformId ?? apId(),
         pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
         clientId: oAuthApp?.clientId ?? apId(),
-        clientSecret: encryptUtils.encryptString(faker.lorem.word()),
+        clientSecret: await encryptUtils.encryptString(faker.lorem.word()),
     }
 }
 
@@ -641,21 +641,21 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = (aiProvider?: Partial<AIProvider>): Omit<AIProviderSchema, 'platform'> => {
+export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
         updated: aiProvider?.updated ?? faker.date.recent().toISOString(),
         platformId: aiProvider?.platformId ?? apId(),
         provider: aiProvider?.provider ?? 'openai',
-        config: encryptUtils.encryptObject({
+        config: await encryptUtils.encryptObject({
             apiKey: aiProvider?.config?.apiKey ?? process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
     }
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
-    const mockAIProvider = createMockAIProvider(params)
+    const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
 }

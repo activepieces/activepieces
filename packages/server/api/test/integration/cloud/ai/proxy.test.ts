@@ -18,6 +18,7 @@ let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
+    jest.setTimeout(240000)
     app = await setupServer()
 })
 
@@ -332,6 +333,65 @@ describe('AI Providers Proxy', () => {
 
     if (anthropicKey) {
         describe('Anthropic', () => {
+            it('should record the usage cost of a messages request', async () => {
+                // arrange
+                const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                    platform: {
+                        id: CLOUD_PLATFORM_ID,
+                    },
+                    plan: {
+                        includedAiCredits: 10,
+                    },
+                })
+                await mockAndSaveAIProvider({
+                    platformId: mockPlatform.id,
+                    provider: 'anthropic',
+                    config: {
+                        apiKey: anthropicKey,
+                    },
+                })
+
+                const mockToken = await generateMockToken({
+                    type: PrincipalType.USER,
+                    projectId: mockProject.id,
+                    id: mockOwner.id,
+                    platform: {
+                        id: mockPlatform.id,
+                    },
+                })
+
+                const model = getProviderConfig('anthropic')?.languageModels.find(model => model.instance.modelId === 'claude-3-5-haiku-20241022')
+
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: '/v1/ai-providers/proxy/anthropic/v1/messages',
+                    headers: {
+                        authorization: `Bearer ${mockToken}`,
+                        'anthropic-version': '2023-06-01',
+                    },
+                    body: {
+                        model: model?.instance.modelId,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'Give me a title of hackernews article',
+                            },
+                        ],
+                        max_tokens: 2000,
+                    },
+                })
+                const data = response?.json()
+                const { usage } = data as { usage: { input_tokens: number, output_tokens: number } }
+
+                // assert
+                const { input: inputCost, output: outputCost } = model?.pricing as FlatLanguageModelPricing
+                const totalCost = calculateTokensCost(usage.input_tokens, inputCost) + calculateTokensCost(usage.output_tokens, outputCost)
+
+                const aiUsage = await pollForAIUsage(mockProject.id, 'anthropic')
+                expect(aiUsage?.cost).toBe(totalCost)
+            })
+
             it('should record the usage cost of a messages request with web search', async () => {
                 // arrange
                 const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({

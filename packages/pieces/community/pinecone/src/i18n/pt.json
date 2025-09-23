@@ -1,5 +1,4 @@
 {
-  "Pinecone": "Pinhata",
   "Manage vector databases, store embeddings, and perform similarity searches": "Gerenciar bancos de dados vetoriais, armazenar incorporações e realizar pesquisas de similaridade",
   "API Key": "Chave de API",
   "Enter your Pinecone API key. You can create a new API key in the Pinecone console for your target project.": "Digite sua chave de API Pinecone. Você pode criar uma nova chave de API no console Pinecone para o seu projeto de destino.",

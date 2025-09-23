@@ -1,5 +1,4 @@
 {
-  "Placid": "Platzhalter",
   "Creative automation engine that generates dynamic images, PDFs, and videos from templates and data.": "Creative Automation Engine, die dynamische Bilder, PDFs und Videos aus Vorlagen und Daten generiert.",
   "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.": "\nUm Ihren Placid API Token zu erhalten:\n\n1. Melden Sie sich bei [placid.app]an (https://placid.app/login).\n2. Gehen Sie zur Projektübersicht.\n3. Wählen Sie Ihr gewünschtes Projekt.\n4. Klicken Sie im linken Menü auf \"API-Tokens\".\n5. Kopieren Sie Ihren API-Token.\n\nDer Token ist projektspezifisch und funktioniert nur mit Vorlagen aus diesem Projekt.",
   "Create Image": "Bild erstellen",

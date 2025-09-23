@@ -1,5 +1,4 @@
 {
-  "Placid": "Plaácida",
   "Creative automation engine that generates dynamic images, PDFs, and videos from templates and data.": "Motor de automação criativo que gera imagens dinâmicas, PDFs e vídeos a partir de modelos e dados.",
   "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.": "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.",
   "Create Image": "Criar imagem",

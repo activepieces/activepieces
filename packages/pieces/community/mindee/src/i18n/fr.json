@@ -1,5 +1,4 @@
 {
-  "Mindee": "Mindee",
   "Document automation API": "API d'automatisation de documents",
   "\n  #### To obtain access your Api Key\n  1. Sign up and log in to Mindee\n  2. Go to [API Key page](https://platform.mindee.com/api-keys)\n  3. Copy the Key and paste below.\n  ": "\n  #### Pour accéder à votre clé Api\n  1. Inscrivez-vous et connectez-vous à Mindee\n  2. Allez sur la [page de la clé API](https://platform.mindee.com/api-keys)\n  3. Copiez la clé et collez ci-dessous.\n  ",
   "Extract Document": "Extraire le document",

@@ -4,11 +4,10 @@ import {
     PieceMetadata,
     PropertyType,
 } from '@activepieces/pieces-framework'
-import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, SourceCode, TriggerHookType } from '@activepieces/shared'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
-type EngineConstants = 'publicApiUrl' | 'internalApiUrl' | 'engineToken'
 
 export type CodeArtifact = {
     name: string
@@ -64,35 +63,6 @@ export type ExecuteSandboxResult = {
     standardError: string
 }
 
-export type EngineRunner = {
-    executeFlow(
-        engineToken: string,
-        operation:
-        | Omit<BeginExecuteFlowOperation, EngineConstants>
-        | Omit<ResumeExecuteFlowOperation, EngineConstants>,
-    ): Promise<EngineHelperResponse<EngineHelperFlowResult>>
-    executeTrigger<T extends TriggerHookType>(
-        engineToken: string,
-        operation: Omit<ExecuteTriggerOperation<T>, EngineConstants>,
-    ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>>
-    extractPieceMetadata(
-        engineToken: string,
-        operation: ExecuteExtractPieceMetadata,
-    ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>>
-    executeValidateAuth(
-        engineToken: string,
-        operation: Omit<ExecuteValidateAuthOperation, EngineConstants>,
-    ): Promise<EngineHelperResponse<EngineHelperValidateAuthResult>>
-    excuteTool(
-        engineToken: string,
-        operation: Omit<ExecuteToolOperation, EngineConstants>,
-    ): Promise<EngineHelperResponse<EngineHelperActionResult>>
-    executeProp(
-        engineToken: string,
-        operation: Omit<ExecutePropsOptions, EngineConstants>,
-    ): Promise<EngineHelperResponse<EngineHelperPropResult>>
-    shutdownAllWorkers(): Promise<void>
-}
 
 export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
     async readResults<Result extends EngineHelperResult>(sandboxResponse: ExecuteSandboxResult): Promise<EngineHelperResponse<Result>> {
@@ -109,7 +79,10 @@ export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
         if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXECUTION_TIMEOUT,
-                params: {},
+                params: {
+                    standardOutput: sandboxResponse.standardOutput,
+                    standardError: sandboxResponse.standardError,
+                },
             })
         }
         if (sandboxResponse.verdict === EngineResponseStatus.MEMORY_ISSUE) {

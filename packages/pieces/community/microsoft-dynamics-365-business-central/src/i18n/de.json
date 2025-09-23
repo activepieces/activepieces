@@ -1,5 +1,4 @@
 {
-  "Microsoft Dynamics 365 Business Central": "Microsoft Dynamics 365 Business Central",
   "All-in-one business management solution by Microsoft.": "All-in-One Business Management Lösung von Microsoft.",
   "Environment": "Umgebung",
   "Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.": "Name der Umgebung, zu der eine Verbindung hergestellt werden soll, z.B. 'Produktion' oder 'Sandbox'. Umweltnamen finden Sie im Business Central Admin Center.",

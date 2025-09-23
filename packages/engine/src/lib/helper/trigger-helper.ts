@@ -1,3 +1,4 @@
+import { inspect } from 'node:util'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
 import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
@@ -157,10 +158,9 @@ export const triggerHelper = {
                 }
                 catch (e) {
                     console.error(e)
-
                     return {
                         success: false,
-                        message: JSON.stringify(e),
+                        message: `Error while testing trigger: ${inspect(e)}`,
                     }
                 }
             }
@@ -180,11 +180,9 @@ export const triggerHelper = {
                     }
                 }
                 catch (e) {
-                    console.error(e)
-
                     return {
                         success: false,
-                        message: JSON.stringify(e),
+                        message: `Error while testing trigger: ${inspect(e)}`,
                         output: [],
                     }
                 }
@@ -214,29 +212,36 @@ export const triggerHelper = {
                         }
                     }
                     catch (e) {
-                        console.error('Error while verifying webhook', e)
                         return {
                             success: false,
-                            message: 'Error while verifying webhook',
+                            message: `Error while verifying webhook: ${inspect(e)}`,
                             output: [],
                         }
                     }
                 }
-                const items = await pieceTrigger.run({
-                    ...context,
-                    files: createFilesService({
-                        apiUrl: constants.internalApiUrl,
-                        engineToken: params.engineToken!,
-                        flowId: params.flowVersion.flowId,
-                        stepName: triggerName,
-                    }),
-                })
-                if (!Array.isArray(items)) {
-                    throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
+
+                try {
+                    const items = await pieceTrigger.run({
+                        ...context,
+                        files: createFilesService({
+                            apiUrl: constants.internalApiUrl,
+                            engineToken: params.engineToken!,
+                            flowId: params.flowVersion.flowId,
+                            stepName: triggerName,
+                        }),
+                    })
+                    return {
+                        success: true,
+                        output: items,
+                    }
                 }
-                return {
-                    success: true,
-                    output: items,
+                catch (e) {
+                    console.error(e)
+                    return {
+                        success: false,
+                        message: inspect(e),
+                        output: [],
+                    }
                 }
             }
         }

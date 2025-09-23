@@ -1,5 +1,4 @@
 {
-  "Microsoft Dynamics 365 Business Central": "Microsoft Dynamics 365 Business Central",
   "All-in-one business management solution by Microsoft.": "Microsoftによるオールインワンのビジネス管理ソリューション。",
   "Environment": "環境",
   "Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.": "「Production」や「Sandbox」など、接続する環境の名前は、Business Central Admin Center に記載されています。",

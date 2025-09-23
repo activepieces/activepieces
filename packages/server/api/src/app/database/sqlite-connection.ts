@@ -26,6 +26,7 @@ import { DeprecateApproval1748648340742 } from './migration/common/1748648340742
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
+import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -145,6 +146,8 @@ import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243
 import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
 import { RemoveAgentRelationToTablesSqlite1755954639833 } from './migration/sqlite/1755954639833-RemoveAgentRelationToTablesSqlite'
 import { AddTriggerNameToTriggerSourceSqlite1757018637559 } from './migration/sqlite/1757018637559-AddTriggerNameToTriggerSourceSqlite'
+import { AddIndexOnTriggerRunSqlite1757560231246 } from './migration/sqlite/1757560231246-AddIndexOnTriggerRunSqlite'
+import { DeleteHandshakeFromTriggerSourceSqlite1758108281602 } from './migration/sqlite/1758108281602-DeleteHandshakeFromTriggerSourceSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -306,6 +309,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveAgentRelationToTablesSqlite1755954639833,
         AddIndexToIssues1756775080449,
         AddTriggerNameToTriggerSourceSqlite1757018637559,
+        AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRunSqlite1757560231246,
+        DeleteHandshakeFromTriggerSourceSqlite1758108281602,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

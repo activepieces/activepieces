@@ -1,5 +1,4 @@
 {
-  "Placid": "Plaatselijk",
   "Creative automation engine that generates dynamic images, PDFs, and videos from templates and data.": "Creatieve automatiseringsmotor die dynamische afbeeldingen, PDF's en video's genereert.",
   "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.": "\nOm je Placid API te verkrijgen:\n\n1. Log in op [placid.app](https://placid.app/login).\n2. Ga naar Projecten overzicht.\n3. Selecteer het gewenste project.\n4. Klik op \"API Tokens\" in het linkermenu.\n5. Kopieer je API-token.\n\nHet token is project-specifiek en werkt alleen met sjablonen uit dat project.",
   "Create Image": "Afbeelding aanmaken",

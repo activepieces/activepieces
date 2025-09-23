@@ -1,9 +1,9 @@
 {
-  "Saleor": "Verkoper",
   "Saleor API URL": "Saleor API URL",
   "Saleor token": "Verkoop token",
   "Your Saleor GraphQL API endpoint": "Uw Verkoper GraphQL API eindpunt",
   "Your token": "Jouw token",
+  "Saleor": "Verkoper",
   "Raw GraphQL query": "Onbewerkte GraphQL query",
   "Get an order": "Vraag een bestelling aan",
   "Add Order Note": "Voeg bestellingsnotitie toe",

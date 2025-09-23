@@ -1,5 +1,4 @@
 {
-  "HTTP": "HTTP",
   "Sends HTTP requests and return responses": "Verstuurt HTTP-verzoeken en retourantwoorden",
   "Send HTTP request": "Stuur HTTP request",
   "Method": "Methode",
@@ -15,6 +14,7 @@
   "Proxy Settings": "Proxy Instellingen",
   "Timeout(in seconds)": "Timeout(in seconden)",
   "On Failure": "Bij Mislukking",
+  "Stop the flow on Failure ?": "Stop de stroom bij mislukking?",
   "Enable for files like PDFs, images, etc. A base64 body will be returned.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen, etc. Een base64 inhoud wordt geretourneerd.",
   "Use a proxy for this request": "Gebruik een proxy voor dit verzoek",
   "GET": "KRIJG",
@@ -30,6 +30,9 @@
   "JSON": "JSON",
   "Raw": "Onbewerkte",
   "Retry on all errors (4xx, 5xx)": "Opnieuw proberen bij alle fouten (4xx, 5xx)",
-  "Continue flow": "Blijven stroom",
-  "Retry on internal errors (5xx)": "Opnieuw proberen bij interne fouten (5xx)"
+  "Retry on internal errors (5xx)": "Opnieuw proberen bij interne fouten (5xx)",
+  "Do not retry": "Probeer het niet opnieuw",
+  "Continue flow on all errors": "Doorgaan met flow op alle fouten",
+  "Continue flow on 4xx errors": "Doorgaan met stroom op 4xx fouten",
+  "Do not continue (stop the flow)": "Ga niet verder (stop de stroom)"
 }

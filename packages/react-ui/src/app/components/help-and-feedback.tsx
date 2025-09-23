@@ -1,9 +1,10 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronRight, BookOpen, History } from 'lucide-react';
+import { ChevronRight, BookOpen, History, VideoIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import TutorialsDialog from '@/components/custom/tutorials-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,15 +24,15 @@ export const HelpAndFeedback = () => {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <SidebarMenuButton>
+        <SidebarMenuButton className="px-2 py-5">
           <div className="flex items-center gap-2">
             <QuestionMarkCircledIcon className="size-4" />
-            <span>Help & Feedback</span>
+            <span>{t('Help & Feedback')}</span>
           </div>
-          <ChevronRight className="size-4" />
+          <ChevronRight className="size-4 ml-auto" />
         </SidebarMenuButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="right" className="w-[220px]">
+      <DropdownMenuContent align="end" side="right" className="w-[220px]">
         <DropdownMenuItem asChild>
           <Link
             to="https://activepieces.com/docs"
@@ -55,10 +56,17 @@ export const HelpAndFeedback = () => {
           >
             <div className="flex items-center gap-2">
               <History className="size-4" />
-              <span>Changelog</span>
+              <span>{t('Changelog')}</span>
             </div>
           </Link>
         </DropdownMenuItem>
+
+        <TutorialsDialog location="tutorials-sidebar-item" showTooltip={false}>
+          <div className="flex items-center gap-2 text-sm px-2 py-1.5 cursor-pointer hover:bg-sidebar-accent rounded-sm transition-colors">
+            <VideoIcon className="size-4" />
+            <span>{t('Tutorials')}</span>
+          </div>
+        </TutorialsDialog>
 
         {showCommunity && (
           <>
