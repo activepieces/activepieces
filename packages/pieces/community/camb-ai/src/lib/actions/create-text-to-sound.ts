@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../../index';
 import { API_BASE_URL, MAX_POLLING_ATTEMPTS, POLLING_INTERVAL_MS } from '../common';
+import { listFoldersDropdown } from '../common';
 
 export const createTextToSound = createAction({
     auth: cambaiAuth,
@@ -29,11 +30,7 @@ export const createTextToSound = createAction({
             description: 'Provide details about your project\'s goals and specifications for documentation purposes.',
             required: false,
         }),
-        folder_id: Property.Number({
-            displayName: 'Folder ID',
-            description: 'The ID of an existing folder in your workspace to store this task.',
-            required: false,
-        }),
+        folder_id: listFoldersDropdown,
     },
     async run(context) {
         const { auth } = context;

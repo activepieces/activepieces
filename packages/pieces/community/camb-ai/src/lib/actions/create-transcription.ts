@@ -3,6 +3,7 @@ import { HttpMethod, httpClient, HttpMessageBody, HttpHeaders } from '@activepie
 import { cambaiAuth } from '../../index';
 import { API_BASE_URL, listSourceLanguagesDropdown, POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS } from '../common';
 import FormData from 'form-data';
+import { listFoldersDropdown } from '../common';
 
 export const createTranscription = createAction({
     auth: cambaiAuth,
@@ -56,11 +57,7 @@ export const createTranscription = createAction({
             description: 'Provide details about your project\'s goals and specifications for documentation purposes.',
             required: false,
         }),
-        folder_id: Property.Number({
-            displayName: 'Folder ID',
-            description: 'The ID of an existing folder in your workspace to store this task.',
-            required: false,
-        }),
+        folder_id: listFoldersDropdown,
     },
     async run(context) {
         const { auth } = context;

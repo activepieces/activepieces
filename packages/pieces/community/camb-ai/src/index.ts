@@ -1,8 +1,10 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
+import { createCustomApiCallAction, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { createTextToSound } from "./lib/actions/create-text-to-sound";
 import { createTextToSpeech } from "./lib/actions/create-text-to-speech";
 import { createTranslation } from "./lib/actions/create-translation";
-import { createTranscription } from "./lib/actions/create-transcription"; 
+import { createTranscription } from "./lib/actions/create-transcription";
+import { API_BASE_URL } from "./lib/common";
 
 export const cambaiAuth = PieceAuth.SecretText({
     displayName: "API Key",
@@ -14,6 +16,25 @@ export const cambaiAuth = PieceAuth.SecretText({
     4. Copy the API key and paste it here.
     `,
     required: true,
+    validate: async ({ auth }) => {
+        try {
+            await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: `${API_BASE_URL}/source-languages`,
+                headers: {
+                    'x-api-key': auth,
+                }
+            });
+            return {
+                valid: true,
+            };
+        } catch (e) {
+            return {
+                valid: false,
+                error: 'Invalid API Key.',
+            };
+        }
+    }
 });
 
 export const cambAi = createPiece({
@@ -21,12 +42,21 @@ export const cambAi = createPiece({
     auth: cambaiAuth,
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/camb-ai.png",
-    authors: [],
+    authors: ['david-oluwaseun420'], 
     actions: [
         createTextToSound,
         createTextToSpeech,
         createTranslation,
-        createTranscription 
+        createTranscription,
+        createCustomApiCallAction({
+            auth: cambaiAuth,
+            baseUrl: () => API_BASE_URL,
+            authMapping: async (auth) => {
+                return {
+                    'x-api-key': auth as string,
+                };
+            },
+        }),
     ],
     triggers: [],
 });

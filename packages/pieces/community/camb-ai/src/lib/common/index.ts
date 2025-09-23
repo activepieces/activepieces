@@ -13,6 +13,11 @@ type Voice = {
     voice_name: string;
 };
 
+type Folder = {
+    folder_id: number;
+    folder_name: string;
+};
+
 type Language = {
     id: number;
     language: string;
@@ -112,5 +117,44 @@ export const listTargetLanguagesDropdown = Property.Dropdown({
                 value: lang.id,
             })),
         };
+    },
+});
+
+export const listFoldersDropdown = Property.Dropdown({
+    displayName: 'Folder',
+    description: 'Select the folder to save the task in.',
+    required: false,
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'Please authenticate first',
+            };
+        }
+        try {
+            const response = await httpClient.sendRequest<Folder[]>({
+                method: HttpMethod.GET,
+                url: `${API_BASE_URL}/folders`, 
+                headers: {
+                    'x-api-key': auth as string,
+                },
+            });
+            const folders = response.body ?? [];
+            return {
+                disabled: false,
+                options: folders.map((folder) => ({
+                    label: folder.folder_name,
+                    value: folder.folder_id,
+                })),
+            };
+        } catch (error) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: "Could not load folders."
+            }
+        }
     },
 });
