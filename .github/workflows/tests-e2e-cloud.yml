@@ -13,8 +13,8 @@ env:
   AP_POSTGRES_PASSWORD: postgres
   AP_POSTGRES_DATABASE: activepieces
   AP_POSTGRES_USE_SSL: "false"
-  AP_ENCRYPTION_KEY: ""
-  AP_JWT_SECRET: ""
+  AP_JWT_SECRET: "secret"
+  AP_ENCRYPTION_KEY: "fdbe51af3678563560972e4a912aee6d"
   AP_FRONTEND_URL: http://localhost:4200
   AP_REDIS_URL: redis://localhost:6379
   AP_QUEUE_MODE: REDIS
@@ -32,7 +32,7 @@ env:
 jobs:
   test-e2e-cloud:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     
     services:
       postgres:
@@ -70,11 +70,6 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-        
-      - name: Generate secrets for testing
-        run: |
-          echo "AP_ENCRYPTION_KEY=$(openssl rand -hex 16)" >> $GITHUB_ENV
-          echo "AP_JWT_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
         
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

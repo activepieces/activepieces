@@ -58,6 +58,7 @@ jobs:
                 return;
               }
             }
+
             const labelFound = labels.map(l => l.name).includes('ready-for-e2e');
             core.setOutput('run-e2e', labelFound);
 
