@@ -13,7 +13,7 @@ export class BuilderPage extends BasePage {
     testStepButton: (page: Page) => page.getByRole('button', { name: 'Test Step Ctrl + G' }),
     testTriggerButton: (page: Page) => page.getByRole('button', { name: 'Test Trigger Ctrl + G' }),
     runSucceededText: (page: Page) => page.locator('text=Run Succeeded'),
-    exitRunButton: (page: Page) => page.getByRole('button', { name: 'Exit Run' }),
+    exitRunButton: (page: Page) => page.getByTestId('exit-run-button'),
     dismissButton: (page: Page) => page.getByRole('button', { name: 'Dismiss' }),
     loadSampleDataButton: (page: Page) => page.getByText('Load Sample data'),
     connectionSelectButton: (page: Page) => page.locator('button').filter({ hasText: 'Select a connection' }),

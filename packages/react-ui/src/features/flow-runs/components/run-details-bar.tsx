@@ -133,8 +133,9 @@ const RunDetailsBar = React.memo(
               onKeyboardShortcut={handleSwitchToDraft}
               keyboardShortcut="Esc"
               className="flex-shrink-0"
+              data-testId="exit-run-button"
             >
-              {isInRunsPage ? t('Edit Flow') : t('Exit Run')}
+              {t('Edit Flow')}
             </Button>
           }
         </div>
