@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -6,24 +6,73 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createTimeEntryOnTask = createAction({
 	name: 'create_time_entry_on_task',
 	displayName: 'Create Time Entry on Task',
-	description: 'Log time against a task',
+	description: 'Log time spent on a task with duration, description.',
 	auth: teamworkAuth,
 	props: {
-		taskId: Property.ShortText({ displayName: 'Task ID', required: true }),
-		hours: Property.Number({ displayName: 'Hours', required: true }),
-		date: Property.ShortText({ displayName: 'Date (YYYYMMDD)', required: true }),
-		description: Property.LongText({ displayName: 'Description', required: false }),
+		taskId: Property.Dropdown({
+			displayName: 'Task',
+			required: true,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/tasks.json',
+				});
+				const options = res.data['todo-items'].map((task: { id: string; content: string }) => ({
+					label: task.content,
+					value: task.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		date: Property.DateTime({
+			displayName: 'Date',
+			required: true,
+		}),
+		hours: Property.Number({
+			displayName: 'Hours',
+			required: true,
+		}),
+		minutes: Property.Number({
+			displayName: 'Minutes',
+			required: true,
+		}),
+		description: Property.LongText({
+			displayName: 'Description',
+			required: false,
+		}),
+		isBillable: Property.Checkbox({
+			displayName: 'Is Billable',
+			required: false,
+		}),
 	},
 	async run({ auth, propsValue }) {
+		const date = new Date(propsValue.date).toISOString().slice(0, 10);
 		const body = {
-			'time-entry': {
-				'task-id': propsValue.taskId,
-				hours: propsValue.hours,
-				date: propsValue.date,
+			timelog: {
+				date: date,
 				description: propsValue.description,
+				hasStartTime: false,
+				hours: propsValue.hours,
+				minutes: propsValue.minutes,
+				isBillable: propsValue.isBillable,
 			},
 		};
-		return await teamworkRequest(auth, { method: HttpMethod.POST, path: `/time_entries.json`, body });
+		return await teamworkRequest(auth, {
+			method: HttpMethod.POST,
+			path: `/projects/api/v3/tasks/${propsValue.taskId}/time.json`,
+			body,
+		});
 	},
 });
 

@@ -1,36 +1,77 @@
-import { createTrigger, DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
-
-const props = {
-	projectId: Property.ShortText({ displayName: 'Project ID (optional)', required: false }),
-};
-
-const polling: Polling<string, typeof props> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-		const query: Record<string, string> = { pageSize: '50', sort: 'createdAt:desc' };
-		if (propsValue.projectId) query['projectId'] = propsValue.projectId as string;
-		const res = await teamworkRequest(auth, { method: HttpMethod.GET, path: `/comments.json`, query });
-		const comments = (res?.data?.comments ?? []) as any[];
-		return comments
-			.map((c) => ({ epochMilliSeconds: c['created-at'] ? Number(c['created-at']) * 1000 : Date.now(), data: c }))
-			.filter((i) => !lastFetchEpochMS || i.epochMilliSeconds > lastFetchEpochMS);
-	},
-};
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const newComment = createTrigger({
 	name: 'new_comment',
 	displayName: 'New Comment',
-	description: 'Fires when a new comment is posted',
+	description: 'Fires when a new comment is posted.',
 	auth: teamworkAuth,
-	props,
-	triggers: [],
-	type: TriggerStrategy.POLLING,
-	onEnable: async () => {},
-	onDisable: async () => {},
-	polling: pollingHelper.createPolling({ polling, pollInterval: 15, pollTimeout: 10 }),
+	props: {
+		projectId: Property.Dropdown({
+			displayName: 'Project',
+			description: 'The project to watch for new comments. If not specified, all projects will be watched.',
+			required: false,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/projects.json',
+				});
+				const options = res.data.projects.map((p: { id: string; name: string }) => ({
+					label: p.name,
+					value: p.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+	},
+	type: TriggerStrategy.WEBHOOK,
+	async onEnable(context) {
+		const res = await teamworkRequest(context.auth as OAuth2PropertyValue, {
+			method: HttpMethod.POST,
+			path: '/webhooks.json',
+			body: {
+				webhook: {
+					event: 'COMMENT.CREATED',
+					url: context.webhookUrl,
+					version: 'v3',
+				},
+			},
+		});
+		await context.store.put('webhookId', res.data.id);
+	},
+	async onDisable(context) {
+		const webhookId = await context.store.get('webhookId');
+		if (webhookId) {
+			await teamworkRequest(context.auth as OAuth2PropertyValue, {
+				method: HttpMethod.DELETE,
+				path: `/webhooks/${webhookId}.json`,
+			});
+		}
+	},
+	async run(context) {
+		const payload = context.payload.body as any;
+		if (context.propsValue.projectId) {
+			if (String(payload?.comment?.projectId) === context.propsValue.projectId) {
+				return [payload];
+			}
+			return [];
+		}
+		return [payload];
+	},
+	sampleData: {},
 });
 
 

@@ -1,32 +1,66 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findNotebookOrComment = createAction({
 	name: 'find_notebook_or_comment',
-	displayName: 'Find Notebook or Comment',
-	description: 'Search notebooks or their comments by text',
+	displayName: 'Find Notebook / Notebook Comment',
+	description: 'Locate notebooks or note comments by search parameters.',
 	auth: teamworkAuth,
 	props: {
-		projectId: Property.ShortText({ displayName: 'Project ID', required: true }),
-		query: Property.ShortText({ displayName: 'Query', required: true }),
-		type: Property.StaticDropdown({
-			displayName: 'Type',
+		searchFor: Property.StaticDropdown({
+			displayName: 'Search For',
 			required: true,
 			options: {
 				options: [
-					{ label: 'Notebooks', value: 'notebooks' },
-					{ label: 'Comments', value: 'comments' },
+					{ label: 'Notebook', value: 'notebooks' },
+					{ label: 'Notebook Comment', value: 'notebookComments' },
 				],
+			},
+		}),
+		searchTerm: Property.ShortText({
+			displayName: 'Search Term',
+			required: true,
+		}),
+		projectId: Property.Dropdown({
+			displayName: 'Project',
+			required: false,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/projects.json',
+				});
+				const options = res.data.projects.map((p: { id: string; name: string }) => ({
+					label: p.name,
+					value: p.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
 			},
 		}),
 	},
 	async run({ auth, propsValue }) {
-		if (propsValue.type === 'notebooks') {
-			return await teamworkRequest(auth, { method: HttpMethod.GET, path: `/projects/${propsValue.projectId}/notebooks.json`, query: { searchTerm: propsValue.query } as any });
-		}
-		return await teamworkRequest(auth, { method: HttpMethod.GET, path: `/notebooks/${propsValue.projectId}/comments.json`, query: { searchTerm: propsValue.query } as any });
+		const res = await teamworkRequest(auth, {
+			method: HttpMethod.GET,
+			path: '/search.json',
+			query: {
+				searchFor: propsValue.searchFor,
+				searchTerm: propsValue.searchTerm,
+				projectId: propsValue.projectId,
+			},
+		});
+		return res.data;
 	},
 });
 

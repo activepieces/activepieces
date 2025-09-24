@@ -1,20 +1,103 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const createTaskComment = createAction({
 	name: 'create_task_comment',
 	displayName: 'Create Task Comment',
-	description: 'Add a comment to a task',
+	description: 'Leave a comment in a task.',
 	auth: teamworkAuth,
 	props: {
-		taskId: Property.ShortText({ displayName: 'Task ID', required: true }),
-		content: Property.LongText({ displayName: 'Comment', required: true }),
+		taskId: Property.Dropdown({
+			displayName: 'Task',
+			required: true,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/tasks.json',
+				});
+				const options = res.data['todo-items'].map((task: { id: string; content: string }) => ({
+					label: task.content,
+					value: task.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		body: Property.LongText({
+			displayName: 'Comment',
+			required: true,
+		}),
+		attachment: Property.File({
+			displayName: 'Attachment',
+			required: false,
+		}),
+		notify: Property.StaticDropdown({
+			displayName: 'Notify',
+			required: false,
+			options: {
+				options: [
+					{ label: 'Nobody', value: '' },
+					{ label: 'Followers', value: 'true' },
+					{ label: 'All Project Users', value: 'all' },
+				],
+			},
+		}),
+		isprivate: Property.Checkbox({
+			displayName: 'Private',
+			required: false,
+		}),
 	},
+
 	async run({ auth, propsValue }) {
-		const body = { comment: { body: propsValue.content } };
-		return await teamworkRequest(auth, { method: HttpMethod.POST, path: `/tasks/${propsValue.taskId}/comments.json`, body });
+		let pendingFileRef: string | undefined = undefined;
+		if (propsValue.attachment) {
+			const presignedUrlRes = await teamworkRequest(auth, {
+				method: HttpMethod.GET,
+				path: '/projects/api/v1/pendingfiles/presignedurl.json',
+				query: {
+					fileName: propsValue.attachment.filename,
+					fileSize: propsValue.attachment.data.length,
+				},
+			});
+			const { ref, url } = presignedUrlRes.data;
+			await httpClient.sendRequest({
+				method: HttpMethod.PUT,
+				url: url,
+				body: propsValue.attachment.data,
+				headers: {
+					'X-Amz-Acl': 'public-read',
+					'Content-Length': String(propsValue.attachment.data.length),
+				},
+			});
+			pendingFileRef = ref;
+		}
+
+		const body = {
+			comment: {
+				body: propsValue.body,
+				notify: propsValue.notify,
+				isprivate: propsValue.isprivate,
+				pendingFileAttachments: pendingFileRef,
+			},
+		};
+
+		return await teamworkRequest(auth, {
+			method: HttpMethod.POST,
+			path: `/tasks/${propsValue.taskId}/comments.json`,
+			body,
+		});
 	},
 });
 

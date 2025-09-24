@@ -1,33 +1,122 @@
-import { createAction, Property, File } from '@activepieces/pieces-framework';
+import {
+	createAction,
+	Property,
+	DynamicPropsValue,
+	OAuth2PropertyValue,
+} from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
-import { resolveCredentials } from '../common/client';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { teamworkRequest } from '../common/client';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const uploadFileToProject = createAction({
 	name: 'upload_file_to_project',
 	displayName: 'Upload File to Project',
-	description: 'Upload a file to a Teamwork project',
+	description: 'Upload a file to a Teamwork project.',
 	auth: teamworkAuth,
 	props: {
-		projectId: Property.ShortText({ displayName: 'Project ID', required: true }),
-		file: Property.File({ displayName: 'File', required: true }),
-		description: Property.ShortText({ displayName: 'Description', required: false }),
+		projectId: Property.Dropdown({
+			displayName: 'Project',
+			required: true,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/projects/api/v3/projects.json',
+				});
+				const options = res.data.projects.map((p: { id: string; name: string }) => ({
+					label: p.name,
+					value: p.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		file: Property.File({
+			displayName: 'File',
+			required: true,
+		}),
+		description: Property.LongText({
+			displayName: 'Description',
+			required: false,
+		}),
+		categoryId: Property.Dropdown({
+			displayName: 'Category',
+			required: false,
+			refreshers: ['projectId'],
+			options: async ({ auth, projectId }) => {
+				if (!auth || !projectId) {
+					return {
+						disabled: true,
+						placeholder: 'Please select a project.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: `/projects/api/v3/projects/${projectId}/filecategories.json`,
+				});
+				const options = res.data.filecategories.map((c: { id: string; name: string }) => ({
+					label: c.name,
+					value: c.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		private: Property.Checkbox({
+			displayName: 'Private',
+			required: false,
+		}),
 	},
+
 	async run({ auth, propsValue }) {
-		const { apiKey, subdomain } = resolveCredentials(auth);
-		const url = `https://${subdomain}.teamwork.com/projects/${propsValue.projectId}/files.json`;
-		const form = new FormData();
-		const f = propsValue.file as File;
-		form.append('files[]', new Blob([f.data], { type: f.extension || 'application/octet-stream' }), f.fileName || 'upload');
-		if (propsValue.description) form.append('description', String(propsValue.description));
-		const res = await httpClient.sendRequest({
-			method: HttpMethod.POST,
-			url,
-			headers: {},
-			body: form,
-			authentication: { type: AuthenticationType.BASIC, username: apiKey, password: 'x' },
+		// Step 1: Get presigned URL
+		const presignedUrlRes = await teamworkRequest(auth, {
+			method: HttpMethod.GET,
+			path: '/projects/api/v1/pendingfiles/presignedurl.json',
+			query: {
+				fileName: propsValue.file.filename,
+				fileSize: propsValue.file.data.length,
+			},
 		});
-		return { success: true, data: res.body };
+		const { ref, url } = presignedUrlRes.data;
+
+		// Step 2: Upload file to S3
+		await httpClient.sendRequest({
+			method: HttpMethod.PUT,
+			url: url,
+			body: propsValue.file.data,
+			headers: {
+				'X-Amz-Acl': 'public-read',
+				'Content-Length': String(propsValue.file.data.length),
+			},
+		});
+
+		// Step 3: Finalize file upload
+		const body = {
+			file: {
+				pendingFileRef: ref,
+				description: propsValue.description,
+				'category-id': propsValue.categoryId,
+				private: propsValue.private ? 1 : 0,
+			},
+		};
+		return await teamworkRequest(auth, {
+			method: HttpMethod.POST,
+			path: `/projects/${propsValue.projectId}/files.json`,
+			body,
+		});
 	},
 });
 

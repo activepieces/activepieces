@@ -1,4 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+	createAction,
+	Property,
+	OAuth2PropertyValue,
+	DynamicPropsValue,
+} from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { teamworkRequest } from '../common/client';
@@ -6,23 +11,178 @@ import { teamworkRequest } from '../common/client';
 export const createProject = createAction({
 	name: 'create_project',
 	displayName: 'Create Project',
-	description: 'Create a new project in Teamwork',
+	description: 'Create a new project (name, description, belongs to company, dates, etc.).',
 	auth: teamworkAuth,
 	props: {
-		name: Property.ShortText({ displayName: 'Name', required: true }),
-		description: Property.LongText({ displayName: 'Description', required: false }),
-		companyId: Property.ShortText({ displayName: 'Company ID', required: false }),
-		startDate: Property.ShortText({ displayName: 'Start Date (YYYYMMDD)', required: false }),
-		endDate: Property.ShortText({ displayName: 'End Date (YYYYMMDD)', required: false }),
+		name: Property.ShortText({
+			displayName: 'Name',
+			required: true,
+		}),
+		description: Property.LongText({
+			displayName: 'Description',
+			required: false,
+		}),
+		companyId: Property.Dropdown({
+			displayName: 'Company',
+			required: true,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/companies.json',
+				});
+				const options = res.data.companies.map((c: { id: string; name: string }) => ({
+					label: c.name,
+					value: c.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		'category-id': Property.Dropdown({
+			displayName: 'Category',
+			required: false,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/projects/api/v3/projectcategories.json',
+				});
+				const options = res.data.projectCategories.map((c: { id: string; name: string }) => ({
+					label: c.name,
+					value: c.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		tagIds: Property.MultiSelectDropdown({
+			displayName: 'Tags',
+			required: false,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/tags.json',
+				});
+				const options = res.data.tags.map((t: { id: string; name: string }) => ({
+					label: t.name,
+					value: t.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		'start-date': Property.DateTime({
+			displayName: 'Start Date',
+			required: false,
+		}),
+		'end-date': Property.DateTime({
+			displayName: 'End Date',
+			required: false,
+		}),
+		projectOwnerId: Property.Dropdown({
+			displayName: 'Project Owner',
+			required: false,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please authenticate first.',
+						options: [],
+					};
+				}
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/people.json',
+				});
+				const options = res.data.people.map((p: { id: string; 'first-name': string; 'last-name': string }) => ({
+					label: `${p['first-name']} ${p['last-name']}`,
+					value: p.id,
+				}));
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
+		customFields: Property.DynamicProperties({
+			displayName: 'Custom Fields',
+			required: false,
+			refreshers: [],
+			props: async ({ auth }) => {
+				if (!auth) return {};
+
+				const fields: DynamicPropsValue = {};
+				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+					method: HttpMethod.GET,
+					path: '/projects/api/v3/customfields.json',
+					query: {
+						entities: 'projects',
+					},
+				});
+
+				if (res.data?.customfields) {
+					for (const field of res.data.customfields) {
+						fields[field.id] = Property.ShortText({
+							displayName: field.name,
+							required: field.required,
+						});
+					}
+				}
+				return fields;
+			},
+		}),
 	},
 	async run({ auth, propsValue }) {
+		const formatDate = (date: string | undefined) => {
+			if (!date) return undefined;
+			return new Date(date).toISOString().slice(0, 10).replace(/-/g, '');
+		};
+
+		const customFields = Object.entries(propsValue.customFields ?? {}).map(
+			([customFieldId, value]) => ({ customFieldId: parseInt(customFieldId), value })
+		);
+
 		const body = {
 			project: {
 				name: propsValue.name,
 				description: propsValue.description,
 				companyId: propsValue.companyId,
-				startDate: propsValue.startDate,
-				endDate: propsValue.endDate,
+				'category-id': propsValue['category-id'],
+				tagIds: propsValue.tagIds?.join(','),
+				'start-date': formatDate(propsValue['start-date']),
+				'end-date': formatDate(propsValue['end-date']),
+				projectOwnerId: propsValue.projectOwnerId,
+				customFields: customFields.length > 0 ? customFields : undefined,
 			},
 		};
 		return await teamworkRequest(auth, {
