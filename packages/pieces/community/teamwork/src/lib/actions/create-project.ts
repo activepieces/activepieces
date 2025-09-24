@@ -1,8 +1,8 @@
 import {
 	createAction,
 	Property,
-	OAuth2PropertyValue,
 	DynamicPropsValue,
+	PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -37,7 +37,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/companies.json',
 				});
@@ -64,7 +64,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/projectcategories.json',
 				});
@@ -91,7 +91,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/tags.json',
 				});
@@ -128,7 +128,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/people.json',
 				});
@@ -151,7 +151,7 @@ export const createProject = createAction({
 				if (!auth) return {};
 
 				const fields: DynamicPropsValue = {};
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/customfields.json',
 					query: {

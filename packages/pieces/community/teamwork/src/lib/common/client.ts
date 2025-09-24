@@ -2,8 +2,10 @@ import {
 	AuthenticationType,
 	httpClient,
 	HttpMethod,
+	QueryParams,
 } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { teamworkAuth } from './auth';
 
 const MAX_RETRIES = 5;
 const INITIAL_DELAY_MS = 500;
@@ -12,7 +14,7 @@ export type TeamworkRequestOptions = {
 	method: HttpMethod;
 	path: string;
 	body?: unknown;
-	query?: Record<string, string | number | boolean | undefined>;
+	query?: QueryParams;
 };
 
 function buildUrl(base: string, path: string, query?: TeamworkRequestOptions['query']): string {
@@ -30,16 +32,10 @@ async function sleep(ms: number) {
 }
 
 export async function teamworkRequest(
-	auth: OAuth2PropertyValue,
+	auth: PiecePropValueSchema<typeof teamworkAuth>,
 	options: TeamworkRequestOptions,
 ) {
-	const { access_token, data } = auth;
-	const installation = (data as any)?.installation;
-	if (!installation || !installation.apiEndPoint) {
-		throw new Error('Missing API endpoint in Teamwork credentials.');
-	}
-
-	const base = installation.apiEndPoint;
+	const base = `https://${auth.subdomain}.teamwork.com`;
 	const url = buildUrl(base, options.path, options.query);
 
 	let attempt = 0;
@@ -53,8 +49,9 @@ export async function teamworkRequest(
 				headers: { 'Content-Type': 'application/json' },
 				body: options.body,
 				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: access_token,
+					type: AuthenticationType.BASIC,
+					username: auth.username,
+					password: auth.password,
 				},
 			});
 			return normalizeResponse(res.body);

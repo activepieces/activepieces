@@ -1,8 +1,7 @@
 import {
 	createAction,
 	Property,
-	DynamicPropsValue,
-	OAuth2PropertyValue,
+	PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
@@ -27,7 +26,7 @@ export const uploadFileToProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/projects.json',
 				});
@@ -64,7 +63,7 @@ export const uploadFileToProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: `/projects/api/v3/projects/${projectId}/filecategories.json`,
 				});
@@ -92,7 +91,7 @@ export const uploadFileToProject = createAction({
 			path: '/projects/api/v1/pendingfiles/presignedurl.json',
 			query: {
 				fileName: propsValue.file.filename,
-				fileSize: propsValue.file.data.length,
+				fileSize: propsValue.file.data.length.toString(),
 			},
 		});
 		const { ref, url } = presignedUrlRes.data;

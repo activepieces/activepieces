@@ -1,8 +1,7 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 export const newPerson = createTrigger({
 	name: 'new_person',
@@ -12,7 +11,7 @@ export const newPerson = createTrigger({
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const res = await teamworkRequest(context.auth as OAuth2PropertyValue, {
+		const res = await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
 			method: HttpMethod.POST,
 			path: '/webhooks.json',
 			body: {
@@ -28,7 +27,7 @@ export const newPerson = createTrigger({
 	async onDisable(context) {
 		const webhookId = await context.store.get('webhookId');
 		if (webhookId) {
-			await teamworkRequest(context.auth as OAuth2PropertyValue, {
+			await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
 				method: HttpMethod.DELETE,
 				path: `/webhooks/${webhookId}.json`,
 			});

@@ -1,4 +1,4 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -27,7 +27,7 @@ export const findMilestone = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});

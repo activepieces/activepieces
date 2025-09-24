@@ -1,4 +1,4 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { teamworkRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -22,11 +22,11 @@ export const markTaskComplete = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/tasks.json',
 					query: {
-						includeCompletedTasks: false,
+						includeCompletedTasks: 'false',
 					},
 				});
 				const options = res.data['todo-items'].map((task: { id: string; content: string }) => ({

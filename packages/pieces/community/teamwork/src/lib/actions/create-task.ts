@@ -1,8 +1,8 @@
 import {
 	createAction,
 	Property,
-	OAuth2PropertyValue,
 	DynamicPropsValue,
+	PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
@@ -27,7 +27,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});
@@ -54,7 +54,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: `/projects/${projectId}/tasklists.json`,
 				});
@@ -86,7 +86,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: `/projects/${projectId}/people.json`,
 				});
@@ -141,7 +141,7 @@ export const createTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/tags.json',
 				});
@@ -168,7 +168,7 @@ export const createTask = createAction({
 			props: async ({ auth }) => {
 				if (!auth) return {};
 				const fields: DynamicPropsValue = {};
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/customfields.json',
 					query: {
@@ -195,7 +195,7 @@ export const createTask = createAction({
 				path: '/projects/api/v1/pendingfiles/presignedurl.json',
 				query: {
 					fileName: propsValue.attachment.filename,
-					fileSize: propsValue.attachment.data.length,
+					fileSize: propsValue.attachment.data.length.toString(),
 				},
 			});
 			const { ref, url } = presignedUrlRes.data;

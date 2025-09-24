@@ -1,15 +1,14 @@
 import {
 	createAction,
 	Property,
-	OAuth2PropertyValue,
-	DynamicPropsValue,
+	PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { teamworkAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { teamworkRequest } from '../common/client';
 
 // Helper to fetch all tasks, handling pagination
-async function getAllTasks(auth: OAuth2PropertyValue) {
+async function getAllTasks(auth: PiecePropValueSchema<typeof teamworkAuth>) {
 	let allTasks: any[] = [];
 	let page = 1;
 	let moreTasks = true;
@@ -18,8 +17,8 @@ async function getAllTasks(auth: OAuth2PropertyValue) {
 			method: HttpMethod.GET,
 			path: '/tasks.json',
 			query: {
-				page: page,
-				pageSize: 250,
+				page: page.toString(),
+				pageSize: '250',
 			},
 		});
 		if (res.data['todo-items'] && res.data['todo-items'].length > 0) {
@@ -51,7 +50,7 @@ export const updateTask = createAction({
 						options: [],
 					};
 				}
-				const tasks = await getAllTasks(auth as OAuth2PropertyValue);
+				const tasks = await getAllTasks(auth as PiecePropValueSchema<typeof teamworkAuth>);
 				const options = tasks.map((task: { id: string; content: string }) => ({
 					label: task.content,
 					value: task.id,
@@ -85,14 +84,14 @@ export const updateTask = createAction({
 						options: [],
 					};
 				}
-				const taskRes = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const taskRes = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: `/tasks/${taskId}.json`,
 				});
 				const projectId = taskRes.data['todo-item']['project-id'];
 				if (!projectId) return { disabled: true, placeholder: 'Could not determine project.', options: [] };
 
-				const peopleRes = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const peopleRes = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: `/projects/${projectId}/people.json`,
 				});
@@ -142,7 +141,7 @@ export const updateTask = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as OAuth2PropertyValue, {
+				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
 					method: HttpMethod.GET,
 					path: '/tags.json',
 				});
