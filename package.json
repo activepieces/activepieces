@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.69.0",
-  "rcVersion": "0.69.0-same-piece",
+  "rcVersion": "0.69.0-webhook-same-piece",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
