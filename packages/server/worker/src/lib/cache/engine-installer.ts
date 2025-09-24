@@ -17,9 +17,7 @@ export const engineInstaller = (log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
 
-        let startTime = performance.now()
         return memoryLock.runExclusive(`engineInstaller-${path}`, async () => {
-            log.info({ timeTaken: `${Math.floor(performance.now() - startTime)}ms` }, '[engineInstaller#install] claimed lock')
             const cache = cacheState(path)
             const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
             const cacheMiss = !isEngineInstalled || isDev
@@ -29,7 +27,6 @@ export const engineInstaller = (log: FastifyBaseLogger) => ({
                 await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
                 await cache.setCache(ENGINE_INSTALLED, ENGINE_CACHE_ID)
             }
-            log.info({ path, timeTaken: `${Math.floor(performance.now() - startTime)}ms` }, '[engineInstaller#install] installed engine')
             return { cacheHit: !cacheMiss }
         })
     },
