@@ -1,11 +1,10 @@
 {
-  "name": "@activepieces/piece-camb-ai",
-  "version": "0.0.2",
+  "name": "@activepieces/piece-emailoctopus",
+  "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "form-data": "^4.0.4",
     "tslib": "^2.3.0"
   }
 }
