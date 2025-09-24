@@ -70,7 +70,7 @@ const config: PlaywrightTestConfig = {
       : 'export $(cat .env.e2e | xargs) && npm run dev',
     url: 'http://localhost:4200/api/v1/flags',
     reuseExistingServer: !process.env.CI,
-    timeout: 100000,
+    timeout: process.env.CI ? 60000 : 100000, // Reduced from 100s to 60s for faster failure detection
     stdout: 'pipe',
   },
 };
