@@ -8,6 +8,7 @@ import {
   User,
   Replace,
   Trash2,
+  Plus,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -435,7 +436,6 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="destructive"
-                    size="sm"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -463,7 +463,6 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="outline"
-                    size="sm"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
                     <Replace className="h-4 w-4" />
@@ -483,10 +482,9 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="default"
-                    size="sm"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
-                    {t('New Connection')}
+                    <Plus className="h-4 w-4" /> {t('New Connection')}
                   </Button>
                 </NewConnectionDialog>
               </PermissionNeededTooltip>

@@ -1,14 +1,19 @@
 import { Readable } from 'stream'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { apId, FileType, ProjectId } from '@activepieces/shared'
+import { apId, FileType, isNil, ProjectId } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
+import { fileRepo } from './file.service'
 
 export const s3Helper = (log: FastifyBaseLogger) => ({
-    constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string {
+    async constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): Promise<string> {
+        const existingFile = await fileRepo().findOneBy({ id: fileId })
+        if (!isNil(existingFile?.s3Key)) {
+            return existingFile.s3Key
+        }
         const now = dayjs()
         const datePath = `${now.format('YYYY/MM/DD/HH')}`
         if (platformId) {
@@ -63,7 +68,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         })
         return getSignedUrl(client, command)
     },
-    async putS3SignedUrl(s3Key: string, contentLength: number): Promise<string> {
+    async putS3SignedUrl(s3Key: string, contentLength?: number | undefined): Promise<string> {
         const client = getS3Client()
         const command = new PutObjectCommand({
             Bucket: getS3BucketName(),

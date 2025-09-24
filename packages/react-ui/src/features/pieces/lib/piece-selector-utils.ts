@@ -123,13 +123,13 @@ const getInitalStepInput = (pieceSelectorItem: PieceSelectorItem) => {
   if (!isPieceActionOrTrigger(pieceSelectorItem)) {
     return {};
   }
-  return formUtils.getDefaultValueForStep(
-    {
+  return formUtils.getDefaultValueForStep({
+    props: {
       ...spreadIfDefined('auth', pieceSelectorItem.pieceMetadata.auth),
       ...pieceSelectorItem.actionOrTrigger.props,
     },
-    {},
-  );
+    existingInput: {},
+  });
 };
 
 const getDefaultStepValues = ({

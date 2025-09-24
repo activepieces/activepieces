@@ -2,7 +2,7 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, Changelog, ErrorCode, ListChangelogsResponse } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore } from '../helper/keyvalue'
+import { distributedStore } from '../helper/key-value'
 import { system } from '../helper/system/system'
 
 const CHANGELOG_KEY = 'changelogs'
@@ -18,7 +18,7 @@ const emptyChangelog: ListChangelogsResponse = {
 
 export const changelogService = (logger: FastifyBaseLogger) => ({
     async list(): Promise<ListChangelogsResponse> {
-        const changelogs: ChangelogStore = await distributedStore().get(CHANGELOG_KEY) ?? {
+        const changelogs: ChangelogStore = await distributedStore.get(CHANGELOG_KEY) ?? {
             lastFetched: dayjs().subtract(5, 'minutes').toISOString(),
             data: emptyChangelog,
         }
@@ -28,7 +28,7 @@ export const changelogService = (logger: FastifyBaseLogger) => ({
                 lastFetched: dayjs().toISOString(),
                 data: newChangelogs,
             }
-            await distributedStore().put(CHANGELOG_KEY, changelogStore)
+            await distributedStore.put(CHANGELOG_KEY, changelogStore)
             return newChangelogs
         }
         return changelogs.data

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
 import { Agent, CreateAgentRequest } from '@activepieces/shared';
 
 import { AgentImageLoading } from './agent-image-loading';
@@ -65,12 +66,14 @@ export const CreateAgentButton = ({
               </p>
             </div>
 
-            <textarea
+            <Textarea
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               placeholder={t(
                 'E.g A witty blog writer who specializes in short, engaging posts about tech gadgets and futurism, using a casual and slightly sarcastic tone.',
               )}
+              minRows={6}
+              maxRows={6}
               className="w-full h-40 px-4 py-3 border border-input rounded-lg resize-none focus-visible:ring-0 outline-none text-sm leading-relaxed"
               disabled={isPending}
             />

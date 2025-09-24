@@ -160,6 +160,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     <SelectValue
                       className="truncate flex-grow flex-shrink"
                       placeholder={t('Select a connection')}
+                      data-testid="select-connection-value"
                     >
                       {!isNil(field.value) &&
                       !isNil(

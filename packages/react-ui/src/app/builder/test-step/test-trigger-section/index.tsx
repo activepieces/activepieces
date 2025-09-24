@@ -27,7 +27,7 @@ type TestTriggerSectionProps = {
 
 const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
-    const form = useFormContext<FlowTrigger>();
+    const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
     const abortControllerRef = useRef<AbortController>(new AbortController());

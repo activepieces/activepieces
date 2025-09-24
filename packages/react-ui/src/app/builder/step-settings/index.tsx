@@ -196,7 +196,7 @@ const StepSettingsContainer = () => {
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={55}>
+            <ResizablePanel defaultSize={55} className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="flex flex-col gap-4 px-4 pb-6">
                   <StepCard step={modifiedStep}></StepCard>
@@ -250,7 +250,7 @@ const StepSettingsContainer = () => {
             {!readonly && (
               <>
                 <ResizableHandle withHandle={true} />
-                <ResizablePanel defaultSize={45}>
+                <ResizablePanel defaultSize={45} className="min-h-[130px]">
                   <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
                     {modifiedStep.type && (
                       <TestStepContainer

@@ -1,7 +1,6 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { encryptUtils } from '../../../helper/encryption'
-import { QueueMode, system } from '../../../helper/system/system'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
@@ -19,8 +18,6 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
     public async up(queryRunner: QueryRunner): Promise<void> {
         log.info('AIProviderRedactorPostgres1748871900624 up: started')
 
-        const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-        await encryptUtils.loadEncryptionKey(queueMode)
 
         const aiProviders = await queryRunner.query(`
             SELECT id, config, provider FROM "ai_provider"
@@ -28,7 +25,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
 
         for (const provider of aiProviders) {
             try {
-                const decryptedConfig: OldAiProviderConfig = encryptUtils.decryptObject(provider.config)
+                const decryptedConfig: OldAiProviderConfig = await encryptUtils.decryptObject(provider.config)
 
                 let apiKey = ''
                 const providerType = provider.provider.toLowerCase()
@@ -88,8 +85,6 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
     public async down(queryRunner: QueryRunner): Promise<void> {
         log.info('AIProviderRedactorPostgres1748871900624 down: started')
 
-        const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-        await encryptUtils.loadEncryptionKey(queueMode)
 
         const aiProviders = await queryRunner.query(`
             SELECT id, config, provider FROM "ai_provider"
@@ -97,7 +92,7 @@ export class AIProviderRedactorPostgres1748871900624 implements MigrationInterfa
 
         for (const provider of aiProviders) {
             try {
-                const decryptedConfig: NewAiProviderConfig = encryptUtils.decryptObject(provider.config)
+                const decryptedConfig: NewAiProviderConfig = await encryptUtils.decryptObject(provider.config)
                 
                 const defaultHeaders: Record<string, string> = {}
                 const providerType = provider.provider.toLowerCase()

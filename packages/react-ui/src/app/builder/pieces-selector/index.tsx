@@ -136,14 +136,13 @@ const PieceSelector = ({
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
-              className=" flex flex-row max-h-[300px] h-[300px] "
+              className=" flex flex-row max-h-[300px]"
               style={{
                 height: listHeight + 'px',
               }}
             >
               <ExploreTabContent operation={operation} />
               <PiecesCardList
-                listHeight={listHeight}
                 //this is done to avoid debounced results when user clears search
                 searchQuery={searchQuery === '' ? '' : debouncedQuery}
                 operation={operation}

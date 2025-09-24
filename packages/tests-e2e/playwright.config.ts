@@ -1,17 +1,19 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, PlaywrightTestConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+// Load environment variables from the shared .env.e2e file (local dev only)
+// In CI, use inherited environment variables instead
+if (!process.env.CI) {
+  dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
+}
+
+const AP_EDITION = process.env.AP_EDITION || 'ce'; // Default to Community Edition
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-export default defineConfig({
+const baseConfig: PlaywrightTestConfig = {
   testDir: './scenarios',
   testMatch: '**/*.spec.ts',
   /* Run tests in files in parallel */
@@ -21,37 +23,65 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? '100%' : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:4200',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    
+
     /* Run in headless mode for environments without display server */
     headless: true,
   },
+};
+
+// Edition-specific configurations
+const editionConfigs = {
+  ce: {
+    testDir: './scenarios/ce',
+  },
+  cloud: {
+    testDir: './scenarios/cloud',
+  },
+  ee: {
+    testDir: './scenarios/ee',
+  },
+};
+
+const webServerConfig = {
+  command: process.env.CI
+    ? 'npm run start'
+    : 'export $(cat .env.e2e | xargs) && npm run dev',
+  url: 'http://localhost:4200/api/v1/flags',
+  reuseExistingServer: !process.env.CI,
+  timeout: 100000,
+  stdout: 'ignore' as const,
+};
+
+const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
+
+const config: PlaywrightTestConfig = {
+  ...baseConfig,
+  testDir: editionConfig.testDir,
 
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
-      use: { 
+      name: `@activepieces/${AP_EDITION}`,
+      use: {
         ...devices['Desktop Chrome'],
         headless: true,
       },
-      testDir: './scenarios',
+      testDir: editionConfig.testDir,
     },
   ],
 
   /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
-});
+  webServer: webServerConfig,
+};
+
+export default defineConfig(config);

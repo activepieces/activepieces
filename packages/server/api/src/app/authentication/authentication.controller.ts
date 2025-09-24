@@ -3,6 +3,7 @@ import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
+    PrincipalType,
     SignInRequest,
     SignUpRequest,
     SwitchPlatformRequest,
@@ -96,7 +97,7 @@ const rateLimitOptions: RateLimitOptions = {
 
 const SwitchProjectRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -106,7 +107,7 @@ const SwitchProjectRequestOptions = {
 
 const SwitchPlatformRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
         rateLimit: rateLimitOptions,
     },
     schema: {

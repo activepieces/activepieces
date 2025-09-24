@@ -15,12 +15,11 @@ export const updateRecord = createAction({
       displayName: 'Values',
       description: 'The values to update. Leave empty to keep current value.',
       required: true,
-      refreshers: ['table_id', 'record_id'],
-      props: async ({ table_id, record_id }, context) => {
+      refreshers: ['table_id'],
+      props: async ({ table_id }, context) => {
         const tableExternalId = table_id as unknown as string;
         const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
-        const recordId = record_id as unknown as string;
-        if ((tableId ?? '').toString().length === 0 || (recordId ?? '').toString().length === 0) {
+        if ((tableId ?? '').toString().length === 0) {
           return {};
         }
 
@@ -56,6 +55,7 @@ export const updateRecord = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
+      retries: 5,
     });
 
     return tablesCommon.formatRecord(response.body as PopulatedRecord);

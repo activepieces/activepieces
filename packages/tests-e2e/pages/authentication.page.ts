@@ -1,58 +1,50 @@
-import { Page } from '@playwright/test';
 import { BasePage } from './base';
-import { configUtils } from '../helper/config';
+import { faker } from '@faker-js/faker';
 
 export class AuthenticationPage extends BasePage {
-  url = `${configUtils.getConfig().instanceUrl}/sign-in`;
-  signUpUrl = `${configUtils.getConfig().instanceUrl}/sign-up`;
+  url = `/sign-in`;
+  signUpUrl = `/sign-up`;
 
-  getters = {
-    emailField: (page: Page) => page.getByPlaceholder('email@example.com'),
-    passwordField: (page: Page) => page.getByPlaceholder('********'),
-    firstNameField: (page: Page) => page.getByText('First Name').first(),
-    lastNameField: (page: Page) => page.getByText('Last Name').first(),
-    signUpButton: (page: Page) => page.getByRole('button', { name: 'Sign up' }),
-    signInButton: (page: Page) => page.getByRole('button', { name: 'Sign in', exact: true }),
-  };
+  async signIn(params: { email: string; password: string }) {
+    await this.page.goto(this.url);
+    
+    const emailField = this.page.getByTestId('sign-in-email');
+    await emailField.click();
+    await emailField.fill(params.email);
+    
+    const passwordField = this.page.getByTestId('sign-in-password');
+    await passwordField.click();
+    await passwordField.fill(params.password);
+    
+    await this.page.getByTestId('sign-in-button').click();
+  }
 
-  actions = {
-    signIn: async (page: Page, params: { email: string; password: string }) => {
-      await page.goto(this.url);
-      
-      const emailField = this.getters.emailField(page);
-      await emailField.click();
-      await emailField.fill(params.email);
-      
-      const passwordField = this.getters.passwordField(page);
-      await passwordField.click();
-      await passwordField.fill(params.password);
-      
-      await this.getters.signInButton(page).click();
-    },
+  async signUp() {
+    await this.page.goto(this.signUpUrl);
 
-    signUp: async (page: Page, params: { email: string; password: string }) => {
-      await page.goto(this.signUpUrl);
+    const firstNameField = this.page.getByTestId('sign-up-first-name');
+    await firstNameField.click();
+    await firstNameField.fill('Bugs');
+    await firstNameField.press('Tab');
 
-      const firstNameField = this.getters.firstNameField(page);
-      await firstNameField.click();
-      await firstNameField.fill('Bugs');
-      await firstNameField.press('Tab');
+    const lastNameField = this.page.getByTestId('sign-up-last-name');
+    await lastNameField.click();
+    await lastNameField.fill('Bunny');
+    await lastNameField.press('Tab');
 
-      const lastNameField = this.getters.lastNameField(page);
-      await lastNameField.click();
-      await lastNameField.fill('Bunny');
-      await lastNameField.press('Tab');
+    const emailField = this.page.getByTestId('sign-up-email');
+    await emailField.click();
+    await emailField.fill(faker.internet.email());
+    await emailField.press('Tab');
 
-      const emailField = this.getters.emailField(page);
-      await emailField.click();
-      await emailField.fill(params.email);
-      await emailField.press('Tab');
+    const passwordField = this.page.getByTestId('sign-up-password');
+    await passwordField.click();
+    await passwordField.fill(faker.internet.password({
+      pattern: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?a-zA-Z0-9]/,
+      length: 12,
+      prefix: '0'
+    }));
 
-      const passwordField = this.getters.passwordField(page);
-      await passwordField.click();
-      await passwordField.fill(params.password);
-
-      await this.getters.signUpButton(page).click();
-    },
-  };
+    await this.page.getByTestId('sign-up-button').click();
+  }
 } 

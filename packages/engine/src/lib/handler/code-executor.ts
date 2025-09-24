@@ -37,12 +37,9 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
     try {
 
-        progressService.sendUpdate({
+        await progressService.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
-            updateImmediate: true,
-        }).catch((e) => {
-            console.error('error sending update', e)
         })
 
         assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')

@@ -66,6 +66,10 @@ jobs:
         run: |
           ssh pre-prod -t -t 'bash -ic "cd activepieces && IMAGE_TAG=testing docker compose pull && IMAGE_TAG=testing docker compose up -d --force-recreate activepieces; exit"' 
 
+      - name: Clean up unused Docker images
+        run: |
+          ssh pre-prod -t -t 'bash -ic "docker image prune -a -f; exit"'
+
       - name: Docker system prune
         run: docker system prune -a -f
 
@@ -121,7 +125,7 @@ jobs:
 
   Pre-Prod-E2E-Tests:
     needs: Deploy-Pre-Prod
-    uses: ./.github/workflows/e2e-tests.yml
+    uses: ./.github/workflows/e2e-tests-checkly.yml
     with:
       environment: Pre-Prod
     secrets:
@@ -130,7 +134,7 @@ jobs:
 
   Community-E2E-Tests:
     needs: Deploy-Community
-    uses: ./.github/workflows/e2e-tests.yml
+    uses: ./.github/workflows/e2e-tests-checkly.yml
     with:
       environment: Community
     secrets:
@@ -139,7 +143,7 @@ jobs:
 
   Enterprise-E2E-Tests:
     needs: Deploy-Enterprise
-    uses: ./.github/workflows/e2e-tests.yml
+    uses: ./.github/workflows/e2e-tests-checkly.yml
     with:
       environment: Enterprise
     secrets:

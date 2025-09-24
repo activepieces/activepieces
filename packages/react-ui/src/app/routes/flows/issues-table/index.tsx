@@ -128,9 +128,11 @@ export function IssuesTable() {
                     hasPermission={userHasPermissionToMarkAsArchived}
                   >
                     <Button
-                      disabled={!userHasPermissionToMarkAsArchived}
+                      disabled={
+                        !userHasPermissionToMarkAsArchived ||
+                        selectedRows.length === 0
+                      }
                       className="gap-2"
-                      size={'sm'}
                       onClick={(e) => {
                         selectedRows.forEach((row) => {
                           handleMarkAsArchived(row.flowDisplayName, row.id);

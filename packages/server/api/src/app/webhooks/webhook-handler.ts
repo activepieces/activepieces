@@ -1,14 +1,15 @@
-import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, ProgressUpdateType, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
+import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
-import { jobQueue } from '../workers/queue'
-import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
+import { jobQueue } from '../workers/queue/job-queue'
+import { JobType } from '../workers/queue/queue-manager'
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export enum WebhookFlowVersionToRun {
@@ -36,14 +37,17 @@ export const webhookHandler = {
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
         const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure } = params
 
+        const platformId = await projectService.getPlatformId(flow.projectId)
         await jobQueue(logger).add({
             id: webhookRequestId,
-            type: JobType.WEBHOOK,
+            type: JobType.ONE_TIME,
             data: {
+                platformId,
                 projectId: flow.projectId,
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 requestId: webhookRequestId,
                 payload,
+                jobType: WorkerJobType.EXECUTE_WEBHOOK,
                 flowId: flow.id,
                 saveSampleData,
                 flowVersionIdToRun,
@@ -52,7 +56,6 @@ export const webhookHandler = {
                 parentRunId,
                 failParentOnFailure,
             },
-            priority: DEFAULT_PRIORITY,
         })
         logger.info('Async webhook request completed')
         return {
@@ -158,7 +161,7 @@ type SyncWebhookParams = {
     logger: FastifyBaseLogger
     webhookRequestId: string
     synchronousHandlerId: string
-    flowVersionIdToRun: FlowVersionId   
+    flowVersionIdToRun: FlowVersionId
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
     failParentOnFailure: boolean

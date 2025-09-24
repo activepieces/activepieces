@@ -102,7 +102,7 @@ Activepieces supports integrations with Google Sheets, OpenAI, Discord, RSS, and
 
 As an **open ecosystem**, all integration source code is accessible in our repository. These integrations are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contribution.
 
-You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview).
+You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/developers/building-pieces/overview).
 
 <br>
 <br>

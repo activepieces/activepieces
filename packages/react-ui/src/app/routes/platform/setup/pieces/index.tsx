@@ -184,7 +184,7 @@ const PlatformPiecesPage = () => {
   >([]);
 
   return (
-    <div className="flex w-full flex-col items-center justify-center gap-4">
+    <>
       <DashboardPageHeader
         description={t('Manage the pieces that are available to your users')}
         title={t('Pieces')}
@@ -243,7 +243,7 @@ const PlatformPiecesPage = () => {
           onSelectedRowsChange={setSelectedPieces}
         />
       </div>
-    </div>
+    </>
   );
 };
 

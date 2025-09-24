@@ -31,12 +31,14 @@ export const createDocumentBasedOnTemplate = createAction({
       displayName: 'Placeholder Format',
       description: 'Choose the format of placeholders in your template',
       required: true,
-      defaultValue: '[[]]',
+      defaultValue: '[[KEY]]',
       options: {
           disabled: false,
           options: [
-              { label: 'Curly Braces {{}}', value: '{{}}' },
-              { label: 'Square Brackets [[]]', value: '[[]]' }
+              { label: 'Curly Braces {{}}', value: '{{KEY}}' },
+              { label: 'Square Brackets [[]]', value: '[[KEY]]' },
+              { label: 'Single Curly Braces {}', value: '{KEY}' },
+              { label: 'Single Square Brackets []', value: '[KEY]' }
           ],
         },
   }),
@@ -54,9 +56,8 @@ export const createDocumentBasedOnTemplate = createAction({
 
     for (const key in values) {
       const value = values[key];
-      const new_key = placeholder_format === '[[]]' 
-                        ? `[[${key}]]` 
-                        : `{{${key}}}`;
+      const new_key = placeholder_format.replace('KEY', key);
+
       requests.push({
         replaceAllText: {
           containsText: {

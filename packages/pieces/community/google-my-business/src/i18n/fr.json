@@ -22,7 +22,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "New Review": "Nouveau commentaire",
   "Triggers when there is new review": "Déclenche quand il y a une nouvelle revue",
   "Account": "Compte client",

@@ -24,7 +24,7 @@ export const TriggerEventSelect = React.memo(
   ({ pollResults, sampleData }: TriggerEventSelectProps) => {
     const selectedId = getSelectedId(sampleData, pollResults?.data ?? []);
 
-    const form = useFormContext<FlowTrigger>();
+    const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
     const formValues = form.getValues();
 
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
@@ -33,10 +33,11 @@ export const TriggerEventSelect = React.memo(
         const sampleDataFileId = step.settings.sampleData?.sampleDataFileId;
         const sampleDataInputFileId =
           step.settings.sampleData?.sampleDataInputFileId;
+
         form.setValue(
           'settings.sampleData',
           {
-            ...formValues.settings.sampleData,
+            ...(formValues.settings.sampleData ?? {}),
             sampleDataFileId,
             sampleDataInputFileId,
             lastTestDate: dayjs().toISOString(),

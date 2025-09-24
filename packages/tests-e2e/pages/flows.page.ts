@@ -1,52 +1,45 @@
-import { Page } from '@playwright/test';
 import { BasePage } from './base';
-import { configUtils } from '../helper/config';
-
 export class FlowsPage extends BasePage {
-  url = `${configUtils.getConfig().instanceUrl}/flows`;
+  url = `/flows`;
 
-  getters = {
-    createFlowButton: (page: Page) => page.getByRole('button', { name: 'Create Flow' }),
-    fromScratchButton: (page: Page) => page.getByText('From scratch'),
-    flowRow: (page: Page, flowName: string) => page.getByRole('row', { name: new RegExp(`^${flowName}`) }),
-    flowActionsButton: (page: Page, flowName: string) => this.getters.flowRow(page, flowName).getByRole('button').first(),
-    deleteMenuItem: (page: Page) => page.getByRole('menuitem', { name: 'Delete' }),
-    confirmDeleteInput: (page: Page) => page.getByPlaceholder('DELETE'),
-    confirmButton: (page: Page) => page.getByRole('button', { name: 'Confirm' }),
-    sidebarFlowsLink: (page: Page) => page.getByRole('link', { name: 'Flows' }),
-    mutedForegroundSpans: (page: Page) => page.locator('span.text-muted-foreground'),
-    deleteButton: (page: Page) => page.locator('td:nth-child(7)').first(),
-    removeButton: (page: Page) => page.getByRole('button', { name: 'Remove' }),
-    pageTitle: (page: Page) => page.locator('h1:has-text("Flows")'),  
-  };
+  async navigate() {
+    await this.page.getByRole('link', { name: 'Flows' }).click();
+    await this.closeTrialDialogIfPresent();
+    await this.page.waitForSelector('tbody tr');
+  }
 
-  actions = {
-    waitFor: async (page: Page) => {
-      await page.waitForURL('**/flows');
-      await this.getters.pageTitle(page).waitFor({ state: 'visible' });
-    },
-    navigate: async (page: Page) => {
-      await this.getters.sidebarFlowsLink(page).click();
-      await page.waitForTimeout(2000);
-      await page.waitForSelector('tbody tr', { timeout: 10000 });
-    },
+  async waitFor() {
+    await this.page.waitForSelector('tbody tr');
+  }
 
-    newFlowFromScratch: async (page: Page) => {
-      await page.waitForSelector('button:has-text("Create Flow")');
-      await this.getters.createFlowButton(page).click();
-      await this.getters.fromScratchButton(page).click();
-    },
+  async closeTrialDialogIfPresent() {
+    try {
+      // Check if trial dialog is present with a short timeout
+      const trialButton = this.page.getByTestId('trial-dialog-continue-button');
+      await trialButton.waitFor({ timeout: 2000 });
+      await trialButton.click();
+      // Wait for dialog to close
+      await trialButton.waitFor({ state: 'hidden', timeout: 5000 });
+    } catch (error) {
+      // Trial dialog is not present, continue normally
+    }
+  }
 
-    cleanupExistingFlows: async (page: Page) => {
-      while ((await this.getters.mutedForegroundSpans(page).count()) > 1) {
-        if (!(await this.getters.deleteButton(page).count())) break;
-        await this.getters.deleteButton(page).click();
-        await this.getters.deleteMenuItem(page).click();
-        const confirmButton = await this.getters.removeButton(page);
-        await confirmButton.click();
-        await page.waitForSelector('button:has-text("Remove")', { state: 'hidden' });
-        await page.reload();
-      }
-    },
-  };
+  async newFlowFromScratch() {
+    await this.closeTrialDialogIfPresent();
+    await this.page.getByTestId('new-flow-button').click();
+    await this.page.getByTestId('new-flow-from-scratch-button').click();
+  }
+
+  async cleanupExistingFlows() {
+    while ((await this.page.locator('span.text-muted-foreground').count()) > 1) {
+      if (!(await this.page.locator('td:nth-child(7)').first().count())) break;
+      await this.page.locator('td:nth-child(7)').first().click();
+      await this.page.getByRole('menuitem', { name: 'Delete' }).click();
+      const confirmButton = this.page.getByRole('button', { name: 'Remove' });
+      await confirmButton.click();
+      await this.page.waitForSelector('button:has-text("Remove")', { state: 'hidden' });
+      await this.page.reload();
+    }
+  }
 } 

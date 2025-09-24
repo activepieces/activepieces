@@ -5,7 +5,7 @@ import { projectStateService } from '../projects/project-release/project-state/p
 
 export const solutionService = (log: FastifyBaseLogger) => ({
     export: async (params: ExportParams): Promise<Solution> => {
-        const state = await projectStateService(log).getCurrentState(params.projectId, log)
+        const state = await projectStateService(log).getProjectState(params.projectId, log)
         return {
             state,
             name: params.name,
@@ -13,7 +13,7 @@ export const solutionService = (log: FastifyBaseLogger) => ({
         }
     },
     import: async (params: ImportParams): Promise<void> => {
-        const currentState = await projectStateService(log).getCurrentState(params.projectId, log)
+        const currentState = await projectStateService(log).getProjectState(params.projectId, log)
         const newState = params.solution.state
         const diffs = await projectDiffService.diff({
             newState,

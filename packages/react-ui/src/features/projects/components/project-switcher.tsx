@@ -1,12 +1,10 @@
-'use client';
-
-import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
+import { CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -16,22 +14,23 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
 
-function ProjectSwitcher() {
+export function ProjectSwitcher() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();
-  const [open, setOpen] = React.useState(false);
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
+
   const filterProjects = React.useCallback(
     (value: string, search: string) => {
       const project = allProjects
@@ -48,36 +47,32 @@ function ProjectSwitcher() {
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          role="combobox"
-          size={'sm'}
-          aria-expanded={open}
-          aria-label="Select a project"
-          className="gap-2 w-full justify-start px-2"
-        >
-          <div className="flex grow flex-col justify-start items-start">
-            <span className="flex-grow truncate overflow-hidden text-sm max-w-[100px]">
-              {currentProject?.displayName}
-            </span>
-          </div>
-          <CaretSortIcon className="size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full max-w-full p-0">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <SidebarMenuButton className="px-2 h-9 gap-x-3">
+          <h1 className="truncate font-semibold">
+            {currentProject?.displayName}
+          </h1>
+          <ChevronsUpDown className="ml-auto" />
+        </SidebarMenuButton>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        className="w-56 p-0 rounded-lg"
+        align="start"
+        side="right"
+        sideOffset={4}
+      >
         <Command filter={filterProjects}>
           <CommandList>
             <CommandInput placeholder="Search project..." />
-            <CommandEmpty>{t('No projects found')}</CommandEmpty>
             {allProjects &&
               allProjects.map((platform) => (
-                <CommandGroup
+                <ScrollArea
+                  viewPortClassName="max-h-[200px]"
                   key={platform.platformName}
-                  heading={platform.platformName}
                 >
-                  <ScrollArea viewPortClassName="max-h-[200px]">
+                  <CommandGroup heading={platform.platformName}>
                     {platform.projects &&
                       platform.projects.map((project) => (
                         <CommandItem
@@ -88,10 +83,9 @@ function ProjectSwitcher() {
                               project,
                               location.pathname,
                             );
-                            setOpen(false);
                           }}
                           value={project.id}
-                          className="text-sm break-all"
+                          className="text-sm p-2 break-all"
                         >
                           {project.displayName}
                           <CheckIcon
@@ -104,14 +98,14 @@ function ProjectSwitcher() {
                           />
                         </CommandItem>
                       ))}
-                  </ScrollArea>
-                </CommandGroup>
+
+                    <CommandEmpty>{t('No projects found')}</CommandEmpty>
+                  </CommandGroup>
+                </ScrollArea>
               ))}
           </CommandList>
         </Command>
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
-
-export { ProjectSwitcher };

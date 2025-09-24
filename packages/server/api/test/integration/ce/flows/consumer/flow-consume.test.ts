@@ -11,9 +11,10 @@ import {
     ProgressUpdateType,
     PropertyExecutionType,
     RunEnvironment,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { flowJobExecutor, flowWorker } from 'server-worker'
+import { flowJobExecutor, flowWorker, workerMachine } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
@@ -160,23 +161,33 @@ describe('flow execution', () => {
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
 
+        await waitForSocketConnection()
+        
+
         await flowJobExecutor(mockLog).executeFlow({
-            flowVersionId: mockFlowVersion.id,
-            projectId: mockProject.id,
-            environment: RunEnvironment.PRODUCTION,
-            runId: mockFlowRun.id,
-            payload: {},
-            synchronousHandlerId: null,
-            progressUpdateType: ProgressUpdateType.NONE,
-            executionType: ExecutionType.BEGIN,
-        }, 1, engineToken)
+            jobData: {
+                flowVersionId: mockFlowVersion.id,
+                projectId: mockProject.id,
+                platformId: mockPlatform.id,
+                jobType: WorkerJobType.EXECUTE_FLOW,
+                environment: RunEnvironment.PRODUCTION,
+                runId: mockFlowRun.id,
+                payload: {},
+                synchronousHandlerId: null,
+                progressUpdateType: ProgressUpdateType.NONE,
+                executionType: ExecutionType.BEGIN,
+            },
+            attempsStarted: 1,
+            engineToken,
+            timeoutInSeconds: 1000,
+        })
 
         const flowRun = await databaseConnection()
             .getRepository('flow_run')
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
-      
+
         expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection()
@@ -226,3 +237,26 @@ describe('flow execution', () => {
         })
     }, 60000)
 })
+
+
+async function waitForSocketConnection(maxAttempts = 60, intervalMs = 1000): Promise<void> {
+    let attempts = 0
+    while (attempts < maxAttempts) {
+        try {
+            const settings = workerMachine.getSettings()
+            if (settings) {
+                break
+            }
+        }
+        catch (error) {
+            // Settings not ready yet
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs))
+        attempts++
+    }
+    
+    if (attempts >= maxAttempts) {
+        throw new Error(`Worker settings not initialized after ${maxAttempts} seconds`)
+    }
+}
+

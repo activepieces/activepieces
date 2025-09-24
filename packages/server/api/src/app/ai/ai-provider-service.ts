@@ -73,7 +73,7 @@ export const aiProviderService = {
 
         await aiProviderRepo().upsert({
             id: apId(),
-            config: encryptUtils.encryptObject({
+            config: await encryptUtils.encryptObject({
                 apiKey: request.apiKey,
                 azureOpenAI: request.useAzureOpenAI ? {
                     resourceName: request.resourceName,

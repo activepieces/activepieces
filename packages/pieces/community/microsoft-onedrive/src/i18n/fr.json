@@ -34,7 +34,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "New File": "Nouveau fichier",
   "Trigger when a new file is uploaded.": "Déclencher quand un nouveau fichier est téléchargé."
 }

@@ -38,7 +38,6 @@ const RenameTableDialog = ({
   onRename,
   children,
 }: RenameTableDialogProps) => {
-  console.log(tableName);
   const form = useForm<{ name: string }>({
     defaultValues: {
       name: tableName,

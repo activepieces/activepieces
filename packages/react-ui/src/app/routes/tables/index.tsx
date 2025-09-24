@@ -1,7 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  CheckIcon,
+  Table2,
+  UploadCloud,
+  EllipsisVertical,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -129,11 +136,11 @@ const ApTablesPage = () => {
             }}
             className="flex items-center justify-end w-full"
           >
-            <ApTableActionsMenu
-              table={row.original}
-              refetch={refetch}
-              deleteMutation={bulkDeleteMutation}
-            />
+            <ApTableActionsMenu table={row.original} refetch={refetch}>
+              <Button variant="ghost" size="icon">
+                <EllipsisVertical />
+              </Button>
+            </ApTableActionsMenu>
           </div>
         );
       },
@@ -151,6 +158,20 @@ const ApTablesPage = () => {
 
   const bulkActions: BulkAction<Table>[] = useMemo(
     () => [
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
       {
         render: (_, resetSelection) => (
           <div onClick={(e) => e.stopPropagation()}>
@@ -224,18 +245,7 @@ const ApTablesPage = () => {
           )}
           title={t('Tables')}
           tutorialTab="tables"
-        >
-          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Button
-              onClick={() => createTable({ name: t('New Table') })}
-              className="flex items-center gap-2"
-              disabled={!userHasTableWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New Table')}
-            </Button>
-          </PermissionNeededTooltip>
-        </DashboardPageHeader>
+        ></DashboardPageHeader>
         <DataTable
           filters={[
             {

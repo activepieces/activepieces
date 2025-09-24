@@ -327,6 +327,7 @@ export const triggers = [
     displayName: 'Product Created',
     description: 'Triggers when new product is created.',
     sampleData: sampleData.product,
+    testDataEndpoint: '/wp-json/wc/v3/products',
   },
   {
     name: 'product_updated',
@@ -334,6 +335,7 @@ export const triggers = [
     displayName: 'Product Updated',
     description: 'Triggers when an existing product is updated.',
     sampleData: sampleData.product,
+    testDataEndpoint: '/wp-json/wc/v3/products',
   },
   {
     name: 'product_deleted',
@@ -341,6 +343,7 @@ export const triggers = [
     displayName: 'Product Deleted',
     description: 'Triggers when an existing product is deleted.',
     sampleData: sampleData.product,
+    testDataEndpoint: '/wp-json/wc/v3/products',
   },
   {
     name: 'order_created',
@@ -348,6 +351,7 @@ export const triggers = [
     displayName: 'Order Created',
     description: 'Triggers when new order is created.',
     sampleData: sampleData.order,
+    testDataEndpoint: '/wp-json/wc/v3/orders',
   },
   {
     name: 'order_updated',
@@ -355,6 +359,7 @@ export const triggers = [
     displayName: 'Order Updated',
     description: 'Triggers when an existing order is updated.',
     sampleData: sampleData.order,
+    testDataEndpoint: '/wp-json/wc/v3/orders',
   },
   {
     name: 'order_deleted',
@@ -362,6 +367,7 @@ export const triggers = [
     displayName: 'Order Deleted',
     description: 'Triggers when an existing order is deleted.',
     sampleData: sampleData.order,
+    testDataEndpoint: '/wp-json/wc/v3/orders',
   },
   {
     name: 'coupon_created',
@@ -369,6 +375,7 @@ export const triggers = [
     displayName: 'Coupon Created',
     description: 'Triggers when new coupon is created.',
     sampleData: sampleData.coupon,
+    testDataEndpoint: '/wp-json/wc/v3/coupons',
   },
   {
     name: 'coupon_updated',
@@ -376,6 +383,7 @@ export const triggers = [
     displayName: 'Coupon Updated',
     description: 'Triggers when an existing coupon is updated.',
     sampleData: sampleData.coupon,
+    testDataEndpoint: '/wp-json/wc/v3/coupons',
   },
   {
     name: 'coupon_deleted',
@@ -383,6 +391,7 @@ export const triggers = [
     displayName: 'Coupon Deleted',
     description: 'Triggers when an existing coupon is deleted.',
     sampleData: sampleData.coupon,
+    testDataEndpoint: '/wp-json/wc/v3/coupons',
   },
   {
     name: 'customer_created',
@@ -390,6 +399,7 @@ export const triggers = [
     displayName: 'Customer Created',
     description: 'Triggers when new customer is created.',
     sampleData: sampleData.customer,
+    testDataEndpoint: '/wp-json/wc/v3/customers',
   },
   {
     name: 'customer_updated',
@@ -397,6 +407,7 @@ export const triggers = [
     displayName: 'Customer Updated',
     description: 'Triggers when an existing customer is updated.',
     sampleData: sampleData.customer,
+    testDataEndpoint: '/wp-json/wc/v3/customers',
   },
   {
     name: 'customer_deleted',
@@ -404,5 +415,6 @@ export const triggers = [
     displayName: 'Customer Deleted',
     description: 'Triggers when an existing customer is deleted.',
     sampleData: sampleData.customer,
+    testDataEndpoint: '/wp-json/wc/v3/customers',
   },
 ].map((trigger) => woocommerceRegisterTrigger(trigger));

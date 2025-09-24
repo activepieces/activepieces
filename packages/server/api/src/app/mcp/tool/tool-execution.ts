@@ -1,10 +1,10 @@
 import { ActionBase } from '@activepieces/pieces-framework'
-import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ExecuteActionResponse,
     isNil,
     PiecePackage,
     spreadIfDefined,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { type Schema as AiSchema, generateObject } from 'ai'
@@ -50,8 +50,9 @@ export const toolExecutor = {
 
         const result = await userInteractionWatcher(logger)
             .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
-            jobType: UserInteractionJobType.EXECUTE_TOOL,
-            actionName,
+            jobType: WorkerJobType.EXECUTE_TOOL,
+            platformId,
+            actionName, 
             pieceName,
             pieceVersion,
             packageType: piecePackage.packageType,

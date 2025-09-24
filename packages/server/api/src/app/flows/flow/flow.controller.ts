@@ -44,7 +44,6 @@ const DEFAULT_PAGE_SIZE = 10
 
 export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preValidation', migrateTemplatesHook)
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.principal.projectId,
@@ -62,7 +61,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
-
 
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
@@ -242,6 +240,29 @@ const CreateFlowRequestOptions = {
     },
 }
 
+const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDefaultExpression, RawReplyDefaultExpression, FlowOperationRouteGeneric> = (request, _, done) => {
+
+    if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
+        const migratedFlowVersion = flowMigrations.apply({
+            agentIds: [],
+            connectionIds: [],
+            created: new Date().toISOString(),
+            displayName: '',
+            flowId: '',
+            id: '',
+            updated: new Date().toISOString(),
+            updatedBy: '',
+            valid: false,
+            trigger: request.body.request.trigger,
+            state: FlowVersionState.DRAFT,
+            schemaVersion: request.body.request.schemaVersion,
+        })
+        request.body.request.trigger = migratedFlowVersion.trigger
+        request.body.request.schemaVersion = migratedFlowVersion.schemaVersion
+    }
+    done()
+}
+
 const UpdateFlowRequestOptions = {
     config: {
         permission: Permission.UPDATE_FLOW_STATUS,
@@ -255,6 +276,7 @@ const UpdateFlowRequestOptions = {
             id: ApId,
         }),
     },
+    preValidation: migrateTemplatesHook,
 }
 
 const ListFlowsRequestOptions = {
@@ -336,33 +358,7 @@ const DeleteFlowRequestOptions = {
 }
 
 
+
 type FlowOperationRouteGeneric = {
     Body: FlowOperationRequest
 } & RouteGenericInterface
-export const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDefaultExpression, RawReplyDefaultExpression, FlowOperationRouteGeneric> = (request, _, done) => {
-
-
-    if (request.method === 'POST' && request.routeOptions.url === '/v1/flows/:id' && request.body?.type === FlowOperationType.IMPORT_FLOW) {
-        const migratedFlowVersion = flowMigrations.apply({
-            agentIds: [],
-            connectionIds: [],
-            created: new Date().toISOString(),
-            displayName: '',
-            flowId: '',
-            id: '',
-            updated: new Date().toISOString(),
-            updatedBy: '',
-            valid: false,
-            trigger: request.body.request.trigger,
-            state: FlowVersionState.DRAFT,
-        })
-        request.log.trace(
-            { schemaVersionBefore: request.body.request.schemaVersion, schemaVersionAfter: migratedFlowVersion.schemaVersion },
-            'migrateTemplatesHook',
-        )
-        request.body.request.trigger = migratedFlowVersion.trigger
-        request.body.request.schemaVersion = migratedFlowVersion.schemaVersion
-    }
-
-    done()
-}

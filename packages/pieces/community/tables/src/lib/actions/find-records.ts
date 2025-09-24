@@ -144,6 +144,7 @@ export const findRecords = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
+      retries: 5,
     });
 
     return response.body.data.map(tablesCommon.formatRecord);

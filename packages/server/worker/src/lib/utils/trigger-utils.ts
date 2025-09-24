@@ -17,50 +17,43 @@ import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
 
 export const triggerHooks = (log: FastifyBaseLogger) => ({
-    renewWebhook: async (params: RenewParams): Promise<void> => {
-        const { flowVersion, projectId, simulate } = params
-        await engineRunner(log).executeTrigger(params.engineToken, {
-            hookType: TriggerHookType.RENEW,
-            flowVersion,
-            webhookUrl: await webhookUtils(log).getWebhookUrl({
-                flowId: flowVersion.flowId,
-                simulate,
-                publicApiUrl: workerMachine.getPublicApiUrl(),
-            }),
-            test: simulate,
-            projectId,
-        })
-    },
     extractPayloads: async (
         engineToken: string,
         params: ExecuteTrigger,
-    ): Promise<unknown[]> => {
+    ): Promise<ExtractPayloadsResult> => {
         const { payload, flowVersion, simulate, jobId } = params
         if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
             }, '[WebhookUtils#extractPayload] empty trigger, skipping')
-            return []
+            return {
+                status: TriggerRunStatus.COMPLETED,
+                payloads: [],
+            }
         }
-        const { payloads, status, error } = await getTriggerPayloadsAndStatus(engineToken, log, params)
-        rejectedPromiseHandler(engineApiService(engineToken, log).createTriggerRun({
+        const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
+        rejectedPromiseHandler(engineApiService(engineToken).createTriggerRun({
             status,
             payload,
             flowId: flowVersion.flowId,
             simulate,
             jobId,
-            error: inspect(error),
+            error: errorMessage,
         }), log)
 
-        return payloads
+        return {
+            status,
+            payloads,
+            errorMessage,
+        }
     },
-}) 
+})
 
 
 type ExtractPayloadsResult = {
     payloads: unknown[]
     status: TriggerRunStatus
-    error?: unknown
+    errorMessage?: string
 }
 
 type ExecuteTrigger = {
@@ -69,13 +62,7 @@ type ExecuteTrigger = {
     projectId: ProjectId
     simulate: boolean
     payload: TriggerPayload
-}
-
-type RenewParams = {
-    engineToken: string
-    flowVersion: FlowVersion
-    projectId: ProjectId
-    simulate: boolean
+    timeoutInSeconds: number
 }
 
 async function getTriggerPayloadsAndStatus(
@@ -83,7 +70,7 @@ async function getTriggerPayloadsAndStatus(
     log: FastifyBaseLogger,
     params: ExecuteTrigger,
 ): Promise<ExtractPayloadsResult> {
-    const { payload, flowVersion, projectId, simulate } = params
+    const { payload, flowVersion, projectId, simulate, timeoutInSeconds } = params
     try {
         const { result } = await engineRunner(log).executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
@@ -96,9 +83,10 @@ async function getTriggerPayloadsAndStatus(
             }),
             projectId,
             test: simulate,
+            timeoutInSeconds,
         })
 
-        if (result.success && Array.isArray(result.output)) {
+        if (result.success) {
             return {
                 payloads: result.output as unknown[],
                 status: TriggerRunStatus.COMPLETED,
@@ -107,8 +95,8 @@ async function getTriggerPayloadsAndStatus(
         else {
             return {
                 payloads: [],
-                status: TriggerRunStatus.INTERNAL_ERROR,
-                error: result.message,
+                status: TriggerRunStatus.FAILED,
+                errorMessage: result.message,
             }
         }
     }
@@ -118,13 +106,13 @@ async function getTriggerPayloadsAndStatus(
             return {
                 payloads: [],
                 status: TriggerRunStatus.TIMED_OUT,
-                error: inspect(e),
+                errorMessage: inspect(e),
             }
         }
         return {
             payloads: [],
             status: TriggerRunStatus.INTERNAL_ERROR,
-            error: inspect(e),
+            errorMessage: inspect(e),
         }
     }
 }

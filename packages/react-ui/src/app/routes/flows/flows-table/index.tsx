@@ -133,7 +133,7 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
       {!embedState.hideFolders && (
         <FolderFilterList key="folder-filter" refresh={refresh} />
       )}
-      <div className="w-full">
+      <div className="overflow-hidden w-full ">
         <DataTable
           emptyStateTextTitle={t('No flows found')}
           emptyStateTextDescription={t('Create a workflow to start automating')}

@@ -207,6 +207,7 @@ const SignUpForm = ({
                     type="text"
                     placeholder={'John'}
                     className="rounded-sm"
+                    data-testid="sign-up-first-name"
                   />
                   <FormMessage />
                 </FormItem>
@@ -228,6 +229,7 @@ const SignUpForm = ({
                     type="text"
                     placeholder={'Doe'}
                     className="rounded-sm"
+                    data-testid="sign-up-last-name"
                   />
                   <FormMessage />
                 </FormItem>
@@ -252,6 +254,7 @@ const SignUpForm = ({
                   type="email"
                   placeholder={'email@example.com'}
                   className="rounded-sm"
+                  data-testid="sign-up-email"
                 />
                 <FormMessage />
               </FormItem>
@@ -285,6 +288,7 @@ const SignUpForm = ({
                       placeholder={'********'}
                       className="rounded-sm"
                       ref={inputRef}
+                      data-testid="sign-up-password"
                       onChange={(e) => field.onChange(e)}
                     />
                   </PopoverTrigger>
@@ -327,6 +331,7 @@ const SignUpForm = ({
           <Button
             loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
+            data-testid="sign-up-button"
           >
             {t('Sign up')}
           </Button>

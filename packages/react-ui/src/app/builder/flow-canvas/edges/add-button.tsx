@@ -94,6 +94,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                     'bg-primary ': isPieceSelectorOpen,
                   },
                 )}
+                data-testid="add-action-button"
               >
                 {!isPieceSelectorOpen && (
                   <Plus className="w-3 h-3 stroke-[3px] text-white" />

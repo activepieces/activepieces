@@ -10,7 +10,7 @@ import { FlowVersionState } from '@activepieces/shared';
 
 type FlowVersionStateProps = {
   state: FlowVersionState;
-  publishedVersionId?: string;
+  publishedVersionId: string | undefined | null;
   versionId: string;
 };
 
@@ -31,7 +31,9 @@ const findVersionStateName: (
 };
 const FlowVersionStateDot = React.memo((state: FlowVersionStateProps) => {
   const stateName = findVersionStateName(state);
-
+  if (stateName === 'Locked') {
+    return null;
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -42,15 +44,11 @@ const FlowVersionStateDot = React.memo((state: FlowVersionStateProps) => {
           {stateName === 'Published' && (
             <span className="bg-success size-1.5 rounded-full"></span>
           )}
-          {stateName === 'Locked' && (
-            <span className="bg-foreground/45 size-1.5 rounded-full"></span>
-          )}
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        {stateName === 'Draft' && t('Draft Version')}
-        {stateName === 'Published' && t('Published Version')}
-        {stateName === 'Locked' && t('Locked Version')}
+        {stateName === 'Draft' && t('Draft')}
+        {stateName === 'Published' && t('Published')}
       </TooltipContent>
     </Tooltip>
   );

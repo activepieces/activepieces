@@ -1,6 +1,6 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
-    isFlowStateTerminal,
+    isFlowRunStateTerminal,
     isNil,
     StepOutputStatus,
     StepRunResponse,
@@ -21,7 +21,10 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
             // In single-step execution mode, the engine executes the step directly without traverse the flow, which means the step will always be at the root level
             const stepOutput = populatedFlowRun.steps[populatedFlowRun.stepNameToTest]
 
-            if (isNil(stepOutput) || !isFlowStateTerminal(populatedFlowRun.status)) {
+            if (isNil(stepOutput) || !isFlowRunStateTerminal({
+                status: populatedFlowRun.status,
+                ignoreInternalError: false,
+            })) {
                 return null
             }
 

@@ -51,7 +51,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "Task Created": "Tâche créée",
   "Triggers when a new task is created.": "Déclenche quand une nouvelle tâche est créée."
 }

@@ -1,13 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  PlayIcon,
-  Redo,
-  RotateCw,
-  ChevronDown,
-  History,
-} from 'lucide-react';
+import { CheckIcon, Redo, RotateCw, ChevronDown, History } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -142,7 +135,7 @@ export const RunsTable = () => {
     [flows],
   );
 
-  const replayRun = useMutation({
+  const retryRun = useMutation({
     mutationFn: (retryParams: {
       runIds: string[];
       strategy: FlowRetryStrategy;
@@ -166,7 +159,7 @@ export const RunsTable = () => {
     },
     onSuccess: () => {
       toast({
-        title: t('Runs replayed successfully'),
+        title: t('Runs retried successfully'),
         variant: 'default',
       });
       navigate(window.location.pathname);
@@ -191,7 +184,6 @@ export const RunsTable = () => {
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild disabled={isDisabled}>
                     <Button disabled={isDisabled} className="h-9 w-full">
-                      <PlayIcon className="mr-2 h-3 w-4" />
                       {selectedRows.length > 0
                         ? `${t('Retry')} ${
                             selectedAll
@@ -211,7 +203,7 @@ export const RunsTable = () => {
                       <DropdownMenuItem
                         disabled={!userHasPermissionToRetryRun}
                         onClick={() => {
-                          replayRun.mutate({
+                          retryRun.mutate({
                             runIds: selectedRows.map((row) => row.id),
                             strategy: FlowRetryStrategy.ON_LATEST_VERSION,
                           });
@@ -237,7 +229,7 @@ export const RunsTable = () => {
                         <DropdownMenuItem
                           disabled={!userHasPermissionToRetryRun || !allFailed}
                           onClick={() => {
-                            replayRun.mutate({
+                            retryRun.mutate({
                               runIds: selectedRows.map((row) => row.id),
                               strategy: FlowRetryStrategy.FROM_FAILED_STEP,
                             });
@@ -263,7 +255,7 @@ export const RunsTable = () => {
         },
       },
     ],
-    [replayRun, userHasPermissionToRetryRun, t, selectedRows, data],
+    [retryRun, userHasPermissionToRetryRun, t, selectedRows, data],
   );
 
   const handleRowClick = useCallback(

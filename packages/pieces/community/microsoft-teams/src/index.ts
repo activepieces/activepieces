@@ -7,10 +7,20 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { createChannelAction } from './lib/actions/create-channel';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { sendChatMessageAction } from './lib/actions/send-chat-message';
+import { replyToChannelMessageAction } from './lib/actions/reply-to-channel-message';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { newChannelMessageTrigger } from './lib/triggers/new-channel-message';
+import { newChannelTrigger } from './lib/triggers/new-channel';
+import { newChatTrigger } from './lib/triggers/new-chat';
+import { newChatMessageTrigger } from './lib/triggers/new-chat-message';
+import { createChatAndSendMessageAction } from './lib/actions/create-chat-and-send-message';
+import { createPrivateChannelAction } from './lib/actions/create-private-channel';
+import { getChatMessageAction } from './lib/actions/get-chat-message';
+import { getChannelMessageAction } from './lib/actions/get-channel-message';
+import { findChannelAction } from './lib/actions/find-channel';
+import { findTeamMemberAction } from './lib/actions/find-team-member';
+import { createGraphClient, withGraphRetry } from './lib/common/graph';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -41,6 +51,7 @@ const authDesc = `
 	  - ChannelMessage.Read.All
 	  - User.ReadBasic.All
 	  - Presence.Read.All
+	  - TeamMember.Read.All
       - openid
       - email
       - profile
@@ -64,6 +75,7 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 		'Team.ReadBasic.All',
 		'Chat.ReadWrite',
 		'ChannelMessage.Read.All',
+		'TeamMember.Read.All',
     'User.ReadBasic.All',
     'Presence.Read.All',
 	],
@@ -73,12 +85,8 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 	validate: async ({ auth }) => {
 		try {
 			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-			const client = Client.initWithMiddleware({
-				authProvider: {
-					getAccessToken: () => Promise.resolve(authValue.access_token),
-				},
-			});
-			await client.api('/me').get();
+			const client = createGraphClient(authValue.access_token);
+			await withGraphRetry(() => client.api('/me').get());
 			return { valid: true };
 		} catch (error) {
 			return { valid: false, error: 'Invalid Credentials.' };
@@ -97,6 +105,13 @@ export const microsoftTeams = createPiece({
 		createChannelAction,
 		sendChannelMessageAction,
 		sendChatMessageAction,
+		replyToChannelMessageAction,
+		createChatAndSendMessageAction,
+		createPrivateChannelAction,
+		getChatMessageAction,
+		getChannelMessageAction,
+		findChannelAction,
+		findTeamMemberAction,
 		createCustomApiCallAction({
 			auth: microsoftTeamsAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/teams',
@@ -105,5 +120,5 @@ export const microsoftTeams = createPiece({
 			}),
 		}),
 	],
-	triggers: [newChannelMessageTrigger],
+	triggers: [newChannelMessageTrigger, newChannelTrigger, newChatTrigger, newChatMessageTrigger],
 });

@@ -14,7 +14,6 @@ export const agentGenerator = {
             outputFields: [],
             runCompleted: faker.number.int({ min: 0, max: 100 }),
             mcp: {
-                id: apId(),
                 name: faker.lorem.words(2),
                 externalId: apId(),
                 token: faker.string.alphanumeric(32),
@@ -46,7 +45,6 @@ export const agentGenerator = {
             ],
             runCompleted: faker.number.int({ min: 0, max: 100 }),
             mcp: {
-                id: apId(),
                 name: faker.lorem.words(2),
                 externalId: apId(),
                 token: faker.string.alphanumeric(32),
@@ -84,7 +82,6 @@ export const agentGenerator = {
             outputFields: [],
             runCompleted: faker.number.int({ min: 0, max: 100 }),
             mcp: {
-                id: apId(),
                 name: faker.lorem.words(2),
                 externalId: apId(),
                 token: faker.string.alphanumeric(32),

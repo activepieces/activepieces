@@ -114,7 +114,7 @@ export const stepUtils = {
         const piece = await piecesApi.get({
           name: step.settings.pieceName,
           version: step.settings.pieceVersion,
-          locale: locale,
+          locale,
         });
         const metadata = stepUtils.mapPieceToMetadata({
           piece,

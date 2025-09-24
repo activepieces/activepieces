@@ -3,6 +3,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
+import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { ScrollArea } from './scroll-area';
@@ -13,7 +14,6 @@ interface VirtualizedScrollAreaProps<T> {
   overscan?: number;
   estimateSize: (index: number) => number;
   getItemKey?: (index: number) => string | number;
-  listHeight: number;
   className?: string;
   initialScroll?: {
     index: number;
@@ -31,22 +31,21 @@ export interface VirtualizedScrollAreaRef {
   ) => void;
 }
 
-const VirtualizedScrollArea = ({
+const VirtualizedScrollArea = <T,>({
   items,
   renderItem,
   overscan = 5,
   estimateSize,
   getItemKey,
-  listHeight,
   initialScroll,
   className,
   ...props
-}: VirtualizedScrollAreaProps<any>) => {
-  const parentRef = React.useRef<HTMLDivElement>(null);
+}: VirtualizedScrollAreaProps<T>) => {
+  const scrollAreaViewportRef = React.useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({
     count: items.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => scrollAreaViewportRef.current,
     estimateSize: estimateSize,
     overscan,
     getItemKey: getItemKey || ((index) => index),
@@ -65,7 +64,7 @@ const VirtualizedScrollArea = ({
       if (initialScroll?.clickAfterScroll) {
         //need to wait for the scroll to be completed
         setTimeout(() => {
-          const targetElement = parentRef.current?.querySelector(
+          const targetElement = scrollAreaViewportRef.current?.querySelector(
             `[data-virtual-index="${initialScroll.index}"]`,
           );
           const renderedElement = targetElement?.children[0];
@@ -78,9 +77,9 @@ const VirtualizedScrollArea = ({
   }, [rowVirtualizer]);
   return (
     <ScrollArea
-      style={{ height: `${listHeight}px` }}
-      viewPortRef={parentRef}
+      viewPortRef={scrollAreaViewportRef}
       {...props}
+      className={cn('h-full', className)}
     >
       <div
         style={{
