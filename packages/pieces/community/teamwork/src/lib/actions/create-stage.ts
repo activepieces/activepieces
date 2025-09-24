@@ -11,6 +11,7 @@ export const createStage = createAction({
 	props: {
 		workflowId: Property.Dropdown({
 			displayName: 'Workflow',
+			description: 'The workflow to add the stage to.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -37,6 +38,7 @@ export const createStage = createAction({
 		}),
 		name: Property.ShortText({
 			displayName: 'Name',
+			description: 'The name of the stage.',
 			required: true,
 		}),
 		color: Property.ShortText({

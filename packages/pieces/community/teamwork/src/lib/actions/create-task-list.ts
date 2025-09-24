@@ -11,6 +11,7 @@ export const createTaskList = createAction({
 	props: {
 		projectId: Property.Dropdown({
 			displayName: 'Project',
+			description: 'The project to create the task list in.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -37,18 +38,22 @@ export const createTaskList = createAction({
 		}),
 		name: Property.ShortText({
 			displayName: 'Name',
+			description: 'The name of the task list.',
 			required: true,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
+			description: 'A description for the task list.',
 			required: false,
 		}),
 		private: Property.Checkbox({
 			displayName: 'Private',
+			description: 'Set to true to make the task list private.',
 			required: false,
 		}),
 		priority: Property.StaticDropdown({
 			displayName: 'Default Task Priority',
+			description: 'The default priority for new tasks in this list.',
 			required: false,
 			options: {
 				options: [
@@ -61,6 +66,7 @@ export const createTaskList = createAction({
 		}),
 		tags: Property.MultiSelectDropdown({
 			displayName: 'Default Task Tags',
+			description: 'Default tags for new tasks in this list.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {

@@ -11,6 +11,7 @@ export const findNotebookOrComment = createAction({
 	props: {
 		searchFor: Property.StaticDropdown({
 			displayName: 'Search For',
+			description: 'The type of item to search for.',
 			required: true,
 			options: {
 				options: [
@@ -21,10 +22,12 @@ export const findNotebookOrComment = createAction({
 		}),
 		searchTerm: Property.ShortText({
 			displayName: 'Search Term',
+			description: 'The keyword to search for.',
 			required: true,
 		}),
 		projectId: Property.Dropdown({
 			displayName: 'Project',
+			description: 'Limit the search to a specific project.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {

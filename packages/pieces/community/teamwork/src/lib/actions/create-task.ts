@@ -16,6 +16,7 @@ export const createTask = createAction({
 	props: {
 		projectId: Property.Dropdown({
 			displayName: 'Project',
+			description: 'The project to create the task in.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -42,6 +43,7 @@ export const createTask = createAction({
 		}),
 		tasklistId: Property.Dropdown({
 			displayName: 'Task List',
+			description: 'The task list to add the task to.',
 			required: true,
 			refreshers: ['projectId'],
 			options: async ({ auth, projectId }) => {
@@ -68,10 +70,12 @@ export const createTask = createAction({
 		}),
 		content: Property.ShortText({
 			displayName: 'Content',
+			description: 'The content of the task.',
 			required: true,
 		}),
 		'responsible-party-id': Property.MultiSelectDropdown({
 			displayName: 'Responsible Parties',
+			description: 'The users responsible for the task.',
 			required: false,
 			refreshers: ['projectId'],
 			options: async ({ auth, projectId }) => {
@@ -98,18 +102,22 @@ export const createTask = createAction({
 		}),
 		'start-date': Property.DateTime({
 			displayName: 'Start Date',
+			description: 'The start date of the task.',
 			required: false,
 		}),
 		'due-date': Property.DateTime({
 			displayName: 'Due Date',
+			description: 'The due date of the task.',
 			required: false,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
+			description: 'A description for the task.',
 			required: false,
 		}),
 		priority: Property.StaticDropdown({
 			displayName: 'Priority',
+			description: 'The priority of the task.',
 			required: false,
 			options: {
 				options: [
@@ -122,6 +130,7 @@ export const createTask = createAction({
 		}),
 		tagIds: Property.MultiSelectDropdown({
 			displayName: 'Tags',
+			description: 'Tags to associate with the task.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -148,10 +157,12 @@ export const createTask = createAction({
 		}),
 		attachment: Property.File({
 			displayName: 'Attachment',
+			description: 'A file to attach to the task.',
 			required: false,
 		}),
 		customFields: Property.DynamicProperties({
 			displayName: 'Custom Fields',
+			description: 'Custom fields for this task.',
 			required: false,
 			refreshers: [],
 			props: async ({ auth }) => {

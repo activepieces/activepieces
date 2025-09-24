@@ -11,10 +11,12 @@ export const findTask = createAction({
 	props: {
 		searchTerm: Property.ShortText({
 			displayName: 'Search Term',
+			description: 'The keyword to search for.',
 			required: true,
 		}),
 		projectId: Property.Dropdown({
 			displayName: 'Project',
+			description: 'Limit the search to a specific project.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {

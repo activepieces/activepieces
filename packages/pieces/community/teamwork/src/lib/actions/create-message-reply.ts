@@ -11,6 +11,7 @@ export const createMessageReply = createAction({
 	props: {
 		messageId: Property.Dropdown({
 			displayName: 'Message',
+			description: 'The message to reply to.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -37,6 +38,7 @@ export const createMessageReply = createAction({
 		}),
 		body: Property.LongText({
 			displayName: 'Body',
+			description: 'The content of the reply.',
 			required: true,
 		}),
 		notify: Property.Checkbox({

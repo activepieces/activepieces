@@ -11,6 +11,7 @@ export const markTaskComplete = createAction({
 	props: {
 		taskId: Property.Dropdown({
 			displayName: 'Task',
+			description: 'The task to mark as complete.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {

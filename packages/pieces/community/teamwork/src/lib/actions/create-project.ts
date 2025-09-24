@@ -16,14 +16,17 @@ export const createProject = createAction({
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',
+			description: 'The name of the project.',
 			required: true,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
+			description: 'A description for the project.',
 			required: false,
 		}),
 		companyId: Property.Dropdown({
 			displayName: 'Company',
+			description: 'The company to associate the project with.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -50,6 +53,7 @@ export const createProject = createAction({
 		}),
 		'category-id': Property.Dropdown({
 			displayName: 'Category',
+			description: 'The category to assign the project to.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -76,6 +80,7 @@ export const createProject = createAction({
 		}),
 		tagIds: Property.MultiSelectDropdown({
 			displayName: 'Tags',
+			description: 'Tags to associate with the project.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -102,14 +107,17 @@ export const createProject = createAction({
 		}),
 		'start-date': Property.DateTime({
 			displayName: 'Start Date',
+			description: 'The start date of the project.',
 			required: false,
 		}),
 		'end-date': Property.DateTime({
 			displayName: 'End Date',
+			description: 'The end date of the project.',
 			required: false,
 		}),
 		projectOwnerId: Property.Dropdown({
 			displayName: 'Project Owner',
+			description: 'The user to assign as the project owner.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -136,6 +144,7 @@ export const createProject = createAction({
 		}),
 		customFields: Property.DynamicProperties({
 			displayName: 'Custom Fields',
+			description: 'Custom fields for this project.',
 			required: false,
 			refreshers: [],
 			props: async ({ auth }) => {

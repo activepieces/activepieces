@@ -11,6 +11,7 @@ export const addPeopleToProject = createAction({
 	props: {
 		projectId: Property.Dropdown({
 			displayName: 'Project',
+			description: 'The project to add people to.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -37,6 +38,7 @@ export const addPeopleToProject = createAction({
 		}),
 		userIdList: Property.MultiSelectDropdown({
 			displayName: 'Users',
+			description: 'The users to add to the project.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {

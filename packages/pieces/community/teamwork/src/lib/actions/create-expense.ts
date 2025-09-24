@@ -11,6 +11,7 @@ export const createExpense = createAction({
 	props: {
 		'project-id': Property.Dropdown({
 			displayName: 'Project',
+			description: 'The project to log the expense against.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -37,18 +38,22 @@ export const createExpense = createAction({
 		}),
 		name: Property.ShortText({
 			displayName: 'Name',
+			description: 'The name of the expense.',
 			required: true,
 		}),
 		cost: Property.Number({
 			displayName: 'Cost',
+			description: 'The cost of the expense.',
 			required: true,
 		}),
 		date: Property.DateTime({
 			displayName: 'Date',
+			description: 'The date of the expense.',
 			required: true,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
+			description: 'A description for the expense.',
 			required: false,
 		}),
 	},

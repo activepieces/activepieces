@@ -11,6 +11,7 @@ export const createMilestone = createAction({
 	props: {
 		projectId: Property.Dropdown({
 			displayName: 'Project',
+			description: 'The project to create the milestone in.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -37,14 +38,17 @@ export const createMilestone = createAction({
 		}),
 		title: Property.ShortText({
 			displayName: 'Title',
+			description: 'The title of the milestone.',
 			required: true,
 		}),
 		deadline: Property.DateTime({
 			displayName: 'Deadline',
+			description: 'The due date of the milestone.',
 			required: true,
 		}),
 		'responsible-party-ids': Property.MultiSelectDropdown({
 			displayName: 'Responsible Parties',
+			description: 'The users responsible for the milestone.',
 			required: true,
 			refreshers: ['projectId'],
 			options: async ({ auth, projectId }) => {
@@ -71,14 +75,17 @@ export const createMilestone = createAction({
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
+			description: 'A description for the milestone.',
 			required: false,
 		}),
 		notify: Property.Checkbox({
 			displayName: 'Notify',
+			description: 'Notify responsible parties about the milestone.',
 			required: false,
 		}),
 		private: Property.Checkbox({
 			displayName: 'Private',
+			description: 'Set to true to make the milestone private.',
 			required: false,
 		}),
 	},

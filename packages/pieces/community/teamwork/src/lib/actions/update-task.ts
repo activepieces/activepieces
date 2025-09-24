@@ -40,6 +40,7 @@ export const updateTask = createAction({
 	props: {
 		taskId: Property.Dropdown({
 			displayName: 'Task',
+			description: 'The task to update.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -63,14 +64,17 @@ export const updateTask = createAction({
 		}),
 		content: Property.ShortText({
 			displayName: 'Content',
+			description: 'The new content of the task.',
 			required: false,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
+			description: 'The new description for the task.',
 			required: false,
 		}),
 		'responsible-party-id': Property.MultiSelectDropdown({
 			displayName: 'Responsible Parties',
+			description: 'The new users responsible for the task.',
 			required: false,
 			refreshers: ['taskId'],
 			options: async ({ auth, taskId }) => {
@@ -104,14 +108,17 @@ export const updateTask = createAction({
 		}),
 		'start-date': Property.DateTime({
 			displayName: 'Start Date',
+			description: 'The new start date of the task.',
 			required: false,
 		}),
 		'due-date': Property.DateTime({
 			displayName: 'Due Date',
+			description: 'The new due date of the task.',
 			required: false,
 		}),
 		priority: Property.StaticDropdown({
 			displayName: 'Priority',
+			description: 'The new priority of the task.',
 			required: false,
 			options: {
 				options: [
@@ -124,6 +131,7 @@ export const updateTask = createAction({
 		}),
 		tagIds: Property.MultiSelectDropdown({
 			displayName: 'Tags',
+			description: 'New tags to associate with the task.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {

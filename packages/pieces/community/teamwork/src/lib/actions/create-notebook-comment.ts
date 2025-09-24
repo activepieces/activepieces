@@ -11,6 +11,7 @@ export const createNotebookComment = createAction({
 	props: {
 		notebookId: Property.Dropdown({
 			displayName: 'Notebook',
+			description: 'The notebook to add a comment to.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -40,14 +41,17 @@ export const createNotebookComment = createAction({
 		}),
 		body: Property.LongText({
 			displayName: 'Comment',
+			description: 'The content of the comment.',
 			required: true,
 		}),
 		attachment: Property.File({
 			displayName: 'Attachment',
+			description: 'A file to attach to the comment.',
 			required: false,
 		}),
 		notify: Property.StaticDropdown({
 			displayName: 'Notify',
+			description: 'Who to notify about this comment.',
 			required: false,
 			options: {
 				options: [
@@ -59,6 +63,7 @@ export const createNotebookComment = createAction({
 		}),
 		isprivate: Property.Checkbox({
 			displayName: 'Private',
+			description: 'Set to true to make the comment private.',
 			required: false,
 		}),
 	},

@@ -16,6 +16,7 @@ export const uploadFileToProject = createAction({
 	props: {
 		projectId: Property.Dropdown({
 			displayName: 'Project',
+			description: 'The project to upload the file to.',
 			required: true,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -42,14 +43,17 @@ export const uploadFileToProject = createAction({
 		}),
 		file: Property.File({
 			displayName: 'File',
+			description: 'The file to upload.',
 			required: true,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
+			description: 'A description for the file.',
 			required: false,
 		}),
 		categoryId: Property.Dropdown({
 			displayName: 'Category',
+			description: 'The category to assign the file to.',
 			required: false,
 			refreshers: ['projectId'],
 			options: async ({ auth, projectId }) => {
@@ -76,6 +80,7 @@ export const uploadFileToProject = createAction({
 		}),
 		private: Property.Checkbox({
 			displayName: 'Private',
+			description: 'Set to true to make the file private.',
 			required: false,
 		}),
 	},

@@ -11,18 +11,22 @@ export const createPerson = createAction({
 	props: {
 		'first-name': Property.ShortText({
 			displayName: 'First Name',
+			description: "The user's first name.",
 			required: true,
 		}),
 		'last-name': Property.ShortText({
 			displayName: 'Last Name',
+			description: "The user's last name.",
 			required: true,
 		}),
 		'email-address': Property.ShortText({
 			displayName: 'Email',
+			description: "The user's email address.",
 			required: true,
 		}),
 		'user-type': Property.StaticDropdown({
 			displayName: 'User Type',
+			description: 'The type of user to create.',
 			required: true,
 			options: {
 				options: [
@@ -34,6 +38,7 @@ export const createPerson = createAction({
 		}),
 		'company-id': Property.Dropdown({
 			displayName: 'Company',
+			description: 'The company to associate the user with.',
 			required: false,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -65,6 +70,7 @@ export const createPerson = createAction({
 		}),
 		title: Property.ShortText({
 			displayName: 'Title',
+			description: "The user's job title.",
 			required: false,
 		}),
 	},
