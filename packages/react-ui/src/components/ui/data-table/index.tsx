@@ -34,9 +34,9 @@ import {
 import { DataTableBulkActions } from './data-table-bulk-actions';
 import { DataTableColumnHeader } from './data-table-column-header';
 import {
-  DataTableFacetedFilter,
+  DataTableFilter,
   DataTableFilterProps,
-} from './data-table-options-filter';
+} from './data-table-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 
@@ -248,7 +248,7 @@ export function DataTable<
             <div className="flex items-center space-x-2">
               {filters &&
                 filters.map((filter) => (
-                  <DataTableFacetedFilter
+                  <DataTableFilter
                     key={filter.accessorKey}
                     column={table.getColumn(filter.accessorKey)}
                     {...filter}
