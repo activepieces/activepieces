@@ -72,7 +72,7 @@ jobs:
         with:
           name: playwright-report-ce
           path: packages/tests-e2e/playwright-report/
-          retention-days: 30
+          retention-days: 10
           
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -80,4 +80,4 @@ jobs:
         with:
           name: test-results-ce
           path: packages/tests-e2e/test-results/
-          retention-days: 30
+          retention-days: 10
