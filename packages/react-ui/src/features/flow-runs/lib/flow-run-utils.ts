@@ -268,7 +268,6 @@ function getLoopChildStepOutput(
   return currentStepOutput;
 }
 
-
 function getTargetStepName(
   parents: LoopOnItemsAction[],
   currentLoopLevel: number,

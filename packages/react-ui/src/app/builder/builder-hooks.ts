@@ -432,7 +432,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           loopsIndexes[stepName] = index;
 
           childLoops.forEach((childLoop) => {
-
             const childLoopOutput = flowRunUtils.extractStepOutput(
               childLoop.name,
               loopsIndexes,
