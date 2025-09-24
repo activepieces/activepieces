@@ -144,8 +144,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)
-        const isSamePiece = constants.triggerPieceName === action.settings.pieceName
-        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
+        if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId)) {
             await progressService.sendFlowResponse(constants, {
                 workerHandlerId: constants.serverHandlerId,
                 httpRequestId: constants.httpRequestId,
