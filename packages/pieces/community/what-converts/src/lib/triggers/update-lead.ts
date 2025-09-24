@@ -1,6 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { whatConvertsAuth } from '../common/auth';
-import { whatConvertsClient } from '../common/client';
 
 export const updatedLeadTrigger = createTrigger({
   auth: whatConvertsAuth,
@@ -9,52 +8,31 @@ export const updatedLeadTrigger = createTrigger({
   description: 'Fires when an existing lead is updated in WhatConverts.',
   props: {},
   sampleData: {
-    lead_id: 987654,
-    profile_id: 12345,
-    lead_type: 'Web Form',
-    lead_source: 'google',
-    lead_medium: 'organic',
-    lead_campaign: null,
-    quotable: 'Yes',
-    sales_value: '250.50',
-    created_on: '2025-09-21 13:07:00',
-    lead_details: [
-      {
-        label: 'First Name',
-        value: 'Jane',
-      },
-      {
-        label: 'Last Name',
-        value: 'Doe',
-      },
-      {
-        label: 'Email',
-        value: 'jane.doe@example.com',
-      },
-      {
-        label: 'Notes',
-        value: 'Inquiring about pricing. Followed up on 2025-09-21.',
-      },
-    ],
+    trigger: 'update',
+    lead_id: 153928,
+    lead_type: 'Phone Call',
+    lead_status: 'Unique',
+    last_updated: '2016-01-25T17:18:20Z',
+    quotable: 'Not Set',
+    sales_value: null,
   },
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.APP_WEBHOOK,
 
-  async onEnable(context) {
-    await whatConvertsClient.subscribeWebhook(
-      context.auth,
-      'lead_update',
-      context.webhookUrl
-    );
+  async onEnable(_context) {
+    // User configures the webhook manually in the WhatConverts UI.
   },
 
-  async onDisable(context) {
-    await whatConvertsClient.unsubscribeWebhook(
-      context.auth,
-      context.webhookUrl
-    );
+  async onDisable(_context) {
+    // User removes the webhook manually in the WhatConverts UI.
   },
 
   async run(context) {
+    const payloadBody = context.payload.body as { trigger: string };
+
+    if (payloadBody.trigger !== 'update') {
+      return [];
+    }
+
     return [context.payload.body];
   },
 });

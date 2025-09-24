@@ -7,7 +7,6 @@ import {
 } from '@activepieces/pieces-common';
 import { WhatConvertsAuth } from './auth';
 import {
-  CreateExportParams,
   CreateLeadParams,
   FindLeadParams,
   LeadsResponse,
@@ -99,21 +98,6 @@ export const whatConvertsClient = {
     return response.body;
   },
 
-  async createExport(auth: WhatConvertsAuth, params: CreateExportParams) {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/exports`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
-      },
-      body: params,
-    };
-    const response = await httpClient.sendRequest(request);
-    return response.body;
-  },
-
   async updateLead(
     auth: WhatConvertsAuth,
     leadId: number,
@@ -133,40 +117,4 @@ export const whatConvertsClient = {
     return response.body;
   },
 
-  async subscribeWebhook(
-    auth: WhatConvertsAuth,
-    event: string,
-    targetUrl: string
-  ) {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/webhooks/subscribe`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
-      },
-      body: {
-        event: event,
-        target_url: targetUrl,
-      },
-    };
-    return await httpClient.sendRequest(request);
-  },
-
-  async unsubscribeWebhook(auth: WhatConvertsAuth, targetUrl: string) {
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${WHATCONVERTS_API_URL}/webhooks/unsubscribe`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
-      },
-      body: {
-        target_url: targetUrl,
-      },
-    };
-    return await httpClient.sendRequest(request);
-  },
 };

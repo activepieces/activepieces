@@ -4,7 +4,6 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { whatConvertsAuth } from '../common/auth';
-import { whatConvertsClient } from '../common/client';
 
 export const newLeadTrigger = createTrigger({
   auth: whatConvertsAuth,
@@ -28,44 +27,38 @@ export const newLeadTrigger = createTrigger({
     }),
   },
   sampleData: {
-    lead_id: 112233,
-    profile_id: 12345,
+    trigger: 'new',
+    lead_id: 153928,
     lead_type: 'Phone Call',
-    lead_source: 'google',
-    lead_medium: 'cpc',
-    lead_campaign: 'Summer Sale',
-    quotable: 'Yes',
-    sales_value: '0.00',
-    created_on: '2025-09-21 13:35:00',
-    lead_details: [
-      { label: 'First Name', value: 'Test' },
-      { label: 'Last Name', value: 'Caller' },
-      { label: 'Email', value: 'test.caller@example.com' },
-      { label: 'Phone Number', value: '+18005551234' },
-    ],
+    lead_status: 'Unique',
+    date_created: '2016-02-01T14:09:01Z',
+    profile_id: 51497,
+    account_id: 27313,
+    contact_name: 'Jeremy Helms',
+    contact_email_address: 'hello@whatconverts.com',
   },
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.APP_WEBHOOK,
 
-  async onEnable(context) {
-    await whatConvertsClient.subscribeWebhook(
-      context.auth,
-      'lead_add',
-      context.webhookUrl
-    );
+  async onEnable(_context) {
+    // User configures the webhook manually in the WhatConverts UI.
   },
 
-  async onDisable(context) {
-    await whatConvertsClient.unsubscribeWebhook(
-      context.auth,
-      context.webhookUrl
-    );
+  async onDisable(_context) {
+    // User removes the webhook manually in the WhatConverts UI.
   },
 
   async run(context) {
-    const leadData = context.payload.body as { lead_type: string };
+    const payloadBody = context.payload.body as {
+      trigger: string;
+      lead_type: string;
+    };
     const selectedLeadType = context.propsValue.lead_type;
 
-    if (selectedLeadType && leadData.lead_type !== selectedLeadType) {
+    if (payloadBody.trigger !== 'new') {
+      return [];
+    }
+
+    if (selectedLeadType && payloadBody.lead_type !== selectedLeadType) {
       return [];
     }
 
