@@ -81,8 +81,7 @@ jobs:
         
       - name: Run E2E tests
         run: |
-          cd packages/tests-e2e
-          npx playwright test
+          npm run test:e2e
         env:
           CI: true
           
