@@ -32,10 +32,6 @@ async function saveToCache(cache: CacheMap, folderPath: string): Promise<void> {
     return fileSystemUtils.runExclusive(folderPath, 'saveToCache', async () => {
         await fileSystemUtils.threadSafeMkdir(folderPath)
         const filePath = cachePath(folderPath)
-        const fileExists = await fileSystemUtils.fileExists(filePath)
-        if (fileExists) {
-            return
-        }
         await writeFileAtomic(filePath, JSON.stringify(cache), 'utf8')
     })
 }

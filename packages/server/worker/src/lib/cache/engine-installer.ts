@@ -1,7 +1,7 @@
 import { PathLike } from 'fs'
 import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { memoryLock, systemConstants } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock, systemConstants } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -23,7 +23,7 @@ export const engineInstaller = (log: FastifyBaseLogger) => ({
         if (isCacheEngineInstalled && !isDev) {
             return
         }
-        return memoryLock.runExclusive(`engineInstaller-${path}`, async () => {
+        return fileSystemUtils.runExclusive(path, `engineInstaller`, async () => {
             log.debug({ path }, '[engineInstaller#install]')
             const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
             if (!isEngineInstalled || isDev) {
