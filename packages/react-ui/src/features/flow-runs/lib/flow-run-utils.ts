@@ -268,11 +268,7 @@ function getLoopChildStepOutput(
   return currentStepOutput;
 }
 
-/**
- * Determines the name of the step we're looking for at the current loop level.
- * For intermediate levels, it's the next loop's name.
- * For the final level, it's the child step name.
- */
+
 function getTargetStepName(
   parents: LoopOnItemsAction[],
   currentLoopLevel: number,
@@ -282,9 +278,6 @@ function getTargetStepName(
   return hasMoreLevels ? parents[currentLoopLevel + 1].name : childName;
 }
 
-/**
- * Extracts a step output from a specific iteration of a loop.
- */
 function getStepOutputFromIteration({
   loopStepOutput,
   loopName,
