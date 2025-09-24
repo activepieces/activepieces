@@ -15,9 +15,7 @@ import { useTheme } from '@/components/theme-provider';
 import {
   FlowActionType,
   flowStructureUtil,
-  FlowVersion,
   isNil,
-  Step,
 } from '@activepieces/shared';
 
 import {
@@ -42,46 +40,6 @@ import {
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-
-const getChildrenKey = (step: Step) => {
-  switch (step.type) {
-    case FlowActionType.LOOP_ON_ITEMS:
-      return step.firstLoopAction ? step.firstLoopAction.name : '';
-    case FlowActionType.ROUTER:
-      return step.children.reduce((routerKey, child) => {
-        const childrenKey = child
-          ? flowStructureUtil
-              .getAllSteps(child)
-              .reduce(
-                (childKey, grandChild) => `${childKey}-${grandChild.name}`,
-                '',
-              )
-          : 'null';
-        return `${routerKey}-${childrenKey}`;
-      }, '');
-    case FlowActionType.CODE:
-    case FlowActionType.PIECE:
-      return '';
-  }
-};
-
-const createGraphKey = (flowVersion: FlowVersion) => {
-  return flowStructureUtil
-    .getAllSteps(flowVersion.trigger)
-    .reduce((acc, step) => {
-      const branchesNames =
-        step.type === FlowActionType.ROUTER
-          ? step.settings.branches.map((branch) => branch.branchName).join('-')
-          : '0';
-      const childrenKey = getChildrenKey(step);
-      const agentId = flowStructureUtil.getExternalAgentId(step);
-      return `${acc}-${step.displayName}-${step.type}-${
-        step.nextAction ? step.nextAction.name : ''
-      }-${
-        step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
-      }-${branchesNames}-${childrenKey}-${agentId}`;
-    }, '');
-};
 
 export const FlowCanvas = React.memo(
   ({
@@ -126,7 +84,7 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
-    const graphKey = createGraphKey(flowVersion);
+    const graphKey = flowCanvasUtils.createGraphKey(flowVersion);
     const graph = useMemo(() => {
       return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
     }, [graphKey]);

@@ -327,6 +327,7 @@
     "yaml": "2.4.1",
     "zod": "3.25.76",
     "zone.js": "0.14.4",
+    "zundo": "2.3.0",
     "zustand": "4.5.4"
   },
   "devDependencies": {
