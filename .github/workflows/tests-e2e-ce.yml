@@ -19,13 +19,14 @@ env:
   AP_TRIGGER_DEFAULT_POLL_INTERVAL: "1"
   AP_EXECUTION_MODE: UNSANDBOXED
   AP_TELEMETRY_ENABLED: "false"
-  AP_JWT_SECRET: "secret"
   AP_ENVIRONMENT: testing
+  AP_JWT_SECRET: "secret"
+  AP_ENCRYPTION_KEY: "fdbe51af3678563560972e4a912aee6d"
 
 jobs:
   test-e2e-ce:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     
     services:
       postgres:
