@@ -12,24 +12,25 @@ const engineExecutablePath = systemConstants.ENGINE_EXECUTABLE_PATH
 const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
-/**
- * Installs the engine executable to the given path
- */
+
 export const engineInstaller = (log: FastifyBaseLogger) => ({
-    async install({ path }: InstallParams): Promise<void> {
+    async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
 
+        let startTime = performance.now()
         return memoryLock.runExclusive(`engineInstaller-${path}`, async () => {
-            log.debug({ path }, '[engineInstaller#install]')
+            log.info({ timeTaken: `${Math.floor(performance.now() - startTime)}ms` }, '[engineInstaller#install] claimed lock')
             const cache = cacheState(path)
             const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
-            if (!isEngineInstalled || isDev) {
+            const cacheMiss = !isEngineInstalled || isDev
+
+            if (cacheMiss) {
                 await atomicCopy(engineExecutablePath, `${path}/main.js`)
-            }
-            if (!isEngineInstalled || isDev) {
                 await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
+                await cache.setCache(ENGINE_INSTALLED, ENGINE_CACHE_ID)
             }
-            await cache.setCache(ENGINE_INSTALLED, ENGINE_CACHE_ID)
+            log.info({ path, timeTaken: `${Math.floor(performance.now() - startTime)}ms` }, '[engineInstaller#install] installed engine')
+            return { cacheHit: !cacheMiss }
         })
     },
 })
@@ -43,4 +44,7 @@ async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
 
 type InstallParams = {
     path: string
+}
+type EngineInstallResult = {
+    cacheHit: boolean
 }
