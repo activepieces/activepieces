@@ -31,7 +31,7 @@ export const createCompany = createAction({
 		privateNotes: Property.LongText({ displayName: 'Private Notes', required: false }),
 		customFields: Property.DynamicProperties({
 			displayName: 'Custom Fields',
-			required: true,
+			required: false,
 			refreshers: [],
 			props: async ({ auth }) => {
 				if (!auth) return {};
@@ -63,7 +63,7 @@ export const createCompany = createAction({
 			([customfieldId, value]) => ({ customfieldId: parseInt(customfieldId), value })
 		);
 
-		const companyData = {
+		const companyData: any = {
 			name: propsValue.name,
 			website: propsValue.website,
 			addressOne: propsValue.addressOne,
@@ -79,10 +79,13 @@ export const createCompany = createAction({
 			emailThree: propsValue.emailThree,
 			profile: propsValue.profile,
 			privateNotes: propsValue.privateNotes,
-			customFields: {
-				values: customFields,
-			},
 		};
+
+		if (customFields.length > 0) {
+			companyData.customFields = {
+				Values: customFields,
+			};
+		}
 
 		const body = { company: companyData };
 		return await teamworkRequest(auth, {

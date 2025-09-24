@@ -37,7 +37,13 @@ export const createTimeEntryOnTask = createAction({
 		}),
 		date: Property.DateTime({
 			displayName: 'Date',
+			description: 'Date of the time entry (yyyy-mm-dd)',
 			required: true,
+		}),
+		time: Property.ShortText({
+			displayName: 'Time',
+			description: 'Time of the entry (hh:mm:ss)',
+			required: false,
 		}),
 		hours: Property.Number({
 			displayName: 'Hours',
@@ -45,6 +51,7 @@ export const createTimeEntryOnTask = createAction({
 		}),
 		minutes: Property.Number({
 			displayName: 'Minutes',
+			description: 'Duration in minutes',
 			required: true,
 		}),
 		description: Property.LongText({
@@ -61,8 +68,9 @@ export const createTimeEntryOnTask = createAction({
 		const body = {
 			timelog: {
 				date: date,
+				time: propsValue.time,
 				description: propsValue.description,
-				hasStartTime: false,
+				hasStartTime: !!propsValue.time,
 				hours: propsValue.hours,
 				minutes: propsValue.minutes,
 				isBillable: propsValue.isBillable,
