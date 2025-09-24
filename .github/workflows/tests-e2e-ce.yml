@@ -12,8 +12,7 @@ env:
   AP_TRIGGER_DEFAULT_POLL_INTERVAL: "1"
   AP_EXECUTION_MODE: UNSANDBOXED
   AP_TELEMETRY_ENABLED: "false"
-  AP_ENCRYPTION_KEY: "test"
-  AP_JWT_SECRET: "test"
+  AP_JWT_SECRET: "secret"
 
 jobs:
   test-e2e-ce:
