@@ -33,10 +33,7 @@ import {
 
 import { DataTableBulkActions } from './data-table-bulk-actions';
 import { DataTableColumnHeader } from './data-table-column-header';
-import {
-  DataTableFilter,
-  DataTableFilterProps,
-} from './data-table-filter';
+import { DataTableFilter, DataTableFilterProps } from './data-table-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 

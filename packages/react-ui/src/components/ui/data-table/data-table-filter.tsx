@@ -10,9 +10,6 @@ import { DataTableSelectPopover } from './data-table-select-popover';
 
 import { CURSOR_QUERY_PARAM } from '.';
 
-
-
-
 type DropdownFilterProps = {
   type: 'select';
   options: {
@@ -20,22 +17,25 @@ type DropdownFilterProps = {
     value: string;
     icon?: React.ComponentType<{ className?: string }> | string;
   }[];
-}
+};
 
 type InputFilterProps = {
   type: 'input';
-}
+};
 type DateFilterProps = {
   type: 'date';
-}
-
+};
 
 export type DataTableFilterProps = {
   title?: string;
   icon?: React.ComponentType<{ className?: string }>;
 } & (DropdownFilterProps | InputFilterProps | DateFilterProps);
 
-export function DataTableFilter<TData, TValue>( {title,column, ...props}: (DataTableFilterProps & {column?: Column<TData, TValue>})) {
+export function DataTableFilter<TData, TValue>({
+  title,
+  column,
+  ...props
+}: DataTableFilterProps & { column?: Column<TData, TValue> }) {
   const facets = column?.getFacetedUniqueValues();
   const [searchParams, setSearchParams] = useSearchParams();
 

@@ -1,6 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckIcon, Redo, RotateCw, ChevronDown, History } from 'lucide-react';
+import {
+  CheckIcon,
+  Redo,
+  RotateCw,
+  ChevronDown,
+  History,
+  X,
+} from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -11,6 +18,7 @@ import {
   CURSOR_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
   DataTable,
+  DataTableFilters,
 } from '@/components/ui/data-table';
 import {
   DropdownMenu,
@@ -53,7 +61,7 @@ export const RunsTable = () => {
 
   const projectId = authenticationSession.getProjectId()!;
   const [retriedRunsIds, setRetriedRunsIds] = useState<string[]>([]);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     staleTime: 0,
     gcTime: 0,
@@ -115,7 +123,7 @@ export const RunsTable = () => {
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.WRITE_RUN);
 
-  const filters = useMemo(
+  const filters: DataTableFilters<keyof FlowRun>[] = useMemo(
     () => [
       {
         type: 'select',
@@ -127,7 +135,7 @@ export const RunsTable = () => {
             value: flow.id,
           })) || [],
         icon: CheckIcon,
-      } as const,
+      },
       {
         type: 'select',
         title: t('Status'),
@@ -140,19 +148,18 @@ export const RunsTable = () => {
           };
         }),
         icon: CheckIcon,
-      } as const,
+      },
       {
         type: 'date',
         title: t('Created'),
         accessorKey: 'created',
-        options: [],
         icon: CheckIcon,
-      } as const,
+      },
     ],
     [flows],
   );
 
-  const retryRun = useMutation({
+  const retryRuns = useMutation({
     mutationFn: (retryParams: {
       runIds: string[];
       strategy: FlowRetryStrategy;
@@ -178,6 +185,7 @@ export const RunsTable = () => {
       const runsIds = runs.map((run) => run.id);
       setRetriedRunsIds(runsIds);
       const isAlreadyViewingRetriedRuns = searchParams.get(RUN_IDS_QUERY_PARAM);
+      refetch();
       if (isAlreadyViewingRetriedRuns) {
         navigate(authenticationSession.appendProjectRoutePrefix(`/runs`));
         setSearchParams({
@@ -225,7 +233,7 @@ export const RunsTable = () => {
                       <DropdownMenuItem
                         disabled={!userHasPermissionToRetryRun}
                         onClick={() => {
-                          retryRun.mutate({
+                          retryRuns.mutate({
                             runIds: selectedRows.map((row) => row.id),
                             strategy: FlowRetryStrategy.ON_LATEST_VERSION,
                           });
@@ -251,7 +259,7 @@ export const RunsTable = () => {
                         <DropdownMenuItem
                           disabled={!userHasPermissionToRetryRun || !allFailed}
                           onClick={() => {
-                            retryRun.mutate({
+                            retryRuns.mutate({
                               runIds: selectedRows.map((row) => row.id),
                               strategy: FlowRetryStrategy.FROM_FAILED_STEP,
                             });
@@ -277,7 +285,7 @@ export const RunsTable = () => {
         },
       },
     ],
-    [retryRun, userHasPermissionToRetryRun, t, selectedRows, data],
+    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
   );
 
   const handleRowClick = useCallback(
@@ -295,6 +303,25 @@ export const RunsTable = () => {
     [navigate, openNewWindow],
   );
 
+  const retriedRunsInQueryParams = searchParams.getAll(RUN_IDS_QUERY_PARAM);
+  const customFilters =
+    retriedRunsInQueryParams.length > 0
+      ? [
+          <Button
+            key="retried-runs-filter"
+            variant="outline"
+            onClick={() => {
+              navigate(authenticationSession.appendProjectRoutePrefix(`/runs`));
+            }}
+          >
+            <div className="flex flex-row gap-2 items-center">
+              {t('Viewing retried runs')} ({retriedRunsInQueryParams.length}){' '}
+              <X className="size-4" />
+            </div>
+          </Button>,
+        ]
+      : [];
+
   return (
     <div className="relative">
       <DataTable
@@ -306,9 +333,11 @@ export const RunsTable = () => {
         columns={columns}
         page={data}
         isLoading={isLoading || isFetchingFlows}
-        filters={filters}
+        filters={customFilters.length > 0 ? [] : filters}
         bulkActions={bulkActions}
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
+        customFilters={customFilters}
+        hidePagination={retriedRunsInQueryParams.length > 0}
       />
       <RetriedRunsSnackbar
         retriedRunsIds={retriedRunsIds}
