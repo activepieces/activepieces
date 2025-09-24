@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
-import { enrichErrorContext, execPromise, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { enrichErrorContext, execPromise, fileSystemUtils } from '@activepieces/server-shared'
 import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -82,7 +82,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        return memoryLock.runExclusive(`pnpm-init-${path}`, async () => {
+        return fileSystemUtils.runExclusive(path, `pnpm-init-${path}`, async () => {
             const fExists = await fileSystemUtils.fileExists(fsPath.join(path, 'package.json'))
             if (fExists) {
                 return {

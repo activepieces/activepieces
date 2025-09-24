@@ -56,12 +56,16 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             name,
             codePath,
         })
+        const currentHash = await cryptoUtils.hashObject(sourceCode)
+        const cache = cacheState(codePath)
+        const cachedHash = await cache.cacheCheckState(codePath)
+        if (cachedHash === currentHash) {
+            return
+        }
 
         return memoryLock.runExclusive(`code-builder-${flowVersionId}-${name}`, async () => {
             try {
-                const cache = cacheState(codePath)
                 const cachedHash = await cache.cacheCheckState(codePath)
-                const currentHash = await cryptoUtils.hashObject(sourceCode)
                 if (cachedHash === currentHash) {
                     return
                 }

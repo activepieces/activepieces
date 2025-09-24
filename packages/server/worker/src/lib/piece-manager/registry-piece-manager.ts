@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -26,7 +26,7 @@ export class RegistryPieceManager extends PieceManager {
             return
         }
 
-        await memoryLock.runExclusive(`pnpm-add-${projectPath}`, async () => {
+        await fileSystemUtils.runExclusive(projectPath, `pnpm-add-${projectPath}`, async () => {
             const cache = cacheState(projectPath)
 
             const dependencies = await this.filterExistingPieces(projectPath, pieces)

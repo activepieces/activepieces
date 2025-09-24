@@ -1,40 +1,25 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
 import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 
 type CacheMap = Record<string, string>
+type Cache = {
+    cacheCheckState: (cacheAlias: string) => Promise<string | undefined>
+    setCache: (cacheAlias: string, state: string) => Promise<void>
+}
 
 const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
 
-const cached: Record<string, CacheMap | null> = {}
-const getCache = async (folderPath: string): Promise<CacheMap> => {
-    if (isNil(cached[folderPath])) {
-        const filePath = cachePath(folderPath)
-        const cacheExists = await fileSystemUtils.fileExists(filePath)
-        if (!cacheExists) {
-            await saveToCache({}, folderPath)
-        }
-        cached[folderPath] = await readCache(folderPath)
-    }
-    const cache = (cached[folderPath] as CacheMap) || {}
-    return cache
-}
-
-export const cacheState = (folderPath: string) => {
+export const cacheState = (folderPath: string): Cache => {
     return {
         async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
-                const cache = await getCache(folderPath)
-                return cache[cacheAlias]
-            })
+            const cache = await readCache(folderPath)
+            return cache[cacheAlias]
         },
         async setCache(cacheAlias: string, state: string): Promise<void> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
-                const cache = await getCache(folderPath)
+            return fileSystemUtils.runExclusive(folderPath, cacheAlias, async () => {
+                const cache = await readCache(folderPath)
                 cache[cacheAlias] = state
                 await saveToCache(cache, folderPath)
             })
@@ -44,13 +29,23 @@ export const cacheState = (folderPath: string) => {
 
 
 async function saveToCache(cache: CacheMap, folderPath: string): Promise<void> {
-    await fileSystemUtils.threadSafeMkdir(folderPath)
-    const filePath = cachePath(folderPath)
-    await writeFileAtomic(filePath, JSON.stringify(cache), 'utf8')
+    return fileSystemUtils.runExclusive(folderPath, 'saveToCache', async () => {
+        await fileSystemUtils.threadSafeMkdir(folderPath)
+        const filePath = cachePath(folderPath)
+        const fileExists = await fileSystemUtils.fileExists(filePath)
+        if (fileExists) {
+            return
+        }
+        await writeFileAtomic(filePath, JSON.stringify(cache), 'utf8')
+    })
 }
 
 async function readCache(folderPath: string): Promise<CacheMap> {
     const filePath = cachePath(folderPath)
+    const cacheExists = await fileSystemUtils.fileExists(filePath)
+    if (!cacheExists) {
+        return {}
+    }
     const fileContent = await readFile(filePath, 'utf8')
     return JSON.parse(fileContent)
 }
