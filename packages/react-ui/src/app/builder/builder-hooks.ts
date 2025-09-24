@@ -30,6 +30,8 @@ import {
   apId,
   StepSettings,
   FlowTriggerType,
+  FlowActionType,
+  LoopStepOutput,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -403,11 +405,46 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       isPublishing: false,
       setLoopIndex: (stepName: string, index: number) => {
         set((state) => {
+          const parentLoop = flowStructureUtil.getStepOrThrow(
+            stepName,
+            state.flowVersion.trigger,
+          );
+          if (parentLoop.type !== FlowActionType.LOOP_ON_ITEMS) {
+            console.error(
+              `Trying to set loop index for a step that is not a loop: ${stepName}`,
+            );
+            return state;
+          }
+          const childLoops = flowStructureUtil
+            .getAllChildSteps(parentLoop)
+            .filter((c) => c.type === FlowActionType.LOOP_ON_ITEMS)
+            .filter((c) => c.name !== stepName);
+          const loopsIndexes = { ...state.loopsIndexes };
+
+          loopsIndexes[stepName] = index;
+
+          childLoops.forEach((childLoop) => {
+            const childLoopOutput = flowRunUtils.extractStepOutput(
+              childLoop.name,
+              loopsIndexes,
+              state.run?.steps ?? {},
+              state.flowVersion.trigger,
+            ) as LoopStepOutput | undefined;
+
+            if (isNil(childLoopOutput) || isNil(childLoopOutput.output)) {
+              loopsIndexes[childLoop.name] = 0;
+            } else {
+              loopsIndexes[childLoop.name] = Math.max(
+                Math.min(
+                  loopsIndexes[childLoop.name],
+                  childLoopOutput.output.iterations.length - 1,
+                ),
+                0,
+              );
+            }
+          });
           return {
-            loopsIndexes: {
-              ...state.loopsIndexes,
-              [stepName]: index,
-            },
+            loopsIndexes,
           };
         });
       },
