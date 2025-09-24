@@ -199,6 +199,9 @@
       "@activepieces/piece-campaign-monitor": [
         "packages/pieces/community/campaign-monitor/src/index.ts"
       ],
+      "@activepieces/piece-capsule-crm": [
+        "packages/pieces/community/capsule-crm/src/index.ts"
+      ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
       ],
@@ -367,6 +370,9 @@
       ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
+      ],
+      "@activepieces/piece-emailoctopus": [
+        "packages/pieces/community/emailoctopus/src/index.ts"
       ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
@@ -822,6 +828,9 @@
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
+      "@activepieces/piece-prompthub": [
+        "packages/pieces/community/prompthub/src/index.ts"
+      ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],
@@ -1113,6 +1122,9 @@
       ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
+      ],
+      "@activepieces/piece-vadoo-ai":[
+        "packages/pieces/community/vadoo-ai/src/index.ts"
       ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
