@@ -18,6 +18,10 @@ export interface CreateLeadParams {
   phone_number?: string;
   company_name?: string;
   notes?: string;
+  date_created?: string;
+  quotable?: string;
+  quote_value?: number;
+  sales_value?: number;
 }
 
 export interface FindLeadParams {

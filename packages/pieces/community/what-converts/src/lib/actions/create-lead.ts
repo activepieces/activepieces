@@ -89,6 +89,35 @@ export const createLeadAction = createAction({
       required: true,
       defaultValue: false,
     }),
+    date_created : Property.DateTime({
+      displayName: 'Creation Date',
+      description: 'The date and time when the lead was created.',
+      required: false,
+    }),
+    quotable: Property.StaticDropdown({
+      displayName: 'Quotable',
+      description: 'Indicates if the lead is quotable.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+          { label: 'Pending', value: 'pending' },
+          { label: 'Not Set', value: 'not_set' },
+        ],
+      },
+    }),
+    quote_value: Property.Number({
+      displayName: 'Quote Value',
+      description: 'The monetary value of the quote associated with the lead.',
+      required: false,
+    }),
+    sales_value: Property.Number({
+      displayName: 'Sales Value',
+      description: 'The monetary value of the sale associated with the lead.',
+      required: false,
+    }),
+
   },
 
   async run(context) {
@@ -107,7 +136,7 @@ export const createLeadAction = createAction({
       .trim();
 
     return await whatConvertsClient.createLead(auth, propsValue.account_id, {
-      profile_id: propsValue.profile_id,
+      profile_id: propsValue.profile_id as number,
       lead_type: propsValue.lead_type,
       send_notification: propsValue.send_notification,
       referring_source: propsValue.referring_source,
@@ -115,6 +144,12 @@ export const createLeadAction = createAction({
       contact_name: contactName || undefined,
       email_address: propsValue.email,
       phone_number: propsValue.phone_number,
+      company_name: propsValue.company_name,
+      notes: propsValue.notes,
+      date_created: propsValue.date_created,
+      quotable: propsValue.quotable,
+      quote_value: propsValue.quote_value,
+      sales_value: propsValue.sales_value,
     });
   },
 });
