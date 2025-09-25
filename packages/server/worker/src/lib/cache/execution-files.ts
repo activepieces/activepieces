@@ -46,12 +46,13 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         }, 'Installed code in sandbox')
 
         const startTimeEngine = performance.now()
-        await engineInstaller(log).install({
+        const { cacheHit } = await engineInstaller(log).install({
             path: GLOBAL_CACHE_COMMON_PATH,
         })
         log.info({
             path: GLOBAL_CACHE_COMMON_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeEngine)}ms`,
+            cacheHit,
         }, 'Installed engine in sandbox')
 
         const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
