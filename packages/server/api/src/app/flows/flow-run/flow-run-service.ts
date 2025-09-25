@@ -105,9 +105,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 failedStepName: params.failedStepName,
             })
         }
-        if (params.runIds) {
+        if (params.flowRunIds) {
             query = query.andWhere({
-                id: In(params.runIds),
+                id: In(params.flowRunIds),
             })
         }
 
@@ -698,7 +698,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
-    runIds?: FlowRunId[]
+    flowRunIds?: FlowRunId[]
 }
 
 type GetOneParams = {

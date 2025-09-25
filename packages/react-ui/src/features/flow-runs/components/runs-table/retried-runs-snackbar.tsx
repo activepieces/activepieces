@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { LIMIT_QUERY_PARAM } from '@/components/ui/data-table';
 import { authenticationSession } from '@/lib/authentication-session';
 
-export const RUN_IDS_QUERY_PARAM = 'runIds';
+export const RUN_IDS_QUERY_PARAM = 'flowRunIds';
 
 export const RetriedRunsSnackbar = ({
   retriedRunsIds,

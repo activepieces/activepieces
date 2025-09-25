@@ -78,7 +78,6 @@ const RunsList = React.memo(() => {
       (run) => ({ type: 'flowRun' as const, run }),
     );
     if (hasNextPage) {
-      console.log('hasNextPage', hasNextPage);
       return [
         ...allRuns,
         { type: 'loadMoreButton' as const, id: 'loadMoreButton' },

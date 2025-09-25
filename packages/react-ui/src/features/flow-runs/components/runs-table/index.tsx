@@ -69,7 +69,7 @@ export const RunsTable = () => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const runIds = searchParams.getAll(RUN_IDS_QUERY_PARAM);
+      const flowRunIds = searchParams.getAll(RUN_IDS_QUERY_PARAM);
       const failedStepName = searchParams.get('failedStepName') || undefined;
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
@@ -87,7 +87,7 @@ export const RunsTable = () => {
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
         failedStepName: failedStepName,
-        runIds,
+        flowRunIds,
       });
     },
     refetchInterval: (query) => {
