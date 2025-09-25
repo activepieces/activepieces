@@ -2,7 +2,7 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineProcessManager } from '../runner/process/engine-process-manager'
@@ -17,7 +17,6 @@ export const workerMachine = {
     getWorkerId: () => workerId,
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
-
         const cpus = os.cpus()
         const cpuUsage = cpus.reduce((acc, cpu) => {
             const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
@@ -26,7 +25,7 @@ export const workerMachine = {
         }, 0) / cpus.length * 100
 
         const ip = (await networkUtils.getPublicIp()).ip
-        const diskInfo = await getDiskInfo()
+        const diskInfo = await getDiskInfo()        
 
         return {
             diskInfo,
@@ -137,8 +136,8 @@ async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
 
-    const memLimitExists = await fileExists(memLimitPath)
-    const memUsageExists = await fileExists(memUsagePath)
+    const memLimitExists = await fileSystemUtils.fileExists(memLimitPath)
+    const memUsageExists = await fileSystemUtils.fileExists(memUsagePath)
 
     const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
     const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.totalmem() - os.freemem()

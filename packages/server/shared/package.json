@@ -18,6 +18,7 @@
     "@activepieces/import-fresh-webpack": "3.3.0",
     "clear-module": "4.1.2",
     "axios-retry": "4.4.1",
-    "@hyperdx/node-opentelemetry": "0.8.2"
+    "@hyperdx/node-opentelemetry": "0.8.2",
+    "proper-lockfile": "4.1.2"
   }
 }

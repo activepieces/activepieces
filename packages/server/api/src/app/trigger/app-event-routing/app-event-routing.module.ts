@@ -25,7 +25,7 @@ import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun, webhookHandler } from '../../webhooks/webhook-handler'
-import { jobQueue } from '../../workers/queue'
+import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
@@ -124,7 +124,10 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                const flow = await flowService(request.log).getOneOrThrow({ id: listener.flowId, projectId: listener.projectId })
+                const flow = await flowService(request.log).getOne({ id: listener.flowId, projectId: listener.projectId })
+                if (isNil(flow)) {
+                    return
+                }
                 const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
                 const platformId = await projectService.getPlatformId(listener.projectId)
                 return jobQueue(request.log).add({
