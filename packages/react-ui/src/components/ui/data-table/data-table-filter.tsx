@@ -10,23 +10,32 @@ import { DataTableSelectPopover } from './data-table-select-popover';
 
 import { CURSOR_QUERY_PARAM } from '.';
 
-interface DataTableFacetedFilterProps<TData, TValue> {
-  type: 'select' | 'input' | 'date';
-  column?: Column<TData, TValue>;
-  title?: string;
-  options: readonly {
+type DropdownFilterProps = {
+  type: 'select';
+  options: {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }> | string;
   }[];
-}
+};
 
-export function DataTableFacetedFilter<TData, TValue>({
-  type,
-  column,
+type InputFilterProps = {
+  type: 'input';
+};
+type DateFilterProps = {
+  type: 'date';
+};
+
+export type DataTableFilterProps = {
+  title?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+} & (DropdownFilterProps | InputFilterProps | DateFilterProps);
+
+export function DataTableFilter<TData, TValue>({
   title,
-  options,
-}: DataTableFacetedFilterProps<TData, TValue>) {
+  column,
+  ...props
+}: DataTableFilterProps & { column?: Column<TData, TValue> }) {
   const facets = column?.getFacetedUniqueValues();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -82,7 +91,7 @@ export function DataTableFacetedFilter<TData, TValue>({
     [column, setSearchParams],
   );
 
-  switch (type) {
+  switch (props.type) {
     case 'input': {
       const filterValue = searchParams.get(column?.id as string) || '';
       return (
@@ -100,7 +109,7 @@ export function DataTableFacetedFilter<TData, TValue>({
         <DataTableSelectPopover
           title={title}
           selectedValues={selectedValues}
-          options={options}
+          options={props.options}
           handleFilterChange={handleFilterChange}
           facets={facets}
         />

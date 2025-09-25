@@ -144,6 +144,14 @@ module.exports = {
           '100%': {
             backgroundPosition: '0%'
           }
+        },
+        'slide-in-from-bottom': {
+          '0%': {
+            transform: 'translateY(100%)'
+          },
+          '100%': {
+            transform: 'translateY(0%)'
+          }
         }
       },
       animation: {
@@ -153,7 +161,8 @@ module.exports = {
         highlight: 'highlight 1s ease-out',
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
-        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'
+        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite',
+        'slide-in-from-bottom': 'slide-in-from-bottom 0.2s ease-out forwards' 
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',

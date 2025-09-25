@@ -253,7 +253,6 @@ const ApTablesPage = () => {
               type: 'input',
               title: t('Name'),
               icon: CheckIcon,
-              options: [],
             },
           ]}
           emptyStateIcon={<Table2 className="size-14" />}
