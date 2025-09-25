@@ -1,8 +1,59 @@
-import { AIErrorResponse } from "@activepieces/common-ai";
 import { httpClient, AuthenticationType, HttpMethod } from "@activepieces/pieces-common";
-import { Agent, SeekPage, ContentBlockType, agentbuiltInToolsNames, RunAgentRequestBody, AgentRun, UpdateAgentRunRequestBody, AgentStepBlock, AgentTaskStatus, isNil, ToolCallContentBlock } from "@activepieces/shared"
-import { APICallError } from "ai";
+import { Agent, SeekPage, ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined } from "@activepieces/shared"
+import { experimental_createMCPClient, tool } from "ai";
 import { StatusCodes } from "http-status-codes";
+import z, { ZodRawShape, ZodSchema } from "zod";
+
+async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
+    const outputFields = agent.outputFields ?? []
+    const shape: ZodRawShape = {}
+
+    for (const field of outputFields) {
+        switch (field.type) {
+            case AgentOutputFieldType.TEXT:
+                shape[field.displayName] = z.string()
+                break
+            case AgentOutputFieldType.NUMBER:
+                shape[field.displayName] = z.number()
+                break
+            case AgentOutputFieldType.BOOLEAN:
+                shape[field.displayName] = z.boolean()
+                break
+            default:
+                shape[field.displayName] = z.any()
+        }
+    }
+
+    return z.object(shape)
+}  
+
+async function buildInternalTools(params: AgentToolsParams) {
+    return {
+        [agentbuiltInToolsNames.markAsComplete]: tool({
+            description: 'Mark the todo as complete',
+            inputSchema: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
+                output: await getStructuredOutput(params.agent),
+            }) : z.object({}),
+            execute: async () => {
+                return 'Marked as Complete'
+            },
+        }),
+    }
+}
+
+async function getMcpClient(params: AgentToolsParams) {
+    const mcpServer = params.mcp
+    if (mcpServer.tools.length === 0) {
+        return null
+    }
+    const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
+    return experimental_createMCPClient({
+        transport: {
+            type: 'sse',
+            url: mcpServerUrl,
+        },
+    })
+}
 
 export const agentCommon = {
   listAgents(params: ListAgents) {
@@ -15,97 +66,95 @@ export const agentCommon = {
       },
     })
   },
-
-  async createAgentRun(params: CreateAgentRun) {
-    const { agentId, apiUrl, prompt, token } = params;
-    const body: RunAgentRequestBody = {
-      externalId: agentId,
-      prompt,
+  async agentTools(params: AgentToolsParams) {
+    const mcpClient = await getMcpClient(params)
+    const builtInTools = await buildInternalTools(params)
+    const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
+    const tools = {
+        ...builtInTools,
+        ...mcpTools,
     }
-    
-    const response = await httpClient.sendRequest<AgentRun>({
-      method: HttpMethod.POST,
-      url: `${apiUrl}v1/agent-runs`,
+    return {
+        tools: async () => {
+            return tools
+        },
+        close: async () => {
+            await mcpClient?.close()
+        },
+    }
+  },
+  async getAgent(params: GetAgent) {
+    const { agentId, apiUrl , token } = params;
+    const response = await httpClient.sendRequest<Agent>({
+      method: HttpMethod.GET,
+      url: `${apiUrl}v1/agents/${agentId}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token,
-      },
-      body
+      }
+    })
+    if (response.status !== StatusCodes.OK) {
+      throw new Error("There was an error fetching agent")
+    }
+
+    return response.body
+  },
+  getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock {
+    if (toolName === agentbuiltInToolsNames.markAsComplete || toolName === agentbuiltInToolsNames.updateTableRecord) {
+        return {
+            ...baseTool,
+            toolCallType: ToolCallType.INTERNAL,
+            displayName: toolName === agentbuiltInToolsNames.markAsComplete ? 'Mark as Complete' : 'Update Table Record',
+        }
+    }
+    const tool = mcp.tools.find((tool) => tool.toolName === toolName)
+    if (!tool) {
+        throw new Error(`Tool ${toolName} not found`)
+    }
+    switch (tool.type) {
+        case McpToolType.PIECE: {
+            const pieceMetadata = tool.pieceMetadata
+            assertNotNullOrUndefined(pieceMetadata, 'Piece metadata is required')
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.PIECE,
+                pieceName: pieceMetadata.pieceName,
+                pieceVersion: pieceMetadata.pieceVersion,
+                actionName: tool.pieceMetadata.actionName,
+            }
+        }
+        case McpToolType.FLOW: {
+            assertNotNullOrUndefined(tool.flowId, 'Flow ID is required')
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.FLOW,
+                displayName: tool.flow?.version?.displayName ?? 'Unknown',
+                flowId: tool.flowId,
+            }
+        }
+    }
+  },
+  async getMcp(params: GetMcp) {
+    const { mcpId, apiUrl , token } = params;
+
+    const response = await httpClient.sendRequest<McpWithTools>({
+      method: HttpMethod.GET,
+      url: `${apiUrl}v1/mcp-servers/${mcpId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      }
     })
     
     if (response.status !== StatusCodes.OK) {
-      throw new Error(response.body.message)
+      throw new Error("There was an error fetching agent")
     }
-      
+
     return response.body
   },
-
-  async updateAgentRun(params: UpdateAgentRunParams) {
-    const { apiUrl, token, agentRunId, agentResult } = params;
-    
-    const response = await httpClient.sendRequest<AgentRun>({
-      method: HttpMethod.POST,
-      url: `${apiUrl}v1/agent-runs/${agentRunId}/update`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token,
-      },
-      body: agentResult
-    })
-    
-    return response.body
-  },
-
-  createInitialAgentResult(projectId: string): UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } {
-    return {
-      projectId,
-      startTime: new Date().toISOString(),
-      steps: [],
-      message: '',
-      status: AgentTaskStatus.IN_PROGRESS,
-      output: undefined,
-    }
-  },
-
-  handleStreamError(chunk: any, agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] }): void {
-    agentResult.status = AgentTaskStatus.FAILED
-    
-    if (APICallError.isInstance(chunk.error)) {
-      const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
-      agentResult.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
-    } else {
-      agentResult.message = this.concatMarkdown(agentResult.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
-    }
-    
-    agentResult.finishTime = new Date().toISOString()
-  },
-
-  finalizeAgentResult(
-    agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] }, 
-    currentText: string
-  ): UpdateAgentRunRequestBody & { steps: AgentStepBlock[] } {
-    if (currentText.length > 0) {
-      agentResult.steps.push({
-        type: ContentBlockType.MARKDOWN,
-        markdown: currentText,
-      })
-    }
-
-    const markAsComplete = agentResult.steps.find(this.isMarkAsComplete) as ToolCallContentBlock | undefined
-    
-    return {
-      ...agentResult,
-      output: markAsComplete?.input,
-      status: !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED,
-      message: this.concatMarkdown(agentResult.steps),
-      finishTime: new Date().toISOString(),
-    }
-  },
-
   isMarkAsComplete(block: any): boolean {
     return block.type === ContentBlockType.TOOL_CALL && block.toolName === agentbuiltInToolsNames.markAsComplete
   },
-
   concatMarkdown(blocks: AgentStepBlock[]): string {
     return blocks
       .filter((block) => block.type === ContentBlockType.MARKDOWN)
@@ -131,16 +180,21 @@ type ListAgents = {
   token: string
 }
 
-type CreateAgentRun = {
+type GetAgent = {
   agentId: string;
-  prompt: string;
   apiUrl: string;
   token: string
 }
 
-type UpdateAgentRunParams = {
+type GetMcp = {
+  mcpId: string;
   apiUrl: string;
-  token: string;
-  agentRunId: string;
-  agentResult: UpdateAgentRunRequestBody & { steps: AgentStepBlock[] };
+  token: string
+}
+
+type AgentToolsParams = {
+    publicUrl: string
+    token: string
+    mcp: McpWithTools
+    agent: Agent
 }

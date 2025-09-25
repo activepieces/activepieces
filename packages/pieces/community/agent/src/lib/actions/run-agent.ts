@@ -1,9 +1,9 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
+import { AIErrorResponse, AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { agentCommon } from '../common';
-import {  AgentRun } from '@activepieces/shared';
+import {  AgentStepBlock, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { openai } from '@ai-sdk/openai';
-import { stepCountIs, streamText } from 'ai';
+import { APICallError, stepCountIs, streamText } from 'ai';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -56,21 +56,24 @@ export const runAgent = createAction({
     const { agentId, prompt, maxSteps } = context.propsValue
     const { server } = context
 
-    const agentRun = await agentCommon.createAgentRun({
-      token: server.token,
-      agentId,
-      apiUrl: server.publicUrl,
-      prompt 
+    const output: AgentOutput = {
+      steps: [],
+      status: AgentTaskStatus.IN_PROGRESS,
+      message: null,
+      output: null,
+      startTime: new Date().toISOString(),
+      finishTime: null,
+    }
+
+    const agent = await agentCommon.getAgent({ agentId, token: server.token, apiUrl: server.publicUrl })
+    const mcp = await agentCommon.getMcp({ mcpId: agent.mcpId, token: server.token, apiUrl: server.publicUrl })
+
+    const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
+        agent,
+        publicUrl: server.publicUrl,
+        token: server.token,
+        mcp,
     })
-
-    const agentResult = agentCommon.createInitialAgentResult(agentRun.projectId)
-
-    await agentCommon.updateAgentRun({
-      agentRunId: agentRun.id,
-      apiUrl: server.publicUrl,
-      token: server.token,
-      agentResult
-    }) 
 
     const baseURL = `${server.apiUrl}v1/ai-providers/proxy/openai`
     const model = createAIModel({
@@ -90,55 +93,81 @@ export const runAgent = createAction({
       system: systemPrompt,
       prompt: prompt,
       stopWhen: stepCountIs(maxSteps),
+      tools: await agentToolInstance.tools()
     })
 
     let currentText = ''
-
     for await (const chunk of fullStream) {
-      if (chunk.type === 'text-delta') {
-        currentText += chunk.text
-      }
-      else if (chunk.type === 'error') {
-        agentCommon.handleStreamError(chunk, agentResult)
-        
-        await agentCommon.updateAgentRun({
-          agentRunId: agentRun.id,
-          apiUrl: server.publicUrl,
-          token: server.token,
-          agentResult
-        }) 
-        return
-      }
-
-      if (agentResult.steps.length > 0) {
-        await agentCommon.updateAgentRun({
-          agentRunId: agentRun.id,
-          apiUrl: server.publicUrl,
-          token: server.token,
-          agentResult
-        })
-      }
+        if (chunk.type === 'text-delta') {
+            currentText += chunk.text
+        }
+        else if (chunk.type === 'tool-call') { 
+            if (currentText.length > 0) {
+                output.steps.push({
+                    type: ContentBlockType.MARKDOWN,
+                    markdown: currentText,
+                })
+                currentText = ''
+            }
+            const metadata = agentCommon.getMetadata(chunk.toolName, mcp, {
+                toolName: chunk.toolName,
+                toolCallId: chunk.toolCallId,
+                type: ContentBlockType.TOOL_CALL,
+                status: ToolCallStatus.IN_PROGRESS,
+                input: chunk.input as Record<string, unknown>,
+                output: undefined,
+                startTime: new Date().toISOString(),
+            })
+            output.steps.push(metadata)
+        }
+        else if (chunk.type === 'tool-result') {
+            const lastBlockIndex = output.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
+            const lastBlock = output.steps[lastBlockIndex] as ToolCallContentBlock
+            assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
+            output.steps[lastBlockIndex] = {
+                ...lastBlock,
+                status: ToolCallStatus.COMPLETED,
+                endTime: new Date().toISOString(),
+                output: chunk.output,
+            }
+        }
+        else if (chunk.type === 'error') {
+            output.status = AgentTaskStatus.FAILED
+            if (APICallError.isInstance(chunk.error)) {
+                const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
+                output.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
+            }
+            else {
+                output.message = agentCommon.concatMarkdown(output.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
+            }
+            output.finishTime = new Date().toISOString()
+            return output
+        }
     }
 
-    const finalizedResult = agentCommon.finalizeAgentResult(agentResult, currentText)
-    
-    const lastAgentRun = await agentCommon.updateAgentRun({
-      agentRunId: agentRun.id,
-      apiUrl: server.publicUrl,
-      token: server.token,
-      agentResult: finalizedResult
-    })
+    if (currentText.length > 0) {
+        output.steps.push({
+            type: ContentBlockType.MARKDOWN,
+            markdown: currentText,
+        })
+    }
 
-    return mapAgentRunToOutput(lastAgentRun)
-  },
+    const markAsComplete = output.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
+    
+    output.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
+    output.output = markAsComplete?.input
+    output.message = agentCommon.concatMarkdown(output.steps)
+    output.finishTime = new Date().toISOString()
+
+    return output
+  }
 });
 
-function mapAgentRunToOutput(agentRun: AgentRun): Record<string, unknown> {
-  return {
-    steps: agentRun.steps,
-    status: agentRun.status,
-    output: agentRun.output,
-    agentRunId: agentRun.id,
-    message: agentRun.message
-  }
+type AgentOutput = {
+  steps: AgentStepBlock[]
+  status: AgentTaskStatus
+  message: string | null
+  output?: Record<string, unknown> | null | undefined
+  finishTime: string | null
+  startTime: string
 }
