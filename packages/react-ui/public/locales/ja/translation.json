@@ -124,6 +124,7 @@
   "Run Details": "実行の詳細",
   "Iteration": "イテレーション",
   "Done": "完了",
+  "No Iterations": "",
   "All Iterations": "すべてのイテレーション",
   "Took": "取得済み",
   "Running": "実行中",

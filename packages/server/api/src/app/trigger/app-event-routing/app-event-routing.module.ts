@@ -124,7 +124,10 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                const flow = await flowService(request.log).getOneOrThrow({ id: listener.flowId, projectId: listener.projectId })
+                const flow = await flowService(request.log).getOne({ id: listener.flowId, projectId: listener.projectId })
+                if (isNil(flow)) {
+                    return
+                }
                 const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
                 const platformId = await projectService.getPlatformId(listener.projectId)
                 return jobQueue(request.log).add({

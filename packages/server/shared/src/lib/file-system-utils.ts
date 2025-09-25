@@ -44,10 +44,10 @@ export const fileSystemUtils = {
             await fileSystemUtils.threadSafeMkdir(lockFolderPath)
             release = await lockfile.lock(lockPathFile, {
                 retries: {
-                    retries: Math.ceil(timeout / 100),
+                    retries: Math.ceil(timeout / 10),
                     factor: 1,
-                    minTimeout: 100,
-                    maxTimeout: 100,
+                    minTimeout: 10,
+                    maxTimeout: 10,
                 },
                 stale: 30000,
                 realpath: false,
