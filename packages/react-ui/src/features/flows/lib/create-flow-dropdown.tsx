@@ -1,8 +1,14 @@
+import { Permission, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, Plus, Upload, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { ImportFlowDialog } from '../components/import-flow-dialog';
+import { SelectFlowTemplateDialog } from '../components/select-flow-template-dialog';
+
+import { flowsApi } from './flows-api';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
@@ -23,12 +29,6 @@ import { foldersApi } from '@/features/folders/lib/folders-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import { Permission, PopulatedFlow } from '@activepieces/shared';
-
-import { ImportFlowDialog } from '../components/import-flow-dialog';
-import { SelectFlowTemplateDialog } from '../components/select-flow-template-dialog';
-
-import { flowsApi } from './flows-api';
 
 type CreateFlowDropdownProps = {
   refetch?: () => void;
@@ -88,6 +88,7 @@ export const CreateFlowDropdown = ({
                 size={variant === 'small' ? 'icon' : 'default'}
                 loading={isCreateFlowPending}
                 onClick={(e) => e.stopPropagation()}
+                data-testid="new-flow-button"
               >
                 {variant === 'small' ? (
                   <Plus className="h-4 w-4" />
@@ -111,6 +112,7 @@ export const CreateFlowDropdown = ({
               createFlow();
             }}
             disabled={isCreateFlowPending}
+            data-testid="new-flow-from-scratch-button"
           >
             <Plus className="h-4 w-4 me-2" />
             <span>{t('From scratch')}</span>

@@ -1,10 +1,17 @@
 import { test, expect } from '../../../fixtures';
 
 test.describe('Webhooks', () => {
-  test('should handle webhook with return response', async ({ page, flowsPage, builderPage, users }) => {
-    test.setTimeout(1200000);
+  test('should handle webhook with return response', async ({ page, flowsPage, builderPage, users, authenticationPage }) => {
+    test.setTimeout(120000);
 
-    await users.apiSignUp();
+    if (process.env.E2E_EMAIL && process.env.E2E_PASSWORD) {
+      await authenticationPage.signIn({
+        email: process.env.E2E_EMAIL,
+        password: process.env.E2E_PASSWORD
+      });
+    } else {
+      await users.apiSignUp();
+    }
 
     await flowsPage.visit();
 
