@@ -1,15 +1,15 @@
 {
-  "Receive new email trigger": "接收新邮件触发器",
+  "Receive new email trigger": "Receive new email trigger",
   "Host": "主机",
   "Username": "用户名",
-  "Password": "密码",
+  "Password": "Password",
   "Port": "端口",
-  "Use TLS": "使用 TLS",
+  "Use TLS": "Use TLS",
   "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
-  "New Email": "新邮件",
-  "Trigger when a new email is received.": "收到新邮件时触发邮件。",
-  "Mailbox": "邮箱",
+  "New Email": "New Email",
+  "Trigger when a new email is received.": "Trigger when a new email is received.",
+  "Mailbox": "Mailbox",
   "Markdown": "Markdown",
-  "Select the mailbox to search": "选择要搜索的邮箱",
+  "Select the mailbox to search": "Select the mailbox to search",
   "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n"
 }
