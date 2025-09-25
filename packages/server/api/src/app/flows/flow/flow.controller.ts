@@ -266,6 +266,7 @@ const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDe
             valid: false,
             trigger: request.body.request.trigger,
             state: FlowVersionState.DRAFT,
+            schemaVersion: request.body.request.schemaVersion,
         })
         request.body.request.trigger = migratedFlowVersion.trigger
         request.body.request.schemaVersion = migratedFlowVersion.schemaVersion

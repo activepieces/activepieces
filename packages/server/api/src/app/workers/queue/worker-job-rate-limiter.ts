@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ExecuteFlowJobData, isNil, JobData, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, isNil, JobData, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
@@ -21,6 +21,9 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return
         }
         const castedJob = data as ExecuteFlowJobData
+        if (castedJob.environment === RunEnvironment.TESTING) {
+            return
+        }
 
         const setKey = projectSetKey(castedJob.projectId)
         const redisConnection = await redisConnections.useExisting()
@@ -49,12 +52,13 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
     }> {
-        if (isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
+        if (isNil(data.projectId) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
             return {
                 shouldRateLimit: false,
             }
         }
-        if (isNil(data.projectId) || !PROJECT_RATE_LIMITER_ENABLED) {
+        const castedJob = data as ExecuteFlowJobData
+        if (castedJob.environment === RunEnvironment.TESTING) {
             return {
                 shouldRateLimit: false,
             }
@@ -87,22 +91,22 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             redis.call('SREM', setKey, member)
         -- Check if the job already exists in the set
         elseif existingJobId == jobIdToCheck then
-            return { 0, currentSize }  -- Job already exists, should not rate limit
+            return 0  -- fixed
         end
     end
-
+    
     -- Check current size after cleanup
     local currentSize = redis.call('SCARD', setKey)
     
     if currentSize >= maxJobs then
-        return { 1, currentSize }  -- Should rate limit
+        return 1  -- Should rate limit
     end
     
     -- Add new job with timestamp
     redis.call('SADD', setKey, newJobEntry)
     redis.call('EXPIRE', setKey, math.ceil(timeoutMs / 1000))
     
-    return { 0, currentSize + 1 }  -- Should not rate limit
+    return 0  -- Should not rate limit
 `,
             1,
             setKey,
@@ -110,12 +114,10 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             FLOW_TIMEOUT_IN_MILLISECONDS.toString(),
             MAX_CONCURRENT_JOBS_PER_PROJECT.toString(),
             jobWithTimestamp,
-        ) as [number, number]
-
-        const [shouldRateLimit] = result
+        ) as number
 
         return {
-            shouldRateLimit: shouldRateLimit === 1,
+            shouldRateLimit: result === 1,
         }
     },
 
