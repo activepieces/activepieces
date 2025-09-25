@@ -13,7 +13,7 @@ test.describe('Webhooks', () => {
       await users.apiSignUp();
     }
 
-    await flowsPage.visit();
+    await flowsPage.waitFor();
 
     await flowsPage.newFlowFromScratch();
 
