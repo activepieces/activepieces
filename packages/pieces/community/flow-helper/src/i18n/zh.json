@@ -1,9 +1,9 @@
 {
-  "Get Run Info": "Get Run Info",
-  "Fail Flow": "Fail Flow",
-  "Stop Flow": "Stop Flow",
-  "Fails the flow execution with a custom message.": "Fails the flow execution with a custom message.",
-  "Stops the flow immediately this step is reached.": "Stops the flow immediately this step is reached.",
-  "Error Message": "Error Message",
-  "The error message to show when the flow fails.": "The error message to show when the flow fails."
+  "Get Run Info": "获取运行信息",
+  "Fail Flow": "故障流",
+  "Stop Flow": "停止流",
+  "Fails the flow execution with a custom message.": "使用自定义消息执行流失败。",
+  "Stops the flow immediately this step is reached.": "立即停止流速到达此步骤。",
+  "Error Message": "错误消息",
+  "The error message to show when the flow fails.": "显示流失败时的错误消息。"
 }
