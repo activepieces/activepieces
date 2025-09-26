@@ -36,6 +36,13 @@ export const updateTaskListAction = createAction({
         const { auth, propsValue } = context;
         const { task_list_id, displayName } = propsValue;
 
+        // -- ADD THIS VALIDATION BLOCK --
+        // This check prevents sending an empty name to the API.
+        if (!displayName || displayName.trim().length === 0) {
+            throw new Error('New Name cannot be empty. Please provide a valid name for the task list.');
+        }
+        // ---------------------------------
+
         const client = Client.initWithMiddleware({
             authProvider: {
                 getAccessToken: () => Promise.resolve(auth.access_token),

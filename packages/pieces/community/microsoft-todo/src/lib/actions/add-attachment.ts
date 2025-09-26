@@ -58,6 +58,10 @@ export const addAttachmentAction = createAction({
         const { auth, propsValue } = context;
         const { task_list_id, task_id, file, filename } = propsValue;
 
+        if (!file || !file.data) {
+            throw new Error('File or file data is missing. Please provide a valid file.');
+        }
+
         const client = Client.initWithMiddleware({
             authProvider: {
                 getAccessToken: () => Promise.resolve(auth.access_token),
@@ -67,8 +71,8 @@ export const addAttachmentAction = createAction({
         const attachmentBody = {
             '@odata.type': '#microsoft.graph.taskFileAttachment',
             name: filename || file.filename,
-            contentBytes: file.data,
-
+            // -- FIX: Convert Buffer to base64 string --
+            contentBytes: file.data.toString('base64'),
             contentType: 'application/octet-stream',
         };
 
