@@ -43,6 +43,7 @@ export enum FlowOperationType {
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
+    UPDATE_FLOW_CONTEXT = 'UPDATE_FLOW_CONTEXT',
     MOVE_BRANCH = 'MOVE_BRANCH',
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
 }
@@ -55,6 +56,7 @@ export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
+    prompt: Type.Optional(Type.String()),
     branchName: Type.String(),
 })
 export const MoveBranchRequest = Type.Object({
@@ -175,6 +177,11 @@ export const UpdateMetadataRequest = Type.Object({
     metadata: Nullable(Metadata),
 })
 export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
+
+export const UpdateFlowContextRequest = Type.Object({
+    flowContext: Type.String(),
+})
+export type UpdateFlowContextRequest = Static<typeof UpdateFlowContextRequest>
 
 export const FlowOperationRequest = Type.Union([
     Type.Object(
@@ -341,6 +348,15 @@ export const FlowOperationRequest = Type.Union([
     ),
     Type.Object(
         {
+            type: Type.Literal(FlowOperationType.UPDATE_FLOW_CONTEXT),
+            request: UpdateFlowContextRequest,
+        },
+        {
+            title: 'Update Flow Context',
+        },
+    ),
+    Type.Object(
+        {
             type: Type.Literal(FlowOperationType.MOVE_BRANCH),
             request: MoveBranchRequest,
         },
@@ -439,6 +455,11 @@ export const flowOperations = {
             }
             case FlowOperationType.MOVE_BRANCH: {
                 clonedVersion = _moveBranch(clonedVersion, operation.request)
+                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
+                break
+            }
+            case FlowOperationType.UPDATE_FLOW_CONTEXT: {
+                clonedVersion.flowContext = operation.request.flowContext
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }

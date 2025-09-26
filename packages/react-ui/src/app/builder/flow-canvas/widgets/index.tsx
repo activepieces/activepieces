@@ -2,16 +2,19 @@ import { ViewportPortal } from '@xyflow/react';
 import React from 'react';
 
 import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget';
-import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
-import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widget';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
 
+import { FlowContextWidget } from './flow-context-widget';
+import { useBuilderStateContext } from '../../builder-hooks';
+
 const AboveFlowWidgets = React.memo(() => {
-  const [flowVersion, selectStepByName, readonly] = useBuilderStateContext(
-    (state) => [state.flowVersion, state.selectStepByName, state.readonly],
-  );
+  const { data: flags } = flagsHooks.useFlags();
+  const { flowVersion } = useBuilderStateContext((state) => ({
+    flowVersion: state.flowVersion,
+  }));
   return (
     <ViewportPortal>
       <div
@@ -23,13 +26,9 @@ const AboveFlowWidgets = React.memo(() => {
           pointerEvents: 'auto',
         }}
       >
-        <div className="justify-center items-center flex w-[260px]">
-          <TestFlowWidget></TestFlowWidget>
-          {!readonly && (
-            <IncompleteSettingsButton
-              flowVersion={flowVersion}
-              selectStepByName={selectStepByName}
-            ></IncompleteSettingsButton>
+        <div className="justify-center items-center flex w-[260px] relative">
+          {flags?.[ApFlagId.EDITION] !== ApEdition.COMMUNITY && (
+            <FlowContextWidget key={flowVersion.id}></FlowContextWidget>
           )}
         </div>
       </div>

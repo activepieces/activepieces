@@ -14,7 +14,6 @@ import {
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 import { useStepSettingsContext } from '../step-settings-context';
 
-import { ConnectionSelect } from './connection-select';
 
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;
@@ -69,10 +68,6 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     webhookTimeoutSeconds: webhookTimeoutSeconds?.toString() ?? '',
   };
 
-  const showAuthForAction =
-    !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
-  const showAuthForTrigger =
-    !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
   return (
     <div className="flex flex-col gap-4 w-full">
       {!pieceModel && (
@@ -85,13 +80,6 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
 
       {pieceModel && (
         <>
-          {pieceModel.auth && (showAuthForAction || showAuthForTrigger) && (
-            <ConnectionSelect
-              isTrigger={!isNil(selectedTrigger)}
-              piece={pieceModel}
-              disabled={props.readonly}
-            ></ConnectionSelect>
-          )}
           {selectedAction && (
             <AutoPropertiesFormComponent
               key={selectedAction.name}

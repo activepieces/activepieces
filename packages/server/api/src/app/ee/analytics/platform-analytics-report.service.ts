@@ -233,6 +233,7 @@ async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, proj
             'latest_version.state as "version_state"',
             'latest_version.created as "version_created"',
             'latest_version.updated as "version_updated"',
+            'latest_version."flowContext" as "version_flowContext"',
         ])
         .andWhere('project."platformId" = :platformId', { platformId })
 
@@ -264,6 +265,7 @@ async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, proj
             created: row.version_created,
             updated: row.version_updated,
             agentIds: row.version_agentIds,
+            flowContext: row.version_flowContext,
         }, false, false),
     }))
 }

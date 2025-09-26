@@ -56,6 +56,7 @@ export async function assertUserHasPermissionToFlow(
         case FlowOperationType.DELETE_BRANCH:
         case FlowOperationType.DUPLICATE_BRANCH:
         case FlowOperationType.UPDATE_METADATA:
+        case FlowOperationType.UPDATE_FLOW_CONTEXT:
         case FlowOperationType.SET_SKIP_ACTION:
         case FlowOperationType.MOVE_BRANCH: {
             await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
