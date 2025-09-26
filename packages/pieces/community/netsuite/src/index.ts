@@ -1,7 +1,14 @@
-import { PieceAuth, createPiece, Property } from '@activepieces/pieces-framework';
+import {
+  PieceAuth,
+  createPiece,
+  Property,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
 import { getVendor } from './lib/actions/get-vendor';
 import { getCustomer } from './lib/actions/get-customer';
 import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createOAuthHeader } from './lib/oauth';
 
 export const netsuiteAuth = PieceAuth.CustomAuth({
   required: true,
@@ -37,9 +44,38 @@ export const netsuiteAuth = PieceAuth.CustomAuth({
 export const netsuite = createPiece({
   displayName: 'NetSuite',
   logoUrl: 'https://cdn.activepieces.com/pieces/netsuite.png',
-  categories:[PieceCategory.SALES_AND_CRM],
+  categories: [PieceCategory.SALES_AND_CRM],
   auth: netsuiteAuth,
-  authors: ["geekyme"],
-  actions: [getVendor, getCustomer],
+  authors: ['geekyme'],
+  actions: [
+    getVendor,
+    getCustomer,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        const authValue = auth as PiecePropValueSchema<typeof netsuiteAuth>;
+        return `https://${authValue.accountId}.suitetalk.api.netsuite.com`;
+      },
+      auth: netsuiteAuth,
+      authMapping: async (auth, propsValue) => {
+        const authValue = auth as PiecePropValueSchema<typeof netsuiteAuth>;
+
+        const authHeader = createOAuthHeader(
+          authValue.accountId,
+          authValue.consumerKey,
+          authValue.consumerSecret,
+          authValue.tokenId,
+          authValue.tokenSecret,
+          propsValue['url'],
+          propsValue['method']
+        );
+
+        return {
+          Authorization: authHeader,
+          prefer: 'transient',
+          Cookie: 'NS_ROUTING_VERSION=LAGGING',
+        };
+      },
+    }),
+  ],
   triggers: [],
 });
