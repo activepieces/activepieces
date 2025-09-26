@@ -1,14 +1,12 @@
 import { t } from 'i18next';
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { AgentBuilder } from '@/app/routes/agents/builder';
 import { ToastAction } from '@/components/ui/toast';
 import { toast } from '@/components/ui/use-toast';
 import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
-import { Agent, ApFlagId } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -26,14 +24,8 @@ const CreateAgentActionItem = ({
   operation,
   hidePieceIconAndDescription,
 }: CreateAgentActionItemProps) => {
-  const { data: isAgentsConfigured } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_CONFIGURED,
-  );
-  const [isAgentBuilderOpen, setIsAgentBuilderOpen] = useState(false);
-  const [agent, setAgent] = useState<Agent | undefined>(undefined);
-  const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
-    state.handleAddingOrUpdatingStep,
-  ]);
+  const { data: isAgentsConfigured } = flagsHooks.useFlag<boolean>(ApFlagId.AGENTS_CONFIGURED);
+  const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [state.handleAddingOrUpdatingStep]);
   const createAgentPieceSelectorItem: PieceSelectorPieceItem = JSON.parse(
     JSON.stringify(pieceSelectorItem),
   );
@@ -45,77 +37,55 @@ const CreateAgentActionItem = ({
   const navigate = useNavigate();
 
   return (
-    <div
+    <GenericActionOrTriggerItem
+      item={createAgentPieceSelectorItem}
+      hidePieceIconAndDescription={hidePieceIconAndDescription}
+      stepMetadataWithSuggestions={
+        createAgentPieceSelectorItem.pieceMetadata
+      }
       onClick={() => {
-        setIsAgentBuilderOpen(true);
+      if (!isAgentsConfigured) {
+        toast({
+          title: t('Connect to OpenAI'),
+          description: t(
+            "To create an agent, you'll first need to connect to OpenAI in platform settings.",
+          ),
+          action: (
+            <ToastAction
+              altText="Try again"
+              onClick={() => {
+                navigate('/platform/setup/ai');
+              }}
+            >
+              {t('Set Up')}
+            </ToastAction>
+          ),
+        });
+        return;
+      }
+      createAgent(
+        {
+          displayName: 'Fresh Agent',
+          description:
+            'I am a fresh agent, Jack of all trades, master of none (yet)',
+          systemPrompt: '',
+        },
+        {
+          onSuccess: (agent) => {
+            handleAddingOrUpdatingCustomAgentPieceSelectorItem(
+              pieceSelectorItem,
+              agent,
+              operation,
+              handleAddingOrUpdatingStep,
+            );
+          },
+          onError: () => {
+            toast({ variant: 'destructive', description: 'Error creating agent' })
+          },
+        },
+      );
       }}
-    >
-      <AgentBuilder
-        isOpen={isAgentBuilderOpen}
-        onOpenChange={(open, agent) => {
-          setIsAgentBuilderOpen(open);
-          if (!open) {
-            if (agent) {
-              handleAddingOrUpdatingCustomAgentPieceSelectorItem(
-                pieceSelectorItem,
-                agent,
-                operation,
-                handleAddingOrUpdatingStep,
-              );
-            }
-            setAgent(undefined);
-          }
-        }}
-        agent={agent}
-        showUseInFlow={false}
-        trigger={
-          <GenericActionOrTriggerItem
-            item={createAgentPieceSelectorItem}
-            hidePieceIconAndDescription={hidePieceIconAndDescription}
-            stepMetadataWithSuggestions={
-              createAgentPieceSelectorItem.pieceMetadata
-            }
-            onClick={() => {
-              if (!isAgentsConfigured) {
-                toast({
-                  title: t('Connect to OpenAI'),
-                  description: t(
-                    "To create an agent, you'll first need to connect to OpenAI in platform settings.",
-                  ),
-                  action: (
-                    <ToastAction
-                      altText="Try again"
-                      onClick={() => {
-                        navigate('/platform/setup/ai');
-                      }}
-                    >
-                      {t('Set Up')}
-                    </ToastAction>
-                  ),
-                });
-                return;
-              }
-              createAgent(
-                {
-                  displayName: 'Fresh Agent',
-                  description:
-                    'I am a fresh agent, Jack of all trades, master of none (yet)',
-                  systemPrompt: '',
-                },
-                {
-                  onSuccess: (agent) => {
-                    setAgent(agent);
-                  },
-                  onError: () => {
-                    setIsAgentBuilderOpen(false);
-                  },
-                },
-              );
-            }}
-          />
-        }
-      />
-    </div>
+    />
   );
 };
 
