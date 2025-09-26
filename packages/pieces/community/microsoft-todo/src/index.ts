@@ -8,6 +8,13 @@ import { newTaskCreatedTrigger } from './lib/triggers/new-task-created';
 import { newOrUpdatedTaskTrigger } from './lib/triggers/task-updated';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { taskCompletedTrigger } from './lib/triggers/task-completed';
+import { newListTrigger } from './lib/triggers/new-list';
+import { completeTaskAction } from './lib/actions/complete-task';
+import { updateTaskListAction } from './lib/actions/update-task-list';
+import { addAttachmentAction } from './lib/actions/add-attachment';
+import { getTaskAction } from './lib/actions/get-task';
+import { deleteTaskAction } from './lib/actions/delete-task';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -56,6 +63,11 @@ export const microsoftTodo = createPiece({
 	actions: [
 		createTask,
 		createTaskListAction,
+		completeTaskAction,
+		updateTaskListAction,
+		addAttachmentAction,
+		getTaskAction,
+		deleteTaskAction,
 		updateTaskAction,
 		findTaskListByNameAction,
 		findTaskByTitleAction,
@@ -67,5 +79,5 @@ export const microsoftTodo = createPiece({
 			}),
 		}),
 	],
-	triggers: [newTaskCreatedTrigger, newOrUpdatedTaskTrigger],
+	triggers: [newTaskCreatedTrigger, newOrUpdatedTaskTrigger, taskCompletedTrigger, newListTrigger],
 });
