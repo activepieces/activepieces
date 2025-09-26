@@ -4,7 +4,7 @@ import { hedyAuth } from '../../auth';
 import { HedyApiClient } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { PaginatedResponse, Todo } from '../../common/types';
-import { assertIdPrefix, assertLimit } from '../../common/validation';
+import { assertLimit } from '../../common/validation';
 
 function toTodoArray(result: unknown): Todo[] {
   if (Array.isArray(result)) {
@@ -32,7 +32,7 @@ export const listSessionTodos = createAction({
     limit: commonProps.limit,
   },
   async run(context) {
-    const sessionId = assertIdPrefix(context.propsValue.sessionId as string, 'sess_', 'Session ID');
+    const sessionId = context.propsValue.sessionId as string;
     const client = new HedyApiClient(context.auth as string);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;

@@ -1,15 +1,3 @@
-export function assertIdPrefix(value: string, prefix: string, label: string): string {
-  if (!value) {
-    throw new Error(`${label} is required.`);
-  }
-
-  if (!value.startsWith(prefix)) {
-    throw new Error(`${label} must start with "${prefix}".`);
-  }
-
-  return value;
-}
-
 export function assertLimit(limit?: number): number | undefined {
   if (limit === undefined || limit === null) {
     return limit ?? undefined;

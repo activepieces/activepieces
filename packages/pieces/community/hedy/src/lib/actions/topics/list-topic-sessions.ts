@@ -4,7 +4,7 @@ import { hedyAuth } from '../../auth';
 import { HedyApiClient } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { PaginatedResponse, Session } from '../../common/types';
-import { assertIdPrefix, assertLimit } from '../../common/validation';
+import { assertLimit } from '../../common/validation';
 
 function toSessionArray(result: unknown): Session[] {
   if (Array.isArray(result)) {
@@ -32,7 +32,7 @@ export const listTopicSessions = createAction({
     limit: commonProps.limit,
   },
   async run(context) {
-    const topicId = assertIdPrefix(context.propsValue.topicId as string, 'topic_', 'Topic ID');
+    const topicId = context.propsValue.topicId as string;
     const client = new HedyApiClient(context.auth as string);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;

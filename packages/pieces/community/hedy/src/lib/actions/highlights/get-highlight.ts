@@ -4,7 +4,6 @@ import { hedyAuth } from '../../auth';
 import { HedyApiClient, unwrapResource } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { Highlight } from '../../common/types';
-import { assertIdPrefix } from '../../common/validation';
 
 export const getHighlight = createAction({
   auth: hedyAuth,
@@ -15,7 +14,7 @@ export const getHighlight = createAction({
     highlightId: commonProps.highlightId,
   },
   async run(context) {
-    const highlightId = assertIdPrefix(context.propsValue.highlightId as string, 'high_', 'Highlight ID');
+    const highlightId = context.propsValue.highlightId as string;
     const client = new HedyApiClient(context.auth as string);
     const response = await client.request<Highlight>({
       method: HttpMethod.GET,

@@ -4,7 +4,6 @@ import { hedyAuth } from '../../auth';
 import { HedyApiClient, unwrapResource } from '../../common/client';
 import { commonProps } from '../../common/props';
 import { Topic } from '../../common/types';
-import { assertIdPrefix } from '../../common/validation';
 
 export const getTopic = createAction({
   auth: hedyAuth,
@@ -15,7 +14,7 @@ export const getTopic = createAction({
     topicId: commonProps.topicId,
   },
   async run(context) {
-    const topicId = assertIdPrefix(context.propsValue.topicId as string, 'topic_', 'Topic ID');
+    const topicId = context.propsValue.topicId as string;
     const client = new HedyApiClient(context.auth as string);
     const response = await client.request<Topic>({
       method: HttpMethod.GET,
