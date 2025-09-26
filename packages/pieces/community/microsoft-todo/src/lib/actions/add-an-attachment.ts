@@ -1,7 +1,7 @@
 import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { microsoftToDoAuth } from '../../index';
 import { Client } from '@microsoft/microsoft-graph-client';
-import { getTaskListsDropdown } from '../common';
+import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
 
 export const addAttachment = createAction({
   auth: microsoftToDoAuth,
@@ -25,10 +25,24 @@ export const addAttachment = createAction({
         return await getTaskListsDropdown(auth as OAuth2PropertyValue);
       },
     }),
-    task_id: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task to add the attachment to.',
+    task_id: Property.Dropdown({
+      displayName: 'Task',
+      description: 'The task to update.',
       required: true,
+      refreshers: ['task_list_id'],
+      options: async ({ auth, task_list_id }) => {
+        const authValue = auth as OAuth2PropertyValue;
+        if (!authValue?.access_token || !task_list_id) {
+          return {
+            disabled: true,
+            placeholder: !authValue?.access_token
+              ? 'Connect your account first'
+              : 'Select a task list first',
+            options: [],
+          };
+        }
+        return await getTasksInListDropdown(authValue, task_list_id as string);
+      },
     }),
     file_name: Property.ShortText({
       displayName: 'File Name',
