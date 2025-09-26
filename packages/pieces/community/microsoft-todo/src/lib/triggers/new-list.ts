@@ -37,7 +37,7 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     },
 };
 
-export const newList = createTrigger({
+export const newListTrigger = createTrigger({
     auth: microsoftToDoAuth,
     name: 'newList',
     displayName: 'New List',
