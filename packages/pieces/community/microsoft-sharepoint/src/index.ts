@@ -12,6 +12,21 @@ import { deleteListItemAction } from './lib/actions/delete-list-item';
 import { findListItemAction } from './lib/actions/search-list-item';
 import { uploadFile } from './lib/actions/upload-file';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { newFileInFolder } from '../src/lib/triggers/new-file-in-folder';
+import { newFileInSubfolders } from '../src/lib/triggers/new-file-in-subfolders';
+import { newListItem } from '../src/lib/triggers/new-list-item';
+import { newList } from '../src/lib/triggers/new-list';
+import { newOrUpdatedFile } from './lib/triggers/new-or-updated-file';
+import { newOrUpdatedFolder } from './lib/triggers/new-or-updated-folder';
+import { newOrUpdatedList } from './lib/triggers/new-or-updated-list';
+import { updatedListItem } from './lib/triggers/updated-list-item';
+import { publishPage } from './lib/actions/publish-page';
+import { copyFileOrFolder } from './lib/actions/copy-file-or-folder';
+import { copyFileOrFolderwithinSite } from './lib/actions/copy-file-or-folder-within-site';
+import { moveFile } from './lib/actions/move-file';
+import { findFile } from './lib/actions/find-file';
+import { getFolderContents } from './lib/actions/get-folder-contents';
+import { getSiteInformation } from './lib/actions/get-site-information';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -74,6 +89,13 @@ export const microsoftSharePoint = createPiece({
     deleteListItemAction,
     findListItemAction,
     uploadFile,
+    publishPage,
+    copyFileOrFolder,
+    copyFileOrFolderwithinSite,
+    moveFile,
+    findFile,
+    getFolderContents,
+    getSiteInformation,
     createCustomApiCallAction({
       auth: microsoftSharePointAuth,
       baseUrl: () => 'https://graph.microsoft.com/v1.0/sites',
@@ -82,5 +104,14 @@ export const microsoftSharePoint = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [
+    newFileInFolder,
+    newFileInSubfolders,
+    newListItem,
+    newList,
+    newOrUpdatedFile,
+    newOrUpdatedFolder,
+    newOrUpdatedList,
+    updatedListItem,
+  ],
 });
