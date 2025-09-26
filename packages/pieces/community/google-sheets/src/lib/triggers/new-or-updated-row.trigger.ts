@@ -71,13 +71,14 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
 				const options: DropdownOption<string>[] = [{ label: 'All Columns', value: ALL_COLUMNS }];
 
-				Object.entries(labeledRowValues[0].values).forEach(([key, value]) => {
+				Object.entries(labeledRowValues.length > 0 && labeledRowValues[0].values).forEach(([key, value]) => {
 					options.push({ label: value as string, value: key });
 				});
 
 				return {
-					disabled: false,
-					options,
+					disabled: labeledRowValues.length === 0,
+    				options,
+    				placeholder: labeledRowValues.length === 0 ? 'No columns found' : undefined,
 				};
 			},
 		}),
