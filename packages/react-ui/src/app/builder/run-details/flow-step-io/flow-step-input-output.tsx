@@ -36,12 +36,12 @@ const FlowStepInputOutput = React.memo(
       'output' in stepDetails || 'errorMessage' in stepDetails;
 
     return (
-      <>
-        <div className="flex items-center leading-4 gap-2 justify-start px-4 mt-4">
+      <div className="flex flex-col h-full">
+        <div className="flex items-center leading-4 gap-2  px-4 justify-start mt-4">
           <StepStatusIcon status={stepDetails.status} size="5" />
           <div>{selectedStep?.displayName}</div>
         </div>
-        <ScrollArea className="h-full px-2 py-4 mx-2">
+        <ScrollArea className="grow  py-4 px-4 ">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 leading-4 justify-start">
               <Timer className="w-5 h-5" />
@@ -56,7 +56,7 @@ const FlowStepInputOutput = React.memo(
             )}
           </div>
         </ScrollArea>
-      </>
+      </div>
     );
   },
 );
