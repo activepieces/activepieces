@@ -22,8 +22,20 @@ import { getWorksheetsAction } from './lib/actions/get-worksheets';
 import { lookupTableColumnAction } from './lib/actions/lookup-table-column';
 import { updateRowAction } from './lib/actions/update-row';
 import { excelCommon } from './lib/common/common';
-import { readNewRows } from './lib/trigger/new-row-added';
+import { readNewRows } from './lib/triggers/new-row-added';
 import { createWorkbook } from './lib/actions/create-workbook';
+import { createWorksheet } from './lib/actions/create-worksheet';
+import { renameWorksheet } from './lib/actions/rename-worksheet';
+import { clearRowById } from './lib/actions/clear-row-by-id';
+import { clearColumnByIndex } from './lib/actions/clear-column-by-index';
+import { clearCellsByRange } from './lib/actions/clear-cells-by-range';
+import { findRow } from './lib/actions/find-row';
+import { getRowById } from './lib/actions/get-row-by-id';
+import { getCellsInRange } from './lib/actions/get-cells-in-range';
+import { getWorksheetById } from './lib/actions/get-worksheet-by-id';
+import { newWorksheet } from './lib/triggers/new-worksheet';
+import { newRowInTable } from './lib/triggers/new-row-in-table';
+import { updatedRow } from './lib/triggers/updated-row';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -68,7 +80,7 @@ export const microsoftExcel = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['BastienMe', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     appendRowAction,
     getWorksheetsAction,
@@ -87,6 +99,15 @@ export const microsoftExcel = createPiece({
     appendTableRowsAction,
     convertToRangeAction,
     createWorkbook,
+    createWorksheet,
+    renameWorksheet,
+    clearRowById,
+    clearColumnByIndex,
+    clearCellsByRange,
+    findRow,
+    getRowById,
+    getCellsInRange,
+    getWorksheetById,
     createCustomApiCallAction({
       baseUrl: () => excelCommon.baseUrl,
       auth: excelAuth,
@@ -95,5 +116,5 @@ export const microsoftExcel = createPiece({
       }),
     }),
   ],
-  triggers: [readNewRows],
+  triggers: [readNewRows, newWorksheet, newRowInTable, updatedRow],
 });
