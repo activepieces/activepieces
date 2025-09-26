@@ -1,7 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 import {
-  ListAgentsQueryParams,
   ListAgentRunsQueryParams,
   CreateAgentRequest,
   AgentRun,
@@ -12,26 +11,11 @@ import {
 import { agentsApi, agentRunsApi } from './agents-api';
 
 export const agentHooks = {
-  useList: (params?: ListAgentsQueryParams) => {
-    return useQuery({
-      queryKey: ['agents', params],
-      queryFn: () => agentsApi.list(params),
-    });
-  },
-
   useGet: (id: string | null | undefined) => {
     return useQuery({
       queryKey: ['agents', id],
       queryFn: () => agentsApi.get(id!),
       enabled: !!id,
-    });
-  },
-
-  useGetByExternalId: (externalId: string | null | undefined) => {
-    return useQuery({
-      queryKey: ['agents', externalId],
-      queryFn: () => agentsApi.findByExteranlId(externalId!),
-      enabled: !!externalId,
     });
   },
 
@@ -45,12 +29,6 @@ export const agentHooks = {
     return useMutation({
       mutationFn: (request: EnhaceAgentPrompt) =>
         agentsApi.enhanceAgentPrompt(request),
-    });
-  },
-
-  useDelete: () => {
-    return useMutation({
-      mutationFn: (id: string) => agentsApi.delete(id),
     });
   },
 };

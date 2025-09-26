@@ -17,13 +17,13 @@ import {
 } from '@/features/agents/lib/store/builder-agent-state-provider';
 import { Agent, isNil } from '@activepieces/shared';
 
-import { AgentLeftSection } from './agent-left-section';
-import { AgentPreviewSection } from './agent-preview-section';
-import { AgentRunsTable } from './agent-runs-table';
-import { AgentSavingIndicator } from './agent-saving-indicator';
-import { AgentStructuredOutput } from './agent-structured-output';
-import { AgentToolSection } from './agent-tool-section';
-import { LinkedFlowsSection } from './linked-flows-section';
+import { AgentLeftSection } from '@/features/agents/builder/agent-left-section';
+import { AgentPreviewSection } from '@/features/agents/builder/agent-preview-section';
+import { AgentRunsTable } from '@/features/agents/builder/agent-runs-table';
+import { AgentSavingIndicator } from '@/features/agents/builder/agent-saving-indicator';
+import { AgentStructuredOutput } from '@/features/agents/builder/agent-structured-output';
+import { AgentToolSection } from '@/features/agents/builder/agent-tool-section';
+import { LinkedFlowsSection } from '@/features/agents/builder/linked-flows-section';
 
 type AgentBuilderProps = {
   isOpen: boolean;

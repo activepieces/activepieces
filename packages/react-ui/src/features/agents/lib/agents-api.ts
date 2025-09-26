@@ -3,7 +3,6 @@ import {
   Agent,
   CreateAgentRequest,
   UpdateAgentRequestBody,
-  ListAgentsQueryParams,
   ListAgentRunsQueryParams,
   SeekPage,
   AgentRun,
@@ -13,20 +12,9 @@ import {
 } from '@activepieces/shared';
 
 export const agentsApi = {
-  async list(params?: ListAgentsQueryParams): Promise<SeekPage<Agent>> {
-    return await api.get<SeekPage<Agent>>(`/v1/agents`, params);
-  },
-
   async get(id: string): Promise<Agent> {
     return await api.get<Agent>(`/v1/agents/${id}`);
   },
-  async findByExteranlId(externalId: string): Promise<Agent | null> {
-    const seekPage = await agentsApi.list({
-      externalIds: [externalId],
-    });
-    return seekPage.data?.[0] ?? null;
-  },
-
   async enhanceAgentPrompt(
     request: EnhaceAgentPrompt,
   ): Promise<EnhancedAgentPrompt> {
@@ -42,10 +30,6 @@ export const agentsApi = {
 
   async update(id: string, request: UpdateAgentRequestBody): Promise<Agent> {
     return await api.post<Agent>(`/v1/agents/${id}`, request);
-  },
-
-  async delete(id: string): Promise<void> {
-    return await api.delete(`/v1/agents/${id}`);
   },
 };
 

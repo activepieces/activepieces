@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { useBuilderAgentState } from '@/features/agents/lib/store/builder-agent-state-provider';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
-import { McpToolsSection } from '../../mcp-servers/id/mcp-config/mcp-tools-section';
+import { McpToolsSection } from '../../../app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
 
 export const AgentToolSection = () => {
   const [mcpId] = useBuilderAgentState((state) => [state.agent.mcpId]);
