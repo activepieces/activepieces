@@ -1,0 +1,66 @@
+name: Setup Environment
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, closed, labeled]
+
+concurrency:
+  group: setup-environment
+  cancel-in-progress: false
+
+jobs:
+  Setup-Preview-Environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/preview-server.key
+          chmod 600 ~/.ssh/preview-server.key
+          cat >>~/.ssh/config <<END
+          Host preview-server
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/preview-server.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
+          SSH_KEY: ${{ secrets.PREVIEW_SSH_KEY }}
+          SSH_HOST: ${{ secrets.PREVIEW_HOST }}
+
+      - name: Check if PR has preview label
+        id: check-label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name);
+            const hasPreviewLabel = labels.includes('preview');
+            
+            console.log('PR labels:', labels);
+            console.log('Has preview label:', hasPreviewLabel);
+            
+            core.setOutput('should-setup', hasPreviewLabel);
+            return hasPreviewLabel;
+          
+      - name: Setup Environment
+        id: setup
+        if: steps.check-label.outputs.should-setup == 'true'
+        run: |
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js setup ${{ github.head_ref }}; exit"'
+          echo "environment_url=https://$(echo '${{ github.head_ref }}' | sed 's|/|-|g').preview.activepieces.dev" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        if: steps.check-label.outputs.should-setup == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview environment has been set up!\n\n**Environment URL:** ${{ steps.setup.outputs.environment_url }}\n\nThe preview environment for branch `${{ github.head_ref }}` is now ready for testing.'
+            })

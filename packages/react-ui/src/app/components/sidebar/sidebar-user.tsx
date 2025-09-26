@@ -125,7 +125,7 @@ export function SidebarUser() {
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
-              {!embedState.hideProjectSettings && !isInPlatformAdmin && (
+              {!isInPlatformAdmin && (
                 <DropdownMenuItem onClick={() => setProjectSettingsOpen(true)}>
                   <Settings className="w-4 h-4 mr-2" />
                   {t('Project Settings')}

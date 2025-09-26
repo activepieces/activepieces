@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
-import {  isNil } from '@activepieces/shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 
 type CacheMap = Record<string, string>
@@ -12,7 +12,7 @@ const cached: Record<string, CacheMap | null> = {}
 const getCache = async (folderPath: string): Promise<CacheMap> => {
     if (isNil(cached[folderPath])) {
         const filePath = cachePath(folderPath)
-        const cacheExists = await fileExists(filePath)
+        const cacheExists = await fileSystemUtils.fileExists(filePath)
         if (!cacheExists) {
             await saveToCache({}, folderPath)
         }
@@ -25,32 +25,26 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
 export const cacheState = (folderPath: string) => {
     return {
         async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-
-            const lock = await memoryLock.acquire('cache_' + cacheAlias)
-            try {
+            const cacheKey = `${folderPath}-${cacheAlias}`
+            return memoryLock.runExclusive(cacheKey, async () => {
                 const cache = await getCache(folderPath)
                 return cache[cacheAlias]
-            }
-            finally {
-                await lock.release()
-            }
+            })
         },
         async setCache(cacheAlias: string, state: string): Promise<void> {
-            const lock = await memoryLock.acquire('cache_' + cacheAlias)
-            try {
+            const cacheKey = `${folderPath}-${cacheAlias}`
+            return memoryLock.runExclusive(cacheKey, async () => {
                 const cache = await getCache(folderPath)
                 cache[cacheAlias] = state
                 await saveToCache(cache, folderPath)
-            }
-            finally {
-                await lock.release()
-            }
+            })
         },
     }
 }
 
+
 async function saveToCache(cache: CacheMap, folderPath: string): Promise<void> {
-    await threadSafeMkdir(folderPath)
+    await fileSystemUtils.threadSafeMkdir(folderPath)
     const filePath = cachePath(folderPath)
     await writeFileAtomic(filePath, JSON.stringify(cache), 'utf8')
 }
