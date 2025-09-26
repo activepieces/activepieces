@@ -49,7 +49,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, updateLogsBehavior: updateLogs, executionStateBuffer, failedStepName: failedStepName, logsFileId, testSingleStepMode } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, updateLogsBehavior, executionStateBuffer, failedStepName: failedStepName, logsFileId, testSingleStepMode } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
@@ -72,7 +72,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             logsFileId,
         })
 
-        switch (updateLogs) {
+        switch (updateLogsBehavior) {
             case UpdateLogsBehavior.UPDATE_LOGS: {
                 assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
                 await flowRunService(request.log).updateLogs({
