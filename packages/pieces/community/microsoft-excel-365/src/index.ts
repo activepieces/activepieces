@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 
-// Existing Actions
+
 import { addWorksheetAction } from './lib/actions/add-worksheet';
 import { appendRowAction } from './lib/actions/append-row';
 import { appendTableRowsAction } from './lib/actions/append-table-rows';
@@ -25,7 +25,7 @@ import { getWorksheetsAction } from './lib/actions/get-worksheets';
 import { lookupTableColumnAction } from './lib/actions/lookup-table-column';
 import { updateRowAction } from './lib/actions/update-row';
 
-// New Actions
+
 import { clearRangeAction} from './lib/actions/clear-cells-by-range';
 import { clearColumnAction } from './lib/actions/clear-column-by-index';
 import { clearRowAction } from './lib/actions/clear-row-by-id';
@@ -36,15 +36,15 @@ import { getRowAction } from './lib/actions/get-row-by-id';
 import { getWorksheetAction } from './lib/actions/get-worksheet-by-id';
 import { renameWorksheetAction} from './lib/actions/rename-worksheet';
 
-// Existing Triggers
+
 import { readNewRows } from './lib/trigger/new-row-added';
 
-// New Triggers
+
 import { newRowInTableTrigger } from './lib/trigger/new-row-in-table';
 import { newWorksheetTrigger } from './lib/trigger/new-worksheet';
 import { updatedRowTrigger } from './lib/trigger/updated-row';
 
-// Common
+
 import { excelCommon } from './lib/common/common';
 import { get } from 'http';
 
@@ -91,7 +91,7 @@ export const microsoftExcel = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud"],
+  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud","Pranith124"],
   actions: [
     appendRowAction,
     getWorksheetsAction,
