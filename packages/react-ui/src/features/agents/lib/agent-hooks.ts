@@ -18,13 +18,11 @@ export const agentHooks = {
       enabled: !!id,
     });
   },
-
   useCreate: () => {
     return useMutation({
       mutationFn: (request: CreateAgentRequest) => agentsApi.create(request),
     });
   },
-
   useEnhanceAgentPrompt: () => {
     return useMutation({
       mutationFn: (request: EnhaceAgentPrompt) =>

@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 
-import { agentsApi } from '@/features/agents/lib/agents-api';
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -181,15 +180,21 @@ async function getAgentMetadata(
     if (!externalAgentId) {
       return {};
     }
-    const agent = await agentsApi.findByExteranlId(externalAgentId);
-    if (!agent) {
-      return {};
-    }
+    // const agent = await agentsApi.findByExteranlId(externalAgentId);
+    // if (!agent) {
+    //   return {};
+    // }
+    // return {
+    //   logoUrl: agent.profilePictureUrl,
+    //   description: agent.description,
+    //   displayName: agent.displayName,
+    // };
+
     return {
-      logoUrl: agent.profilePictureUrl,
-      description: agent.description,
-      displayName: agent.displayName,
-    };
+      logoUrl: '',
+      description: 'My agent stuff',
+      displayName: 'Louai Achour'
+    }
   }
   return {};
 }
