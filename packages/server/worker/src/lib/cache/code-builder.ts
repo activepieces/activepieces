@@ -1,13 +1,12 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
+import { cryptoUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { cacheState } from './cache-state'
 import { PackageInfo, packageManager } from './package-manager'
-import { GLOBAL_CACHE_PATH_LATEST_VERSION } from './worker-cache'
 
 const TS_CONFIG_CONTENT = `
 
@@ -58,7 +57,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        return fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `code-builder-${flowVersionId}-${name}`, async () => {
+        return memoryLock.runExclusive(`code-builder-${flowVersionId}-${name}`, async () => {
             try {
                 const cache = cacheState(codePath)
                 const cachedHash = await cache.cacheCheckState(codePath)
