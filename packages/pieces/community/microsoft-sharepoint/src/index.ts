@@ -1,17 +1,17 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
-  PieceAuth,
   OAuth2PropertyValue,
+  PieceAuth,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createFolderAction } from './lib/actions/create-folder';
 import { createListAction } from './lib/actions/create-list';
 import { createListItemAction } from './lib/actions/create-list-item';
-import { updateListItemAction } from './lib/actions/update-list-item';
 import { deleteListItemAction } from './lib/actions/delete-list-item';
 import { findListItemAction } from './lib/actions/search-list-item';
+import { updateListItemAction } from './lib/actions/update-list-item';
 import { uploadFile } from './lib/actions/upload-file';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -65,7 +65,7 @@ export const microsoftSharePoint = createPiece({
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-sharepoint.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['kishanprmr'],
+  authors: ['kishanprmr', 'LuizDMM'],
   actions: [
     createFolderAction,
     createListAction,
