@@ -13,7 +13,9 @@ export function getScopeAndKey(params: Params): { scope: StoreScope, key: string
         case PieceStoreScope.FLOW:
             return { scope: StoreScope.FLOW, key: params.key }
         case PieceStoreScope.RUN:
-            return { scope: StoreScope.FLOW, key: `run_${params.runId}/${params.key}` }
+            // Use a consistent test run ID when testing to allow store operations to work together
+            const runId = params.isTestMode ? 'test-run' : params.runId
+            return { scope: StoreScope.FLOW, key: `run_${runId}/${params.key}` }
     }
 }
 
@@ -21,6 +23,7 @@ type Params = {
     runId: string
     key: string
     scope: PieceStoreScope
+    isTestMode: boolean
 }
 
 export const common = {
