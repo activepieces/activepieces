@@ -87,6 +87,12 @@ export const drupalListEntitiesAction = createAction({
         ],
       },
     }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of entities to retrieve (0 = all entities)',
+      required: true,
+      defaultValue: 50,
+    }),
     output_options: Property.DynamicProperties({
       displayName: 'Output Options',
       required: false,
@@ -94,7 +100,7 @@ export const drupalListEntitiesAction = createAction({
       props: async (propsValue) => {
         const entityInfo = propsValue['entity_type'] as any;
         if (!entityInfo) return {};
-        
+
         // Only show minimal output option for nodes (they can have many fields)
         if (entityInfo.entity_type === 'node') {
           return {
@@ -106,7 +112,7 @@ export const drupalListEntitiesAction = createAction({
             })
           } as any;
         }
-        
+
         return {} as any;
       }
     }),
@@ -134,7 +140,7 @@ export const drupalListEntitiesAction = createAction({
     }
     
     const sortField = (propsValue.sort_by as any)?.sort_field;
-    
+
     let entities = await drupal.listEntities(
       auth as DrupalAuthType,
       entityInfo.entity_type,
@@ -144,6 +150,7 @@ export const drupalListEntitiesAction = createAction({
         sort: sortField,
         sortDirection: propsValue.sort_direction,
         fields,
+        limit: propsValue.limit,
       }
     );
     
