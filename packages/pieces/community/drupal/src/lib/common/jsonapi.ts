@@ -64,12 +64,28 @@ export async function makeJsonApiRequest<T = JsonApiResponse>(
   }
 
   try {
-    return await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method,
       url: endpoint,
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
+
+    // Sanitize response body if it's a string containing JSON
+    if (response.body && typeof response.body === 'string') {
+      try {
+        // Remove invalid control characters that violate JSON specification (RFC 8259 Section 7)
+        // Workaround for Drupal bug: https://www.drupal.org/project/drupal/issues/3549107
+        // TODO: Remove this when Drupal issue is fixed
+        const cleanedBody = response.body.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        response.body = JSON.parse(cleanedBody);
+      } catch (parseError) {
+        console.warn('Failed to parse JSON response, returning raw body:', parseError);
+        // Return response as-is if parsing fails
+      }
+    }
+
+    return response;
   } catch (error) {
     console.error('JSON:API request failed:', { endpoint, method, error });
     throw error;
