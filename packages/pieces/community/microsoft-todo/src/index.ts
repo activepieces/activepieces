@@ -8,6 +8,13 @@ import { newTaskCreatedTrigger } from './lib/triggers/new-task-created';
 import { newOrUpdatedTaskTrigger } from './lib/triggers/task-updated';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { completeTaskAction } from '../src/lib/actions/complete-task';
+import { updateTaskListAction } from '../src/lib/actions/update-task-list';
+import { addAttachmentAction } from '../src/lib/actions/add-attachment';
+import { getTaskAction } from '../src/lib/actions/get-task';
+import { deleteTaskAction } from '../src/lib/actions/delete-task';
+import { taskCompletedTrigger } from '../src/lib/triggers/task-completed';
+import { newListCreatedTrigger } from '../src/lib/triggers/new-list-created';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -46,26 +53,36 @@ export const microsoftToDoAuth = PieceAuth.OAuth2({
 });
 
 export const microsoftTodo = createPiece({
-	displayName: 'Microsoft To Do',
-	description: 'Cloud based task management application.',
-	categories: [PieceCategory.PRODUCTIVITY],
-	auth: microsoftToDoAuth,
-	minimumSupportedRelease: '0.36.1',
-	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-todo.png',
-	authors: ['onyedikachi-david'],
-	actions: [
-		createTask,
-		createTaskListAction,
-		updateTaskAction,
-		findTaskListByNameAction,
-		findTaskByTitleAction,
-		createCustomApiCallAction({
-			baseUrl: () => 'https://graph.microsoft.com/v1.0/me/todo',
-			auth: microsoftToDoAuth,
-			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-			}),
-		}),
-	],
-	triggers: [newTaskCreatedTrigger, newOrUpdatedTaskTrigger],
+  displayName: 'Microsoft To Do',
+  description: 'Cloud based task management application.',
+  categories: [PieceCategory.PRODUCTIVITY],
+  auth: microsoftToDoAuth,
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-todo.png',
+  authors: ['onyedikachi-david'],
+  actions: [
+    createTask,
+    createTaskListAction,
+    updateTaskAction,
+    findTaskListByNameAction,
+    findTaskByTitleAction,
+    completeTaskAction,
+    updateTaskListAction,
+    addAttachmentAction,
+    getTaskAction,
+    deleteTaskAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://graph.microsoft.com/v1.0/me/todo',
+      auth: microsoftToDoAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
+  triggers: [
+    newTaskCreatedTrigger,
+    newOrUpdatedTaskTrigger,
+    taskCompletedTrigger,
+    newListCreatedTrigger,
+  ],
 });
