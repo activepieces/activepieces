@@ -1087,6 +1087,9 @@
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
       ],
+      "@activepieces/piece-timelinesai": [
+        "packages/pieces/community/timelinesai/src/index.ts"
+      ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
       ],
