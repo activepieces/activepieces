@@ -145,7 +145,9 @@ export function fromJsonApiFormat(response: JsonApiResponse): any | any[] {
 
   try {
     if (Array.isArray(response.data)) {
-      return response.data.map(convertJsonApiResource);
+      return response.data
+        .filter(resource => resource != null)
+        .map(convertJsonApiResource);
     } else {
       return convertJsonApiResource(response.data);
     }
