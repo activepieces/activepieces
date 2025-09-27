@@ -34,12 +34,12 @@ jobs:
 
       - name: Run Pre-Prod Setup
         run: |
-          ssh pre-prod -t -t 'bash -ic "node dist/index.js setup main preprod env.preprod; exit"'
+          ssh preview-server -t -t 'bash -ic "node dist/index.js setup main preprod env.preprod; exit"'
 
       - name: Run Community Setup
         run: |
-          ssh pre-prod -t -t 'bash -ic "node dist/index.js setup main ce env.ce; exit"'
+          ssh preview-server -t -t 'bash -ic "node dist/index.js setup main ce env.ce; exit"'
 
       - name: Run Enterprise Setup
         run: |
-          ssh pre-prod -t -t 'bash -ic "node dist/index.js setup main ee env.ee; exit"'
+          ssh preview-server -t -t 'bash -ic "node dist/index.js setup main ee env.ee; exit"'
