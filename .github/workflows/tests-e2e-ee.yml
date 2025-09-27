@@ -14,8 +14,8 @@ env:
   AP_POSTGRES_PASSWORD: postgres
   AP_POSTGRES_DATABASE: activepieces
   AP_POSTGRES_USE_SSL: "false"
-  AP_ENCRYPTION_KEY: ${{ secrets.EE_ENCRYPTION_KEY }}
-  AP_JWT_SECRET: ${{ secrets.EE_JWT_SECRET }}
+  AP_JWT_SECRET: "secret"
+  AP_ENCRYPTION_KEY: "fdbe51af3678563560972e4a912aee6d"
   AP_FRONTEND_URL: http://localhost:4200
   AP_REDIS_URL: redis://localhost:6379
   AP_QUEUE_MODE: REDIS
@@ -26,7 +26,7 @@ env:
 jobs:
   test-e2e-ee:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
     
     services:
       postgres:
@@ -70,8 +70,7 @@ jobs:
         
       - name: Run E2E tests
         run: |
-          cd packages/tests-e2e
-          npx playwright test
+          npm run test:e2e
         env:
           CI: true
           

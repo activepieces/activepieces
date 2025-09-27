@@ -7,7 +7,7 @@ export class BuilderPage extends BasePage {
   async selectInitialTrigger(params: { piece: string; trigger: string }) {
     await this.page.locator('div[data-testid="rf__node-trigger"]').filter({ hasText: 'Select Trigger' }).click();
     await this.page.getByTestId('pieces-search-input').fill(params.trigger);
-    await this.page.getByText(params.trigger).click({ timeout: 10000 });
+    await this.page.getByText(params.trigger).click();
   }
 
   async addAction(params: { piece: string; action: string }) {
