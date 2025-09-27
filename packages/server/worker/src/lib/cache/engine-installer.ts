@@ -13,7 +13,7 @@ const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
 
-export const engineInstaller = (log: FastifyBaseLogger) => ({
+export const engineInstaller = (_log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
 

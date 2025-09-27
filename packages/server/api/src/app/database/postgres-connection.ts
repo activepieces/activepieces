@@ -620,7 +620,7 @@ export const createPostgresDataSource = (): DataSource => {
         ...commonProperties,
         extra: {
             idleTimeoutMillis: 5 * 60 * 1000,
-        }
+        },
     })
 }
 
