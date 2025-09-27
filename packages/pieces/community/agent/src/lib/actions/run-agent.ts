@@ -34,7 +34,7 @@ export const runAgent = createAction({
           options: agentPage.body.data.map((agent) => {
             return {
               label: agent.displayName,
-              value: agent.externalId,
+              value: agent.id,
             };
           }),
         }
