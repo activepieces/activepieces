@@ -1,11 +1,10 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-
 
 import { addWorksheetAction } from './lib/actions/add-worksheet';
 import { appendRowAction } from './lib/actions/append-row';
@@ -25,25 +24,21 @@ import { getWorksheetsAction } from './lib/actions/get-worksheets';
 import { lookupTableColumnAction } from './lib/actions/lookup-table-column';
 import { updateRowAction } from './lib/actions/update-row';
 
-
-import { clearRangeAction} from './lib/actions/clear-cells-by-range';
+import { clearRangeAction } from './lib/actions/clear-cells-by-range';
 import { clearColumnAction } from './lib/actions/clear-column-by-index';
 import { clearRowAction } from './lib/actions/clear-row-by-id';
 import { createWorksheetAction } from './lib/actions/create-worksheet';
-import { findRowAction} from './lib/actions/find-row';
+import { findRowAction } from './lib/actions/find-row';
 import { getRangeAction } from './lib/actions/get-cells-in-range';
 import { getRowAction } from './lib/actions/get-row-by-id';
 import { getWorksheetAction } from './lib/actions/get-worksheet-by-id';
-import { renameWorksheetAction} from './lib/actions/rename-worksheet';
-
+import { renameWorksheetAction } from './lib/actions/rename-worksheet';
 
 import { readNewRows } from './lib/trigger/new-row-added';
-
 
 import { newRowInTableTrigger } from './lib/trigger/new-row-in-table';
 import { newWorksheetTrigger } from './lib/trigger/new-worksheet';
 import { updatedRowTrigger } from './lib/trigger/updated-row';
-
 
 import { excelCommon } from './lib/common/common';
 import { get } from 'http';
@@ -72,44 +67,44 @@ const authDesc = `
       - offline_access
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
-`
+`;
 
 export const excelAuth = PieceAuth.OAuth2({
-  description: authDesc,
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-  required: true,
-  scope: ['Files.ReadWrite', 'offline_access'],
-  prompt: 'omit'
+  description: authDesc,
+  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  required: true,
+  scope: ['Files.ReadWrite', 'offline_access'],
+  prompt: 'omit'
 });
 
 export const microsoftExcel = createPiece({
-  displayName: 'Microsoft Excel 365',
-  description: 'Spreadsheet software by Microsoft',
+  displayName: 'Microsoft Excel 365',
+  description: 'Spreadsheet software by Microsoft',
 
-  auth: excelAuth,
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
-  categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud","Pranith124"],
-  actions: [
-    appendRowAction,
-    getWorksheetsAction,
-    getWorksheetRowsAction,
-    updateRowAction,
-    clearWorksheetAction,
-    deleteWorksheetAction,
-    getWorkbooksAction,
-    deleteWorkbookAction,
-    addWorksheetAction,
-    getTableRowsAction,
-    getTableColumnsAction,
-    createTableAction,
-    deleteTableAction,
-    lookupTableColumnAction,
-    appendTableRowsAction,
-    convertToRangeAction,
-    createWorkbook,
+  auth: excelAuth,
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
+  categories: [PieceCategory.PRODUCTIVITY],
+  authors: ['BastienMe', 'kishanprmr', 'MoShizzle', 'abuaboud', 'Pranith124'],
+  actions: [
+    appendRowAction,
+    getWorksheetsAction,
+    getWorksheetRowsAction,
+    updateRowAction,
+    clearWorksheetAction,
+    deleteWorksheetAction,
+    getWorkbooksAction,
+    deleteWorkbookAction,
+    addWorksheetAction,
+    getTableRowsAction,
+    getTableColumnsAction,
+    createTableAction,
+    deleteTableAction,
+    lookupTableColumnAction,
+    appendTableRowsAction,
+    convertToRangeAction,
+    createWorkbook,
     clearColumnAction,
     clearRangeAction,
     clearRowAction,
@@ -119,18 +114,18 @@ export const microsoftExcel = createPiece({
     getRowAction,
     getWorksheetAction,
     renameWorksheetAction,
-    createCustomApiCallAction({
-      baseUrl: () => excelCommon.baseUrl,
-      auth: excelAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-      }),
-    }),
-  ],
-  triggers: [
+    createCustomApiCallAction({
+      baseUrl: () => excelCommon.baseUrl,
+      auth: excelAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`
+      })
+    })
+  ],
+  triggers: [
     readNewRows,
     newRowInTableTrigger,
     newWorksheetTrigger,
-    updatedRowTrigger,
-  ],
+    updatedRowTrigger
+  ]
 });
