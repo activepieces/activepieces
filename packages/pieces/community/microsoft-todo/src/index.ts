@@ -8,6 +8,13 @@ import { newTaskCreatedTrigger } from './lib/triggers/new-task-created';
 import { newOrUpdatedTaskTrigger } from './lib/triggers/task-updated';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { addAttachment } from './lib/actions/add-an-attachment';
+import { completeTask } from './lib/actions/complete-task';
+import { deleteTask } from './lib/actions/delete-task';
+import { getTask } from './lib/actions/get-task';
+import { updateTaskList } from './lib/actions/update-task-list';
+import { taskCompletedTrigger } from './lib/triggers/task-completed';
+import { newListTrigger } from './lib/triggers/new-list';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -52,13 +59,18 @@ export const microsoftTodo = createPiece({
 	auth: microsoftToDoAuth,
 	minimumSupportedRelease: '0.36.1',
 	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-todo.png',
-	authors: ['onyedikachi-david'],
+	authors: ['onyedikachi-david','Niket2035'],
 	actions: [
 		createTask,
 		createTaskListAction,
 		updateTaskAction,
 		findTaskListByNameAction,
 		findTaskByTitleAction,
+		addAttachment,
+		completeTask,
+		deleteTask,
+		getTask,
+		updateTaskList,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/me/todo',
 			auth: microsoftToDoAuth,
@@ -67,5 +79,5 @@ export const microsoftTodo = createPiece({
 			}),
 		}),
 	],
-	triggers: [newTaskCreatedTrigger, newOrUpdatedTaskTrigger],
+	triggers: [newTaskCreatedTrigger, newOrUpdatedTaskTrigger, taskCompletedTrigger, newListTrigger],
 });
