@@ -11,6 +11,7 @@ import { appendTableRowsAction } from './lib/actions/append-table-rows';
 import { clearWorksheetAction } from './lib/actions/clear-worksheet';
 import { convertToRangeAction } from './lib/actions/convert-to-range';
 import { createTableAction } from './lib/actions/create-table';
+import { createWorkbook } from './lib/actions/create-workbook';
 import { deleteTableAction } from './lib/actions/delete-table';
 import { deleteWorkbookAction } from './lib/actions/delete-workbook';
 import { deleteWorksheetAction } from './lib/actions/delete-worksheet';
@@ -23,7 +24,6 @@ import { lookupTableColumnAction } from './lib/actions/lookup-table-column';
 import { updateRowAction } from './lib/actions/update-row';
 import { excelCommon } from './lib/common/common';
 import { readNewRows } from './lib/trigger/new-row-added';
-import { createWorkbook } from './lib/actions/create-workbook';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -68,7 +68,7 @@ export const microsoftExcel = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud"],
+  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud","LuizDMM"],
   actions: [
     appendRowAction,
     getWorksheetsAction,
