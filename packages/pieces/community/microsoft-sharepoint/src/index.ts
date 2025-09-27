@@ -4,6 +4,9 @@ import {
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+
+
 import { createFolderAction } from './lib/actions/create-folder';
 import { createListAction } from './lib/actions/create-list';
 import { createListItemAction } from './lib/actions/create-list-item';
@@ -11,7 +14,26 @@ import { updateListItemAction } from './lib/actions/update-list-item';
 import { deleteListItemAction } from './lib/actions/delete-list-item';
 import { findListItemAction } from './lib/actions/search-list-item';
 import { uploadFile } from './lib/actions/upload-file';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+
+
+import { publishPageAction } from './lib/actions/publish-page';
+import { copyItemAction } from './lib/actions/copy-item';
+import { copyItemWithinSiteAction } from './lib/actions/copy-item-within-site';
+import { moveFileAction } from './lib/actions/move-file';
+import { findFileAction } from './lib/actions/find-file';
+import { getFolderContentsAction } from './lib/actions/get-folder-contents';
+import { getSiteInformationAction } from './lib/actions/get-site-information';
+
+
+import { newFileInFolderTrigger } from './lib/triggers/new-file-in-folder';
+import { newFileInSubfoldersTrigger } from './lib/triggers/new-file-in-subfolders';
+import { newOrUpdatedFileTrigger } from './lib/triggers/new-or-updated-file';
+import { newOrUpdatedFolderTrigger } from './lib/triggers/new-or-updated-folder';
+import { newListItemTrigger } from './lib/triggers/new-list-item';
+import { updatedListItemTrigger } from './lib/triggers/updated-list-item';
+import { newListTrigger } from './lib/triggers/new-list';
+import { newOrUpdatedListTrigger } from './lib/triggers/new-or-updated-list';
+
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -31,14 +53,16 @@ const authDesc = `
     - Copy the **Value** of the client secret (this will not be shown again).
 11. Go to **API permissions** from the left menu.
     - Click **Add a permission**.
-    - Select **Power BI Service** → **Delegated permissions**.
-    - Add the following scopes:
-	    - Sites.Manage.All
-      - Files.ReadWrite
+    - Select **Microsoft Graph**.
+    - Add the following **Delegated permissions**:
+      - Sites.Read.All
+      - Sites.ReadWrite.All
+      - Sites.Manage.All
+      - Files.ReadWrite.All
       - openid
       - email
       - profile
-	    - offline_access
+      - offline_access
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
@@ -53,8 +77,10 @@ export const microsoftSharePointAuth = PieceAuth.OAuth2({
     'email',
     'profile',
     'offline_access',
+    'Sites.Read.All',
+    'Sites.ReadWrite.All',
     'Sites.Manage.All',
-    'Files.ReadWrite',
+    'Files.ReadWrite.All',
   ],
   prompt: 'omit'
 });
@@ -74,13 +100,29 @@ export const microsoftSharePoint = createPiece({
     deleteListItemAction,
     findListItemAction,
     uploadFile,
+    publishPageAction,
+    copyItemAction,
+    copyItemWithinSiteAction,
+    moveFileAction,
+    findFileAction,
+    getFolderContentsAction,
+    getSiteInformationAction,
     createCustomApiCallAction({
       auth: microsoftSharePointAuth,
-      baseUrl: () => 'https://graph.microsoft.com/v1.0/sites',
+      baseUrl: () => 'https://graph.microsoft.com/v1.0',
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),
   ],
-  triggers: [],
+  triggers: [
+    newFileInFolderTrigger,
+    newFileInSubfoldersTrigger,
+    newOrUpdatedFileTrigger,
+    newOrUpdatedFolderTrigger,
+    newListItemTrigger,
+    updatedListItemTrigger,
+    newListTrigger,
+    newOrUpdatedListTrigger,
+  ],
 });
