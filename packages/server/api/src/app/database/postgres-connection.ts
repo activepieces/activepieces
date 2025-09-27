@@ -594,6 +594,7 @@ export const createPostgresDataSource = (): DataSource => {
             type: 'postgres',
             url,
             ssl: getSslConfig(),
+            ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
         })
@@ -617,6 +618,9 @@ export const createPostgresDataSource = (): DataSource => {
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...migrationConfig,
         ...commonProperties,
+        extra: {
+            idleTimeoutMillis: 5 * 60 * 1000,
+        },
     })
 }
 

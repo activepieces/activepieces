@@ -1,5 +1,5 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -49,7 +49,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, executionStateBuffer, failedStepName: failedStepName, logsFileId, testSingleStepMode } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, updateLogsBehavior, executionStateBuffer, failedStepName: failedStepName, logsFileId, testSingleStepMode } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
@@ -72,10 +72,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             logsFileId,
         })
 
-        if (!isNil(executionStateContentLength)) {
-            const updateSizeOnlyForSignedUrl = isNil(executionStateBuffer) && !isNil(logsFileId)
-            const uploadTheLogs = !isNil(executionStateBuffer)
-            if (uploadTheLogs) {
+        switch (updateLogsBehavior) {
+            case UpdateLogsBehavior.UPDATE_LOGS: {
+                assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
                 await flowRunService(request.log).updateLogs({
                     flowRunId: runId,
                     logsFileId: runWithoutSteps.logsFileId ?? undefined,
@@ -83,14 +82,21 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                     executionStateString: executionStateBuffer,
                     executionStateContentLength,
                 })
+                break
             }
-            else if (updateSizeOnlyForSignedUrl) {
+            case UpdateLogsBehavior.UPDATE_LOGS_SIZE: {
+                assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
                 await fileService(request.log).updateSize({
                     fileId: runWithoutSteps.logsFileId!,
                     size: executionStateContentLength,
                 })
+                break
+            }
+            case UpdateLogsBehavior.NONE: {
+                break
             }
         }
+
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService(request.log).pause({
                 flowRunId: runId,
