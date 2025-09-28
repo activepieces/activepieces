@@ -35,7 +35,7 @@ export interface JsonApiResource {
 export interface JsonApiResponse {
   data: JsonApiResource | JsonApiResource[];
   included?: JsonApiResource[];
-  links?: Record<string, string>;
+  links?: Record<string, string | { href: string }>;
   meta?: Record<string, any>;
 }
 
@@ -143,23 +143,51 @@ export function toJsonApiFormat(
 export function fromJsonApiFormat(response: JsonApiResponse): any | any[] {
   if (!response.data) return null;
 
-  if (Array.isArray(response.data)) {
-    return response.data.map(convertJsonApiResource);
-  } else {
-    return convertJsonApiResource(response.data);
+  try {
+    if (Array.isArray(response.data)) {
+      return response.data
+        .filter(resource => resource != null)
+        .map(convertJsonApiResource);
+    } else {
+      return convertJsonApiResource(response.data);
+    }
+  } catch (error) {
+    // Return empty array instead of throwing, so pagination can continue
+    return [];
   }
 }
 
 function convertJsonApiResource(resource: JsonApiResource) {
+  if (!resource || typeof resource !== 'object') {
+    throw new Error('Invalid resource: resource is not an object');
+  }
+
+  if (!resource.type) {
+    throw new Error('Invalid resource: missing required "type" field');
+  }
+
   const result: any = {
     id: resource.id,
     type: resource.type,
-    ...resource.attributes,
   };
 
-  if (resource.relationships) {
-    for (const [key, value] of Object.entries(resource.relationships)) {
-      result[key] = value;
+  // Safely copy attributes
+  if (resource.attributes && typeof resource.attributes === 'object') {
+    try {
+      Object.assign(result, resource.attributes);
+    } catch (error) {
+      throw new Error(`Failed to copy attributes: ${error}`);
+    }
+  }
+
+  // Safely copy relationships
+  if (resource.relationships && typeof resource.relationships === 'object') {
+    try {
+      for (const [key, value] of Object.entries(resource.relationships)) {
+        result[key] = value;
+      }
+    } catch (error) {
+      throw new Error(`Failed to copy relationships: ${error}`);
     }
   }
 
@@ -175,6 +203,7 @@ function buildQueryParams(options: {
   sortDirection?: string;
   fields?: string[];
   resourceType?: string;
+  limit?: number;
 }): string {
   const params = new URLSearchParams();
 
@@ -194,6 +223,10 @@ function buildQueryParams(options: {
   if (options.fields && options.resourceType) {
     const fieldsParam = options.fields.join(',');
     params.append(`fields[${options.resourceType}]`, fieldsParam);
+  }
+
+  if (options.limit && options.limit > 0) {
+    params.append('page[limit]', String(options.limit));
   }
 
   const queryString = params.toString();
@@ -233,6 +266,7 @@ export const jsonApi = {
 
   /**
    * Fetch a collection of resources with optional query parameters
+   * Follows pagination links if present to retrieve all requested data
    * @example jsonApi.list(auth, '/jsonapi/node/node--article', { sort: 'created', filters: { status: '1' } })
    */
   async list(auth: DrupalAuthType, collectionPath: string, options?: {
@@ -241,17 +275,54 @@ export const jsonApi = {
     sortDirection?: string;
     fields?: string[];
     resourceType?: string;
+    limit?: number;
   }) {
+    let allEntities: any[] = [];
     const query = options ? buildQueryParams(options) : '';
-    const url = `${auth.website_url.replace(/\/+$/, '')}${collectionPath}${query}`;
+    let url: string | null = `${auth.website_url.replace(/\/+$/, '')}${collectionPath}${query}`;
 
-    const result = await makeJsonApiRequest(auth, url, HttpMethod.GET);
+    do {
+      const result = await makeJsonApiRequest(auth, url, HttpMethod.GET);
 
-    if (result.status === 200) {
-      return fromJsonApiFormat(result.body as JsonApiResponse);
-    }
+      if (result.status !== 200) {
+        throw new Error(`Failed to list resources: ${result.status}`);
+      }
 
-    throw new Error(`Failed to list resources: ${result.status}`);
+      if (!result.body) {
+        break;
+      }
+
+      // Parse JSON if response body is a string
+      let parsedBody: JsonApiResponse;
+      if (typeof result.body === 'string') {
+        try {
+          parsedBody = JSON.parse(result.body);
+        } catch (parseError) {
+          console.warn('Skipping page due to corrupted data in Drupal database:', parseError);
+          url = null; // Stop pagination
+          break;
+        }
+      } else {
+        parsedBody = result.body as JsonApiResponse;
+      }
+
+      const response = parsedBody;
+      const entities = fromJsonApiFormat(response);
+
+      // Add entities from this page
+      if (Array.isArray(entities)) {
+        allEntities.push(...entities);
+      } else if (entities) {
+        allEntities.push(entities);
+      }
+
+      // Continue to next page if it exists
+      const nextLink = response.links?.['next'];
+      url = typeof nextLink === 'string' ? nextLink : nextLink?.href || null;
+
+    } while (url);
+
+    return allEntities;
   },
 
   /**
@@ -349,6 +420,7 @@ export const drupal = {
     sort?: string;
     sortDirection?: string;
     fields?: string[];
+    limit?: number;
   }) {
     const collectionPath = `/jsonapi/${entityType}/${bundle}`;
     const queryOptions = options ? {
