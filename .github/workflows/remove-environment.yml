@@ -27,4 +27,4 @@ jobs:
 
       - name: Remove Environment
         run: |
-          ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js remove ${{ github.head_ref }}; exit"'
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js remove ${{ github.head_ref }}; exit"'
