@@ -23,15 +23,19 @@ interface TableRow {
 
 // Helper function to get all rows from a specific table
 async function getTableRows(auth: OAuth2PropertyValue, workbookId: string, tableId: string): Promise<TableRow[]> {
-    const response = await httpClient.sendRequest<{ value: TableRow[] }>({
-        method: HttpMethod.GET,
-        url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/tables/${tableId}/rows`,
-        authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.access_token,
-        },
-    });
-    return response.body.value ?? [];
+    try {
+        const response = await httpClient.sendRequest<{ value: TableRow[] }>({
+            method: HttpMethod.GET,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/tables/${encodeURIComponent(tableId)}/rows`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: auth.access_token,
+            },
+        });
+        return response.body.value ?? [];
+    } catch (error) {
+        throw new Error(`Failed to fetch table rows: ${error}`);
+    }
 }
 
 const polling: Polling<
@@ -44,18 +48,32 @@ const polling: Polling<
     }
 > = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ auth, propsValue, lastItemId }) => {
+    items: async ({ auth, propsValue, lastItemId, store }) => {
         const rows = await getTableRows(auth, propsValue.workbook_id, propsValue.table_id);
-        
-        let headers: string[] = [];
-        if (propsValue.has_headers) {
-            headers = await excelCommon.getTableHeaders(
-                propsValue.workbook_id,
-                auth.access_token,
-                propsValue.worksheet_id,
-                propsValue.table_id
-            );
+
+        if (rows.length === 0) {
+            return [];
         }
+
+        const cachedHeaders = await store.get<string[]>('table_headers');
+        let headers: string[] = [];
+
+        if (cachedHeaders && cachedHeaders.length > 0) {
+            headers = cachedHeaders
+        } else {
+            try {
+                headers = await excelCommon.getTableHeaders(
+                    propsValue.workbook_id,
+                    auth.access_token,
+                    propsValue.worksheet_id,
+                    propsValue.table_id
+                );
+                await store.put('table_headers', headers);
+            } catch (error) {
+                headers = []
+            }
+        }
+        
 
         const processedRows = rows.map(row => {
             let rowData: Record<string, unknown> = {};
@@ -63,15 +81,15 @@ const polling: Polling<
             if (propsValue.has_headers && headers.length > 0) {
                 // Map values to header keys
                 rowData = headers.reduce((acc, header, index) => {
-                    acc[header] = row.values[0][index]; // row.values is a 2D array: [[v1, v2]]
+                    acc[header] = row.values[0]?.[index] ?? null;
                     return acc;
                 }, {} as Record<string, unknown>);
             } else {
                 // Use default column letter keys (A, B, C...)
-                rowData = row.values[0].reduce((acc, value, index) => {
+                rowData = row.values[0]?.reduce((acc, value, index) => {
                     acc[excelCommon.numberToColumnName(index + 1)] = value;
                     return acc;
-                }, {} as Record<string, unknown>);
+                }, {} as Record<string, unknown>) ?? {};
             }
 
             return {

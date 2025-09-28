@@ -43,6 +43,11 @@ export const clearRowAction = createAction({
         const { workbook_id, worksheet_id, row_id, applyTo } = context.propsValue;
         const { access_token } = context.auth;
 
+        if (typeof row_id !== 'number' || !Number.isInteger(row_id) || row_id < 1) {
+            throw new Error('Row index must be a positive integer.');
+        }
+
+
         // Construct the range address for the entire row, e.g., '5:5'
         const rowAddress = `${row_id}:${row_id}`;
 
