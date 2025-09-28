@@ -180,6 +180,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                     platformId,
                 },
             },
+            allow_promotion_codes: true,
             success_url: `${frontendUrl}/platform/setup/billing/success?action=create`,
             cancel_url: `${frontendUrl}/platform/setup/billing/error`,
             customer: customerId,
