@@ -39,7 +39,7 @@ const polling: Polling<
     }
 > = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue, lastFetchEpochMS, store }) => {
+    items: async ({ auth, propsValue, store }) => {
         const allRows = await getWorksheetRows(auth, propsValue.workbook_id, propsValue.worksheet_id);
         
         if (allRows.length === 0) {

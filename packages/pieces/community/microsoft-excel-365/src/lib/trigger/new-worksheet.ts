@@ -1,6 +1,5 @@
 import {
   OAuth2PropertyValue,
-  Property,
   createTrigger
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -14,7 +13,6 @@ import {
   pollingHelper,
   DedupeStrategy
 } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
 
 interface Worksheet {
   id: string;
@@ -46,7 +44,7 @@ async function getWorksheets(
 
 const polling: Polling<OAuth2PropertyValue, { workbook_id: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth, propsValue, lastItemId, store }) => {
+  items: async ({ auth, propsValue, store }) => {
     const worksheets = await getWorksheets(auth, propsValue.workbook_id);
 
     const storedWorksheetIds = await store.get<string[]>('worksheet_ids') ?? [];
@@ -56,7 +54,7 @@ const polling: Polling<OAuth2PropertyValue, { workbook_id: string }> = {
     const currentWorksheetIds = worksheets.map(ws => ws.id);
     await store.put('worksheet_ids', currentWorksheetIds);
 
-    const processedWorksheets = newWorksheets.map((worksheet, index) => ({
+    const processedWorksheets = newWorksheets.map((worksheet) => ({
       id: worksheet.id,
       data: worksheet
     }));
