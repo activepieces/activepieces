@@ -19,7 +19,7 @@ env:
   AP_TRIGGER_DEFAULT_POLL_INTERVAL: "1"
   AP_EXECUTION_MODE: UNSANDBOXED
   AP_TELEMETRY_ENABLED: "false"
-  AP_ENVIRONMENT: testing
+  AP_ENVIRONMENT: test
   AP_JWT_SECRET: "secret"
   AP_ENCRYPTION_KEY: "fdbe51af3678563560972e4a912aee6d"
 
@@ -55,6 +55,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Dangerous git checkout
+        uses: ./.github/actions/dangerous-git-checkout
         
       - name: Setup Node.js
         uses: actions/setup-node@v3
