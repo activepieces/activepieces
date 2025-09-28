@@ -181,7 +181,6 @@ async function handleUpdateLogsBehavior(request: HandleUpdateLogsBehaviorParams)
     switch (updateLogsBehavior) {
         case UpdateLogsBehavior.UPDATE_LOGS: {
             assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-            assertNotNullOrUndefined(logsFileId, 'logsFileId is required')
             await flowRunService(request.log).updateLogs({
                 flowRunId: request.runId,
                 logsFileId,
