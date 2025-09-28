@@ -10,7 +10,6 @@ if (!process.env.CI) {
 
 const AP_EDITION = process.env.AP_EDITION || 'ce';
 
-// Edition-specific configurations
 const editionConfigs = {
   ce: {
     testDir: './scenarios/ce',
