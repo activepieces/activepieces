@@ -26,7 +26,6 @@ const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
 
 const config: PlaywrightTestConfig = {
   testDir: editionConfig.testDir,
-
   testMatch: '**/*.spec.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
