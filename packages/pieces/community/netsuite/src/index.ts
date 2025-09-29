@@ -59,13 +59,17 @@ export const netsuite = createPiece({
       authMapping: async (auth, propsValue) => {
         const authValue = auth as PiecePropValueSchema<typeof netsuiteAuth>;
 
+        const parsedUrl = new URL(propsValue['url']['url']);
+        // sanitize cases where params etc are entered directly in the url field
+        const baseUrl = `${parsedUrl.origin}${parsedUrl.pathname}`;
+
         const authHeader = createOAuthHeader(
           authValue.accountId,
           authValue.consumerKey,
           authValue.consumerSecret,
           authValue.tokenId,
           authValue.tokenSecret,
-          propsValue['url'],
+          baseUrl,
           propsValue['method']
         );
 
