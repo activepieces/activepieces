@@ -807,6 +807,9 @@
       "@activepieces/piece-pinecone": [
         "packages/pieces/community/pinecone/src/index.ts"
       ],
+      "@activepieces/piece-pinterest": [
+        "packages/pieces/community/pinterest/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
