@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { SparkleIcon } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 type AgentPromptBlockProps = {
   prompt: string;
@@ -7,11 +7,14 @@ type AgentPromptBlockProps = {
 
 export const AgentPromptBlock = ({ prompt }: AgentPromptBlockProps) => {
   return (
-    <div className="animate-fade mb-3">
-      <div className="flex items-center gap-2 mb-2">
-        <SparkleIcon className="size-4 text-primary" /> {t('Goal')}
+    <div className="mb-3">
+      <div className="rounded-lg border bg-muted/10 p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="size-4 text-primary" />
+          <span className="text-sm font-medium">{t('Prompt')}</span>
+        </div>
+        <div className="text-sm pl-6">{prompt}</div>
       </div>
-      <div>{prompt}</div>
     </div>
   );
 };

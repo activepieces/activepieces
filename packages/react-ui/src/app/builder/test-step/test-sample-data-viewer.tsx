@@ -4,13 +4,29 @@ import React, { useContext } from 'react';
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import { isNil, StepOutputStatus } from '@activepieces/shared';
+import {
+  AgentResult,
+  FlowAction,
+  FlowActionType,
+  isNil,
+  StepOutputStatus,
+} from '@activepieces/shared';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
 import { TestButtonTooltip } from './test-step-tooltip';
+
+const isRunAgent = (step?: FlowAction) => {
+  return (
+    !isNil(step) &&
+    step.type === FlowActionType.PIECE &&
+    step.settings.pieceName === '@activepieces/piece-agent' &&
+    step.settings.actionName === 'run_agent'
+  );
+};
 
 type TestSampleDataViewerProps = {
   isValid: boolean;
@@ -19,6 +35,7 @@ type TestSampleDataViewerProps = {
   sampleDataInput: unknown | null;
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
+  currentStep?: FlowAction;
   children?: React.ReactNode;
   consoleLogs?: string | null;
 } & RetestButtonProps;
@@ -68,11 +85,62 @@ const TestSampleDataViewer = React.memo(
     sampleDataInput,
     errorMessage,
     lastTestDate,
+    currentStep,
     children,
     consoleLogs,
     isSaving,
     onRetest,
   }: TestSampleDataViewerProps) => {
+    const renderViewer = () => {
+      if (isRunAgent(currentStep)) {
+        return <AgentTimeline agentResult={sampleData as AgentResult} />;
+      }
+      if (isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs)) {
+        return (
+          <JsonViewer json={errorMessage ?? sampleData} title={t('Output')} />
+        );
+      } else {
+        return (
+          <Tabs defaultValue="Output">
+            <TabsList
+              className={`grid w-full ${
+                !isNil(sampleDataInput) && isConsoleLogsValid(consoleLogs)
+                  ? 'w-[300px] grid-cols-3'
+                  : 'w-[250px] grid-cols-2'
+              }`}
+            >
+              {!isNil(sampleDataInput) && (
+                <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
+              )}
+              <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
+              {isConsoleLogsValid(consoleLogs) && (
+                <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
+              )}
+            </TabsList>
+            {!isNil(sampleDataInput) && (
+              <TabsContent value="Input">
+                <JsonViewer
+                  json={sampleDataInput}
+                  title={t('Input')}
+                ></JsonViewer>
+              </TabsContent>
+            )}
+            <TabsContent value="Output">
+              <JsonViewer
+                json={errorMessage ?? sampleData}
+                title={t('Output')}
+              ></JsonViewer>
+            </TabsContent>
+            {isConsoleLogsValid(consoleLogs) && (
+              <TabsContent value="Logs">
+                <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
+              </TabsContent>
+            )}
+          </Tabs>
+        );
+      }
+    };
+
     return (
       <>
         {!isTesting && children}
@@ -113,50 +181,7 @@ const TestSampleDataViewer = React.memo(
               />
             </TestButtonTooltip>
           </div>
-
-          {isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs) ? (
-            <JsonViewer
-              json={errorMessage ?? sampleData}
-              title={t('Output')}
-            ></JsonViewer>
-          ) : (
-            <Tabs defaultValue="Output">
-              <TabsList
-                className={`grid w-full ${
-                  !isNil(sampleDataInput) && isConsoleLogsValid(consoleLogs)
-                    ? 'w-[300px] grid-cols-3'
-                    : 'w-[250px] grid-cols-2'
-                }`}
-              >
-                {!isNil(sampleDataInput) && (
-                  <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
-                )}
-                <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
-                {isConsoleLogsValid(consoleLogs) && (
-                  <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
-                )}
-              </TabsList>
-              {!isNil(sampleDataInput) && (
-                <TabsContent value="Input">
-                  <JsonViewer
-                    json={sampleDataInput}
-                    title={t('Input')}
-                  ></JsonViewer>
-                </TabsContent>
-              )}
-              <TabsContent value="Output">
-                <JsonViewer
-                  json={errorMessage ?? sampleData}
-                  title={t('Output')}
-                ></JsonViewer>
-              </TabsContent>
-              {isConsoleLogsValid(consoleLogs) && (
-                <TabsContent value="Logs">
-                  <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
-                </TabsContent>
-              )}
-            </Tabs>
-          )}
+          {renderViewer()}
         </div>
       </>
     );

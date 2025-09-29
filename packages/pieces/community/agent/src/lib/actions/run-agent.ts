@@ -1,7 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { AIErrorResponse, AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { agentCommon } from '../common';
-import {  AgentStepBlock, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
+import {  AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { openai } from '@ai-sdk/openai';
 import { APICallError, stepCountIs, streamText } from 'ai';
 
@@ -56,13 +56,11 @@ export const runAgent = createAction({
     const { agentId, prompt, maxSteps } = context.propsValue
     const { server } = context
 
-    const output: AgentOutput = {
+    const result: AgentResult = {
+      prompt,
       steps: [],
       status: AgentTaskStatus.IN_PROGRESS,
       message: null,
-      output: null,
-      startTime: new Date().toISOString(),
-      finishTime: null,
     }
 
     const agent = await agentCommon.getAgent({ agentId, token: server.token, apiUrl: server.publicUrl })
@@ -103,7 +101,7 @@ export const runAgent = createAction({
         }
         else if (chunk.type === 'tool-call') { 
             if (currentText.length > 0) {
-                output.steps.push({
+                result.steps.push({
                     type: ContentBlockType.MARKDOWN,
                     markdown: currentText,
                 })
@@ -118,13 +116,13 @@ export const runAgent = createAction({
                 output: undefined,
                 startTime: new Date().toISOString(),
             })
-            output.steps.push(metadata)
+            result.steps.push(metadata)
         }
         else if (chunk.type === 'tool-result') {
-            const lastBlockIndex = output.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
-            const lastBlock = output.steps[lastBlockIndex] as ToolCallContentBlock
+            const lastBlockIndex = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
+            const lastBlock = result.steps[lastBlockIndex] as ToolCallContentBlock
             assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
-            output.steps[lastBlockIndex] = {
+            result.steps[lastBlockIndex] = {
                 ...lastBlock,
                 status: ToolCallStatus.COMPLETED,
                 endTime: new Date().toISOString(),
@@ -132,42 +130,23 @@ export const runAgent = createAction({
             }
         }
         else if (chunk.type === 'error') {
-            output.status = AgentTaskStatus.FAILED
+            result.status = AgentTaskStatus.FAILED
             if (APICallError.isInstance(chunk.error)) {
                 const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
-                output.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
+                result.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
             }
             else {
-                output.message = agentCommon.concatMarkdown(output.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
+                result.message = agentCommon.concatMarkdown(result.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
             }
-            output.finishTime = new Date().toISOString()
-            return output
+            return result
         }
     }
 
-    if (currentText.length > 0) {
-        output.steps.push({
-            type: ContentBlockType.MARKDOWN,
-            markdown: currentText,
-        })
-    }
-
-    const markAsComplete = output.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
+    const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
     
-    output.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
-    output.output = markAsComplete?.input
-    output.message = agentCommon.concatMarkdown(output.steps)
-    output.finishTime = new Date().toISOString()
+    result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
+    result.message = agentCommon.concatMarkdown(result.steps)
 
-    return output
+    return result
   }
 });
-
-type AgentOutput = {
-  steps: AgentStepBlock[]
-  status: AgentTaskStatus
-  message: string | null
-  output?: Record<string, unknown> | null | undefined
-  finishTime: string | null
-  startTime: string
-}

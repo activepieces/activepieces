@@ -186,7 +186,7 @@ const transformPiecesMetadataToVirtualizedItems = (
 
 const getItemHeight = (
   pieceMetadata: StepMetadataWithSuggestions,
-  showActionsOrTriggersInsidePiecesList: boolean
+  showActionsOrTriggersInsidePiecesList: boolean,
 ) => {
   const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
     PIECE_SELECTOR_ELEMENTS_HEIGHTS;
@@ -198,7 +198,8 @@ const getItemHeight = (
       pieceSelectorUtils.removeHiddenActions(pieceMetadata);
     return (
       ACTION_OR_TRIGGER_ITEM_HEIGHT *
-        Object.values(actionsListWithoutHiddenActions).length + PIECE_ITEM_HEIGHT
+        Object.values(actionsListWithoutHiddenActions).length +
+      PIECE_ITEM_HEIGHT
     );
   }
   if (

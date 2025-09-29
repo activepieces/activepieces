@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
-import { AgentRunDialog } from '@/features/agents/agent-run-dialog';
 import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
 import { ApTableHeader } from '@/features/tables/components/ap-table-header';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
@@ -43,8 +42,6 @@ const ApTableEditorPage = () => {
     createRecord,
     fields,
     records,
-    selectedAgentRunId,
-    setSelectedAgentRunId,
     setRecords,
   ] = useTableState((state) => [
     state.table,
@@ -56,8 +53,6 @@ const ApTableEditorPage = () => {
     state.createRecord,
     state.fields,
     state.records,
-    state.selectedAgentRunId,
-    state.setSelectedAgentRunId,
     state.setRecords,
   ]);
 
@@ -180,16 +175,6 @@ const ApTableEditorPage = () => {
           />
         </div>
       </div>
-
-      <AgentRunDialog
-        agentRunId={selectedAgentRunId}
-        open={!!selectedAgentRunId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedAgentRunId(null);
-          }
-        }}
-      />
     </div>
   );
 };

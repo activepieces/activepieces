@@ -35,6 +35,13 @@ export enum AgentTaskStatus {
     IN_PROGRESS = 'IN_PROGRESS',
 }
 
+export type AgentResult = {
+  prompt: string,
+  steps: AgentStepBlock[]
+  status: AgentTaskStatus
+  message: string | null
+}
+
 export const AgentRun = Type.Object({
     ...BaseModelSchema,
     agentId: Type.String(),

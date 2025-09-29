@@ -180,21 +180,12 @@ async function getAgentMetadata(
     if (!externalAgentId) {
       return {};
     }
-    // const agent = await agentsApi.findByExteranlId(externalAgentId);
-    // if (!agent) {
-    //   return {};
-    // }
-    // return {
-    //   logoUrl: agent.profilePictureUrl,
-    //   description: agent.description,
-    //   displayName: agent.displayName,
-    // };
 
     return {
-      logoUrl: '',
-      description: 'My agent stuff',
-      displayName: 'Louai Achour'
-    }
+      logoUrl: `https://cdn.activepieces.com/quicknew/agents/robots/robot_1500.png`,
+      description: 'This is a fresh general purpose agent',
+      displayName: 'Fresh Agent',
+    };
   }
   return {};
 }
