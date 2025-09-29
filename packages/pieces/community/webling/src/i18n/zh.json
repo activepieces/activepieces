@@ -1,15 +1,14 @@
 {
-  "Webling": "Webling",
   "Base URL": "基本网址",
   "API Key": "API 密钥",
-  "Get Events by ID": "Get Events by ID",
-  "Gets event data by a list of event IDs and optional calendar ID to filter.": "Gets event data by a list of event IDs and optional calendar ID to filter.",
-  "Event ID list": "Event ID list",
-  "Calendar": "Calendar",
-  "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.": "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.",
-  "Calendar to filter the events by.": "Calendar to filter the events by.",
-  "New or Updated Event": "New or Updated Event",
-  "On Changed Data": "On Changed Data",
-  "Triggers when an event is added or updated.": "Triggers when an event is added or updated.",
-  "Triggers when anything was added, updated or deleted since last request.": "Triggers when anything was added, updated or deleted since last request."
+  "Get Events by ID": "通过ID获取事件",
+  "Gets event data by a list of event IDs and optional calendar ID to filter.": "通过事件ID列表和可选日历ID进行过滤获取事件数据。",
+  "Event ID list": "事件 ID 列表",
+  "Calendar": "日程表",
+  "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.": "逗号分隔的事件ID列表(如：'536,525,506,535')。当至少一个ID不存在时，整个查询返回一个404个错误。",
+  "Calendar to filter the events by.": "筛选事件的日历。",
+  "New or Updated Event": "新建或更新事件",
+  "On Changed Data": "在更改数据时",
+  "Triggers when an event is added or updated.": "事件添加或更新时触发.",
+  "Triggers when anything was added, updated or deleted since last request.": "自上次请求以来添加、更新或删除任何内容时触发。"
 }
