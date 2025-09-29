@@ -317,6 +317,9 @@
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/community/data-summarizer/src/index.ts"
       ],
+      "@activepieces/piece-datadog": [
+        "packages/pieces/community/datadog/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
