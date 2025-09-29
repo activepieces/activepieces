@@ -21,7 +21,7 @@ import { newWhatsappAccount } from './lib/triggers/new-whatsapp-account';
 import { PieceCategory } from '@activepieces/shared';
 
 export const timelinesAi = createPiece({
-  displayName: 'Timelines-ai',
+  displayName: 'TimelinesAI',
   auth: timelinesAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/timelines-ai.png',
