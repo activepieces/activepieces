@@ -1,5 +1,5 @@
 import path from 'path'
-import { PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
+import { fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
 import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
@@ -28,10 +28,10 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const startTime = performance.now()
 
         const source = workerMachine.getSettings().PIECES_SOURCE as PiecesSource
-        await threadSafeMkdir(GLOBAL_CACHE_PATH_LATEST_VERSION)
+        await fileSystemUtils.threadSafeMkdir(GLOBAL_CACHE_PATH_LATEST_VERSION)
 
         const startTimeCode = performance.now()
-        await threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
+        await fileSystemUtils.threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
         // This is sequential to ensure the worker machine is not overloaded
         for (const artifact of codeSteps) {
             await codeBuilder(log).processCodeStep({
@@ -46,12 +46,13 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         }, 'Installed code in sandbox')
 
         const startTimeEngine = performance.now()
-        await engineInstaller(log).install({
+        const { cacheHit } = await engineInstaller(log).install({
             path: GLOBAL_CACHE_COMMON_PATH,
         })
         log.info({
             path: GLOBAL_CACHE_COMMON_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeEngine)}ms`,
+            cacheHit,
         }, 'Installed engine in sandbox')
 
         const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
@@ -72,7 +73,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const customPieces = pieces.filter(f => f.pieceType === PieceType.CUSTOM)
         if (customPieces.length > 0) {
             const startTime = performance.now()
-            await threadSafeMkdir(customPiecesPath)
+            await fileSystemUtils.threadSafeMkdir(customPiecesPath)
             await pieceManager(source).install({
                 projectPath: customPiecesPath,
                 pieces: customPieces,

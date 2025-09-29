@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { getRedisConnection } from '../../../database/redis-connection'
+import { redisConnections } from '../../../database/redis'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { userService } from '../../../user/user-service'
@@ -45,7 +45,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const key = `trial-gift-${platformId}-${customerId}`
         const redisValue = await redisConnection.get(key)
         const parsedGiftTrial = redisValue 
@@ -101,7 +101,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 isNil(platformPlan.stripeSubscriptionId) || 
                 platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.CANCELED
             ) {
-                const redisConnection = getRedisConnection()
+                const redisConnection = await redisConnections.useExisting()
                 const key = `trial-gift-${platformPlan.platformId}-${platformPlan.stripeCustomerId}`
                 await platformPlanService(log).update({
                     platformId: platformPlan.platformId,
@@ -180,6 +180,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                     platformId,
                 },
             },
+            allow_promotion_codes: true,
             success_url: `${frontendUrl}/platform/setup/billing/success?action=create`,
             cancel_url: `${frontendUrl}/platform/setup/billing/error`,
             customer: customerId,

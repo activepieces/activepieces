@@ -74,7 +74,7 @@ Please check the [navigation](./navigation) section, as it's very important to u
 | embedding.builder.homeButtonIcon | ❌ | `logo`  \| `back` |  if set to **`back`** the tooltip shown on hovering the home button is removed (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))
 | embedding.dashboard.hideSidebar | ❌ | boolean | Controls the visibility of the sidebar in the dashboard, by default it is false. |
 | embedding.dashboard.hideFlowsPageNavbar | ❌ | boolean | Controls the visibility of the navbar showing flows,issues and runs above the flows table in the dashboard, by default it is false. (added in [0.6.0](./sdk-changelog#07%2F07%2F2025-0-6-0)) |
-| embedding.dashboard.hideSettings | ❌ | boolean | Controls the visibility of settings button next to the home button in the sidebar, by default it is false. (added in [0.7.0](./sdk-changelog#07%2F07%2F2025-0-7-0)) |
+| embedding.dashboard.hidePageHeader | ❌ | boolean | Hides the page header in the dashboard by default it is false. (added in [0.8.0](./sdk-changelog#09%2F21%2F2025-0-8-0)) |
 | embedding.hideFolders | ❌ | boolean | Hides all things related to folders in both the flows table and builder by default it is false. |
 | embedding.styling.fontUrl | ❌ | string | The url of the font to be used in the embedding, by default it is `https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap`. |
 | embedding.styling.fontFamily | ❌ | string | The font family to be used in the embedding, by default it is `Roboto`. |
@@ -83,7 +83,6 @@ Please check the [navigation](./navigation) section, as it's very important to u
 | embedding.hideDuplicateFlow | ❌ |  boolean | Hides the option to duplicate a flow  (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
 | embedding.locale | ❌ |  `en` \| `nl` \| `de` \| `fr`  \| `es` \| `ja` \| `zh` \| `pt` \| `zh-TW` \| `ru` \|  | it takes [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) locale codes (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
 | navigation.handler  | ❌ | `({route:string}) => void`  | This callback will be triggered each time a route in Activepieces changes, you can read more about it [here](/embedding/navigation) |
-
 <Tip>
  For the font to be loaded, you need to set both the `fontUrl` and `fontFamily` properties.
  If you only set one of them, the default font will be used.
