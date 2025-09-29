@@ -1,10 +1,9 @@
 {
-  "Twin Web Agent": "Twin Web Agent",
-  "Please use ***your-twin-labs-api-key*** as value for API Key": "Please use ***your-twin-labs-api-key*** as value for API Key",
-  "Browse": "Browse",
-  "Browse the internet with an AI web navigation agent that can find information for you": "Browse the internet with an AI web navigation agent that can find information for you",
+  "Please use ***your-twin-labs-api-key*** as value for API Key": "请使用 ***您的双labs-api-key**作为API密钥的值",
+  "Browse": "浏览",
+  "Browse the internet with an AI web navigation agent that can find information for you": "用 AI 网页导航代理浏览互联网，可以为您找到信息",
   "startUrl": "startUrl",
-  "Goal": "Goal",
-  "The URL where the browsing task should begin": "The URL where the browsing task should begin",
-  "The goal or objective of the browsing task": "The goal or objective of the browsing task"
+  "Goal": "目标",
+  "The URL where the browsing task should begin": "开始浏览任务的 URL",
+  "The goal or objective of the browsing task": "浏览任务的目标或目的"
 }
