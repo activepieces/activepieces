@@ -62,3 +62,30 @@ export const whatsappAccountDropdown = ({ required = true }) =>
       };
     },
   });
+
+export const fileDropdown = ({ required = true }) =>
+  Property.Dropdown({
+    displayName: 'Uploaded File',
+    description: 'Select the uploaded file',
+    required,
+    refreshers: ['auth'],
+    options: async ({ auth: apiKey }) => {
+      if (!apiKey) {
+        return {
+          disabled: true,
+          placeholder: 'Please select an authentication first',
+          options: [],
+        };
+      }
+      const response = await timelinesAiCommon.listUploadedFiles({
+        apiKey: apiKey as string,
+      });
+      const files = response.data;
+      return {
+        options: files.map((file) => ({
+          label: file.filename,
+          value: file.uid,
+        })),
+      };
+    },
+  });
