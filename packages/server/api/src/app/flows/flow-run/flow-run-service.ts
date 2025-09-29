@@ -212,7 +212,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         tags,
         duration,
         failedStepName,
-        logsFileId,
     }: FinishParams): Promise<FlowRun> {
         log.info({
             flowRunId,
@@ -232,7 +231,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             tags,
             finishTime: new Date().toISOString(),
             failedStepName: failedStepName ?? undefined,
-            logsFileId: logsFileId ?? undefined,
         })
 
 
@@ -263,11 +261,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 projectId,
             },
         })
-        if (isNil(logsFileId)) {
-            await flowRunRepo().update(flowRunId, {
-                logsFileId: newLogsFileId,
-            })
-        }
+        await flowRunRepo().update(flowRunId, {
+            logsFileId: newLogsFileId,
+        })
+    },
+    async updateLogsSizeAndAttachLogsFile({ flowRunId, logsFileId, executionStateContentLength }: UpdateLogsSizeAndAttachLogsFileParams): Promise<void> {
+        await flowRunRepo().update(flowRunId, {
+            logsFileId,
+        })
+        await fileService(log).updateSize({
+            fileId: logsFileId,
+            size: executionStateContentLength,
+        })
     },
     async start({
         payload,
@@ -673,8 +678,15 @@ type FinishParams = {
     duration: number | undefined
     tags: string[]
     failedStepName?: string | undefined
-    logsFileId?: string | undefined
 }
+
+type UpdateLogsSizeAndAttachLogsFileParams = {
+    flowRunId: FlowRunId
+    logsFileId: string
+    executionStateContentLength: number
+}
+
+
 
 type CreateParams = {
     projectId: ProjectId
