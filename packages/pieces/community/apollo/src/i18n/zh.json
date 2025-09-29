@@ -1,8 +1,8 @@
 {
-  "Match Person": "匹配人员",
+  "Match Person": "Match Person",
   "Enrich Company": "Enrich Company",
   "Email": "电子邮件地址",
-  "Cache Response": "缓存响应",
-  "Domain": "域",
-  "Store the response in the project store for future use.": "将响应存储在项目商店以供未来使用。"
+  "Cache Response": "Cache Response",
+  "Domain": "Domain",
+  "Store the response in the project store for future use.": "Store the response in the project store for future use."
 }
