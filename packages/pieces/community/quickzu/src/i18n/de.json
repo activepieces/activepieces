@@ -1,5 +1,4 @@
 {
-  "Quickzu": "Schnell",
   "Streamline ordering from whatsapp": "Streamline Bestellung von whatsapp",
   "\n1. Login to your Quickzu Dashboard.\n2. Go to **https://app.quickzu.com/dash/settings/api-webhooks**.\n3. Copy **API Token** to the clipboard and paste it.": "\n1. Melde dich in dein Quickzu-Dashboard ein.\n2. Gehe zu **https://app.quickzu.com/dash/settings/api-webhooks**.\n3. Kopiere **API Token** in die Zwischenablage und füge sie ein.",
   "Add Product": "Neuer Artikel",

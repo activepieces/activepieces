@@ -1,5 +1,4 @@
 {
-  "ntfy": "ntfy",
   "Notification management made easy": "La gestion des notifications simplifiée",
   "Server URL": "URL du serveur",
   "Access Token": "Jeton d'accès",
@@ -26,7 +25,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
-  "The topic/channel to send the notification to, e.g. test1": "Le sujet/salon auquel envoyer la notification, par exemple test1",
+  "The topic/channel to send the notification to, e.g. test1": "Le sujet/channel auquel envoyer la notification, par exemple test1",
   "The title of the notification": "Le titre de la notification",
   "The message to send": "Le message à envoyer",
   "The priority of the notification (1-5). 1 is lowest priority.": "La priorité de la notification (1-5).",

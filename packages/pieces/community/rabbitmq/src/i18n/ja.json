@@ -1,8 +1,7 @@
 {
-  "RabbitMQ": "RabbitMQ",
   "Host": "ホスト",
   "Username": "ユーザー名",
-  "Password": "パスワード",
+  "Password": "Password",
   "Port": "ポート",
   "Virtual Host": "バーチャルホスト",
   "Rabbitmq Auth": "Rabbitmq 認証",

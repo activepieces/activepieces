@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
-import { enrichErrorContext, execPromise, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
-import { isEmpty } from '@activepieces/shared'
+import { enrichErrorContext, execPromise, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 type PackageManagerOutput = {
@@ -23,6 +23,11 @@ export type PackageInfo = {
    * where to get the package from, could be an npm tag, a local path, or a tarball.
    */
     spec: string
+
+    /**
+   * if the package is standalone, it means it get installed in it's own folder
+   */
+    standalone?: boolean
 }
 
 const runCommand = async (
@@ -34,7 +39,7 @@ const runCommand = async (
     try {
         log.debug({ path, command, args }, '[PackageManager#execute]')
 
-        await threadSafeMkdir(path)
+        await fileSystemUtils.threadSafeMkdir(path)
 
         const commandLine = `pnpm ${command} ${args.join(' ')}`
         return await execPromise(commandLine, { cwd: path })
@@ -54,7 +59,7 @@ const runCommand = async (
 }
 
 export const packageManager = (log: FastifyBaseLogger) => ({
-    async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
+    async add({ path, dependencies, installDir }: AddParams): Promise<PackageManagerOutput> {
         if (isEmpty(dependencies)) {
             return {
                 stdout: '',
@@ -68,15 +73,17 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
         ]
+        if (!isNil(installDir)) {
+            config.push(`--dir=${installDir}`)
+        }
 
         const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
         return runCommand(path, 'add', log, ...dependencyArgs, ...config)
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        const lock = await memoryLock.acquire(`pnpm-init-${path}`)
-        try {
-            const fExists = await fileExists(fsPath.join(path, 'package.json'))
+        return memoryLock.runExclusive(`pnpm-init-${path}`, async () => {
+            const fExists = await fileSystemUtils.fileExists(fsPath.join(path, 'package.json'))
             if (fExists) {
                 return {
                     stdout: 'N/A',
@@ -86,10 +93,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             // It must be awaited so it only releases the lock after the command is done
             const result = await runCommand(path, 'init', log)
             return result
-        }
-        finally {
-            await lock.release()
-        }
+        })
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
@@ -135,6 +139,7 @@ const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: Fast
 type AddParams = {
     path: string
     dependencies: PackageInfo[]
+    installDir?: string
 }
 
 type InitParams = {

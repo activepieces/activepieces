@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
+import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
@@ -11,11 +12,7 @@ import {
   UpdateSubscriptionParams,
   StartTrialParams,
 } from '@activepieces/ee-shared';
-import {
-  ApErrorParams,
-  ErrorCode,
-  ListAICreditsUsageRequest,
-} from '@activepieces/shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 

@@ -1,5 +1,4 @@
 {
-  "Manychat": "Manychat",
   "Automations for Instagram, WhatsApp, TikTok, and Messenger marketing.": "Automations for Instagram, WhatsApp, TikTok, and Messenger marketing.",
   "You can create an API key by navigating to **Setting -> Extensions -> API**.": "You can create an API key by navigating to **Setting -> Extensions -> API**.",
   "Add Tag to User": "Add Tag to User",
@@ -18,7 +17,7 @@
   "Ass or Updates a custom field value for a user.": "Ass or Updates a custom field value for a user.",
   "User ID": "User ID",
   "Tag": "标签",
-  "First Name": "名字",
+  "First Name": "First Name",
   "Last Name": "名字",
   "Phone Number": "Phone Number",
   "WhatsApp Phone": "WhatsApp Phone",

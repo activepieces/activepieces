@@ -1,5 +1,4 @@
 {
-  "HTTP (OAuth2)": "HTTP (OAuth2)",
   "Authorize URL": "Autoriser l'URL",
   "Token URL": "URL du jeton",
   "Scopes (whitespace separated)": "Portées (séparées par des espaces)",
@@ -20,13 +19,13 @@
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "Use a proxy for this request": "Utiliser un proxy pour cette requête",
-  "GET": "OBTENIR",
-  "POST": "POSTER",
-  "PUT": "EFFACER",
+  "GET": "GET",
+  "POST": "POST",
+  "PUT": "PUT",
   "PATCH": "PATCH",
-  "DELETE": "SUPPRIMER",
+  "DELETE": "DELETE",
   "None": "Aucun",
   "Form Data": "Données du formulaire",
   "JSON": "JSON",
-  "Raw": "Brute"
+  "Raw": "Brut"
 }

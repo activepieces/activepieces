@@ -1,5 +1,4 @@
 {
-  "Saastic": "Saastic",
   "Revenue and churn analytics for Stripe": "Revenue and churn analytics for Stripe",
   " You can find your project’s API key here: https://saastic.com/settings/developers": " You can find your project’s API key here: https://saastic.com/settings/developers",
   "Create or Update a Customer": "Create or Update a Customer",
@@ -8,7 +7,7 @@
   "Create or update a customer.": "Create or update a customer.",
   "Creates a customer charge.": "Creates a customer charge.",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
-  "First Name": "名字",
+  "First Name": "First Name",
   "Last Name": "名字",
   "Email": "电子邮件地址",
   "Phone": "Phone",

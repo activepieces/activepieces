@@ -5,7 +5,7 @@
   "Return Response": "返品対応",
   "Call a flow that has \"Callable Flow\" trigger": "\"Callable Flow\" トリガーがあるフローを呼び出します。",
   "Return response to the original flow": "元のフローに返信する",
-  "Flow": "フロー",
+  "Flow": "Flow",
   "Mode": "モード",
   "Wait for Response": "応答待ち",
   "Response": "回答",

@@ -54,6 +54,100 @@ export const mailchimpCommon = {
       count: 1000,
     });
   },
+
+  mailChimpCampaignIdDropdown: Property.Dropdown<string>({
+    displayName: 'Campaign',
+    refreshers: [],
+    description: 'Select the campaign to get information for',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
+
+      const authProp = auth as OAuth2PropertyValue;
+      const campaignResponse = (await mailchimpCommon.getUserCampaigns(
+        authProp
+      )) as any;
+
+      const options = campaignResponse.campaigns.map((campaign: any) => ({
+        label: `${campaign.settings?.title || campaign.id} (${campaign.status})`,
+        value: campaign.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
+      };
+    },
+  }),
+
+  getUserCampaigns: async (authProp: OAuth2PropertyValue) => {
+    const access_token = authProp.access_token;
+    const mailChimpServerPrefix =
+      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    mailchimp.setConfig({
+      accessToken: access_token,
+      server: mailChimpServerPrefix,
+    });
+
+    // Get campaigns with essential fields for dropdown
+    return await (mailchimp as any).campaigns.list({
+      fields: ['campaigns.id', 'campaigns.settings.title', 'campaigns.status', 'total_items'],
+      count: 1000,
+    });
+  },
+
+  mailChimpStoreIdDropdown: Property.Dropdown<string>({
+    displayName: 'Store',
+    refreshers: [],
+    description: 'Select the e-commerce store',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
+      }
+
+      const authProp = auth as OAuth2PropertyValue;
+      const storeResponse = (await mailchimpCommon.getUserStores(
+        authProp
+      )) as any;
+
+      const options = storeResponse.stores.map((store: any) => ({
+        label: `${store.name} (${store.id})`,
+        value: store.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
+      };
+    },
+  }),
+
+  getUserStores: async (authProp: OAuth2PropertyValue) => {
+    const access_token = authProp.access_token;
+    const mailChimpServerPrefix =
+      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    mailchimp.setConfig({
+      accessToken: access_token,
+      server: mailChimpServerPrefix,
+    });
+
+    // Get stores with essential fields for dropdown
+    return await (mailchimp as any).ecommerce.stores({
+      fields: ['stores.id', 'stores.name', 'total_items'],
+      count: 1000,
+    });
+  },
   getMailChimpServerPrefix: async (access_token: string) => {
     const mailChimpMetaDataRequest: HttpRequest<{ dc: string }> = {
       method: HttpMethod.GET,

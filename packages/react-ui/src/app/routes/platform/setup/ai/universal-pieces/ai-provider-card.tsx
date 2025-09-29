@@ -3,7 +3,7 @@ import { Pencil, Trash } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { SupportedAIProvider } from '@activepieces/shared';
+import { SupportedAIProvider } from '@activepieces/common-ai';
 
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
 

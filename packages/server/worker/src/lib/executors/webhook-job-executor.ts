@@ -1,13 +1,17 @@
-import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
+import { pinoLogging } from '@activepieces/server-shared'
 import {
+    ConsumeJobResponse,
+    ConsumeJobResponseStatus,
     EventPayload,
     isNil,
     PopulatedFlow,
     ProgressUpdateType,
+    TriggerRunStatus,
+    WebhookJobData,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowWorkerCache } from '../api/flow-worker-cache'
 import { workerApiService } from '../api/server-api.service'
+import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { triggerHooks } from '../utils/trigger-utils'
 import { webhookUtils } from '../utils/webhook-utils'
 
@@ -17,7 +21,8 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         data: WebhookJobData,
         engineToken: string,
         workerToken: string,
-    ): Promise<void> {
+        timeoutInSeconds: number,
+    ): Promise<ConsumeJobResponse> {
         const webhookLogger = pinoLogging.createWebhookContextLog({
             log,
             webhookId: data.requestId,
@@ -26,30 +31,42 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         webhookLogger.info('Webhook job executor started')
         const { payload, saveSampleData, flowVersionIdToRun, execute } = data
 
-        const populatedFlowToRun = await flowWorkerCache(log).getFlow({
+        const populatedFlowToRun = await flowWorkerCache.getFlow({
             engineToken,
             flowVersionId: flowVersionIdToRun,
         })
 
         if (isNil(populatedFlowToRun)) {
-            return
+            return {
+                status: ConsumeJobResponseStatus.OK,
+            }
         }
 
         if (saveSampleData) {
-            await handleSampleData(jobId, populatedFlowToRun, engineToken, workerToken, webhookLogger, payload)
+            await handleSampleData(jobId, populatedFlowToRun, engineToken, workerToken, webhookLogger, payload, timeoutInSeconds)
         }
 
         const onlySaveSampleData = !execute
         if (onlySaveSampleData) {
-            return
+            return {
+                status: ConsumeJobResponseStatus.OK,
+            }
         }
-        const filteredPayloads = await triggerHooks(log).extractPayloads(engineToken, {
+        const { payloads, status, errorMessage } = await triggerHooks(log).extractPayloads(engineToken, {
             jobId,
             flowVersion: populatedFlowToRun.version,
             payload,
             projectId: populatedFlowToRun.projectId,
             simulate: saveSampleData,
+            timeoutInSeconds,
         })
+
+        if (status === TriggerRunStatus.INTERNAL_ERROR) {
+            return {
+                status: ConsumeJobResponseStatus.INTERNAL_ERROR,
+                errorMessage,
+            }
+        }
 
         await workerApiService(workerToken).startRuns({
             flowVersionId: populatedFlowToRun.version.id,
@@ -57,10 +74,13 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             environment: data.runEnvironment,
             progressUpdateType: ProgressUpdateType.NONE,
             httpRequestId: data.requestId,
-            payloads: filteredPayloads,
+            payloads,
             parentRunId: data.parentRunId,
             failParentOnFailure: data.failParentOnFailure,
-        })
+        })  
+        return {
+            status: ConsumeJobResponseStatus.OK,
+        }
     },
 })
 
@@ -72,13 +92,15 @@ async function handleSampleData(
     workerToken: string,
     log: FastifyBaseLogger,
     payload: EventPayload,
+    timeoutInSeconds: number,
 ): Promise<void> {
-    const payloads = await triggerHooks(log).extractPayloads(engineToken, {
+    const { payloads } = await triggerHooks(log).extractPayloads(engineToken, {
         jobId,
         flowVersion: latestFlowVersion.version,
         payload,
         projectId: latestFlowVersion.projectId,
         simulate: true,
+        timeoutInSeconds,
     })
     webhookUtils(log).savePayloadsAsSampleData({
         flowVersion: latestFlowVersion.version,

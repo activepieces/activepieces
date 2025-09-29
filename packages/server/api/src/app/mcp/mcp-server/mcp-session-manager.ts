@@ -2,7 +2,7 @@ import { apId, isNil } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore } from '../../helper/keyvalue'
+import { distributedStore } from '../../helper/key-value'
 import { pubsub } from '../../helper/pubsub'
 
 type SessionData = {
@@ -19,8 +19,7 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
     return {
         init: async (): Promise<void> => {
 
-
-            pubsub().subscribe(`server:${serverId}`, async (channel, message) => {
+            pubsub.subscribe(`server:${serverId}`, async (channel, message) => {
                 const { sessionId, body, operation } = JSON.parse(message)
                 logger.info({ sessionId, operation }, 'Received message')
 
@@ -61,14 +60,14 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
             logger.info({ sessionId }, 'MCP session added')
 
             // Store session information in distributed store
-            await distributedStore().put(constructSessionKey(sessionId), serverId)
+            await distributedStore.put(constructSessionKey(sessionId), serverId)
         },
 
         publish: async (sessionId: string, body: unknown, operation: 'remove' | 'message' = 'message'): Promise<void> => {
-            const serverId = await distributedStore().get<string>(constructSessionKey(sessionId))
+            const serverId = await distributedStore.get<string>(constructSessionKey(sessionId))
             if (serverId) {
                 logger.info({ sessionId, body, operation }, 'Publishing message')
-                await pubsub().publish(`server:${serverId}`, JSON.stringify({ sessionId, body, operation }))
+                await pubsub.publish(`server:${serverId}`, JSON.stringify({ sessionId, body, operation }))
             }
 
         },
@@ -94,7 +93,7 @@ export async function remove(sessionId: string): Promise<void> {
         sessions.delete(sessionId)
 
         // Remove session information from distributed store
-        await distributedStore().delete(constructSessionKey(sessionId))
+        await distributedStore.delete(constructSessionKey(sessionId))
     }
     catch (error) {
         throw new Error(`Failed to remove session: ${error instanceof Error ? error.message : 'Unknown error'}`)

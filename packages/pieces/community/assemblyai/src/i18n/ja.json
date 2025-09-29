@@ -1,5 +1,4 @@
 {
-  "AssemblyAI": "AssemblyAI",
   "Transcribe and extract data from audio using AssemblyAI's Speech AI.": "AssemblyAIのSpeech AIを使用してオーディオからデータを書き換えて抽出します。",
   "You can retrieve your AssemblyAI API key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces).": "AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces)からAssemblyAI APIキーを取得できます。",
   "Upload File": "ファイルをアップロード",
@@ -297,7 +296,7 @@
   "Occupation": "Ocupação",
   "Organization": "組織",
   "Passport Number": "パスポート番号",
-  "Password": "パスワード",
+  "Password": "Password",
   "Person Age": "年齢:",
   "Person Name": "担当者名",
   "Phone Number": "電話番号",
@@ -326,7 +325,7 @@
   "Queued": "キューに入りました",
   "Processing": "処理中",
   "Completed": "完了",
-  "Error": "エラー",
+  "Error": "Error",
   "Claude 3.5 Sonnet (on Anthropic)": "Claude 3.5 Sonnet (Anthropic)",
   "Claude 3 Opus (on Anthropic)": "クロード3 Opus (アンスロピック上)",
   "Claude 3 Haiku (on Anthropic)": "クロード3俳句（アンスロピック）",

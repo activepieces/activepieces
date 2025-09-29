@@ -1,5 +1,4 @@
 {
-  "Shopify": "Shopify",
   "Ecommerce platform for online stores": "Plataforma de comércio eletrônico para lojas on-line",
   "Shop Name": "Nome da loja",
   "Admin Token": "Token Admin",
@@ -71,6 +70,7 @@
   "Last Name": "Sobrenome",
   "Phone Number": "Número de telefone",
   "Tags": "Etiquetas",
+  "Accepts Marketing ?": "Aceita Marketing ?",
   "Product Variant": "Variante do Produto",
   "Title": "Título",
   "Quantity": "Quantidade",

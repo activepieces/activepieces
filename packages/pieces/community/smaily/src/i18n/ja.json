@@ -2,7 +2,7 @@
   "Smaily": "スマイル",
   "Domain": "ドメイン",
   "User Name": "ユーザー名",
-  "Password": "Password",
+  "Password": "パスワード",
   "\n  1. Click on profile pic (top right corner), navigate to **Preferences**.\n  2. Go to **Integrations** tab and click on **Create a New User**.\n  3. Copy generated domain, user and password.": "\n  1. Click on profile pic (top right corner), navigate to **Preferences**.\n  2. Go to **Integrations** tab and click on **Create a New User**.\n  3. Copy generated domain, user and password.",
   "Create or Update Subscriber": "購読者を作成または更新",
   "Get Subscriber": "購読者を取得",

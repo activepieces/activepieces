@@ -10,6 +10,6 @@
   "Calendar to filter the events by.": "Calendrier pour filtrer les événements.",
   "New or Updated Event": "Nouvel événement ou mise à jour",
   "On Changed Data": "Sur les données modifiées",
-  "Triggers when an event is added or updated.": "Déclenche lorsqu'un événement est ajouté ou mis à jour.",
+  "Triggers when an event is added or updated.": "Se déclenche lorsqu'un événement est ajouté ou mis à jour.",
   "Triggers when anything was added, updated or deleted since last request.": "Déclenche quand quelque chose a été ajouté, mis à jour ou supprimé depuis la dernière requête."
 }

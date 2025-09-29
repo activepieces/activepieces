@@ -1,11 +1,10 @@
 {
-  "Robolly": "Robuste",
   "Robolly is the all‑in‑one service for personalized image, video & PDF generation with API": "Robolly est le service tout-en-un pour une image personnalisée, la génération de vidéos et de PDF avec API",
   "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://robolly.com/dashboard/account/\n2. Once on the website, locate and copy your API Key.\nPlease, take into consideration: We don't test your API Key validity in order to save you some generations, so make sure this is the correct one.\n": "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://robolly.com/dashboard/account/\n2. Once on the website, locate and copy your API Key.\nPlease, take into consideration: We don't test your API Key validity in order to save you some generations, so make sure this is the correct one.\n",
   "Generate Image": "Générer une image",
-  "Custom API Call": "Appel API personnalisé",
+  "Custom API Call": "Appel d'API personnalisé",
   "Generate an image using Robolly": "Générer une image en utilisant Robolly",
-  "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
+  "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "Template": "Gabarit",
   "Format": "Formater",
   "Values": "Valeurs",
@@ -16,7 +15,7 @@
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
-  "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Timeout (in seconds)": "Délai d'expiration (en secondes)",
   "Select your template. (If you want to use Template ID. Click on the \"(x)\" above this field. Template ID can be found by opening a template and going to “Render”. Being there copy the template ID from the top right.)": "Sélectionnez votre modèle. (Si vous voulez utiliser l'ID du modèle. Cliquez sur le \"(x)\" au-dessus de ce champ. L'ID du modèle peut être trouvé en ouvrant un modèle et en allant à \"Rendu\". En étant là, copiez l'ID du modèle en haut à droite.)",
   "The format of the image to generate.": "Le format de l'image à générer.",
   "The values to apply to the fields in the template.": "Les valeurs à appliquer aux champs du modèle.",
@@ -26,10 +25,10 @@
   "JPG": "JPG",
   "PNG": "PNG",
   "PDF": "PDF",
-  "GET": "OBTENIR",
-  "POST": "POSTER",
+  "GET": "GET",
+  "POST": "POST",
   "PATCH": "PATCH",
-  "PUT": "EFFACER",
-  "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "PUT": "PUT",
+  "DELETE": "DELETE",
+  "HEAD": "HEAD"
 }

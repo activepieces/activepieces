@@ -1,4 +1,5 @@
-import { isNil, omit, ProjectState, TableOperation, TableOperationType, TableState } from '@activepieces/shared'
+import { isNil, ProjectState, TableOperation, TableOperationType, TableState } from '@activepieces/shared'
+import deepEqual from 'deep-equal'
 
 export const tableDiffService = {
     diff({ newState, currentState }: DiffParams): TableOperation[] {
@@ -8,11 +9,11 @@ export const tableDiffService = {
         return [...updates, ...creates, ...deletes]
     },
 }
-
 function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
-    const omitId = omit(stateOne, ['id'])
-    const omitIdTwo = omit(stateTwo, ['id'])
-    return JSON.stringify(omitId) !== JSON.stringify(omitIdTwo)
+    const { id: _, ...restOne } = stateOne
+    const { id: __, ...restTwo } = stateTwo
+
+    return !deepEqual(restOne, restTwo)
 }
 
 function findTablesToUpdate(currentState: ProjectState, newState: ProjectState): TableOperation[] {
@@ -54,9 +55,7 @@ function findTablesToDelete(currentState: ProjectState, newState: ProjectState):
         if (isNil(exists)) {
             operations.push({
                 type: TableOperationType.DELETE_TABLE,
-                tableState: {
-                    externalId: table.externalId,
-                },
+                tableState: table,
             })
         }
     })

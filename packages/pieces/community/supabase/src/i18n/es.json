@@ -88,8 +88,8 @@
   "Column is null": "Column is null",
   "Column is not null": "Column is not null",
   "Column matches pattern (LIKE)": "Column matches pattern (LIKE)",
-  "Column matches pattern (case-insensitive)": "Column matches pattern (case-insensitive)",
-  "Exact": "Exact",
+  "Column matches pattern (case-insensitive)": "La columna coincide con el patrón (mayúsculas y minúsculas)",
+  "Exact": "Exacto",
   "Planned": "Planeado",
   "Estimated": "Estimado",
   "GET": "RECOGER",
@@ -99,9 +99,9 @@
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
   "New Row": "Nueva fila",
-  "Fires when a new row is created in a table": "Fires when a new row is created in a table",
+  "Fires when a new row is created in a table": "Dispara cuando se crea una nueva fila en una tabla",
   "Markdown": "Markdown",
   "Schema": "Esquema",
-  "## Setup Instructions\n\n1. **Go to your Supabase Dashboard** → Database → Webhooks\n2. **Click \"Create a new hook\"**\n3. **Configure the webhook:**\n   - **Name**: Give it a descriptive name (e.g., \"Activepieces New Row\")\n   - **Table**: Select the table you want to monitor\n   - **Events**: Check \"Insert\" \n   - **Type**: HTTP Request\n   - **Method**: POST\n   - **URL**: Copy and paste the webhook URL below\n4. **Click \"Create webhook\"**\n\n**Webhook URL:** `{{webhookUrl}}`\n\n## Important Notes\n- The webhook will sen": "## Setup Instructions\n\n1. **Go to your Supabase Dashboard** → Database → Webhooks\n2. **Click \"Create a new hook\"**\n3. **Configure the webhook:**\n   - **Name**: Give it a descriptive name (e.g., \"Activepieces New Row\")\n   - **Table**: Select the table you want to monitor\n   - **Events**: Check \"Insert\" \n   - **Type**: HTTP Request\n   - **Method**: POST\n   - **URL**: Copy and paste the webhook URL below\n4. **Click \"Create webhook\"**\n\n**Webhook URL:** `{{webhookUrl}}`\n\n## Important Notes\n- The webhook will send a JSON payload with the new row data\n- Make sure your table has the necessary permissions\n- You can test the webhook by inserting a new row into your table\n\nFor more details, see [Supabase Database Webhooks documentation](https://supabase.com/docs/guides/database/webhooks).",
-  "Database schema (default: public)": "Database schema (default: public)"
+  "## Setup Instructions\n\n1. **Go to your Supabase Dashboard** → Database → Webhooks\n2. **Click \"Create a new hook\"**\n3. **Configure the webhook:**\n   - **Name**: Give it a descriptive name (e.g., \"Activepieces New Row\")\n   - **Table**: Select the table you want to monitor\n   - **Events**: Check \"Insert\" \n   - **Type**: HTTP Request\n   - **Method**: POST\n   - **URL**: Copy and paste the webhook URL below\n4. **Click \"Create webhook\"**\n\n**Webhook URL:** `{{webhookUrl}}`\n\n## Important Notes\n- The webhook will sen": "## Configurar Instrucciones\n\n1. **Ve a tu Tablero de Suaba** → Base de datos → Webhooks\n\n. **Haz clic en \"Crear un nuevo hook\"**\n3. **Configura el webhook:**\n   - **Nombre**: Dale un nombre descriptivo (p.e. \"Activepieces New Row\")\n   - **Tabla**: Selecciona la tabla que quieres monitorizar\n   - **Eventos**: Comprueba \"Insertar\" \n   - **Tipo**: HTTP Request\n   - **Método**: POST\n   - **URL**: Copia y pega la URL del webhook debajo de\n4. **Haz clic en \"Crear webhook\"**\n\n**Webhook URL:** `{{webhookUrl}}` \n\n ## Notas Importantes\n- El webhook enviará una carga JSON con los nuevos datos de fila\n- Asegúrate de que tu tabla tiene los permisos necesarios\n- Puedes probar el webhook insertando una nueva fila en tu tabla\n\nPara más detalles, vea [Suabase Database Webhooks documentation](https://supabase.com/docs/guides/database/webhooks).",
+  "Database schema (default: public)": "Esquema de base de datos (por defecto: público)"
 }

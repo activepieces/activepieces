@@ -1,5 +1,4 @@
 {
-  "ChargeKeep": "ChargeKeep",
   "Easy-to-use recurring and one-time payments software for Stripe & PayPal": "Easy-to-use recurring and one-time payments software for Stripe & PayPal",
   "Base URL": "基本网址",
   "Secret API Key": "Secret API Key",
@@ -24,7 +23,7 @@
   "Contact ID": "Contact ID",
   "Full Name": "Full Name",
   "Prefix": "Prefix",
-  "First Name": "First Name",
+  "First Name": "名字",
   "Middle Name": "Middle Name",
   "Last Name": "名字",
   "Nick Name": "Nick Name",
@@ -155,7 +154,7 @@
   "Product Code": "Product Code",
   "Product Payment Period Type": "Product Payment Period Type",
   "System Type": "System Type",
-  "Code": "代码",
+  "Code": "Code",
   "Name": "名称",
   "Level": "Level",
   "Start Date": "Start Date",

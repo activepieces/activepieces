@@ -6,6 +6,7 @@ import {
     isEmpty,
     PackageType,
     PiecePackage,
+    PieceType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PackageInfo } from '../cache/package-manager'
@@ -50,6 +51,7 @@ export abstract class PieceManager {
         return {
             alias: packageAlias,
             spec: packageSpec,
+            standalone: piece.pieceType === PieceType.CUSTOM,
         }
     }
 

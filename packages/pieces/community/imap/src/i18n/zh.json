@@ -1,16 +1,15 @@
 {
-  "IMAP": "IMAP",
-  "Receive new email trigger": "接收新電子郵件觸發器",
-  "Host": "主機",
-  "Username": "用戶名",
-  "Password": "密碼",
+  "Receive new email trigger": "Receive new email trigger",
+  "Host": "主机",
+  "Username": "用户名",
+  "Password": "Password",
   "Port": "端口",
-  "Use TLS": "使用 TLS",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail 使用者：**\n<br><br>\n請確保以下內容：\n<br>\n* 在你的 Gmail 設定中啟用了 IMAP (https://support.google.com/mail/answer/7126229?hl=zh-tw)\n* 你已經創建了一個應用程式密碼以供登入 (https://support.google.com/accounts/answer/185833?hl=zh-tw)\n* 啟用 TLS 並將端口設置為 993 和主機設置為 imap.gmail.com\n",
-  "New Email": "新電子郵件",
-  "Trigger when a new email is received.": "接收到新電子郵件時觸發。",
-  "Mailbox": "郵箱",
+  "Use TLS": "Use TLS",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
+  "New Email": "New Email",
+  "Trigger when a new email is received.": "Trigger when a new email is received.",
+  "Mailbox": "Mailbox",
   "Markdown": "Markdown",
-  "Select the mailbox to search": "選擇要搜索的郵箱",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**過濾電子郵件：**\n\n你可以添加分支編排來根據主題、收件人、寄件人、抄送人或其他欄位過濾電子郵件。\n"
+  "Select the mailbox to search": "Select the mailbox to search",
+  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n"
 }

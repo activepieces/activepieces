@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-amazon-sns",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "dependencies": {
     "@aws-sdk/client-sns": "3.726.1"
   }

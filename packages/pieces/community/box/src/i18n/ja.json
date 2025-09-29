@@ -1,5 +1,4 @@
 {
-  "Box": "Box",
   "Secure content management and collaboration": "セキュアなコンテンツ管理とコラボレーション",
   "Custom API Call": "カスタムAPI通話",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
@@ -31,5 +30,5 @@
   "The ID of the item to trigger a webhook": "WebhookをトリガーするアイテムのID",
   "The type of the item to trigger a webhook": "Webhookをトリガーするアイテムの種類",
   "File": "ファイル",
-  "Folder": "Folder"
+  "Folder": "フォルダ"
 }

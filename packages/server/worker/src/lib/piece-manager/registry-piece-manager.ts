@@ -1,6 +1,6 @@
-import { writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { CacheState, fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -10,6 +10,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { PackageInfo, packageManager } from '../cache/package-manager'
+import { CacheState } from '../cache/worker-cache'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 
 export class RegistryPieceManager extends PieceManager {
@@ -24,28 +25,37 @@ export class RegistryPieceManager extends PieceManager {
         if (dependenciesToInstall.length === 0) {
             return
         }
-        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}`)
 
-        const cache = cacheState(projectPath)
+        await memoryLock.runExclusive(`pnpm-add-${projectPath}`, async () => {
+            const cache = cacheState(projectPath)
 
-        try {
             const dependencies = await this.filterExistingPieces(projectPath, pieces)
             if (dependencies.length === 0) {
                 return
             }
             for (const dependency of dependencies) {
                 const exactVersionPath = join(projectPath, 'pieces', dependency.alias)
-                await packageManager(log).init({ path: exactVersionPath })
-                await packageManager(log).add({ path: exactVersionPath, dependencies: [dependency] })
+                await mkdir(exactVersionPath, { recursive: true })
+
+                if (!dependency.standalone) {
+                    await this.writePnpmWorkspaceConfig(projectPath)
+                }
+
+                await packageManager(log).add({ path: projectPath, dependencies: [dependency], installDir: exactVersionPath })
             }
 
             await Promise.all(
                 dependencies.map(pkg => cache.setCache(pkg.alias, CacheState.READY)),
             )
-        }
-        finally {
-            await pnpmAddLock.release()
-        }
+        })
+    }
+
+    private async writePnpmWorkspaceConfig(projectPath: string): Promise<void> {
+        const workspaceConfig = `packages:
+  - "pieces/*"
+`
+        const workspaceFilePath = join(projectPath, 'pnpm-workspace.yaml')
+        await writeFile(workspaceFilePath, workspaceConfig)
     }
 
     private async savePackageArchivesToDiskIfNotCached(
@@ -73,7 +83,7 @@ export class RegistryPieceManager extends PieceManager {
                 archivePath: PACKAGE_ARCHIVE_PATH,
             })
 
-            if (await fileExists(archivePath)) {
+            if (await fileSystemUtils.fileExists(archivePath)) {
                 continue
             }
 
@@ -93,7 +103,7 @@ export class RegistryPieceManager extends PieceManager {
             archivePath: PACKAGE_ARCHIVE_PATH,
         })
 
-        await threadSafeMkdir(dirname(archivePath))
+        await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
 
         await writeFile(archivePath, piece.archive as Buffer)
     }

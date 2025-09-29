@@ -15,8 +15,7 @@ description: 'The AI Toolkit to build AI pieces tailored for specific use cases 
 Activepieces integrates with the [AI SDK](https://ai-sdk.dev/) to provide a unified interface for calling LLMs across multiple AI providers. Here's an example on how to use the AI SDK's `generateText` function to call an LLM in your actions.
 
 ```typescript
-import { aiProps } from '@activepieces/pieces-common';
-import { SUPPORTED_AI_PROVIDERS, createAIProvider } from '@activepieces/shared';
+import { SUPPORTED_AI_PROVIDERS, createAIModel, aiProps } from '@activepieces/common-ai';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModel, generateText } from 'ai';
 
@@ -49,13 +48,13 @@ export const askAI = createAction({
     const providerName = context.propsValue.provider as string;
     const modelInstance = context.propsValue.model as LanguageModel;
 
-    // The `createAIProvider` function creates a standardized AI provider instance compatible with the AI SDK:
+    // The `createAIModel` function creates a standardized AI model instance compatible with the AI SDK:
     const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
     const engineToken = context.server.token;
-    const provider = createAIProvider({
+    const provider = createAIModel({
       providerName,           // Provider name (e.g., 'openai', 'anthropic')
       modelInstance,          // Model instance with configuration
-      apiKey: engineToken,    // Authentication token
+      engineToken,            // Authentication token
       baseURL,               // Proxy URL for API requests
     });
 
@@ -85,7 +84,7 @@ export const askAI = createAction({
 Use `aiProps` to create consistent AI-related properties:
 
 ```typescript
-import { aiProps } from '@activepieces/pieces-common';
+import { aiProps } from '@activepieces/ai-common';
 
 // For language models (text generation)
 props: {
@@ -171,7 +170,7 @@ npm install @ai-sdk/openai
 
 ### 2. Update SUPPORTED_AI_PROVIDERS Array
 
-First, add your new provider to the `SUPPORTED_AI_PROVIDERS` array in `packages/shared/src/lib/ai/supported-ai-providers.ts`:
+First, add your new provider to the `SUPPORTED_AI_PROVIDERS` array in `packages/ai-providers-shared/src/lib/supported-ai-providers.ts`:
 
 ```typescript
 import { openai } from '@ai-sdk/openai' // Import the OpenAI SDK
@@ -219,19 +218,19 @@ export const SUPPORTED_AI_PROVIDERS: SupportedAIProvider[] = [
 ];
 ```
 
-### 3. Update createAIProvider Function
+### 3. Update createAIModel Function
 
-Add a case for your provider in the `createAIProvider` function in `packages/shared/src/lib/ai/ai-sdk.ts`:
+Add a case for your provider in the `createAIModel` function in `packages/shared/src/lib/ai/ai-sdk.ts`:
 
 ```typescript
 import { createOpenAI } from '@ai-sdk/openai' // Import the OpenAI SDK
 
-export function createAIProvider<T extends LanguageModel | ImageModel>({
+export function createAIModel<T extends LanguageModel | ImageModel>({
     providerName,
     modelInstance,
-    apiKey,
+    engineToken,
     baseURL,
-}: CreateAIProviderParams<T>): T {
+}: CreateAIModelParams<T>): T {
     const isImageModel = SUPPORTED_AI_PROVIDERS
         .flatMap(provider => provider.imageModels)
         .some(model => model.instance.modelId === modelInstance.modelId)

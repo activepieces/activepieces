@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-help-scout",
-  "version": "0.0.5",
+  "version": "0.0.8",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

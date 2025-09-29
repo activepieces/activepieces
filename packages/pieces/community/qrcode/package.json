@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-qrcode",
-  "version": "0.0.3",
+  "version": "0.0.7",
   "devDependencies": {
     "@types/qrcode": "^1.5.5"
   }

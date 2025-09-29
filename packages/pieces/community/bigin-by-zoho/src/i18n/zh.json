@@ -1,5 +1,4 @@
 {
-  "Bigin by Zoho CRM": "Bigin by Zoho CRM",
   "Bigin by Zoho CRM is a lightweight CRM designed for small businesses to manage contacts, companies, deals (pipeline records), tasks, calls, and events.": "Bigin by Zoho CRM is a lightweight CRM designed for small businesses to manage contacts, companies, deals (pipeline records), tasks, calls, and events.",
   "Your Data Center Region": "Your Data Center Region",
   "Select your Zoho data center region for your account": "Select your Zoho data center region for your account",
@@ -56,7 +55,7 @@
   "Billing Code": "Billing Code",
   "Select Company": "Select Company",
   "Company Details": "Company Details",
-  "First Name": "名字",
+  "First Name": "First Name",
   "Last Name": "名字",
   "Title": "标题",
   "Email": "电子邮件地址",

@@ -9,6 +9,10 @@ on:
       - 'packages/pieces/**'
       - 'packages/shared/**'
 
+concurrency:
+  group: release-pieces
+  cancel-in-progress: false
+
 jobs:
   Release-Pieces:
     if: github.repository == 'activepieces/activepieces'
@@ -35,25 +39,30 @@ jobs:
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
-      - name: publish ai providers shared package
-        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/ai-providers-shared
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish shared package
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+
       - name: publish pieces-common package
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+
       - name: publish pieces-framework package
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+
+      - name: publish common-ai package
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common-ai
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}          
+          
 
       - name: publish pieces packages
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts

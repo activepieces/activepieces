@@ -1,7 +1,7 @@
 {
   "TidyCal": "TidyCal",
-  "Streamline your scheduling": "簡化您的日程安排",
-  "\n# Personal Access Token\n1- Visit https://tidycal.com/integrations/oauth and click on \"Create a new token\"\n2- Enter a name for your token and click on \"Create\"\n": "\n# 個人訪問令牌\n1- 访问 https://tidycal.com/integrations/oauth 并点击 \"创建新令牌\"\n2- 输入令牌名称并点击 \"创建\"\n",
+  "Streamline your scheduling": "Streamline your scheduling",
+  "\n# Personal Access Token\n1- Visit https://tidycal.com/integrations/oauth and click on \"Create a new token\"\n2- Enter a name for your token and click on \"Create\"\n": "\n# Personal Access Token\n1- Visit https://tidycal.com/integrations/oauth and click on \"Create a new token\"\n2- Enter a name for your token and click on \"Create\"\n",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Method": "方法",
@@ -19,10 +19,10 @@
   "PUT": "弹出",
   "DELETE": "删除",
   "HEAD": "黑色",
-  "Booking Canceled": "預訂被取消",
-  "New Booking": "新預訂",
-  "New Contact": "新聯絡人",
-  "Triggers when a new booking is canceled": "預訂取消時觸發",
-  "Triggers when a new booking is created": "新預訂時觸發",
-  "Triggers when a new contact is created": "新聯絡人加入時觸發"
+  "Booking Canceled": "Booking Canceled",
+  "New Booking": "New Booking",
+  "New Contact": "New Contact",
+  "Triggers when a new booking is canceled": "Triggers when a new booking is canceled",
+  "Triggers when a new booking is created": "Triggers when a new booking is created",
+  "Triggers when a new contact is created": "Triggers when a new contact is created"
 }

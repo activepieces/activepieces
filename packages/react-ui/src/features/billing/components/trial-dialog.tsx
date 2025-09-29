@@ -80,7 +80,11 @@ export const WelcomeTrialDialog = () => {
             </div>
 
             <div className="flex w-full flex-col gap-3">
-              <Button onClick={handleClose} className="flex-1">
+              <Button
+                onClick={handleClose}
+                className="flex-1"
+                data-testid="trial-dialog-continue-button"
+              >
                 {t(`Continue on ${trialPlan?.toLowerCase()} Trial`)}
               </Button>
 

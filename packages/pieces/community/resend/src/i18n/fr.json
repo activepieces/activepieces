@@ -1,10 +1,9 @@
 {
-  "Resend": "Resend",
   "Email for developers": "E-mail pour les développeurs",
   "Send Email": "Envoyer un e-mail",
-  "Custom API Call": "Appel API personnalisé",
+  "Custom API Call": "Appel d'API personnalisé",
   "Send a text or HTML email": "Envoyer un message texte ou HTML",
-  "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
+  "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "To": "À",
   "Sender Name": "Nom de l'expéditeur",
   "Sender Email (From)": "Courriel de l'expéditeur (From)",
@@ -20,7 +19,7 @@
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
-  "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Timeout (in seconds)": "Délai d'expiration (en secondes)",
   "Emails of the recipients": "E-mails des destinataires",
   "Sender name": "Nom de l'expéditeur",
   "Sender email": "E-mail de l'expéditeur",
@@ -30,10 +29,10 @@
   "HTML is only allowed if you selected HTML as type": "Le code HTML n'est autorisé que si vous avez sélectionné le code HTML comme type",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
   "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
-  "GET": "OBTENIR",
-  "POST": "POSTER",
+  "GET": "GET",
+  "POST": "POST",
   "PATCH": "PATCH",
-  "PUT": "EFFACER",
-  "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "PUT": "PUT",
+  "DELETE": "DELETE",
+  "HEAD": "HEAD"
 }

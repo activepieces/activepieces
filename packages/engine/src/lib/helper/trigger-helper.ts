@@ -1,5 +1,6 @@
-import { InputPropertyMap, PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import { inspect } from 'node:util'
+import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
+import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -19,7 +20,7 @@ type Listener = {
 
 export const triggerHelper = {
     async executeOnStart(trigger: FlowTrigger, constants: EngineConstants, payload: unknown) {
-        const { pieceName, pieceVersion, triggerName, input, inputUiInfo } = (trigger as PieceTrigger).settings
+        const { pieceName, pieceVersion, triggerName, input, propertySettings } = (trigger as PieceTrigger).settings
         assertNotNullOrUndefined(triggerName, 'triggerName is required')
         const { pieceTrigger, processedInput } = await prepareTriggerExecution({
             pieceName,
@@ -29,8 +30,8 @@ export const triggerHelper = {
             projectId: constants.projectId,
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
-            piecesSource: constants.piecesSource,
-            inputSchema: inputUiInfo.schema as Record<string, InputPropertyMap>,
+            pieceSource: constants.piecesSource,
+            propertySettings,
         })
         const isOldVersionOrNotSupported = isNil(pieceTrigger.onStart)
         if (isOldVersionOrNotSupported) {
@@ -65,7 +66,7 @@ export const triggerHelper = {
     },
 
     async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
-        const { pieceName, pieceVersion, triggerName, input, inputUiInfo } = (params.flowVersion.trigger as PieceTrigger).settings
+        const { pieceName, pieceVersion, triggerName, input, propertySettings } = (params.flowVersion.trigger as PieceTrigger).settings
         assertNotNullOrUndefined(triggerName, 'triggerName is required')
 
         const { piece, pieceTrigger, processedInput } = await prepareTriggerExecution({
@@ -76,8 +77,8 @@ export const triggerHelper = {
             projectId: params.projectId,
             apiUrl: constants.internalApiUrl,
             engineToken: params.engineToken,
-            piecesSource: constants.piecesSource,
-            inputSchema: inputUiInfo.schema as Record<string, InputPropertyMap>,
+            pieceSource: constants.piecesSource,
+            propertySettings,
         })
 
         const appListeners: Listener[] = []
@@ -157,10 +158,9 @@ export const triggerHelper = {
                 }
                 catch (e) {
                     console.error(e)
-
                     return {
                         success: false,
-                        message: JSON.stringify(e),
+                        message: `Error while testing trigger: ${inspect(e)}`,
                     }
                 }
             }
@@ -180,11 +180,9 @@ export const triggerHelper = {
                     }
                 }
                 catch (e) {
-                    console.error(e)
-
                     return {
                         success: false,
-                        message: JSON.stringify(e),
+                        message: `Error while testing trigger: ${inspect(e)}`,
                         output: [],
                     }
                 }
@@ -214,29 +212,36 @@ export const triggerHelper = {
                         }
                     }
                     catch (e) {
-                        console.error('Error while verifying webhook', e)
                         return {
                             success: false,
-                            message: 'Error while verifying webhook',
+                            message: `Error while verifying webhook: ${inspect(e)}`,
                             output: [],
                         }
                     }
                 }
-                const items = await pieceTrigger.run({
-                    ...context,
-                    files: createFilesService({
-                        apiUrl: constants.internalApiUrl,
-                        engineToken: params.engineToken!,
-                        flowId: params.flowVersion.flowId,
-                        stepName: triggerName,
-                    }),
-                })
-                if (!Array.isArray(items)) {
-                    throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
+
+                try {
+                    const items = await pieceTrigger.run({
+                        ...context,
+                        files: createFilesService({
+                            apiUrl: constants.internalApiUrl,
+                            engineToken: params.engineToken!,
+                            flowId: params.flowVersion.flowId,
+                            stepName: triggerName,
+                        }),
+                    })
+                    return {
+                        success: true,
+                        output: items,
+                    }
                 }
-                return {
-                    success: true,
-                    output: items,
+                catch (e) {
+                    console.error(e)
+                    return {
+                        success: false,
+                        message: inspect(e),
+                        output: [],
+                    }
                 }
             }
         }
@@ -248,12 +253,12 @@ type ExecuteTriggerParams = {
     constants: EngineConstants
 }
 
-async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, projectId, apiUrl, engineToken, piecesSource, inputSchema }: PrepareTriggerExecutionParams) {
+async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, pieceSource }: PrepareTriggerExecutionParams) {
     const { piece, pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
         pieceName,
         pieceVersion,
         triggerName,
-        piecesSource,
+        pieceSource,
     })
 
     const { resolvedInput } = await createPropsResolver({
@@ -265,7 +270,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         executionState: FlowExecutorContext.empty(),
     })
 
-    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, inputSchema)
+    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, propertySettings)
 
     if (Object.keys(errors).length > 0) {
         throw new Error(JSON.stringify(errors, null, 2))
@@ -279,9 +284,9 @@ type PrepareTriggerExecutionParams = {
     pieceVersion: string
     triggerName: string
     input: unknown
+    propertySettings: Record<string, PropertySettings>
     projectId: string
     apiUrl: string
     engineToken: string
-    inputSchema: Record<string, InputPropertyMap> | undefined
-    piecesSource: string
+    pieceSource: string
 }

@@ -1,5 +1,4 @@
 {
-  "ClickSend SMS": "SMSをクリックして送信",
   "Cloud-based messaging platform for sending SMS, MMS, voice, email, and more.": "SMS、MMS、音声、電子メールなどを送信するためのクラウドベースのメッセージングプラットフォーム。",
   "Username": "ユーザー名",
   "Your ClickSend username": "ClickSend ユーザー名",
@@ -36,7 +35,7 @@
   "Phone Number": "電話番号",
   "Email Address": "メールアドレス",
   "First Name": "名",
-  "Last Name": "Last Name",
+  "Last Name": "姓",
   "Company Name": "会社名",
   "Address Line 1": "住所1",
   "Address Line 2": "住所2",

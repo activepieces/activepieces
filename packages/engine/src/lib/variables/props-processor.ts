@@ -1,5 +1,5 @@
 import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
@@ -16,8 +16,12 @@ export const propsProcessor = {
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
         requireAuth: boolean,
-        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined | null,
+        propertySettings: Record<string, PropertySettings>,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
+        let dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined = undefined
+        if (Object.keys(propertySettings).length > 0) {
+            dynamaicPropertiesSchema = Object.fromEntries(Object.entries(propertySettings).map(([key, propertySetting]) => [key, propertySetting.schema]))
+        }
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
 
@@ -28,7 +32,7 @@ export const propsProcessor = {
                 auth.props,
                 undefined,
                 requireAuth,
-                undefined,
+                {},
             )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
@@ -47,7 +51,7 @@ export const propsProcessor = {
                     dynamaicPropertiesSchema[key],
                     undefined,
                     false,
-                    undefined,
+                    {},
                 )
                 processedInput[key] = itemProcessedInput
                 if (Object.keys(itemErrors).length > 0) {
@@ -64,7 +68,7 @@ export const propsProcessor = {
                         property.properties,
                         undefined,
                         false,
-                        undefined,
+                        {},
                     )
                     processedArray.push(itemProcessedInput)
                     processedErrors.push(itemErrors)

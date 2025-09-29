@@ -14,22 +14,29 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             const { flowVersion, projectId, simulate } = params
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
 
-            const { scheduleOptions, webhookHandshakeConfiguration } = await flowTriggerSideEffect(log).enable({
+            const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
                 flowVersion,
                 projectId,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceTrigger,
                 simulate,
             })
+
+            await triggerSourceRepo().softDelete({
+                flowId: flowVersion.flowId,
+                projectId,
+                simulate,
+            })
+
             const triggerSource: Omit<TriggerSource, 'created' | 'updated'> = {
                 id: apId(),
                 type: pieceTrigger.type,
                 projectId,
                 flowId: flowVersion.flowId,
+                triggerName: pieceTrigger.name,
                 flowVersionId: flowVersion.id,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                handshakeConfiguration: webhookHandshakeConfiguration,
                 schedule: scheduleOptions,
                 simulate,
             }

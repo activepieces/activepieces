@@ -2,8 +2,72 @@ import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./p
 import { LocalesEnum, MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/shared"
 import path from 'path';
 import fs from 'fs/promises';
-import pathsToValuesToTranslate from '../../translation-keys.json'
 
+export const pieceTranslation = {
+  translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale?: LocalesEnum): T => {
+    if (!locale) {
+      return piece
+    }
+    try {
+      const target = piece.i18n?.[locale]
+      if (!target) {
+        return piece
+      }
+      const translatedPiece: T = JSON.parse(JSON.stringify(piece))
+      pieceTranslation.pathsToValuesToTranslate.forEach(key => {
+        translateProperty(translatedPiece, key, target)
+      })
+      return translatedPiece
+    }
+    catch (err) {
+      console.error(`error translating piece ${piece.name}:`, err)
+      return piece
+    }
+  },
+
+  /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
+  initializeI18n: async (pieceOutputPath: string): Promise<I18nForPiece | undefined> => {
+    try {
+      const locales = Object.values(LocalesEnum);
+      const i18n: I18nForPiece = {};
+      
+      for (const locale of locales) {
+        const translations = await readLocaleFile(locale, pieceOutputPath);
+        if (translations) {
+          i18n[locale] = translations;
+        }
+      }
+      
+      return Object.keys(i18n).length > 0 ? i18n : undefined;
+    }
+    catch (err) {
+      console.log(`Error initializing i18n for ${pieceOutputPath}:`, err)
+      return undefined
+    }
+  },
+
+  pathsToValuesToTranslate: [
+    "description",
+    "auth.username.displayName",
+    "auth.username.description",
+    "auth.password.displayName",
+    "auth.password.description",
+    "auth.props.*.displayName",
+    "auth.props.*.description",
+    "auth.props.*.options.options.*.label",
+    "auth.description",
+    "actions.*.displayName",
+    "actions.*.description",
+    "actions.*.props.*.displayName",
+    "actions.*.props.*.description",
+    "actions.*.props.*.options.options.*.label",
+    "triggers.*.displayName",
+    "triggers.*.description",
+    "triggers.*.props.*.displayName",
+    "triggers.*.props.*.description",
+    "triggers.*.props.*.options.options.*.label"
+  ]
+}
 
 
 /**This function translates a property inside a piece, i.e description, displayName, etc... 
@@ -30,8 +94,6 @@ function translateProperty(pieceModelOrProperty: Record<string, unknown>, path: 
     pieceModelOrProperty[parsedKeys[0]] = valueInI18n
   }
 }
-
-
 
 async function fileExists(filePath: string) {
   try {
@@ -60,87 +122,4 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
     console.error(`Error reading i18n file for ${locale} in piece ${pieceOutputPath}:`, error);
     return null;
   }
-}
-
-
-
-const extractPiecePath = async (pieceName: string) => {
-  try{
-   if(await fileExists(`/node_modules/${pieceName}`)) {
-    return `/node_modules/${pieceName}`;
-   }
-   console.log(`extractPiecePath: /node_modules/${pieceName} does not exist`)
-    
-    const distPath = path.resolve('dist/packages/pieces');
-    const fastGlob = (await import('fast-glob')).default;
-    const packageJsonFiles = await fastGlob('**/package.json', { cwd: distPath,  ignore: ['**/node_modules/**'] });
-    for (const relativeFile of packageJsonFiles) {
-      const fullPath = path.join(distPath, relativeFile);
-      try {
-        const packageJson = JSON.parse(await fs.readFile(fullPath, 'utf-8'));
-        if (packageJson.name === pieceName) {
-          const piecePath = path.dirname(fullPath);
-          return piecePath;
-        }
-      } catch (err) {
-        console.log(`Error reading package.json at ${fullPath}:`, err);
-      }
-    }
-  }
-  catch (err) {
-    console.log(`Error extracting piece path for ${pieceName}:`, err)
-  }
-  console.log(`Piece path not found for ${pieceName}`);
-  return undefined;
-}
-
-
-
-const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale?: LocalesEnum): T => {
-  if (!locale) {
-    return piece
-  }
-  try {
-    const target = piece.i18n?.[locale]
-    if (!target) {
-      return piece
-    }
-    const translatedPiece: T = JSON.parse(JSON.stringify(piece))
-    pathsToValuesToTranslate.forEach(key => {
-      translateProperty(translatedPiece, key, target)
-    })
-    return translatedPiece
-  }
-  catch (err) {
-    console.error(`error translating piece ${piece.name}:`, err)
-    return piece
-  }
-}
-/**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
-const initializeI18n =  async (pieceName: string): Promise<I18nForPiece | undefined> => {
-  try{
-    const locales = Object.values(LocalesEnum);
-    const i18n: I18nForPiece = {};
-    const pieceOutputPath = await extractPiecePath(pieceName)
-    if (!pieceOutputPath) {
-      return undefined
-    }
-    for (const locale of locales) {
-      const translation = await readLocaleFile(locale, pieceOutputPath);
-      if (translation) {
-        i18n[locale] = translation;
-      }
-    }
-    return (Object.keys(i18n).length > 0) ? i18n : undefined;
-  }
-  catch (err) {
-    console.log(`Error initializing i18n for ${pieceName}:`, err)
-    return undefined
-  }
-}
-
-export const pieceTranslation = {
-  translatePiece,
-  initializeI18n,
-  pathsToValuesToTranslate
 }

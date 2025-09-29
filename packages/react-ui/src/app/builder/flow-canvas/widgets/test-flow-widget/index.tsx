@@ -23,7 +23,7 @@ const TestFlowWidget = () => {
 
   const triggerHasSampleData =
     flowVersion.trigger.type === FlowTriggerType.PIECE &&
-    !isNil(flowVersion.trigger.settings.inputUiInfo?.lastTestDate);
+    !isNil(flowVersion.trigger.settings.sampleData?.lastTestDate);
 
   const isChatTrigger = pieceSelectorUtils.isChatTrigger(
     flowVersion.trigger.settings.pieceName,

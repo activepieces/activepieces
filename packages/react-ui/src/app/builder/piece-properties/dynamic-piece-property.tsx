@@ -114,14 +114,14 @@ const DynamicPropertiesImplementation = React.memo(
             const currentValue = form.getValues(
               `settings.input.${props.propertyName}`,
             );
-            const customizedInput = form.getValues(
-              'settings.inputUiInfo.customizedInputs',
-            );
-            const defaultValue = formUtils.getDefaultValueForStep(
-              response.options,
-              currentValue ?? {},
-              customizedInput,
-            );
+            const defaultValue = formUtils.getDefaultValueForStep({
+              props: response.options,
+              existingInput: currentValue ?? {},
+              propertySettings:
+                form.getValues().settings?.propertySettings?.[
+                  props.propertyName
+                ],
+            });
             setPropertyMap(response.options);
 
             updateFormSchema(
@@ -130,12 +130,10 @@ const DynamicPropertiesImplementation = React.memo(
             );
 
             if (!readonly) {
-              const schemaInput: Record<string, unknown> =
-                form.getValues()?.settings?.inputUiInfo?.schema ?? {};
-              form.setValue(`settings.inputUiInfo.schema`, {
-                ...schemaInput,
-                [props.propertyName]: response.options,
-              } as Record<string, unknown>);
+              form.setValue(
+                `settings.propertySettings.${props.propertyName}.schema`,
+                response.options,
+              );
             }
 
             form.setValue(

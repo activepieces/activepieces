@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     if: |
-      github.event.pull_request.user.login == 'AbdulTheActivePiecer' &&
+      github.event.pull_request.user.login == 'automated-commits-ap' &&
       github.event.pull_request.head.ref == 'l10n_main'
     
     steps:
@@ -62,8 +62,8 @@ jobs:
             echo "Changes detected, committing..."
             
             # Configure git
-            git config --local user.email "abdulyki@activepieces.com"
-            git config --local user.name "AbdulTheActivePiecer"
+            git config --local user.email "abdulyki+automatedcommits@activepieces.com"
+            git config --local user.name "automated-commits-ap"
             
             # Add all changes
             git add .
@@ -140,7 +140,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
-              merge_method: 'merge'
+              merge_method: 'squash'
             });
 
       - name: Delete branch after merge

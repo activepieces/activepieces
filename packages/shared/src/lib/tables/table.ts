@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, NullableEnum } from '../common'
+import { Field } from './field'
 
 export enum TableAutomationTrigger {
     ON_NEW_RECORD = 'ON_NEW_RECORD',
@@ -22,3 +23,12 @@ export const Table = Type.Object({
 
 export type Table = Static<typeof Table>
 
+
+export const PopulatedTable = Type.Composite([
+    Table,
+    Type.Object({
+        fields: Type.Array(Field),
+    }),
+])
+
+export type PopulatedTable = Static<typeof PopulatedTable>

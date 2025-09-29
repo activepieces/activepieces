@@ -1,5 +1,4 @@
 {
-  "Reddit": "Reddit",
   "Interact with Reddit - fetch and submit posts.": "Interagissez avec Reddit - récupérez et soumettez des messages.",
   "\nTo obtain your Reddit API credentials:\n\n1. Go to https://www.reddit.com/prefs/apps.\n2. Click \"create another app...\" at the bottom.\n3. Select \"script\" as the app type.\n4. Fill in the required information:\n   - name: Your app name\n   - description: Brief description\n   - about url: Can be left blank\n   - redirect uri: as shown in Redirect URL field\n5. Click \"create app\".\n6. Note down the client ID (under the app name) and client secret.\n": "\nTo obtain your Reddit API credentials:\n\n1. Go to https://www.reddit.com/prefs/apps.\n2. Click \"create another app...\" at the bottom.\n3. Select \"script\" as the app type.\n4. Fill in the required information:\n   - name: Your app name\n   - description: Brief description\n   - about url: Can be left blank\n   - redirect uri: as shown in Redirect URL field\n5. Click \"create app\".\n6. Note down the client ID (under the app name) and client secret.\n",
   "Retrieve Post": "Récupérer le message",
@@ -11,7 +10,7 @@
   "Edit Comment": "Modifier le commentaire",
   "Delete Post": "Supprimer la publication",
   "Delete Comment": "Supprimer le commentaire",
-  "Custom API Call": "Appel API personnalisé",
+  "Custom API Call": "Appel d'API personnalisé",
   "Fetch top posts in a subreddit with optional size limit.": "Récupère les meilleurs messages dans un subreddit avec une limite de taille optionnelle.",
   "Fetch detailed information about a specific Reddit post using its ID.": "Récupère des informations détaillées sur un message Reddit spécifique en utilisant son ID.",
   "Submit a new self (text) post to a subreddit.": "Soumettez un nouveau message (texte) à un subreddit.",
@@ -21,7 +20,7 @@
   "Edits the content of an existing Reddit comment.": "Modifie le contenu d'un commentaire Reddit existant.",
   "Delete a specific Reddit post by ID.": "Supprimer un message Reddit spécifique par ID.",
   "Delete a specific Reddit comment by ID.": "Supprimer un commentaire Reddit spécifique par ID.",
-  "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
+  "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "Post Category": "Catégorie de publication",
   "Subreddit": "Subreddit",
   "Number of Posts": "Nombre de messages",
@@ -41,7 +40,7 @@
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
-  "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Timeout (in seconds)": "Délai d'expiration (en secondes)",
   "Select the category of posts to retrieve": "Sélectionnez la catégorie de messages à récupérer",
   "The subreddit to fetch posts from": "Le subreddit pour récupérer les messages de",
   "Number of posts to fetch (max 100)": "Nombre de messages à récupérer (max 100)",
@@ -69,10 +68,10 @@
   "Controversial": "Controversial",
   "Best": "Meilleure",
   "Old": "Ancien",
-  "GET": "OBTENIR",
-  "POST": "POSTER",
+  "GET": "GET",
+  "POST": "POST",
   "PATCH": "PATCH",
-  "PUT": "EFFACER",
-  "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "PUT": "PUT",
+  "DELETE": "DELETE",
+  "HEAD": "HEAD"
 }

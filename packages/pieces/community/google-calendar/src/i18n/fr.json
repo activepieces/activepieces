@@ -1,5 +1,4 @@
 {
-  "Google Calendar": "Google Agenda",
   "Get organized and stay on schedule": "Organisez-vous et tenez les délais",
   "Add Attendees to Event": "Ajouter des participants à l'événement",
   "Create Quick Event": "Créer un événement rapide",
@@ -28,7 +27,7 @@
   "Start date time of the event": "Date de début de l'événement",
   "End date time of the event": "Date de fin de l'événement",
   "Location": "Lieu",
-  "Description": "Description",
+  "Description": "Libellé",
   "Color": "Couleur",
   "Guests can modify": "Les invités peuvent modifier",
   "Guests can invite others": "Les invités peuvent inviter d'autres personnes",

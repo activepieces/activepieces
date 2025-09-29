@@ -1,5 +1,4 @@
 {
-  "Beamer": "ビーム",
   "Engage users with targeted announcements": "ターゲットを絞ったアナウンスでユーザーをエンゲージする",
   "API key acquired from your Beamer settings": "Beamerの設定から取得したAPIキー",
   "Create Beamer Post ": "ビームの投稿を作成 ",
@@ -13,7 +12,7 @@
   "Create a new vote on a feature request": "機能リクエストに新しい投票を作成する",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Title": "タイトル",
-  "Description": "Description",
+  "Description": "説明",
   "Category": "カテゴリ",
   "Show In Widget ": "ウィジェットに表示 ",
   "Show In Standalone  ": "スタンドアロンで表示  ",
@@ -24,7 +23,7 @@
   "Enable Push Notifications": "プッシュ通知を有効にする",
   "User Email": "ユーザーのメールアドレス",
   "Visibility": "公開範囲",
-  "Status": "Status",
+  "Status": "ステータス",
   "ID": "ID",
   "User ID": "ユーザー ID",
   "Text": "テキスト",

@@ -1,12 +1,11 @@
 {
-  "Human Input": "Entrée humaine",
   "Trigger a flow through human input.": "Déclencher un flux à travers les entrées humaines.",
   "Respond on UI": "Répondre à l'interface utilisateur",
   "Return a file or text (markdown) as a response.": "Renvoie un fichier ou un texte (markdown) comme réponse.",
   "Text (Markdown)": "Texte (Markdown)",
   "Attachment": "Pièce jointe",
   "Web Form": "Formulaire Web",
-  "Chat UI": "Interface de discussion",
+  "Chat UI": "Interface de chat",
   "Trigger the flow by submitting a form.": "Déclencher le flux en soumettant un formulaire.",
   "Trigger the flow by sending a message": "Déclencher le flux en envoyant un message",
   "Markdown": "Markdown",

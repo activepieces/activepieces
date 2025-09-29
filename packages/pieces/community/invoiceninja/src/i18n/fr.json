@@ -1,5 +1,4 @@
 {
-  "Invoice Ninja": "Facture Ninja",
   "Free open-source invoicing tool": "Outil gratuit de facturation open-source",
   "Base URL": "URL de base",
   "API Token": "API Token",
@@ -135,7 +134,7 @@
   "Stop": "Arrêter",
   "Send Now": "Envoyer maintenant",
   "Restore": "Restaurer",
-  "Archive": "Archive",
+  "Archive": "Archiver",
   "Delete": "Supprimer",
   "GET": "OBTENIR",
   "POST": "POSTER",

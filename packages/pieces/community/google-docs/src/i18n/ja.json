@@ -1,5 +1,4 @@
 {
-  "Google Docs": "Google Docs",
   "Create and edit documents online": "オンラインでドキュメントを作成・編集",
   "Create Document": "ドキュメントを作成",
   "Edit template file": "テンプレートファイルを編集",
@@ -43,6 +42,8 @@
   "The ID of the document to append text to": "テキストを追加するドキュメントの ID",
   "Curly Braces {{}}": "Curly Braces {{}}",
   "Square Brackets [[]]": "平方ブラケット[[]]",
+  "Single Curly Braces {}": "単一の中括弧{}",
+  "Single Square Brackets []": "単一の正方形のかっこ[]",
   "GET": "取得",
   "POST": "POST",
   "PATCH": "PATCH",

@@ -17,15 +17,13 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         const paths = []
         const files = await readdir(folderPath)
 
+        const ignoredFiles = ['node_modules', 'dist', 'framework', 'common', 'common-ai']
         for (const file of files) {
             const filePath = join(folderPath, file)
             const fileStats = await stat(filePath)
             if (
                 fileStats.isDirectory() &&
-                file !== 'node_modules' &&
-                file !== 'dist' &&
-                file !== 'framework' &&
-                file !== 'common'
+                !ignoredFiles.includes(file)
             ) {
                 paths.push(...(await findAllPiecesFolder(filePath)))
             }
@@ -124,7 +122,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 pieceVersion,
             })
             const originalMetadata = piece.metadata()
-            const i18n = await pieceTranslation.initializeI18n(pieceName)
+            const i18n = await pieceTranslation.initializeI18n(folderPath)
             const metadata: PieceMetadata = {
                 ...originalMetadata,
                 name: pieceName,

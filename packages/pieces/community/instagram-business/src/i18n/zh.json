@@ -1,15 +1,14 @@
 {
-  "Instagram for Business": "Instagram for Business",
-  "Grow your business on Instagram": "在 Instagram 上發展您的事業",
-  "\nTo Obtain the following credentials:\n1. Visit https://developers.facebook.com/\n2. Create an application, Select Other for Usecase.\n3. Select Business as App Type.\n4. Copy App Id and App Secret from Basic Settings.\n": "\n要獲得以下憑證：\n1. 訪問 https://developers.facebook.com/\n2. 創建應用，選擇其他作為使用案例。\n3. 選擇商業作為應用類型。\n4. 從基本設置中複製應用程序 ID 和應用程序密碼。\n",
-  "Upload Photo": "上傳照片",
-  "Upload Reel": "上傳影片",
-  "Upload a photo to an Instagram Professional Account": "上傳照片至 Instagram 專業帳戶",
-  "Upload a reel to an Instagram Professional Account": "上傳影片至 Instagram 專業帳戶",
-  "Page": "頁面",
-  "Photo": "相片",
-  "Caption": "字幕",
-  "Video": "影片",
-  "A URL we can access for the photo (JPG only)": "我們可以訪問的相片網址(僅限 JPG)",
-  "A URL we can access for the video (Limit: 1GB or 15 minutes)": "我們可以訪問的影片網址(限制: 1GB 或 15 分鐘)"
+  "Grow your business on Instagram": "Grow your business on Instagram",
+  "\nTo Obtain the following credentials:\n1. Visit https://developers.facebook.com/\n2. Create an application, Select Other for Usecase.\n3. Select Business as App Type.\n4. Copy App Id and App Secret from Basic Settings.\n": "\nTo Obtain the following credentials:\n1. Visit https://developers.facebook.com/\n2. Create an application, Select Other for Usecase.\n3. Select Business as App Type.\n4. Copy App Id and App Secret from Basic Settings.\n",
+  "Upload Photo": "Upload Photo",
+  "Upload Reel": "Upload Reel",
+  "Upload a photo to an Instagram Professional Account": "Upload a photo to an Instagram Professional Account",
+  "Upload a reel to an Instagram Professional Account": "Upload a reel to an Instagram Professional Account",
+  "Page": "Page",
+  "Photo": "Photo",
+  "Caption": "Caption",
+  "Video": "Video",
+  "A URL we can access for the photo (JPG only)": "A URL we can access for the photo (JPG only)",
+  "A URL we can access for the video (Limit: 1GB or 15 minutes)": "A URL we can access for the video (Limit: 1GB or 15 minutes)"
 }

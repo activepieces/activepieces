@@ -1,8 +1,8 @@
-import { aiProps } from '@activepieces/pieces-common';
-import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, WebSearchOptions, createAIModel, createWebSearchTool } from '@activepieces/shared';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, WebSearchOptions, createAIModel, createWebSearchTool } from '@activepieces/common-ai';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { ModelMessage, generateText, stepCountIs } from 'ai';
+import { aiProps } from '@activepieces/common-ai';
 
 export const askAI = createAction({
   name: 'askAi',

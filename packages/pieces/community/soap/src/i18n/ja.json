@@ -3,7 +3,7 @@
   "Simple Object Access Protocol for communication between applications": "アプリケーション間の通信のためのシンプルなオブジェクトアクセスプロトコル",
   "Authentication Type": "認証タイプ",
   "Username": "ユーザー名",
-  "Password": "パスワード",
+  "Password": "Password",
   "Custom Header": "カスタムヘッダー",
   "The WS Security username": "WSセキュリティユーザー名",
   "The WS Security password": "WSセキュリティパスワード",

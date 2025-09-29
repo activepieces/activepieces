@@ -17,7 +17,7 @@
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Email": "Eメールアドレス",
   "Name": "名前",
-  "Password": "Password",
+  "Password": "パスワード",
   "Domain": "ドメイン",
   "Generate Magic Link": "マジックリンクを生成する",
   "Database ID": "データベースID",

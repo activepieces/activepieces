@@ -1,5 +1,4 @@
 {
-  "Close": "閉じる",
   "Sales automation and CRM integration for Close": "閉じるためのセールスオートメーションとCRM統合",
   "Your Close CRM API key for authentication.": "認証のためにCRMを閉じるAPIキー",
   "Create Lead": "リードを作成",
@@ -21,7 +20,7 @@
   "Status": "ステータス",
   "Custom Fields": "カスタムフィールド",
   "Lead": "リード",
-  "Name": "Name",
+  "Name": "名前",
   "Title": "タイトル",
   "Office Phone": "勤務先電話番号",
   "Mobile Phone": "携帯電話",

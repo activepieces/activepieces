@@ -1,5 +1,4 @@
 {
-  "Cognito Forms": "Formas de Cognito",
   "\n  1. Click your organization's name in the top left corner and then click Settings.\n  2. Go to the Integrations section and select + New API Key.\n  3. Make sure to copy and store your API key, as it cannot be retrieved later.\n  ": "\n  1. Clique no nome da sua organização no canto superior esquerdo e depois clique em Configurações.\n  2. Vá para a seção de integrações e selecione + Nova Chave de API.\n  3. Certifique-se de copiar e armazenar a sua chave de API, pois ela não pode ser recuperada mais tarde.\n  ",
   "Create Entry": "Criar Entrada",
   "Update Entry": "Atualizar Entrada",

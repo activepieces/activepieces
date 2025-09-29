@@ -75,7 +75,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         const repos = await repo().findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
-    async onDeleted({ type, idOrExternalId, userId, projectId, platformId, log }: { type: GitPushOperationType, idOrExternalId: string, userId: string, projectId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    async onDeleted({ type, externalId, userId, projectId, platformId, log }: { type: GitPushOperationType, externalId: string, userId: string, projectId: string, platformId: string, log: FastifyBaseLogger }): Promise<void> {
         const edition = system.getEdition()
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
@@ -92,8 +92,8 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     userId,
                     request: {
                         type: GitPushOperationType.DELETE_FLOW,
-                        commitMessage: `chore: deleted flow ${idOrExternalId}`,
-                        externalFlowIds: [idOrExternalId],
+                        commitMessage: `chore: deleted flow ${externalId}`,
+                        externalFlowIds: [externalId],
                     },
                     log,
                 })
@@ -106,8 +106,8 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     userId,
                     request: {
                         type: GitPushOperationType.DELETE_TABLE,
-                        commitMessage: `chore: deleted table ${idOrExternalId}`,
-                        externalTableIds: [idOrExternalId],
+                        commitMessage: `chore: deleted table ${externalId}`,
+                        externalTableIds: [externalId],
                     },
                     log,
                 })
@@ -120,8 +120,8 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     userId,
                     request: {
                         type: GitPushOperationType.DELETE_AGENT,
-                        commitMessage: `chore: deleted agent ${idOrExternalId}`,
-                        externalAgentIds: [idOrExternalId],
+                        commitMessage: `chore: deleted agent ${externalId}`,
+                        externalAgentIds: [externalId],
                     },
                     log,
                 })
@@ -141,7 +141,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         switch (request.type) {
             case GitPushOperationType.PUSH_EVERYTHING: {
                 const gitRepo = await gitRepoService(log).getOrThrow({ id })
-                const projectState = await projectStateService(log).getCurrentState(gitRepo.projectId, log)
+                const projectState = await projectStateService(log).getProjectState(gitRepo.projectId, log)
                 const operations: PushGitRepoRequest[] = []
                 if (!isNil(projectState.flows)) {
                     operations.push({
@@ -228,11 +228,12 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
-        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        const { flowFolderPath, connectionsFolderPath, tablesFolderPath, agentsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         return gitSyncHelper(log).getStateFromGit({
             flowPath: flowFolderPath,
             connectionsFolderPath,
             tablesFolderPath,
+            agentsFolderPath,
         })
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {

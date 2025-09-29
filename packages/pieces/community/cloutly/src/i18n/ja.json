@@ -1,5 +1,4 @@
 {
-  "Cloutly": "Cloutly",
   "Review Management Tool": "レビュー管理ツール",
   "Please enter the API Key obtained from Cloutly.": "Cloutly から取得した API キーを入力してください。",
   "Send Review Invite": "レビュー招待を送信",
@@ -7,7 +6,7 @@
   "Sends a review invite to your customer.": "顧客にレビューの招待状を送信します。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "First Name": "名",
-  "Last Name": "Last Name",
+  "Last Name": "姓",
   "Email": "Eメールアドレス",
   "Phone Number": "電話番号",
   "Source Customer ID": "ソース顧客ID",

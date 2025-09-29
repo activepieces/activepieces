@@ -1,5 +1,4 @@
 {
-  "SendGrid": "Grilla",
   "Email delivery service for sending transactional and marketing emails": "Servicio de entrega de correo electrónico para enviar correos electrónicos transaccionales y de marketing",
   "API key acquired from your SendGrid settings": "Clave API adquirida de tus ajustes de SendGrid",
   "Send Email": "Enviar Email",

@@ -1,15 +1,18 @@
 {
-  "Medullar": "Medalhas",
   "AI-powered discovery & insight platform that acts as your extended digital mind": "Plataforma de descoberta e visão de IA que atua como sua mente digital estendida",
   "Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.": "Por favor, use sua **CHAVE API** pessoal. Você pode gerar uma em seu [perfil de conta Medular](https://my.medullar.com/my-account), sob a seção **Chaves API**.",
   "Create new Space": "Criar novo Espaço",
   "List Spaces": "Listar Espaços",
   "Add Space Record": "Adicionar Gravação de Espaço",
   "Ask Space": "Perguntar espaço",
+  "Delete Space": "Excluir Espaço",
+  "Rename Space": "Renomear Espaço",
   "Create a new Space.": "Crie um novo Espaço.",
   "List all user Spaces": "Listar todos os espaços de usuário",
   "Adds a Record into a Space": "Adiciona um Registro em um Espaço",
   "Ask anything to a Space": "Pergunte qualquer coisa a um Espaço",
+  "Delete an existing Space.": "Apague um Espaço existente.",
+  "Rename an existing Space.": "Renomear um Espaço existente.",
   "Space Name": "Nome do Espaço",
   "Space": "Sala",
   "Source Type": "Tipo de origem",
@@ -30,6 +33,10 @@
   "Text": "texto",
   "Image": "Imagem:",
   "File": "Arquivo",
-  "Single AI Agent": "Agente Único de IA",
-  "Basic AI Chat": "Bate-papo AI básico"
+  "MedullaryAI Agent": "Agente MedullaryAI",
+  "MedullaryAI Agent (xAI Grok)": "MedullaryAI Agent (xAI Grok)",
+  "MedullaryAI Fact Check": "Verificação do Fato MedullaryIA",
+  "MedullaryAI Researcher": "Pesquisador MedullaryAI",
+  "MedullaryAI Sales Researcher": "Pesquisador de vendas MedullaryAI",
+  "MedullaryAI Search Agent": "Agente de busca MedullaryAI"
 }

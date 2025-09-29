@@ -1,11 +1,10 @@
 {
-  "Razorpay": "Razorpay",
   "Key ID": "ID de la clé",
   "Key Secret": "Secret de la clé",
   "\n          Enter your Key ID and Key Secret\n\n          Login to your Dashboard with appropriate credentials.\n          Select the mode (Test or Live) for which you want to generate the API key\n          Navigate to Settings > API Keys > Generate Key to generate keys for the selected mode.\n\n          The Key ID and Key Secret appear in a pop-out window.\n        ": "\n          Enter your Key ID and Key Secret\n\n          Login to your Dashboard with appropriate credentials.\n          Select the mode (Test or Live) for which you want to generate the API key\n          Navigate to Settings > API Keys > Generate Key to generate keys for the selected mode.\n\n          The Key ID and Key Secret appear in a pop-out window.\n        ",
-  "Custom API Call": "Appel API personnalisé",
+  "Custom API Call": "Appel d'API personnalisé",
   "Create Payment Link": "Créer un lien de paiement",
-  "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
+  "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "Create a payment link": "Créer un lien de paiement",
   "Method": "Méthode",
   "Headers": "En-têtes",
@@ -13,7 +12,7 @@
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
-  "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Timeout (in seconds)": "Délai d'expiration (en secondes)",
   "Amount": "Montant",
   "Currency": "Devise",
   "Reference ID": "ID de référence",
@@ -30,10 +29,10 @@
   "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Send notification via SMS": "Envoyer une notification par SMS",
   "Send notification via Email": "Envoyer une notification par e-mail",
-  "GET": "OBTENIR",
-  "POST": "POSTER",
+  "GET": "GET",
+  "POST": "POST",
   "PATCH": "PATCH",
-  "PUT": "EFFACER",
-  "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "PUT": "PUT",
+  "DELETE": "DELETE",
+  "HEAD": "HEAD"
 }

@@ -55,7 +55,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         return updatedFlow
     },
 
-    async republishFlow({ flow, projectId }: RepublishFlowParams): Promise<FlowSyncError | null> {
+    async republishFlow({ flow, projectId, status }: RepublishFlowParams): Promise<FlowSyncError | null> {
         if (!flow.version.valid) {
             return {
                 flowId: flow.id,
@@ -73,7 +73,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 operation: {
                     type: FlowOperationType.LOCK_AND_PUBLISH,
                     request: {
-                        status: FlowStatus.ENABLED,
+                        status: status ?? FlowStatus.ENABLED,
                     },
                 },
             })
@@ -99,4 +99,5 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
 type RepublishFlowParams = {
     flow: PopulatedFlow
     projectId: string
+    status?: FlowStatus
 }

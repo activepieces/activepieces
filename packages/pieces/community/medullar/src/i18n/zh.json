@@ -1,15 +1,18 @@
 {
-  "Medullar": "Medullar",
   "AI-powered discovery & insight platform that acts as your extended digital mind": "AI-powered discovery & insight platform that acts as your extended digital mind",
   "Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.": "Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.",
   "Create new Space": "Create new Space",
   "List Spaces": "List Spaces",
   "Add Space Record": "Add Space Record",
   "Ask Space": "Ask Space",
+  "Delete Space": "Delete Space",
+  "Rename Space": "Rename Space",
   "Create a new Space.": "Create a new Space.",
   "List all user Spaces": "List all user Spaces",
   "Adds a Record into a Space": "Adds a Record into a Space",
   "Ask anything to a Space": "Ask anything to a Space",
+  "Delete an existing Space.": "Delete an existing Space.",
+  "Rename an existing Space.": "Rename an existing Space.",
   "Space Name": "Space Name",
   "Space": "Space",
   "Source Type": "Source Type",
@@ -30,6 +33,10 @@
   "Text": "文本",
   "Image": "Image",
   "File": "文件",
-  "Single AI Agent": "Single AI Agent",
-  "Basic AI Chat": "Basic AI Chat"
+  "MedullaryAI Agent": "MedullaryAI Agent",
+  "MedullaryAI Agent (xAI Grok)": "MedullaryAI Agent (xAI Grok)",
+  "MedullaryAI Fact Check": "MedullaryAI Fact Check",
+  "MedullaryAI Researcher": "MedullaryAI Researcher",
+  "MedullaryAI Sales Researcher": "MedullaryAI Sales Researcher",
+  "MedullaryAI Search Agent": "MedullaryAI Search Agent"
 }

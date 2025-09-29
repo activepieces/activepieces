@@ -1,12 +1,11 @@
 {
-  "RSS Feed": "RSS訂閱",
-  "Stay updated with RSS feeds": "通過RSS訂閱保持更新",
-  "New Item In Feed": "訂閱源中有新項目",
-  "New Items in Multiple Feeds": "多個訂閱源中的新項目",
-  "Runs when a new item is added in the RSS feed": "當在RSS訂閱源中新增一個項目時運行",
-  "Runs when a new item is added in one of the RSS feed": "當在一個RSS訂閱源中新增一個項目時運行",
-  "RSS Feed URL": "RSS訂閱源URL",
-  "RSS Feed URLs": "RSS訂閱源URL列表",
-  "Single RSS feed URL": "單個RSS訂閱源URL",
-  "List of RSS feed URLs": "RSS訂閱源URL一覽表"
+  "Stay updated with RSS feeds": "Stay updated with RSS feeds",
+  "New Item In Feed": "New Item In Feed",
+  "New Items in Multiple Feeds": "New Items in Multiple Feeds",
+  "Runs when a new item is added in the RSS feed": "Runs when a new item is added in the RSS feed",
+  "Runs when a new item is added in one of the RSS feed": "Runs when a new item is added in one of the RSS feed",
+  "RSS Feed URL": "RSS Feed URL",
+  "RSS Feed URLs": "RSS Feed URLs",
+  "Single RSS feed URL": "Single RSS feed URL",
+  "List of RSS feed URLs": "List of RSS feed URLs"
 }

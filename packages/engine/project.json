@@ -49,13 +49,20 @@
         "lintFilePatterns": ["packages/engine/**/*.ts"]
       }
     },
+    "build-pieces-for-testing": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx nx run-many --target=build --projects=pieces-http,pieces-data-mapper,pieces-approval,pieces-webhook"
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/engine/jest.config.ts",
         "silent": true
-      }
+      },
+      "dependsOn": ["build-pieces-for-testing", "build"]
     }
   },
   "tags": []

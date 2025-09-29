@@ -99,7 +99,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     },
 
 
-    async checkAICreditsExceededLimit(projectId: string): Promise<boolean> {
+    async checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring }: { projectId: string, requestCostBeforeFiring: number }): Promise<boolean> {
         if (edition === ApEdition.COMMUNITY) {
             return false
         }
@@ -111,8 +111,8 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
             const { startDate, endDate } = await platformPlanService(log).getBillingDates(platformPlan)
 
-            const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate })
-            const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate })
+            const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate }) + requestCostBeforeFiring
+            const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }) + requestCostBeforeFiring
 
             const aiCreditPlatformLimit = await platformReachedLimit({ platformPlan, platformUsage: platformAICreditUsage, log, usageType: 'ai_credits' })
             const aiCreditPorjectLimit = await projectReachedLimit({ projectPlan, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'ai_credits' })

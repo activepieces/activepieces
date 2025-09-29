@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-grok-xai",
-  "version": "0.0.4",
+  "version": "0.0.7",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

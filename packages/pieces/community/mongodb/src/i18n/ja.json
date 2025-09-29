@@ -1,10 +1,9 @@
 {
-  "MongoDB": "MongoDB",
   "Host": "ホスト",
   "Use MongoDB Atlas URL Format": "MongoDBアトラスのURL形式を使用する",
   "Database": "データベース",
   "Username": "ユーザー名",
-  "Password": "パスワード",
+  "Password": "Password",
   "Auth Source": "認証ソース",
   "The hostname or address of the MongoDB server (e.g., localhost:27017 or cluster.example.mongodb.net)": "MongoDBサーバーのホスト名またはアドレス (例: localhost:27017 または cluster.example.mongodb.net)",
   "Enable this if connecting to MongoDB Atlas (uses mongodb+srv:// protocol)": "MongoDB Atlasに接続する場合、これを有効にする (mongodb+srv:// プロトコルを使用)",

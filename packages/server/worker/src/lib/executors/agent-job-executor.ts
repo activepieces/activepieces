@@ -1,5 +1,5 @@
-import { AgentJobData } from '@activepieces/server-shared'
-import { Agent, agentbuiltInToolsNames, AgentStepBlock, AgentTaskStatus, AIErrorResponse, AIUsageFeature, assertNotNullOrUndefined, ContentBlockType, createAIModel, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { AIErrorResponse, AIUsageFeature, createAIModel } from '@activepieces/common-ai'
+import { Agent, agentbuiltInToolsNames, AgentJobData, AgentStepBlock, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpToolType, McpWithTools, ToolCallContentBlock, ToolCallStatus, ToolCallType, UpdateAgentRunRequestBody } from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { APICallError, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -28,7 +28,6 @@ export const agentJobExecutor = (log: FastifyBaseLogger) => ({
                 publicUrl: workerMachine.getPublicApiUrl(),
                 token: engineToken,
                 mcp,
-                source: jobData.source,
             })
 
             const baseURL = `${workerMachine.getPublicApiUrl()}v1/ai-providers/proxy/openai`

@@ -1,15 +1,18 @@
 {
-  "Medullar": "Medullair",
   "AI-powered discovery & insight platform that acts as your extended digital mind": "Ontdekking op AI-aangedreven en inzichtsplatform dat fungeert als je uitgebreide digitale geest",
   "Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.": "Gebruik alstublieft uw persoonlijke **API KEY**. U kunt er een genereren in het [Medullar account profiel](https://my.medullar.com/my-account), onder de **API Keys** sectie.",
   "Create new Space": "Nieuwe ruimte maken",
   "List Spaces": "Lijst van ruimten",
   "Add Space Record": "Ruimterecord toevoegen",
   "Ask Space": "Vraag ruimte",
+  "Delete Space": "Verwijder ruimte",
+  "Rename Space": "Spatie hernoemen",
   "Create a new Space.": "Maak een nieuwe ruimte aan.",
   "List all user Spaces": "Laat alle gebruikersruimten zien",
   "Adds a Record into a Space": "Voegt een record toe in een spatie",
   "Ask anything to a Space": "Vraag iets aan een spatie",
+  "Delete an existing Space.": "Verwijder een bestaande ruimte.",
+  "Rename an existing Space.": "Hernoem een bestaande ruimte.",
   "Space Name": "Ruimte Naam",
   "Space": "Spatiebalk",
   "Source Type": "Type bron",
@@ -30,6 +33,10 @@
   "Text": "Tekstveld",
   "Image": "Afbeelding",
   "File": "Bestand",
-  "Single AI Agent": "Enkele AI Agent",
-  "Basic AI Chat": "Basis AI chat"
+  "MedullaryAI Agent": "MedullaryAI Agent",
+  "MedullaryAI Agent (xAI Grok)": "MedullaryAI Agent (xAI Grok)",
+  "MedullaryAI Fact Check": "MedullaryAI Fact Controle",
+  "MedullaryAI Researcher": "MedullaryAI Onderzoeker",
+  "MedullaryAI Sales Researcher": "MedullaryAI Verkoper Onderzoeker",
+  "MedullaryAI Search Agent": "MedullaryAI Zoek Agent"
 }

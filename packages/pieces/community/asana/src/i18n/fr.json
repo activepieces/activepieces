@@ -1,10 +1,9 @@
 {
-  "Asana": "Asana",
   "Work management platform designed to help teams organize, track, and manage their work.": "Plateforme de gestion du travail conçue pour aider les équipes à organiser, suivre et gérer leur travail.",
   "Create Task": "Créer une tâche",
-  "Custom API Call": "Appel API personnalisé",
+  "Custom API Call": "Appel d'API personnalisé",
   "Create a new task": "Créer une nouvelle tâche",
-  "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
+  "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "Workspace": "Espace de travail",
   "Project": "Projet",
   "Task Name": "Nom de la tâche",

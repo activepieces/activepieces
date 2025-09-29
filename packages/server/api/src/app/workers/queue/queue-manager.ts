@@ -1,14 +1,7 @@
 import {
-    AgentJobData,
-    DelayedJobData, JobData,
-    JobType,
-    OneTimeJobData,
-    RenewWebhookJobData,
-    RepeatingJobData,
-    UserInteractionJobData,
-    WebhookJobData,
+    QueueName,
 } from '@activepieces/server-shared'
-import { ApId, isNil, ScheduleOptions } from '@activepieces/shared'
+import { AgentJobData, ApId, DelayedJobData, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 
 export const JOB_PRIORITY = {
     high: 2,
@@ -17,70 +10,54 @@ export const JOB_PRIORITY = {
     ultraLow: 5,
 }
 
-export const TEST_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
-export const SYNC_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
-export const DEFAULT_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
+
 export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'ultraLow'
 
-export async function getJobPriority(synchronousHandlerId: string | null | undefined): Promise<keyof typeof JOB_PRIORITY> {
-    if (!isNil(synchronousHandlerId)) {
-        return SYNC_FLOW_PRIORITY
+export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
+    switch (job.jobType) {
+        case WorkerJobType.EXECUTE_POLLING:
+        case WorkerJobType.RENEW_WEBHOOK:
+            return 'low'
+        case WorkerJobType.EXECUTE_FLOW:
+        case WorkerJobType.EXECUTE_WEBHOOK:
+        case WorkerJobType.EXECUTE_AGENT:
+        case WorkerJobType.DELAYED_FLOW:
+            return 'medium'
+        case WorkerJobType.EXECUTE_TOOL:
+        case WorkerJobType.EXECUTE_PROPERTY:
+        case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
+        case WorkerJobType.EXECUTE_VALIDATION:
+        case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+            return 'high'
     }
-    return DEFAULT_PRIORITY
 }
 
-export type QueueManager = {
-    init(): Promise<void>
-    add<JT extends JobType>(params: AddParams<JT>): Promise<void>
-    removeRepeatingJob(params: RemoveParams): Promise<void>
+export enum JobType {
+    REPEATING = 'repeating',
+    ONE_TIME = 'one_time',
 }
 
 type RemoveParams = {
     flowVersionId: ApId
 }
 
-type BaseAddParams<JT extends JobType, JD extends JobData> = {
+type BaseAddParams<JD extends JobData, JT extends JobType> = {
     id: ApId
-    type: JT
     data: JD
+    type: JT
+    delay?: number
+    priority?: keyof typeof JOB_PRIORITY
 }
-
-type RepeatingJobAddParams<JT extends JobType.REPEATING> = Omit<BaseAddParams<JT, RepeatingJobData> & {
-    scheduleOptions: ScheduleOptions
-}, 'id'>
-
-type RenewWebhookJobAddParams<JT extends JobType.REPEATING> = BaseAddParams<JT, RenewWebhookJobData> & {
+type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | DelayedJobData | UserInteractionJobData | AgentJobData, JobType.ONE_TIME>
 
-type DelayedJobAddParams<JT extends JobType.DELAYED> = BaseAddParams<JT, DelayedJobData> & {
-    delay: number
+export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams
+
+export type QueueManager = {
+    setConcurrency(queueName: QueueName, concurrency: number): Promise<void>
+    init(): Promise<void>
+    add<JT extends JobType>(params: AddJobParams<JT>): Promise<void>
+    removeRepeatingJob(params: RemoveParams): Promise<void>
 }
-
-type WebhookJobAddParams<JT extends JobType.WEBHOOK> = BaseAddParams<JT, WebhookJobData> & {
-    priority: keyof typeof JOB_PRIORITY
-}
-
-type OneTimeJobAddParams<JT extends JobType.ONE_TIME> = BaseAddParams<JT, OneTimeJobData> & {
-    priority: keyof typeof JOB_PRIORITY
-}
-
-type UserInteractionJobAddParams<JT extends JobType.USERS_INTERACTION> = BaseAddParams<JT, UserInteractionJobData>
-
-type AgentJobAddParams<JT extends JobType.AGENTS> = BaseAddParams<JT, AgentJobData> & {
-    priority: keyof typeof JOB_PRIORITY
-}
-
-export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
-    ? OneTimeJobAddParams<JT>
-    : JT extends JobType.REPEATING
-        ? RepeatingJobAddParams<JT> | RenewWebhookJobAddParams<JT>
-        : JT extends JobType.DELAYED
-            ? DelayedJobAddParams<JT>
-            : JT extends JobType.WEBHOOK
-                ? WebhookJobAddParams<JT>
-                : JT extends JobType.USERS_INTERACTION
-                    ? UserInteractionJobAddParams<JT>
-                    : JT extends JobType.AGENTS
-                        ? AgentJobAddParams<JT>
-                        : never

@@ -1,5 +1,4 @@
 {
-  "Box": "Boîte",
   "Secure content management and collaboration": "Gestion sécurisée du contenu et collaboration",
   "Custom API Call": "Appel API personnalisé",
   "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
@@ -31,5 +30,5 @@
   "The ID of the item to trigger a webhook": "L'ID de l'élément pour déclencher un webhook",
   "The type of the item to trigger a webhook": "Le type de l'élément pour déclencher un webhook",
   "File": "Ficher",
-  "Folder": "Folder"
+  "Folder": "Dossier"
 }

@@ -1,5 +1,4 @@
 {
-  "PandaDoc": "PandaDoc",
   "Your PandaDoc API key. Get it from the Developer Dashboard in your PandaDoc account.": "Votre clé API PandaDoc. Obtenez-la depuis le Dashboard développeur dans votre compte PandaDoc.",
   "Create Document from Template": "Créer un document à partir d'un modèle",
   "Create Attachment": "Créer une pièce jointe",
@@ -22,7 +21,7 @@
   "Recipients": "Destinataires",
   "Template Fields": "Champs du modèle",
   "Variables/Tokens": "Variables/Tokens",
-  "Folder": "Folder",
+  "Folder": "Dossier",
   "Tags": "Tags",
   "Metadata": "Métadonnées",
   "Document": "Document",

@@ -1,11 +1,10 @@
 {
-  "Brevo": "Brèves",
   "Formerly Sendinblue, is a SaaS solution for relationship marketing": "Anciennement Sendinblue, est une solution SaaS pour le marketing relationnel",
   "Your project API key": "Votre clé API de projet",
   "Create or Update Contact": "Créer ou mettre à jour le contact",
-  "Custom API Call": "Appel API personnalisé",
+  "Custom API Call": "Appel d'API personnalisé",
   "Create or update an existing contact": "Créer ou mettre à jour un contact existant",
-  "Make a custom API call to a specific endpoint": "Passez un appel API personnalisé à un point de terminaison spécifique",
+  "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "Email": "Courriel",
   "External ID": "ID externe",
   "Attributes": "Attributs",
@@ -19,7 +18,7 @@
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
-  "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Timeout (in seconds)": "Délai d'expiration (en secondes)",
   "Email address of the user. Mandatory if \"SMS\" field is not passed in \"attributes\" parameter. Mobile Number in SMS field should be passed with proper country code. For example: {\"SMS\":\"+91xxxxxxxxxx\"} or {\"SMS\":\"0091xxxxxxxxxx\"}": "Adresse e-mail de l'utilisateur. Obligatoire si le champ \"SMS\" n'est pas passé dans le paramètre \"attributs\". Le numéro de téléphone mobile dans le champ SMS doit être transmis avec le code de pays approprié. Par exemple: {\"SMS\":\"+91xxxxxxxx\"} ou {\"SMS\":\"0091xxxxxxxx\"}",
   "Pass your own Id to create a contact.": "Passez votre propre Id pour créer un contact.",
   "Pass the set of attributes and their values. The attribute's parameter should be passed in capital letter while creating a contact. These attributes must be present in your SendinBlue account. For eg:\n        {\"FNAME\":\"Elly\", \"LNAME\":\"Roger\"}": "Passer l'ensemble des attributs et leurs valeurs. Le paramètre de l'attribut doit être passé en majuscule lors de la création d'un contact. Ces attributs doivent être présents dans votre compte SendinBlue. Par exemple:\n        {\"FNAME\":\"Elly\", \"LNAME\":\"Roger\"}",
@@ -29,10 +28,10 @@
   "transactional email forbidden sender for contact. Use only for email Contact ( only available if updateEnabled = true )": "e-mail transactionnel expéditeur interdit pour le contact. Utiliser uniquement pour le contact par e-mail (disponible uniquement si updateEnabled = true )",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
   "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
-  "GET": "OBTENIR",
-  "POST": "POSTER",
+  "GET": "GET",
+  "POST": "POST",
   "PATCH": "PATCH",
-  "PUT": "EFFACER",
-  "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "PUT": "PUT",
+  "DELETE": "DELETE",
+  "HEAD": "HEAD"
 }

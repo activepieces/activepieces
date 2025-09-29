@@ -1,9 +1,8 @@
 {
-  "Mautic": "Mautic",
   "Open-source marketing automation software": "Open-source marketing automation software",
   "Base URL": "基本网址",
   "Username": "用户名",
-  "Password": "密码",
+  "Password": "Password",
   "\nFollow these steps:\n\n1. **Enter the Base URL:** Open your Mautic instance and copy the URL from the address bar. If your dashboard link is \"https://mautic.ddev.site/s/dashboard\", set your base URL as \"https://mautic.ddev.site/\".\n\n2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.\n\n": "\nFollow these steps:\n\n1. **Enter the Base URL:** Open your Mautic instance and copy the URL from the address bar. If your dashboard link is \"https://mautic.ddev.site/s/dashboard\", set your base URL as \"https://mautic.ddev.site/\".\n\n2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.\n\n",
   "Create Contact": "Create Contact",
   "Search Contact": "Search Contact",

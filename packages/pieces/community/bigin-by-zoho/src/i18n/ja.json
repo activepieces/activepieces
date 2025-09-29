@@ -1,5 +1,4 @@
 {
-  "Bigin by Zoho CRM": "Bigin by Zoho CRM",
   "Bigin by Zoho CRM is a lightweight CRM designed for small businesses to manage contacts, companies, deals (pipeline records), tasks, calls, and events.": "Bigin by Zoho CRM は、連絡先、企業、取引先(パイプラインレコード)、タスク、電話、イベントを管理するための小規模企業向けに設計された軽量CRMです。",
   "Your Data Center Region": "データセンターの地域",
   "Select your Zoho data center region for your account": "アカウントのZohoデータセンターの地域を選択してください",
@@ -57,7 +56,7 @@
   "Select Company": "所属を選択",
   "Company Details": "会社詳細",
   "First Name": "名",
-  "Last Name": "姓",
+  "Last Name": "Last Name",
   "Title": "タイトル",
   "Email": "Eメールアドレス",
   "Mobile": "モバイル",

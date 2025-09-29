@@ -1,5 +1,4 @@
 {
-  "HTTP": "HTTP",
   "Sends HTTP requests and return responses": "Sendet HTTP-Anfragen und Rückgabewerte",
   "Send HTTP request": "HTTP-Anfrage senden",
   "Method": "Methode",
@@ -15,6 +14,7 @@
   "Proxy Settings": "Proxy-Einstellungen",
   "Timeout(in seconds)": "Zeitüberschreitung (in Sekunden)",
   "On Failure": "Bei Fehlschlag",
+  "Stop the flow on Failure ?": "Stoppen Sie den Fluss auf Fehler?",
   "Enable for files like PDFs, images, etc. A base64 body will be returned.": "Aktivieren für Dateien wie PDFs, Bilder, etc. Ein base64-Text wird zurückgegeben.",
   "Use a proxy for this request": "Proxy für diese Anfrage verwenden",
   "GET": "ERHALTEN",
@@ -30,6 +30,9 @@
   "JSON": "JSON",
   "Raw": "Rohe",
   "Retry on all errors (4xx, 5xx)": "Alle Fehler wiederholen (4xx, 5xx)",
-  "Continue flow": "Ablauf fortsetzen",
-  "Retry on internal errors (5xx)": "Bei internen Fehlern wiederholen (5xx)"
+  "Retry on internal errors (5xx)": "Bei internen Fehlern wiederholen (5xx)",
+  "Do not retry": "Nicht wiederholen",
+  "Continue flow on all errors": "Flow bei allen Fehlern fortsetzen",
+  "Continue flow on 4xx errors": "Flow bei 4xx-Fehlern fortsetzen",
+  "Do not continue (stop the flow)": "Nicht fortfahren (Strömung stoppen)"
 }

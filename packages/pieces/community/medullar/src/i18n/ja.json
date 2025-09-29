@@ -1,15 +1,18 @@
 {
-  "Medullar": "Medular",
   "AI-powered discovery & insight platform that acts as your extended digital mind": "拡張デジタルマインドとして機能するAIを搭載したディスカバリー&インサイトプラットフォーム",
   "Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.": "あなたの **API キー** を使用してください。**API キー** セクションの下の [Medullar account profile](https://my.medullar.com/my-account) にそれを生成できます。",
   "Create new Space": "新しいスペースを作成",
   "List Spaces": "スペースの一覧",
   "Add Space Record": "スペースレコードを追加",
   "Ask Space": "スペースに質問する",
+  "Delete Space": "スペースを削除",
+  "Rename Space": "スペースの名前を変更",
   "Create a new Space.": "新しいスペースを作成します。",
   "List all user Spaces": "すべてのユーザースペースを一覧表示する",
   "Adds a Record into a Space": "スペースにレコードを追加",
   "Ask anything to a Space": "スペースに質問する",
+  "Delete an existing Space.": "既存スペースを削除します。",
+  "Rename an existing Space.": "既存のスペースの名前を変更します。",
   "Space Name": "スペース名",
   "Space": "スペース",
   "Source Type": "ソースタイプ",
@@ -30,6 +33,10 @@
   "Text": "テキスト",
   "Image": "画像",
   "File": "ファイル",
-  "Single AI Agent": "単一の AI エージェント",
-  "Basic AI Chat": "基本的なAIチャット"
+  "MedullaryAI Agent": "MedullaryAI Agent",
+  "MedullaryAI Agent (xAI Grok)": "MedullaryAI Agent (xAI Grok)",
+  "MedullaryAI Fact Check": "MedullaryAI Fact Check",
+  "MedullaryAI Researcher": "MedullaryAI Research",
+  "MedullaryAI Sales Researcher": "MedullaryAI セールス研究者",
+  "MedullaryAI Search Agent": "MedullaryAI 検索エージェント"
 }

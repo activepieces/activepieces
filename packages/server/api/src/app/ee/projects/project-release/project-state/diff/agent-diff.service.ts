@@ -49,9 +49,7 @@ function findAgentsToDelete(currentState: ProjectState, newState: ProjectState):
         if (isNil(isStillPresent)) {
             agentOperations.push({
                 type: AgentOperationType.DELETE_AGENT,
-                agentState: {
-                    externalId: agent.externalId,
-                },
+                agentState: agent,
             })
         }
     })

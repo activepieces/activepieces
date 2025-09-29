@@ -1,5 +1,4 @@
 {
-  "Human Input": "人間入力",
   "Trigger a flow through human input.": "人間の入力を通して流れをトリガーします。",
   "Respond on UI": "UIに対応する",
   "Return a file or text (markdown) as a response.": "ファイルまたはテキスト(マークダウン)をレスポンスとして返します。",

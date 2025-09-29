@@ -2,8 +2,9 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
-import { PieceCategory, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/shared';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
+import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 
 export const claudeAuth = PieceAuth.SecretText({
   displayName: 'API Key',

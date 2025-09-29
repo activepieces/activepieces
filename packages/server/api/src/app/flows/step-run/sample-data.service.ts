@@ -1,5 +1,6 @@
 import {
     apId,
+    DATA_TYPE_KEY_IN_FILE_METADATA,
     FileCompression,
     FileType,
     FlowAction,
@@ -10,6 +11,7 @@ import {
     FlowVersionId,
     isNil,
     ProjectId,
+    SampleDataDataType,
     SampleDataFileType,
     SaveSampleDataResponse,
     Step,
@@ -18,9 +20,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
-
 export const sampleDataService = (log: FastifyBaseLogger) => ({
-    async modifyStep(params: SaveSampleDataParams): Promise<Step> {
+    async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<Step> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(params.flowVersionId)
         const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion.trigger)
         const sampleDataFile = await saveSampleData(params, log)
@@ -29,11 +30,10 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             ...clonedStep,
             settings: {
                 ...clonedStep.settings,
-                inputUiInfo: {
-                    ...clonedStep.settings.inputUiInfo,
-                    sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.inputUiInfo?.sampleDataFileId,
-                    sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.inputUiInfo?.sampleDataInputFileId,
-                    currentSelectedData: undefined,
+                sampleData: {
+                    ...clonedStep.settings.sampleData,
+                    sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
+                    sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
                     lastTestDate: dayjs().toISOString(),
                 },
             },
@@ -42,9 +42,8 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
         const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
         const fileType = params.type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
-        const fileId = params.type === SampleDataFileType.OUTPUT ? step.settings.inputUiInfo?.sampleDataFileId : step.settings.inputUiInfo?.sampleDataInputFileId
-        const currentSelectedData = step.settings.inputUiInfo?.currentSelectedData
-        if (isNil(currentSelectedData) && isNil(fileId)) {
+        const fileId = params.type === SampleDataFileType.OUTPUT ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
+        if (isNil(fileId)) {
             return {}
         }
         if (!isNil(fileId)) {
@@ -57,12 +56,12 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             if (isNil(response)) {
                 return undefined
             }
+            if (response.metadata?.[DATA_TYPE_KEY_IN_FILE_METADATA] === SampleDataDataType.STRING) {
+                return response.data.toString('utf-8')
+            }
             return JSON.parse(response.data.toString('utf-8'))
         }
-        if (fileType === FileType.SAMPLE_DATA_INPUT) {
-            return undefined
-        }
-        return currentSelectedData
+        return undefined
 
     },
     async deleteForStep(params: DeleteSampleDataForStepParams): Promise<void> {
@@ -100,6 +99,7 @@ export async function saveSampleData({
     stepName,
     payload,
     type,
+    dataType,
 }: SaveSampleDataParams, log: FastifyBaseLogger): Promise<SaveSampleDataResponse> {
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
     const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
@@ -117,12 +117,13 @@ export async function saveSampleData({
             flowId: flowVersion.flowId,
             flowVersionId,
             stepName,
+            [DATA_TYPE_KEY_IN_FILE_METADATA]: dataType,
         },
     })
 }
 
 async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: FlowAction | FlowTrigger, fileType: FileType, log: FastifyBaseLogger): Promise<string> {
-    const sampleDataId = fileType === FileType.SAMPLE_DATA ? step.settings.inputUiInfo?.sampleDataFileId : step.settings.inputUiInfo?.sampleDataInputFileId
+    const sampleDataId = fileType === FileType.SAMPLE_DATA ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
     if (isNil(sampleDataId)) {
         return apId()
     }
@@ -166,4 +167,5 @@ type SaveSampleDataParams = {
     stepName: string
     payload: unknown
     type: SampleDataFileType
+    dataType: SampleDataDataType
 }
