@@ -1,13 +1,21 @@
 import {
+  ActionContext,
   createAction,
+  PieceAuthProperty,
   Property,
+  ShortTextProperty,
+  StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import deepEqual from 'deep-equal';
-import { common, getScopeAndKey } from './common';
+import { common, getScopeAndKey, PieceStoreScope } from './common';
 
-async function executeStorageRemoveFromList(context: any, isTestMode: boolean = false) {
+async function executeStorageRemoveFromList(context: ActionContext<PieceAuthProperty, {
+  key: ShortTextProperty<true>;
+  value: ShortTextProperty<true>;
+  store_scope: StaticDropdownProperty<PieceStoreScope, true>;
+}>, isTestMode = false) {
   await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });

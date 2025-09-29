@@ -1,13 +1,21 @@
 import {
+  ActionContext,
   createAction,
+  PieceAuthProperty,
   Property,
+  ShortTextProperty,
+  StaticDropdownProperty,
   StoreScope,
 } from '@activepieces/pieces-framework';
 import { getScopeAndKey, PieceStoreScope } from './common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
-async function executeStorageGet(context: any, isTestMode: boolean = false) {
+async function executeStorageGet(context: ActionContext<PieceAuthProperty, {
+  key: ShortTextProperty<true>;
+  defaultValue: ShortTextProperty<false>;
+  store_scope: StaticDropdownProperty<PieceStoreScope, true>;
+}>, isTestMode = false) {
   await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });

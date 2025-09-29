@@ -6,6 +6,7 @@ export enum PieceStoreScope {
     RUN = 'RUN',
 }
 
+const testRunId = 'test-run-id-CbVidYfEuCRpUanfEb3RU';
 export function getScopeAndKey(params: Params): { scope: StoreScope, key: string } {
     switch (params.scope) {
         case PieceStoreScope.PROJECT:
@@ -14,8 +15,10 @@ export function getScopeAndKey(params: Params): { scope: StoreScope, key: string
             return { scope: StoreScope.FLOW, key: params.key }
         case PieceStoreScope.RUN:
             // Use a consistent test run ID when testing to allow store operations to work together
-            const runId = params.isTestMode ? 'test-run' : params.runId
-            return { scope: StoreScope.FLOW, key: `run_${runId}/${params.key}` }
+            {
+                const runId = params.isTestMode ? testRunId : params.runId
+                return { scope: StoreScope.FLOW, key: `run_${runId}/${params.key}` }
+            }
     }
 }
 

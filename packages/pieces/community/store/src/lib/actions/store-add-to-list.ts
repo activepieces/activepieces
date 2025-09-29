@@ -1,10 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ActionContext, ArrayProperty, CheckboxProperty, createAction, PieceAuthProperty, Property, ShortTextProperty, StaticDropdownProperty } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import deepEqual from 'deep-equal';
-import { common, getScopeAndKey } from './common';
+import { common, getScopeAndKey, PieceStoreScope } from './common';
 
-async function executeStorageAddToList(context: any, isTestMode: boolean = false) {
+async function executeStorageAddToList(context: ActionContext<PieceAuthProperty, {
+	key: ShortTextProperty<true>;
+	value: ArrayProperty<true>;
+	ignore_if_exists: CheckboxProperty<false>;
+	store_scope: StaticDropdownProperty<PieceStoreScope, true>;
+}>, isTestMode = false) {
 	await propsValidation.validateZod(context.propsValue, {
 		key: z.string().max(128),
 	});
