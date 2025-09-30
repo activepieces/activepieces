@@ -101,6 +101,10 @@ module.exports = {
         '4xl': '2rem',
       },
       keyframes: {
+       'primary-color-pulse': {
+           from: { color: 'hsl(var(--primary))' },
+           to: { color: 'hsl(var(--primary)/0.7)' },
+        },
         'accordion-down': {
           from: { height: '0' },
           to: { height: 'var(--radix-accordion-content-height)' },
@@ -163,6 +167,7 @@ module.exports = {
         'typing-sm': 'typing 0.5s steps(5) alternate',
         'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite',
         'slide-in-from-bottom': 'slide-in-from-bottom 0.2s ease-out forwards' 
+        'primary-color-pulse': 'primary-color-pulse 1s ease-in-out infinite alternate'
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',

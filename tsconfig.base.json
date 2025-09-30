@@ -779,6 +779,9 @@
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
       ],
+      "@activepieces/piece-parseur": [
+        "packages/pieces/community/parseur/src/index.ts"
+      ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
       ],
@@ -807,6 +810,9 @@
       "@activepieces/piece-pinecone": [
         "packages/pieces/community/pinecone/src/index.ts"
       ],
+      "@activepieces/piece-pinterest": [
+        "packages/pieces/community/pinterest/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -827,6 +833,9 @@
       ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
+      ],
+      "@activepieces/piece-productboard": [
+        "packages/pieces/community/productboard/src/index.ts"
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
@@ -1087,6 +1096,9 @@
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
       ],
+      "@activepieces/piece-timelines-ai": [
+        "packages/pieces/community/timelines-ai/src/index.ts"
+      ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
       ],
@@ -1123,7 +1135,7 @@
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
-      "@activepieces/piece-vadoo-ai":[
+      "@activepieces/piece-vadoo-ai": [
         "packages/pieces/community/vadoo-ai/src/index.ts"
       ],
       "@activepieces/piece-vbout": [
@@ -1161,6 +1173,9 @@
       ],
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
+      ],
+      "@activepieces/piece-what-converts": [
+        "packages/pieces/community/what-converts/src/index.ts"
       ],
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
