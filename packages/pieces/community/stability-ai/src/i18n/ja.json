@@ -1,5 +1,4 @@
 {
-  "Stability AI": "安定度AI",
   "Generative AI video model based on the image model Stable Diffusion.": "画像モデル安定拡散をベースにしたAIビデオモデル。",
   "API Key": "API キー",
   "Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key": "API キーを取得するには、https://platform.stability.ai/docs/getting-started/authentication をご覧ください。",

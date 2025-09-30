@@ -1,5 +1,4 @@
 {
-  "Xero": "Xero",
   "Beautiful accounting software": "Schöne Buchhaltungssoftware",
   "\n  1. Log in to Xero.\n  2. Go to [Developer portal](https://developer.xero.com/app/manage/).\n  3. Click on the App you want to integrate.\n  4. On the left, click on `Configuration`.\n  5. Enter your `redirect url`.\n  6. Copy the `Client Id` and `Client Secret`.\n  ": "\n  1. Melde dich bei Xero an.\n  2. Gehe zum [Entwicklerportal](https://developer.xero.com/app/manage/).\n  3. Klicken Sie auf die App, die Sie integrieren möchten.\n  Klicken Sie auf der linken Seite auf `Konfiguration`.\n  Geben Sie Ihre `Umleitungsurl` ein.\n  6. Kopiere die `Client Id` und `Client Secret`.\n  ",
   "Create or Update Contact": "Kontakt erstellen oder aktualisieren",

@@ -1,5 +1,4 @@
 {
-  "Zoo": "Zoo",
   "Generate and iterate on 3D models from text descriptions using ML endpoints.": "ML エンドポイントを使用したテキスト記述から 3D モデルを生成して反復します。",
   "Your Zoo API Key (Bearer Token).": "あなたのZoo APIキー(Bearerトークン)。",
   "Generate CAD Model": "CADモデルを生成",
