@@ -9,6 +9,7 @@ import { split } from './lib/actions/split';
 import { stripHtmlContent } from './lib/actions/strip-html';
 import { slugifyAction } from './lib/actions/slugify';
 import { defaultValue } from './lib/actions/default-value';
+import { jsonToAsciiTable } from './lib/actions/json-to-ascii-table';
 
 export const textHelper = createPiece({
   displayName: 'Text Helper',
@@ -24,6 +25,7 @@ export const textHelper = createPiece({
     'abuaboud',
     'AdamSelene',
     'Anmol-Gup',
+    'geekyme'
   ],
   categories: [PieceCategory.CORE],
   actions: [
@@ -36,6 +38,7 @@ export const textHelper = createPiece({
     stripHtmlContent,
     slugifyAction,
     defaultValue,
+    jsonToAsciiTable,
   ],
   triggers: [],
 });
