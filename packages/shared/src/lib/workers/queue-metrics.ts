@@ -3,13 +3,12 @@ import { BaseModelSchema } from '../common'
 import { WorkerJobType } from './job-data';
 
 export enum WorkerJobStatus {
-  COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
   DELAYED = 'DELAYED',
   ACTIVE = 'ACTIVE',
   QUEUED = 'QUEUED',
-  // RETRYING = 'RETRYING',
-  // THROTTLED = 'THROTTLED',
+  RETRYING = 'RETRYING',
+  THROTTLED = 'THROTTLED',
 }
 
 export const ListQueueJobsRequestQuery = Type.Object({

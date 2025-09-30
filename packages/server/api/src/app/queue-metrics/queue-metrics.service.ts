@@ -1,8 +1,8 @@
 import { WorkerJobStatItem, WorkerJobType, WorkerJobStatus } from "@activepieces/shared"
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from "../database/redis"
-import { METRICS_KEY_PREFIX } from "../workers/queue/queue-events/save-queue-metrics"
 import { Redis } from "ioredis"
+import { metricsRedisKey } from "../workers/queue/queue-events/queue-metrics"
 
 export const queueMetricService = (log: FastifyBaseLogger) => ({
 
@@ -13,11 +13,12 @@ export const queueMetricService = (log: FastifyBaseLogger) => ({
       Object.values(WorkerJobType).map(async jobType => ({
         jobType: jobType,
         stats: {
-          failed: await getStat(redis, jobType, WorkerJobStatus.FAILED),
-          active: await getStat(redis, jobType, WorkerJobStatus.ACTIVE),
+          queued: await getStat(redis, jobType, WorkerJobStatus.QUEUED),
           delayed: await getStat(redis, jobType, WorkerJobStatus.DELAYED),
-          retried: await getStat(redis, jobType, WorkerJobStatus.DELAYED),
-          throttled: await getStat(redis, jobType, WorkerJobStatus.DELAYED)
+          retried: await getStat(redis, jobType, WorkerJobStatus.RETRYING),
+          active: await getStat(redis, jobType, WorkerJobStatus.ACTIVE),
+          failed: await getStat(redis, jobType, WorkerJobStatus.FAILED),
+          throttled: await getStat(redis, jobType, WorkerJobStatus.THROTTLED)
         }
       }))
     )
@@ -28,5 +29,5 @@ export const queueMetricService = (log: FastifyBaseLogger) => ({
 })
 
 const getStat = async (redis: Redis, jobType: WorkerJobType, status:WorkerJobStatus ) => {
-  return Number(await redis.get(`${METRICS_KEY_PREFIX(jobType)}:${status}`))
+  return Number(await redis.get(metricsRedisKey(jobType, status)))
 }

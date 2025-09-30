@@ -9,7 +9,7 @@ import { system } from '../../helper/system/system'
 import { machineService } from '../machine/machine-service'
 import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
-import { saveQueueMetrics } from './queue-events/save-queue-metrics'
+import { queueMetrics } from './queue-events/queue-metrics'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -97,8 +97,8 @@ async function ensureQueueExists(queueName: QueueName, log?: FastifyBaseLogger):
     if (log) {
         const queueEvents = new QueueEvents(queueName, options)
         await queueEvents.waitUntilReady()
-        saveQueueMetrics(log, queueEvents).detach()
-        saveQueueMetrics(log, queueEvents).attach()
+        queueMetrics(log, queueEvents).detach()
+        queueMetrics(log, queueEvents).attach()
     }
 
     return bullMqGroups[queueName]
