@@ -2,8 +2,7 @@ import { FastifyBaseLogger } from "fastify";
 import { Job, QueueEvents } from "bullmq";
 import { redisConnections } from "../../../database/redis";
 import { JobData, WorkerJobStatus, WorkerJobType } from "@activepieces/shared";
-import { QueueName } from "@activepieces/server-shared";
-import { bullMqGroups } from "../job-queue";
+import { bullMqQueue } from "../job-queue";
 import { Redis } from "ioredis";
 
 export const metricsRedisKey = (jobType: WorkerJobType, status: WorkerJobStatus) => `metrics:${jobType}:${status}`
@@ -28,8 +27,7 @@ export const queueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvents) =
 })
 
 const onAdded = async (args: { jobId: string, prev?: string }) => {
-  const queue = bullMqGroups[QueueName.WORKER_JOBS]
-  const job = await queue.getJob(args.jobId)
+  const job = await bullMqQueue?.getJob(args.jobId)
   if (!job?.data.jobType) return
 
   const redisConnectionInstance = await redisConnections.useExisting()
@@ -42,8 +40,7 @@ const onAdded = async (args: { jobId: string, prev?: string }) => {
 }
 
 const onDelayed = async (args: { jobId: string, prev?: string }) => {
-  const queue = bullMqGroups[QueueName.WORKER_JOBS]
-  const job = await queue.getJob(args.jobId)
+  const job = await bullMqQueue?.getJob(args.jobId)
   if (!job?.data.jobType) return
 
   const redisConnectionInstance = await redisConnections.useExisting()
@@ -58,8 +55,7 @@ const onDelayed = async (args: { jobId: string, prev?: string }) => {
 }
 
 const onActive = async (args: { jobId: string, prev?: string }) => {
-  const queue = bullMqGroups[QueueName.WORKER_JOBS]
-  const job = await queue.getJob(args.jobId)
+  const job = await bullMqQueue?.getJob(args.jobId)
   if (!job?.data.jobType) return
 
   const redisConnectionInstance = await redisConnections.useExisting()
@@ -72,8 +68,7 @@ const onActive = async (args: { jobId: string, prev?: string }) => {
 } 
 
 const onFailed = async (args: { jobId: string }) => {
-  const queue = bullMqGroups[QueueName.WORKER_JOBS]
-  const job: Job<JobData> = await queue.getJob(args.jobId)
+  const job: Job<JobData> = await bullMqQueue?.getJob(args.jobId)
   if (!job?.data.jobType) return
 
   const redisConnectionInstance = await redisConnections.useExisting()

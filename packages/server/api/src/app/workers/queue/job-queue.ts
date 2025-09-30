@@ -15,15 +15,15 @@ const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMillisecond
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
-export const bullMqGroups: Record<string, Queue> = {}
+export let bullMqQueue: Queue | undefined = undefined
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
-        const queue = await ensureQueueExists(queueName)
+        const queue = await ensureQueueExists(queueName, log)
         await queue.setGlobalConcurrency(concurrency)
     },
     async init(): Promise<void> {
-        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName, queueName === QueueName.WORKER_JOBS ? log : undefined))
+        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName, log))
         await Promise.all(queues)
         await machineService(log).updateConcurrency()
         log.info('[redisQueueManager#init] Redis queues initialized')
@@ -32,7 +32,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         const { data, type } = params
 
         const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
 
         switch (type) {
             case JobType.REPEATING: {
@@ -59,7 +59,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         }
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
@@ -67,9 +67,9 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
 })
 
-async function ensureQueueExists(queueName: QueueName, log?: FastifyBaseLogger): Promise<Queue> {
-    if (!isNil(bullMqGroups[queueName])) {
-        return bullMqGroups[queueName]
+async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): Promise<Queue> {
+    if (!isNil(bullMqQueue)) {
+        return bullMqQueue
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
 
@@ -91,16 +91,14 @@ async function ensureQueueExists(queueName: QueueName, log?: FastifyBaseLogger):
 
     }
 
-    bullMqGroups[queueName] = new Queue(queueName, options)
-    await bullMqGroups[queueName].waitUntilReady()
+    bullMqQueue = new Queue(queueName, options)
+    await bullMqQueue.waitUntilReady()
     
-    if (log) {
-        const queueEvents = new QueueEvents(queueName, options)
-        await queueEvents.waitUntilReady()
-        queueMetrics(log, queueEvents).detach()
-        queueMetrics(log, queueEvents).attach()
-    }
+    const queueEvents = new QueueEvents(queueName, options)
+    await queueEvents.waitUntilReady()
+    queueMetrics(log, queueEvents).detach()
+    queueMetrics(log, queueEvents).attach()
 
-    return bullMqGroups[queueName]
+    return bullMqQueue
 }
 
