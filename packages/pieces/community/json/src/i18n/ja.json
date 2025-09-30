@@ -2,6 +2,8 @@
   "Convert JSON to text and vice versa": "JSONをテキストに、そしてその逆に変換する",
   "Convert Json to Text": "Jsonをテキストに変換する",
   "Convert Text to Json": "テキストをJsonに変換する",
+  "Stringifies JSON.": "JSON を文字列化します。",
+  "Parses text into JSON.": "テキストを JSON に解析します。",
   "JSON": "JSON",
   "Text": "テキスト"
 }
