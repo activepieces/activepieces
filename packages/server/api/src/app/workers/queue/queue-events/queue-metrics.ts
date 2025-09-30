@@ -26,64 +26,37 @@ export const queueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvents) =
 
 })
 
-const onAdded = async (args: { jobId: string, prev?: string }) => {
-  const job = await bullMqQueue?.getJob(args.jobId)
+const onAdded = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.QUEUED)
+
+const onDelayed = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.DELAYED)
+
+const onActive = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.ACTIVE)
+
+const onFailed = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.FAILED, true)
+
+const updateJobState = async (jobId: string, status: WorkerJobStatus, deleteState = false) => {
+  const job = await bullMqQueue?.getJob(jobId)
+
   if (!job?.data.jobType) return
 
-  const redisConnectionInstance = await redisConnections.useExisting()
-
-  await decrPrevState(redisConnectionInstance, job.data.jobType, args.jobId)
-
-  await redisConnectionInstance.incr(metricsRedisKey(job.data.jobType, WorkerJobStatus.QUEUED))
+  const redis = await redisConnections.useExisting()
   
-  await redisConnectionInstance.set(jobStateRedisKey(args.jobId), WorkerJobStatus.QUEUED)
+  status = (status === WorkerJobStatus.DELAYED && job?.attemptsMade > 0) ? WorkerJobStatus.RETRYING : status
+
+  await decrPrevState(redis, job.data.jobType, jobId)
+
+  await redis.incr(metricsRedisKey(job.data.jobType, status))
+  
+  if (deleteState) {
+    await redis.del(jobStateRedisKey(jobId))
+  } else {
+    await redis.set(jobStateRedisKey(jobId), status)
+  }
 }
 
-const onDelayed = async (args: { jobId: string, prev?: string }) => {
-  const job = await bullMqQueue?.getJob(args.jobId)
-  if (!job?.data.jobType) return
-
-  const redisConnectionInstance = await redisConnections.useExisting()
-
-  await decrPrevState(redisConnectionInstance, job.data.jobType, args.jobId)
-
-  const status = job.attemptsMade > 0 ? WorkerJobStatus.RETRYING : WorkerJobStatus.DELAYED
-
-  await redisConnectionInstance.incr(metricsRedisKey(job.data.jobType, status))
-  
-  await redisConnectionInstance.set(jobStateRedisKey(args.jobId), status)
-}
-
-const onActive = async (args: { jobId: string, prev?: string }) => {
-  const job = await bullMqQueue?.getJob(args.jobId)
-  if (!job?.data.jobType) return
-
-  const redisConnectionInstance = await redisConnections.useExisting()
-
-  await decrPrevState(redisConnectionInstance, job.data.jobType, args.jobId)
-
-  await redisConnectionInstance.incr(metricsRedisKey(job.data.jobType, WorkerJobStatus.ACTIVE))
-  
-  await redisConnectionInstance.set(jobStateRedisKey(args.jobId), WorkerJobStatus.ACTIVE)
-} 
-
-const onFailed = async (args: { jobId: string }) => {
-  const job: Job<JobData> = await bullMqQueue?.getJob(args.jobId)
-  if (!job?.data.jobType) return
-
-  const redisConnectionInstance = await redisConnections.useExisting()
-  
-  await decrPrevState(redisConnectionInstance, job.data.jobType, args.jobId)
-
-  await redisConnectionInstance.incr(metricsRedisKey(job.data.jobType, WorkerJobStatus.FAILED))
-  
-  await redisConnectionInstance.del(jobStateRedisKey(args.jobId))
-}
-
-
-const decrPrevState = async (redisConnectionInstance: Redis, jobType: WorkerJobType, jobId: string) => {
-  const prevState = await redisConnectionInstance.get(jobStateRedisKey(jobId))
+const decrPrevState = async (redis: Redis, jobType: WorkerJobType, jobId: string) => {
+  const prevState = await redis.get(jobStateRedisKey(jobId))
   if (prevState) {
-    await redisConnectionInstance.decr(metricsRedisKey(jobType, prevState as WorkerJobStatus))
+    await redis.decr(metricsRedisKey(jobType, prevState as WorkerJobStatus))
   }
 }
