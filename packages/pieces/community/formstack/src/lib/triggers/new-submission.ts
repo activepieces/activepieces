@@ -34,54 +34,59 @@ const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
     try {
       const isTest = lastFetchEpochMS === 0;
 
-      let queryParams = {};
+      const queryParams: Record<string, any> = {
+        data: 'true',
+        sort: 'DESC',
+        page: 1,
+      };
 
-      if (!isTest) {
-        queryParams = {
-          data: 'true',
-          sort: 'DESC',
-          per_page: 10,
-          page: 1,
-        };
+      if (isTest) {
+        queryParams['per_page'] = 10;
       } else {
-        queryParams = {
-          data: 'true',
-          sort: 'DESC',
-          per_page: 100,
-          page: 1,
-          // YYYY-MM-DD HH:MM:SS expected (Based around Eastern Time)
-          min_time: dayjs
-            .utc(lastFetchEpochMS)
-            .tz('America/New_York')
-            .format('YYYY-MM-DD HH:MM:SS'),
-        };
+        queryParams['per_page'] = 100;
+        // YYYY-MM-DD HH:MM:SS expected (Based around Eastern Time)
+        queryParams['min_time'] = dayjs
+          .utc(lastFetchEpochMS)
+          .tz('America/New_York')
+          .format('YYYY-MM-DD HH:MM:SS');
       }
 
-      const submissionsResponse = await makeRequest(
-        accessToken,
-        HttpMethod.GET,
-        `/form/${formId}/submission.json`,
-        undefined,
-        queryParams
-      );
+      const detailedSubmissions: any[] = [];
+      let hasMorePages = true;
 
-      const submissions = submissionsResponse.submissions || [];
-      const detailedSubmissions: any[] = submissions.map((submission: any) => {
-        return {
-          epochMilliSeconds: dayjs(submission.timestamp).valueOf(),
-          data: {
-            id: submission.id,
-            form_id: formId,
-            timestamp: submission.timestamp,
-            user_agent: submission.user_agent,
-            remote_addr: submission.remote_addr,
-            latitude: submission.latitude,
-            longitude: submission.longitude,
-            payment_status: submission.payment_status || '',
-            data: Object.values(submission.data),
-          },
-        };
-      });
+      while (hasMorePages) {
+        const submissionsResponse = await makeRequest(
+          accessToken,
+          HttpMethod.GET,
+          `/form/${formId}/submission.json`,
+          undefined,
+          queryParams
+        );
+
+        const submissions: any[] = submissionsResponse.submissions || [];
+        submissions.forEach((submission: any) => {
+          detailedSubmissions.push({
+            epochMilliSeconds: dayjs(submission.timestamp).valueOf(),
+            data: {
+              id: submission.id,
+              form_id: formId,
+              timestamp: submission.timestamp,
+              user_agent: submission.user_agent,
+              remote_addr: submission.remote_addr,
+              latitude: submission.latitude,
+              longitude: submission.longitude,
+              payment_status: submission.payment_status || '',
+              data: Object.values(submission.data),
+            },
+          });
+        });
+
+        if (queryParams['page'] >= submissionsResponse['pages']) {
+          hasMorePages = false;
+        } else {
+          queryParams['page'] += 1;
+        }
+      }
 
       return detailedSubmissions;
     } catch (error) {
