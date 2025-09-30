@@ -2,6 +2,7 @@ import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework
 import { PieceCategory } from "@activepieces/shared";
 
 import { customApiCallAction } from './lib/actions/custom-api-call';
+import { assessmentCompletedTrigger, assessmentUpdatedTrigger } from './lib/triggers';
 
 export const smarterMeasureAuth = PieceAuth.CustomAuth({
   description: 'Authentication for SmarterMeasure API',
@@ -40,5 +41,5 @@ export const smartermeasure = createPiece({
   ],
   description: 'Learning readiness assessment platform',
   actions: [customApiCallAction],
-  triggers: [],
+  triggers: [assessmentCompletedTrigger, assessmentUpdatedTrigger],
 });
