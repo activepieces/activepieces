@@ -48,7 +48,7 @@ const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
         queryParams['min_time'] = dayjs
           .utc(lastFetchEpochMS)
           .tz('America/New_York')
-          .format('YYYY-MM-DD HH:MM:SS');
+          .format('YYYY-MM-DD HH:mm:ss');
       }
 
       const detailedSubmissions: any[] = [];
