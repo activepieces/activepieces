@@ -779,6 +779,9 @@
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
       ],
+      "@activepieces/piece-parseur": [
+        "packages/pieces/community/parseur/src/index.ts"
+      ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
       ],
@@ -830,6 +833,9 @@
       ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
+      ],
+      "@activepieces/piece-productboard": [
+        "packages/pieces/community/productboard/src/index.ts"
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
