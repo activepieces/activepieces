@@ -1,7 +1,9 @@
 {
-  "Convert JSON to text and vice versa": "Convert JSON to text and vice versa",
-  "Convert Json to Text": "Convert Json to Text",
-  "Convert Text to Json": "Convert Text to Json",
+  "Convert JSON to text and vice versa": "将 JSON 转换为文本，反之亦然。",
+  "Convert Json to Text": "转换 Json 为文本",
+  "Convert Text to Json": "将文本转换为 Json",
+  "Stringifies JSON.": "字符串化JSON。",
+  "Parses text into JSON.": "解析文本到 JSON",
   "JSON": "JSON",
   "Text": "文本"
 }
