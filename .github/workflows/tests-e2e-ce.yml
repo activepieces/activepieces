@@ -58,10 +58,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
-        
-      - name: Dangerous git checkout
-        uses: ./.github/actions/dangerous-git-checkout
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
