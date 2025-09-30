@@ -807,6 +807,9 @@
       "@activepieces/piece-pinecone": [
         "packages/pieces/community/pinecone/src/index.ts"
       ],
+      "@activepieces/piece-pinterest": [
+        "packages/pieces/community/pinterest/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -1086,6 +1089,9 @@
       ],
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
+      ],
+      "@activepieces/piece-timelines-ai": [
+        "packages/pieces/community/timelines-ai/src/index.ts"
       ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
