@@ -34,6 +34,35 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/datadog",
+        "command": "npm ci"
+      }
+    },
+    "build-with-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run pieces-datadog:prebuild",
+          "nx run pieces-datadog:build",
+          "nx run pieces-datadog:postbuild"
+        ],
+        "parallel": false
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "dist/packages/pieces/community/datadog",
+        "command": "npm install"
       }
     },
     "nx-release-publish": {

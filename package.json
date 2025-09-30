@@ -47,7 +47,6 @@
     "@bull-board/fastify": "6.10.1",
     "@codemirror/lang-javascript": "6.2.2",
     "@codemirror/lang-json": "6.0.1",
-    "@datadog/datadog-api-client": "1.43.0",
     "@datastructures-js/queue": "4.2.3",
     "@dnd-kit/core": "6.1.0",
     "@dnd-kit/modifiers": "7.0.0",

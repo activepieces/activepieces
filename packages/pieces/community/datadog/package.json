@@ -5,6 +5,7 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "@datadog/datadog-api-client": "^1.43.0",
     "tslib": "^2.3.0"
   }
 }
