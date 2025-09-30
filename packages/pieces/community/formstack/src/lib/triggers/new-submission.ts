@@ -81,7 +81,7 @@ const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
           });
         });
 
-        if (queryParams['page'] >= submissionsResponse['pages']) {
+        if (isTest || queryParams['page'] >= submissionsResponse['pages']) {
           hasMorePages = false;
         } else {
           queryParams['page'] += 1;
