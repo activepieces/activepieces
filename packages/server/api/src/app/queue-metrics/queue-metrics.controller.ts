@@ -1,17 +1,15 @@
 import { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox"
 import { queueMetricService } from "./queue-metrics.service"
-import { ALL_PRINCIPAL_TYPES, ListQueueJobsRequestQuery } from "@activepieces/shared"
+import { ALL_PRINCIPAL_TYPES } from "@activepieces/shared"
 
 export const queueMetricsController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/', GetJobs, async (request) => {
+    app.get('/', GetMetrics, async (request) => {
         return queueMetricService(request.log).getMetrics()
     })
 }
 
-const GetJobs = {
-    schema: {
-       querystring : ListQueueJobsRequestQuery,
-    },
+const GetMetrics = {
+    schema: { },
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
