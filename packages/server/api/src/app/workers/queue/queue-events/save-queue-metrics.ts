@@ -1,6 +1,5 @@
 import { FastifyBaseLogger } from "fastify";
 import { Job, Queue, QueueEvents } from "bullmq";
-import { EventsManager } from "./events-manager";
 import { redisConnections } from "../../../database/redis";
 import { JobData, WorkerJobStatus, WorkerJobType } from "@activepieces/shared";
 import { QueueName } from "@activepieces/server-shared";
@@ -13,7 +12,7 @@ export const JOB_STATE_KEY = "job_state"
 export const METRICS_KEY_PREFIX = (jobType: WorkerJobType) => `${METRICS_KEY}:${jobType}`
 export const JOB_STATE_KEY_PREFIX = (jobId: string) => `${JOB_STATE_KEY}:${jobId}`
 
-export const saveQueueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvents): EventsManager => ({
+export const saveQueueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvents) => ({
 
     attach: () => {
         queueEvents.on("waiting", onWaiting)
@@ -24,13 +23,13 @@ export const saveQueueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvent
     detach: () => {
         queueEvents.off("waiting", onWaiting)
         queueEvents.off("failed", onFailed)
-        queueEvents.off("completed", onCompleted)
+        queueEvents.off("added", onCompleted)
     }
 
 })
 
 const onWaiting = async (args: { jobId: string, prev?: string }) => {
-  const queue = bullMqGroups[QueueName.WORKER_JOBS].queue
+  const queue = bullMqGroups[QueueName.WORKER_JOBS]
   const job = await queue.getJob(args.jobId)
   if (!job?.data.jobType) return
 
@@ -45,7 +44,7 @@ const onWaiting = async (args: { jobId: string, prev?: string }) => {
 }
 
 const onFailed = async (args: { jobId: string }) => {
-  const queue = bullMqGroups[QueueName.WORKER_JOBS].queue
+  const queue = bullMqGroups[QueueName.WORKER_JOBS]
   const job: Job<JobData> = await queue.getJob(args.jobId)
   if (!job?.data.jobType) return
 
@@ -59,7 +58,7 @@ const onFailed = async (args: { jobId: string }) => {
 }
 
 const onCompleted = async (args: { jobId: string }) => {
-  const queue = bullMqGroups[QueueName.WORKER_JOBS].queue
+  const queue = bullMqGroups[QueueName.WORKER_JOBS]
   const job = await queue.getJob(args.jobId)
   if (!job?.data.jobType) return
 

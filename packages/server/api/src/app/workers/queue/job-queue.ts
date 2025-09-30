@@ -10,22 +10,20 @@ import { machineService } from '../machine/machine-service'
 import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
 import { saveQueueMetrics } from './queue-events/save-queue-metrics'
-import { EventsTypeHandlerMapper, EventsHandlerType } from './queue-events/events-manager'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
-export const bullMqGroups: Record<string, {queue: Queue, queueEvents: QueueEvents}> = {}
-// export const bullMqEventsGroups: Record<string, QueueEvents> = {}
+export const bullMqGroups: Record<string, Queue> = {}
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
-        const {queue} = await ensureQueueExists(queueName)
+        const queue = await ensureQueueExists(queueName)
         await queue.setGlobalConcurrency(concurrency)
     },
     async init(): Promise<void> {
-        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
+        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName, queueName === QueueName.WORKER_JOBS ? log : undefined))
         await Promise.all(queues)
         await machineService(log).updateConcurrency()
         log.info('[redisQueueManager#init] Redis queues initialized')
@@ -34,7 +32,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         const { data, type } = params
 
         const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
-        const {queue} = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
 
         switch (type) {
             case JobType.REPEATING: {
@@ -61,25 +59,15 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         }
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
-        const {queue} = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
         await queue.removeJobScheduler(flowVersionId)
     },
-    async addEventsHandler(queueName: QueueName, handlerType: EventsHandlerType): Promise<void> {
-        const { queueEvents } = await ensureQueueExists(queueName)
-        const handler = EventsTypeHandlerMapper[handlerType]
-        await handler(log, queueEvents).attach()
-    },
-    async removeEventsHandler(queueName: QueueName, handlerType: EventsHandlerType): Promise<void> {
-        const { queueEvents } = await ensureQueueExists(queueName)
-        const handler = EventsTypeHandlerMapper[handlerType]
-        await handler(log, queueEvents).detach()
-    }
 })
 
-async function ensureQueueExists(queueName: QueueName): Promise<{queue: Queue, queueEvents: QueueEvents}> {
+async function ensureQueueExists(queueName: QueueName, log?: FastifyBaseLogger): Promise<Queue> {
     if (!isNil(bullMqGroups[queueName])) {
         return bullMqGroups[queueName]
     }
@@ -103,11 +91,15 @@ async function ensureQueueExists(queueName: QueueName): Promise<{queue: Queue, q
 
     }
 
-    bullMqGroups[queueName] = {queue: new Queue(queueName, options), queueEvents: new QueueEvents(queueName, options)}
+    bullMqGroups[queueName] = new Queue(queueName, options)
+    await bullMqGroups[queueName].waitUntilReady()
     
-    await bullMqGroups[queueName].queue.waitUntilReady()
-    await bullMqGroups[queueName].queueEvents.waitUntilReady()
-
+    if (log) {
+        const queueEvents = new QueueEvents(queueName, options)
+        await queueEvents.waitUntilReady()
+        saveQueueMetrics(log, queueEvents).detach()
+        saveQueueMetrics(log, queueEvents).attach()
+    }
 
     return bullMqGroups[queueName]
 }

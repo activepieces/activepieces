@@ -7,10 +7,6 @@ import { jobQueueWorker } from './queue/job-queue-worker'
 import { queueMigration } from './queue/migration'
 import { setupBullMQBoard } from './queue/redis-bullboard'
 import { flowWorkerController } from './worker-controller'
-import { QueueName } from '@activepieces/server-shared'
-import { EventsHandlerType } from './queue/queue-events/events-manager'
-import { apId, WorkerJobType, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment } from '@activepieces/shared'
-import { JobType } from './queue/queue-manager'
 
 export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, {
@@ -23,7 +19,6 @@ export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
         prefix: '/v1/worker-machines',
     })
     await jobQueue(app.log).init()
-    await jobQueue(app.log).addEventsHandler(QueueName.WORKER_JOBS, EventsHandlerType.SAVE_METRICS)
 
     await setupBullMQBoard(app)
     await jobQueueWorker(app.log).init()
