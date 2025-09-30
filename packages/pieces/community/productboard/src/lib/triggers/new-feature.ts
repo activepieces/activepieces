@@ -1,107 +1,64 @@
 import { productboardAuth } from '../common/auth';
+import { HttpMethod } from '@activepieces/pieces-common';
 import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import {
-  TriggerStrategy,
-  createTrigger,
+    TriggerStrategy,
+    createTrigger,
 } from '@activepieces/pieces-framework';
 import { productboardCommon } from '../common/client';
 
 export const newFeature = createTrigger({
-  name: 'new_feature',
-  displayName: 'New Feature',
-  description: 'Triggers when a new feature is created in Productboard',
-  auth: productboardAuth,
-  type: TriggerStrategy.WEBHOOK,
-  props: {},
-  sampleData: {
-    id: 'feature-123',
-    name: 'New Feature',
-    description: 'A new feature description',
-    status: 'open',
-    type: 'feature',
-    priority: 'normal',
-    created_at: '2023-12-01T10:00:00Z',
-    updated_at: '2023-12-01T10:00:00Z'
-  },
-  onEnable: async (context) => {
-    const webhookUrl = context.webhookUrl;
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${productboardCommon.baseUrl}/webhooks`,
-      body: {
-        notification: {
-          url: webhookUrl
+    name: 'new_feature',
+    displayName: 'New Feature',
+    description: 'Triggers when a new feature is created in Productboard',
+    auth: productboardAuth,
+    type: TriggerStrategy.WEBHOOK,
+    props: {},
+    sampleData: {
+        data: {
+            id: 'c5a0b5f0-3f2e-4e1a-8c7z-5c8e4b3f2e1a',
+            eventType: 'feature.created',
+            links: {
+                target: 'https://api.productboard.com/features/c5a0b5f0-3f2e-4e1a-8c7z-5c8e4b3f2e1a',
+            },
         },
-        events: ['feature.created']
-      },
-      headers: {
-        'X-API-Key': context.auth,
-        'Content-Type': 'application/json',
-      },
-    };
-
-    try {
-      const { status, body } = await httpClient.sendRequest(request);
-      if (status !== 201 && status !== 200) {
-        throw new Error(`Failed to register webhook. Status: ${status}, Response: ${JSON.stringify(body)}`);
-      }
-      return body;
-    } catch (error) {
-      throw new Error(`Webhook registration failed: ${error}`);
-    }
-  },
-  onDisable: async (context) => {
-    const webhookUrl = context.webhookUrl;
-
-    try {
-      const getWebhooksRequest: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${productboardCommon.baseUrl}/webhooks`,
-        headers: {
-          'X-API-Key': context.auth,
-        },
-      };
-
-      const { body: webhooks } = await httpClient.sendRequest(getWebhooksRequest);
-
-      const webhook = webhooks.data?.find((wh: any) => wh.url === webhookUrl);
-
-      if (webhook) {
-        const deleteRequest: HttpRequest = {
-          method: HttpMethod.DELETE,
-          url: `${productboardCommon.baseUrl}/webhooks/${webhook.id}`,
-          headers: {
-            'X-API-Key': context.auth,
-          },
-        };
-
-        await httpClient.sendRequest(deleteRequest);
-      }
-    } catch (error) {
-      console.warn('Failed to unregister webhook:', error);
-    }
-  },
-  run: async (context) => {
-    const payload = context.payload.body as any;
-
-    if (payload?.data?.id) {
-      try {
-        const featureDetails = await productboardCommon.apiCall({
-          auth: context.auth,
-          method: HttpMethod.GET,
-          resourceUri: `/features/${payload.data.id}`
+    },
+    onEnable: async (context) => {
+        const { webhookUrl, auth } = context;
+        const response = await productboardCommon.apiCall({
+            auth,
+            method: HttpMethod.POST,
+            resourceUri: '/webhooks',
+            body: {
+                data: {
+                    name: 'Activepieces - New Feature',
+                    events: [
+                        {
+                            eventType: 'feature.created',
+                        },
+                    ],
+                    notification: {
+                        url: webhookUrl,
+                        version: 1,
+                    },
+                },
+            },
         });
 
-        return [featureDetails.body.data];
-      } catch (error) {
-        return [payload.data];
-      }
-    }
-
-    return [payload];
-  },
+        await context.store.put('webhook_id', response.body['data'].id);
+        return response.body;
+    },
+    onDisable: async (context) => {
+        const { auth } = context;
+        const webhookId = await context.store.get('webhook_id');
+        if (webhookId) {
+            await productboardCommon.apiCall({
+                auth,
+                method: HttpMethod.DELETE,
+                resourceUri: `/webhooks/${webhookId}`,
+            });
+        }
+    },
+    run: async (context) => {
+        return [context.payload.body];
+    },
 });

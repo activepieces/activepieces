@@ -6,12 +6,12 @@ import { productboardCommon } from '../common/client';
 export const getFeature = createAction({
     name: 'get_feature',
     displayName: 'Get Feature',
-    description: 'Retrieves detailed information about a specific feature from Productboard',
+    description: 'Retrieves an existing feature.',
     auth: productboardAuth,
     props: {
         feature_id: Property.Dropdown({
             displayName: 'Feature',
-            description: 'Feature to retrieve details for',
+            description: 'The feature to retrieve.',
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
@@ -22,43 +22,31 @@ export const getFeature = createAction({
                         placeholder: 'Please authenticate first'
                     };
                 }
-
-                try {
-                    const response = await productboardCommon.apiCall({
-                        auth: auth as string,
-                        method: HttpMethod.GET,
-                        resourceUri: '/features'
-                    });
-
-                    const features = response.body.data || [];
-                    return {
-                        disabled: false,
-                        options: features.map((feature: any) => ({
-                            label: feature.name || `Feature ${feature.id}`,
-                            value: feature.id
-                        }))
-                    };
-                } catch (error) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Error loading features'
-                    };
-                }
+                const response = await productboardCommon.apiCall({
+                    auth: auth as string,
+                    method: HttpMethod.GET,
+                    resourceUri: '/features'
+                });
+                const features = response.body['data'] ?? [];
+                return {
+                    disabled: false,
+                    options: features.map((feature: { id: string; name: string }) => ({
+                        label: feature.name,
+                        value: feature.id
+                    }))
+                };
             }
         })
     },
     async run(context) {
-        try {
-            const response = await productboardCommon.apiCall({
-                auth: context.auth,
-                method: HttpMethod.GET,
-                resourceUri: `/features/${context.propsValue.feature_id}`
-            });
+        const { feature_id } = context.propsValue;
 
-            return response.body;
-        } catch (error) {
-            throw new Error(`Failed to get feature: ${error}`);
-        }
+        const response = await productboardCommon.apiCall({
+            auth: context.auth,
+            method: HttpMethod.GET,
+            resourceUri: `/features/${feature_id}`,
+        });
+
+        return response.body;
     },
 });

@@ -8,13 +8,16 @@ import { getFeature } from "./lib/actions/get-feature";
 import { newFeature } from "./lib/triggers/new-feature";
 import { newNote } from "./lib/triggers/new-note";
 import { updatedFeature } from "./lib/triggers/updated-feature";
+import { PieceCategory } from "@activepieces/shared";
 
 export const productboard = createPiece({
     displayName: "Productboard",
     auth: productboardAuth,
+    description: "Productboard is a product management tool that helps you manage your product roadmap and features.",
+    categories: [PieceCategory.PRODUCTIVITY],
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/productboard.png",
-    authors: ["owuzo"],
+    authors: ["owuzo", "onyedikachi-david"],
     actions: [
         createFeature,
         createNote,

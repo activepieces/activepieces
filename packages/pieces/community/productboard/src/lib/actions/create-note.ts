@@ -6,7 +6,7 @@ import { productboardCommon } from '../common/client';
 export const createNote = createAction({
     name: 'create_note',
     displayName: 'Create Note',
-    description: 'Creates a new note in Productboard with rich content and associations',
+    description: 'Creates a new note in Productboard',
     auth: productboardAuth,
     props: {
         title: Property.ShortText({
@@ -19,184 +19,90 @@ export const createNote = createAction({
             description: 'HTML-encoded rich text content of the feedback note',
             required: true,
         }),
-        display_url: Property.ShortText({
-            displayName: 'Display URL',
-            description: 'URL where the external entity can be accessed (displayed as clickable title)',
-            required: false,
-        }),
         user_email: Property.ShortText({
             displayName: 'User Email',
-            description: 'Email address of the user associated with this note',
+            description: "Email address of a user to be attached to the note. This field can't be combined with `Company Domain`.",
             required: false,
-        }),
-        user_external_id: Property.ShortText({
-            displayName: 'User External ID',
-            description: 'External ID of the user in your system',
-            required: false,
-        }),
-        company_id: Property.Dropdown({
-            displayName: 'Company',
-            description: 'Company to associate with the note',
-            required: false,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first'
-                    };
-                }
-
-                try {
-                    const response = await productboardCommon.apiCall({
-                        auth: auth as string,
-                        method: HttpMethod.GET,
-                        resourceUri: '/companies'
-                    });
-
-                    const companies = response.body.data || [];
-                    return {
-                        disabled: false,
-                        options: companies.map((company: any) => ({
-                            label: company.name || `Company ${company.id}`,
-                            value: company.id
-                        }))
-                    };
-                } catch (error) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Error loading companies'
-                    };
-                }
-            }
         }),
         company_domain: Property.ShortText({
             displayName: 'Company Domain',
-            description: 'Domain of the company to associate with the note',
+            description: "Domain of a company the note should be linked to. This field can't be combined with `User Email`.",
             required: false,
         }),
-        company_external_id: Property.ShortText({
-            displayName: 'Company External ID',
-            description: 'External ID of the company in your system',
+        display_url: Property.ShortText({
+            displayName: 'Display URL',
+            description: 'URL where the external entity can be accessed.',
             required: false,
         }),
-        source_name: Property.ShortText({
-            displayName: 'Source Name',
-            description: 'Name of the external system where this feedback originated',
+        source_origin: Property.ShortText({
+            displayName: 'Source Origin',
+            description: 'A unique string identifying the external system from which the data came.',
             required: false,
         }),
-        source_url: Property.ShortText({
-            displayName: 'Source URL',
-            description: 'URL of the original source entity',
-            required: false,
-        }),
-        source_external_id: Property.ShortText({
-            displayName: 'Source External ID',
-            description: 'External ID in the origin system',
-            required: false,
-        }),
-        owner_email: Property.ShortText({
-            displayName: 'Owner Email',
-            description: 'Email address of the user to add as note owner',
-            required: false,
-        }),
-        owner_external_id: Property.ShortText({
-            displayName: 'Owner External ID',
-            description: 'External ID of the owner in your system',
+        source_record_id: Property.ShortText({
+            displayName: 'Source Record ID',
+            description: 'The unique id of the record in the origin system.',
             required: false,
         }),
         tags: Property.Array({
             displayName: 'Tags',
-            description: 'Tags to categorize the note (case and diacritic insensitive)',
+            description: 'A set of tags for categorizing the note.',
             required: false,
             properties: {
                 tag: Property.ShortText({
                     displayName: 'Tag',
-                    description: 'Tag name for categorizing the note',
                     required: true,
-                })
-            }
-        })
+                }),
+            },
+        }),
     },
     async run(context) {
-        try {
-            const note: Record<string, any> = {
-                title: context.propsValue.title,
-                content: context.propsValue.content,
-            };
+        const {
+            title,
+            content,
+            user_email,
+            company_domain,
+            display_url,
+            source_origin,
+            source_record_id,
+            tags,
+        } = context.propsValue;
 
-            // Add display_url if provided
-            if (context.propsValue.display_url) {
-                note['display_url'] = context.propsValue.display_url;
-            }
+        const note: Record<string, any> = {
+            title,
+            content,
+        };
 
-            // Add user object if user fields are provided
-            if (context.propsValue.user_email || context.propsValue.user_external_id) {
-                note['user'] = {};
-                if (context.propsValue.user_email) {
-                    note['user'].email = context.propsValue.user_email;
-                }
-                if (context.propsValue.user_external_id) {
-                    note['user'].external_id = context.propsValue.user_external_id;
-                }
-            }
-
-            // Add company object if company fields are provided
-            if (context.propsValue.company_id || context.propsValue.company_domain || context.propsValue.company_external_id) {
-                note['company'] = {};
-                if (context.propsValue.company_id) {
-                    note['company'].id = context.propsValue.company_id;
-                }
-                if (context.propsValue.company_domain) {
-                    note['company'].domain = context.propsValue.company_domain;
-                }
-                if (context.propsValue.company_external_id) {
-                    note['company'].external_id = context.propsValue.company_external_id;
-                }
-            }
-
-            // Add source object if source fields are provided
-            if (context.propsValue.source_name || context.propsValue.source_url || context.propsValue.source_external_id) {
-                note['source'] = {};
-                if (context.propsValue.source_name) {
-                    note['source'].name = context.propsValue.source_name;
-                }
-                if (context.propsValue.source_url) {
-                    note['source'].url = context.propsValue.source_url;
-                }
-                if (context.propsValue.source_external_id) {
-                    note['source'].external_id = context.propsValue.source_external_id;
-                }
-            }
-
-            // Add owner object if owner fields are provided
-            if (context.propsValue.owner_email || context.propsValue.owner_external_id) {
-                note['owner'] = {};
-                if (context.propsValue.owner_email) {
-                    note['owner'].email = context.propsValue.owner_email;
-                }
-                if (context.propsValue.owner_external_id) {
-                    note['owner'].external_id = context.propsValue.owner_external_id;
-                }
-            }
-
-            // Add tags as array of strings if provided
-            if (context.propsValue.tags && context.propsValue.tags.length > 0) {
-                note['tags'] = context.propsValue.tags.map((tagObj: any) => tagObj.tag);
-            }
-
-            const response = await productboardCommon.apiCall({
-                auth: context.auth,
-                method: HttpMethod.POST,
-                resourceUri: '/notes',
-                body: note
-            });
-
-            return response.body;
-        } catch (error) {
-            throw new Error(`Failed to create note: ${error}`);
+        if (user_email) {
+            note['user'] = { email: user_email };
         }
+
+        if (company_domain) {
+            note['company'] = { domain: company_domain };
+        }
+
+        if (display_url) {
+            note['display_url'] = display_url;
+        }
+
+        if (source_origin && source_record_id) {
+            note['source'] = {
+                origin: source_origin,
+                record_id: source_record_id,
+            };
+        }
+
+        if (tags) {
+            note['tags'] = (tags as { tag: string }[]).map((t) => t.tag);
+        }
+
+        const response = await productboardCommon.apiCall({
+            auth: context.auth,
+            method: HttpMethod.POST,
+            resourceUri: '/notes',
+            body: note,
+        });
+
+        return response.body;
     },
 });

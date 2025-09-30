@@ -24,7 +24,7 @@ export const productboardCommon = {
             body,
             queryParams,
             headers: {
-                'X-API-Key': auth,
+                'Authorization': `Bearer ${auth}`,
                 'X-Version': '1',
                 'Content-Type': 'application/json',
             }
