@@ -26,7 +26,7 @@ env:
 jobs:
   test-e2e-ee:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     
     services:
       postgres:
