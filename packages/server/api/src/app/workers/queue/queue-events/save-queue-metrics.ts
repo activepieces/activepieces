@@ -55,7 +55,7 @@ const onFailed = async (args: { jobId: string }) => {
 
   await redisConnectionInstance.incr(`${METRICS_KEY_PREFIX(job.data.jobType)}:${WorkerJobStatus.FAILED}`)
   
-  await redisConnectionInstance.set(JOB_STATE_KEY_PREFIX(args.jobId), WorkerJobStatus.FAILED)
+  await redisConnectionInstance.del(JOB_STATE_KEY_PREFIX(args.jobId))
 }
 
 const onCompleted = async (args: { jobId: string }) => {
@@ -69,7 +69,7 @@ const onCompleted = async (args: { jobId: string }) => {
 
   await redisConnectionInstance.incr(`${METRICS_KEY_PREFIX(job.data.jobType)}:${WorkerJobStatus.COMPLETED}`)
   
-  await redisConnectionInstance.set(JOB_STATE_KEY_PREFIX(args.jobId), WorkerJobStatus.COMPLETED)
+  await redisConnectionInstance.del(JOB_STATE_KEY_PREFIX(args.jobId))
 }
 
 const decrPrevState = async (redisConnectionInstance: Redis, jobType: WorkerJobType, jobId: string) => {
