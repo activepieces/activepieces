@@ -31,6 +31,8 @@ import { TextInputWithMentions } from './text-input-with-mentions';
 import { AutoDynamicFields } from './auto-dynamic-fields';
 import { Separator } from '@/components/ui/separator';
 import { autoPropertiesUtils } from '@/features/pieces/lib/auto-properties-utils';
+import { propertyUtils } from './property-utils';
+import { useStepSettingsContext } from '@/app/builder/step-settings/step-settings-context';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -53,6 +55,7 @@ const AutoPropertiesFormComponent = React.memo(
     onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
+    const { updateFormFieldSchemaWithAuto } = useStepSettingsContext();
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-6 w-full">
@@ -60,7 +63,14 @@ const AutoPropertiesFormComponent = React.memo(
             const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
             if (isNil(propertySettings?.type)) {
               const propertyExecutionType = autoPropertiesUtils.determinePropertyExecutionType(propertyName, propertySettings?.schema ?? props[propertyName], props);
-              form.setValue(`settings.propertySettings.${propertyName}.type`, propertyExecutionType);
+              propertyUtils.handlePropertyExecutionModeChange({
+                form,
+                mode: propertyExecutionType,
+                propertyName,
+                inputName: `${prefixValue}.${propertyName}`,
+                property: propertySettings?.schema ?? props[propertyName],
+                updateFormFieldSchemaWithAuto,
+              });
             }
             return propertySettings?.type !== PropertyExecutionType.AUTO;
           }).map(([propertyName]) => {

@@ -13,7 +13,9 @@ import {
     PieceTriggerSettings,
     PlatformId,
     ProjectId,
+    PropertyExecutionType,
     RouterActionSettingsValidation,
+    PropertySettings,
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -163,7 +165,7 @@ async function validateAction(
     if (!isNil(piece.auth) && action.requireAuth !== false) {
         props.auth = piece.auth
     }
-    return validateProps(props, settings.input)
+    return validateProps(props, settings.input, settings.propertySettings)
 }
 
 async function validateTrigger(
@@ -198,14 +200,15 @@ async function validateTrigger(
     if (!isNil(piece.auth) && trigger.requireAuth !== false) {
         props.auth = piece.auth
     }
-    return validateProps(props, settings.input)
+    return validateProps(props, settings.input, settings.propertySettings)
 }
 
 function validateProps(
     props: PiecePropertyMap,
     input: Record<string, unknown> | undefined,
+    propertySettings: Record<string, PropertySettings>,
 ): ValidationResult {
-    const propsSchema = buildSchema(props)
+    const propsSchema = buildSchema(props, propertySettings)
     const propsValidator = TypeCompiler.Compile(propsSchema)
     const valid = propsValidator.Check(input)
     const cleanInput = !isNil(input) ? Object.fromEntries(
@@ -218,7 +221,7 @@ function validateProps(
     }
 }
 
-function buildSchema(props: PiecePropertyMap): TSchema {
+function buildSchema(props: PiecePropertyMap, propertySettings: Record<string, PropertySettings>): TSchema {
     const entries = Object.entries(props)
     const nonNullableUnknownPropType = Type.Not(
         Type.Union([Type.Null(), Type.Undefined()]),
@@ -226,6 +229,20 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     )
     const propsSchema: Record<string, TSchema> = {}
     for (const [name, property] of entries) {
+        const propertySetting = propertySettings[name]
+        
+        if (propertySetting?.type === PropertyExecutionType.AUTO) {
+            propsSchema[name] = Type.Optional(
+                Type.Union([
+                  Type.Null(),
+                  Type.Undefined(),
+                  Type.Never(),
+                  Type.Unknown(),
+                ]),
+              );
+            continue
+        }
+
         switch (property.type) {
             case PropertyType.MARKDOWN:
                 propsSchema[name] = Type.Optional(

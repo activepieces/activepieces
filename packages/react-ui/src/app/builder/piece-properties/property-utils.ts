@@ -1,6 +1,6 @@
-import { PropertyExecutionType } from "@activepieces/shared";
+import { PropertyExecutionType, FlowOperationType, FlowOperationRequest, PropertySettings } from "@activepieces/shared";
 import { UseFormReturn } from "react-hook-form";
-import { PropertyType, PieceProperty } from "@activepieces/pieces-framework";
+import { PropertyType, PieceProperty, PiecePropertyMap } from "@activepieces/pieces-framework";
 
 type inputNameLiteral = `settings.input.${string}`;
 
@@ -17,10 +17,11 @@ const isInputNameLiteral = (
   return inputName.match(/settings\.input\./) !== null;
 };
 
-function handleDynamicValueToggleChange({ form, mode, propertyName }: HandleDynamicValueToggleChangeProps) {
+function handlePropertyExecutionModeChange({ form, mode, propertyName, inputName, updateFormFieldSchemaWithAuto }: HandlePropertyExecutionModeChangeProps) {
     const propertySettingsForSingleProperty = {
       ...form.getValues().settings?.propertySettings?.[propertyName],
       type: mode,
+      schema: undefined,
     };
     form.setValue(
       `settings.propertySettings.${propertyName}`,
@@ -29,43 +30,40 @@ function handleDynamicValueToggleChange({ form, mode, propertyName }: HandleDyna
         shouldValidate: true,
       },
     );
+    const propertySettings = form.getValues().settings?.propertySettings;
 
-    if (mode === PropertyExecutionType.DYNAMIC) {
-      const propertySettings = form.getValues().settings?.propertySettings;
-      const property = propertySettings?.[propertyName]?.schema ?? propertySettings?.[propertyName];
-      const inputName = `settings.input.${propertyName}`;
-      
-      if (isInputNameLiteral(inputName)) {
-        const currentValue = form.getValues(inputName);
-        const newValue = getDefaultValueForDynamicProperty(property, currentValue);
-        form.setValue(inputName, newValue, {
-            shouldValidate: true,
-        });
-        form.setValue(inputName, property.defaultValue ?? null, {
-          shouldValidate: true,
-        });
-      }
+    if (mode === PropertyExecutionType.AUTO) {
+      updateFormFieldSchemaWithAuto(inputName);
     }
+    
+    setTimeout(() => {
+      if (mode === PropertyExecutionType.DYNAMIC || mode === PropertyExecutionType.AUTO) {
+        const property = propertySettings?.[propertyName]?.schema ?? propertySettings?.[propertyName];
+        
+        if (isInputNameLiteral(inputName)) {
+          const currentValue = form.getValues(inputName);
+          const newValue = mode === PropertyExecutionType.AUTO ? undefined : getDefaultValueForDynamicProperty(property, currentValue);
+          form.setValue(inputName, newValue, {
+              shouldValidate: true,
+          });
+        }
+      }
+      form.trigger();
+    }, 0);
+
 }
 
 const propertyUtils = {
-  handleDynamicValueToggleChange,
+  handlePropertyExecutionModeChange,
 };
 
 export { propertyUtils };
 
-type HandleDynamicValueToggleChangePropsDynamic = {
-  mode: PropertyExecutionType.DYNAMIC,
+type HandlePropertyExecutionModeChangeProps = {
+  mode: PropertyExecutionType,
   form: UseFormReturn,
   property: PieceProperty,
   propertyName: string,
   inputName: string,
+  updateFormFieldSchemaWithAuto: (schemaPropertyPath: string) => void,
 }
-
-type HandleDynamicValueToggleChangePropsManualOrAuto = {
-  mode: PropertyExecutionType.MANUAL | PropertyExecutionType.AUTO,
-  form: UseFormReturn,
-  propertyName: string,
-}
-
-type HandleDynamicValueToggleChangeProps = HandleDynamicValueToggleChangePropsManualOrAuto | HandleDynamicValueToggleChangePropsDynamic;

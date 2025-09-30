@@ -21,6 +21,7 @@ import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
 import { propertyUtils } from './property-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
 
 type AutoDynamicFieldsProps = {
@@ -39,6 +40,7 @@ const AutoDynamicFields = ({
   disabled,
 }: AutoDynamicFieldsProps) => {
   const form = useFormContext();
+  const { updateFormFieldSchemaWithAuto } = useStepSettingsContext();
   const { data: flags } = flagsHooks.useFlags();
   const inputMode =
     form.getValues().settings?.propertySettings?.[propertyName]?.type;
@@ -63,12 +65,13 @@ const AutoDynamicFields = ({
                     const newMode = e
                         ? PropertyExecutionType.DYNAMIC
                         : PropertyExecutionType.MANUAL;
-                    propertyUtils.handleDynamicValueToggleChange({
+                    propertyUtils.handlePropertyExecutionModeChange({
                         form,
                         mode: newMode,
                         property: propertySettings?.[propertyName]?.schema ?? property,
                         propertyName,
                         inputName,
+                        updateFormFieldSchemaWithAuto,
                     });
                     }}
                     disabled={disabled}
@@ -98,12 +101,13 @@ const AutoDynamicFields = ({
                       : isDynamicMode
                       ? PropertyExecutionType.DYNAMIC
                       : PropertyExecutionType.MANUAL;
-                  propertyUtils.handleDynamicValueToggleChange({
+                  propertyUtils.handlePropertyExecutionModeChange({
                       form,
                       mode: newMode,
                       property: propertySettings?.[propertyName]?.schema ?? property,
                       propertyName,
                       inputName,
+                      updateFormFieldSchemaWithAuto,
                     });
                   }}
                   disabled={disabled}
