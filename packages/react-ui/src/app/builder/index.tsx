@@ -42,6 +42,7 @@ import { cn, useElementSize } from '../../lib/utils';
 import { BuilderHeader } from './builder-header/builder-header';
 import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
+import { LEFT_SIDEBAR_ID } from './flow-canvas/utils/consts';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
@@ -141,7 +142,6 @@ const BuilderPage = () => {
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
-  const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
 
   const { pieceModel, refetch: refetchPiece } =
@@ -207,26 +207,25 @@ const BuilderPage = () => {
           maxSize={39}
           order={1}
           ref={leftHandleRef}
-          className={cn('min-w-0 bg-background z-50  overflow-visible', {
+          className={cn('min-w-0 bg-background z-20 ', {
             [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
         >
-          <div ref={leftSidePanelRef} className="w-full h-full">
+          <div id={LEFT_SIDEBAR_ID} className="w-full h-full">
             {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
             {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
           </div>
         </ResizablePanel>
+
         <ResizableHandle
           disabled={leftSidebar === LeftSideBarType.NONE}
           withHandle={leftSidebar !== LeftSideBarType.NONE}
           onDragging={setIsDraggingHandle}
           className={
-            leftSidebar === LeftSideBarType.NONE
-              ? 'bg-transparent'
-              : 'z-[999999]'
+            leftSidebar === LeftSideBarType.NONE ? 'bg-transparent' : ''
           }
         />
 
@@ -234,9 +233,6 @@ const BuilderPage = () => {
           <div ref={middlePanelRef} className="relative h-full w-full">
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-              lefSideBarContainerWidth={
-                leftSidePanelRef.current?.clientWidth || 0
-              }
             ></FlowCanvas>
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
@@ -264,7 +260,7 @@ const BuilderPage = () => {
           withHandle={rightSidebar !== RightSideBarType.NONE}
           onDragging={setIsDraggingHandle}
           className={
-            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : 'z-50'
+            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
           }
         />
 

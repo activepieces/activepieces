@@ -27,11 +27,9 @@ import { ApButtonData } from './utils/types';
 
 const FlowDragLayer = ({
   children,
-  lefSideBarContainerWidth,
   cursorPosition,
 }: {
   children: React.ReactNode;
-  lefSideBarContainerWidth: number;
   cursorPosition: { x: number; y: number };
 }) => {
   const viewport = useViewport();
@@ -161,7 +159,6 @@ const FlowDragLayer = ({
       {draggedStep && (
         <StepDragOverlay
           cursorPosition={cursorPosition}
-          lefSideBarContainerWidth={lefSideBarContainerWidth}
           step={draggedStep}
         ></StepDragOverlay>
       )}

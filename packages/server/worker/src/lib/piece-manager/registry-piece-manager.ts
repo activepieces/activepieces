@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -25,12 +25,10 @@ export class RegistryPieceManager extends PieceManager {
         if (dependenciesToInstall.length === 0) {
             return
         }
-        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}`)
 
-        const cache = cacheState(projectPath)
+        await memoryLock.runExclusive(`pnpm-add-${projectPath}`, async () => {
+            const cache = cacheState(projectPath)
 
-
-        try {
             const dependencies = await this.filterExistingPieces(projectPath, pieces)
             if (dependencies.length === 0) {
                 return
@@ -49,10 +47,7 @@ export class RegistryPieceManager extends PieceManager {
             await Promise.all(
                 dependencies.map(pkg => cache.setCache(pkg.alias, CacheState.READY)),
             )
-        }
-        finally {
-            await pnpmAddLock.release()
-        }
+        })
     }
 
     private async writePnpmWorkspaceConfig(projectPath: string): Promise<void> {
@@ -88,7 +83,7 @@ export class RegistryPieceManager extends PieceManager {
                 archivePath: PACKAGE_ARCHIVE_PATH,
             })
 
-            if (await fileExists(archivePath)) {
+            if (await fileSystemUtils.fileExists(archivePath)) {
                 continue
             }
 
@@ -108,7 +103,7 @@ export class RegistryPieceManager extends PieceManager {
             archivePath: PACKAGE_ARCHIVE_PATH,
         })
 
-        await threadSafeMkdir(dirname(archivePath))
+        await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
 
         await writeFile(archivePath, piece.archive as Buffer)
     }

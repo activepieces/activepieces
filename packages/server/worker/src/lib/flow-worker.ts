@@ -139,7 +139,7 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                 status: ConsumeJobResponseStatus.OK,
             }
         case WorkerJobType.EXECUTE_FLOW:
-            await flowJobExecutor(log).executeFlow(jobData, attempsStarted, engineToken, timeoutInSeconds)
+            await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
             return {
                 status: ConsumeJobResponseStatus.OK,
             }

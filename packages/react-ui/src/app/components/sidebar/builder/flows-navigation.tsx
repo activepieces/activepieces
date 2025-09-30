@@ -1,10 +1,9 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { EllipsisVertical, Folder, FolderOpen } from 'lucide-react';
+import { EllipsisVertical, Folder, FolderOpen, Shapes } from 'lucide-react';
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { CreateFlowDropdown } from '@/app/routes/flows';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -24,11 +23,11 @@ import {
   SidebarGroupContent,
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { CreateFlowDropdown } from '@/features/flows/lib/create-flow-dropdown';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { FolderDto, PopulatedFlow } from '@activepieces/shared';
@@ -41,7 +40,6 @@ interface FlowsByFolder {
 
 export function FlowsNavigation() {
   const navigate = useNavigate();
-  const { project } = projectHooks.useCurrentProject();
   const { flowId: currentFlowId } = useParams();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -58,16 +56,9 @@ export function FlowsNavigation() {
     data: flows,
     isLoading: flowsLoading,
     refetch: refetchFlows,
-  } = useQuery({
-    queryKey: ['flow-table', project.id],
-    staleTime: 0,
-    queryFn: () => {
-      return flowsApi.list({
-        projectId: project.id,
-        cursor: undefined,
-        limit: 99999,
-      });
-    },
+  } = flowsHooks.useFlows({
+    cursor: undefined,
+    limit: 99999,
   });
 
   const flowsData = flows?.data || [];
@@ -164,7 +155,7 @@ export function FlowsNavigation() {
   if (foldersLoading || flowsLoading) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel>{t('Flows')}</SidebarGroupLabel>
+        <SidebarGroupLabel>{t('Flows Folders')}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarSkeleton numOfItems={6} />
         </SidebarGroupContent>
@@ -181,7 +172,7 @@ export function FlowsNavigation() {
           updateSearchParams={() => {}}
         />
       </SidebarGroupLabel>
-      <ScrollArea ref={scrollAreaRef}>
+      <ScrollArea ref={scrollAreaRef} showGradient>
         <SidebarGroupContent>
           <SidebarMenu className="pr-2">
             <DefaultFolder
@@ -239,13 +230,9 @@ function DefaultFolder({
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
-            <Folder className="!size-3.5 group-data-[state=open]/collapsible:hidden" />
-            <FolderOpen className="!size-3.5 hidden group-data-[state=open]/collapsible:block" />
+            <Shapes className="!size-3.5" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
-              <span className="text-xs w-9 h-9 flex items-center justify-center text-muted-foreground font-semibold absolute group-hover/item:hidden">
-                {flows.length}
-              </span>
               <CreateFlowDropdown
                 folderId="NULL"
                 variant="small"
@@ -307,7 +294,11 @@ function RegularFolder({
                 variant="small"
                 className="group-hover/item:opacity-100 opacity-0"
               />
-              <FolderActions refetch={refetchFolders} folder={folder} />
+              <FolderActions
+                hideFlowCount={true}
+                refetch={refetchFolders}
+                folder={folder}
+              />
             </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -361,13 +352,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           onMoveTo={refetch}
           onDelete={() => {
             if (flowId === flow.id) {
-              queryClient.invalidateQueries({
-                queryKey: [
-                  'flow',
-                  flowId,
-                  authenticationSession.getProjectId(),
-                ],
-              });
+              flowsHooks.invalidateFlowsQuery(queryClient);
             }
             refetch();
           }}

@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { FolderPlus } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -113,11 +113,11 @@ export const CreateFolderDialog = ({
               size="icon"
               className={cn(className)}
             >
-              <Plus />
+              <FolderPlus />
             </Button>
           </DialogTrigger>
         </TooltipTrigger>
-        <TooltipContent side="right">{t('Create folder')}</TooltipContent>
+        <TooltipContent side="right">{t('New folder')}</TooltipContent>
       </Tooltip>
 
       <DialogContent>
@@ -151,6 +151,7 @@ export const CreateFolderDialog = ({
               <Button
                 variant={'outline'}
                 onClick={() => setIsDialogOpen(false)}
+                type="button"
               >
                 {t('Cancel')}
               </Button>

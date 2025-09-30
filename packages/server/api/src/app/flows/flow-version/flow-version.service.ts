@@ -106,12 +106,13 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 break
             }
             case FlowOperationType.SAVE_SAMPLE_DATA: {
-                const modifiedStep = await sampleDataService(log).modifyStep({
+                const modifiedStep = await sampleDataService(log).saveSampleDataFileIdsInStep({
                     projectId,
                     flowVersionId: mutatedFlowVersion.id,
                     stepName: userOperation.request.stepName,
                     payload: userOperation.request.payload,
                     type: userOperation.request.type,
+                    dataType: userOperation.request.dataType,
                 })
                 if (flowStructureUtil.isAction(modifiedStep.type)) {
                     operations = [{

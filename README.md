@@ -102,7 +102,7 @@ Activepieces supports integrations with Google Sheets, OpenAI, Discord, RSS, and
 
 As an **open ecosystem**, all integration source code is accessible in our repository. These integrations are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contribution.
 
-You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview).
+You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/developers/building-pieces/overview).
 
 <br>
 <br>
@@ -443,6 +443,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fortunamide"><img src="https://avatars.githubusercontent.com/u/122938302?v=4?s=100" width="100px;" alt="Fortunate"/><br /><sub><b>Fortunate</b></sub></a><br /><a href="#plugin-fortunamide" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://jaachiwrites.com"><img src="https://avatars.githubusercontent.com/u/173014495?v=4?s=100" width="100px;" alt="Jaachịmmá Anyatọnwụ"/><br /><sub><b>Jaachịmmá Anyatọnwụ</b></sub></a><br /><a href="#plugin-thejaachi" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://luizmainart.com"><img src="https://avatars.githubusercontent.com/u/55499897?v=4?s=100" width="100px;" alt="Luiz D. M. Mainart"/><br /><sub><b>Luiz D. M. Mainart</b></sub></a><br /><a href="#plugin-LuizDMM" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/uvenkatateja"><img src="https://avatars.githubusercontent.com/u/118493739?v=4?s=100" width="100px;" alt="uvenkatateja"/><br /><sub><b>uvenkatateja</b></sub></a><br /><a href="#plugin-uvenkatateja" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
