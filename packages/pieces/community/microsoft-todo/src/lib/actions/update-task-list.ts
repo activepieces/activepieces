@@ -16,14 +16,15 @@ export const updateTaskListAction = createAction({
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!(auth as OAuth2PropertyValue)?.access_token) {
+                const authValue = auth as OAuth2PropertyValue;
+                if (!authValue?.access_token) {
                     return {
                         disabled: true,
                         placeholder: 'Connect your account first',
                         options: [],
                     };
                 }
-                return await getTaskListsDropdown(auth as OAuth2PropertyValue);
+                return await getTaskListsDropdown(authValue);
             },
         }),
         displayName: Property.ShortText({
@@ -36,12 +37,13 @@ export const updateTaskListAction = createAction({
         const { auth, propsValue } = context;
         const { task_list_id, displayName } = propsValue;
 
-        // -- ADD THIS VALIDATION BLOCK --
-        // This check prevents sending an empty name to the API.
+        if (!task_list_id) {
+            throw new Error('Task List ID is required');
+        }
+
         if (!displayName || displayName.trim().length === 0) {
             throw new Error('New Name cannot be empty. Please provide a valid name for the task list.');
         }
-        // ---------------------------------
 
         const client = Client.initWithMiddleware({
             authProvider: {
@@ -49,14 +51,18 @@ export const updateTaskListAction = createAction({
             },
         });
 
-        const taskListBody: Partial<TodoTaskList> = {
-            displayName: displayName,
-        };
+        try {
+            const taskListBody: Partial<TodoTaskList> = {
+                displayName: displayName.trim(),
+            };
 
-        const response = await client
-            .api(`/me/todo/lists/${task_list_id}`)
-            .update(taskListBody);
+            const response = await client
+                .api(`/me/todo/lists/${task_list_id}`)
+                .update(taskListBody);
 
-        return response;
+            return response as TodoTaskList;
+        } catch (error: any) {
+            throw new Error(`Failed to update task list: ${error?.message || error}`);
+        }
     },
 });

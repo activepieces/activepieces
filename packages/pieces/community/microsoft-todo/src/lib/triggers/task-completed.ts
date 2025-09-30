@@ -27,10 +27,11 @@ export const taskCompletedTrigger = createTrigger({
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                if (!(auth as OAuth2PropertyValue)?.access_token) {
+                const authValue = auth as OAuth2PropertyValue;
+                if (!authValue?.access_token) {
                     return { disabled: true, placeholder: 'Connect your account first', options: [] };
                 }
-                return await getTaskListsDropdown(auth as OAuth2PropertyValue);
+                return await getTaskListsDropdown(authValue);
             },
         }),
     },
@@ -44,46 +45,73 @@ export const taskCompletedTrigger = createTrigger({
     },
 
     async onEnable(context) {
-        const client = Client.initWithMiddleware({
-            authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
-        });
-
-        const expirationDateTime = dayjs().add(2, 'days').toISOString();
-        const response = await client.api('/subscriptions').post({
-            changeType: 'updated',
-            notificationUrl: context.webhookUrl,
-            resource: `/me/todo/lists/${context.propsValue.task_list_id}/tasks`,
-            expirationDateTime: expirationDateTime,
-        });
-
-        await context.store.put('subscriptionId', response.id);
-    },
-
-    async onDisable(context) {
-        const subscriptionId = await context.store.get('subscriptionId') as string | null;
-        if (subscriptionId) {
+        try {
             const client = Client.initWithMiddleware({
                 authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
             });
-            await client.api(`/subscriptions/${subscriptionId}`).delete();
+
+            const clientState = Math.random().toString(36).substring(7);
+            const expirationDateTime = dayjs().add(2, 'days').toISOString();
+            
+            const response = await client.api('/subscriptions').post({
+                changeType: 'updated',
+                notificationUrl: context.webhookUrl,
+                resource: `/me/todo/lists/${context.propsValue.task_list_id}/tasks`,
+                expirationDateTime: expirationDateTime,
+                clientState: clientState,
+            });
+
+            await context.store.put('subscriptionId', response.id);
+            await context.store.put('clientState', clientState);
+        } catch (error: any) {
+            throw new Error(`Failed to create webhook subscription: ${error?.message || error}`);
+        }
+    },
+
+    async onDisable(context) {
+        try {
+            const subscriptionId = await context.store.get('subscriptionId') as string | null;
+            if (subscriptionId) {
+                const client = Client.initWithMiddleware({
+                    authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
+                });
+                await client.api(`/subscriptions/${subscriptionId}`).delete();
+                await context.store.delete('subscriptionId');
+                await context.store.delete('clientState');
+            }
+        } catch (error: any) {
+            console.warn(`Failed to delete subscription: ${error?.message || error}`);
         }
     },
 
     async onRenew(context) {
-        const subscriptionId = await context.store.get('subscriptionId') as string | null;
-        if (subscriptionId) {
-            const client = Client.initWithMiddleware({
-                authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
-            });
-            await client.api(`/subscriptions/${subscriptionId}`).update({
-                expirationDateTime: dayjs().add(2, 'days').toISOString(),
-            });
+        try {
+            const subscriptionId = await context.store.get('subscriptionId') as string | null;
+            if (subscriptionId) {
+                const client = Client.initWithMiddleware({
+                    authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
+                });
+                await client.api(`/subscriptions/${subscriptionId}`).patch({
+                    expirationDateTime: dayjs().add(2, 'days').toISOString(),
+                });
+            }
+        } catch (error: any) {
+            throw new Error(`Failed to renew subscription: ${error?.message || error}`);
         }
     },
 
     async run(context) {
         const payload = context.payload.body as WebhookNotification;
-        const completedTasks = [];
+        
+        const storedClientState = await context.store.get('clientState') as string | null;
+        const receivedClientState = (context.payload.body as any)?.value?.[0]?.clientState;
+        
+        if (storedClientState && receivedClientState !== storedClientState) {
+            console.warn('Invalid clientState received in webhook notification');
+            return [];
+        }
+
+        const completedTasks: TodoTask[] = [];
 
         const client = Client.initWithMiddleware({
             authProvider: { getAccessToken: () => Promise.resolve(context.auth.access_token) },
@@ -94,14 +122,12 @@ export const taskCompletedTrigger = createTrigger({
             if (!taskId) continue;
 
             try {
-
                 const task = await client.api(notification.resource).get() as TodoTask;
                 
                 if (task.status === 'completed') {
                     completedTasks.push(task);
                 }
             } catch (e) {
-
                 console.warn(`Failed to fetch task ${taskId}, it may have been deleted.`);
             }
         }
