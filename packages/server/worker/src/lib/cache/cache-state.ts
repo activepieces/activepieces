@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 
@@ -25,13 +25,15 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
 export const cacheState = (folderPath: string) => {
     return {
         async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-            return fileSystemUtils.runExclusive(folderPath, cacheAlias, async () => {
+            const cacheKey = `${folderPath}-${cacheAlias}`
+            return memoryLock.runExclusive(cacheKey, async () => {
                 const cache = await getCache(folderPath)
                 return cache[cacheAlias]
             })
         },
         async setCache(cacheAlias: string, state: string): Promise<void> {
-            return fileSystemUtils.runExclusive(folderPath, cacheAlias, async () => {
+            const cacheKey = `${folderPath}-${cacheAlias}`
+            return memoryLock.runExclusive(cacheKey, async () => {
                 const cache = await getCache(folderPath)
                 cache[cacheAlias] = state
                 await saveToCache(cache, folderPath)
