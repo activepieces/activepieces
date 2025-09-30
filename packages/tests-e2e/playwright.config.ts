@@ -2,7 +2,7 @@ import { defineConfig, devices, PlaywrightTestConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables from the shared .env.e2e file (local dev only)
+// Load environment variables from the shared .env.e2e file (local dev)
 // In CI, use inherited environment variables instead
 if (!process.env.CI) {
   dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
