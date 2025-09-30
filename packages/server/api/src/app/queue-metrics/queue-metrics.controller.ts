@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox"
 import { queueMetricService } from "./queue-metrics.service"
-import { ALL_PRINCIPAL_TYPES } from "@activepieces/shared"
+import { PrincipalType } from "@activepieces/shared"
 
 export const queueMetricsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', GetMetrics, async (request) => {
@@ -11,6 +11,6 @@ export const queueMetricsController: FastifyPluginAsyncTypebox = async (app) => 
 const GetMetrics = {
     schema: { },
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.SERVICE],
     },
 }
