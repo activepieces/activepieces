@@ -36,7 +36,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         authenticate: true,
     })
 
-    const allQueues = [...Object.values(bullMqGroups).map((queue) => new BullMQAdapter(queue)),
+    const allQueues = [...Object.values(bullMqGroups).map(({queue}) => new BullMQAdapter(queue)),
         new BullMQAdapter(systemJobsQueue)]
 
     const serverAdapter = new FastifyAdapter()

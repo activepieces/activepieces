@@ -2,6 +2,7 @@ import {
     QueueName,
 } from '@activepieces/server-shared'
 import { AgentJobData, ApId, DelayedJobData, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { EventsHandlerType } from './queue-events/events-manager'
 
 export const JOB_PRIORITY = {
     high: 2,
@@ -60,4 +61,7 @@ export type QueueManager = {
     init(): Promise<void>
     add<JT extends JobType>(params: AddJobParams<JT>): Promise<void>
     removeRepeatingJob(params: RemoveParams): Promise<void>
+    addEventsHandler(queueName: QueueName, handlerType: EventsHandlerType): Promise<void>
+    removeEventsHandler(queueName: QueueName, handlerType: EventsHandlerType): Promise<void>
 }
+
