@@ -49,7 +49,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateContentLength, updateLogsBehavior, executionStateBuffer, failedStepName: failedStepName, logsFileId, testSingleStepMode } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, testSingleStepMode } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
@@ -69,33 +69,16 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
             failedStepName,
-            logsFileId,
         })
-
-        switch (updateLogsBehavior) {
-            case UpdateLogsBehavior.UPDATE_LOGS: {
-                assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-                await flowRunService(request.log).updateLogs({
-                    flowRunId: runId,
-                    logsFileId: runWithoutSteps.logsFileId ?? undefined,
-                    projectId: request.principal.projectId,
-                    executionStateString: executionStateBuffer,
-                    executionStateContentLength,
-                })
-                break
-            }
-            case UpdateLogsBehavior.UPDATE_LOGS_SIZE: {
-                assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-                await fileService(request.log).updateSize({
-                    fileId: runWithoutSteps.logsFileId!,
-                    size: executionStateContentLength,
-                })
-                break
-            }
-            case UpdateLogsBehavior.NONE: {
-                break
-            }
-        }
+        await handleUpdateLogsBehavior({
+            log: request.log,
+            updateLogsBehavior: request.body.updateLogsBehavior,
+            executionStateContentLength: request.body.executionStateContentLength,
+            logsFileId: request.body.logsFileId,
+            executionStateBuffer: request.body.executionStateBuffer,
+            projectId: request.principal.projectId,
+            runId,
+        })
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService(request.log).pause({
@@ -191,6 +174,46 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 
 
+}
+
+async function handleUpdateLogsBehavior(request: HandleUpdateLogsBehaviorParams): Promise<void> {
+    const { updateLogsBehavior, executionStateContentLength, logsFileId, executionStateBuffer, projectId } = request
+    switch (updateLogsBehavior) {
+        case UpdateLogsBehavior.UPDATE_LOGS: {
+            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
+            await flowRunService(request.log).updateLogs({
+                flowRunId: request.runId,
+                logsFileId,
+                projectId,
+                executionStateString: executionStateBuffer,
+                executionStateContentLength,
+            })
+            break
+        }
+        case UpdateLogsBehavior.UPDATE_LOGS_SIZE: {
+            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
+            assertNotNullOrUndefined(logsFileId, 'logsFileId is required')
+            await flowRunService(request.log).updateLogsSizeAndAttachLogsFile({
+                flowRunId: request.runId,
+                logsFileId,
+                executionStateContentLength,
+            })
+            break
+        }
+        case UpdateLogsBehavior.NONE: {
+            break
+        }
+    }   
+}
+
+type HandleUpdateLogsBehaviorParams = {
+    log: FastifyBaseLogger
+    updateLogsBehavior: UpdateLogsBehavior
+    executionStateContentLength: number | null
+    logsFileId: string | undefined
+    executionStateBuffer: string | undefined
+    projectId: string
+    runId: string
 }
 
 async function getFlowResponse(
