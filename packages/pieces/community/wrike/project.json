@@ -1,0 +1,43 @@
+{
+  "name": "pieces-wrike",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/wrike/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/wrike",
+        "tsConfig": "packages/pieces/community/wrike/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/wrike/package.json",
+        "main": "packages/pieces/community/wrike/src/index.ts",
+        "assets": [
+          "packages/pieces/community/wrike/*.md",
+          {
+            "input": "packages/pieces/community/wrike/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-community-wrike {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}
