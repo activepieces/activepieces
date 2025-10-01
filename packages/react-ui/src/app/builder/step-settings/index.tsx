@@ -19,7 +19,6 @@ import {
   FlowOperationType,
   FlowTrigger,
   FlowTriggerType,
-  debounce,
   isNil,
 } from '@activepieces/shared';
 
@@ -36,7 +35,6 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
-const SAVING_DEBOUNCE_TIME_MS = 1000;
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectHooks.useCurrentProject();
@@ -49,7 +47,6 @@ const StepSettingsContainer = () => {
     selectedBranchIndex,
     setSelectedBranchIndex,
     refreshStepFormSettingsToggle,
-    setSavingOn,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -59,7 +56,6 @@ const StepSettingsContainer = () => {
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
     state.refreshStepFormSettingsToggle,
-    state.setSavingOn,
   ]);
 
   const defaultValues = useMemo(() => {
@@ -82,23 +78,6 @@ const StepSettingsContainer = () => {
     step: selectedStep,
   });
 
-  const debouncedTrigger = useMemo(() => {
-    return debounce((newTrigger: FlowTrigger) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: newTrigger,
-      });
-    }, SAVING_DEBOUNCE_TIME_MS);
-  }, [applyOperation]);
-
-  const debouncedAction = useMemo(() => {
-    return debounce((newAction: FlowAction) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_ACTION,
-        request: newAction,
-      });
-    }, SAVING_DEBOUNCE_TIME_MS);
-  }, [applyOperation]);
   const currentValuesRef = useRef<FlowAction | FlowTrigger>(defaultValues);
   const form = useForm<FlowAction | FlowTrigger>({
     mode: 'all',
@@ -129,11 +108,16 @@ const StepSettingsContainer = () => {
       const valid = Object.keys(result.errors).length === 0;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
-      setSavingOn();
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
-        debouncedTrigger({ ...cleanedNewValues, valid });
+        applyOperation({
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: { ...cleanedNewValues, valid },
+        });
       } else {
-        debouncedAction({ ...cleanedNewValues, valid });
+        applyOperation({
+          type: FlowOperationType.UPDATE_ACTION,
+          request: { ...cleanedNewValues, valid },
+        });
       }
       return result;
     },

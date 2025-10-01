@@ -33,6 +33,7 @@ import {
   FlowTriggerType,
   FlowActionType,
   LoopStepOutput,
+  debounce,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -59,7 +60,7 @@ import {
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
-const flowUpdatesQueue = new PromiseQueue();
+
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
 export function useBuilderStateContext<T>(
@@ -104,7 +105,6 @@ export type BuilderState = {
   canExitRun: boolean;
   activeDraggingStep: string | null;
   saving: boolean;
-  setSavingOn: () => void;
   /** change this value to trigger the step form to set its values from the step */
   refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
@@ -201,9 +201,17 @@ export type BuilderInitialState = Pick<
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
-
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set, get) => {
+    console.log('createBuilderStore');
+    const flowUpdatesQueue = new PromiseQueue();
+    const debouncedAddToFlowUpdatesQueue = debounce(
+      (updateRequest: () => Promise<void>) => {
+        flowUpdatesQueue.add(updateRequest);
+      },
+      1000,
+    );
+
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
@@ -236,7 +244,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
-      setSavingOn: () => set({ saving: true }),
       selectedStep: initiallySelectedStep,
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
@@ -476,9 +483,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           state.operationListeners.forEach((listener) => {
             listener(state.flowVersion, operation);
           });
-
+          set({ saving: true });
           const updateRequest = async () => {
-            set({ saving: true });
             try {
               const updatedFlowVersion = await flowsApi.update(
                 state.flow.id,
@@ -501,7 +507,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               flowUpdatesQueue.halt();
             }
           };
-          flowUpdatesQueue.add(updateRequest);
+          const isDebouncableOperation =
+            operation.type === FlowOperationType.UPDATE_TRIGGER ||
+            operation.type === FlowOperationType.UPDATE_ACTION;
+          if (isDebouncableOperation) {
+            debouncedAddToFlowUpdatesQueue(
+              operation.request.name,
+              updateRequest,
+            );
+          } else {
+            flowUpdatesQueue.add(updateRequest);
+          }
           return { flowVersion: newFlowVersion };
         }),
       setVersion: (flowVersion: FlowVersion) => {
