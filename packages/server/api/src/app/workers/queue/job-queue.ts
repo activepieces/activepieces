@@ -43,14 +43,14 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
                     name: data.flowVersionId,
                     data,
                     opts: {
-                        priority: JOB_PRIORITY[params.priority ?? getDefaultJobPriority(data)],
+                        priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     },
                 })
                 break
             }
             case JobType.ONE_TIME: {
                 await queue.add(params.id, data, {
-                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[params.priority ?? getDefaultJobPriority(data)],
+                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: params.delay,
                     jobId: params.id,
                 })
