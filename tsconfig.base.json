@@ -220,6 +220,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-chatdata": [
+        "packages/pieces/community/chatdata/src/index.ts"
+      ],
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
@@ -528,7 +531,7 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
-      "@activepieces/piece-hedy":[
+      "@activepieces/piece-hedy": [
         "packages/pieces/community/hedy/src/index.ts"
       ],
       "@activepieces/piece-help-scout": [
