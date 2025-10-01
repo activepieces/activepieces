@@ -1201,6 +1201,7 @@
   "executeExtractPieceInformationDescription": "يجمع معلومات حول تكاملات التطبيقات",
   "executeToolDescription": "يشغل أدوات أو برامج مساعدة محددة ضمن التدفق",
   "noDescription": "لا يوجد وصف متاح",
+  "statusQueued": "في الصف",
   "statusActive": "نشط",
   "statusRetrying": "إعادة المحاولة",
   "statusDelayed": "مؤجل",

@@ -1388,6 +1388,7 @@
   "executeExtractPieceInformationDescription": "アプリ統合に関する情報を収集します",
   "executeToolDescription": "フロー内で特定のツールまたはユーティリティを実行します",
   "noDescription": "説明はありません",
+  "statusQueued": "待機中",
   "statusActive": "アクティブ",
   "statusRetrying": "再試行中",
   "statusDelayed": "遅延",

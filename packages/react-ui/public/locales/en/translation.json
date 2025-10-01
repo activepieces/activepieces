@@ -1388,6 +1388,7 @@
   "executeExtractPieceInformationDescription": "Gathers information about app integrations",
   "executeToolDescription": "Runs specific tools or utilities within a flow",
   "noDescription": "No description available",
+  "statusQueued": "QUEUED",
   "statusActive": "ACTIVE",
   "statusRetrying": "RETRYING",
   "statusDelayed": "DELAYED",

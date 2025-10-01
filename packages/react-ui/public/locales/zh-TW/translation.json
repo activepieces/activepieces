@@ -1388,6 +1388,7 @@
   "executeExtractPieceInformationDescription": "收集有關應用程式整合的資訊",
   "executeToolDescription": "在流程中執行特定的工具或公用程式",
   "noDescription": "沒有可用的描述",
+  "statusQueued": "佇列中",
   "statusActive": "啟用",
   "statusRetrying": "重試中",
   "statusDelayed": "延遲",

@@ -1388,6 +1388,7 @@
   "executeExtractPieceInformationDescription": "Coleta informações sobre integrações de aplicativos",
   "executeToolDescription": "Executa ferramentas ou utilitários específicos dentro de um fluxo",
   "noDescription": "Nenhuma descrição disponível",
+  "statusQueued": "NA FILA",
   "statusActive": "ATIVO",
   "statusRetrying": "TENTANDO NOVAMENTE",
   "statusDelayed": "ATRASADO",

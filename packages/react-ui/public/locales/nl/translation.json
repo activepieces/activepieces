@@ -1388,6 +1388,7 @@
   "executeExtractPieceInformationDescription": "Verzamelt informatie over app-integraties",
   "executeToolDescription": "Voert specifieke tools of hulpprogramma's uit binnen een stroom",
   "noDescription": "Geen beschrijving beschikbaar",
+  "statusQueued": "IN WACHTRIJ",
   "statusActive": "ACTIEF",
   "statusRetrying": "OPNIEUW PROBEREN",
   "statusDelayed": "VERTRAAGD",

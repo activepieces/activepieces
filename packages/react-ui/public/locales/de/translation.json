@@ -1388,6 +1388,7 @@
   "executeExtractPieceInformationDescription": "Sammelt Informationen über App-Integrationen",
   "executeToolDescription": "Führt spezifische Werkzeuge oder Dienstprogramme innerhalb eines Flows aus",
   "noDescription": "Keine Beschreibung verfügbar",
+  "statusQueued": "WARTESCHLANGE",
   "statusActive": "AKTIV",
   "statusRetrying": "WIEDERHOLUNG",
   "statusDelayed": "VERZÖGERT",

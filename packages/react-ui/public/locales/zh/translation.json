@@ -1388,6 +1388,7 @@
   "executeExtractPieceInformationDescription": "收集有关应用程序集成的信息",
   "executeToolDescription": "在流中运行特定的工具或实用程序",
   "noDescription": "无可用描述",
+  "statusQueued": "排队中",
   "statusActive": "活动",
   "statusRetrying": "重试中",
   "statusDelayed": "延迟",

@@ -1351,6 +1351,7 @@
   "executeExtractPieceInformationDescription": "Собирает информацию об интеграциях приложений",
   "executeToolDescription": "Запускает определенные инструменты или утилиты в рамках потока",
   "noDescription": "Описание отсутствует",
+  "statusQueued": "В ОЧЕРЕДИ",
   "statusActive": "АКТИВНО",
   "statusRetrying": "ПОВТОР",
   "statusDelayed": "ЗАДЕРЖАНО",
