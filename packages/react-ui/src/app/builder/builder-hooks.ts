@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
+import { t } from 'i18next';
 import {
   createContext,
   useContext,
@@ -103,6 +104,7 @@ export type BuilderState = {
   canExitRun: boolean;
   activeDraggingStep: string | null;
   saving: boolean;
+  setSavingOn: () => void;
   /** change this value to trigger the step form to set its values from the step */
   refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
@@ -234,6 +236,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
+      setSavingOn: () => set({ saving: true }),
       selectedStep: initiallySelectedStep,
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
@@ -1038,3 +1041,4 @@ function determineInitiallySelectedStep(
   }
   return firstInvalidStep?.name ?? 'trigger';
 }
+
