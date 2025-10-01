@@ -4,20 +4,20 @@ import {
 import { AgentJobData, ApId, DelayedJobData, ExecuteFlowJobData, isNil, JobData, PollingJobData, RenewWebhookJobData, RunEnvironment, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 
 export const JOB_PRIORITY = {
-    ultraHigh: 1,
+    critical: 1,
     high: 2,
     medium: 3,
     low: 4,
-    ultraLow: 5,
+    veryLow: 5,
+    lowest: 6,
 }
-
 
 
 
 const TESTING_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
 const ASYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 const SYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
-export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'ultraLow'
+export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'lowest'
 
 function getExecuteFlowPriority(environment: RunEnvironment, synchronousHandlerId: string | undefined | null): keyof typeof JOB_PRIORITY {
     switch (environment) {
@@ -32,7 +32,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
     switch (job.jobType) {
         case WorkerJobType.EXECUTE_POLLING:
         case WorkerJobType.RENEW_WEBHOOK:
-            return 'low'
+            return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_AGENT:
             return 'medium'
@@ -44,7 +44,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-            return 'ultraHigh'
+            return 'critical'
     }
 }
 
@@ -62,7 +62,6 @@ type BaseAddParams<JD extends JobData, JT extends JobType> = {
     data: JD
     type: JT
     delay?: number
-    priority?: keyof typeof JOB_PRIORITY
 }
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
