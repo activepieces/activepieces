@@ -1,15 +1,15 @@
 {
   "Ask AI": "询问AI",
-  "Summarize Text": "Summarize Text",
-  "Provider": "Provider",
-  "Model": "Model",
+  "Summarize Text": "摘要文本",
+  "Provider": "提供商",
+  "Model": "模型",
   "Prompt": "Prompt",
-  "Conversation Key": "Conversation Key",
-  "Creativity": "Creativity",
-  "Max Tokens": "Max Tokens",
-  "Web Search": "Web Search",
-  "Web Search Options": "Web Search Options",
+  "Conversation Key": "对话键",
+  "Creativity": "创意性",
+  "Max Tokens": "最大令牌",
+  "Web Search": "网页搜索",
+  "Web Search Options": "网页搜索选项",
   "Text": "文本",
-  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.",
-  "Whether to use web search to find information for the AI to use in its response.": "Whether to use web search to find information for the AI to use in its response."
+  "Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.": "控制AI 响应的创造性。更高的值将使AI 更具创造性，并且降低值将使其更具决定性意义。",
+  "Whether to use web search to find information for the AI to use in its response.": "是否使用 Web 搜索来查找用于响应的 AI 信息。"
 }
