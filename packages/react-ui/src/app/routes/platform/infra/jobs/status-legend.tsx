@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
-import { getStatusColor, getStatusLabel } from '.';
 import { WorkerJobStatus } from '@activepieces/shared';
+
+import { getStatusColor, getStatusLabel } from '.';
 
 export const StatusLegend = () => (
   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pb-4">

@@ -40,7 +40,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     
     const allQueues = [
         new BullMQAdapter(bullMqQueue),
-        new BullMQAdapter(systemJobsQueue)
+        new BullMQAdapter(systemJobsQueue),
     ]
 
     const serverAdapter = new FastifyAdapter()

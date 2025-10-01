@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { AlertCircle, Info } from 'lucide-react';
+
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
   Tooltip,
@@ -7,7 +8,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { WorkerJobType, WorkerJobStats, WorkerJobStatus } from '@activepieces/shared';
+import {
+  WorkerJobType,
+  WorkerJobStats,
+  WorkerJobStatus,
+} from '@activepieces/shared';
+
 import { MultiProgressBar } from './multi-progress-bar';
 
 export type WorkerJobCardProps = {

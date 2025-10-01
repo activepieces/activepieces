@@ -1,12 +1,22 @@
 import { t } from 'i18next';
-import { cn } from '@/lib/utils';
-import { WorkerJobStats, WorkerJobStatus } from '@activepieces/shared';
-import { getStatusColor } from '.';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMemo } from 'react';
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { WorkerJobStats, WorkerJobStatus } from '@activepieces/shared';
+
+import { getStatusColor } from '.';
+
 export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
-  const total = useMemo(() => Object.values(stats).reduce((a, b) => a + b, 0), [stats]);
+  const total = useMemo(
+    () => Object.values(stats).reduce((a, b) => a + b, 0),
+    [stats],
+  );
 
   if (total === 0) {
     return (
@@ -29,21 +39,21 @@ export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
             <TooltipProvider key={index}>
               <Tooltip key={index}>
                 <TooltipTrigger asChild>
-              <div
-                key={index}
-                className={cn(
-                  'flex items-center justify-center transition-all duration-300',
-                  getStatusColor(status),
-                )}
-                style={{ width: `${percentage}%` }}
-              >
-                <span className="drop-shadow-sm">{percentage.toFixed()}%</span>
-              </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                {t(status)}
-              </TooltipContent>
-            </Tooltip>
+                  <div
+                    key={index}
+                    className={cn(
+                      'flex items-center justify-center transition-all duration-300',
+                      getStatusColor(status),
+                    )}
+                    style={{ width: `${percentage}%` }}
+                  >
+                    <span className="drop-shadow-sm">
+                      {percentage.toFixed()}%
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>{t(status)}</TooltipContent>
+              </Tooltip>
             </TooltipProvider>
           );
         })}
