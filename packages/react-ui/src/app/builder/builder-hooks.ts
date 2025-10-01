@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
+import {temporal, TemporalState} from "zundo"
 
 import { Messages } from '@/components/ui/chat/chat-message-list';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -68,6 +69,36 @@ export function useBuilderStateContext<T>(
   if (!store)
     throw new Error('Missing BuilderStateContext.Provider in the tree');
   return useStore(store, selector);
+}
+
+export function useTemporalStateContext<T>(
+  selector: (
+    state: TemporalState<Pick<BuilderState, 'flowVersion'>> & {
+      canUndo: boolean;
+      canRedo: boolean;
+    }
+  ) => T
+): T {
+  const store = useContext(BuilderStateContext);
+  if (!store)
+    throw new Error('Missing BuilderStateContext.Provider in the tree');
+  return useStore(store.temporal, (state) => {
+    const { saveCurrentVersion } = store.getState();
+
+    return selector({
+      ...state,
+      undo: () => {
+        state.undo();
+        saveCurrentVersion();
+      },
+      redo: () => {
+        state.redo();
+        saveCurrentVersion();
+      },
+      canUndo: state.pastStates.length > 0,
+      canRedo: state.futureStates.length > 0,
+    })}
+  );
 }
 
 export enum LeftSideBarType {
@@ -134,6 +165,7 @@ export type BuilderState = {
   setSampleData: (stepName: string, payload: unknown) => void;
   setSampleDataInput: (stepName: string, payload: unknown) => void;
   setVersion: (flowVersion: FlowVersion) => void;
+  saveCurrentVersion: () => void;
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
@@ -201,7 +233,7 @@ export type BuilderInitialState = Pick<
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
 export const createBuilderStore = (initialState: BuilderInitialState) =>
-  create<BuilderState>((set, get) => {
+  create<BuilderState>()(temporal((set, get) => {
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
@@ -524,6 +556,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedBranchIndex: null,
         }));
       },
+      saveCurrentVersion: () => {
+        const { applyOperation, flowVersion } = get();
+        applyOperation({
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: flowVersion.displayName,
+            trigger: flowVersion.trigger,
+          }
+        });
+      },
       insertMention: null,
       setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
         set({ insertMention });
@@ -748,7 +790,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }));
       },
     };
-  });
+  },
+  {
+    partialize: ({ flowVersion }) => ({ flowVersion }),
+    equality: (past, current) =>
+        (flowCanvasUtils.createGraphKey(past.flowVersion) ===
+        flowCanvasUtils.createGraphKey(current.flowVersion)) &&
+        (past.flowVersion.displayName === current.flowVersion.displayName)
+  }
+));
 
 export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
   return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
