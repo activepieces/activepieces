@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import * as fs from 'fs';
-import * as FormData from 'form-data';
+import FormData from 'form-data';
 import {
   CreateChatbotDto,
   SendMessageDto,
@@ -12,6 +12,7 @@ import {
   FileMeta,
   WebhookSubscription,
   EventList,
+  UpdateChatbotSettingsDto,
 } from './types';
 
 export class ChatDataClient {
@@ -19,17 +20,18 @@ export class ChatDataClient {
   private apiKey: string;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.CHATDATA_API_KEY || '';
+    this.apiKey = apiKey || process.env['CHATDATA_API_KEY'] || '';
     if (!this.apiKey) {
       throw new Error('CHATDATA_API_KEY environment variable is required');
     }
 
-    const baseURL = process.env.CHATDATA_BASE_URL || 'https://api.chat-data.com/v1';
+    const baseURL =
+      process.env['CHATDATA_BASE_URL'] || 'https://api.chat-data.com/v1';
 
     this.client = axios.create({
       baseURL,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
       timeout: 30000,
@@ -38,7 +40,11 @@ export class ChatDataClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        if (this.shouldRetry(error) && error.config && !error.config.metadata?.retryCount) {
+        if (
+          this.shouldRetry(error) &&
+          error.config &&
+          !(error.config as any).retryCount
+        ) {
           return this.retryRequest(error);
         }
         throw this.mapError(error);
@@ -59,7 +65,7 @@ export class ChatDataClient {
     }
 
     let delay = Math.pow(2, attempt) * 1000;
-    
+
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       if (retryAfter) {
@@ -67,11 +73,11 @@ export class ChatDataClient {
       }
     }
 
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
 
     try {
       if (error.config) {
-        error.config.metadata = { retryCount: attempt };
+        (error.config as any).retryCount = attempt;
         return await this.client.request(error.config);
       }
     } catch (retryError) {
@@ -108,28 +114,40 @@ export class ChatDataClient {
   }
 
   async createChatbot(payload: CreateChatbotDto): Promise<Chatbot> {
-    const response = await this.client.post('/chatbots', payload);
+    const response = await this.client.post('/api/v2/create-chatbot', payload);
     return Chatbot.parse(response.data);
   }
 
-  async deleteChatbot(chatbotId: string): Promise<void> {
-    await this.client.delete(`/chatbots/${chatbotId}`);
+  async deleteChatbot(chatbotId: string): Promise<{ status: string }> {
+    const response = await this.client.delete(
+      `/api/v2/delete-chatbot/${chatbotId}`
+    );
+    return response.data;
   }
 
-  async sendMessage(chatbotId: string, payload: SendMessageDto): Promise<Message> {
-    const response = await this.client.post(`/chatbots/${chatbotId}/messages`, payload);
+  async sendMessage(payload: SendMessageDto): Promise<Message> {
+    const response = await this.client.post('/api/v2/chat', payload);
+    if (payload.stream) {
+      return {
+        response: response.data,
+        conversationId: payload.conversationId,
+      };
+    }
     return Message.parse(response.data);
   }
 
-  async updateBasePrompt(chatbotId: string, newPrompt: string): Promise<Chatbot> {
-    const response = await this.client.patch(`/chatbots/${chatbotId}`, {
-      basePrompt: newPrompt,
-    });
-    return Chatbot.parse(response.data);
+  async updateChatbotSettings(
+    payload: UpdateChatbotSettingsDto
+  ): Promise<{ status: string }> {
+    const response = await this.client.post(
+      '/api/v2/update-chatbot-settings',
+      payload
+    );
+    return response.data;
   }
 
-  async retrainChatbot(chatbotId: string, opts?: RetrainOptions): Promise<RetrainJob> {
-    const response = await this.client.post(`/chatbots/${chatbotId}/retrain`, opts || {});
+  async retrainChatbot(payload: RetrainOptions): Promise<RetrainJob> {
+    const response = await this.client.post('/api/v2/retrain-chatbot', payload);
     return RetrainJob.parse(response.data);
   }
 
@@ -144,10 +162,13 @@ export class ChatDataClient {
     meta: { filename: string; contentType: string }
   ): Promise<FileMeta> {
     const formData = new FormData();
-    
+
     if (typeof file === 'string') {
       if (file.startsWith('data:') || file.match(/^[A-Za-z0-9+/]+=*$/)) {
-        const buffer = Buffer.from(file.replace(/^data:[^;]+;base64,/, ''), 'base64');
+        const buffer = Buffer.from(
+          file.replace(/^data:[^;]+;base64,/, ''),
+          'base64'
+        );
         formData.append('file', buffer, {
           filename: meta.filename,
           contentType: meta.contentType,
@@ -166,16 +187,23 @@ export class ChatDataClient {
       });
     }
 
-    const response = await this.client.post(`/chatbots/${chatbotId}/files`, formData, {
-      headers: {
-        ...formData.getHeaders(),
-      },
-    });
-    
+    const response = await this.client.post(
+      `/api/v2/upload-file/${chatbotId}`,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+        },
+      }
+    );
+
     return FileMeta.parse(response.data);
   }
 
-  async subscribeWebhook(chatbotId: string, callbackUrl: string): Promise<WebhookSubscription> {
+  async subscribeWebhook(
+    chatbotId: string,
+    callbackUrl: string
+  ): Promise<WebhookSubscription> {
     const response = await this.client.post(`/chatbots/${chatbotId}/webhooks`, {
       callbackUrl,
       events: ['new_message', 'new_lead', 'escalation'],
@@ -183,11 +211,31 @@ export class ChatDataClient {
     return WebhookSubscription.parse(response.data);
   }
 
-  async listEvents(chatbotId: string, since?: string, page = 1): Promise<EventList> {
+  async listEvents(
+    chatbotId: string,
+    since?: string,
+    page = 1
+  ): Promise<EventList> {
     const params: any = { page };
     if (since) params.since = since;
-    
-    const response = await this.client.get(`/chatbots/${chatbotId}/events`, { params });
+
+    const response = await this.client.get(`/chatbots/${chatbotId}/events`, {
+      params,
+    });
     return EventList.parse(response.data);
+  }
+
+  async listChatbots(): Promise<Array<{ id: string; name: string }>> {
+    const response = await this.client.get('/api/v2/chatbots');
+    return response.data.chatbots || [];
+  }
+
+  async listConversations(
+    chatbotId: string
+  ): Promise<Array<{ id: string; title: string; lastMessage?: string }>> {
+    const response = await this.client.get(
+      `/api/v2/conversations/${chatbotId}`
+    );
+    return response.data.conversations || [];
   }
 }
