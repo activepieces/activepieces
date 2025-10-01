@@ -5,8 +5,8 @@ import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Separator } from '@/components/ui/separator';
 import {
   WorkerJobType,
-  WorkerJobStatItem,
   WorkerJobStatus,
+  QueueMetricsResponse,
 } from '@activepieces/shared';
 import { StatusLegend } from './status-legend';
 import { WorkerJobCard } from './worker-job-card';
@@ -15,29 +15,29 @@ import { queueMetricsApi } from '@/features/platform-admin/lib/queue-metrics-api
 export const getJobTypeDescription = (jobType: WorkerJobType): string => {
   switch (jobType) {
     case WorkerJobType.RENEW_WEBHOOK:
-      return t('renewWebhookDescription');
+      return t('Renew Webhook');
     case WorkerJobType.EXECUTE_POLLING:
-      return t('executePollingDescription');
+      return t('Execute Polling');
     case WorkerJobType.DELAYED_FLOW:
-      return t('delayedFlowDescription');
+      return t('Delayed Flow');
     case WorkerJobType.EXECUTE_WEBHOOK:
-      return t('executeWebhookDescription');
+      return t('Execute Webhook');
     case WorkerJobType.EXECUTE_FLOW:
-      return t('executeFlowDescription');
+      return t('Execute Flow');
     case WorkerJobType.EXECUTE_AGENT:
-      return t('executeAgentDescription');
+      return t('Execute Agent');
     case WorkerJobType.EXECUTE_VALIDATION:
-      return t('executeValidationDescription');
+      return t('Execute Validation');
     case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-      return t('executeTriggerHookDescription');
+      return t('Execute Trigger Hook');
     case WorkerJobType.EXECUTE_PROPERTY:
-      return t('executePropertyDescription');
+      return t('Execute Property');
     case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-      return t('executeExtractPieceInformationDescription');
+      return t('Extract Piece Information');
     case WorkerJobType.EXECUTE_TOOL:
-      return t('executeToolDescription');
+      return t('Execute Tool');
     default:
-      return t('noDescription');
+      return t('No description');
   }
 };
 
@@ -49,8 +49,6 @@ export const getStatusLabel = (status: WorkerJobStatus): string => {
       return t('statusRetrying');
     case WorkerJobStatus.DELAYED:
       return t('statusDelayed');
-    case WorkerJobStatus.THROTTLED:
-      return t('statusThrottled');
     case WorkerJobStatus.FAILED:
       return t('statusFailed');
     case WorkerJobStatus.QUEUED:
@@ -68,15 +66,13 @@ export const getStatusColor = (status: WorkerJobStatus) => {
       return 'bg-orange-500';
     case WorkerJobStatus.DELAYED:
       return 'bg-purple-500';
-    case WorkerJobStatus.THROTTLED:
-      return 'bg-gray-500';
     case WorkerJobStatus.FAILED:
       return 'bg-red-500';
   }
 };
 
 export default function SettingsJobsPage() {
-  const { data: workerJobsStats, isLoading } = useQuery<WorkerJobStatItem[]>({
+  const { data: workerJobsStats, isLoading } = useQuery<QueueMetricsResponse>({
     queryKey: ['worker-job-stats'],
     queryFn: async () => queueMetricsApi.getMetrics(),
     staleTime: 5000,

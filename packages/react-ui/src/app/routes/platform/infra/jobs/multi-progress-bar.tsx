@@ -13,7 +13,7 @@ export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
       <div className="flex w-full items-center gap-3">
         <div className="h-5 flex-grow rounded-full bg-muted" />
         <span className="w-16 text-right text-sm font-medium text-muted-foreground">
-          {t('zeroJobs')}
+          {t('Zero jobs')}
         </span>
       </div>
     );
@@ -49,7 +49,7 @@ export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
         })}
       </div>
       <span className="w-16 text-right text-sm font-medium text-muted-foreground">
-        {t('countJobs', { count: total })}
+        {t('{count} jobs', { count: total })}
       </span>
     </div>
   );

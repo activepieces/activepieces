@@ -1,8 +1,8 @@
 import { api } from '@/lib/api';
-import { WorkerJobStatItem } from '@activepieces/shared';
+import { QueueMetricsResponse } from '@activepieces/shared';
 
 export const queueMetricsApi = {
   getMetrics() {
-    return api.get<WorkerJobStatItem[]>('/v1/queue-metrics');
+    return api.get<QueueMetricsResponse>('/v1/queue-metrics');
   },
 };

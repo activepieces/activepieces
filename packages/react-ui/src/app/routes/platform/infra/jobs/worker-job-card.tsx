@@ -37,7 +37,7 @@ export const WorkerJobCard = ({
               <Info className="h-4 w-4 cursor-pointer text-slate-400" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>{description || t('noDescription')}</p>
+              <p>{description || t('No description')}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -49,7 +49,7 @@ export const WorkerJobCard = ({
           {stats[WorkerJobStatus.FAILED] > 0 && (
             <span className="flex items-center font-bold text-red-600">
               <AlertCircle className="mr-1 h-4 w-4" />
-              {t('countFailed', { count: stats[WorkerJobStatus.FAILED] })}
+              {t('{count} failed', { count: stats[WorkerJobStatus.FAILED] })}
             </span>
           )}
         </div>
