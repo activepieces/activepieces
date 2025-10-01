@@ -64,6 +64,11 @@ When you contribute pieces to Activepieces they become automatically available a
 
 - **🛠️ Largest open source MCP toolkit**: All our pieces (280+) are available as MCP that you can use with LLMs on Claude Desktop, Cursor or Windsurf.
 
+- **🎯 AI Assistant Management**: Streamline your workflow with **[Roundtable](https://github.com/askbudi/roundtable)** – a zero-configuration MCP server that unifies multiple AI coding assistants (Claude Desktop, Cursor, Windsurf, Codex) for Activepieces developers. Perfect complement to your 280+ MCP pieces by providing unified access to the AI assistants that consume them.
+  - **Installation**: `pip install roundtable-ai`
+  - **Use Case**: Manage all your AI assistants from one interface while working with Activepieces flows and pieces
+  - **Integration**: Seamlessly works with the same AI assistants that use your MCP toolkit
+
 - **🛠️  Pieces are written in Typescript**: Pieces are npm packages in TypeScript, offering full customization with the best developer experience, including **hot reloading** for **local** piece development on your machine. 😎
 
 <img src="/docs/resources/create-action.png" alt="">
