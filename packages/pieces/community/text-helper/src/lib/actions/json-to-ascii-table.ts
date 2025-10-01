@@ -32,9 +32,7 @@ export const jsonToAsciiTable = createAction({
     }
 
     // Get all unique keys from all objects
-    const keys = Array.from(
-      new Set(data.flatMap((obj) => Object.keys(obj)))
-    );
+    const keys = Array.from(new Set(data.flatMap((obj) => Object.keys(obj))));
 
     // Calculate column widths
     const columnWidths = keys.map((key) => {
@@ -46,16 +44,12 @@ export const jsonToAsciiTable = createAction({
 
     // Create separator line
     const separator =
-      '+' +
-      columnWidths.map((width) => '-'.repeat(width + 2)).join('+') +
-      '+';
+      '+' + columnWidths.map((width) => '-'.repeat(width + 2)).join('+') + '+';
 
     // Create header row
     const header =
       '|' +
-      keys
-        .map((key, i) => ' ' + key.padEnd(columnWidths[i]) + ' ')
-        .join('|') +
+      keys.map((key, i) => ' ' + key.padEnd(columnWidths[i]) + ' ').join('|') +
       '|';
 
     // Create data rows
