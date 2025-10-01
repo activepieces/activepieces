@@ -10,6 +10,7 @@
   "Support": "サポート",
   "Runs": "実行",
   "Versions": "バージョン",
+  "Leaving this page while saving will discard your changes, are you sure you want to leave?": "",
   "Error generating code": "コードの生成中にエラー",
   "AI Copilot": "AI コパイロット",
   "i.e Calculate the sum of a list...": "i.e リストの合計を計算...",
