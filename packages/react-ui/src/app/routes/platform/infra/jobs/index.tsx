@@ -12,47 +12,39 @@ import { StatusLegend } from './status-legend';
 import { WorkerJobCard } from './worker-job-card';
 import { queueMetricsApi } from '@/features/platform-admin/lib/queue-metrics-api';
 
-export const getJobTypeDescription = (jobType: WorkerJobType): string => {
+export const getJobTypeDescription = (jobType: WorkerJobType): string | undefined => {
   switch (jobType) {
     case WorkerJobType.RENEW_WEBHOOK:
-      return t('Renew Webhook');
+      return t('Renews webhooks for pieces that need to stay connected to external services like Google Sheets.');
     case WorkerJobType.EXECUTE_POLLING:
-      return t('Execute Polling');
+      return t('Checks external services for new data at regular intervals.');
     case WorkerJobType.DELAYED_FLOW:
-      return t('Delayed Flow');
+      return t('Runs flows that were scheduled for later, like paused flows or delayed executions.');
     case WorkerJobType.EXECUTE_WEBHOOK:
-      return t('Execute Webhook');
+      return t('Processes incoming webhook requests that start flow runs.');
     case WorkerJobType.EXECUTE_FLOW:
-      return t('Execute Flow');
+      return t('Runs flows when they’re triggered.');
     case WorkerJobType.EXECUTE_AGENT:
-      return t('Execute Agent');
-    case WorkerJobType.EXECUTE_VALIDATION:
-      return t('Execute Validation');
-    case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-      return t('Execute Trigger Hook');
-    case WorkerJobType.EXECUTE_PROPERTY:
-      return t('Execute Property');
-    case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-      return t('Extract Piece Information');
+      return t('Runs AI agent tasks within flows.');
     case WorkerJobType.EXECUTE_TOOL:
-      return t('Execute Tool');
+      return t('Runs tool operations in flows, usually for AI-powered features.');
     default:
-      return t('No description');
+      return;
   }
 };
 
 export const getStatusLabel = (status: WorkerJobStatus): string => {
   switch (status) {
     case WorkerJobStatus.ACTIVE:
-      return t('statusActive');
+      return t('Active');
     case WorkerJobStatus.RETRYING:
-      return t('statusRetrying');
+      return t('Retrying');
     case WorkerJobStatus.DELAYED:
-      return t('statusDelayed');
+      return t('Delayed');
     case WorkerJobStatus.FAILED:
-      return t('statusFailed');
+      return t('Failed');
     case WorkerJobStatus.QUEUED:
-      return t('statusQueued');
+      return t('Queued');
   }
 };
 
@@ -82,8 +74,8 @@ export default function SettingsJobsPage() {
   return (
     <div className="flex w-full flex-col gap-4">
       <DashboardPageHeader
-        title={t('systemJobsOverviewTitle')}
-        description={t('systemJobsOverviewDescription')}
+        title={t('System jobs overview')}
+        description={t('System Jobs Queue Metrics')}
       />
       <StatusLegend />
       {isLoading ? (
@@ -92,12 +84,12 @@ export default function SettingsJobsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {workerJobsStats?.map(({ jobType, stats }) => (
+          {Object.entries(workerJobsStats?.statsPerJobType ?? {}).map(([jobType, stats]) => (
             <WorkerJobCard
               key={jobType}
-              jobType={jobType}
+              jobType={jobType as WorkerJobType}
               stats={stats}
-              description={getJobTypeDescription(jobType)}
+              description={getJobTypeDescription(jobType as WorkerJobType)}
             />
           ))}
         </div>

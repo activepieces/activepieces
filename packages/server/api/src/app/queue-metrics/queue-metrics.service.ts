@@ -1,4 +1,4 @@
-import { WorkerJobType, WorkerJobStatus, QueueMetricsResponse, WorkerJobStats } from "@activepieces/shared"
+import { WorkerJobType, WorkerJobStatus, QueueMetricsResponse, WorkerJobStats, WorkerJobTypeForMetrics } from "@activepieces/shared"
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from "../database/redis"
 import { Redis } from "ioredis"
@@ -12,8 +12,7 @@ export const queueMetricService = (log: FastifyBaseLogger) => ({
 
     const redis = await redisConnections.useExisting()
 
-    
-    for (const jobType of Object.values(WorkerJobType)) {
+    for (const jobType of WorkerJobTypeForMetrics) {
       const jobStats = {} as WorkerJobStats
 
       for (const status of Object.values(WorkerJobStatus)) {

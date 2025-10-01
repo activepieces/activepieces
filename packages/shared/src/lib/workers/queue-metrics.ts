@@ -8,6 +8,17 @@ export enum WorkerJobStatus {
   QUEUED = 'queued',
   RETRYING = 'retrying',
 }
+
+export const WorkerJobTypeForMetrics = [
+  WorkerJobType.RENEW_WEBHOOK,
+  WorkerJobType.EXECUTE_POLLING,
+  WorkerJobType.DELAYED_FLOW,
+  WorkerJobType.EXECUTE_WEBHOOK,
+  WorkerJobType.EXECUTE_FLOW,
+  WorkerJobType.EXECUTE_AGENT,
+  WorkerJobType.EXECUTE_TOOL,
+] as const
+
 export const WorkerJobStats = Type.Object({
     [WorkerJobStatus.ACTIVE]: Type.Number(),
     [WorkerJobStatus.QUEUED]: Type.Number(),
