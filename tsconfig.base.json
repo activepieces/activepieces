@@ -1201,6 +1201,9 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
       ],
+       "@activepieces/piece-wrike": [
+        "packages/pieces/community/wrike/src/index.ts"
+      ],
       "@activepieces/piece-wufoo": [
         "packages/pieces/community/wufoo/src/index.ts"
       ],

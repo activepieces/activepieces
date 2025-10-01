@@ -8,10 +8,10 @@ export const createFolderAction = createAction({
   displayName: 'Create Folder',
   description: 'Create a new folder in Wrike',
   props: {
-    parentFolderId: Property.ShortText({
-      displayName: 'Parent Folder ID',
-      description: 'The parent folder ID',
-      required: true,
+    folderId: Property.ShortText({
+      displayName: 'Folder ID',
+      description: 'The folder ID',
+      required: false,
     }),
     title: Property.ShortText({
       displayName: 'Title',
@@ -36,7 +36,7 @@ export const createFolderAction = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${apiUrl}/folders/${context.propsValue.parentFolderId}/folders`,
+      url: `${apiUrl}/folders`,
       body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

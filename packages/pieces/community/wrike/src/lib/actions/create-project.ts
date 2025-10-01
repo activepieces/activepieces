@@ -8,9 +8,9 @@ export const createProjectAction = createAction({
   displayName: 'Create Project',
   description: 'Creates a new project in Wrike',
   props: {
-    parentFolderId: Property.ShortText({
-      displayName: 'Parent Folder ID',
-      description: 'The parent folder ID',
+    folderId: Property.ShortText({
+      displayName: 'Folder ID',
+      description: 'The folder ID',
       required: true,
     }),
     title: Property.ShortText({
@@ -21,16 +21,6 @@ export const createProjectAction = createAction({
     description: Property.LongText({
       displayName: 'Description',
       description: 'Project description',
-      required: false,
-    }),
-    startDate: Property.ShortText({
-      displayName: 'Start Date',
-      description: 'Start date (YYYY-MM-DD format)',
-      required: false,
-    }),
-    endDate: Property.ShortText({
-      displayName: 'End Date',
-      description: 'End date (YYYY-MM-DD format)',
       required: false,
     }),
   },
@@ -46,14 +36,10 @@ export const createProjectAction = createAction({
     if (context.propsValue.description) {
       body.description = context.propsValue.description;
     }
-    if (context.propsValue.startDate || context.propsValue.endDate) {
-      body.project.startDate = context.propsValue.startDate;
-      body.project.endDate = context.propsValue.endDate;
-    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${apiUrl}/folders/${context.propsValue.parentFolderId}/folders`,
+      url: `${apiUrl}/folders/${context.propsValue.folderId}/folders`,
       body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

@@ -29,9 +29,9 @@ export const createTaskAction = createAction({
       description: 'Task status',
       required: false,
     }),
-    assignees: Property.ShortText({
-      displayName: 'Assignees',
-      description: 'Comma-separated list of user IDs to assign',
+    importance: Property.ShortText({
+      displayName: 'Importance',
+      description: 'Task importance (Low, Normal, High)',
       required: false,
     }),
     startDate: Property.ShortText({
@@ -57,8 +57,8 @@ export const createTaskAction = createAction({
     if (context.propsValue.status) {
       body.status = context.propsValue.status;
     }
-    if (context.propsValue.assignees) {
-      body.responsibles = context.propsValue.assignees.split(',').map((id: string) => id.trim());
+    if (context.propsValue.importance) {
+      body.responsibles = context.propsValue.importance.split(',').map((id: string) => id.trim());
     }
     if (context.propsValue.startDate || context.propsValue.dueDate) {
       body.dates = {};

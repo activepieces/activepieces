@@ -18,6 +18,16 @@ export const findFolderAction = createAction({
       description: 'Search by folder title',
       required: false,
     }),
+    withInvitations: Property.Checkbox({
+      displayName: 'Include Invitations',
+      description: 'Whether to include invitations in the response',
+      required: false,
+    }),
+    plainTextCustomFields: Property.Checkbox({
+      displayName: 'Plain Text Custom Fields',
+      description: 'Whether to return custom fields as plain text',
+      required: false,
+    }),
   },
   async run(context) {
     const apiUrl = await getWrikeApiUrl(context.auth);
@@ -37,6 +47,12 @@ export const findFolderAction = createAction({
     const params: any = {};
     if (context.propsValue.title) {
       params.title = context.propsValue.title;
+    }
+    if( context.propsValue.withInvitations !== undefined) {
+      params.withInvitations = context.propsValue.withInvitations;
+    }
+    if( context.propsValue.plainTextCustomFields !== undefined) {
+      params.plainTextCustomFields = context.propsValue.plainTextCustomFields;
     }
 
     const response = await httpClient.sendRequest({

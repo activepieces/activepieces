@@ -5,9 +5,8 @@ import { OAuth2GrantType } from '@activepieces/shared';
 export const wrikeAuth = PieceAuth.OAuth2({
   authUrl: 'https://www.wrike.com/oauth2/authorize/v4',
   tokenUrl: 'https://www.wrike.com/oauth2/token',
-  grantType: OAuth2GrantType.CLIENT_CREDENTIALS,
   required: true,
-  scope: ['Default', 'wsReadWrite'],
+  scope: [],
 });
 
 export const taskIdProp = {

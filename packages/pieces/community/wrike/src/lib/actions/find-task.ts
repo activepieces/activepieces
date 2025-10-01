@@ -14,14 +14,14 @@ export const findTaskAction = createAction({
       description: 'The exact task ID to retrieve',
       required: false,
     }),
-    title: Property.ShortText({
-      displayName: 'Title',
-      description: 'Search by task title',
+    withInvitations: Property.Checkbox({
+      displayName: 'Include Invitations',
+      description: 'Whether to include invitations in the response',  
       required: false,
     }),
-    folderId: Property.ShortText({
-      displayName: 'Folder ID',
-      description: 'Filter by folder ID',
+    plainTextCustomFields: Property.Checkbox({
+      displayName: 'Plain Text Custom Fields',
+      description: 'Whether to return custom fields as plain text',
       required: false,
     }),
   },
@@ -41,12 +41,12 @@ export const findTaskAction = createAction({
     }
 
     const params: any = {};
-    if (context.propsValue.title) {
-      params.title = context.propsValue.title;
-    }
-    if (context.propsValue.folderId) {
-      params.folderId = context.propsValue.folderId;
-    }
+    // if (context.propsValue.includeInvitations) {
+    //   params.title = context.propsValue.includeInvitations;
+    // }
+    // if (context.propsValue.plainTextCustomFields) {
+    //   params.folderId = context.propsValue.plainTextCustomFields;
+    // }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,

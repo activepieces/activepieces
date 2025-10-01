@@ -15,13 +15,21 @@ import { newSubtaskTrigger } from './lib/triggers/new-subtask-created';
 
 export const wrike = createPiece({
   displayName: 'Wrike',
+  description: 'Manage and track your work in Wrike',
   auth: wrikeAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wrike.png',
   authors: ['Ani-4x'],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     createTaskAction,
+    updateTaskAction,
+    createFolderAction,
+    createProjectAction,
+    addCommentAction,
+    uploadAttachmentAction,
+    findTaskAction,
+    findFolderAction,
   ],
   triggers: [
     newTaskTrigger,

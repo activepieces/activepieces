@@ -9,7 +9,7 @@ export const uploadAttachmentAction = createAction({
   displayName: 'Upload Attachment to Task',
   description: 'Upload a file and attach it to a task',
   props: {
-    taskId: Property.ShortText({
+    folderId: Property.ShortText({
       displayName: 'Task ID',
       description: 'The ID of the task',
       required: true,
@@ -30,8 +30,10 @@ export const uploadAttachmentAction = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${apiUrl}/tasks/${context.propsValue.taskId}/attachments`,
-      body: formData,
+      url: `${apiUrl}/tasks/${context.propsValue.folderId}/attachments`,
+      body: {
+       
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
