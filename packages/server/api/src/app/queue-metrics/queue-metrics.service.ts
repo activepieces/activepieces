@@ -13,12 +13,12 @@ export const queueMetricService = (log: FastifyBaseLogger) => ({
       Object.values(WorkerJobType).map(async jobType => ({
         jobType: jobType,
         stats: {
-          queued: await getStat(redis, jobType, WorkerJobStatus.QUEUED),
-          delayed: await getStat(redis, jobType, WorkerJobStatus.DELAYED),
-          retried: await getStat(redis, jobType, WorkerJobStatus.RETRYING),
-          active: await getStat(redis, jobType, WorkerJobStatus.ACTIVE),
-          failed: await getStat(redis, jobType, WorkerJobStatus.FAILED),
-          throttled: await getStat(redis, jobType, WorkerJobStatus.THROTTLED)
+          [WorkerJobStatus.QUEUED]: await getStat(redis, jobType, WorkerJobStatus.QUEUED),
+          [WorkerJobStatus.DELAYED]: await getStat(redis, jobType, WorkerJobStatus.DELAYED),
+          [WorkerJobStatus.RETRYING]: await getStat(redis, jobType, WorkerJobStatus.RETRYING),
+          [WorkerJobStatus.ACTIVE]: await getStat(redis, jobType, WorkerJobStatus.ACTIVE),
+          [WorkerJobStatus.FAILED]: await getStat(redis, jobType, WorkerJobStatus.FAILED),
+          [WorkerJobStatus.THROTTLED]: await getStat(redis, jobType, WorkerJobStatus.THROTTLED)
         }
       }))
     )

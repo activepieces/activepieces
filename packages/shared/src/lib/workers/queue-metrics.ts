@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common'
 import { WorkerJobType } from './job-data';
 
 export enum WorkerJobStatus {
@@ -20,13 +19,13 @@ export const ListQueueJobsRequestQuery = Type.Object({
 
 export type ListQueueJobsRequestQuery = Static<typeof ListQueueJobsRequestQuery>
 
-
 export const WorkerJobStats = Type.Object({
-    active: Type.Number(),
-    failed: Type.Number(),
-    retried: Type.Number(),
-    delayed: Type.Number(),
-    throttled: Type.Number(),
+    [WorkerJobStatus.ACTIVE]: Type.Number(),
+    [WorkerJobStatus.QUEUED]: Type.Number(),
+    [WorkerJobStatus.FAILED]: Type.Number(),
+    [WorkerJobStatus.RETRYING]: Type.Number(),
+    [WorkerJobStatus.DELAYED]: Type.Number(),
+    [WorkerJobStatus.THROTTLED]: Type.Number(),
 })
 
 export type WorkerJobStats = Static<typeof WorkerJobStats>
@@ -38,11 +37,3 @@ export const WorkerJobStatItem = Type.Object({
 
 export type WorkerJobStatItem = Static<typeof WorkerJobStatItem>;
 
-export const WorkerJobLog = Type.Object({
-    ...BaseModelSchema,
-    jobType: Type.String(),
-    status: Type.String(),
-    data: Type.Any(),
-  })
-
-export type WorkerJobLog = Static<typeof WorkerJobLog> 

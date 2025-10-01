@@ -1,100 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Activity } from 'lucide-react';
-
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Separator } from '@/components/ui/separator';
 import {
-  apId,
   WorkerJobType,
   WorkerJobStatItem,
-  WorkerJobLog,
+  WorkerJobStatus,
 } from '@activepieces/shared';
-
-import { LogsDataTable } from './logs-data-table';
 import { StatusLegend } from './status-legend';
 import { WorkerJobCard } from './worker-job-card';
-
-export const mockJobStats: WorkerJobStatItem[] = [
-  {
-    jobType: WorkerJobType.RENEW_WEBHOOK,
-    stats: { active: 5, failed: 2, retried: 3, delayed: 10, throttled: 0 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_POLLING,
-    stats: { active: 12, failed: 0, retried: 1, delayed: 25, throttled: 2 },
-  },
-  {
-    jobType: WorkerJobType.DELAYED_FLOW,
-    stats: { active: 0, failed: 5, retried: 8, delayed: 45, throttled: 0 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_WEBHOOK,
-    stats: { active: 8, failed: 3, retried: 4, delayed: 0, throttled: 0 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_FLOW,
-    stats: { active: 15, failed: 12, retried: 18, delayed: 5, throttled: 4 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_AGENT,
-    stats: { active: 3, failed: 1, retried: 2, delayed: 0, throttled: 0 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_VALIDATION,
-    stats: { active: 0, failed: 0, retried: 0, delayed: 2, throttled: 0 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
-    stats: { active: 6, failed: 4, retried: 7, delayed: 8, throttled: 1 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_PROPERTY,
-    stats: { active: 1, failed: 0, retried: 0, delayed: 0, throttled: 0 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-    stats: { active: 2, failed: 8, retried: 12, delayed: 3, throttled: 0 },
-  },
-  {
-    jobType: WorkerJobType.EXECUTE_TOOL,
-    stats: { active: 4, failed: 2, retried: 3, delayed: 1, throttled: 0 },
-  },
-];
-
-const generateMockLogs = (
-  jobType: WorkerJobType,
-  count: number,
-  status: string,
-): WorkerJobLog[] =>
-  Array.from({ length: count }, (_, i) => {
-    const now = new Date();
-    const created = new Date(now.getTime() - Math.random() * 10000000);
-    return {
-      id: apId(),
-      created: created.toISOString(),
-      updated: now.toISOString(),
-      jobType,
-      status,
-      data: {
-        message: `Log for ${jobType} job #${i} with status ${status}.`,
-        details: `This is mock data for a ${status.toLowerCase()} job.`,
-        flowId: `flow_${Math.random().toString(36).substring(7)}`,
-        runId: `run_${Math.random().toString(36).substring(7)}`,
-        error: status === 'failed' ? t('errorMessage') : null,
-      },
-    };
-  });
-
-export const allMockLogs: WorkerJobLog[] = Array.from({ length: 5 }, () =>
-  mockJobStats.flatMap(({ jobType, stats }: WorkerJobStatItem) => [
-    ...generateMockLogs(jobType, stats.active, 'active'),
-    ...generateMockLogs(jobType, stats.failed, 'failed'),
-    ...generateMockLogs(jobType, stats.retried, 'retrying'),
-    ...generateMockLogs(jobType, stats.delayed, 'delayed'),
-    ...generateMockLogs(jobType, stats.throttled, 'throttled'),
-  ]),
-).flat();
+import { queueMetricsApi } from '@/features/platform-admin/lib/queue-metrics-api';
 
 export const getJobTypeDescription = (jobType: WorkerJobType): string => {
   switch (jobType) {
@@ -125,52 +41,44 @@ export const getJobTypeDescription = (jobType: WorkerJobType): string => {
   }
 };
 
-export const getStatusLabel = (status: string): string => {
+export const getStatusLabel = (status: WorkerJobStatus): string => {
   switch (status) {
-    case 'active':
+    case WorkerJobStatus.ACTIVE:
       return t('statusActive');
-    case 'retrying':
+    case WorkerJobStatus.RETRYING:
       return t('statusRetrying');
-    case 'delayed':
+    case WorkerJobStatus.DELAYED:
       return t('statusDelayed');
-    case 'throttled':
+    case WorkerJobStatus.THROTTLED:
       return t('statusThrottled');
-    case 'failed':
+    case WorkerJobStatus.FAILED:
       return t('statusFailed');
-    default:
-      return t(status.toUpperCase());
+    case WorkerJobStatus.QUEUED:
+      return t('statusQueued');
   }
 };
 
-export const getStatusColor = (status: string) => {
+export const getStatusColor = (status: WorkerJobStatus) => {
   switch (status) {
-    case 'active':
-      return 'bg-blue-500';
-    case 'retrying':
+    case WorkerJobStatus.QUEUED:
       return 'bg-yellow-500';
-    case 'delayed':
+    case WorkerJobStatus.ACTIVE:
+      return 'bg-blue-500';
+    case WorkerJobStatus.RETRYING:
+      return 'bg-orange-500';
+    case WorkerJobStatus.DELAYED:
       return 'bg-purple-500';
-    case 'throttled':
+    case WorkerJobStatus.THROTTLED:
       return 'bg-gray-500';
-    case 'failed':
+    case WorkerJobStatus.FAILED:
       return 'bg-red-500';
-    default:
-      return 'bg-gray-500';
   }
 };
-
-export const STATUS_TYPES = [
-  'active',
-  'retrying',
-  'delayed',
-  'throttled',
-  'failed',
-];
 
 export default function SettingsJobsPage() {
   const { data: workerJobsStats, isLoading } = useQuery<WorkerJobStatItem[]>({
     queryKey: ['worker-job-stats'],
-    queryFn: async () => mockJobStats,
+    queryFn: async () => queueMetricsApi.getMetrics(),
     staleTime: 5000,
     refetchInterval: 5000,
   });
@@ -199,11 +107,6 @@ export default function SettingsJobsPage() {
         </div>
       )}
       <Separator className="my-4" />
-      <DashboardPageHeader
-        title={t('jobLogsTitle')}
-        description={t('jobLogsDescription')}
-      />
-      <LogsDataTable />
     </div>
   );
 }

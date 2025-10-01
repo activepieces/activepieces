@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import { AlertCircle, Info } from 'lucide-react';
-
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import {
   Tooltip,
@@ -8,8 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { WorkerJobType, WorkerJobStats } from '@activepieces/shared';
-
+import { WorkerJobType, WorkerJobStats, WorkerJobStatus } from '@activepieces/shared';
 import { MultiProgressBar } from './multi-progress-bar';
 
 export type WorkerJobCardProps = {
@@ -24,7 +22,7 @@ export const WorkerJobCard = ({
   description,
 }: WorkerJobCardProps) => {
   const cardClasses = `flex flex-col gap-3 border ${
-    stats.failed > 0 ? 'border-l-4 border-l-red-500 pl-3' : ''
+    stats[WorkerJobStatus.FAILED] > 0 ? 'border-l-4 border-l-red-500 pl-3' : ''
   }`;
 
   return (
@@ -48,10 +46,10 @@ export const WorkerJobCard = ({
       <CardContent className="flex flex-col gap-3 p-4 pt-0">
         <MultiProgressBar stats={stats} />
         <div className="mt-auto flex min-h-[18px] items-center justify-between pt-2 text-xs text-slate-500">
-          {stats.failed > 0 && (
+          {stats[WorkerJobStatus.FAILED] > 0 && (
             <span className="flex items-center font-bold text-red-600">
               <AlertCircle className="mr-1 h-4 w-4" />
-              {t('countFailed', { count: stats.failed })}
+              {t('countFailed', { count: stats[WorkerJobStatus.FAILED] })}
             </span>
           )}
         </div>

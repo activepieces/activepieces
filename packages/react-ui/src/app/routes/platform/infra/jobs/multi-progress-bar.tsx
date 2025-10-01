@@ -1,20 +1,12 @@
 import { t } from 'i18next';
-
 import { cn } from '@/lib/utils';
-import { WorkerJobStats } from '@activepieces/shared';
-
+import { WorkerJobStats, WorkerJobStatus } from '@activepieces/shared';
 import { getStatusColor } from '.';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMemo } from 'react';
 
 export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
-  const total = Object.values(stats).reduce((a, b) => a + b, 0);
-
-  const segments = [
-    { value: stats.active, color: getStatusColor('active') },
-    { value: stats.retried, color: getStatusColor('retrying') },
-    { value: stats.delayed, color: getStatusColor('delayed') },
-    { value: stats.throttled, color: getStatusColor('throttled') },
-    { value: stats.failed, color: getStatusColor('failed') },
-  ];
+  const total = useMemo(() => Object.values(stats).reduce((a, b) => a + b, 0), [stats]);
 
   if (total === 0) {
     return (
@@ -30,20 +22,29 @@ export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
   return (
     <div className="flex w-full items-center gap-3">
       <div className="flex h-5 flex-grow overflow-hidden rounded-full bg-muted text-xs font-bold text-white">
-        {segments.map((seg, index) => {
-          if (seg.value <= 0) return null;
-          const percentage = (seg.value / total) * 100;
+        {Object.values(WorkerJobStatus).map((status, index) => {
+          if (stats[status] <= 0) return null;
+          const percentage = (stats[status] / total) * 100;
           return (
-            <div
-              key={index}
-              className={cn(
-                'flex items-center justify-center transition-all duration-300',
-                seg.color,
-              )}
-              style={{ width: `${percentage}%` }}
-            >
-              <span className="drop-shadow-sm">{percentage.toFixed()}%</span>
-            </div>
+            <TooltipProvider key={index}>
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+              <div
+                key={index}
+                className={cn(
+                  'flex items-center justify-center transition-all duration-300',
+                  getStatusColor(status),
+                )}
+                style={{ width: `${percentage}%` }}
+              >
+                <span className="drop-shadow-sm">{percentage.toFixed()}%</span>
+              </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t(status)}
+              </TooltipContent>
+            </Tooltip>
+            </TooltipProvider>
           );
         })}
       </div>
