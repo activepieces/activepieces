@@ -1042,3 +1042,31 @@ function determineInitiallySelectedStep(
   return firstInvalidStep?.name ?? 'trigger';
 }
 
+export const useShowBuilderIsSavingWarningBeforeLeaving = (
+  isInEmbeddingMode: boolean,
+) => {
+  const isSaving = useBuilderStateContext((state) => state.saving);
+  useEffect(() => {
+    if (isInEmbeddingMode) {
+      return;
+    }
+    const message = t(
+      'Leaving this page while saving will discard your changes, are you sure you want to leave?',
+    );
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSaving) {
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    if (isSaving) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isSaving, isInEmbeddingMode]);
+};
