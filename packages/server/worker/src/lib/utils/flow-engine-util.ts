@@ -1,6 +1,12 @@
+import { readFile } from 'node:fs/promises'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { assertEqual, CodeAction, EXACT_VERSION_REGEX, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step } from '@activepieces/shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
+import {
+    assertEqual, CodeAction, EXACT_VERSION_REGEX, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion,
+    getPackageArchivePathForPiece, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step
+} from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
+import { PACKAGE_ARCHIVE_PATH } from '../piece-manager/piece-manager'
 import { CodeArtifact } from '../runner/engine-runner-types'
 
 export const pieceEngineUtil = {
@@ -35,8 +41,8 @@ export const pieceEngineUtil = {
                     pieceName: name,
                     pieceVersion: version,
                 })
+                const archive = await getArchive(engineToken, archiveId!)
 
-                const archive = await engineApiService(engineToken).getFile(archiveId!)
 
                 return {
                     packageType: pieceMetadata.packageType,
@@ -99,6 +105,19 @@ async function getPieceVersionAndArchiveId(engineToken: string, archiveId: strin
     return {
         pieceVersion: pieceMetadata.version,
         archiveId: pieceMetadata.archiveId!,
+    }
+}
+
+async function getArchive(engineToken: string, archiveId: string): Promise<Buffer> {
+    const archivePath = getPackageArchivePathForPiece({
+        archiveId: archiveId,
+        archivePath: PACKAGE_ARCHIVE_PATH,
+    })
+    const archiveExists = await fileSystemUtils.fileExists(archivePath)
+    if (archiveExists) {
+        return await readFile(archivePath)
+    } else {
+        return await engineApiService(engineToken).getFile(archiveId)
     }
 }
 
