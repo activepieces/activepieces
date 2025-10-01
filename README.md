@@ -28,7 +28,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
     target="_blank"
   ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
    <a
-    href="https://www.activepieces.com/docs/developers/overview"
+    href="https://www.activepieces.com/docs/developers/building-pieces/overview"
     target="_blank"
   ><b>Create a Piece</b></a>&nbsp;&nbsp;&nbsp;🖉&nbsp;&nbsp;&nbsp;
   <a
