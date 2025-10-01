@@ -6,12 +6,14 @@ import {
   LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
+  useShowBuilderIsSavingWarningBeforeLeaving,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
+import { useEmbedding } from '@/components/embed-provider';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { useSocket } from '@/components/socket-provider';
 import {
@@ -106,7 +108,11 @@ const BuilderPage = () => {
     state.canExitRun,
     state.selectedStep,
   ]);
+  const {
+    embedState: { isEmbedded },
+  } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  useShowBuilderIsSavingWarningBeforeLeaving(isEmbedded);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
