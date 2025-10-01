@@ -9,13 +9,7 @@ export const newFolderTrigger = createTrigger({
   displayName: 'New Folder',
   description: 'Fires when a new folder or project is created in Wrike',
   type: TriggerStrategy.POLLING,
-  props: {
-    folderId: Property.ShortText({
-      displayName: 'Folder ID',
-      description: 'The folder ID to monitor for new subfolders',
-      required: true,
-    }),
-  },
+  props: {},
   async onEnable(context) {
     await context.store.put('lastPollTime', new Date().toISOString());
   },
