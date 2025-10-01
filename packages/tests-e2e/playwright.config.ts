@@ -14,9 +14,6 @@ const editionConfigs = {
   ce: {
     testDir: './scenarios/ce',
   },
-  cloud: {
-    testDir: './scenarios/cloud',
-  },
   ee: {
     testDir: './scenarios/ee',
   },
@@ -37,6 +34,8 @@ const config: PlaywrightTestConfig = {
   workers: process.env.CI ? '100%' : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI ? 'github' : 'html',
+  /* Global setup to run once before all tests */
+  globalSetup: require.resolve('./global-setup'),
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
