@@ -1,9 +1,9 @@
 {
-  "Manage your WhatsApp business account": "管理您的 WhatsApp 业务账户",
-  "The auth token for Whatsable": "可Whatable 的认证令牌",
-  "Send Message": "发送消息",
-  "To": "收件人",
-  "Message": "留言",
-  "The recipient of the message": "消息接收者",
-  "The message to send": "要发送的消息"
+  "Manage your WhatsApp business account": "Manage your WhatsApp business account",
+  "The auth token for Whatsable": "The auth token for Whatsable",
+  "Send Message": "Send Message",
+  "To": "To",
+  "Message": "Message",
+  "The recipient of the message": "The recipient of the message",
+  "The message to send": "The message to send"
 }
