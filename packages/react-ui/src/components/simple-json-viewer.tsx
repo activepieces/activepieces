@@ -23,7 +23,8 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
   const [copied, setCopied] = useState(false);
   const { theme } = useTheme();
 
-  const formattedJson = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  const formattedJson =
+    typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(formattedJson);
@@ -77,14 +78,12 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
           boxSizing: 'border-box',
         }}
       >
-
-        {
-          typeof data === 'string' ? (
-            <pre className="text-sm whitespace-pre-wrap break-all overflow-x-auto p-2">
-              {data}
-            </pre>
-          ) : (
-            <div style={{ minWidth: 0, width: '100%', height: '100%' }}>
+        {typeof data === 'string' ? (
+          <pre className="text-sm whitespace-pre-wrap break-all overflow-x-auto p-2">
+            {data}
+          </pre>
+        ) : (
+          <div style={{ minWidth: 0, width: '100%', height: '100%' }}>
             <ReactJson
               style={{
                 overflowX: 'auto',
@@ -112,9 +111,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
               onDelete={readOnly ? false : undefined}
             />
           </div>
-          )
-        }
-
+        )}
       </div>
     </div>
   );
