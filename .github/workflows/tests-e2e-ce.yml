@@ -5,6 +5,10 @@ on:
   workflow_dispatch:
 
 env:
+  AP_DEV_PIECES: store,webhook
+  AP_PIECES_SYNC_MODE: NONE
+  AP_PIECES_SOURCE: FILE
+  AP_API_KEY: api-key
   AP_DB_TYPE: POSTGRES
   AP_POSTGRES_HOST: localhost
   AP_POSTGRES_PORT: 5432
