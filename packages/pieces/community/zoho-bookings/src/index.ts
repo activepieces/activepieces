@@ -5,9 +5,10 @@ import { rescheduleAppointment } from './lib/actions/reschedule-appointment';
 import { bookAppointment } from './lib/actions/book-appointment';
 import { getAppointmentDetails } from './lib/actions/get-appointment-details';
 import { zohoBookingsAuth } from './lib/common';
+import { PieceCategory } from '@activepieces/shared';
 
 export const zohoBookings = createPiece({
-  displayName: 'Zoho-bookings',
+  displayName: 'Zoho Bookings',
   description:
     'Zoho Bookings is an appointment scheduling software for managing bookings, services, and customer appointments.',
   auth: zohoBookingsAuth,

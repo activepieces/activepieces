@@ -49,7 +49,9 @@ export const zohoBookingsAuth = PieceAuth.OAuth2({
 
 export const zohoBookingsCommon = {
   baseUrl: (location = 'zoho.com') => {
-    return `https://www.zohoapis.${location}/bookings/v1/json`;
+    return `https://www.zohoapis.${location
+      .substring(5)
+      .trim()}/bookings/v1/json`;
   },
   baseHeaders: (accessToken: string) => {
     return {
@@ -57,7 +59,7 @@ export const zohoBookingsCommon = {
       'Content-Type': 'application/json',
     };
   },
-  
+
   // API Methods
   async fetchWorkspaces(accessToken: string, location: string) {
     const response = await httpClient.sendRequest({
@@ -69,7 +71,11 @@ export const zohoBookingsCommon = {
     return response.body?.response?.returnvalue?.data || [];
   },
 
-  async fetchServices(accessToken: string, location: string, workspaceId?: string) {
+  async fetchServices(
+    accessToken: string,
+    location: string,
+    workspaceId?: string
+  ) {
     const queryParams: Record<string, string> = {};
     if (workspaceId) {
       queryParams['workspace_id'] = workspaceId;
@@ -85,7 +91,11 @@ export const zohoBookingsCommon = {
     return response.body?.response?.returnvalue?.data || [];
   },
 
-  async fetchResources(accessToken: string, location: string, serviceId?: string) {
+  async fetchResources(
+    accessToken: string,
+    location: string,
+    serviceId?: string
+  ) {
     const queryParams: Record<string, string> = {};
     if (serviceId) {
       queryParams['service_id'] = serviceId;
@@ -117,39 +127,47 @@ export const zohoBookingsCommon = {
     return response.body?.response?.returnvalue?.data || [];
   },
 
-  async fetchAppointments(accessToken: string, location: string, options?: {
-    serviceId?: string;
-    staffId?: string;
-    status?: string;
-    page?: number;
-    perPage?: number;
-  }) {
-    const formData = new FormData();
-    
-    if (options?.serviceId) {
-      formData.append('service_id', options.serviceId);
+  async fetchAppointments(
+    accessToken: string,
+    location: string,
+    options?: {
+      serviceId?: string;
+      staffId?: string;
+      status?: string;
+      from_time?: string;
+      to_time?: string;
+      page?: number;
+      perPage?: number;
     }
-    if (options?.staffId) {
-      formData.append('staff_id', options.staffId);
-    }
-    if (options?.status) {
-      formData.append('status', options.status);
-    }
-    if (options?.page) {
-      formData.append('page', options.page.toString());
-    }
-    if (options?.perPage) {
-      formData.append('per_page', options.perPage.toString());
-    }
+  ) {
+    const payload: Record<string, string | number> = {};
 
+    // if (options?.staffId !== undefined) payload['staff_id'] = Number(options.staffId);
+    // if (options?.serviceId) payload['service_id'] = options.serviceId;
+    if (options?.from_time) payload['from_time'] = options.from_time;
+    // if (options?.to_time) payload['to_time'] = options.to_time;
+    // if (options?.status) payload['status'] = options.status;
+    // if (options?.page != null) payload['page'] = options.page;
+    // if (options?.perPage != null) payload['per_page'] = options.perPage;
+    // if (options?.need_customer_more_info != null) {
+    //   payload.need_customer_more_info = String(options.need_customer_more_info);
+    // }
+    // if (options?.customer_name) payload['customer_name'] = options.customer_name;
+    // if (options?.customer_email) payload['customer_email'] = options.customer_email;
+
+    // Send as multipart/form-data with a single `data` field
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(payload));
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${this.baseUrl(location)}/fetchappointment`,
       headers: {
         Authorization: `Zoho-oauthtoken ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: formData,
     });
+    console.log(JSON.stringify(response.body.response));
 
     return response.body?.response?.returnvalue?.response || [];
   },
@@ -161,3 +179,78 @@ export const zohoBookingsCommon = {
   getAppointmentDetailsSchema: schemas.getAppointmentDetails,
   cancelAppointmentSchema: schemas.cancelAppointment,
 };
+
+export const formatDateTime = (date: string) => {
+  const d = new Date(date);
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const day = d.getDate().toString().padStart(2, '0');
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  const hours = d.getHours().toString().padStart(2, '0');
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+  const seconds = d.getSeconds().toString().padStart(2, '0');
+
+  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+};
+
+export const bookingIdDropdown = Property.Dropdown({
+  displayName: 'Appointment',
+  description: 'Select the appointment to get details for',
+  required: true,
+  refreshers: ['from_time', 'to_time'],
+  options: async ({ auth, from_time, to_time }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Authentication required',
+        options: [],
+      };
+    }
+    if (!from_time) {
+      return {
+        disabled: true,
+        placeholder: 'Please select From Time first',
+        options: [],
+      };
+    }
+    const formattedFromTime = formatDateTime(from_time as string);
+    try {
+      const location = (auth as any).props?.['location'] || 'zoho.com';
+      const appointments = await zohoBookingsCommon.fetchAppointments(
+        (auth as any).access_token,
+        location,
+        {
+          perPage: 50,
+          from_time: formattedFromTime,
+          to_time: to_time ? formatDateTime(to_time as string) : undefined,
+        }
+      );
+      return {
+        options: appointments.map((appointment: any) => ({
+          label: `${appointment.booking_id} - ${appointment.customer_name} (${appointment.service_name}) - ${appointment.start_time} [${appointment.status}]`,
+          value: appointment.booking_id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        placeholder: 'Failed to load appointments',
+        options: [],
+      };
+    }
+  },
+});

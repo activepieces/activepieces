@@ -163,7 +163,7 @@ export const fetchAvailability = createAction({
     }),
     selected_date: Property.DateTime({
       displayName: 'Selected Date',
-      description: 'The date on which services are checked for availability (format: dd-MMM-yyyy HH:mm:ss)',
+      description: 'The date on which services are checked for availability (format: mm-dd-yyyy)',
       required: true,
     }),
   },
