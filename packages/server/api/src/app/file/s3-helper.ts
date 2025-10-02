@@ -68,7 +68,9 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             Key: s3Key,
             ResponseContentDisposition: `attachment; filename="${fileName}"`,
         })
-        return getSignedUrl(client, command)
+        return getSignedUrl(client, command, {
+            expiresIn: dayjs.duration(7, 'days').asSeconds(),
+        })
     },
     async putS3SignedUrl(s3Key: string, contentLength?: number | undefined): Promise<string> {
         const client = getS3Client()
@@ -78,7 +80,9 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             Expires: dayjs().add(executionRetentionInDays, 'days').toDate(),
             ContentLength: contentLength,
         })
-        return getSignedUrl(client, command)
+        return getSignedUrl(client, command, {
+            expiresIn: dayjs.duration(7, 'days').asSeconds(),
+        })
     },
     async deleteFiles(s3Keys: string[]): Promise<void> {
         if (s3Keys.length === 0) {
