@@ -132,12 +132,8 @@ jobs:
               });
               summary += "\n";
             }
-            
-            // Add artifacts section
-            summary += "### 📊 Test Artifacts\n\n";
 
-            summary += "\n---\n";
-            summary += `<sub>🤖 Automated E2E test results from [workflow run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>`;
+            summary += `🤖 Automated E2E test results from [workflow run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
             
             // Post comment
             await github.rest.issues.createComment({
