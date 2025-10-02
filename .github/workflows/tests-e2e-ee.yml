@@ -6,6 +6,10 @@ on:
 
 env:
   AP_EDITION: ee
+  AP_DEV_PIECES: store,webhook
+  AP_PIECES_SYNC_MODE: NONE
+  AP_PIECES_SOURCE: FILE
+  AP_API_KEY: api-key
   AP_LICENSE_KEY: ${{ secrets.EE_LICENSE_KEY }}
   AP_DB_TYPE: POSTGRES
   AP_POSTGRES_HOST: localhost
