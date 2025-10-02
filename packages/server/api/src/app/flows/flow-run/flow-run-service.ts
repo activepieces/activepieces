@@ -613,7 +613,6 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
-        priority: params.flowRun.environment === RunEnvironment.TESTING ? 'high' : isNil(params.synchronousHandlerId) ? 'low' : 'medium',
         data: {
             synchronousHandlerId: params.synchronousHandlerId ?? null,
             projectId: params.flowRun.projectId,

@@ -166,7 +166,7 @@ module.exports = {
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
         'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite',
-        'slide-in-from-bottom': 'slide-in-from-bottom 0.2s ease-out forwards' 
+        'slide-in-from-bottom': 'slide-in-from-bottom 0.2s ease-out forwards',
         'primary-color-pulse': 'primary-color-pulse 1s ease-in-out infinite alternate'
       },
       boxShadow: {

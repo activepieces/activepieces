@@ -6,6 +6,7 @@ import {
   LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
+  useShowBuilderIsSavingWarningBeforeLeaving,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
@@ -98,7 +99,9 @@ const BuilderPage = () => {
       state.run,
       state.selectedStep,
     ]);
+
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  useShowBuilderIsSavingWarningBeforeLeaving();
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {

@@ -317,6 +317,9 @@
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/community/data-summarizer/src/index.ts"
       ],
+      "@activepieces/piece-datadog": [
+        "packages/pieces/community/datadog/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
@@ -524,6 +527,9 @@
       ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
+      ],
+      "@activepieces/piece-hedy": [
+        "packages/pieces/community/hedy/src/index.ts"
       ],
       "@activepieces/piece-help-scout": [
         "packages/pieces/community/help-scout/src/index.ts"
@@ -1195,6 +1201,9 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-wrike": [
+        "packages/pieces/community/wrike/src/index.ts"
+      ],
       "@activepieces/piece-wufoo": [
         "packages/pieces/community/wufoo/src/index.ts"
       ],
@@ -1213,6 +1222,9 @@
       ],
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-bookings": [
+        "packages/pieces/community/zoho-bookings/src/index.ts"
       ],
       "@activepieces/piece-zoho-books": [
         "packages/pieces/community/zoho-books/src/index.ts"
