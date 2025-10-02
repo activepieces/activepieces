@@ -283,21 +283,13 @@ const StepSettingsContainer = () => {
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
-                </div>
-                {((selectedAction && Object.keys(actionPropsWithoutAuth).length > 0) || 
-                  (selectedTrigger && Object.keys(triggerPropsWithoutAuth).length > 0)) && (
-                  <div className="h-32" />
-                )}
-              </ScrollArea>
-              
-              {((selectedAction && Object.keys(actionPropsWithoutAuth).length > 0) || 
-                (selectedTrigger && Object.keys(triggerPropsWithoutAuth).length > 0)) && (
-                <AutoFieldsAccordion
+                  <AutoFieldsAccordion
                   props={selectedAction ? actionPropsWithoutAuth : triggerPropsWithoutAuth}
                   prefixValue="settings.input"
                   disabled={readonly}
                 />
-              )}
+                </div>
+              </ScrollArea>
             </ResizablePanel>
             {!readonly && (
               <>

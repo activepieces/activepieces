@@ -71,7 +71,7 @@ const AutoFieldsAccordion = React.memo(({ props, prefixValue, disabled }: AutoFi
   };
 
   return (
-    <div className="sticky bottom-0 px-4 pb-4 bg-white z-50">
+    <div className="sticky bottom-0 pb-4 bg-white z-50">
      <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       <div style={{
         background: 'conic-gradient(from 180deg at 50% 50%, #6217D6 0deg, #6217D6 50.19deg, #3DA8FF 95.19deg, #3DA8FF 202.56deg, rgba(61, 168, 255, 0.2) 236.33deg, rgba(198, 23, 214, 0.2) 281.26deg, #C617D6 286.94deg, #C617D6 335.39deg, #6217D6 360deg)',
