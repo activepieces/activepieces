@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
+import { t } from 'i18next';
 import {
   createContext,
   useContext,
@@ -32,6 +33,7 @@ import {
   FlowTriggerType,
   FlowActionType,
   LoopStepOutput,
+  debounce,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -58,7 +60,7 @@ import {
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
-const flowUpdatesQueue = new PromiseQueue();
+
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
 export function useBuilderStateContext<T>(
@@ -199,9 +201,17 @@ export type BuilderInitialState = Pick<
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
-
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set, get) => {
+    console.log('createBuilderStore');
+    const flowUpdatesQueue = new PromiseQueue();
+    const debouncedAddToFlowUpdatesQueue = debounce(
+      (updateRequest: () => Promise<void>) => {
+        flowUpdatesQueue.add(updateRequest);
+      },
+      1000,
+    );
+
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
@@ -473,9 +483,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           state.operationListeners.forEach((listener) => {
             listener(state.flowVersion, operation);
           });
-
+          set({ saving: true });
           const updateRequest = async () => {
-            set({ saving: true });
             try {
               const updatedFlowVersion = await flowsApi.update(
                 state.flow.id,
@@ -498,7 +507,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               flowUpdatesQueue.halt();
             }
           };
-          flowUpdatesQueue.add(updateRequest);
+          const isDebouncableOperation =
+            operation.type === FlowOperationType.UPDATE_TRIGGER ||
+            operation.type === FlowOperationType.UPDATE_ACTION;
+          if (isDebouncableOperation) {
+            debouncedAddToFlowUpdatesQueue(
+              operation.request.name,
+              updateRequest,
+            );
+          } else {
+            flowUpdatesQueue.add(updateRequest);
+          }
           return { flowVersion: newFlowVersion };
         }),
       setVersion: (flowVersion: FlowVersion) => {
@@ -1038,3 +1057,32 @@ function determineInitiallySelectedStep(
   }
   return firstInvalidStep?.name ?? 'trigger';
 }
+
+export const useShowBuilderIsSavingWarningBeforeLeaving = (
+  isInEmbeddingMode: boolean,
+) => {
+  const isSaving = useBuilderStateContext((state) => state.saving);
+  useEffect(() => {
+    if (isInEmbeddingMode) {
+      return;
+    }
+    const message = t(
+      'Leaving this page while saving will discard your changes, are you sure you want to leave?',
+    );
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSaving) {
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+      }
+    };
+
+    if (isSaving) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isSaving, isInEmbeddingMode]);
+};
