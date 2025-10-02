@@ -1,20 +1,77 @@
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { insightlyAuth } from "../common/auth";
+import { InsightlyClient } from '../common/client';
 
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-export const deletedRecord = createTrigger({
-    // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-    name: 'deletedRecord',
+export const deletedRecordTrigger = createTrigger({
+    auth: insightlyAuth,
+    name: 'deleted_record',
     displayName: 'Deleted Record',
-    description: 'Fires when a record is deleted.',
-    props: {},
-    sampleData: {},
-    type: TriggerStrategy.WEBHOOK,
-    async onEnable(context){
-        // implement webhook creation logic
+    description: 'Fires when a record is deleted. Note: This can be slow and API-intensive for large accounts.',
+    type: TriggerStrategy.POLLING,
+    props: {
+        object_type: Property.StaticDropdown({
+            displayName: 'Object Type',
+            description: 'The type of Insightly object to monitor for deletions.',
+            required: true,
+            options: {
+                options: [
+                    { label: 'Contact', value: 'Contacts' },
+                    { label: 'Lead', value: 'Leads' },
+                    { label: 'Opportunity', value: 'Opportunities' },
+                    { label: 'Organisation', value: 'Organisations' },
+                    { label: 'Project', value: 'Projects' },
+                    { label: 'Task', value: 'Tasks' },
+                ],
+            },
+        }),
     },
-    async onDisable(context){
-        // implement webhook deletion logic
+
+    async onEnable(context) {
+        const { apiKey, pod } = context.auth;
+        const { object_type } = context.propsValue;
+        const client = new InsightlyClient(apiKey, pod);
+
+        const allRecords = await client.fetchAllRecords(object_type);
+        const idKey = `${object_type.slice(0, -1).toUpperCase()}_ID`;
+        const recordIds = allRecords.map((r: any) => r[idKey]);
+
+        await context.store.put('knownRecordIds', recordIds);
     },
-    async run(context){
-        return [context.payload.body]
-    }
-})
+
+    async onDisable(context) {
+        await context.store.delete('knownRecordIds');
+    },
+
+    async run(context) {
+        const { apiKey, pod } = context.auth;
+        const { object_type } = context.propsValue;
+        const client = new InsightlyClient(apiKey, pod);
+        
+        const knownRecordIds = await context.store.get<number[]>('knownRecordIds') || [];
+        
+        const allRecords = await client.fetchAllRecords(object_type);
+        const idKey = `${object_type.slice(0, -1).toUpperCase()}_ID`;
+        const currentRecordIds = allRecords.map((r: any) => r[idKey]);
+
+        const deletedIds = knownRecordIds.filter(id => !currentRecordIds.includes(id));
+
+        await context.store.put('knownRecordIds', currentRecordIds);
+
+        return deletedIds.map(id => ({
+            id,
+            objectType: object_type,
+            deletedAt: new Date().toISOString(),
+        }));
+    },
+
+    async test() {
+        // Returns an empty array to avoid accidentally triggering during tests.
+        return [];
+    },
+
+    sampleData: {
+        id: 1234567,
+        objectType: 'Contacts',
+        deletedAt: '2025-10-26T10:00:00.000Z',
+    },
+});
