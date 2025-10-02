@@ -8,8 +8,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { fileRepo } from './file.service'
 
-const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
-
 export const s3Helper = (log: FastifyBaseLogger) => ({
     async constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): Promise<string> {
         const existingFile = await fileRepo().findOneBy({ id: fileId })
