@@ -1,5 +1,6 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { makeInsightlyRequest , insightlyAuth, INSIGHTLY_OBJECTS } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 
 
@@ -8,7 +9,7 @@ export const deletedRecordTrigger = createTrigger({
   name: 'deleted_record',
   displayName: 'Deleted Record',
   description: 'Fires when a record is deleted',
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   props: {
     objectType: Property.StaticDropdown({
       displayName: 'Object Type',
@@ -23,46 +24,37 @@ export const deletedRecordTrigger = createTrigger({
     }),
   },
   async onEnable(context) {
+    const webhookUrl = context.webhookUrl;
     const objectType = context.propsValue.objectType;
+    const webhookData = {
+      OBJECT_TYPE: objectType.toUpperCase().slice(0, -1), // Remove 's' from plural
+      EVENT_TYPE: 'DELETE',
+      WEBHOOK_URL: webhookUrl,
+    };
+
     const response = await makeInsightlyRequest(
       context.auth,
-      `/${objectType}?brief=true`
+      '/Webhooks',
+      HttpMethod.POST,
+      webhookData
     );
-    const records = response.body || [];
-    const recordIds = records.map((r: any) => {
-      return r.CONTACT_ID || r.LEAD_ID || r.OPPORTUNITY_ID || 
-             r.ORGANISATION_ID || r.PROJECT_ID || r.TASK_ID || 
-             r.EVENT_ID || r.NOTE_ID || r.EMAIL_ID;
-    });
-    await context.store.put('knownRecordIds', recordIds);
+    await context.store.put('webhookId', response.body.WEBHOOK_ID);
   },
   async onDisable(context) {
-    await context.store.delete('knownRecordIds');
+    const webhookId = await context.store.get<number>('webhookId');
+    
+    if (webhookId) {
+      await makeInsightlyRequest(
+        context.auth,
+        `/Webhooks/${webhookId}`,
+        HttpMethod.DELETE
+      );
+    }
+    
+    await context.store.delete('webhookId');
   },
   async run(context) {
-    const objectType = context.propsValue.objectType;
-    const knownRecordIds = await context.store.get<number[]>('knownRecordIds') || [];
-    
-    const response = await makeInsightlyRequest(
-      context.auth,
-      `/${objectType}?brief=true`
-    );
-    
-    const records = response.body || [];
-    const currentRecordIds = records.map((r: any) => {
-      return r.CONTACT_ID || r.LEAD_ID || r.OPPORTUNITY_ID || 
-             r.ORGANISATION_ID || r.PROJECT_ID || r.TASK_ID || 
-             r.EVENT_ID || r.NOTE_ID || r.EMAIL_ID;
-    });
-    const deletedIds = knownRecordIds.filter(id => !currentRecordIds.includes(id));
-    
-    await context.store.put('knownRecordIds', currentRecordIds);
-    
-    return deletedIds.map(id => ({
-      id,
-      objectType,
-      deletedAt: new Date().toISOString(),
-    }));
+    return [context.payload.body];
   },
   async test(context) {
     return [];
