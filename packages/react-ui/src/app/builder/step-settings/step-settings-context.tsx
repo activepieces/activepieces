@@ -57,18 +57,18 @@ export const StepSettingsProvider = ({
   children,
 }: StepSettingsProviderProps) => {
   const [formSchema, setFormSchema] = useState<TObject<any>>(
-    Type.Object(Type.Any()),
+    Type.Object(Type.Unknown()),
   );
-  const formSchemaRef = useRef<boolean>(false);
+  const formSchemaInitializedRef = useRef<boolean>(false);
 
-  if (!formSchemaRef.current && selectedStep) {
+  if (!formSchemaInitializedRef.current && selectedStep) {
     const schema = formUtils.buildPieceSchema(
       selectedStep.type,
       selectedStep.settings.actionName ?? selectedStep.settings.triggerName,
       pieceModel ?? null,
       selectedStep.settings.propertySettings,
     );
-    formSchemaRef.current = true;
+    formSchemaInitializedRef.current = true;
     setFormSchema(schema as TObject<any>);
   }
 

@@ -79,42 +79,18 @@ const StepSettingsContainer = () => {
     currentValuesRef.current = defaultValues;
     form.reset(defaultValues);
     form.trigger();
-    if (defaultValues.type === FlowActionType.LOOP_ON_ITEMS) {
-      //TODO: fix this, for some reason if the form is not triggered, the items input error is not shown
-      setTimeout(() => {
-        form.trigger('settings.items');
-      }, 1);
-    }
   }, [defaultValues]);
 
   //Needed to show new code from Ask AI
   useEffect(() => {
     form.reset(selectedStep);
     form.trigger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshStepFormSettingsToggle]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
-  const debouncedTrigger = useMemo(() => {
-    return debounce((newTrigger: FlowTrigger) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: newTrigger,
-      });
-    }, 200);
-  }, [applyOperation]);
-
-  const debouncedAction = useMemo(() => {
-    return debounce((newAction: FlowAction) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_ACTION,
-        request: newAction,
-      });
-    }, 200);
-  }, [applyOperation]);
   const currentValuesRef = useRef<FlowAction | FlowTrigger>(defaultValues);
   const form = useForm<FlowAction | FlowTrigger>({
     mode: 'all',
@@ -146,9 +122,15 @@ const StepSettingsContainer = () => {
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
-        debouncedTrigger({ ...cleanedNewValues, valid });
+        applyOperation({
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: { ...cleanedNewValues, valid },
+        });
       } else {
-        debouncedAction({ ...cleanedNewValues, valid });
+        applyOperation({
+          type: FlowOperationType.UPDATE_ACTION,
+          request: { ...cleanedNewValues, valid },
+        });
       }
       return result;
     },

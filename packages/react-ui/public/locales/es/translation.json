@@ -10,6 +10,7 @@
   "Support": "Soporte",
   "Runs": "Ejecutar",
   "Versions": "Versiones",
+  "Leaving this page while saving will discard your changes, are you sure you want to leave?": "",
   "Error generating code": "Error al generar código",
   "AI Copilot": "Copilota IA",
   "i.e Calculate the sum of a list...": "es decir, calcular la suma de una lista...",
