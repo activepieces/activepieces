@@ -528,7 +528,7 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
-      "@activepieces/piece-hedy":[
+      "@activepieces/piece-hedy": [
         "packages/pieces/community/hedy/src/index.ts"
       ],
       "@activepieces/piece-help-scout": [
@@ -936,6 +936,9 @@
       ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
+      ],
+      "@activepieces/piece-sender": [
+        "packages/pieces/community/sender/src/index.ts"
       ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
