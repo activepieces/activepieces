@@ -1184,7 +1184,7 @@
   "Permission Needed": "Permissão Necessária",
   "Draft": "",
   "Published": "",
-  "flowsImported": "{flowsCount, plural, one {}=0 {Nenhum fluxo importado} =1 {Fluxo importado com sucesso} other {Fluxos importados com sucesso}}",
+  "flowsImported": "{flowsCount, plural, =0 {0 flui importados} =1 {1 fluxo importado} other {# fluxos importados}}",
   "Template file is invalid": "Arquivo modelo é inválido",
   "No valid templates found. The following files failed to import: ": "Nenhum modelo válido encontrado. Os seguintes arquivos falharam ao importar: ",
   "Please select a file first": "Por favor, selecione um arquivo primeiro",
@@ -1375,5 +1375,6 @@
   "Activation failed, invalid license key": "A ativação falhou, chave de licença inválida",
   "Invalid Access": "Acesso Inválido",
   "Either the project does not exist or you do not have access to it.": "Ou o projeto não existe ou você não tem acesso a ele.",
-  "Yesterday": ""
+  "Yesterday": "",
+  "runsRetriedNote": "{runsCount, plural, =0 {0 execuções tentaram novamente} =1 {Uma corrida foi repetida} other {# execuções foram tentadas novamente}}"
 }
