@@ -5,20 +5,31 @@ on:
   workflow_dispatch:
 
 env:
-  AP_EDITION: ce
-  AP_DB_TYPE: SQLITE3
-  AP_ENCRYPTION_KEY: ${{ secrets.CE_ENCRYPTION_KEY }}
-  AP_JWT_SECRET: ${{ secrets.CE_JWT_SECRET }}
+  AP_DEV_PIECES: store,webhook
+  AP_PIECES_SYNC_MODE: NONE
+  AP_PIECES_SOURCE: FILE
+  AP_API_KEY: api-key
+  AP_DB_TYPE: POSTGRES
+  AP_POSTGRES_HOST: localhost
+  AP_POSTGRES_PORT: 5432
+  AP_POSTGRES_USERNAME: postgres
+  AP_POSTGRES_PASSWORD: postgres
+  AP_POSTGRES_DATABASE: activepieces
+  AP_POSTGRES_USE_SSL: "false"
+  AP_REDIS_URL: redis://localhost:6379
+  AP_QUEUE_MODE: REDIS
   AP_FRONTEND_URL: http://localhost:4200
   AP_WEBHOOK_TIMEOUT_SECONDS: "30"
-  AP_TRIGGER_DEFAULT_POLL_INTERVAL: "5"
+  AP_TRIGGER_DEFAULT_POLL_INTERVAL: "1"
   AP_EXECUTION_MODE: UNSANDBOXED
   AP_TELEMETRY_ENABLED: "false"
-  NODE_ENV: test
+  AP_ENVIRONMENT: test
+  AP_JWT_SECRET: "secret"
+  AP_ENCRYPTION_KEY: "fdbe51af3678563560972e4a912aee6d"
 
 jobs:
   test-e2e-ce:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 30
     
     services:
@@ -48,7 +59,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -63,8 +77,7 @@ jobs:
         
       - name: Run E2E tests
         run: |
-          cd packages/tests-e2e
-          npx playwright test
+          npm run test:e2e
         env:
           CI: true
           
@@ -74,7 +87,7 @@ jobs:
         with:
           name: playwright-report-ce
           path: packages/tests-e2e/playwright-report/
-          retention-days: 30
+          retention-days: 10
           
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -82,4 +95,4 @@ jobs:
         with:
           name: test-results-ce
           path: packages/tests-e2e/test-results/
-          retention-days: 30
+          retention-days: 10
