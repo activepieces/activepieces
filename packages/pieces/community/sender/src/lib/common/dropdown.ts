@@ -17,7 +17,8 @@ export const groupDropdown = Property.Dropdown({
         }
 
         try {
-            const groups = await makeRequest(auth as string, HttpMethod.GET, "/groups");
+            const response: any = await makeRequest(auth as string, HttpMethod.GET, "/groups");
+            const groups = response.data || [];
 
             return {
                 disabled: false,
@@ -51,7 +52,9 @@ export const subscriberDropdown = Property.MultiSelectDropdown<string>({
         }
 
         try {
-            const subscribers = await makeRequest(auth as string, HttpMethod.GET, "/subscribers");
+            const response: any = await makeRequest(auth as string, HttpMethod.GET, "/subscribers?limit=50");
+            const subscribers = response.data || [];
+
             return {
                 disabled: false,
                 options: subscribers.map((sub: any) => ({
@@ -84,13 +87,12 @@ export const campaignDropdown = Property.Dropdown({
         }
 
         try {
-    
+
             const response: any = await makeRequest(
                 auth as string,
                 HttpMethod.GET,
                 `/campaigns?limit=50&status=DRAFT`
             );
-
             const campaigns = response.data || [];
 
             return {

@@ -6,41 +6,54 @@ import { makeRequest } from "../common/client";
 
 export const newSubscriber = createTrigger({
     auth: SenderAuth,
-    name: 'newSubscriber',
-    displayName: 'New Subscriber',
-    description: 'Triggers when a new subscriber is added',
+    name: "newSubscriber",
+    displayName: "New Subscriber",
+    description: "Triggers when a new subscriber is added",
     props: {},
 
-    sampleData: {
-        id: "sub_123",
-        email: "john.doe@example.com",
-        first_name: "John",
-        last_name: "Doe",
-        phone: "+1234567890",
-        groups: ["b2vAR1"],
-        created: "2023-09-01 11:00:00",
-        updated: "2023-09-01 11:00:00"
-    },
+    sampleData: {},
 
     type: TriggerStrategy.WEBHOOK,
 
     async onEnable(context) {
         const body = {
             url: context.webhookUrl,
-            topic: 'subscribers/new',
+            events: ["subscriber.added"], 
         };
-        const response = await makeRequest(context.auth as string, HttpMethod.POST, '/account/webhooks', body);
-        await context.store?.put('webhookId', response.id);
+
+        const response = await makeRequest(
+            context.auth as string,
+            HttpMethod.POST,
+            "/webhooks", 
+            body
+        );
+
+        await context.store?.put("webhookId", response.body.data.id); 
     },
 
     async onDisable(context) {
-        const webhookId = await context.store?.get('webhookId');
+        const webhookId = await context.store?.get("webhookId");
         if (webhookId) {
-            await makeRequest(context.auth as string, HttpMethod.DELETE, `/account/webhooks/${webhookId}`);
+            await makeRequest(
+                context.auth as string,
+                HttpMethod.DELETE,
+                `/webhooks/${webhookId}`
+            );
         }
+        await context.store?.delete("webhookId");
     },
 
     async run(context) {
         return [context.payload.body];
+    },
+
+    async test(context) {
+        const response = await makeRequest(
+            context.auth as string,
+            HttpMethod.GET,
+            "/subscribers?limit=1"
+        );
+         const subscribers = response?.data ?? response?.body?.data ?? [];
+        return Array.isArray(subscribers) ? subscribers : [subscribers];
     },
 });

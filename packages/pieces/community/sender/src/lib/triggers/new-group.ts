@@ -9,35 +9,49 @@ export const newGroup = createTrigger({
     displayName: 'New Group',
     description: 'Triggers when a new group/list is created in Sender',
     props: {},
-
-    sampleData: {
-        id: "b2vAR1",
-        name: "VIP Subscribers",
-        description: "Group for VIP customers",
-        created: "2023-09-01 10:00:00",
-        modified: "2023-09-01 10:00:00",
-        subscriber_count: 15
-    },
-
+    sampleData: {},
     type: TriggerStrategy.WEBHOOK,
 
     async onEnable(context) {
         const body = {
             url: context.webhookUrl,
-            topic: 'groups/new',
+            events: ['group.created'],
         };
-        const response = await makeRequest(context.auth as string, HttpMethod.POST, '/account/webhooks', body);
-        await context.store?.put('webhookId', response.id);
+
+        const response = await makeRequest(
+            context.auth as string,
+            HttpMethod.POST,
+            '/webhooks',
+            body
+        );
+
+        await context.store?.put('webhookId', response.body.data.id);
     },
 
     async onDisable(context) {
-        const webhookId = await context.store?.get('webhookId');
+        const webhookId = await context.store?.get<string>('webhookId');
         if (webhookId) {
-            await makeRequest(context.auth as string, HttpMethod.DELETE, `/account/webhooks/${webhookId}`);
+            await makeRequest(
+                context.auth as string,
+                HttpMethod.DELETE,
+                `/webhooks/${webhookId}`
+            );
         }
+        await context.store?.delete('webhookId');
     },
 
     async run(context) {
         return [context.payload.body];
+    },
+
+    async test(context) {
+        const response = await makeRequest(
+            context.auth as string,
+            HttpMethod.GET,
+            '/groups?limit=1'
+        );
+        const groups = response?.data ?? response?.body?.data ?? [];
+
+        return Array.isArray(groups) ? groups : [groups];
     },
 });

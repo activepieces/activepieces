@@ -42,11 +42,7 @@ export const createCampaign = createAction({
         ],
       }
     }),
-    googleAnalytics: Property.Checkbox({
-      displayName: "Enable Google Analytics",
-      required: false,
-      defaultValue: false,
-    }),
+
     autoFollowupSubject: Property.ShortText({
       displayName: "Auto Follow-up Subject",
       required: false,
@@ -67,16 +63,22 @@ export const createCampaign = createAction({
         ],
       }
     }),
+
+    groups: groupDropdown,
+    content: Property.LongText({
+      displayName: "Campaign Content",
+      required: false,
+      description: "HTML or plain text content depending on Content Type",
+    }),
     autoFollowupActive: Property.Checkbox({
       displayName: "Activate Auto Follow-up",
       required: false,
       defaultValue: false,
     }),
-    groups: groupDropdown,
-    content: Property.LongText({
-      displayName: "Campaign Content",
-      required: true,
-      description: "HTML or plain text content depending on Content Type",
+    googleAnalytics: Property.Checkbox({
+      displayName: "Enable Google Analytics",
+      required: false,
+      defaultValue: false,
     }),
   },
 
