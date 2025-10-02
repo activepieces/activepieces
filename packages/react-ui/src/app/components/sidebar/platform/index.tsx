@@ -195,6 +195,13 @@ export function PlatformSidebar() {
           isSubItem: true,
           show: true,
         },
+        {
+          type: 'link',
+          to: '/platform/infrastructure/outgoing-webhooks',
+          label: t('Outgoing Webhooks'),
+          isSubItem: true,
+          show: true,
+        },
       ],
     },
   ];

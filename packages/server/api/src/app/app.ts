@@ -91,6 +91,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { jobQueueWorker } from './workers/queue/job-queue-worker'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import { outgoingWebhooksModule } from './outging-webhooks/outgoing-webhooks.module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -215,6 +216,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoActivityModule)
     await app.register(agentRunsModule)
     await app.register(solutionsModule)
+    await app.register(outgoingWebhooksModule)
 
     app.get(
         '/redirect',
