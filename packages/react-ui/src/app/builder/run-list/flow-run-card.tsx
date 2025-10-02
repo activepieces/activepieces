@@ -121,7 +121,9 @@ const FlowRunCard = React.memo(
 
     return (
       <CardListItem
-        className={'px-3 group'}
+        className={cn('px-3 group', {
+          'bg-accent text-accent-foreground': run.id === viewedRunId,
+        })}
         style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {
           if (!isFetchingRun) {
