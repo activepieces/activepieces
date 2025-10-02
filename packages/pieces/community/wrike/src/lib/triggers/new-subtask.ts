@@ -5,10 +5,7 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import {
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { wrikeCommon } from '../common/client';
 
 export const newSubtask = createTrigger({
@@ -20,26 +17,18 @@ export const newSubtask = createTrigger({
   props: {
     parentTaskId: Property.ShortText({
       displayName: 'Parent Task ID',
-      description: 'Optional: Only trigger for subtasks created under this specific parent task',
+      description:
+        'Optional: Only trigger for subtasks created under this specific parent task',
       required: false,
     }),
   },
   sampleData: {
-    id: 'IEAAAAAQKQ',
-    title: 'Sample Subtask',
-    description: 'This is a sample subtask description',
-    status: 'New',
-    importance: 'Normal',
-    createdDate: '2024-01-15T10:00:00Z',
-    updatedDate: '2024-01-15T10:00:00Z',
-    dates: {
-      start: '2024-01-15T10:00:00Z',
-      due: '2024-01-20T17:00:00Z',
-    },
-    responsibles: ['IEAAAAAQKQ'],
-    authorId: 'IEAAAAAQKQ',
-    parentIds: ['IEAAAAAQKQ'],
-    superTaskIds: ['IEAAAAAQKQ'],
+    addedParents: ['IEAAABDCI4AB5FLD', 'IEAAABDCI4AB5FLE'],
+    taskId: 'IEAAABDCKQAB5FLC',
+    webhookId: 'IEAAABDCJAAAABAW',
+    eventAuthorId: 'KUAAABKY',
+    eventType: 'TaskParentsAdded',
+    lastUpdatedDate: '2024-09-05T07:22:25Z',
   },
 
   onEnable: async (context) => {
@@ -48,8 +37,6 @@ export const newSubtask = createTrigger({
 
     const webhookData: Record<string, any> = {
       hookUrl: webhookUrl,
-      hookEvents: ['subtask_created'],
-      hookName: `ActivePieces New Subtask Webhook${parentTaskId ? ` - Parent ${parentTaskId}` : ''}`,
     };
 
     if (parentTaskId) {
@@ -68,7 +55,11 @@ export const newSubtask = createTrigger({
 
     const { status, body } = await httpClient.sendRequest(request);
     if (status !== 200) {
-      throw new Error(`Failed to register webhook. Status: ${status}, Body: ${JSON.stringify(body)}`);
+      throw new Error(
+        `Failed to register webhook. Status: ${status}, Body: ${JSON.stringify(
+          body
+        )}`
+      );
     }
 
     await context.store.put('webhook_id', body.data[0].id);
@@ -98,19 +89,8 @@ export const newSubtask = createTrigger({
   run: async (context) => {
     const payload = context.payload.body as any;
 
-    if (payload && payload.taskId) {
-      try {
-        const subtaskDetails = await wrikeCommon.apiCall({
-          auth: context.auth,
-          method: HttpMethod.GET,
-          resourceUri: `/tasks/${payload.taskId}`,
-        });
-
-        return [subtaskDetails.body.data[0]];
-      } catch (error) {
-        console.warn('Failed to fetch subtask details:', error);
-        return [payload];
-      }
+    if (payload && payload.eventType === 'TaskParentsAdded') {
+      return payload;
     }
 
     return [payload];

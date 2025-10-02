@@ -5,10 +5,7 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import {
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { wrikeCommon } from '../common/client';
 
 export const newFolder = createTrigger({
@@ -20,20 +17,17 @@ export const newFolder = createTrigger({
   props: {
     parentFolderId: Property.ShortText({
       displayName: 'Parent Folder ID',
-      description: 'Optional: Only trigger for folders created in this specific parent folder',
+      description:
+        'Optional: Only trigger for folders created in this specific parent folder',
       required: false,
     }),
   },
   sampleData: {
-    id: 'IEAAAAAQKQ',
-    title: 'Sample Folder',
-    description: 'This is a sample folder description',
-    createdDate: '2024-01-15T10:00:00Z',
-    updatedDate: '2024-01-15T10:00:00Z',
-    scope: 'WsWorkspace',
-    childIds: [],
-    parentIds: ['IEAAAAAQKQ'],
-    project: null,
+    folderId: 'IEAAABDMI4AB5FML',
+    webhookId: 'IEAAABDMJAAAABA7',
+    eventAuthorId: 'KUAAABLG',
+    eventType: 'FolderCreated',
+    lastUpdatedDate: '2024-09-05T07:49:34Z',
   },
 
   onEnable: async (context) => {
@@ -42,8 +36,6 @@ export const newFolder = createTrigger({
 
     const webhookData: Record<string, any> = {
       hookUrl: webhookUrl,
-      hookEvents: ['folder_created'],
-      hookName: `ActivePieces New Folder Webhook${parentFolderId ? ` - Parent ${parentFolderId}` : ''}`,
     };
 
     if (parentFolderId) {
@@ -62,7 +54,11 @@ export const newFolder = createTrigger({
 
     const { status, body } = await httpClient.sendRequest(request);
     if (status !== 200) {
-      throw new Error(`Failed to register webhook. Status: ${status}, Body: ${JSON.stringify(body)}`);
+      throw new Error(
+        `Failed to register webhook. Status: ${status}, Body: ${JSON.stringify(
+          body
+        )}`
+      );
     }
 
     await context.store.put('webhook_id', body.data[0].id);
@@ -92,21 +88,10 @@ export const newFolder = createTrigger({
   run: async (context) => {
     const payload = context.payload.body as any;
 
-    if (payload && payload.folderId) {
-      try {
-        const folderDetails = await wrikeCommon.apiCall({
-          auth: context.auth,
-          method: HttpMethod.GET,
-          resourceUri: `/folders/${payload.folderId}`,
-        });
-
-        return [folderDetails.body.data[0]];
-      } catch (error) {
-        console.warn('Failed to fetch folder details:', error);
-        return [payload];
-      }
+    if (payload && payload.eventType === 'FolderCreated') {
+      return payload;
     }
 
-    return [payload];
+    return [];
   },
 });

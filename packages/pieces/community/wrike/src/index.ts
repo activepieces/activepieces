@@ -21,7 +21,7 @@ export const wrike = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/wrike.png",
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['owuzo'],
+  authors: ['owuzo','sanket-a11y'],
   actions: [
     createTask,
     updateTask,

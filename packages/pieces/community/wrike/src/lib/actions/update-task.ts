@@ -63,12 +63,12 @@ export const updateTask = createAction({
         }),
         start_date: Property.DateTime({
             displayName: 'Start Date',
-            description: 'Task start date',
+            description: 'Task start date (format: YYYY-MM-DD)',
             required: false,
         }),
         due_date: Property.DateTime({
             displayName: 'Due Date',
-            description: 'Task due date',
+            description: 'Task due date (format: YYYY-MM-DD)',
             required: false,
         }),
         duration: Property.Number({

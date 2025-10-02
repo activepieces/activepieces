@@ -48,12 +48,12 @@ export const createProject = createAction({
         }),
         start_date: Property.DateTime({
             displayName: 'Start Date',
-            description: 'Project start date',
+            description: 'Project start date (format: YYYY-MM-DD)',
             required: false,
         }),
         end_date: Property.DateTime({
             displayName: 'End Date',
-            description: 'Project end date',
+            description: 'Project end date (format: YYYY-MM-DD)',
             required: false,
         }),
     },
@@ -68,9 +68,7 @@ export const createProject = createAction({
 
         if (ownerIds && ownerIds.length > 0) {
             projectData['project']['ownerIds'] = ownerIds.map((owner: any) => owner.userId);
-        } else {
-            projectData['project']['ownerIds'] = [context.auth.access_token.split('.')[0]];
-        }
+        } 
 
         if (description) projectData['description'] = description;
 

@@ -5,40 +5,30 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import {
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { wrikeCommon } from '../common/client';
 
 export const newTask = createTrigger({
   name: 'new_task',
   displayName: 'New Task',
-  description: 'Fires when a new task is created in Wrike (optionally within a folder).',
+  description:
+    'Fires when a new task is created in Wrike (optionally within a folder).',
   auth: wrikeAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {
     folderId: Property.ShortText({
       displayName: 'Folder ID',
-      description: 'Optional: Only trigger for tasks created in this specific folder',
+      description:
+        'Optional: Only trigger for tasks created in this specific folder',
       required: false,
     }),
   },
   sampleData: {
-    id: 'IEAAAAAQKQ',
-    title: 'Sample Task',
-    description: 'This is a sample task description',
-    status: 'New',
-    importance: 'Normal',
-    createdDate: '2024-01-15T10:00:00Z',
-    updatedDate: '2024-01-15T10:00:00Z',
-    dates: {
-      start: '2024-01-15T10:00:00Z',
-      due: '2024-01-20T17:00:00Z',
-    },
-    responsibles: ['IEAAAAAQKQ'],
-    authorId: 'IEAAAAAQKQ',
-    parentIds: ['IEAAAAAQKQ'],
+    webhookId: 'IEAAABC6JAAAABAS',
+    eventAuthorId: 'KUAAABKU',
+    eventType: 'TaskCreated',
+    taskId: 'IEAAABC6KQAB5FKW',
+    lastUpdatedDate: '2016-10-10T11:33:28Z',
   },
 
   onEnable: async (context) => {
@@ -47,8 +37,6 @@ export const newTask = createTrigger({
 
     const webhookData: Record<string, any> = {
       hookUrl: webhookUrl,
-      hookEvents: ['task_created'],
-      hookName: `ActivePieces New Task Webhook${folderId ? ` - Folder ${folderId}` : ''}`,
     };
 
     if (folderId) {
@@ -67,7 +55,11 @@ export const newTask = createTrigger({
 
     const { status, body } = await httpClient.sendRequest(request);
     if (status !== 200) {
-      throw new Error(`Failed to register webhook. Status: ${status}, Body: ${JSON.stringify(body)}`);
+      throw new Error(
+        `Failed to register webhook. Status: ${status}, Body: ${JSON.stringify(
+          body
+        )}`
+      );
     }
 
     await context.store.put('webhook_id', body.data[0].id);
@@ -97,21 +89,9 @@ export const newTask = createTrigger({
   run: async (context) => {
     const payload = context.payload.body as any;
 
-    if (payload && payload.taskId) {
-      try {
-        const taskDetails = await wrikeCommon.apiCall({
-          auth: context.auth,
-          method: HttpMethod.GET,
-          resourceUri: `/tasks/${payload.taskId}`,
-        });
-
-        return [taskDetails.body.data[0]];
-      } catch (error) {
-        console.warn('Failed to fetch task details:', error);
-        return [payload];
-      }
+    if (payload && payload.eventType === 'TaskCreated') {
+      return payload.data;
     }
-
-    return [payload];
+    return [];
   },
 });

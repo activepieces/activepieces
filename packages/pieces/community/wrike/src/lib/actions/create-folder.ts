@@ -50,12 +50,12 @@ export const createFolder = createAction({
         }),
         projectStartDate: Property.DateTime({
             displayName: 'Project Start Date',
-            description: 'The start date of the project',
+            description: 'The start date of the project (format: YYYY-MM-DD)',
             required: false,
         }),
         projectEndDate: Property.DateTime({
             displayName: 'Project End Date',
-            description: 'The end date of the project',
+            description: 'The end date of the project (format: YYYY-MM-DD)',
             required: false,
         }),
     },
