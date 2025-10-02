@@ -41,12 +41,15 @@ export const moveFileAction = createAction({
         const options: DropdownOption<string>[] = [];
         let response: PageCollection = await client
           .api(
-            `/sites/${siteId}/drives/${driveId}/root/children?$filter=file ne null&$select=id,name`
+            `/drives/${driveId}/root/children?$select=id,name,file`
+            // `/sites/${siteId}/drives/${driveId}/root/children?$select=id,name,file`
           )
           .get();
         while (response.value.length > 0) {
           for (const item of response.value as DriveItem[]) {
-            options.push({ label: item.name!, value: item.id! });
+            if (item.file) {
+                options.push({ label: item.name!, value: item.id! });
+            }
           }
           if (response['@odata.nextLink']) {
             response = await client.api(response['@odata.nextLink']).get();
@@ -83,6 +86,7 @@ export const moveFileAction = createAction({
         ];
         let response: PageCollection = await client
           .api(
+            // `/drives/${driveId}/root/children?$filter=folder ne null&$select=id,name`
             `/sites/${siteId}/drives/${driveId}/root/children?$filter=folder ne null&$select=id,name`
           )
           .get();
@@ -106,7 +110,7 @@ export const moveFileAction = createAction({
     }),
   },
   async run(context) {
-    const { siteId, driveId, fileId, destinationFolderId, newName } =
+    const { driveId, fileId, destinationFolderId, newName } =
       context.propsValue;
 
     const client = Client.initWithMiddleware({
@@ -115,28 +119,45 @@ export const moveFileAction = createAction({
       },
     });
 
+    try {
+      const effectiveDestinationId =
+        destinationFolderId === 'root'
+          ? (await client.api(`/drives/${driveId}/root`).get()).id
+          : destinationFolderId;
 
-    const effectiveDestinationId =
-      destinationFolderId === 'root'
-        ? (await client.api(`/drives/${driveId}/root`).get()).id
-        : destinationFolderId;
+      const requestBody: {
+        parentReference: { id?: string };
+        name?: string;
+      } = {
+        parentReference: {
+          id: effectiveDestinationId,
+        },
+      };
 
-    const requestBody: {
-      parentReference: { id: string };
-      name?: string;
-    } = {
-      parentReference: {
-        id: effectiveDestinationId,
-      },
-    };
+      if (newName) {
+        requestBody.name = newName;
+      }
 
-    if (newName) {
-      requestBody.name = newName;
+      const response = await client
+        .api(`/drives/${driveId}/items/${fileId}`)
+        .patch(requestBody);
+      
+      return {
+        success: true,
+        message: 'File moved successfully',
+        item: response,
+      };
+    } catch (error: any) {
+      if (error.statusCode === 400) {
+        throw new Error(`Invalid request: ${error.message || 'Check your input parameters'}`);
+      }
+      if (error.statusCode === 403) {
+        throw new Error('Insufficient permissions to move this file. Requires Files.ReadWrite or higher.');
+      }
+      if (error.statusCode === 404) {
+        throw new Error('File or destination not found. Please verify the IDs.');
+      }
+      throw new Error(`Failed to move file: ${error.message || 'Unknown error'}`);
     }
-
-
-    return await client
-      .api(`/sites/${siteId}/drive/items/${fileId}`)
-      .patch(requestBody);
   },
 });

@@ -91,7 +91,7 @@ export const microsoftSharePoint = createPiece({
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-sharepoint.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['kishanprmr'],
+  authors: ['kishanprmr', 'pranith124', 'onyedikachi-david'],
   actions: [
     createFolderAction,
     createListAction,

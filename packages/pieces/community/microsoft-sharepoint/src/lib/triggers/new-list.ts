@@ -37,18 +37,22 @@ export const newListTrigger = createTrigger({
       },
     });
 
-    const expirationDateTime = new Date();
-    expirationDateTime.setDate(expirationDateTime.getDate() + 2); 
+    try {
+      const expirationDateTime = new Date();
+      expirationDateTime.setDate(expirationDateTime.getDate() + 2); 
 
-    const subscription = await client.api('/subscriptions').post({
-      changeType: 'created',
-      notificationUrl: context.webhookUrl,
-      resource: `/sites/${siteId}/lists`,
-      expirationDateTime: expirationDateTime.toISOString(),
-      clientState: clientState,
-    });
+      const subscription = await client.api('/subscriptions').post({
+        changeType: 'created',
+        notificationUrl: context.webhookUrl,
+        resource: `/sites/${siteId}/lists`,
+        expirationDateTime: expirationDateTime.toISOString(),
+        clientState: clientState,
+      });
 
-    await context.store.put('subscriptionId', subscription.id);
+      await context.store.put('subscriptionId', subscription.id);
+    } catch (error: any) {
+      throw new Error(`Failed to create subscription: ${error.message || 'Unknown error'}`);
+    }
   },
 
   async onDisable(context) {
@@ -89,9 +93,12 @@ export const newListTrigger = createTrigger({
       
     const newListPayloads = [];
     for (const notification of validNotifications) {
-
-        const newList = await client.api(notification.resource).get();
-        newListPayloads.push(newList);
+        try {
+          const newList = await client.api(notification.resource).get();
+          newListPayloads.push(newList);
+        } catch (error) {
+          console.error('Error fetching list from notification:', error);
+        }
     }
     return newListPayloads;
   },

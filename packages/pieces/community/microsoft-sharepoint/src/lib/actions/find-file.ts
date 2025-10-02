@@ -82,7 +82,7 @@ export const findFileAction = createAction({
     }),
   },
   async run(context) {
-    const { siteId, driveId, findMethod, filePath, searchQuery, searchFolderId } = context.propsValue;
+    const { driveId, findMethod, filePath, searchQuery, searchFolderId } = context.propsValue;
 
     const client = Client.initWithMiddleware({
       authProvider: {
@@ -95,21 +95,25 @@ export const findFileAction = createAction({
 
         const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
         try {
-            const result = await client.api(`/sites/${siteId}/drive/root:/${encodeURI(cleanPath)}`).get();
-
-            return [result];
+            const result = await client.api(`/drives/${driveId}/root:/${encodeURI(cleanPath)}`).get();
+            return {
+                success: true,
+                files: [result]
+            };
         } catch(e) {
             const error = e as GraphError;
             if (error.statusCode === 404) {
-
-                return [];
+                return {
+                    success: true,
+                    files: []
+                };
             }
-            throw e;
+            throw new Error(`Failed to find file by path: ${error.message || 'Unknown error'}`);
         }
     } else { 
         if (!searchQuery) throw new Error("Search Query is required when searching by name.");
         
-        let searchUrl = `/sites/${siteId}/drive/`;
+        let searchUrl = `/drives/${driveId}/`;
         if (searchFolderId) {
             searchUrl += `items/${searchFolderId}/`;
         } else {
@@ -117,8 +121,15 @@ export const findFileAction = createAction({
         }
         searchUrl += `search(q='${encodeURIComponent(searchQuery)}')`;
 
-        const response = await client.api(searchUrl).get();
-        return response.value || [];
+        try {
+            const response = await client.api(searchUrl).get();
+            return {
+                success: true,
+                files: response.value || []
+            };
+        } catch (error: any) {
+            throw new Error(`Failed to search for file: ${error.message || 'Unknown error'}`);
+        }
     }
   },
 });

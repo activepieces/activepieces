@@ -46,7 +46,7 @@ export const newFileInFolderTrigger = createTrigger({
         ];
         let response: PageCollection = await client
           .api(
-            `/sites/${siteId}/drives/${driveId}/root/children?$filter=folder ne null&$select=id,name`
+            `/drives/${driveId}/root/children?$filter=folder ne null&$select=id,name`
           )
           .get();
         while (response.value.length > 0) {
@@ -91,23 +91,26 @@ export const newFileInFolderTrigger = createTrigger({
       },
     });
 
-    const effectiveFolderId = folderId === 'root'
-        ? (await client.api(`/drives/${driveId}/root`).get()).id
-        : folderId;
+    try {
+      const effectiveFolderId = folderId === 'root'
+          ? (await client.api(`/drives/${driveId}/root`).get()).id
+          : folderId;
 
+      const expirationDateTime = new Date();
+      expirationDateTime.setDate(expirationDateTime.getDate() + 2); 
 
-    const expirationDateTime = new Date();
-    expirationDateTime.setDate(expirationDateTime.getDate() + 2); 
+      const subscription = await client.api('/subscriptions').post({
+        changeType: 'created',
+        notificationUrl: context.webhookUrl,
+        resource: `/sites/${siteId}/drive/items/${effectiveFolderId}/children`,
+        expirationDateTime: expirationDateTime.toISOString(),
+        clientState: clientState,
+      });
 
-    const subscription = await client.api('/subscriptions').post({
-      changeType: 'created',
-      notificationUrl: context.webhookUrl,
-      resource: `/sites/${siteId}/drive/items/${effectiveFolderId}/children`,
-      expirationDateTime: expirationDateTime.toISOString(),
-      clientState: clientState,
-    });
-
-    await context.store.put('subscriptionId', subscription.id);
+      await context.store.put('subscriptionId', subscription.id);
+    } catch (error: any) {
+      throw new Error(`Failed to create subscription: ${error.message || 'Unknown error'}`);
+    }
   },
 
   async onDisable(context) {
@@ -150,9 +153,13 @@ export const newFileInFolderTrigger = createTrigger({
       
     const newFilePayloads = [];
     for (const notification of validNotifications) {
-        const newFile = await client.api(notification.resource).get();
-        if (newFile.file) { 
-            newFilePayloads.push(newFile);
+        try {
+          const newFile = await client.api(notification.resource).get();
+          if (newFile.file) { 
+              newFilePayloads.push(newFile);
+          }
+        } catch (error) {
+          console.error('Error fetching file from notification:', error);
         }
     }
     return newFilePayloads;

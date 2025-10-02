@@ -51,6 +51,7 @@ export const copyItemAction = createAction({
   async run(context) {
     const {
       siteId,
+      driveId,
       itemId,
       destination_drive_id,
       destination_folder_id,
@@ -77,11 +78,25 @@ export const copyItemAction = createAction({
       body.name = new_name;
     }
 
-    const initialResponse = await client
-      .api(`/sites/${siteId}/drive/items/${itemId}/copy`)
-      .responseType(ResponseType.RAW)
-      .query({ '@microsoft.graph.conflictBehavior': conflict_behavior })
-      .post(body);
+    let initialResponse;
+    try {
+      initialResponse = await client
+        .api(`/drives/${driveId}/items/${itemId}/copy`)
+        .responseType(ResponseType.RAW)
+        .query({ '@microsoft.graph.conflictBehavior': conflict_behavior })
+        .post(body);
+    } catch (error: any) {
+      if (error.statusCode === 400) {
+        throw new Error(`Invalid request: ${error.message || 'Check your input parameters'}`);
+      }
+      if (error.statusCode === 403) {
+        throw new Error('Insufficient permissions to copy this item. Requires Files.ReadWrite or higher.');
+      }
+      if (error.statusCode === 404) {
+        throw new Error('Source item not found. Please verify the site, drive, and item IDs.');
+      }
+      throw new Error(`Failed to initiate copy operation: ${error.message || 'Unknown error'}`);
+    }
 
     const monitorUrl = initialResponse.headers.get('Location');
     if (!monitorUrl) {
@@ -92,17 +107,23 @@ export const copyItemAction = createAction({
     while (attempts > 0) {
       const monitorResponse = await client.api(monitorUrl).get();
       if (monitorResponse.status === 'completed') {
-        return monitorResponse;
+        return {
+          success: true,
+          status: 'completed',
+          resourceId: monitorResponse.resourceId,
+          resourceLocation: monitorResponse.resourceLocation,
+        };
       }
       if (monitorResponse.status === 'failed') {
-        throw new Error(
-          `Copy job failed: ${monitorResponse.error?.message || 'Unknown error'}`
-        );
+        const errorDetails = monitorResponse.error?.details
+          ? monitorResponse.error.details.map((d: any) => d.message || d.code).join(', ')
+          : monitorResponse.error?.message || 'Unknown error';
+        throw new Error(`Copy operation failed: ${errorDetails}`);
       }
       await delay(polling_delay_ms);
       attempts--;
     }
 
-    throw new Error('Copy operation timed out.');
+    throw new Error('Copy operation timed out after 120 seconds.');
   },
 });

@@ -46,7 +46,7 @@ export const newFileInSubfoldersTrigger = createTrigger({
         ];
         let response: PageCollection = await client
           .api(
-            `/sites/${siteId}/drives/${driveId}/root/children?$filter=folder ne null&$select=id,name`
+            `/drives/${driveId}/root/children?$filter=folder ne null&$select=id,name`
           )
           .get();
         while (response.value.length > 0) {
@@ -85,34 +85,36 @@ export const newFileInSubfoldersTrigger = createTrigger({
       },
     });
 
-    const effectiveParentId = parentFolderId === 'root'
-        ? (await client.api(`/drives/${driveId}/root`).get()).id
-        : parentFolderId;
-    
+    try {
+      const effectiveParentId = parentFolderId === 'root'
+          ? (await client.api(`/drives/${driveId}/root`).get()).id
+          : parentFolderId;
 
-    const subfoldersResponse = await client.api(`/sites/${siteId}/drive/items/${effectiveParentId}/children?$filter=folder ne null&$select=id`).get();
-    const subfolders = subfoldersResponse.value as DriveItem[];
+      const subfoldersResponse = await client.api(`/drives/${driveId}/items/${effectiveParentId}/children?$filter=folder ne null&$select=id`).get();
+      const subfolders = subfoldersResponse.value as DriveItem[];
 
-    const expirationDateTime = new Date();
-    expirationDateTime.setDate(expirationDateTime.getDate() + 2);
+      const expirationDateTime = new Date();
+      expirationDateTime.setDate(expirationDateTime.getDate() + 2);
 
+      const subscriptionPromises = subfolders.map(folder => 
+          client.api('/subscriptions').post({
+              changeType: 'created',
+              notificationUrl: context.webhookUrl,
+              resource: `/sites/${siteId}/drive/items/${folder.id}/children`,
+              expirationDateTime: expirationDateTime.toISOString(),
+              clientState: clientState,
+          })
+      );
+      
+      const settledSubscriptions = await Promise.allSettled(subscriptionPromises);
+      const subscriptionIds = settledSubscriptions
+          .filter(res => res.status === 'fulfilled')
+          .map(res => (res as PromiseFulfilledResult<any>).value.id);
 
-    const subscriptionPromises = subfolders.map(folder => 
-        client.api('/subscriptions').post({
-            changeType: 'created',
-            notificationUrl: context.webhookUrl,
-            resource: `/sites/${siteId}/drive/items/${folder.id}/children`,
-            expirationDateTime: expirationDateTime.toISOString(),
-            clientState: clientState,
-        })
-    );
-    
-    const settledSubscriptions = await Promise.allSettled(subscriptionPromises);
-    const subscriptionIds = settledSubscriptions
-        .filter(res => res.status === 'fulfilled')
-        .map(res => (res as PromiseFulfilledResult<any>).value.id);
-
-    await context.store.put('subscriptionIds', subscriptionIds);
+      await context.store.put('subscriptionIds', subscriptionIds);
+    } catch (error: any) {
+      throw new Error(`Failed to create subscriptions: ${error.message || 'Unknown error'}`);
+    }
   },
 
   async onDisable(context) {
@@ -152,9 +154,13 @@ export const newFileInSubfoldersTrigger = createTrigger({
       
     const newFilePayloads = [];
     for (const notification of validNotifications) {
-        const newFile = await client.api(notification.resource).get();
-        if (newFile.file) { 
-            newFilePayloads.push(newFile);
+        try {
+          const newFile = await client.api(notification.resource).get();
+          if (newFile.file) { 
+              newFilePayloads.push(newFile);
+          }
+        } catch (error) {
+          console.error('Error fetching file from notification:', error);
         }
     }
     return newFilePayloads;

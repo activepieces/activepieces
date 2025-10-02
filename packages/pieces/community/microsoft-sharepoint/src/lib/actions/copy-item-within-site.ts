@@ -101,34 +101,42 @@ export const copyItemWithinSiteAction = createAction({
       },
     });
 
+    const effectiveDestinationId = destinationFolderId === 'root'
+      ? (await client.api(`/drives/${driveId}/root`).get()).id
+      : destinationFolderId;
+
     const body: {
-        parentReference: { id: string };
+        parentReference: { id?: string };
         name?: string;
-        '@microsoft.graph.conflictBehavior'?: string;
     } = {
         parentReference: {
-            id: destinationFolderId,
+            id: effectiveDestinationId,
         },
     };
 
     if (newName) {
       body.name = newName;
     }
-    if (conflictBehavior) {
-        body['@microsoft.graph.conflictBehavior'] = conflictBehavior;
+
+    let initialResponse;
+    try {
+      initialResponse = await client
+        .api(`/drives/${driveId}/items/${itemId}/copy`)
+        .responseType(ResponseType.RAW)
+        .query({ '@microsoft.graph.conflictBehavior': conflictBehavior })
+        .post(body);
+    } catch (error: any) {
+      if (error.statusCode === 400) {
+        throw new Error(`Invalid request: ${error.message || 'Check your input parameters'}`);
+      }
+      if (error.statusCode === 403) {
+        throw new Error('Insufficient permissions to copy this item. Requires Files.ReadWrite or higher.');
+      }
+      if (error.statusCode === 404) {
+        throw new Error('Source item not found. Please verify the site, drive, and item IDs.');
+      }
+      throw new Error(`Failed to initiate copy operation: ${error.message || 'Unknown error'}`);
     }
-    
-
-    const effectiveDestinationId = destinationFolderId === 'root'
-        ? (await client.api(`/drives/${driveId}/root`).get()).id
-        : destinationFolderId;
-    
-    body.parentReference.id = effectiveDestinationId;
-
-    const initialResponse = await client
-      .api(`/sites/${siteId}/drive/items/${itemId}/copy`)
-      .responseType(ResponseType.RAW)
-      .post(body);
 
     const monitorUrl = initialResponse.headers.get('Location');
     if (!monitorUrl) {
@@ -139,17 +147,23 @@ export const copyItemWithinSiteAction = createAction({
     while (attempts > 0) {
       const monitorResponse = await client.api(monitorUrl).get();
       if (monitorResponse.status === 'completed') {
-        return monitorResponse;
+        return {
+          success: true,
+          status: 'completed',
+          resourceId: monitorResponse.resourceId,
+          resourceLocation: monitorResponse.resourceLocation,
+        };
       }
       if (monitorResponse.status === 'failed') {
-        throw new Error(
-          `Copy job failed: ${monitorResponse.error?.message || 'Unknown error'}`
-        );
+        const errorDetails = monitorResponse.error?.details
+          ? monitorResponse.error.details.map((d: any) => d.message || d.code).join(', ')
+          : monitorResponse.error?.message || 'Unknown error';
+        throw new Error(`Copy operation failed: ${errorDetails}`);
       }
       await delay(polling_delay_ms);
       attempts--;
     }
 
-    throw new Error('Copy operation timed out.');
+    throw new Error('Copy operation timed out after 120 seconds.');
   },
 });
