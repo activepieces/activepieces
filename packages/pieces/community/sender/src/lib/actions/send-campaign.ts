@@ -14,22 +14,10 @@ export const sendCampaignAction = createAction({
       description: 'The ID of the campaign to send',
       required: true,
     }),
-    scheduleTime: Property.ShortText({
-      displayName: 'Schedule Time',
-      description: 'Optional: ISO 8601 datetime to schedule sending (leave empty to send immediately)',
-      required: false,
-    }),
   },
   async run(context) {
     const campaignId = context.propsValue.campaignId;
-    const scheduleTime = context.propsValue.scheduleTime;
-
     const sendData: any = {};
-    
-    if (scheduleTime) {
-      sendData.schedule_time = scheduleTime;
-    }
-
     const response = await makeSenderRequest(
       context.auth,
       `/campaigns/${campaignId}/send`,
