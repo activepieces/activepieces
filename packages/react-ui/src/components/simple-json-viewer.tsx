@@ -23,7 +23,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
   const [copied, setCopied] = useState(false);
   const { theme } = useTheme();
 
-  const formattedJson = JSON.stringify(data, null, 2);
+  const formattedJson = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(formattedJson);
@@ -77,34 +77,44 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
           boxSizing: 'border-box',
         }}
       >
-        <div style={{ minWidth: 0, width: '100%', height: '100%' }}>
-          <ReactJson
-            style={{
-              overflowX: 'auto',
-              padding: '0.5rem',
-              fontSize: '14px',
-              width: '100%',
-              minWidth: 0,
-              boxSizing: 'border-box',
-              wordBreak: 'break-word',
-              whiteSpace: 'pre-wrap',
-            }}
-            theme={viewerTheme}
-            enableClipboard={false}
-            groupArraysAfterLength={20}
-            displayDataTypes={false}
-            name={false}
-            quotesOnKeys={false}
-            src={data}
-            collapsed={false}
-            displayObjectSize={false}
-            iconStyle="triangle"
-            shouldCollapse={false}
-            onEdit={readOnly ? false : undefined}
-            onAdd={readOnly ? false : undefined}
-            onDelete={readOnly ? false : undefined}
-          />
-        </div>
+
+        {
+          typeof data === 'string' ? (
+            <pre className="text-sm whitespace-pre-wrap break-all overflow-x-auto p-2">
+              {data}
+            </pre>
+          ) : (
+            <div style={{ minWidth: 0, width: '100%', height: '100%' }}>
+            <ReactJson
+              style={{
+                overflowX: 'auto',
+                padding: '0.5rem',
+                fontSize: '14px',
+                width: '100%',
+                minWidth: 0,
+                boxSizing: 'border-box',
+                wordBreak: 'break-word',
+                whiteSpace: 'pre-wrap',
+              }}
+              theme={viewerTheme}
+              enableClipboard={false}
+              groupArraysAfterLength={20}
+              displayDataTypes={false}
+              name={false}
+              quotesOnKeys={false}
+              src={data}
+              collapsed={false}
+              displayObjectSize={false}
+              iconStyle="triangle"
+              shouldCollapse={false}
+              onEdit={readOnly ? false : undefined}
+              onAdd={readOnly ? false : undefined}
+              onDelete={readOnly ? false : undefined}
+            />
+          </div>
+          )
+        }
+
       </div>
     </div>
   );
