@@ -9,7 +9,7 @@ export enum WorkerJobStatus {
     RETRYING = 'retrying',
 }
 
-export const WorkerJobTypeForMetrics = [
+export const WorkerJobTypeForMetrics: WorkerJobType[] = [
     WorkerJobType.RENEW_WEBHOOK,
     WorkerJobType.EXECUTE_POLLING,
     WorkerJobType.DELAYED_FLOW,
