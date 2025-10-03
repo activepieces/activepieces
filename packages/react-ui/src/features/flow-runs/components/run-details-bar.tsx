@@ -1,9 +1,11 @@
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn, formatUtils } from '@/lib/utils';
 import {
   ApFlagId,
@@ -17,8 +19,7 @@ import { useAuthorization } from '../../../hooks/authorization-hooks';
 import { flowRunUtils } from '../lib/flow-run-utils';
 
 type RunDetailsBarProps = {
-  run?: FlowRun;
-  canExitRun: boolean;
+  run: FlowRun | null;
   exitRun: (userHasPermissionToUpdateFlow: boolean) => void;
   isLoading: boolean;
 };
@@ -58,11 +59,13 @@ function getStatusText(
 }
 
 const RunDetailsBar = React.memo(
-  ({ run, canExitRun, exitRun, isLoading }: RunDetailsBarProps) => {
+  ({ run, exitRun, isLoading }: RunDetailsBarProps) => {
     const { Icon, variant } = run
       ? flowRunUtils.getStatusIcon(run.status)
       : { Icon: QuestionMarkIcon, variant: 'default' };
+    const navigate = useNavigate();
 
+    const isInRunsPage = useLocation().pathname.includes('/runs/');
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
     );
@@ -75,9 +78,20 @@ const RunDetailsBar = React.memo(
     if (!run) {
       return <></>;
     }
+    const handleSwitchToDraft = () => {
+      if (isInRunsPage) {
+        navigate(
+          authenticationSession.appendProjectRoutePrefix(
+            `/flows/${run.flowId}`,
+          ),
+        );
+      } else {
+        exitRun(userHasPermissionToEditFlow);
+      }
+    };
 
     return (
-      <div className="fixed bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-[9999]">
+      <div className="absolute bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-[9999]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Icon
@@ -110,19 +124,20 @@ const RunDetailsBar = React.memo(
               <div className="text-xs text-muted-foreground">{run.id}</div>
             </div>
           </div>
-          {canExitRun && (
+          {
             <Button
               variant={'outline'}
               size="sm"
-              onClick={() => exitRun(userHasPermissionToEditFlow)}
+              onClick={handleSwitchToDraft}
               loading={isLoading}
-              onKeyboardShortcut={() => exitRun(userHasPermissionToEditFlow)}
+              onKeyboardShortcut={handleSwitchToDraft}
               keyboardShortcut="Esc"
               className="flex-shrink-0"
+              data-testId="exit-run-button"
             >
-              {t('Exit Run')}
+              {t('Edit Flow')}
             </Button>
-          )}
+          }
         </div>
       </div>
     );

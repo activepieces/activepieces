@@ -424,7 +424,6 @@ export default function ProjectsPage() {
               type: 'input',
               title: t('Name'),
               accessorKey: 'displayName',
-              options: [],
               icon: CheckIcon,
             },
           ]}
