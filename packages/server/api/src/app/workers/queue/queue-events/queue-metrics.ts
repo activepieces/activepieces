@@ -92,7 +92,7 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
 
     const jobType: WorkerJobType | undefined = job?.data.jobType
 
-    if (jobType && !(WorkerJobTypeForMetrics.includes(jobType))) return;
+    if (jobType && !(WorkerJobTypeForMetrics.includes(jobType))) return
   
     status = (status === WorkerJobStatus.DELAYED && job?.attemptsMade > 0) ? WorkerJobStatus.RETRYING : status
 
@@ -108,6 +108,6 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
         newMetricsKey,
         status,
         jobType || '',
-        deleteState.toString()
+        deleteState.toString(),
     )
 }
