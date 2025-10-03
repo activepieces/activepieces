@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { ApEdition, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
     DataSource,
@@ -146,20 +146,9 @@ function getEntities(): EntitySchema<unknown>[] {
     return entities
 }
 
-const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-
-    const value: Partial<Record<ApEnvironment, boolean>> = {
-        [ApEnvironment.TESTING]: true,
-    }
-
-    return value[env] ?? false
-}
-
 export const commonProperties = {
     subscribers: [],
     entities: getEntities(),
-    synchronize: getSynchronize(),
 }
 
 let _databaseConnection: DataSource | null = null

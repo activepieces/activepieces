@@ -1184,7 +1184,7 @@
   "Permission Needed": "Toestemming nodig",
   "Draft": "",
   "Published": "",
-  "flowsImported": "{flowsCount, plural, one {}=0 {Geen Flows geïmporteerd} =1 {Flow Succesvol geïmporteerd} other {Flows succesvol geïmporteerd}}",
+  "flowsImported": "{flowsCount, plural, =0 {0 stroomt geïmporteerd} =1 {1 stroom geïmporteerd} other {# stromen geïmporteerd}}",
   "Template file is invalid": "Sjabloonbestand is ongeldig",
   "No valid templates found. The following files failed to import: ": "Geen geldige sjablonen gevonden. De volgende bestanden kunnen niet importeren: ",
   "Please select a file first": "Selecteer eerst een bestand",
@@ -1375,5 +1375,6 @@
   "Activation failed, invalid license key": "Activering mislukt, ongeldige licentiesleutel",
   "Invalid Access": "Ongeldige toegang",
   "Either the project does not exist or you do not have access to it.": "Het project bestaat niet of je hebt er geen toegang toe.",
-  "Yesterday": ""
+  "Yesterday": "",
+  "runsRetriedNote": "{runsCount, plural, =0 {0 is opnieuw uitgevoerd} =1 {Een poging werd opnieuw uitgevoerd} other {# opnieuw geprobeerd}}"
 }
