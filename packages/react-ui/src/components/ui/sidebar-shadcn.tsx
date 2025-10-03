@@ -30,7 +30,7 @@ const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
-function getSidebarStateFromCookie(): boolean {
+function getSidebarStateFromCookie() {
   if (typeof document === 'undefined') return true;
   const cookies = document.cookie.split(';');
   const sidebarCookie = cookies.find(cookie => 
@@ -40,7 +40,7 @@ function getSidebarStateFromCookie(): boolean {
     const value = sidebarCookie.split('=')[1];
     return value === 'true';
   }
-  return true; // default to open if no cookie found
+  return true;
 }
 
 type SidebarContextProps = {
