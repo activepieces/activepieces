@@ -10,19 +10,17 @@ export const jobStateRedisKey = (jobId: string) => `jobState:${jobId}`
 const updateJobStateScript = `-- Lua script to atomically update job state and metrics
 -- Arguments:
 -- KEYS[1] = jobStateRedisKey(jobId)
--- KEYS[2] = prevMetricsKey (if prevState exists)
--- KEYS[3] = newMetricsKey (if status != 'completed')
+-- KEYS[2] = newMetricsKey (if status != 'completed')
 -- ARGV[1] = status
 -- ARGV[2] = jobType
 -- ARGV[3] = deleteState ('false' or 'true')
 
 local jobStateKey = KEYS[1]
-local prevMetricsKey = KEYS[2]
-local newMetricsKey = KEYS[3]
+local newMetricsKey = KEYS[2]
 
-local status = ARGV[1]
-local jobType = ARGV[2]
-local deleteState = ARGV[3] == 'false'
+local status = tostring(ARGV[1])
+local jobType = tostring(ARGV[2])
+local deleteState = ARGV[3] == 'true'
 
 -- Get current job state
 local prevState = redis.call('HGET', jobStateKey, 'status')
@@ -36,20 +34,18 @@ end
 -- Decrement previous state if it exists
 if prevState and prevState ~= '' then
     if jobType and jobType ~= '' then
-        -- Use provided prevMetricsKey or construct it
-        if prevMetricsKey == '' then
-            prevMetricsKey = 'metrics:' .. jobType .. ':' .. prevState
-        end
-        redis.call('DECR', prevMetricsKey)
+        local metricsKey = 'metrics:' .. jobType .. ':' .. prevState
+        redis.call('DECR', metricsKey)
     end
 end
 
 -- Increment new state if not completed and jobType exists
 if status ~= 'completed' and jobType and jobType ~= '' then
-    if newMetricsKey == '' then
-        newMetricsKey = 'metrics:' .. jobType .. ':' .. status
+    local metricsKey = newMetricsKey
+    if metricsKey == '' then
+        metricsKey = 'metrics:' .. jobType .. ':' .. status
     end
-    redis.call('INCR', newMetricsKey)
+    redis.call('INCR', metricsKey)
 end
 
 -- Update or delete job state
@@ -57,10 +53,9 @@ if deleteState then
     redis.call('DEL', jobStateKey)
 else
     -- Store both status and jobType for future reference
-    redis.call('HSET', jobStateKey, 'status', status, 'jobType', jobType)
+    redis.call('HMSET', jobStateKey, 'status', status, 'jobType', jobType)
 end
-
-return {status, jobType}`
+`
 
 export const queueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvents) => ({
 
@@ -104,19 +99,15 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
     const redis = await redisConnections.useExisting()
     
     const jobStateKey = jobStateRedisKey(jobId)
-    const prevMetricsKey = '' // Will be constructed in script if needed
     const newMetricsKey = status !== 'completed' && jobType ? metricsRedisKey(jobType, status as WorkerJobStatus) : ''
     
-    console.log(jobId, status)
     await redis.eval(
         updateJobStateScript,
-        3, // number of keys
+        2,
         jobStateKey,
-        prevMetricsKey,
         newMetricsKey,
         status,
         jobType || '',
         deleteState.toString()
     )
-    console.log(jobId, status)
 }
