@@ -561,6 +561,9 @@
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
       ],
+      "@activepieces/piece-insightly": [
+        "packages/pieces/community/insightly/src/index.ts"
+      ],
       "@activepieces/piece-insighto-ai": [
         "packages/pieces/community/insighto-ai/src/index.ts"
       ],
