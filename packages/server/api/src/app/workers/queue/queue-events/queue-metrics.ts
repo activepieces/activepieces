@@ -18,8 +18,8 @@ const updateJobStateScript = `-- Lua script to atomically update job state and m
 local jobStateKey = KEYS[1]
 local newMetricsKey = KEYS[2]
 
-local status = tostring(ARGV[1])
-local jobType = tostring(ARGV[2])
+local status = ARGV[1]
+local jobType = ARGV[2]
 local deleteState = ARGV[3] == 'true'
 
 -- Get current job state
@@ -106,8 +106,8 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
         2,
         jobStateKey,
         newMetricsKey,
-        status,
+        String(status),
         jobType || '',
-        deleteState.toString(),
+        String(deleteState),
     )
 }
