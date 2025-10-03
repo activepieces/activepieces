@@ -76,3 +76,4 @@ export type QueueManager = {
     add<JT extends JobType>(params: AddJobParams<JT>): Promise<void>
     removeRepeatingJob(params: RemoveParams): Promise<void>
 }
+
