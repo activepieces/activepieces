@@ -14,12 +14,12 @@ export const newRecord = createTrigger({
             required: true,
             options: {
                 options: [
-                    { label: 'Contact', value: 'Contact' },
-                    { label: 'Lead', value: 'Lead' },
-                    { label: 'Opportunity', value: 'Opportunity' },
-                    { label: 'Organisation', value: 'Organisation' },
-                    { label: 'Project', value: 'Project' },
-                    { label: 'Task', value: 'Task' },
+                    { label: 'Contact', value: 'Contacts' },
+                    { label: 'Lead', value: 'Leads' },
+                    { label: 'Opportunity', value: 'Opportunities' },
+                    { label: 'Organisation', value: 'Organisations' },
+                    { label: 'Project', value: 'Projects' },
+                    { label: 'Task', value: 'Tasks' },
                 ],
             },
         }),

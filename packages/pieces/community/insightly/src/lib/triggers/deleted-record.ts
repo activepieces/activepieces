@@ -2,6 +2,19 @@ import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-f
 import { insightlyAuth } from "../common/auth";
 import { InsightlyClient } from '../common/client';
 
+
+const getIdKey = (objectType: string): string => {
+    switch(objectType) {
+        case 'Contacts': return 'CONTACT_ID';
+        case 'Leads': return 'LEAD_ID';
+        case 'Opportunities': return 'OPPORTUNITY_ID';
+        case 'Organisations': return 'ORGANISATION_ID';
+        case 'Projects': return 'PROJECT_ID';
+        case 'Tasks': return 'TASK_ID';
+        default: return '';
+    }
+};
+
 export const deletedRecordTrigger = createTrigger({
     auth: insightlyAuth,
     name: 'deleted_record',
@@ -32,11 +45,13 @@ export const deletedRecordTrigger = createTrigger({
         const client = new InsightlyClient(apiKey, pod);
 
         const allRecords = await client.fetchAllRecords(object_type);
-        const idKey = `${object_type.slice(0, -1).toUpperCase()}_ID`;
-        const recordIds = allRecords.map((r: any) => r[idKey]);
+        const idKey = getIdKey(object_type);
+        if (!idKey) return;
 
+        const recordIds = allRecords.map((r: any) => r[idKey]);
         await context.store.put('knownRecordIds', recordIds);
     },
+
 
     async onDisable(context) {
         await context.store.delete('knownRecordIds');
@@ -50,10 +65,13 @@ export const deletedRecordTrigger = createTrigger({
         const knownRecordIds = await context.store.get<number[]>('knownRecordIds') || [];
         
         const allRecords = await client.fetchAllRecords(object_type);
-        const idKey = `${object_type.slice(0, -1).toUpperCase()}_ID`;
+        const idKey = getIdKey(object_type);
+        if (!idKey) return [];
+
         const currentRecordIds = allRecords.map((r: any) => r[idKey]);
 
-        const deletedIds = knownRecordIds.filter(id => !currentRecordIds.includes(id));
+        const deletedIds = knownRecordIds.filter(id => id && !currentRecordIds.includes(id));
+
 
         await context.store.put('knownRecordIds', currentRecordIds);
 
@@ -65,7 +83,6 @@ export const deletedRecordTrigger = createTrigger({
     },
 
     async test() {
-        // Returns an empty array to avoid accidentally triggering during tests.
         return [];
     },
 

@@ -26,7 +26,6 @@ export class InsightlyClient {
                 "Authorization": this.authHeader,
             },
         };
-
         const { body: responseBody } = await httpClient.sendRequest<T>(request);
         return responseBody;
     }
@@ -40,15 +39,10 @@ export class InsightlyClient {
         while (hasMore) {
             const pageRecords = await this.makeRequest<Record<string, unknown>[]>(
                 HttpMethod.GET,
-                `/${objectType}`,
-                {
-                    brief: 'true',
-                    top: top.toString(),   
-                    skip: skip.toString(), 
-                }
+                `/${objectType}`, { brief: 'true', top: top.toString(), skip: skip.toString() }
             );
 
-            if (pageRecords.length > 0) {
+            if (pageRecords && pageRecords.length > 0) {
                 allRecords.push(...pageRecords);
                 skip += top;
             } else {
@@ -57,18 +51,4 @@ export class InsightlyClient {
         }
         return allRecords;
     }
-
-    async getCustomFields(): Promise<CustomField[]> {
-        return await this.makeRequest<CustomField[]>(
-            HttpMethod.GET,
-            '/CustomFields'
-        );
-    }
-}
-
-export interface CustomField {
-    FIELD_NAME: string;
-    CUSTOM_FIELD_ID: string;
-    FIELD_FOR: 'CONTACT' | 'ORGANISATION' | 'PROJECT' | 'OPPORTUNITY' | 'LEAD';
-    FIELD_TYPE: 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'DATETIME' | 'CHECKBOX' | 'DROPDOWN' | 'MULTISELECT';
 }
