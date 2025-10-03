@@ -148,6 +148,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     executeTrigger: false,
                     environment: oldFlowRun.environment,
                     flowVersionId: latestFlowVersion.id,
+                    flowId: oldFlowRun.flowId,
+                    flowDisplayName: latestFlowVersion.displayName,
                     projectId: oldFlowRun.projectId,
                     failParentOnFailure: oldFlowRun.failParentOnFailure,
                     parentRunId: oldFlowRun.id,
@@ -287,23 +289,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         parentRunId,
         failParentOnFailure,
         stepNameToTest,
+        flowId,
         environment,
     }: StartParams): Promise<FlowRun> {
-        const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
-
-        const flow = await flowService(log).getOneOrThrow({
-            id: flowVersion.flowId,
-            projectId,
-        })
+      
 
         const newFlowRun = await create({
             projectId,
             flowVersionId,
             parentRunId,
-            flowId: flow.id,
+            flowId,
             failParentOnFailure,
             stepNameToTest,
-            flowDisplayName: flowVersion.displayName,
             environment,
         })
         await addToQueue({
@@ -332,7 +329,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
-            flowDisplayName: flowVersion.displayName,
             environment: RunEnvironment.TESTING,
             parentRunId,
             failParentOnFailure: undefined,
@@ -643,7 +639,6 @@ async function create(params: CreateParams): Promise<FlowRun> {
         flowId: params.flowId,
         flowVersionId: params.flowVersionId,
         environment: params.environment,
-        flowDisplayName: params.flowDisplayName,
         startTime: new Date().toISOString(),
         parentRunId: params.parentRunId,
         failParentOnFailure: params.failParentOnFailure ?? true,
@@ -695,7 +690,6 @@ type CreateParams = {
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     flowId: FlowId
-    flowDisplayName: string
     environment: RunEnvironment
 }
 
@@ -730,6 +724,8 @@ type AddToQueueParams = {
 
 type StartParams = {
     payload: unknown
+    flowId: FlowId
+    flowDisplayName: string
     environment: RunEnvironment
     flowVersionId: FlowVersionId
     projectId: ProjectId
