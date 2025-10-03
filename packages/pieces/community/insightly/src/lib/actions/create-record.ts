@@ -1,11 +1,10 @@
-import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   AuthenticationType
 } from '@activepieces/pieces-common';
-import { insightlyAuth, insightlyCommon } from '../common/common';
+import { insightlyAuth } from '../common/common';
 
 export const createRecord = createAction({
   auth: insightlyAuth,
@@ -16,9 +15,9 @@ export const createRecord = createAction({
   props: {
     pod: Property.ShortText({
       displayName: 'Pod',
-      description:
-        'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
-      required: true
+      description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
+      required: true,
+      defaultValue: 'na1'
     }),
     objectName: Property.StaticDropdown({
       displayName: 'Object Type',
@@ -39,89 +38,26 @@ export const createRecord = createAction({
         ]
       }
     }),
-    recordName: Property.ShortText({
-      displayName: 'Record Name',
-      description: 'Name for the new record',
+    fieldValues: Property.Object({
+      displayName: 'Field Values',
+      description: 'The record to add (JSON object). Examples by type:\n• Contacts: FIRST_NAME, LAST_NAME, EMAIL_ADDRESS, PHONE_NUMBER\n• Leads: FIRST_NAME, LAST_NAME, EMAIL, LEAD_SOURCE_ID, LEAD_STATUS_ID\n• Opportunities: OPPORTUNITY_NAME, BID_AMOUNT, PROBABILITY, FORECAST_CLOSE_DATE\n• Organizations: ORGANISATION_NAME, PHONE, WEBSITE\n• Projects: PROJECT_NAME, STATUS, PROJECT_DETAILS\n• Tasks: TITLE, DUE_DATE, PRIORITY, OWNER_USER_ID\n• Events: TITLE, START_DATE_UTC, END_DATE_UTC\n• Notes: TITLE, BODY\n• Products: PRODUCT_NAME, DEFAULT_PRICE, ACTIVE\n• Quotes: QUOTATION_NAME, OPPORTUNITY_ID, CONTACT_ID',
       required: true
-    }),
-    ownerUserId: Property.Number({
-      displayName: 'Owner User ID',
-      description: 'ID of the user who will own this record (optional)',
-      required: false
-    }),
-    visibleTo: Property.StaticDropdown({
-      displayName: 'Visible To',
-      description: 'Who can see this record',
-      required: false,
-      options: {
-        options: [
-          { label: 'Everyone', value: 'Everyone' },
-          { label: 'Owner', value: 'Owner' },
-          { label: 'Team', value: 'Team' }
-        ]
-      }
-    }),
-    visibleTeamId: Property.Number({
-      displayName: 'Visible Team ID',
-      description:
-        'ID of the team that can see this record (when Visible To is set to Team)',
-      required: false
-    }),
-    customFields: Property.Object({
-      displayName: 'Custom Fields',
-      description:
-        'Custom fields as key-value pairs. Use the exact FIELD_NAME from your Insightly instance.',
-      required: false
     })
   },
   async run(context) {
-    // Validate props using ActivePieces built-in validation
-    await propsValidation.validateZod(
-      context.propsValue,
-      insightlyCommon.createRecordSchema
-    );
-
-    const {
-      pod,
-      objectName,
-      recordName,
-      ownerUserId,
-      visibleTo,
-      visibleTeamId,
-      customFields
-    } = context.propsValue;
+    const { pod, objectName, fieldValues } = context.propsValue;
     const apiKey = context.auth;
 
     // Build the API URL
     const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
     const url = `${baseUrl}/${objectName}`;
 
-    // Prepare the record data
-    const recordData: any = {
-      RECORD_NAME: recordName
-    };
+    // Use the provided field values as the record data
+    const recordData = { ...fieldValues };
 
-    // Add optional fields if provided
-    if (ownerUserId) {
-      recordData.OWNER_USER_ID = ownerUserId;
-    }
-
-    if (visibleTo) {
-      recordData.VISIBLE_TO = visibleTo;
-    }
-
-    if (visibleTeamId) {
-      recordData.VISIBLE_TEAM_ID = visibleTeamId;
-    }
-
-    // Handle custom fields
-    if (customFields && typeof customFields === 'object') {
-      recordData.CUSTOMFIELDS = Object.entries(customFields).map(
-        ([fieldName, fieldValue]) => ({
-          FIELD_NAME: fieldName,
-          FIELD_VALUE: fieldValue
-        })
-      );
+    // Ensure we have data to create
+    if (!recordData || Object.keys(recordData).length === 0) {
+      throw new Error('Field values must be provided to create the record');
     }
 
     try {
@@ -150,10 +86,12 @@ export const createRecord = createAction({
     } catch (error: any) {
       // Handle specific error cases
       if (error.response?.status === 400) {
+        const errorMessage = error.response.body?.message || error.response.body?.error || 'Invalid data provided';
+        const errorDetails = error.response.body ? JSON.stringify(error.response.body, null, 2) : 'No details available';
         throw new Error(
-          `Data validation error: ${
-            error.response.body?.message || 'Invalid data provided'
-          }`
+          `Data validation error for ${objectName}: ${errorMessage}. ` +
+          `Sent data: ${JSON.stringify(recordData, null, 2)}. ` +
+          `API response: ${errorDetails}`
         );
       } else if (error.response?.status === 401) {
         throw new Error(

@@ -1,180 +1,146 @@
-import { propsValidation } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  makeInsightlyRequest,
-  insightlyAuth,
-  INSIGHTLY_OBJECTS,
-  insightlyCommon
-} from '../common/common';
+  httpClient,
+  HttpMethod,
+  AuthenticationType
+} from '@activepieces/pieces-common';
+import { insightlyAuth } from '../common/common';
 
 export const findRecords = createAction({
   auth: insightlyAuth,
   name: 'find_records',
   displayName: 'Find Records',
-  description:
-    "Search for records using Insightly's search endpoint with field-based filtering",
+  description: 'Gets a filtered list of records from a specified Insightly object',
   props: {
     pod: Property.ShortText({
       displayName: 'Pod',
-      description:
-        'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
-      required: true
+      description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
+      required: true,
+      defaultValue: 'na1'
     }),
     objectName: Property.StaticDropdown({
       displayName: 'Object Type',
-      description: 'Select the type of records to search',
+      description: 'Select the type of records to find',
       required: true,
       options: {
-        options: INSIGHTLY_OBJECTS.map((obj) => ({
-          label: obj,
-          value: obj
-        }))
+        options: [
+          { label: 'Contact', value: 'Contacts' },
+          { label: 'Lead', value: 'Leads' },
+          { label: 'Opportunity', value: 'Opportunities' },
+          { label: 'Organization', value: 'Organisations' },
+          { label: 'Project', value: 'Projects' },
+          { label: 'Task', value: 'Tasks' },
+          { label: 'Event', value: 'Events' },
+          { label: 'Note', value: 'Notes' },
+          { label: 'Product', value: 'Products' },
+          { label: 'Quote', value: 'Quotations' }
+        ]
       }
     }),
     fieldName: Property.ShortText({
       displayName: 'Field Name',
-      description:
-        'Field name to search by (e.g., "FIRST_NAME", "EMAIL_ADDRESS", "ORGANISATION_NAME"). Required if Field Value is provided.',
+      description: 'Optional, field name for object (e.g., "FIRST_NAME", "EMAIL_ADDRESS")',
       required: false
     }),
     fieldValue: Property.ShortText({
       displayName: 'Field Value',
-      description:
-        'Value to search for in the specified field. Required if Field Name is provided.',
+      description: 'Optional, field value of the record',
       required: false
     }),
-    updatedAfterUtc: Property.ShortText({
-      displayName: 'Updated After (UTC)',
-      description:
-        'Optional, earliest date when a record was last updated (ISO format: 2025-01-01T00:00:00Z)',
+    updatedAfter: Property.ShortText({
+      displayName: 'Updated After',
+      description: 'Optional, earliest date when a record was last updated (ISO format: 2025-01-01T00:00:00Z)',
       required: false
     }),
     brief: Property.Checkbox({
-      displayName: 'Brief Response',
-      description:
-        'Return only top-level properties (excludes TAGS, CUSTOMFIELDS, etc.)',
+      displayName: 'Brief',
+      description: 'True if response should only contain top level properties of the record',
       required: false,
       defaultValue: false
     }),
     skip: Property.Number({
-      displayName: 'Skip Records',
-      description: 'Number of records to skip (for pagination)',
-      required: false,
-      defaultValue: 0
+      displayName: 'Skip',
+      description: 'Optional, number of records to skip',
+      required: false
     }),
     top: Property.Number({
-      displayName: 'Max Records',
-      description:
-        'Maximum number of records to return (default: 100, max: 500)',
-      required: false,
-      defaultValue: 100
+      displayName: 'Top',
+      description: 'Optional, maximum number of records to return in the response',
+      required: false
     }),
     countTotal: Property.Checkbox({
       displayName: 'Count Total',
-      description: 'Include total record count in response headers',
+      description: 'Optional, true if total number of records should be returned in the response headers',
       required: false,
       defaultValue: false
     })
   },
   async run(context) {
-    // Validate props using ActivePieces built-in validation
-    await propsValidation.validateZod(
-      context.propsValue,
-      insightlyCommon.findRecordsSchema
-    );
-
     const {
       pod,
       objectName,
       fieldName,
       fieldValue,
-      updatedAfterUtc,
+      updatedAfter,
       brief,
-      skip: skipRecords,
-      top: maxRecords,
+      skip,
+      top,
       countTotal
     } = context.propsValue;
-
-    // Additional validation: field name and value must be provided together
-    if ((fieldName && !fieldValue) || (!fieldName && fieldValue)) {
-      throw new Error(
-        'Field name and field value must both be provided together, or both left empty.'
-      );
-    }
+    const apiKey = context.auth;
 
     // Build query parameters
     const queryParams: string[] = [];
 
-    if (fieldName && fieldValue) {
+    if (fieldName) {
       queryParams.push(`field_name=${encodeURIComponent(fieldName)}`);
+    }
+
+    if (fieldValue) {
       queryParams.push(`field_value=${encodeURIComponent(fieldValue)}`);
     }
 
-    if (updatedAfterUtc) {
-      queryParams.push(
-        `updated_after_utc=${encodeURIComponent(updatedAfterUtc)}`
-      );
+    if (updatedAfter) {
+      queryParams.push(`updated_after=${encodeURIComponent(updatedAfter)}`);
     }
 
     if (brief) {
       queryParams.push('brief=true');
     }
 
-    if (skipRecords && skipRecords > 0) {
-      queryParams.push(`skip=${skipRecords}`);
+    if (skip !== undefined && skip > 0) {
+      queryParams.push(`skip=${skip}`);
     }
 
-    if (maxRecords && maxRecords > 0) {
-      // Ensure top doesn't exceed API limit
-      const limitedRecords = Math.min(maxRecords, 500);
-      queryParams.push(`top=${limitedRecords}`);
+    if (top !== undefined && top > 0) {
+      queryParams.push(`top=${top}`);
     }
 
     if (countTotal) {
       queryParams.push('count_total=true');
     }
 
-    // Build the search endpoint URL
-    const endpoint = `/${objectName}/Search${
-      queryParams.length > 0 ? '?' + queryParams.join('&') : ''
-    }`;
+    // Build the API URL
+    const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
+    const url = `${baseUrl}/${objectName}${queryParams.length > 0 ? '?' + queryParams.join('&') : ''}`;
 
     try {
-      // Make the API request using the search endpoint
-      const response = await makeInsightlyRequest(context.auth, endpoint, pod);
+      // Make the API request
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: apiKey,
+          password: '' // Insightly uses API key as username with blank password
+        }
+      });
 
       // Process the response
       const records = Array.isArray(response.body) ? response.body : [];
-
-      // Extract custom fields for each record for easier access (only if not brief)
-      const processedRecords = records.map((record: any) => {
-        const result: any = {
-          recordId: record.RECORD_ID,
-          recordName: record.RECORD_NAME,
-          ownerUserId: record.OWNER_USER_ID,
-          dateCreated: record.DATE_CREATED_UTC,
-          visibleTo: record.VISIBLE_TO,
-          visibleTeamId: record.VISIBLE_TEAM_ID,
-          rawData: record
-        };
-
-        // Only process custom fields if not in brief mode
-        if (
-          !brief &&
-          record.CUSTOMFIELDS &&
-          Array.isArray(record.CUSTOMFIELDS)
-        ) {
-          const customFields: Record<string, any> = {};
-          record.CUSTOMFIELDS.forEach((field: any) => {
-            if (field.FIELD_NAME) {
-              customFields[field.FIELD_NAME] = field.FIELD_VALUE;
-            }
-          });
-          result.customFields = customFields;
-        }
-
-        return result;
-      });
 
       // Get total count from headers if requested
       let totalCount: number | undefined;
@@ -192,36 +158,27 @@ export const findRecords = createAction({
         success: true,
         recordCount: records.length,
         totalCount,
-        records: processedRecords,
-        pagination: {
-          skip: skipRecords || 0,
-          top: maxRecords || 100,
-          hasMore: records.length === (maxRecords || 100)
-        },
-        searchCriteria:
-          fieldName && fieldValue
-            ? {
-                fieldName,
-                fieldValue,
-                updatedAfterUtc
-              }
-            : { updatedAfterUtc }
+        records,
+        filters: {
+          fieldName,
+          fieldValue,
+          updatedAfter,
+          brief,
+          skip: skip || 0,
+          top: top || undefined
+        }
       };
     } catch (error: any) {
       // Handle specific error cases
       if (error.response?.status === 400) {
-        throw new Error(
-          `Bad request: ${
-            error.response.body?.message ||
-            'Missing or invalid parameter. Check field names and values.'
-          }`
-        );
+        const errorMessage = error.response.body?.message || error.response.body?.error || 'Bad request';
+        throw new Error(`Bad request: ${errorMessage}`);
       } else if (error.response?.status === 401) {
-        throw new Error(
-          'Authentication failed. Please check your API key and pod.'
-        );
+        throw new Error('Authentication failed. Please check your API key and pod.');
+      } else if (error.response?.status === 404) {
+        throw new Error(`Object type ${objectName} not found`);
       } else {
-        throw new Error(`Failed to search records: ${error.message}`);
+        throw new Error(`Failed to find records: ${error.message}`);
       }
     }
   }
