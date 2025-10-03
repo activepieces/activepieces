@@ -1,47 +1,70 @@
-import { assertNotNullOrUndefined, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
-import { Queue, QueueEvents, Worker } from 'bullmq'
+import { WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
+import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { Redis } from 'ioredis'
 import { redisConnections } from '../../../database/redis'
 import { bullMqQueue } from '../job-queue'
 
 export const metricsRedisKey = (jobType: WorkerJobType, status: WorkerJobStatus) => `metrics:${jobType}:${status}`
 export const jobStateRedisKey = (jobId: string) => `jobState:${jobId}`
 
-type InternalEvent = {
-    jobId: string
-    status: WorkerJobStatus | 'completed'
-    deleteState: boolean
-}
+const updateJobStateScript = `-- Lua script to atomically update job state and metrics
+-- Arguments:
+-- KEYS[1] = jobStateRedisKey(jobId)
+-- KEYS[2] = prevMetricsKey (if prevState exists)
+-- KEYS[3] = newMetricsKey (if status != 'completed')
+-- ARGV[1] = status
+-- ARGV[2] = jobType
+-- ARGV[3] = deleteState ('false' or 'true')
 
-let internalEventsQueue: Queue<InternalEvent> 
-let internalEventsWorker: Worker<InternalEvent, unknown, string>
+local jobStateKey = KEYS[1]
+local prevMetricsKey = KEYS[2]
+local newMetricsKey = KEYS[3]
 
-// events can be consumed before the prev event is processed
-// we use a queue to store the events and a worker to process them
+local status = ARGV[1]
+local jobType = ARGV[2]
+local deleteState = ARGV[3] == 'false'
+
+-- Get current job state
+local prevState = redis.call('HGET', jobStateKey, 'status')
+local prevJobType = redis.call('HGET', jobStateKey, 'jobType')
+
+-- Use provided jobType or get from stored state
+if jobType == '' then
+    jobType = prevJobType
+end
+
+-- Decrement previous state if it exists
+if prevState and prevState ~= '' then
+    if jobType and jobType ~= '' then
+        -- Use provided prevMetricsKey or construct it
+        if prevMetricsKey == '' then
+            prevMetricsKey = 'metrics:' .. jobType .. ':' .. prevState
+        end
+        redis.call('DECR', prevMetricsKey)
+    end
+end
+
+-- Increment new state if not completed and jobType exists
+if status ~= 'completed' and jobType and jobType ~= '' then
+    if newMetricsKey == '' then
+        newMetricsKey = 'metrics:' .. jobType .. ':' .. status
+    end
+    redis.call('INCR', newMetricsKey)
+end
+
+-- Update or delete job state
+if deleteState then
+    redis.call('DEL', jobStateKey)
+else
+    -- Store both status and jobType for future reference
+    redis.call('HSET', jobStateKey, 'status', status, 'jobType', jobType)
+end
+
+return {status, jobType}`
+
 export const queueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvents) => ({
 
     attach: async () => {
-        internalEventsQueue = new Queue('internalEventsQueue',
-            {
-                connection: await redisConnections.createNew()
-            }
-        )
-        await internalEventsQueue.waitUntilReady();
-
-        internalEventsWorker = new Worker(
-            'internalEventsQueue',
-            async (job) => {
-                const { jobId, status, deleteState } = job.data
-                await updateJobState(jobId, status, deleteState)
-            },
-            {
-                connection: await redisConnections.createNew(),
-                concurrency: 1,
-            },
-        )
-        await internalEventsWorker.waitUntilReady()
-
         queueEvents.on('added', onAdded)
         queueEvents.on('delayed', onDelayed)
         queueEvents.on('active', onActive)
@@ -54,44 +77,19 @@ export const queueMetrics = (log: FastifyBaseLogger, queueEvents: QueueEvents) =
         queueEvents.off('active', onActive)
         queueEvents.off('failed', onFailed)
         queueEvents.off('completed', onCompleted)
-
-        await internalEventsQueue?.disconnect()
-        await internalEventsWorker?.close()
     },
 })
 
 
-const onAdded = (args: { jobId: string }) => addJobEvent({
-    jobId: args.jobId,
-    status: WorkerJobStatus.QUEUED,
-    deleteState: false
-})
+const onAdded = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.QUEUED)
 
-const onDelayed = (args: { jobId: string }) => addJobEvent({
-    jobId: args.jobId,
-    status: WorkerJobStatus.DELAYED,
-    deleteState: false
-})
+const onDelayed = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.DELAYED)
 
-const onActive = (args: { jobId: string }) => addJobEvent({
-    jobId: args.jobId,
-    status: WorkerJobStatus.ACTIVE,
-    deleteState: false
-})
+const onActive = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.ACTIVE)
 
-const onFailed = (args: { jobId: string }) => addJobEvent({
-    jobId: args.jobId,
-    status: WorkerJobStatus.FAILED,
-    deleteState: true
-})
+const onFailed = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJobStatus.FAILED, true)
 
-const onCompleted = async (args: { jobId: string }) => addJobEvent({
-    jobId: args.jobId,
-    status: 'completed',
-    deleteState: true
-})
-
-const addJobEvent = (event: InternalEvent) => internalEventsQueue.add("updateJobState", event)
+const onCompleted = (args: { jobId: string }) => updateJobState(args.jobId, 'completed', true)
 
 const updateJobState = async (jobId: string, status: WorkerJobStatus | 'completed', deleteState = false) => {
 
@@ -99,32 +97,26 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
 
     const jobType: WorkerJobType | undefined = job?.data.jobType
 
-    const redis = await redisConnections.useExisting()
-
     if (jobType && !(WorkerJobTypeForMetrics.includes(jobType))) return;
   
     status = (status === WorkerJobStatus.DELAYED && job?.attemptsMade > 0) ? WorkerJobStatus.RETRYING : status
 
-    await decrPrevState(redis, jobId, jobType)
-
-    if (status !== 'completed'){
-        assertNotNullOrUndefined(jobType, 'jobType')
-        await redis.incr(metricsRedisKey(jobType, status))
-    }
-
-    if (deleteState) {
-        await redis.del(jobStateRedisKey(jobId))
-    }
-    else {
-        await redis.hset(jobStateRedisKey(jobId), { status, jobType }) // jobType is also saved to handle cases where job is completed and removed from queue
-    }
-}
-
-const decrPrevState = async (redis: Redis, jobId: string, jobType?: WorkerJobType) => {
-    const prevState = await redis.hget(jobStateRedisKey(jobId), 'status')
-
-    if (prevState) {
-        jobType = jobType ?? (await redis.hget(jobStateRedisKey(jobId), 'jobType')) as WorkerJobType
-        await redis.decr(metricsRedisKey(jobType, prevState as WorkerJobStatus))
-    }
+    const redis = await redisConnections.useExisting()
+    
+    const jobStateKey = jobStateRedisKey(jobId)
+    const prevMetricsKey = '' // Will be constructed in script if needed
+    const newMetricsKey = status !== 'completed' && jobType ? metricsRedisKey(jobType, status as WorkerJobStatus) : ''
+    
+    console.log(jobId, status)
+    await redis.eval(
+        updateJobStateScript,
+        3, // number of keys
+        jobStateKey,
+        prevMetricsKey,
+        newMetricsKey,
+        status,
+        jobType || '',
+        deleteState.toString()
+    )
+    console.log(jobId, status)
 }
