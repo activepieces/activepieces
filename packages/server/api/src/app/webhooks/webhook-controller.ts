@@ -29,11 +29,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 flowId: request.params.flowId,
                 async: false,
                 flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await triggerSourceService(request.log).existsByFlowId({
-                    flowId: request.params.flowId,
-                    simulate: true,
-                },
-                ),
+                saveSampleData: false,
                 execute: true,
                 ...extractHeaderFromRequest(request),
             })

@@ -1,5 +1,5 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, ProgressUpdateType, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, ProgressUpdateType, ProjectId, RunEnvironment, TriggerPayload, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -10,6 +10,7 @@ import { triggerSourceService } from '../trigger/trigger-source/trigger-source-s
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue/job-queue'
 import { JobType } from '../workers/queue/queue-manager'
+import { handshakeHandler } from './handshake-handler'
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export enum WebhookFlowVersionToRun {
@@ -36,6 +37,34 @@ export const webhookHandler = {
 
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
         const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure } = params
+
+
+        const triggerSource = await triggerSourceService(logger).getByFlowId({
+            flowId: flow.id,
+            projectId: flow.projectId,
+            simulate: saveSampleData,
+        })
+
+        const response = await handshakeHandler(logger).handleHandshakeRequest({
+            payload: payload as TriggerPayload,
+            handshakeConfiguration: await handshakeHandler(logger).getWebhookHandshakeConfiguration(triggerSource),
+            flowId: flow.id,
+            flowVersionId: flowVersionIdToRun,
+            projectId: flow.projectId,
+        })
+        if (!isNil(response)) {
+            logger.info({
+                message: 'Handshake request completed',
+                flowId: flow.id,
+                flowVersionId: flowVersionIdToRun,
+                webhookRequestId,
+            }, 'Handshake request completed')
+            return {
+                status: response.status,
+                body: response.body,
+                headers: response.headers ?? {},
+            }
+        }
 
         const platformId = await projectService.getPlatformId(flow.projectId)
         await jobQueue(logger).add({
@@ -98,6 +127,8 @@ export const webhookHandler = {
             flowVersionId: flowVersionIdToRun,
             payload,
             synchronousHandlerId,
+            flowId: flow.id,
+            flowDisplayName: 'SOMETHING',
             projectId,
             executeTrigger: true,
             httpRequestId: webhookRequestId,

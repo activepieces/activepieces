@@ -1,12 +1,9 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowRun, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { apId, EngineHttpResponse, EventPayload, FlowRun, FlowStatus, isNil, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { flowService } from '../flows/flow/flow.service'
-import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
-import { handshakeHandler } from './handshake-handler'
 import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
 
 export const webhookService = {
@@ -38,44 +35,6 @@ export const webhookService = {
         }
 
         const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
-
-        const exceededLimit = await projectLimitsService(pinoLogger).checkTasksExceededLimit(flow.projectId)
-        if (exceededLimit) {
-            throw new ActivepiecesError({
-                code: ErrorCode.QUOTA_EXCEEDED,
-                params: {
-                    metric: PlatformUsageMetric.TASKS,
-                },
-            })
-        }
-
-        const triggerSource = await triggerSourceService(pinoLogger).getByFlowId({
-            flowId: flow.id,
-            projectId: flow.projectId,
-            simulate: saveSampleData,
-        })
-
-        const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
-            payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-            handshakeConfiguration: await handshakeHandler(pinoLogger).getWebhookHandshakeConfiguration(triggerSource),
-            flowId: flow.id,
-            flowVersionId: flowVersionIdToRun,
-            projectId: flow.projectId,
-        })
-        if (!isNil(response)) {
-            logger.info({
-                message: 'Handshake request completed',
-                flowId: flow.id,
-                flowVersionId: flowVersionIdToRun,
-                webhookRequestId,
-            }, 'Handshake request completed')
-            return {
-                status: response.status,
-                body: response.body,
-                headers: response.headers ?? {},
-            }
-        }
-
         const flowDisabledAndNoSaveSampleData = flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
         if (flowDisabledAndNoSaveSampleData) {
             return {
