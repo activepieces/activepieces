@@ -9,8 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { WorkerJobStats, WorkerJobStatus } from '@activepieces/shared';
-
-import { getStatusColor } from '.';
+import { getStatusColor, getStatusLabel } from '.';
 
 export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
   const total = useMemo(
@@ -52,7 +51,7 @@ export const MultiProgressBar = ({ stats }: { stats: WorkerJobStats }) => {
                     </span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>{t(status)}</TooltipContent>
+                <TooltipContent>{getStatusLabel(status)}: {t("{count} job{s}", { count: stats[status], s: stats[status] === 1 ? '' : 's' })} </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           );
