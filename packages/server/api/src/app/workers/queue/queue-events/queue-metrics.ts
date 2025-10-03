@@ -118,8 +118,6 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
     else {
         await redis.hset(jobStateRedisKey(jobId), { status, jobType }) // jobType is also saved to handle cases where job is completed and removed from queue
     }
-
-    if (status === WorkerJobStatus.ACTIVE) await bullMqQueue?.remove(jobId)
 }
 
 const decrPrevState = async (redis: Redis, jobId: string, jobType?: WorkerJobType) => {
