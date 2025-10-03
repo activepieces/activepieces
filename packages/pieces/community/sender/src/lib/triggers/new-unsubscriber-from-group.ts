@@ -22,15 +22,13 @@ export const newUnsubscriberFromGroupTrigger = createTrigger({
     
     const webhookData = {
       url: webhookUrl,
-      events: ['subscriber.removed_from_group'],
-      filters: {
-        group_id: groupId,
-      },
+      topic: 'groups/unsubscribed',
+      relation_id : groupId,
     };
 
     const response = await makeSenderRequest(
       context.auth,
-      '/webhooks',
+      '/account/webhooks',
       HttpMethod.POST,
       webhookData
     );
@@ -43,7 +41,7 @@ export const newUnsubscriberFromGroupTrigger = createTrigger({
     if (webhookId) {
       await makeSenderRequest(
         context.auth,
-        `/webhooks/${webhookId}`,
+        `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
     }

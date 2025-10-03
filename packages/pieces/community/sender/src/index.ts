@@ -21,7 +21,7 @@ export const sender = createPiece({
   auth: senderAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sender.png',
-  authors: ['Ani-4x'],
+  authors: ['Ani-4x','sanket-a11y'],
   categories: [PieceCategory.MARKETING],
   actions: [
     addUpdateSubscriberAction,

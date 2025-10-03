@@ -1,6 +1,7 @@
 import { createAction, Property} from '@activepieces/pieces-framework';
-import { makeSenderRequest, senderAuth } from '../common/common';
+import { makeSenderRequest, senderAuth, subscriberDropdownSingle } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { subscribe } from 'diagnostics_channel';
 
 
 export const updateSubscriberAction = createAction({
@@ -9,6 +10,7 @@ export const updateSubscriberAction = createAction({
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber\'s data',
   props: {
+    subscriber: subscriberDropdownSingle,
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Subscriber email address to update',
@@ -38,16 +40,9 @@ export const updateSubscriberAction = createAction({
   async run(context) {
     const email = context.propsValue.email;
     const phone = context.propsValue.phone;
-    const getResponse = await makeSenderRequest(
-      context.auth,
-      `/subscribers?email=${encodeURIComponent(email)}`
-    );
+    const {subscriber}= context.propsValue;
 
-    if (!getResponse.body.data || getResponse.body.data.length === 0) {
-      throw new Error(`Subscriber with email ${email} not found`);
-    }
-
-    const subscriberId = getResponse.body.data[0].id;
+    const subscriberId = subscriber;
     const updateData: any = {};
 
     if (context.propsValue.firstname) {

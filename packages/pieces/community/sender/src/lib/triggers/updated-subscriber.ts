@@ -2,25 +2,24 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { makeSenderRequest, senderAuth } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-
 export const updatedSubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'updated_subscriber',
   displayName: 'Updated Subscriber',
-  description: 'Fires when a subscriber\'s data (fields) is updated',
+  description: "Fires when a subscriber's data (fields) is updated",
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
     const webhookUrl = context.webhookUrl;
-    
+
     const webhookData = {
       url: webhookUrl,
-      events: ['subscriber.updated'],
+      topic: 'subscribers/updated',
     };
 
     const response = await makeSenderRequest(
       context.auth,
-      '/webhooks',
+      '/account/webhooks',
       HttpMethod.POST,
       webhookData
     );
@@ -29,15 +28,15 @@ export const updatedSubscriberTrigger = createTrigger({
   },
   async onDisable(context) {
     const webhookId = await context.store.get<string>('webhookId');
-    
+
     if (webhookId) {
       await makeSenderRequest(
         context.auth,
-        `/webhooks/${webhookId}`,
+        `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
     }
-    
+
     await context.store.delete('webhookId');
   },
   async run(context) {
@@ -46,7 +45,8 @@ export const updatedSubscriberTrigger = createTrigger({
   async test(context) {
     const response = await makeSenderRequest(
       context.auth,
-      '/subscribers?limit=1'
+      '/subscribers?limit=1',
+      HttpMethod.GET
     );
     return response.body.data || [];
   },

@@ -15,12 +15,12 @@ export const newGroupTrigger = createTrigger({
     
     const webhookData = {
       url: webhookUrl,
-      events: ['group.created'],
+      topic : 'groups/new',
     };
 
     const response = await makeSenderRequest(
       context.auth,
-      '/webhooks',
+      '/account/webhooks',
       HttpMethod.POST,
       webhookData
     );
@@ -33,7 +33,7 @@ export const newGroupTrigger = createTrigger({
     if (webhookId) {
       await makeSenderRequest(
         context.auth,
-        `/webhooks/${webhookId}`,
+        `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
     }
@@ -46,7 +46,8 @@ export const newGroupTrigger = createTrigger({
   async test(context) {
     const response = await makeSenderRequest(
       context.auth,
-      '/groups?limit=1'
+      '/groups?limit=1',
+      HttpMethod.GET
     );
     return response.body.data || [];
   },

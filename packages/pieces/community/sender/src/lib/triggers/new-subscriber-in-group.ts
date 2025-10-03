@@ -22,15 +22,13 @@ export const newSubscriberInGroupTrigger = createTrigger({
     
     const webhookData = {
       url: webhookUrl,
-      events: ['subscriber.added_to_group'],
-      filters: {
-        group_id: groupId,
-      },
+      topic : 'groups/new-subscriber',
+      relation_id : groupId,
     };
 
     const response = await makeSenderRequest(
       context.auth,
-      '/webhooks',
+      '/account/webhooks',
       HttpMethod.POST,
       webhookData
     );
@@ -43,7 +41,7 @@ export const newSubscriberInGroupTrigger = createTrigger({
     if (webhookId) {
       await makeSenderRequest(
         context.auth,
-        `/webhooks/${webhookId}`,
+        `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
     }

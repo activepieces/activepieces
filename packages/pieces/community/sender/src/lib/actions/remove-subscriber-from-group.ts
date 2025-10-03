@@ -1,7 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { makeSenderRequest, senderAuth } from '../common/common';
+import {
+  groupIdDropdown,
+  makeSenderRequest,
+  senderAuth,
+  subscribersDropdown,
+} from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-
 
 export const removeSubscriberFromGroupAction = createAction({
   auth: senderAuth,
@@ -9,19 +13,11 @@ export const removeSubscriberFromGroupAction = createAction({
   displayName: 'Remove Subscriber from Group',
   description: 'Remove a subscriber from a specific group',
   props: {
-    subscribers: Property.ShortText({
-      displayName: 'Email(s)',
-      description: 'Subscriber email address(es) - comma-separated for multiple',
-      required: true,
-    }),
-    groupId: Property.ShortText({
-      displayName: 'Group ID',
-      description: 'The ID of the group to remove subscriber from',
-      required: true,
-    }),
+    subscribers: subscribersDropdown,
+    groupId: groupIdDropdown,
   },
   async run(context) {
-    const subscribers = context.propsValue.subscribers.split(',').map(email => email.trim());
+    const subscribers = context.propsValue.subscribers;
     const groupId = context.propsValue.groupId;
 
     const requestBody = {

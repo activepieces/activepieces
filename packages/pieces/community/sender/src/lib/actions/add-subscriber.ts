@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { makeSenderRequest, senderAuth } from '../common/common';
+import { groupIdsDropdown, makeSenderRequest, senderAuth } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { group } from 'console';
 
 
 export const addUpdateSubscriberAction = createAction({
@@ -29,11 +30,7 @@ export const addUpdateSubscriberAction = createAction({
       description: 'Subscriber phone number',
       required: false,
     }),
-    groups: Property.ShortText({
-      displayName: 'Group IDs',
-      description: 'Comma-separated list of group IDs to add subscriber to',
-      required: false,
-    }),
+    groups: groupIdsDropdown,
     customFields: Property.Json({
       displayName: 'Custom Fields',
       description: 'JSON object with custom field keys and values',
@@ -61,7 +58,7 @@ export const addUpdateSubscriberAction = createAction({
       subscriberData.phone = context.propsValue.phone;
     }
     if (context.propsValue.groups) {
-      subscriberData.groups = context.propsValue.groups.split(',').map(id => id.trim());
+      subscriberData.groups = context.propsValue.groups;
     }
     if (context.propsValue.customFields) {
       subscriberData.fields = context.propsValue.customFields;

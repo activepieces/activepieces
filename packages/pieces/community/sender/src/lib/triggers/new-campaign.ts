@@ -14,12 +14,12 @@ export const newCampaignTrigger = createTrigger({
     const webhookUrl = context.webhookUrl;
     const webhookData = {
       url: webhookUrl,
-      events: ['campaign.created'],
+      topic : 'campaigns/new',
     };
 
     const response = await makeSenderRequest(
       context.auth,
-      '/webhooks',
+      '/account/webhooks',
       HttpMethod.POST,
       webhookData
     );
@@ -32,7 +32,7 @@ export const newCampaignTrigger = createTrigger({
     if (webhookId) {
       await makeSenderRequest(
         context.auth,
-        `/webhooks/${webhookId}`,
+        `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
     }
@@ -43,9 +43,11 @@ export const newCampaignTrigger = createTrigger({
     return [context.payload.body];
   },
   async test(context) {
+
     const response = await makeSenderRequest(
       context.auth,
-      '/campaigns?limit=1'
+      '/campaigns?limit=1',
+      HttpMethod.GET
     );
     return response.body.data || [];
   },

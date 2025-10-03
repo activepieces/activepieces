@@ -2,7 +2,6 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { makeSenderRequest, senderAuth } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-
 export const newSubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_subscriber',
@@ -12,15 +11,15 @@ export const newSubscriberTrigger = createTrigger({
   props: {},
   async onEnable(context) {
     const webhookUrl = context.webhookUrl;
-    
+
     const webhookData = {
       url: webhookUrl,
-      events: ['subscriber.added'],
+      topic: 'subscribers/new',
     };
 
     const response = await makeSenderRequest(
       context.auth,
-      '/webhooks',
+      '/account/webhooks',
       HttpMethod.POST,
       webhookData
     );
@@ -29,15 +28,15 @@ export const newSubscriberTrigger = createTrigger({
   },
   async onDisable(context) {
     const webhookId = await context.store.get<string>('webhookId');
-    
+
     if (webhookId) {
       await makeSenderRequest(
         context.auth,
-        `/webhooks/${webhookId}`,
+        `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
     }
-    
+
     await context.store.delete('webhookId');
   },
   async run(context) {
@@ -46,7 +45,8 @@ export const newSubscriberTrigger = createTrigger({
   async test(context) {
     const response = await makeSenderRequest(
       context.auth,
-      '/subscribers?limit=1'
+      '/subscribers?limit=1',
+      HttpMethod.GET
     );
     return response.body.data;
   },
