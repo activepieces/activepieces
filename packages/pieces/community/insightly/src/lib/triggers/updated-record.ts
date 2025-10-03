@@ -1,15 +1,59 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { makeInsightlyRequest, insightlyAuth, INSIGHTLY_OBJECTS } from '../common/common';
+import {
+  httpClient,
+  HttpMethod,
+  AuthenticationType
+} from '@activepieces/pieces-common';
+import { insightlyAuth } from '../common/common';
+
+// Helper function to get the correct ID field for each object type
+function getRecordId(record: any, objectType: string): number {
+  switch (objectType) {
+    case 'Contacts': return record.CONTACT_ID;
+    case 'Leads': return record.LEAD_ID;
+    case 'Opportunities': return record.OPPORTUNITY_ID;
+    case 'Organisations': return record.ORGANISATION_ID;
+    case 'Projects': return record.PROJECT_ID;
+    case 'Tasks': return record.TASK_ID;
+    case 'Events': return record.EVENT_ID;
+    case 'Notes': return record.NOTE_ID;
+    case 'Products': return record.PRODUCT_ID;
+    case 'Quotation': return record.QUOTE_ID;
+    default: return record.RECORD_ID || record.ID;
+  }
+}
 
 // Helper function to create a hash of record data (excluding creation date and ID)
-function createRecordHash(record: any): string {
-  const hashData = {
-    RECORD_NAME: record.RECORD_NAME,
+function createRecordHash(record: any, objectType: string): string {
+  // Use different fields based on object type
+  let hashData: any = {
     OWNER_USER_ID: record.OWNER_USER_ID,
     VISIBLE_TO: record.VISIBLE_TO,
     VISIBLE_TEAM_ID: record.VISIBLE_TEAM_ID,
     CUSTOMFIELDS: record.CUSTOMFIELDS || []
   };
+
+  // Add object-specific fields
+  if (objectType === 'Contacts') {
+    hashData = {
+      ...hashData,
+      FIRST_NAME: record.FIRST_NAME,
+      LAST_NAME: record.LAST_NAME,
+      EMAIL_ADDRESS: record.EMAIL_ADDRESS,
+      PHONE: record.PHONE,
+      TITLE: record.TITLE
+    };
+  } else if (objectType === 'Organisations') {
+    hashData = {
+      ...hashData,
+      ORGANISATION_NAME: record.ORGANISATION_NAME,
+      PHONE: record.PHONE,
+      WEBSITE: record.WEBSITE
+    };
+  } else {
+    hashData.RECORD_NAME = record.RECORD_NAME;
+  }
+
   // Simple hash function using JSON string
   let hash = 0;
   const str = JSON.stringify(hashData);
@@ -32,18 +76,27 @@ export const updatedRecord = createTrigger({
       displayName: 'Pod',
       description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
       required: true,
+      defaultValue: 'na1'
     }),
     objectType: Property.StaticDropdown({
       displayName: 'Object Type',
       description: 'The type of Insightly object to monitor for updates',
       required: true,
       options: {
-        options: INSIGHTLY_OBJECTS.map(obj => ({
-          label: obj,
-          value: obj,
-        })),
-      },
-    }),
+        options: [
+          { label: 'Contact', value: 'Contacts' },
+          { label: 'Lead', value: 'Leads' },
+          { label: 'Opportunity', value: 'Opportunities' },
+          { label: 'Organization', value: 'Organisations' },
+          { label: 'Project', value: 'Projects' },
+          { label: 'Task', value: 'Tasks' },
+          { label: 'Event', value: 'Events' },
+          { label: 'Note', value: 'Notes' },
+          { label: 'Product', value: 'Products' },
+          { label: 'Quote', value: 'Quotation' }
+        ]
+      }
+    })
   },
   async onEnable(context) {
     await context.store.put('record_hashes', {});
@@ -53,25 +106,56 @@ export const updatedRecord = createTrigger({
   },
   async run(context) {
     const { pod, objectType } = context.propsValue;
-    
-    const response = await makeInsightlyRequest(
-      context.auth,
-      `/${objectType}?brief=false&count_total=false`,
-      pod
-    );
-    
-    const records = response.body || [];
+    const apiKey = context.auth;
+
+    // Use the correct endpoint for each object type
+    let endpoint = objectType;
+    if (objectType === 'Products') {
+      endpoint = 'Product';
+    } else if (objectType === 'Quotation') {
+      endpoint = 'Quotation';
+    }
+
+    const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
+    const url = `${baseUrl}/${endpoint}?brief=false&count_total=false&top=100`;
+
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: apiKey,
+          password: ''
+        }
+      });
+
+      const records = Array.isArray(response.body) ? response.body : [];
     const storedHashes = await context.store.get<Record<string, { hash: string; lastSeen: number }>>('record_hashes') || {};
     const currentTime = Date.now();
     const updatedRecords: any[] = [];
 
     for (const record of records) {
-      const recordKey = `${objectType}_${record.RECORD_ID}`;
-      const currentHash = createRecordHash(record);
+      const recordId = getRecordId(record, objectType);
+      const recordKey = `${objectType}_${recordId}`;
+      const currentHash = createRecordHash(record, objectType);
       const storedRecord = storedHashes[recordKey];
 
+      // Parse date properly (handle both formats)
+      let createdDate: Date;
+      const dateStr = record.DATE_CREATED_UTC || record.CREATED_DATE_UTC;
+      if (dateStr) {
+        // Handle both "2025-10-02 08:21:11" and "2025-10-03T17:53:38.953Z" formats
+        createdDate = new Date(dateStr.includes('T') ? dateStr : dateStr + 'Z');
+      } else {
+        createdDate = new Date(0); // Very old date if no creation date
+      }
+
       // Skip records created in the last 5 minutes to avoid triggering on new records
-      const recordAge = currentTime - new Date(record.DATE_CREATED_UTC).getTime();
+      const recordAge = currentTime - createdDate.getTime();
       const isNewRecord = recordAge < 5 * 60 * 1000; // 5 minutes
 
       if (!isNewRecord && storedRecord && storedRecord.hash !== currentHash) {
@@ -94,19 +178,47 @@ export const updatedRecord = createTrigger({
       }
     });
 
-    // Save updated hashes
-    await context.store.put('record_hashes', storedHashes);
-    
-    return updatedRecords;
+      // Save updated hashes
+      await context.store.put('record_hashes', storedHashes);
+      
+      return updatedRecords;
+    } catch (error: any) {
+      throw new Error(`Failed to fetch updated records: ${error.message}`);
+    }
   },
   async test(context) {
     const { pod, objectType } = context.propsValue;
-    const response = await makeInsightlyRequest(
-      context.auth,
-      `/${objectType}?top=1`,
-      pod
-    );
-    return response.body || [];
+    const apiKey = context.auth;
+
+    // Use the correct endpoint for each object type
+    let endpoint = objectType;
+    if (objectType === 'Products') {
+      endpoint = 'Product';
+    } else if (objectType === 'Quotation') {
+      endpoint = 'Quotation';
+    }
+
+    const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
+    const url = `${baseUrl}/${endpoint}?top=1`;
+
+    try {
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: apiKey,
+          password: ''
+        }
+      });
+
+      return Array.isArray(response.body) ? response.body : [];
+    } catch (error: any) {
+      throw new Error(`Failed to test trigger: ${error.message}`);
+    }
   },
   sampleData: {
     RECORD_ID: 123456,
