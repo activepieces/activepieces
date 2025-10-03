@@ -290,6 +290,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         failParentOnFailure,
         stepNameToTest,
         flowId,
+        flowDisplayName,
         environment,
     }: StartParams): Promise<FlowRun> {
       
@@ -301,6 +302,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowId,
             failParentOnFailure,
             stepNameToTest,
+            flowDisplayName,
             environment,
         })
         await addToQueue({
@@ -327,7 +329,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         const flowRun = await create({
             projectId,
-            flowId: flowVersion.flowId,
+            flowId: flowVersion.flowId, 
+            flowDisplayName: flowVersion.displayName,
             flowVersionId: flowVersion.id,
             environment: RunEnvironment.TESTING,
             parentRunId,
@@ -639,6 +642,7 @@ async function create(params: CreateParams): Promise<FlowRun> {
         flowId: params.flowId,
         flowVersionId: params.flowVersionId,
         environment: params.environment,
+        flowDisplayName: params.flowDisplayName,
         startTime: new Date().toISOString(),
         parentRunId: params.parentRunId,
         failParentOnFailure: params.failParentOnFailure ?? true,
@@ -687,6 +691,7 @@ type CreateParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
+    flowDisplayName: string
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     flowId: FlowId
