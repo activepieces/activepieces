@@ -15,13 +15,13 @@ export const newGroup = createTrigger({
     async onEnable(context) {
         const body = {
             url: context.webhookUrl,
-            events: ['group.created'],
+            topic: "groups/new",
         };
 
         const response = await makeRequest(
             context.auth as string,
             HttpMethod.POST,
-            '/webhooks',
+            '/account/webhooks',
             body
         );
 
@@ -34,7 +34,7 @@ export const newGroup = createTrigger({
             await makeRequest(
                 context.auth as string,
                 HttpMethod.DELETE,
-                `/webhooks/${webhookId}`
+                `/account/webhooks/${webhookId}`
             );
         }
         await context.store?.delete('webhookId');

@@ -21,17 +21,17 @@ export const newUnsubscriberFromGroup = createTrigger({
     async onEnable(context) {
         const body = {
             url: context.webhookUrl,
-            events: ["subscriber.removed_from_group"],
+            topic:"groups/unsubscribed",
             group_id: context.propsValue.groupId,
         };
-        const response = await makeRequest(context.auth as string, HttpMethod.POST, '/webhooks', body);
+        const response = await makeRequest(context.auth as string, HttpMethod.POST, '/account/webhooks', body);
         await context.store?.put('webhookId', response.id);
     },
 
     async onDisable(context) {
         const webhookId = await context.store?.get('webhookId');
         if (webhookId) {
-            await makeRequest(context.auth as string, HttpMethod.DELETE, `/webhooks/${webhookId}`);
+            await makeRequest(context.auth as string, HttpMethod.DELETE, `/account/webhooks/${webhookId}`);
         }
     },
 

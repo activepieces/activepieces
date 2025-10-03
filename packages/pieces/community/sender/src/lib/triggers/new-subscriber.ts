@@ -18,17 +18,17 @@ export const newSubscriber = createTrigger({
     async onEnable(context) {
         const body = {
             url: context.webhookUrl,
-            events: ["subscriber.added"], 
+            topic: "subscribers/new",
         };
 
         const response = await makeRequest(
             context.auth as string,
             HttpMethod.POST,
-            "/webhooks", 
+            "/account/webhooks",
             body
         );
 
-        await context.store?.put("webhookId", response.body.data.id); 
+        await context.store?.put("webhookId", response.body.data.id);
     },
 
     async onDisable(context) {
@@ -37,7 +37,7 @@ export const newSubscriber = createTrigger({
             await makeRequest(
                 context.auth as string,
                 HttpMethod.DELETE,
-                `/webhooks/${webhookId}`
+                `/account/webhooks/${webhookId}`
             );
         }
         await context.store?.delete("webhookId");
@@ -53,7 +53,7 @@ export const newSubscriber = createTrigger({
             HttpMethod.GET,
             "/subscribers?limit=1"
         );
-         const subscribers = response?.data ?? response?.body?.data ?? [];
+        const subscribers = response?.data ?? response?.body?.data ?? [];
         return Array.isArray(subscribers) ? subscribers : [subscribers];
     },
 });

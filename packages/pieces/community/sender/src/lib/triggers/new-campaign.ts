@@ -15,13 +15,13 @@ export const newCampaign = createTrigger({
     async onEnable(context) {
         const body = {
             url: context.webhookUrl,
-            events: ["campaign.created"],
+            topic: "campaigns/new",
         };
 
         const response = await makeRequest(
             context.auth as string,
             HttpMethod.POST,
-            "/webhooks",
+            "/account/webhooks",
             body
         );
 
@@ -35,7 +35,7 @@ export const newCampaign = createTrigger({
             await makeRequest(
                 context.auth as string,
                 HttpMethod.DELETE,
-                `/webhooks/${webhookId}`
+                `/account/webhooks/${webhookId}`
             );
         }
         await context.store?.delete("webhookId");
