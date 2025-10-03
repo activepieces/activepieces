@@ -44,7 +44,7 @@ const FlowRunPage = () => {
 
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (
-      <div className="bg-background flex h-screen w-screen items-center justify-center ">
+      <div className="bg-background flex h-full w-full items-center justify-center ">
         <LoadingSpinner isLarge={true}></LoadingSpinner>
       </div>
     );
@@ -57,7 +57,6 @@ const FlowRunPage = () => {
           flow={data.flow}
           flowVersion={data.flow.version}
           readonly={true}
-          canExitRun={false}
           run={data.run}
           sampleData={sampleData ?? {}}
           sampleDataInput={sampleDataInput ?? {}}

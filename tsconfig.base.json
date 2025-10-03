@@ -317,6 +317,9 @@
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/community/data-summarizer/src/index.ts"
       ],
+      "@activepieces/piece-datadog": [
+        "packages/pieces/community/datadog/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
@@ -524,6 +527,9 @@
       ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
+      ],
+      "@activepieces/piece-hedy": [
+        "packages/pieces/community/hedy/src/index.ts"
       ],
       "@activepieces/piece-help-scout": [
         "packages/pieces/community/help-scout/src/index.ts"
@@ -782,6 +788,9 @@
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
       ],
+      "@activepieces/piece-parseur": [
+        "packages/pieces/community/parseur/src/index.ts"
+      ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
       ],
@@ -810,6 +819,9 @@
       "@activepieces/piece-pinecone": [
         "packages/pieces/community/pinecone/src/index.ts"
       ],
+      "@activepieces/piece-pinterest": [
+        "packages/pieces/community/pinterest/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -830,6 +842,9 @@
       ],
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
+      ],
+      "@activepieces/piece-productboard": [
+        "packages/pieces/community/productboard/src/index.ts"
       ],
       "@activepieces/piece-prompthub": [
         "packages/pieces/community/prompthub/src/index.ts"
@@ -1090,6 +1105,9 @@
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
       ],
+      "@activepieces/piece-timelines-ai": [
+        "packages/pieces/community/timelines-ai/src/index.ts"
+      ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
       ],
@@ -1186,6 +1204,9 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-wrike": [
+        "packages/pieces/community/wrike/src/index.ts"
+      ],
       "@activepieces/piece-wufoo": [
         "packages/pieces/community/wufoo/src/index.ts"
       ],
@@ -1204,6 +1225,9 @@
       ],
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-bookings": [
+        "packages/pieces/community/zoho-bookings/src/index.ts"
       ],
       "@activepieces/piece-zoho-books": [
         "packages/pieces/community/zoho-books/src/index.ts"

@@ -27,6 +27,7 @@ import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/175071
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
+import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -312,6 +313,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowIndexToTriggerSource1757555419075,
         AddIndexOnTriggerRunSqlite1757560231246,
         DeleteHandshakeFromTriggerSourceSqlite1758108281602,
+        AddIndexForAppEvents1759392852559,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -334,6 +336,17 @@ const getMigrationConfig = (): MigrationConfig => {
     }
 }
 
+const getSynchronize = (): boolean => {
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+
+    const value: Partial<Record<ApEnvironment, boolean>> = {
+        [ApEnvironment.TESTING]: true,
+    }
+
+    return value[env] ?? false
+}
+
+
 export const createSqlLiteDataSource = (): DataSource => {
     const migrationConfig = getMigrationConfig()
 
@@ -342,6 +355,7 @@ export const createSqlLiteDataSource = (): DataSource => {
         database: getSqliteDatabase(),
         ...migrationConfig,
         ...commonProperties,
+        synchronize: getSynchronize(),
     })
 }
 
