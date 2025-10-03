@@ -14,10 +14,7 @@ const GetMetrics = {
     schema: {
         tags: ['queue-metrics'],
         description: 'Get metrics',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        response: {
-            [StatusCodes.OK]: QueueMetricsResponse,
-        },
+        security: [SERVICE_KEY_SECURITY_OPENAPI]
     },
     config: {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
