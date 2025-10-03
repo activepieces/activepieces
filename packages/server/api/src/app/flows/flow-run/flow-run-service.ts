@@ -105,6 +105,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 failedStepName: params.failedStepName,
             })
         }
+        if (params.flowRunIds) {
+            query = query.andWhere({
+                id: In(params.flowRunIds),
+            })
+        }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
@@ -134,23 +139,19 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     oldFlowRun.flowId,
                 )
                 const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
-                await flowRunRepo().update({
-                    id: oldFlowRun.id,
-                    projectId: oldFlowRun.projectId,
-                }, {
-                    flowVersionId: latestFlowVersion.id,
-                    status: FlowRunStatus.QUEUED,
-                })
-                const updatedFlowRun = await flowRunRepo().findOneByOrFail({ id: oldFlowRun.id })
-                return addToQueue({
+                return this.start({
                     payload,
-                    flowRun: updatedFlowRun,
+                    executionType: ExecutionType.BEGIN,
+                    progressUpdateType: ProgressUpdateType.NONE,
                     synchronousHandlerId: undefined,
                     httpRequestId: undefined,
-                    progressUpdateType: ProgressUpdateType.NONE,
-                    executionType: ExecutionType.BEGIN,
                     executeTrigger: false,
-                }, log)
+                    environment: oldFlowRun.environment,
+                    flowVersionId: latestFlowVersion.id,
+                    projectId: oldFlowRun.projectId,
+                    failParentOnFailure: oldFlowRun.failParentOnFailure,
+                    parentRunId: oldFlowRun.id,
+                })
             }
         }
     },
@@ -708,6 +709,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
+    flowRunIds?: FlowRunId[]
 }
 
 type GetOneParams = {

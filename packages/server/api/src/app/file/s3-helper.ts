@@ -8,7 +8,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { fileRepo } from './file.service'
 
-const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const s3Helper = (log: FastifyBaseLogger) => ({
     async constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): Promise<string> {
@@ -68,17 +67,20 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             Key: s3Key,
             ResponseContentDisposition: `attachment; filename="${fileName}"`,
         })
-        return getSignedUrl(client, command)
+        return getSignedUrl(client, command, {
+            expiresIn: dayjs.duration(7, 'days').asSeconds(),
+        })
     },
     async putS3SignedUrl(s3Key: string, contentLength?: number | undefined): Promise<string> {
         const client = getS3Client()
         const command = new PutObjectCommand({
             Bucket: getS3BucketName(),
             Key: s3Key,
-            Expires: dayjs().add(executionRetentionInDays, 'days').toDate(),
             ContentLength: contentLength,
         })
-        return getSignedUrl(client, command)
+        return getSignedUrl(client, command, {
+            expiresIn: dayjs.duration(7, 'days').asSeconds(),
+        })
     },
     async deleteFiles(s3Keys: string[]): Promise<void> {
         if (s3Keys.length === 0) {

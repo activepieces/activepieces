@@ -11,6 +11,7 @@ import {
 import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Messages } from '@/components/ui/chat/chat-message-list';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
@@ -102,7 +103,6 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
-  canExitRun: boolean;
   activeDraggingStep: string | null;
   saving: boolean;
   /** change this value to trigger the step form to set its values from the step */
@@ -191,13 +191,7 @@ export type BuilderState = {
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  | 'flow'
-  | 'flowVersion'
-  | 'readonly'
-  | 'run'
-  | 'canExitRun'
-  | 'sampleData'
-  | 'sampleDataInput'
+  'flow' | 'flowVersion' | 'readonly' | 'run' | 'sampleData' | 'sampleDataInput'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -245,7 +239,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       run: initialState.run,
       saving: false,
       selectedStep: initiallySelectedStep,
-      canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       rightSidebar:
         initiallySelectedStep && !isEmptyTriggerInitiallySelected
@@ -1058,12 +1051,13 @@ function determineInitiallySelectedStep(
   return firstInvalidStep?.name ?? 'trigger';
 }
 
-export const useShowBuilderIsSavingWarningBeforeLeaving = (
-  isInEmbeddingMode: boolean,
-) => {
+export const useShowBuilderIsSavingWarningBeforeLeaving = () => {
+  const {
+    embedState: { isEmbedded },
+  } = useEmbedding();
   const isSaving = useBuilderStateContext((state) => state.saving);
   useEffect(() => {
-    if (isInEmbeddingMode) {
+    if (isEmbedded) {
       return;
     }
     const message = t(
@@ -1084,5 +1078,5 @@ export const useShowBuilderIsSavingWarningBeforeLeaving = (
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [isSaving, isInEmbeddingMode]);
+  }, [isSaving, isEmbedded]);
 };
