@@ -1,5 +1,5 @@
 import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertyExecutionType, PropertySettings } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
@@ -42,7 +42,7 @@ export const propsProcessor = {
 
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
-            if (isNil(property)) {
+            if (isNil(property) || propertySettings[key]?.type === PropertyExecutionType.AUTO) {
                 continue
             }
             if (property.type === PropertyType.DYNAMIC && !isNil(dynamaicPropertiesSchema?.[key])) {

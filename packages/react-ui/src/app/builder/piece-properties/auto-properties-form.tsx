@@ -16,7 +16,7 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil, PropertyExecutionType } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
@@ -28,6 +28,11 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { AutoDynamicFields } from './auto-dynamic-fields';
+import { Separator } from '@/components/ui/separator';
+import { autoPropertiesUtils } from '@/features/pieces/lib/auto-properties-utils';
+import { propertyUtils } from './property-utils';
+import { useStepSettingsContext } from '@/app/builder/step-settings/step-settings-context';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -50,10 +55,25 @@ const AutoPropertiesFormComponent = React.memo(
     onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
+    const { updateFormFieldSchemaWithAuto } = useStepSettingsContext();
     return (
       Object.keys(props).length > 0 && (
-        <div className="flex flex-col gap-4 w-full">
-          {Object.entries(props).map(([propertyName]) => {
+        <div className="flex flex-col gap-6 w-full">
+          {Object.entries(props).filter(([propertyName]) => {
+            const propertySettings = form.getValues().settings?.propertySettings?.[propertyName];
+            if (isNil(propertySettings?.type)) {
+              const propertyExecutionType = autoPropertiesUtils.determinePropertyExecutionType(propertyName, propertySettings?.schema ?? props[propertyName], props);
+              propertyUtils.handlePropertyExecutionModeChange({
+                form,
+                mode: propertyExecutionType,
+                propertyName,
+                inputName: `${prefixValue}.${propertyName}`,
+                property: propertySettings?.schema ?? props[propertyName],
+                updateFormFieldSchemaWithAuto,
+              });
+            }
+            return propertySettings?.type !== PropertyExecutionType.AUTO;
+          }).map(([propertyName]) => {
             return (
               <FormField
                 key={propertyName}
@@ -194,6 +214,18 @@ const selectFormComponentForProperty = ({
             disabled={disabled}
             placeholder={property.options.placeholder ?? t('Select an option')}
             showDeselect={!property.required}
+            rightContent={
+              <div className="flex items-center gap-3"> 
+                <Separator orientation="vertical" className='h-6'/>
+                <AutoDynamicFields
+                  allowDynamicValues={allowDynamicValues}
+                  propertyName={propertyName}
+                  inputName={inputName}
+                  property={property}
+                  disabled={disabled}
+                />
+            </div>
+            }
           ></SearchableSelect>
         </AutoFormFieldWrapper>
       );
@@ -261,6 +293,9 @@ const selectFormComponentForProperty = ({
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
             showDeselect={!property.required}
             shouldRefreshOnSearch={property.refreshOnSearch ?? false}
+            allowDynamicValues={allowDynamicValues}
+            inputName={inputName}
+            property={property}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );

@@ -41,3 +41,19 @@ export const GetFlowVersionForWorkerRequest = Type.Object({
 })
 
 export type GetFlowVersionForWorkerRequest = Static<typeof GetFlowVersionForWorkerRequest>
+
+export const ResolveToolInputsRequest = Type.Object({
+    auth: Type.Optional(Type.String()),
+    pieceName: Type.String(),
+    pieceVersion: Type.String(),
+    actionName: Type.String(),
+    preDefinedInputs: Type.Record(Type.String(), Type.Any()),
+    flowVersionId: Type.String(),
+})
+export type ResolveToolInputsRequest = Static<typeof ResolveToolInputsRequest>
+
+export const ResolveAIConditionRequest = Type.Object({
+    previousStepsResults: Type.Record(Type.String(), Type.Any()),
+    prompts: Type.Array(Type.String()),
+})
+export type ResolveAIConditionRequest = Static<typeof ResolveAIConditionRequest>

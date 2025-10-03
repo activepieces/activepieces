@@ -22,13 +22,16 @@ import {
   isNil,
   flowStructureUtil,
   StepSettings,
-  RouterActionSettingsWithValidation,
   FlowTriggerType,
-  PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
+  ConditionType,
+  RouterActionSettingsValidation,
+  PropertyExecutionType,
+  PropertySettings,
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';
+import { autoPropertiesUtils } from './auto-properties-utils';
 const defaultCode = `export const code = async (inputs) => {
   return true;
 };`;
@@ -86,6 +89,9 @@ const isStepInitiallyValid = (
       const inputValidity = checkPieceInputValidity(
         overridingInput ?? getInitalStepInput(pieceSelectorItem),
         pieceSelectorItem.actionOrTrigger.props,
+        overrideDefaultSettings && 'propertySettings' in overrideDefaultSettings 
+          ? overrideDefaultSettings.propertySettings 
+          : undefined,
       );
       const needsAuth = pieceSelectorItem.actionOrTrigger.requireAuth;
       const hasAuth = !isNil(pieceSelectorItem.pieceMetadata.auth);
@@ -108,7 +114,7 @@ const isStepInitiallyValid = (
       if (overrideDefaultSettings) {
         const errors = Array.from(
           Value.Errors(
-            RouterActionSettingsWithValidation,
+            RouterActionSettingsValidation,
             overrideDefaultSettings,
           ),
         );
@@ -202,6 +208,7 @@ const getDefaultStepValues = ({
           type: FlowActionType.ROUTER,
           settings: overrideDefaultSettings ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            conditionType: ConditionType.LOGICAL,
             branches: [
               {
                 conditions: [
@@ -214,6 +221,7 @@ const getDefaultStepValues = ({
                     },
                   ],
                 ],
+                prompt: '',
                 branchType: BranchExecutionType.CONDITION,
                 branchName: 'Branch 1',
               },
@@ -233,6 +241,10 @@ const getDefaultStepValues = ({
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
         );
       }
+      
+      const propertySettings = getDefaultPropertySettings(pieceSelectorItem.actionOrTrigger.props);
+      const inputWithoutAutoFields = getInputWithoutAutoFields(input, propertySettings);
+
       return deepMergeAndCast<PieceAction>(
         {
           type: FlowActionType.PIECE,
@@ -240,17 +252,9 @@ const getDefaultStepValues = ({
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
             actionName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
-            input,
+            input: inputWithoutAutoFields,
             errorHandlingOptions,
-            propertySettings: Object.fromEntries(
-              Object.entries(input).map(([key]) => [
-                key,
-                {
-                  type: PropertyExecutionType.MANUAL,
-                  schema: undefined,
-                },
-              ]),
-            ),
+            propertySettings,
           },
         },
         common,
@@ -262,6 +266,11 @@ const getDefaultStepValues = ({
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
         );
       }
+
+      const propertySettings = getDefaultPropertySettings(pieceSelectorItem.actionOrTrigger.props);
+      const inputWithoutAutoFields = getInputWithoutAutoFields(input, propertySettings);
+      
+      
       return deepMergeAndCast<PieceTrigger>(
         {
           type: FlowTriggerType.PIECE,
@@ -269,15 +278,8 @@ const getDefaultStepValues = ({
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
             triggerName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
-            input,
-            propertySettings: Object.fromEntries(
-              Object.entries(input).map(([key]) => [
-                key,
-                {
-                  type: PropertyExecutionType.MANUAL,
-                },
-              ]),
-            ),
+            input: inputWithoutAutoFields,
+            propertySettings,
           },
         },
         common,
@@ -291,8 +293,15 @@ const getDefaultStepValues = ({
 const checkPieceInputValidity = (
   input: Record<string, unknown>,
   props: PiecePropertyMap,
+  propertySettings?: Record<string, PropertySettings>,
 ) => {
   return Object.entries(props).reduce((acc, [key, property]) => {
+    const propertySetting = propertySettings?.[key];
+    
+    if (propertySetting?.type === PropertyExecutionType.AUTO) {
+      return acc;
+    }
+    
     if (
       property.required &&
       property.type !== PropertyType.DYNAMIC &&
@@ -369,6 +378,31 @@ const isChatTrigger = (pieceName: string, triggerName: string) => {
     triggerName === 'chat_submission'
   );
 };
+
+const getDefaultPropertySettings = (props: PiecePropertyMap) => {
+  return Object.fromEntries(
+    Object.entries(props).map(([key, property]) => {
+      const executionType = autoPropertiesUtils.determinePropertyExecutionType(key, property, props);
+      return [
+        key,
+        {
+          type: executionType,
+          schema: undefined,
+        },
+      ];
+    }),
+  );
+};
+
+const getInputWithoutAutoFields = (input: Record<string, unknown>, propertySettings: Record<string, PropertySettings>) => {
+  return Object.fromEntries(Object.entries(input).map(([key, value]) => {
+    if (propertySettings[key]?.type === PropertyExecutionType.AUTO) {
+      return [key, undefined];
+    }
+    return [key, value];
+  }));
+};
+
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,

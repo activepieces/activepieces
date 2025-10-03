@@ -145,6 +145,7 @@ const DynamicPropertiesImplementation = React.memo(
             updateFormSchema(
               `settings.input.${props.propertyName}`,
               schemaWithoutDropdownOptions,
+              form.getValues().settings?.propertySettings,
             );
 
             if (!readonly) {

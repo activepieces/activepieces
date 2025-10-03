@@ -12,7 +12,7 @@ import {
   PieceMetadataModel,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
-import { FlowAction, setAtPath, FlowTrigger } from '@activepieces/shared';
+import { FlowAction, setAtPath, FlowTrigger, PropertySettings } from '@activepieces/shared';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 
@@ -37,7 +37,8 @@ export type StepSettingsContextState = {
   selectedStep: FlowAction | FlowTrigger;
   pieceModel: PieceMetadataModel | undefined;
   formSchema: TObject<any>;
-  updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
+  updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap, propertySettings: Record<string, PropertySettings>) => void;
+  updateFormFieldSchemaWithAuto: (schemaPropertyPath: string) => void;
 };
 
 export type StepSettingsProviderProps = {
@@ -65,15 +66,16 @@ export const StepSettingsProvider = ({
       selectedStep.type,
       selectedStep.settings.actionName ?? selectedStep.settings.triggerName,
       pieceModel ?? null,
+      selectedStep.settings.propertySettings,
     );
     formSchemaInitializedRef.current = true;
     setFormSchema(schema as TObject<any>);
   }
 
   const updateFormSchema = useCallback(
-    (key: string, newFieldPropertyMap: PiecePropertyMap) => {
+    (key: string, newFieldPropertyMap: PiecePropertyMap, propertySettings: Record<string, PropertySettings>) => {
       setFormSchema((prevSchema) => {
-        const newFieldSchema = formUtils.buildSchema(newFieldPropertyMap);
+        const newFieldSchema = formUtils.buildSchema(newFieldPropertyMap, propertySettings);
         const currentSchema = { ...prevSchema };
         const keyUpdated = createUpdatedSchemaKey(key);
         setAtPath(currentSchema, keyUpdated, newFieldSchema);
@@ -82,6 +84,19 @@ export const StepSettingsProvider = ({
     },
     [],
   );
+
+  const updateFormFieldSchemaWithAuto = useCallback(
+    (schemaPropertyPath: string) => {
+      setFormSchema((prevSchema) => {
+        const currentSchema = { ...prevSchema };
+        const keyUpdated = createUpdatedSchemaKey(schemaPropertyPath);
+        setAtPath(currentSchema, keyUpdated, Type.Undefined());
+        return currentSchema;
+      });
+    },
+    [],
+  );
+
   return (
     <StepSettingsContext.Provider
       value={{
@@ -89,6 +104,7 @@ export const StepSettingsProvider = ({
         pieceModel,
         formSchema,
         updateFormSchema,
+        updateFormFieldSchemaWithAuto
       }}
     >
       {children}

@@ -1,6 +1,6 @@
 import { isNil } from '../../common'
 import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
-import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction, RouterActionSettings } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -125,9 +125,10 @@ function getAllSteps(step: Step): Step[] {
 }
 
 
-const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined) => {
+const createBranch = ({branchName, conditions, prompt}: {branchName: string, conditions: BranchCondition[][] | undefined, prompt: string | undefined}): RouterActionSettings['branches'][number] => {
     return {
         conditions: conditions ?? [[emptyCondition]],
+        prompt: prompt ?? '',
         branchType: BranchExecutionType.CONDITION,
         branchName,
     }
