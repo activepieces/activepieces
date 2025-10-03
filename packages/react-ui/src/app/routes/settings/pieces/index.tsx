@@ -156,9 +156,8 @@ const ProjectPiecesPage = () => {
             type: 'input',
             title: t('Piece Name'),
             accessorKey: 'name',
-            options: [],
             icon: CheckIcon,
-          } as const,
+          },
         ]}
         page={{
           data: pieces ?? [],

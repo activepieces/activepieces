@@ -10,6 +10,7 @@
   "Support": "",
   "Runs": "",
   "Versions": "",
+  "Leaving this page while saving will discard your changes, are you sure you want to leave?": "",
   "Error generating code": "",
   "AI Copilot": "",
   "i.e Calculate the sum of a list...": "",
@@ -1183,7 +1184,7 @@
   "Permission Needed": "",
   "Draft": "",
   "Published": "",
-  "flowsImported": "",
+  "flowsImported": "{flowsCount, plural, =0 {0 flows imported} =1 {1 flow imported} other {# flows imported}}",
   "Template file is invalid": "",
   "No valid templates found. The following files failed to import: ": "",
   "Please select a file first": "",
@@ -1374,5 +1375,6 @@
   "Activation failed, invalid license key": "",
   "Invalid Access": "",
   "Either the project does not exist or you do not have access to it.": "",
-  "Yesterday": ""
+  "Yesterday": "",
+  "runsRetriedNote": "{runsCount, plural, =0 {0 runs retried} =1 {1 run was retried} other {# runs were retried}}"
 }

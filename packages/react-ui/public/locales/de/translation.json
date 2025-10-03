@@ -10,6 +10,7 @@
   "Support": "Unterstützung",
   "Runs": "Ausführungen",
   "Versions": "Versionen",
+  "Leaving this page while saving will discard your changes, are you sure you want to leave?": "",
   "Error generating code": "Error generating code",
   "AI Copilot": "KI Copilot",
   "i.e Calculate the sum of a list...": "D.h. Berechne die Summe einer Liste...",
@@ -1183,7 +1184,7 @@
   "Permission Needed": "Berechtigung benötigt",
   "Draft": "",
   "Published": "",
-  "flowsImported": "{flowsCount, plural, =0 {No Flows Imported} =1 {Flow Imported Successfully} other {Flows Imported Successfully}}",
+  "flowsImported": "{flowsCount, plural, =0 {0 Ströme importiert} =1 {1 Flow importiert} other {# Ströme importiert}}",
   "Template file is invalid": "Vorlagendatei ist ungültig",
   "No valid templates found. The following files failed to import: ": "Keine gültigen Vorlagen gefunden. Die folgenden Dateien konnten nicht importiert werden: ",
   "Please select a file first": "Bitte wählen Sie zuerst eine Datei",
@@ -1374,5 +1375,6 @@
   "Activation failed, invalid license key": "Aktivierung fehlgeschlagen, ungültiger Lizenzschlüssel",
   "Invalid Access": "Ungültiger Zugriff",
   "Either the project does not exist or you do not have access to it.": "Entweder existiert das Projekt nicht oder Sie haben keinen Zugriff darauf.",
-  "Yesterday": ""
+  "Yesterday": "",
+  "runsRetriedNote": "{runsCount, plural, =0 {0 läuft erneut versucht} =1 {Ein Run wurde erneut ausprobiert!} other {# Run wurde erneut ausprobiert}}"
 }

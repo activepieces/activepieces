@@ -10,6 +10,7 @@
   "Support": "支持",
   "Runs": "运行",
   "Versions": "版本",
+  "Leaving this page while saving will discard your changes, are you sure you want to leave?": "",
   "Error generating code": "生成代码出错",
   "AI Copilot": "AI 复制器",
   "i.e Calculate the sum of a list...": "i.e 计算列表的总和...",
@@ -1183,7 +1184,7 @@
   "Permission Needed": "需要权限",
   "Draft": "",
   "Published": "",
-  "flowsImported": "{flowsCount, plural, =0 {No Flows Imported} =1 {Flow Imported Successfully} other {Flows Imported Successfully}}",
+  "flowsImported": "{flowsCount, plural, =0 {0 flows imported} =1 {1 flow imported} other {# flows imported}}",
   "Template file is invalid": "模板文件无效",
   "No valid templates found. The following files failed to import: ": "未找到有效的模板。以下文件导入失败： ",
   "Please select a file first": "请先选择一个文件",
@@ -1374,5 +1375,6 @@
   "Activation failed, invalid license key": "Activation failed, invalid license key",
   "Invalid Access": "无效访问",
   "Either the project does not exist or you do not have access to it.": "项目不存在或您没有访问权限。",
-  "Yesterday": ""
+  "Yesterday": "",
+  "runsRetriedNote": "{runsCount, plural, =0 {0 runs retried} =1 {A run was retried} other {# runs were retried}}"
 }

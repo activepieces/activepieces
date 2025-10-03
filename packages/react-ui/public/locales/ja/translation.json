@@ -10,6 +10,7 @@
   "Support": "サポート",
   "Runs": "実行",
   "Versions": "バージョン",
+  "Leaving this page while saving will discard your changes, are you sure you want to leave?": "",
   "Error generating code": "コードの生成中にエラー",
   "AI Copilot": "AI コパイロット",
   "i.e Calculate the sum of a list...": "i.e リストの合計を計算...",
@@ -1183,7 +1184,7 @@
   "Permission Needed": "権限が必要です",
   "Draft": "",
   "Published": "",
-  "flowsImported": "{flowsCount, plural, =0 {No Flows Imported} =1 {Flow Imported Successfully} other {Flows Imported Successfully}}",
+  "flowsImported": "{flowsCount, plural, =0 {0 つのフローがインポートされました} =1 {1 つのフローがインポートされました} other {# フローがインポートされました}}",
   "Template file is invalid": "テンプレートファイルが無効です",
   "No valid templates found. The following files failed to import: ": "有効なテンプレートが見つかりませんでした。次のファイルのインポートに失敗しました: ",
   "Please select a file first": "最初にファイルを選択してください",
@@ -1374,5 +1375,6 @@
   "Activation failed, invalid license key": "アクティベーションに失敗しました。無効なライセンスキーです。",
   "Invalid Access": "不正なアクセス",
   "Either the project does not exist or you do not have access to it.": "プロジェクトが存在しないか、アクセスできません。",
-  "Yesterday": ""
+  "Yesterday": "",
+  "runsRetriedNote": "{runsCount, plural, =0 {0 ランが再試行されました} =1 {ランが再試行されました} other {# ランが再試行されました}}"
 }
