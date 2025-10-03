@@ -1,18 +1,20 @@
-import crypto from 'crypto';
 import { createHmac } from 'crypto';
-import { URL } from 'url';
 
 const SIGN_METHOD = 'HMAC-SHA256';
 const OAUTH_VERSION = '1.0';
 
-export function generateNonce(): string {
+function generateNonce(): string {
   const length = 11;
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({ length }, () => possible[Math.floor(Math.random() * possible.length)]).join('');
+  const possible =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from(
+    { length },
+    () => possible[Math.floor(Math.random() * possible.length)]
+  ).join('');
 }
 
-export function generateSignature(
-  baseUrl: string,
+function generateSignature(
+  requestUrl: string,
   httpMethod: string,
   oauthNonce: string,
   timestamp: number,
@@ -30,6 +32,9 @@ export function generateSignature(
     oauth_version: OAUTH_VERSION,
   });
 
+  const parsedUrl = new URL(requestUrl);
+  const baseUrl = `${parsedUrl.origin}${parsedUrl.pathname}`;
+
   const signatureBaseString = [
     httpMethod,
     encodeURIComponent(baseUrl),
@@ -44,7 +49,7 @@ export function generateSignature(
   const hmac = createHmac('sha256', signingKey);
   hmac.update(signatureBaseString);
   const signature = hmac.digest('base64');
-  
+
   return encodeURIComponent(signature);
 }
 
@@ -54,13 +59,13 @@ export function createOAuthHeader(
   consumerSecret: string,
   tokenId: string,
   tokenSecret: string,
-  baseUrl: string,
+  requestUrl: string,
   httpMethod: string
 ): string {
   const oauthNonce = generateNonce();
   const timestamp = Math.floor(Date.now() / 1000);
   const signature = generateSignature(
-    baseUrl,
+    requestUrl,
     httpMethod,
     oauthNonce,
     timestamp,
@@ -82,4 +87,4 @@ export function createOAuthHeader(
   ].join(',');
 
   return `OAuth ${headerParams}`;
-} 
+}
