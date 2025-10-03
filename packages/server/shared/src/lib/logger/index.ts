@@ -22,7 +22,7 @@ export const pinoLogging = {
                 },
             })
         }
-        
+
         const defaultTargets = [
             {
                 target: 'pino/file',
@@ -49,8 +49,8 @@ export const pinoLogging = {
             },
         })
     },
-    createRunContextLog: ({ log, runId, webhookId, flowId, flowVersionId }: { log: FastifyBaseLogger, runId: string, webhookId: string | undefined, flowId: string, flowVersionId: string }) => {
-        return log.child({ runId, webhookId, flowId, flowVersionId })
+    createRunContextLog: ({ log, flowRunId, webhookId, flowId, flowVersionId }: { log: FastifyBaseLogger, flowRunId: string, webhookId: string | undefined, flowId: string, flowVersionId: string }) => {
+        return log.child({ flowRunId, webhookId, flowId, flowVersionId })
     },
     createWebhookContextLog: ({ log, webhookId, flowId }: { log: FastifyBaseLogger, webhookId: string, flowId: string }) => {
         return log.child({ webhookId, flowId })

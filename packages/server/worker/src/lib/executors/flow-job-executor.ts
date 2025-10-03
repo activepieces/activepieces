@@ -133,7 +133,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             }
             const runLog = pinoLogging.createRunContextLog({
                 log,
-                runId: jobData.runId,
+                flowRunId: jobData.runId,
                 webhookId: jobData.httpRequestId,
                 flowId: flow.id,
                 flowVersionId: flow.version.id,
