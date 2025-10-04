@@ -30,10 +30,13 @@ if jobType == '' then
     jobType = prevJobType
 end
 
--- Decrement previous state if it exists
+-- Decrement previous state if it exists and value is greater than 0 to handle case where metrics are reset
 if prevState and prevState ~= '' and jobType and jobType ~= '' then
     local metricsKey = 'metrics:' .. jobType .. ':' .. prevState
-    redis.call('DECR', metricsKey)
+    local currentValue = redis.call('GET', metricsKey)
+    if currentValue and tonumber(currentValue) and tonumber(currentValue) > 0 then
+        redis.call('DECR', metricsKey)
+    end
 end
 
 -- Increment new state if not completed and jobType exists
