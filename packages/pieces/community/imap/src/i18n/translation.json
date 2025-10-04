@@ -1,15 +1,16 @@
 {
-  "Receive new email trigger": "Receive new email trigger",
+  "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
+  "Enable TLS certificate validation (recommended for production).": "Enable TLS certificate validation (recommended for production).",
   "Host": "Host",
-  "Username": "Username",
+  "Mailbox": "Mailbox",
+  "New Email": "New Email",
   "Password": "Password",
   "Port": "Port",
+  "Receive new email trigger": "Receive new email trigger",
+  "Select the mailbox to search.": "Select the mailbox to search.",
+  "Trigger when a new email is received": "Trigger when a new email is received",
   "Use TLS": "Use TLS",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n",
-  "New Email": "New Email",
-  "Trigger when a new email is received.": "Trigger when a new email is received.",
-  "Mailbox": "Mailbox",
-  "Markdown": "Markdown",
-  "Select the mailbox to search": "Select the mailbox to search",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n"
+  "Username": "Username",
+  "Validate TLS Certificates": "Validate TLS Certificates"
 }

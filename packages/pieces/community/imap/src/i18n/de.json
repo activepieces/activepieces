@@ -1,15 +1,16 @@
 {
-  "Receive new email trigger": "Neuen E-Mail-Auslöser erhalten",
+  "\n**Emails Filtering:**\n\nAdd a Router Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**E-Mail-Filterung:**\n\nFügen Sie ein Router-Element hinzu, um E-Mails basierend auf Betreff, Empfänger, Absender, CC oder anderen Feldern zu filtern.\n",
+  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Benutzer:**\n<br><br>\nStellen Sie folgendes sicher:\n<br>\n* IMAP ist in Ihren Gmail-Einstellungen aktiviert (https://support.google.com/mail/answer/7126229?hl=de)\n* Du hast ein App-Passwort erstellt mit dem du dich einloggen kannst (https://support.google.com/accounts/answer/185833?hl=de)\n* Aktiviere TLS und setze den Port auf 993 und den Host auf imap.gmail.com\n",
+  "Enable TLS certificate validation (recommended for production).": "TLS-Zertifikatvalidierung aktivieren (für Produktion empfohlen).",
   "Host": "Host",
-  "Username": "Benutzername",
+  "Mailbox": "Postfach",
+  "New Email": "Neue E-Mail",
   "Password": "Kennwort",
   "Port": "Port",
+  "Receive new email trigger": "E-Mail-Empfangs-Trigger",
+  "Select the mailbox to search.": "Wählen Sie das Postfach für die Suche.",
+  "Trigger when a new email is received": "Wird ausgelöst, wenn eine neue E-Mail empfangen wird",
   "Use TLS": "TLS verwenden",
-  "\n**Gmail Users:**\n<br><br>\nMake Sure of the following:\n<br>\n* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)\n* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)\n* Enable TLS and set the port to 993 and the host to imap.gmail.com\n": "\n**Gmail Benutzer:**\n<br><br>\nStellen Sie folgendes sicher:\n<br>\n* IMAP ist in Ihren Gmail-Einstellungen aktiviert (https://support. oogle. om/mail/answer/7126229?hl=de)\n* Du hast ein App-Passwort erstellt mit dem du dich einloggen kannst (https://support.google. om/accounts/answer/185833?hl=de)\n* Aktiviere TLS und setze den Port auf 993 und den Host auf imap.gmail.com\n",
-  "New Email": "Neue E-Mail",
-  "Trigger when a new email is received.": "Wird ausgelöst, wenn eine neue E-Mail empfangen wird.",
-  "Mailbox": "Postfach",
-  "Markdown": "Markdown",
-  "Select the mailbox to search": "Wählen Sie das Postfach für die Suche",
-  "\n**Filter Emails:**\n\nYou can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.\n": "\n**E-Mails filtern:**\n\nSie können Zweigstück hinzufügen, um E-Mails nach dem Thema zu filtern, voneinander, cc oder anderen Feldern zu filtern.\n"
+  "Username": "Benutzername",
+  "Validate TLS Certificates": "TLS-Zertifikate validieren"
 }
