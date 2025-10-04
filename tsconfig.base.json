@@ -940,6 +940,9 @@
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
+      "@activepieces/piece-sender": [
+        "packages/pieces/community/sender/src/index.ts"
+      ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
       ],

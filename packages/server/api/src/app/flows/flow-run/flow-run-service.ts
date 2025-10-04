@@ -171,7 +171,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         checkRequestId,
     }: ResumeWebhookParams): Promise<FlowRun | null> {
         log.info({
-            flowRunId,
+            runId: flowRunId,
         }, '[FlowRunService#resume] adding flow run to queue')
 
         const flowRunToResume = await flowRunRepo().findOneBy({
@@ -215,7 +215,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         failedStepName,
     }: FinishParams): Promise<FlowRun> {
         log.info({
-            flowRunId,
+            runId: flowRunId,
             status,
             tasks,
             duration,
@@ -352,7 +352,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
     async pause(params: PauseParams): Promise<void> {
         log.info({
-            flowRunId: params.flowRunId,
+            runId: params.flowRunId,
             pauseType: params.pauseMetadata.type,
         }, '[FlowRunService] pausing flow run')
 
