@@ -12,12 +12,19 @@ export const queueMetricService = (_log: FastifyBaseLogger) => ({
 
         const redis = await redisConnections.useExisting()
 
+        const allKeys = WorkerJobTypeForMetrics
+                .flatMap(jobType => Object.values(WorkerJobStatus).map(status => metricsRedisKey(jobType, status)))
+
+        const values = await redis.mget(allKeys)
+
+        let i = 0
         for (const jobType of WorkerJobTypeForMetrics) {
             const jobStats = {} as WorkerJobStats
 
             for (const status of Object.values(WorkerJobStatus)) {
-                jobStats[status] = await getStat(redis, jobType, status)
+                jobStats[status] = Number(values[i]) ?? 0
                 totalStats[status] = (totalStats[status] ?? 0) + jobStats[status]
+                i++
             }
 
             statsPerJobType[jobType] = jobStats
