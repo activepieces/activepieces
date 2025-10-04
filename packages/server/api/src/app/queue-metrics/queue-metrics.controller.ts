@@ -11,14 +11,12 @@ export const queueMetricsController: FastifyPluginAsyncTypebox = async (app) => 
 }
 
 const GetMetrics = {
-    schema: {},
-    config: {
+    schema: {
         tags: ['queue-metrics'],
         description: 'Get metrics',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        security: [SERVICE_KEY_SECURITY_OPENAPI]
+    },
+    config: {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
-        response: {
-            [StatusCodes.OK]: QueueMetricsResponse,
-        },
     },
 }

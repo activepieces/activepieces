@@ -17,8 +17,8 @@ const updateJobStateScript = `-- Lua script to atomically update job state and m
 
 local jobStateKey = KEYS[1]
 
-local status = tostring(ARGV[1])
-local jobType = tostring(ARGV[2])
+local status = ARGV[1]
+local jobType = ARGV[2]
 local deleteState = ARGV[3] == 'true'
 
 -- Get current job state
@@ -90,7 +90,7 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
 
     const jobType: WorkerJobType | undefined = job?.data.jobType
 
-    if (jobType && !(WorkerJobTypeForMetrics.includes(jobType))) return;
+    if (jobType && !(WorkerJobTypeForMetrics.includes(jobType))) return
   
     status = (status === WorkerJobStatus.DELAYED && job?.attemptsMade > 0) ? WorkerJobStatus.RETRYING : status
 
@@ -102,9 +102,9 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
         updateJobStateScript,
         1,
         jobStateKey,
-        status,
+        String(status),
         jobType || '',
-        deleteState.toString()
+        String(deleteState),
     ).catch(error => {
         logger.error(error, `[updateJobState] Error handling event for saving queue metrics`)
     })
