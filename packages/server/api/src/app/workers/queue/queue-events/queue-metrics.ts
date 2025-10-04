@@ -1,4 +1,4 @@
-import { WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
+import { isNotUndefined, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis'
@@ -31,11 +31,9 @@ if jobType == '' then
 end
 
 -- Decrement previous state if it exists
-if prevState and prevState ~= '' then
-    if jobType and jobType ~= '' then
-        local metricsKey = 'metrics:' .. jobType .. ':' .. prevState
-        redis.call('DECR', metricsKey)
-    end
+if prevState and prevState ~= '' and jobType and jobType ~= '' then
+    local metricsKey = 'metrics:' .. jobType .. ':' .. prevState
+    redis.call('DECR', metricsKey)
 end
 
 -- Increment new state if not completed and jobType exists
@@ -47,7 +45,7 @@ end
 -- Update or delete job state
 if deleteState then
     redis.call('DEL', jobStateKey)
-else
+elseif jobType and jobType ~= '' then
     -- Store both status and jobType for future reference
     redis.call('HMSET', jobStateKey, 'status', status, 'jobType', jobType)
 end
@@ -90,7 +88,7 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
 
     const jobType: WorkerJobType | undefined = job?.data.jobType
 
-    if (jobType && !(WorkerJobTypeForMetrics.includes(jobType))) return
+    if (isNotUndefined(jobType) && !(WorkerJobTypeForMetrics.includes(jobType))) return
   
     status = (status === WorkerJobStatus.DELAYED && job?.attemptsMade > 0) ? WorkerJobStatus.RETRYING : status
 
@@ -103,7 +101,7 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
         1,
         jobStateKey,
         String(status),
-        jobType || '',
+        String(jobType || ''),
         String(deleteState),
     ).catch(error => {
         logger.error(error, `[updateJobState] Error handling event for saving queue metrics`)
