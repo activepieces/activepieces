@@ -235,52 +235,23 @@ export const deletedRecord = createTrigger({
     }
   },
   test: async (context) => {
-    // For testing, we can't actually detect deletions without a baseline
-    // So we'll return an empty array and let users know this trigger needs to run over time
-    const { pod, objectType } = context.propsValue;
-    const apiKey = context.auth;
-
-    // Use the correct endpoint for each object type
-    let endpoint = objectType;
-    if (objectType === 'Products') {
-      endpoint = 'Product';
-    } else if (objectType === 'Quotation') {
-      endpoint = 'Quotation';
-    }
-
-    const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
-    const url = `${baseUrl}/${endpoint}?top=5&brief=true`;
-
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: apiKey,
-          password: ''
-        }
-      });
-
-      const records = Array.isArray(response.body) ? response.body : [];
-      
-      // Return empty array for test - deletion detection requires monitoring over time
-      // But we can verify the API connection works
-      if (records.length > 0) {
-        return []; // No deletions detected in test mode
-      } else {
-        return [];
+    // For testing, we simulate a deleted record since actual deletion detection requires monitoring over time
+    const { objectType } = context.propsValue;
+    
+    // Return sample deleted record data for testing purposes
+    return [
+      {
+        recordId: 123456,
+        recordName: 'Test Deleted Record',
+        deletedAt: new Date().toISOString(),
+        objectType,
+        lastSeenAt: new Date(Date.now() - 15 * 60 * 1000).toISOString() // 15 minutes ago
       }
-    } catch (error: any) {
-      throw new Error(`Failed to test trigger: ${error.message}`);
-    }
+    ];
   },
   sampleData: {
-    recordId: 369925957,
-    recordName: 'Fortunate Ayodele',
+    recordId: 123456,
+    recordName: 'Test Deleted Record',
     deletedAt: '2025-10-04T02:00:31.211Z',
     objectType: 'Contacts',
     lastSeenAt: '2025-10-04T01:45:31.211Z'
