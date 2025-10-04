@@ -186,7 +186,7 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/jobs',
           label: t('Jobs'),
           isSubItem: true,
-          show: false,
+          show: true,
         },
         {
           type: 'link',
