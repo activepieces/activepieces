@@ -10,6 +10,34 @@ import {
 } from '@activepieces/pieces-common';
 import { insightlyAuth } from '../common/common';
 
+// Helper function to get the correct ID field for each object type
+function getRecordId(record: any, objectType: string): number {
+  switch (objectType) {
+    case 'Contacts':
+      return record.CONTACT_ID;
+    case 'Leads':
+      return record.LEAD_ID;
+    case 'Opportunities':
+      return record.OPPORTUNITY_ID;
+    case 'Organisations':
+      return record.ORGANISATION_ID;
+    case 'Projects':
+      return record.PROJECT_ID;
+    case 'Tasks':
+      return record.TASK_ID;
+    case 'Events':
+      return record.EVENT_ID;
+    case 'Notes':
+      return record.NOTE_ID;
+    case 'Products':
+      return record.PRODUCT_ID;
+    case 'Quotation':
+      return record.QUOTE_ID;
+    default:
+      return record.RECORD_ID || record.ID;
+  }
+}
+
 export const newRecord = createTrigger({
   auth: insightlyAuth,
   name: 'new_record',
@@ -19,7 +47,8 @@ export const newRecord = createTrigger({
   props: {
     pod: Property.ShortText({
       displayName: 'Pod',
-      description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
+      description:
+        'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
       required: true,
       defaultValue: 'na1'
     }),
@@ -41,22 +70,31 @@ export const newRecord = createTrigger({
           { label: 'Quote', value: 'Quotation' }
         ]
       }
+    }),
+    maxRecords: Property.Number({
+      displayName: 'Max Records',
+      description:
+        'Maximum number of records to fetch per polling cycle (1-500)',
+      required: false,
+      defaultValue: 100
     })
   },
-  async onEnable(context) {
+  onEnable: async (context) => {
+    // Initialize the last poll time for this trigger
     await context.store.put('lastPollTime', new Date().toISOString());
   },
-  async onDisable(context) {
+  onDisable: async (context) => {
+    // Clean up stored state
     await context.store.delete('lastPollTime');
   },
-  async run(context) {
-    const { pod, objectType } = context.propsValue;
+  run: async (context) => {
+    const { pod, objectType, maxRecords = 100 } = context.propsValue;
     const apiKey = context.auth;
     const lastPollTime = await context.store.get<string>('lastPollTime');
 
     const lastPollDate = lastPollTime
       ? new Date(lastPollTime)
-      : new Date(Date.now() - 24 * 60 * 60 * 1000);
+      : new Date(Date.now() - 24 * 60 * 60 * 1000); // Default to 24 hours ago
 
     // Use the correct endpoint for each object type
     let endpoint = objectType;
@@ -67,7 +105,13 @@ export const newRecord = createTrigger({
     }
 
     const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
-    const url = `${baseUrl}/${endpoint}?brief=false&count_total=false&top=100`;
+    const limitedRecords = Math.min(Math.max(maxRecords, 1), 500);
+
+    // Add updated_after parameter to get recently created/updated records
+    const lastPollIso = lastPollDate.toISOString();
+    const url = `${baseUrl}/${endpoint}?brief=false&count_total=false&top=${limitedRecords}&updated_after=${encodeURIComponent(
+      lastPollIso
+    )}`;
 
     try {
       const response = await httpClient.sendRequest({
@@ -83,25 +127,42 @@ export const newRecord = createTrigger({
         }
       });
 
-      await context.store.put('lastPollTime', new Date().toISOString());
-
       const records = Array.isArray(response.body) ? response.body : [];
 
-      const newRecords = records.filter((record: any) => {
-        const dateStr = record.DATE_CREATED_UTC || record.CREATED_DATE_UTC || record.DATE_CREATED;
-        if (!dateStr) return false;
-        
-        // Handle both "2025-10-02 08:21:11" and "2025-10-03T17:53:38.953Z" formats
-        const createdDate = new Date(dateStr.includes('T') ? dateStr : dateStr + 'Z');
-        return createdDate > lastPollDate;
-      });
+      // Filter for truly new records (created after last poll)
+      const newRecords = records
+        .filter((record: any) => {
+          const dateStr =
+            record.DATE_CREATED_UTC ||
+            record.CREATED_DATE_UTC ||
+            record.DATE_CREATED;
+          if (!dateStr) return false;
+
+          // Handle both "2025-10-02 08:21:11" and "2025-10-03T17:53:38.953Z" formats
+          const createdDate = new Date(
+            dateStr.includes('T') ? dateStr : dateStr + 'Z'
+          );
+          return createdDate > lastPollDate;
+        })
+        .sort((a: any, b: any) => {
+          const dateA = new Date(
+            a.DATE_CREATED_UTC || a.CREATED_DATE_UTC || a.DATE_CREATED || 0
+          );
+          const dateB = new Date(
+            b.DATE_CREATED_UTC || b.CREATED_DATE_UTC || b.DATE_CREATED || 0
+          );
+          return dateB.getTime() - dateA.getTime();
+        });
+
+      // Update the last poll time
+      await context.store.put('lastPollTime', new Date().toISOString());
 
       return newRecords;
     } catch (error: any) {
       throw new Error(`Failed to fetch new records: ${error.message}`);
     }
   },
-  async test(context) {
+  test: async (context) => {
     const { pod, objectType } = context.propsValue;
     const apiKey = context.auth;
 
@@ -114,7 +175,7 @@ export const newRecord = createTrigger({
     }
 
     const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
-    const url = `${baseUrl}/${endpoint}?top=1`;
+    const url = `${baseUrl}/${endpoint}?top=50&brief=false`;
 
     try {
       const response = await httpClient.sendRequest({
@@ -130,22 +191,44 @@ export const newRecord = createTrigger({
         }
       });
 
-      return Array.isArray(response.body) ? response.body : [];
+      const records = Array.isArray(response.body) ? response.body : [];
+
+      // Sort by creation date (newest first) and return top 5
+      return records
+        .sort((a: any, b: any) => {
+          const dateA = new Date(
+            a.DATE_CREATED_UTC || a.CREATED_DATE_UTC || a.DATE_CREATED || 0
+          );
+          const dateB = new Date(
+            b.DATE_CREATED_UTC || b.CREATED_DATE_UTC || b.DATE_CREATED || 0
+          );
+          return dateB.getTime() - dateA.getTime();
+        })
+        .slice(0, 5);
     } catch (error: any) {
       throw new Error(`Failed to test trigger: ${error.message}`);
     }
   },
   sampleData: {
-    RECORD_ID: 123456,
-    RECORD_NAME: 'Sample Contact',
+    CONTACT_ID: 123456,
+    FIRST_NAME: 'John',
+    LAST_NAME: 'Doe',
+    EMAIL_ADDRESS: 'john.doe@example.com',
     OWNER_USER_ID: 789,
-    DATE_CREATED_UTC: '2025-10-02T09:53:54.704Z',
-    VISIBLE_TO: 'Everyone',
-    VISIBLE_TEAM_ID: 0,
+    DATE_CREATED_UTC: '2025-10-03T23:29:42.815Z',
+    DATE_UPDATED_UTC: '2025-10-03T23:29:42.815Z',
+    PHONE: '+1-555-0123',
+    TITLE: 'Sales Manager',
+    ORGANISATION_ID: 456,
     CUSTOMFIELDS: [
       {
-        FIELD_NAME: 'CUSTOM_FIELD_1',
-        FIELD_VALUE: 'Sample Value'
+        FIELD_NAME: 'LEAD_SOURCE',
+        FIELD_VALUE: 'Website'
+      }
+    ],
+    TAGS: [
+      {
+        TAG_NAME: 'VIP Customer'
       }
     ]
   }

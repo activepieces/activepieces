@@ -6,64 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { insightlyAuth } from '../common/common';
 
-// Helper function to get the correct ID field for each object type
-function getRecordId(record: any, objectType: string): number {
-  switch (objectType) {
-    case 'Contacts': return record.CONTACT_ID;
-    case 'Leads': return record.LEAD_ID;
-    case 'Opportunities': return record.OPPORTUNITY_ID;
-    case 'Organisations': return record.ORGANISATION_ID;
-    case 'Projects': return record.PROJECT_ID;
-    case 'Tasks': return record.TASK_ID;
-    case 'Events': return record.EVENT_ID;
-    case 'Notes': return record.NOTE_ID;
-    case 'Products': return record.PRODUCT_ID;
-    case 'Quotation': return record.QUOTE_ID;
-    default: return record.RECORD_ID || record.ID;
-  }
-}
 
-// Helper function to create a hash of record data (excluding creation date and ID)
-function createRecordHash(record: any, objectType: string): string {
-  // Use different fields based on object type
-  let hashData: any = {
-    OWNER_USER_ID: record.OWNER_USER_ID,
-    VISIBLE_TO: record.VISIBLE_TO,
-    VISIBLE_TEAM_ID: record.VISIBLE_TEAM_ID,
-    CUSTOMFIELDS: record.CUSTOMFIELDS || []
-  };
-
-  // Add object-specific fields
-  if (objectType === 'Contacts') {
-    hashData = {
-      ...hashData,
-      FIRST_NAME: record.FIRST_NAME,
-      LAST_NAME: record.LAST_NAME,
-      EMAIL_ADDRESS: record.EMAIL_ADDRESS,
-      PHONE: record.PHONE,
-      TITLE: record.TITLE
-    };
-  } else if (objectType === 'Organisations') {
-    hashData = {
-      ...hashData,
-      ORGANISATION_NAME: record.ORGANISATION_NAME,
-      PHONE: record.PHONE,
-      WEBSITE: record.WEBSITE
-    };
-  } else {
-    hashData.RECORD_NAME = record.RECORD_NAME;
-  }
-
-  // Simple hash function using JSON string
-  let hash = 0;
-  const str = JSON.stringify(hashData);
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash.toString();
-}
 
 export const updatedRecord = createTrigger({
   auth: insightlyAuth,
@@ -96,17 +39,30 @@ export const updatedRecord = createTrigger({
           { label: 'Quote', value: 'Quotation' }
         ]
       }
+    }),
+    maxRecords: Property.Number({
+      displayName: 'Max Records',
+      description: 'Maximum number of records to fetch per polling cycle (1-500)',
+      required: false,
+      defaultValue: 100
     })
   },
-  async onEnable(context) {
-    await context.store.put('record_hashes', {});
+  onEnable: async (context) => {
+    // Initialize the last poll time for this trigger
+    await context.store.put('lastPollTime', new Date().toISOString());
   },
-  async onDisable(context) {
-    await context.store.delete('record_hashes');
+  onDisable: async (context) => {
+    // Clean up stored state
+    await context.store.delete('lastPollTime');
   },
-  async run(context) {
-    const { pod, objectType } = context.propsValue;
+  run: async (context) => {
+    const { pod, objectType, maxRecords = 100 } = context.propsValue;
     const apiKey = context.auth;
+    const lastPollTime = await context.store.get<string>('lastPollTime');
+    
+    const lastPollDate = lastPollTime 
+      ? new Date(lastPollTime) 
+      : new Date(Date.now() - 24 * 60 * 60 * 1000); // Default to 24 hours ago
 
     // Use the correct endpoint for each object type
     let endpoint = objectType;
@@ -117,7 +73,11 @@ export const updatedRecord = createTrigger({
     }
 
     const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
-    const url = `${baseUrl}/${endpoint}?brief=false&count_total=false&top=100`;
+    const limitedRecords = Math.min(Math.max(maxRecords, 1), 500);
+    
+    // Add updated_after parameter to get recently updated records
+    const lastPollIso = lastPollDate.toISOString();
+    const url = `${baseUrl}/${endpoint}?brief=false&count_total=false&top=${limitedRecords}&updated_after=${encodeURIComponent(lastPollIso)}`;
 
     try {
       const response = await httpClient.sendRequest({
@@ -134,59 +94,43 @@ export const updatedRecord = createTrigger({
       });
 
       const records = Array.isArray(response.body) ? response.body : [];
-    const storedHashes = await context.store.get<Record<string, { hash: string; lastSeen: number }>>('record_hashes') || {};
-    const currentTime = Date.now();
-    const updatedRecords: any[] = [];
 
-    for (const record of records) {
-      const recordId = getRecordId(record, objectType);
-      const recordKey = `${objectType}_${recordId}`;
-      const currentHash = createRecordHash(record, objectType);
-      const storedRecord = storedHashes[recordKey];
+      // Filter for truly updated records (updated after last poll, but not newly created)
+      const updatedRecords = records
+        .filter((record: any) => {
+          const createdDateStr = record.DATE_CREATED_UTC || record.CREATED_DATE_UTC || record.DATE_CREATED;
+          const updatedDateStr = record.DATE_UPDATED_UTC || record.UPDATED_DATE_UTC || record.DATE_UPDATED;
+          
+          if (!updatedDateStr) return false;
+          
+          // Handle both "2025-10-02 08:21:11" and "2025-10-03T17:53:38.953Z" formats
+          const updatedDate = new Date(updatedDateStr.includes('T') ? updatedDateStr : updatedDateStr + 'Z');
+          const createdDate = createdDateStr ? new Date(createdDateStr.includes('T') ? createdDateStr : createdDateStr + 'Z') : new Date(0);
+          
+          // Only include records that were:
+          // 1. Updated after the last poll time
+          // 2. Not newly created (created date is different from updated date)
+          return updatedDate > lastPollDate && Math.abs(updatedDate.getTime() - createdDate.getTime()) > 1000; // 1 second difference
+        })
+        .sort((a: any, b: any) => {
+          const dateA = new Date(
+            a.DATE_UPDATED_UTC || a.UPDATED_DATE_UTC || a.DATE_UPDATED || 0
+          );
+          const dateB = new Date(
+            b.DATE_UPDATED_UTC || b.UPDATED_DATE_UTC || b.DATE_UPDATED || 0
+          );
+          return dateB.getTime() - dateA.getTime();
+        });
 
-      // Parse date properly (handle both formats)
-      let createdDate: Date;
-      const dateStr = record.DATE_CREATED_UTC || record.CREATED_DATE_UTC;
-      if (dateStr) {
-        // Handle both "2025-10-02 08:21:11" and "2025-10-03T17:53:38.953Z" formats
-        createdDate = new Date(dateStr.includes('T') ? dateStr : dateStr + 'Z');
-      } else {
-        createdDate = new Date(0); // Very old date if no creation date
-      }
+      // Update the last poll time
+      await context.store.put('lastPollTime', new Date().toISOString());
 
-      // Skip records created in the last 5 minutes to avoid triggering on new records
-      const recordAge = currentTime - createdDate.getTime();
-      const isNewRecord = recordAge < 5 * 60 * 1000; // 5 minutes
-
-      if (!isNewRecord && storedRecord && storedRecord.hash !== currentHash) {
-        // Record has been updated
-        updatedRecords.push(record);
-      }
-
-      // Update stored hash
-      storedHashes[recordKey] = {
-        hash: currentHash,
-        lastSeen: currentTime
-      };
-    }
-
-    // Clean up old stored hashes (older than 30 days)
-    const thirtyDaysAgo = currentTime - 30 * 24 * 60 * 60 * 1000;
-    Object.keys(storedHashes).forEach((key) => {
-      if (storedHashes[key].lastSeen < thirtyDaysAgo) {
-        delete storedHashes[key];
-      }
-    });
-
-      // Save updated hashes
-      await context.store.put('record_hashes', storedHashes);
-      
       return updatedRecords;
     } catch (error: any) {
       throw new Error(`Failed to fetch updated records: ${error.message}`);
     }
   },
-  async test(context) {
+  test: async (context) => {
     const { pod, objectType } = context.propsValue;
     const apiKey = context.auth;
 
@@ -199,7 +143,7 @@ export const updatedRecord = createTrigger({
     }
 
     const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
-    const url = `${baseUrl}/${endpoint}?top=1`;
+    const url = `${baseUrl}/${endpoint}?top=50&brief=false`;
 
     try {
       const response = await httpClient.sendRequest({
@@ -215,22 +159,45 @@ export const updatedRecord = createTrigger({
         }
       });
 
-      return Array.isArray(response.body) ? response.body : [];
+      const records = Array.isArray(response.body) ? response.body : [];
+      
+      // Sort by update date (most recently updated first) and return top 5
+      return records
+        .sort((a: any, b: any) => {
+          const dateA = new Date(
+            a.DATE_UPDATED_UTC || a.UPDATED_DATE_UTC || a.DATE_UPDATED || 0
+          );
+          const dateB = new Date(
+            b.DATE_UPDATED_UTC || b.UPDATED_DATE_UTC || b.DATE_UPDATED || 0
+          );
+          return dateB.getTime() - dateA.getTime();
+        })
+        .slice(0, 5);
     } catch (error: any) {
       throw new Error(`Failed to test trigger: ${error.message}`);
     }
   },
   sampleData: {
-    RECORD_ID: 123456,
-    RECORD_NAME: 'Updated Contact',
-    OWNER_USER_ID: 789,
+    OPPORTUNITY_ID: 789012,
+    OPPORTUNITY_NAME: 'Q4 Enterprise Deal',
+    OPPORTUNITY_DETAILS: 'Large enterprise opportunity for software licensing',
+    BID_AMOUNT: 50000,
+    BID_CURRENCY: 'USD',
+    PROBABILITY: 75,
+    FORECAST_CLOSE_DATE: '2025-12-31T23:59:59.000Z',
+    OWNER_USER_ID: 456,
     DATE_CREATED_UTC: '2025-10-01T09:53:54.704Z',
-    VISIBLE_TO: 'Everyone',
-    VISIBLE_TEAM_ID: 0,
+    DATE_UPDATED_UTC: '2025-10-03T15:30:22.815Z',
+    ORGANISATION_ID: 123,
     CUSTOMFIELDS: [
       {
-        FIELD_NAME: 'CUSTOM_FIELD_1',
-        FIELD_VALUE: 'Updated Value'
+        FIELD_NAME: 'DEAL_SIZE',
+        FIELD_VALUE: 'Large'
+      }
+    ],
+    TAGS: [
+      {
+        TAG_NAME: 'High Priority'
       }
     ]
   },
