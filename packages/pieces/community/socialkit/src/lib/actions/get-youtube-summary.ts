@@ -1,12 +1,35 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+
+const socialkitApiUrl = 'https://api.socialkit.dev';
 
 export const getYoutubeSummary = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-  name: 'getYoutubeSummary',
+  name: 'get_youtube_summary',
   displayName: 'Get YouTube Summary',
-  description: 'Generate an AI-powered summary of the content of a YouTube video.',
-  props: {},
-  async run() {
-    // Action logic here
+  description: 'Generates an AI-powered summary of a YouTube video.',
+  props: {
+    url: Property.ShortText({
+      displayName: 'YouTube Video URL',
+      description: 'The URL of the YouTube video to summarize.',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const { url } = context.propsValue;
+    const accessKey = context.auth;
+
+    const response = await httpClient.sendRequest<{
+        success: boolean;
+        data: unknown;
+    }>({
+      method: HttpMethod.GET,
+      url: `${socialkitApiUrl}/youtube/summarize`,
+      queryParams: {
+        access_key: accessKey as string,
+        url: url,
+      },
+    });
+
+    return response.body.data;
   },
 });
