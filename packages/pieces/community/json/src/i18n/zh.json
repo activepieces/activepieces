@@ -2,6 +2,8 @@
   "Convert JSON to text and vice versa": "Convert JSON to text and vice versa",
   "Convert Json to Text": "Convert Json to Text",
   "Convert Text to Json": "Convert Text to Json",
+  "Stringifies JSON.": "Stringifies JSON.",
+  "Parses text into JSON.": "Parses text into JSON.",
   "JSON": "JSON",
   "Text": "文本"
 }

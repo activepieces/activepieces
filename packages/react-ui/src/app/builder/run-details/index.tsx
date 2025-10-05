@@ -109,7 +109,7 @@ const FlowRunDetails = React.memo(() => {
         </div>
       </SidebarHeader>
       <ResizablePanel className="h-full min-h-[80px]">
-        <CardList className="p-0 h-full" listClassName="gap-0.5">
+        <CardList className="pr-2 h-full" listClassName="gap-0.5">
           {steps.length > 0 &&
             steps
               .filter((path) => !isNil(path))

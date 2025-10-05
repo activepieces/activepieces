@@ -265,7 +265,9 @@ const buildConnectionSchema = (
 export const formUtils = {
   /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
   removeUndefinedFromInput: (step: FlowAction | FlowTrigger) => {
-    const copiedStep = JSON.parse(JSON.stringify(step));
+    const copiedStep = JSON.parse(JSON.stringify(step)) as
+      | FlowAction
+      | FlowTrigger;
     if (
       copiedStep.type !== FlowTriggerType.PIECE &&
       copiedStep.type !== FlowActionType.PIECE
@@ -412,7 +414,7 @@ export const formUtils = {
     switch (type) {
       case FlowActionType.LOOP_ON_ITEMS:
         return Type.Composite([
-          LoopOnItemsActionSchema,
+          Type.Omit(LoopOnItemsActionSchema, ['settings']),
           Type.Object({
             settings: Type.Object({
               items: Type.String({
