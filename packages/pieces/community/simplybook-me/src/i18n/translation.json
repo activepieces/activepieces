@@ -1,0 +1,120 @@
+{
+  "actions": {
+    "create_booking": {
+      "displayName": "Create Booking",
+      "description": "Create a new booking in SimplyBook.me"
+    },
+    "cancel_booking": {
+      "displayName": "Cancel Booking",
+      "description": "Cancel an existing booking"
+    },
+    "create_booking_comment": {
+      "displayName": "Create Booking Comment",
+      "description": "Add a comment or note to a booking"
+    },
+    "create_client": {
+      "displayName": "Create Client",
+      "description": "Create a new client in SimplyBook.me"
+    },
+    "delete_client": {
+      "displayName": "Delete Client",
+      "description": "Delete an existing client"
+    },
+    "create_note": {
+      "displayName": "Create Note",
+      "description": "Create a generic note in the system"
+    },
+    "create_detailed_report": {
+      "displayName": "Create Detailed Report",
+      "description": "Generate a detailed report with metrics, bookings, and revenue"
+    },
+    "find_booking": {
+      "displayName": "Find Booking",
+      "description": "Find bookings based on search criteria"
+    },
+    "find_client": {
+      "displayName": "Find Client",
+      "description": "Find clients based on search criteria"
+    },
+    "find_invoice": {
+      "displayName": "Find Invoice",
+      "description": "Find invoices based on search criteria"
+    }
+  },
+  "triggers": {
+    "new_booking": {
+      "displayName": "New Booking",
+      "description": "Triggers when a new booking is created"
+    },
+    "booking_change": {
+      "displayName": "Booking Change",
+      "description": "Triggers when booking details change"
+    },
+    "booking_cancellation": {
+      "displayName": "Booking Cancellation",
+      "description": "Triggers when a booking is canceled"
+    },
+    "new_client": {
+      "displayName": "New Client",
+      "description": "Triggers when a new client is added"
+    },
+    "new_offer": {
+      "displayName": "New Offer",
+      "description": "Triggers when a new offer is created"
+    },
+    "new_invoice": {
+      "displayName": "New Invoice",
+      "description": "Triggers when a new invoice is generated/paid"
+    }
+  },
+  "props": {
+    "clientId": {
+      "displayName": "Client ID",
+      "description": "ID of the client"
+    },
+    "serviceId": {
+      "displayName": "Service ID",
+      "description": "ID of the service"
+    },
+    "providerId": {
+      "displayName": "Provider ID",
+      "description": "ID of the service provider"
+    },
+    "bookingId": {
+      "displayName": "Booking ID",
+      "description": "ID of the booking"
+    },
+    "firstName": {
+      "displayName": "First Name",
+      "description": "First name"
+    },
+    "lastName": {
+      "displayName": "Last Name",
+      "description": "Last name"
+    },
+    "email": {
+      "displayName": "Email",
+      "description": "Email address"
+    },
+    "phone": {
+      "displayName": "Phone",
+      "description": "Phone number"
+    },
+    "startDateTime": {
+      "displayName": "Start Date & Time",
+      "description": "Start date and time"
+    },
+    "endDateTime": {
+      "displayName": "End Date & Time",
+      "description": "End date and time"
+    },
+    "notes": {
+      "displayName": "Notes",
+      "description": "Additional notes"
+    },
+    "status": {
+      "displayName": "Status",
+      "description": "Status"
+    }
+  }
+}
