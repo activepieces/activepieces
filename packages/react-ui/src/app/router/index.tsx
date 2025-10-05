@@ -45,6 +45,7 @@ import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import OutgoingWebhooksPage from '../routes/platform/infra/outgoing-webhooks';
+import SettingsJobsPage from '../routes/platform/infra/jobs';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -509,6 +510,16 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="Workers">
           <SettingsWorkersPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/jobs',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Jobs">
+          <SettingsJobsPage />
         </PageTitle>
       </PlatformLayout>
     ),

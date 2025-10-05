@@ -105,6 +105,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 failedStepName: params.failedStepName,
             })
         }
+        if (params.flowRunIds) {
+            query = query.andWhere({
+                id: In(params.flowRunIds),
+            })
+        }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
@@ -134,23 +139,19 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     oldFlowRun.flowId,
                 )
                 const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
-                await flowRunRepo().update({
-                    id: oldFlowRun.id,
-                    projectId: oldFlowRun.projectId,
-                }, {
-                    flowVersionId: latestFlowVersion.id,
-                    status: FlowRunStatus.QUEUED,
-                })
-                const updatedFlowRun = await flowRunRepo().findOneByOrFail({ id: oldFlowRun.id })
-                return addToQueue({
+                return this.start({
                     payload,
-                    flowRun: updatedFlowRun,
+                    executionType: ExecutionType.BEGIN,
+                    progressUpdateType: ProgressUpdateType.NONE,
                     synchronousHandlerId: undefined,
                     httpRequestId: undefined,
-                    progressUpdateType: ProgressUpdateType.NONE,
-                    executionType: ExecutionType.BEGIN,
                     executeTrigger: false,
-                }, log)
+                    environment: oldFlowRun.environment,
+                    flowVersionId: latestFlowVersion.id,
+                    projectId: oldFlowRun.projectId,
+                    failParentOnFailure: oldFlowRun.failParentOnFailure,
+                    parentRunId: oldFlowRun.id,
+                })
             }
         }
     },
@@ -170,7 +171,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         checkRequestId,
     }: ResumeWebhookParams): Promise<FlowRun | null> {
         log.info({
-            flowRunId,
+            runId: flowRunId,
         }, '[FlowRunService#resume] adding flow run to queue')
 
         const flowRunToResume = await flowRunRepo().findOneBy({
@@ -214,7 +215,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         failedStepName,
     }: FinishParams): Promise<FlowRun> {
         log.info({
-            flowRunId,
+            runId: flowRunId,
             status,
             tasks,
             duration,
@@ -351,7 +352,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
     async pause(params: PauseParams): Promise<void> {
         log.info({
-            flowRunId: params.flowRunId,
+            runId: params.flowRunId,
             pauseType: params.pauseMetadata.type,
         }, '[FlowRunService] pausing flow run')
 
@@ -612,7 +613,6 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
-        priority: params.flowRun.environment === RunEnvironment.TESTING ? 'high' : isNil(params.synchronousHandlerId) ? 'low' : 'medium',
         data: {
             synchronousHandlerId: params.synchronousHandlerId ?? null,
             projectId: params.flowRun.projectId,
@@ -709,6 +709,7 @@ type ListParams = {
     createdAfter?: string
     createdBefore?: string
     failedStepName?: string
+    flowRunIds?: FlowRunId[]
 }
 
 type GetOneParams = {
