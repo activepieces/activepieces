@@ -1,35 +1,16 @@
-import { PieceAuth, Property } from "@activepieces/pieces-framework";
-import { makeRequest } from "./client";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { PieceAuth } from "@activepieces/pieces-framework";
+
 
 export const SocialKitAuth = PieceAuth.SecretText({
-    displayName: 'SocialKit API Key',
+    displayName: 'SocialKit Access Key',
     description: `**Enter your SocialKit Access Key.**
 ---
-### How to obtain your API key
-1. Visit [socialkit.dev](https://www.socialkit.dev) and sign up or log in.
-2. Go to your **Dashboard**.
-3. Copy your **Access Key**.
-4. Paste it here to connect your account.
+### How to obtain your Access Key
+1. Visit [socialkit.dev](https://www.socialkit.dev) and log in.
+2. Open your project dashboard.
+3. Go to the **Access Keys** section.
+4. Copy your Access Key and paste it here.
 `,
     required: true,
 
-    validate: async ({ auth }) => {
-        if (auth) {
-            try {
-                // Simple test request to validate the API key
-                await makeRequest(auth as string, HttpMethod.GET, '/status');
-                return { valid: true };
-            } catch (error) {
-                return {
-                    valid: false,
-                    error: 'Invalid API Key. Please verify your SocialKit Access Key.'
-                };
-            }
-        }
-        return {
-            valid: false,
-            error: 'Missing API Key.'
-        };
-    },
 });
