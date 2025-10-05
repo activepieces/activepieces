@@ -994,6 +994,9 @@
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],
+      "@activepieces/piece-socialkit": [
+        "packages/pieces/community/socialkit/src/index.ts"
+      ],
       "@activepieces/piece-softr": [
         "packages/pieces/community/softr/src/index.ts"
       ],
