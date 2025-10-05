@@ -11,7 +11,7 @@ export const socialkit = createPiece({
   auth: SocialKitAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/socialkit.png",
-  authors: [],
+  authors: ["Niket2035"],
   actions: [getYoutubeComment, getYoutubeDetails, getYoutubeSummary, getYoutubeTranscript],
   triggers: [],
 });
