@@ -12,13 +12,13 @@ const TS_CONFIG_CONTENT = `
 
 {
     "compilerOptions": {
-        "module": "Node16", 
+        "lib": ["es2022", "dom"],
+        "module": "commonjs", 
         "target": "es2022",
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "moduleResolution": "node16",
-        "lib": ["es2022", "dom"],
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "strict": false,
