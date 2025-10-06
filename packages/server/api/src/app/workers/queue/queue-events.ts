@@ -1,12 +1,13 @@
 import { isNotUndefined, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
-import { system } from '../../../helper/system/system'
-import { bullMqQueue } from '../job-queue'
+import { redisConnections } from '../../database/redis'
+import { system } from '../../helper/system/system'
+import { bullMqQueue } from './job-queue'
 
+export const jobStatsRedisKeyPrefix = 'jobState'
 export const metricsRedisKey = (jobType: WorkerJobType, status: WorkerJobStatus) => `metrics:${jobType}:${status}`
-export const jobStateRedisKey = (jobId: string) => `jobState:${jobId}`
+export const jobStateRedisKey = (jobId: string) => `${jobStatsRedisKeyPrefix}:${jobId}`
 
 const updateJobStateScript = `-- Lua script to atomically update job state and metrics
 -- Arguments:

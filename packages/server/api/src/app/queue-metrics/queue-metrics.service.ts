@@ -1,7 +1,7 @@
 import { QueueMetricsResponse, WorkerJobStats, WorkerJobStatus, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../database/redis'
-import { metricsRedisKey } from '../workers/queue/queue-events/queue-metrics'
+import { jobStatsRedisKeyPrefix, metricsRedisKey } from '../workers/queue/queue-events'
 
 export const queueMetricService = (_log: FastifyBaseLogger) => ({
 
@@ -37,6 +37,7 @@ export const queueMetricService = (_log: FastifyBaseLogger) => ({
     resetMetrics: async (): Promise<{ message: string }> => {
         const redis = await redisConnections.useExisting()
         await redis.del(getMetricsKeys())
+        await redis.del(`${jobStatsRedisKeyPrefix}:*`)
 
         return {
             message: 'Metrics reset successfully',
