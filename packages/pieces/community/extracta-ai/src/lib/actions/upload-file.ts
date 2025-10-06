@@ -11,25 +11,19 @@ export const uploadFile = createAction({
     extractionId: Property.ShortText({
       displayName: 'Extraction ID',
       description: 'Unique identifier for the extraction',
-      required: true,
+      required: true
     }),
-    files: Property.Array({
-      displayName: 'Files',
-      description: 'Files to upload for extraction',
-      required: true,
-      properties: {
-        file: Property.File({
-          displayName: 'File',
-          required: true,
-          description: 'Document file to upload (PDF, images, etc.)',
-        }),
-      },
+    file: Property.File({
+      displayName: 'File',
+      description: 'Document file to upload (PDF, images, etc.)',
+      required: true
     }),
     batchId: Property.ShortText({
       displayName: 'Batch ID',
-      description: 'The ID of the batch to add files to (optional). If not provided, a new batch will be created.',
-      required: false,
-    }),
+      description:
+        'The ID of the batch to add files to (optional). If not provided, a new batch will be created.',
+      required: false
+    })
   },
   async run(context) {
     const apiKey = context.auth;
@@ -41,19 +35,22 @@ export const uploadFile = createAction({
       formData.append('batchId', context.propsValue.batchId);
     }
 
-    // Append all files
-    for (const fileItem of context.propsValue.files) {
-      formData.append('files', new Blob([fileItem.file.data]), fileItem.file.filename);
-    }
+    // Append the file
+    const file = context.propsValue.file;
+    formData.append(
+      'files',
+      new Blob([new Uint8Array(file.data)]),
+      file.filename
+    );
 
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.extracta.ai/api/v1/uploadFiles',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`
         },
-        body: formData,
+        body: formData
       });
 
       return response.body;
@@ -67,5 +64,5 @@ export const uploadFile = createAction({
       }
       throw new Error(`Failed to upload files: ${error.message}`);
     }
-  },
+  }
 });

@@ -11,76 +11,152 @@ export const extractFileData = createAction({
     name: Property.ShortText({
       displayName: 'Extraction Name',
       description: 'A descriptive name for the extraction',
-      required: true,
+      required: true
     }),
-    language: Property.ShortText({
+    language: Property.StaticDropdown({
       displayName: 'Language',
-      description: "Document's language for accurate extraction (e.g., 'en', 'es', 'fr')",
+      description:
+        "Document's language for accurate extraction. Extracta.ai supports multiple languages with advanced AI algorithms designed to parse linguistic nuances.",
       required: true,
-      defaultValue: 'en',
+      defaultValue: 'English',
+      options: {
+        options: [
+          { label: 'Multi-Lingual', value: 'Multi-Lingual' },
+          { label: 'Arabic', value: 'Arabic' },
+          { label: 'Bangla', value: 'Bangla' },
+          { label: 'Bulgarian', value: 'Bulgarian' },
+          { label: 'Croatian', value: 'Croatian' },
+          { label: 'Czech', value: 'Czech' },
+          { label: 'English', value: 'English' },
+          { label: 'Filipino', value: 'Filipino' },
+          { label: 'French', value: 'French' },
+          { label: 'German', value: 'German' },
+          { label: 'Hindi', value: 'Hindi' },
+          { label: 'Hungarian', value: 'Hungarian' },
+          { label: 'Italian', value: 'Italian' },
+          { label: 'Nepali', value: 'Nepali' },
+          { label: 'Polish', value: 'Polish' },
+          { label: 'Portuguese', value: 'Portuguese' },
+          { label: 'Romanian', value: 'Romanian' },
+          { label: 'Russian', value: 'Russian' },
+          { label: 'Serbian', value: 'Serbian' },
+          { label: 'Spanish', value: 'Spanish' },
+          { label: 'Turkish', value: 'Turkish' },
+          { label: 'Ukrainian', value: 'Ukrainian' },
+          { label: 'Urdu', value: 'Urdu' },
+          { label: 'Vietnamese', value: 'Vietnamese' }
+        ]
+      }
     }),
-    fields: Property.Json({
-      displayName: 'Fields',
-      description: 'Array of field objects specifying what to extract. Each field should have key, description, example, and type properties.',
+    fields: Property.Array({
+      displayName: 'Fields to Extract',
+      description: 'Define the data fields you want to extract from documents',
       required: true,
+      properties: {
+        key: Property.ShortText({
+          displayName: 'Field Key',
+          description:
+            'Unique identifier for this field (e.g., "name", "email")',
+          required: true
+        }),
+        type: Property.StaticDropdown({
+          displayName: 'Field Type',
+          description: 'Type of data to extract',
+          required: true,
+          defaultValue: 'string',
+          options: {
+            options: [
+              { label: 'String', value: 'string' },
+              { label: 'Object', value: 'object' },
+              { label: 'Array of Strings', value: 'array_string' },
+              { label: 'Array of Objects', value: 'array_object' }
+            ]
+          }
+        }),
+        description: Property.LongText({
+          displayName: 'Description',
+          description: 'Describe what this field represents',
+          required: true
+        }),
+        example: Property.ShortText({
+          displayName: 'Example (Optional)',
+          description:
+            'Sample value to help the AI understand the expected format',
+          required: false
+        }),
+        objectProperties: Property.Json({
+          displayName: 'Object Properties',
+          description:
+            'For object types: Define nested fields as JSON array. Example: [{"key":"name","type":"string","description":"Full name","example":"John Doe"}]',
+          required: false
+        }),
+        arrayItemProperties: Property.Json({
+          displayName: 'Array Item Properties',
+          description:
+            'For array of objects: Define the structure of each array item as JSON array. Example: [{"key":"company","type":"string","description":"Company name","example":"Tech Corp"}]',
+          required: false
+        })
+      }
     }),
     description: Property.LongText({
       displayName: 'Description',
       description: 'A description for the extraction',
-      required: false,
+      required: false
     }),
     hasTable: Property.Checkbox({
       displayName: 'Has Table',
       description: 'Whether the document contains tables',
       required: false,
-      defaultValue: false,
+      defaultValue: false
     }),
     hasVisuals: Property.Checkbox({
       displayName: 'Has Visuals',
       description: 'Whether the document contains charts, graphs, or diagrams',
       required: false,
-      defaultValue: false,
+      defaultValue: false
     }),
     handwrittenTextRecognition: Property.Checkbox({
       displayName: 'Handwritten Text Recognition',
       description: 'Whether to recognize handwritten text',
       required: false,
-      defaultValue: false,
+      defaultValue: false
     }),
     checkboxRecognition: Property.Checkbox({
       displayName: 'Checkbox Recognition',
       description: 'Whether to recognize checkboxes and their states',
       required: false,
-      defaultValue: false,
+      defaultValue: false
     }),
     longDocument: Property.Checkbox({
       displayName: 'Long Document',
       description: 'Enable for very large or complex documents',
       required: false,
-      defaultValue: false,
+      defaultValue: false
     }),
     splitPdfPages: Property.Checkbox({
       displayName: 'Split PDF Pages',
       description: 'Treat each PDF page as a separate extraction unit',
       required: false,
-      defaultValue: false,
+      defaultValue: false
     }),
     specificPageProcessing: Property.Checkbox({
       displayName: 'Specific Page Processing',
       description: 'Extract only a specified range of pages',
       required: false,
-      defaultValue: false,
+      defaultValue: false
     }),
     pageFrom: Property.Number({
       displayName: 'Page From',
-      description: 'Starting page number (required if Specific Page Processing is enabled)',
-      required: false,
+      description:
+        'Starting page number (required if Specific Page Processing is enabled)',
+      required: false
     }),
     pageTo: Property.Number({
       displayName: 'Page To',
-      description: 'Ending page number (required if Specific Page Processing is enabled)',
-      required: false,
-    }),
+      description:
+        'Ending page number (required if Specific Page Processing is enabled)',
+      required: false
+    })
   },
   async run(context) {
     const apiKey = context.auth;
@@ -88,30 +164,77 @@ export const extractFileData = createAction({
     const options: any = {
       hasTable: context.propsValue.hasTable ?? false,
       hasVisuals: context.propsValue.hasVisuals ?? false,
-      handwrittenTextRecognition: context.propsValue.handwrittenTextRecognition ?? false,
+      handwrittenTextRecognition:
+        context.propsValue.handwrittenTextRecognition ?? false,
       checkboxRecognition: context.propsValue.checkboxRecognition ?? false,
       longDocument: context.propsValue.longDocument ?? false,
       splitPdfPages: context.propsValue.splitPdfPages ?? false,
-      specificPageProcessing: context.propsValue.specificPageProcessing ?? false,
+      specificPageProcessing: context.propsValue.specificPageProcessing ?? false
     };
 
-    if (context.propsValue.specificPageProcessing && context.propsValue.pageFrom && context.propsValue.pageTo) {
+    if (
+      context.propsValue.specificPageProcessing &&
+      context.propsValue.pageFrom &&
+      context.propsValue.pageTo
+    ) {
       options.specificPageProcessingOptions = {
         from: context.propsValue.pageFrom,
-        to: context.propsValue.pageTo,
+        to: context.propsValue.pageTo
       };
     }
 
-    const requestBody: any = {
+    // Convert structured fields to API format
+    const apiFields = (context.propsValue.fields || []).map((field: any) => {
+      const baseField = {
+        key: field.key,
+        description: field.description,
+        type:
+          field.type === 'array_string'
+            ? 'array'
+            : field.type === 'array_object'
+            ? 'array'
+            : field.type
+      };
+
+      if (field.example) {
+        (baseField as any).example = field.example;
+      }
+
+      if (field.type === 'object' && field.objectProperties) {
+        (baseField as any).properties = field.objectProperties;
+      }
+
+      if (field.type === 'array_string') {
+        (baseField as any).items = {
+          type: 'string',
+          example: field.example || 'example'
+        };
+      }
+
+      if (field.type === 'array_object' && field.arrayItemProperties) {
+        (baseField as any).items = {
+          type: 'object',
+          properties: field.arrayItemProperties
+        };
+      }
+
+      return baseField;
+    });
+
+    const extractionDetails: any = {
       name: context.propsValue.name,
       language: context.propsValue.language,
-      fields: context.propsValue.fields,
-      options,
+      fields: apiFields,
+      options
     };
 
     if (context.propsValue.description) {
-      requestBody.description = context.propsValue.description;
+      extractionDetails.description = context.propsValue.description;
     }
+
+    const requestBody = {
+      extractionDetails
+    };
 
     try {
       const response = await httpClient.sendRequest({
@@ -119,21 +242,21 @@ export const extractFileData = createAction({
         url: 'https://api.extracta.ai/api/v1/createExtraction',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`
         },
-        body: requestBody,
+        body: requestBody
       });
 
       return response.body;
     } catch (error: any) {
       if (error.response) {
         throw new Error(
-          `Failed to create extraction: ${error.response.status} - ${JSON.stringify(
-            error.response.body
-          )}`
+          `Failed to create extraction: ${
+            error.response.status
+          } - ${JSON.stringify(error.response.body)}`
         );
       }
       throw new Error(`Failed to create extraction: ${error.message}`);
     }
-  },
+  }
 });
