@@ -1,107 +1,121 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType
+    HttpMethod,
 } from '@activepieces/pieces-common';
-import { insightlyAuth } from '../common/common';
+import { insightlyAuth, makeInsightlyRequest } from '../common/common';
+import { 
+  contactFields, 
+  leadFields,
+  opportunityFields,
+  organisationFields,
+  projectFields,
+  taskFields,
+  eventFields,
+  productFields,
+  quotationFields,
+} from '../common/props';
 
 export const createRecord = createAction({
-  auth: insightlyAuth,
-  name: 'create_record',
-  displayName: 'Create Record',
-  description:
-    'Create a new record in a specified Insightly object (Contact, Lead, Opportunity, etc.)',
-  props: {
-    pod: Property.ShortText({
-      displayName: 'Pod',
-      description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
-      required: true,
-      defaultValue: 'na1'
-    }),
-    objectName: Property.StaticDropdown({
-      displayName: 'Object Type',
-      description: 'Select the type of record to create',
-      required: true,
-      options: {
-        options: [
-          { label: 'Contact', value: 'Contacts' },
-          { label: 'Lead', value: 'Leads' },
-          { label: 'Opportunity', value: 'Opportunities' },
-          { label: 'Organization', value: 'Organisations' },
-          { label: 'Project', value: 'Projects' },
-          { label: 'Task', value: 'Tasks' },
-          { label: 'Event', value: 'Events' },
-          { label: 'Note', value: 'Notes' },
-          { label: 'Product', value: 'Products' },
-          { label: 'Quote', value: 'Quotations' }
-        ]
-      }
-    }),
-    fieldValues: Property.Object({
-      displayName: 'Field Values',
-      description: 'The record to add (JSON object). Key fields by type:\n• Contacts: FIRST_NAME, LAST_NAME, EMAIL_ADDRESS, PHONE, TITLE, ORGANISATION_ID\n• Leads: FIRST_NAME, LAST_NAME, EMAIL, LEAD_SOURCE_ID, LEAD_STATUS_ID, PHONE, ORGANISATION_NAME\n• Opportunities: OPPORTUNITY_NAME, BID_AMOUNT, BID_CURRENCY, PROBABILITY, FORECAST_CLOSE_DATE, ORGANISATION_ID\n• Organizations: ORGANISATION_NAME, PHONE, WEBSITE, ADDRESS_BILLING_STREET, ADDRESS_BILLING_CITY\n• Projects: PROJECT_NAME, STATUS, PROJECT_DETAILS, STARTED_DATE, OWNER_USER_ID, RESPONSIBLE_USER_ID\n• Tasks: TITLE, DUE_DATE, PRIORITY, COMPLETED, DETAILS, RESPONSIBLE_USER_ID, PROJECT_ID\n• Events: TITLE, START_DATE_UTC, END_DATE_UTC, LOCATION, ALL_DAY, DETAILS\n• Notes: TITLE, BODY, OWNER_USER_ID\n• Products: PRODUCT_NAME, PRODUCT_CODE, DEFAULT_PRICE, ACTIVE, DESCRIPTION\n• Quotes: QUOTATION_NAME, OPPORTUNITY_ID, CONTACT_ID, ORGANISATION_ID, QUOTE_STATUS',
-      required: true
-    })
-  },
-  async run(context) {
-    const { pod, objectName, fieldValues } = context.propsValue;
-    const apiKey = context.auth;
+    auth: insightlyAuth,
+    name: 'create_record',
+    displayName: 'Create Record',
+    description:
+        'Create a new record in a specified Insightly object (Contact, Lead, Opportunity, etc.)',
+    props: {
+        pod: Property.ShortText({
+            displayName: 'Pod',
+            description: 'Your Insightly pod (e.g., "na1", "eu1"). Find this in your API URL: https://api.{pod}.insightly.com',
+            required: true,
+            defaultValue: 'na1'
+        }),
+        objectName: Property.StaticDropdown({
+            displayName: 'Object Type',
+            description: 'Select the type of record to create',
+            required: true,
+            options: {
+                options: [
+                    { label: 'Contact', value: 'Contacts' },
+                    { label: 'Lead', value: 'Leads' },
+                    { label: 'Opportunity', value: 'Opportunities' },
+                    { label: 'Organization', value: 'Organisations' },
+                    { label: 'Project', value: 'Projects' },
+                    { label: 'Task', value: 'Tasks' },
+                    { label: 'Event', value: 'Events' },
+                    { label: 'Product', value: 'Products' },
+                    { label: 'Quote', value: 'Quotations' }
+                ]
+            }
+        }),
+        fields: Property.DynamicProperties({
+            displayName: 'Fields',
+            required: true,
+            refreshers: ['objectName'],
+            props: async ({ auth, objectName }) => {
+                if (!objectName) return {};
+                const objName = objectName as unknown as string;
+                
+                const fields: DynamicPropsValue = {};
+                switch (objName) {
+                    case 'Contacts':
+                        Object.assign(fields, contactFields);
+                        break;
+                    case 'Leads':
+                        Object.assign(fields, leadFields);
+                        break;
+                    case 'Opportunities':
+                        Object.assign(fields, opportunityFields);
+                        break;
+                    case 'Organisations':
+                        Object.assign(fields, organisationFields);
+                        break;
+                    case 'Projects':
+                        Object.assign(fields, projectFields);
+                        break;
+                    case 'Tasks':
+                        Object.assign(fields, taskFields);
+                        break;
+                    case 'Events':
+                        Object.assign(fields, eventFields);
+                        break;
+                    case 'Products':
+                        Object.assign(fields, productFields);
+                        break;
+                    case 'Quotations':
+                        Object.assign(fields, quotationFields);
+                        break;
+                }
+                return fields;
+            }
+        })
+    },
+    async run(context) {
+        const { pod, objectName, fields } = context.propsValue;
 
-    // Build the API URL
-    const baseUrl = `https://api.${pod}.insightly.com/v3.1`;
-    const url = `${baseUrl}/${objectName}`;
+        const recordData = { ...fields };
 
-    // Use the provided field values as the record data
-    const recordData = { ...fieldValues };
+        if (!recordData || Object.keys(recordData).length === 0) {
+            throw new Error('Field values must be provided to create the record');
+        }
 
-    // Ensure we have data to create
-    if (!recordData || Object.keys(recordData).length === 0) {
-      throw new Error('Field values must be provided to create the record');
-    }
+        try {
+            const response = await makeInsightlyRequest(
+                context.auth,
+                `/${objectName as string}`,
+                pod as string,
+                HttpMethod.POST,
+                recordData
+            );
 
-    try {
-      // Make the API request
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: apiKey,
-          password: '' // Insightly uses API key as username with blank password
-        },
-        body: recordData
-      });
+            const recordIdKey = Object.keys(response.body).find(key => key.endsWith('_ID'));
+            const recordId = recordIdKey ? response.body[recordIdKey] : undefined;
 
-      return {
-        success: true,
-        recordId: response.body.RECORD_ID,
-        recordName: response.body.RECORD_NAME,
-        dateCreated: response.body.DATE_CREATED_UTC,
-        data: response.body
-      };
-    } catch (error: any) {
-      // Handle specific error cases
-      if (error.response?.status === 400) {
-        const errorMessage = error.response.body?.message || error.response.body?.error || 'Invalid data provided';
-        const errorDetails = error.response.body ? JSON.stringify(error.response.body, null, 2) : 'No details available';
-        throw new Error(
-          `Data validation error for ${objectName}: ${errorMessage}. ` +
-          `Sent data: ${JSON.stringify(recordData, null, 2)}. ` +
-          `API response: ${errorDetails}`
-        );
-      } else if (error.response?.status === 401) {
-        throw new Error(
-          'Authentication failed. Please check your API key and pod.'
-        );
-      } else if (error.response?.status === 402) {
-        throw new Error('Record limit reached for your Insightly plan.');
-      } else {
-        throw new Error(`Failed to create record: ${error.message}`);
-      }
-    }
-  }
+            return {
+                success: true,
+                recordId: recordId,
+                ...response.body
+            };
+        } catch (error: any) {
+            throw new Error(`Failed to create record: ${error.message}`);
+        }
+    },
 });

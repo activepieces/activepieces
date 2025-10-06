@@ -14,7 +14,7 @@ export const insightly = createPiece({
   auth: insightlyAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/insightly.png',
-  authors: [],
+  authors: ['fortunamide', 'onyedikachi-david'],
   actions: [createRecord, updateRecord, getRecord, deleteRecord, findRecords],
   triggers: [newRecord, updatedRecord, deletedRecord]
 });

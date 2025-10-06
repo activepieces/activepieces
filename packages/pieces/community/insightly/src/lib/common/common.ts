@@ -1,6 +1,5 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import * as schemas from './schemas';
 
 export const insightlyAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -20,19 +19,6 @@ export const INSIGHTLY_OBJECTS = [
   'Products',
   'Quotations'
 ];
-
-// Export schemas for validation (following ActivePieces pattern)
-export const insightlyCommon = {
-  // Schemas
-  findRecordsSchema: schemas.findRecords,
-  createRecordSchema: schemas.createRecord,
-  updateRecordSchema: schemas.updateRecord,
-  getRecordSchema: schemas.getRecord,
-  deleteRecordSchema: schemas.deleteRecord,
-  newRecordTriggerSchema: schemas.newRecordTrigger,
-  updatedRecordTriggerSchema: schemas.updatedRecordTrigger,
-  deletedRecordTriggerSchema: schemas.deletedRecordTrigger,
-};
 
 export async function makeInsightlyRequest(
   apiKey: string, 
