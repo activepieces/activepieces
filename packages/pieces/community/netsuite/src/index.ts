@@ -66,7 +66,8 @@ export const netsuite = createPiece({
           authValue.tokenId,
           authValue.tokenSecret,
           propsValue['url']['url'],
-          propsValue['method']
+          propsValue['method'],
+          propsValue['queryParams']
         );
 
         return {
