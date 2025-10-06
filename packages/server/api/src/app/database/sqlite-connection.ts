@@ -336,6 +336,17 @@ const getMigrationConfig = (): MigrationConfig => {
     }
 }
 
+const getSynchronize = (): boolean => {
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+
+    const value: Partial<Record<ApEnvironment, boolean>> = {
+        [ApEnvironment.TESTING]: true,
+    }
+
+    return value[env] ?? false
+}
+
+
 export const createSqlLiteDataSource = (): DataSource => {
     const migrationConfig = getMigrationConfig()
 
@@ -344,6 +355,7 @@ export const createSqlLiteDataSource = (): DataSource => {
         database: getSqliteDatabase(),
         ...migrationConfig,
         ...commonProperties,
+        synchronize: getSynchronize(),
     })
 }
 

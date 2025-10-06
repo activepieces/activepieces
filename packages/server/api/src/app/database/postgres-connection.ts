@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -573,22 +573,15 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
     return commonMigration
 }
 
-const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.TESTING) {
-        return {}
-    }
-
-    return {
+export const createPostgresDataSource = (): DataSource => {
+    const migrationConfig: MigrationConfig =  {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
+        synchronize: false,
     }
-}
 
-export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig = getMigrationConfig()
     const url = system.get(AppSystemProp.POSTGRES_URL)
 
     if (!isNil(url)) {
@@ -618,8 +611,8 @@ export const createPostgresDataSource = (): DataSource => {
         database,
         ssl: getSslConfig(),
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
-        ...migrationConfig,
         ...commonProperties,
+        ...migrationConfig,
         extra: {
             idleTimeoutMillis: 5 * 60 * 1000,
         },
@@ -630,4 +623,5 @@ type MigrationConfig = {
     migrationsRun?: boolean
     migrationsTransactionMode?: 'all' | 'none' | 'each'
     migrations?: (new () => MigrationInterface)[]
+    synchronize: false
 }
