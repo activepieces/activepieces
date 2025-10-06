@@ -1,6 +1,8 @@
+// src/lib/actions/generate-detailed-report.ts
 
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { simplybookMeAuth } from "../common/auth";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
 import { SimplybookMeClient } from "../common/client";
 import { simplybookMeProps } from "../common/props";
 
@@ -20,13 +22,19 @@ export const generateDetailedReport = createAction({
             description: 'The end of the reporting period.',
             required: true,
         }),
-        serviceId: simplybookMeProps.serviceId(false),
-        unitId: simplybookMeProps.unitId(false),    
+        serviceId: simplybookMeProps.serviceId(false), // Optional
+        unitId: simplybookMeProps.unitId(false),     // Optional
     },
 
     async run(context) {
         const { startDate, endDate, serviceId, unitId } = context.propsValue;
-        const client = new SimplybookMeClient(context.auth);
+
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
+
+        if (!startDate || !endDate) {
+            throw new Error("Start Date and End Date are required.");
+        }
 
         const filters = {
             startDate: startDate.split('T')[0],
@@ -44,7 +52,6 @@ export const generateDetailedReport = createAction({
             if (booking.payment && booking.payment.amount && booking.payment.status === 'paid') {
                 totalRevenue += parseFloat(booking.payment.amount);
             }
-
 
             const status = booking.status || 'unknown';
             bookingStatusCounts[status] = (bookingStatusCounts[status] || 0) + 1;

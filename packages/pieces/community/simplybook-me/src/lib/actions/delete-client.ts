@@ -1,6 +1,8 @@
+// src/lib/actions/delete-client.ts
 
 import { createAction } from "@activepieces/pieces-framework";
-import { simplybookMeAuth } from "../common/auth";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
 import { SimplybookMeClient } from "../common/client";
 import { simplybookMeProps } from "../common/props";
 
@@ -20,13 +22,14 @@ export const deleteClient = createAction({
             throw new Error("You must select at least one client to delete.");
         }
 
-        const clientIds = clients.map(id => parseInt(id, 10));
+        const clientIds = (clients as string[]).map(id => parseInt(id, 10));
 
         const params = [
             clientIds
         ];
 
-        const client = new SimplybookMeClient(context.auth);
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
         
         return await client.makeRpcRequest('deleteUsers', params);
     },

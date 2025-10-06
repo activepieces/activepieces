@@ -1,10 +1,11 @@
+// src/lib/actions/create-calendar-note.ts
 
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { HttpMethod } from "@activepieces/pieces-common"; 
-import { simplybookMeAuth } from "../common/auth";
+import { HttpMethod } from "@activepieces/pieces-common";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
 import { SimplybookMeClient } from "../common/client";
 import { simplybookMeProps } from "../common/props";
-
 
 const formatToApiDateTime = (isoDate: string): string => {
     if (!isoDate) return '';
@@ -56,7 +57,8 @@ export const createCalendarNote = createAction({
             note_type_id
         } = context.propsValue;
 
-        const client = new SimplybookMeClient(context.auth);
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
 
         const requestBody = {
             provider_id: parseInt(provider_id as string, 10),

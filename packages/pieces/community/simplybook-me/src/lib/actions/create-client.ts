@@ -1,6 +1,8 @@
+// src/lib/actions/create-client.ts
 
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { simplybookMeAuth } from "../common/auth";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
 import { SimplybookMeClient } from "../common/client";
 
 export const createClient = createAction({
@@ -55,7 +57,8 @@ export const createClient = createAction({
     async run(context) {
         const { name, email, phone, address1, address2, city, zip, country_id, sendEmail } = context.propsValue;
 
-        const client = new SimplybookMeClient(context.auth);
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
 
         const clientData: { [key: string]: string | undefined } = {
             name,
@@ -78,7 +81,6 @@ export const createClient = createAction({
             clientData,
             sendEmail ?? false 
         ];
-
 
         return await client.makeRpcRequest('addClient', params);
     },

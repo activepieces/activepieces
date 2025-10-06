@@ -1,7 +1,9 @@
+// src/lib/actions/add-comment-to-booking.ts
 
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { simplybookMeAuth } from "../common/auth";
-import { SimplybookMeClient } from "../common/client";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
+import { SimplybookMeClient } from "../common/client"; 
 import { simplybookMeProps } from "../common/props";
 
 export const addCommentToBooking = createAction({
@@ -27,7 +29,8 @@ export const addCommentToBooking = createAction({
 
         const { id } = JSON.parse(booking as string);
 
-        const client = new SimplybookMeClient(context.auth);
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
 
         return await client.makeRpcRequest(
             'setBookingComment',

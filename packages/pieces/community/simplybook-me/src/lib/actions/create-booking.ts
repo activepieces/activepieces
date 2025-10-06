@@ -1,8 +1,9 @@
-
+// src/lib/actions/create-booking.ts
 
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { simplybookMeAuth } from "../common/auth";
-import { SimplybookMeClient } from "../common/client";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
+import { SimplybookMeClient } from "../common/client"; 
 import { simplybookMeProps } from "../common/props";
 
 export const createBooking = createAction({
@@ -34,7 +35,8 @@ export const createBooking = createAction({
     async run(context) {
         const { serviceId, unitId, date, time, client_name, client_email, client_phone, additionalFields } = context.propsValue;
         
-        const client = new SimplybookMeClient(context.auth);
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
 
         if (!serviceId || !unitId || !date || !time) {
             throw new Error("Missing required fields: Service, Provider, Date, or Time.");
@@ -46,11 +48,11 @@ export const createBooking = createAction({
             phone: client_phone,
         };
 
-        const bookingDate = date.split('T')[0];
+        const bookingDate = (date as string).split('T')[0];
         
         const params = [
-            parseInt(serviceId, 10),
-            parseInt(unitId, 10),
+            parseInt(serviceId as string, 10),
+            parseInt(unitId as string, 10),
             bookingDate,
             time,
             clientData,

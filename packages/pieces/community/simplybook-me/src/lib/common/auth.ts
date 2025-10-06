@@ -1,11 +1,9 @@
-
+// src/lib/common/auth.ts
 
 import { PieceAuth, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
-
 export const simplybookMeApiUrl = 'https://user-api-v2.simplybook.me';
-
 
 export type SimplybookMeAuthData = {
     company_login: string;
@@ -14,60 +12,42 @@ export type SimplybookMeAuthData = {
 };
 
 export const simplybookMeAuth = PieceAuth.CustomAuth({
+    required: true,
     description: `
-    To get your connection details:
-    1.  **Company Login**: This is your unique company identifier on Simplybook.me.
-    2.  **API Token**: You need to generate a token via the API.
-        - You can use a tool like Postman or curl to make a POST request to \`${simplybookMeApiUrl}/admin/auth\`.
-        - The request body should be a JSON object like this:
-          \`\`\`json
-          {
-            "company": "YOUR_COMPANY_LOGIN",
-            "login": "YOUR_ADMIN_EMAIL",
-            "password": "YOUR_ADMIN_PASSWORD"
-          }
-          \`\`\`
-        - The API response will contain an \`auth_token\`. Paste that token below.
+    ### Authentication Guide
+    1.  **Find Your Keys:** Log in to SimplyBook.me and go to **Plugins > API**.
+        -   Copy your **Company Login**.
+        -   In the **Settings** tab, copy your **API Secret Key**.
+    2.  **Generate an API Token:** You must generate a token using a tool like Postman or Curl by making a POST request to \`${simplybookMeApiUrl}/admin/auth\` with your admin credentials. The response will contain a \`token\`.
     `,
-    required: true, 
     props: {
         company_login: Property.ShortText({
             displayName: 'Company Login',
-            description: 'Your company login for Simplybook.me.',
             required: true,
         }),
         token: Property.ShortText({
-            displayName: 'API Token (auth_token)',
-            description: 'The API token obtained from the authentication endpoint.',
+            displayName: 'API Token',
+            description: 'The token generated from the /admin/auth endpoint.',
             required: true,
         }),
-         secretKey: Property.ShortText({
+        secretKey: Property.ShortText({
             displayName: 'API Secret Key',
-            description: 'Navigate to Plugins > API > Settings in your admin panel to find your key.',
-            required: true,
-        }),
-        webhookSecret: Property.ShortText({
-            displayName: 'Webhook Secret Key',
-            description: 'Found in Plugins > API > Webhooks. Used for verifying incoming events.',
+            description: 'Found in Plugins > API > Settings.',
             required: true,
         }),
     },
-    validate: async ({ auth }) => {
+    validate: async ({ auth }: { auth: SimplybookMeAuthData }) => {
         try {
             await httpClient.sendRequest({
                 method: HttpMethod.GET,
-                url: `${simplybookMeApiUrl}/admin/additional-fields`,
+                url: `${simplybookMeApiUrl}/admin/services`,
                 headers: {
-                    'X-Company-Login': auth.company_login as string,
-                    'X-Token': auth.token as string,
+                    'X-Company-Login': auth.company_login,
+                    'X-Token': auth.token,
                 },
-                queryParams: {
-                    'page[limit]': '1'
-                }
+                queryParams: { 'limit': '1' }
             });
-            return {
-                valid: true,
-            };
+            return { valid: true };
         } catch (e) {
             return {
                 valid: false,

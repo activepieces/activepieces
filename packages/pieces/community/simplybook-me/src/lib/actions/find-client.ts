@@ -1,6 +1,8 @@
+// src/lib/actions/find-client.ts
 
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { simplybookMeAuth } from "../common/auth";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
 import { SimplybookMeClient } from "../common/client";
 
 export const findClient = createAction({
@@ -24,7 +26,8 @@ export const findClient = createAction({
     async run(context) {
         const { searchString, limit } = context.propsValue;
         
-        const client = new SimplybookMeClient(context.auth);
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
         
         return await client.findClients(searchString ?? '', limit ?? null);
     },

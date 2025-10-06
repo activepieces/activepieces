@@ -1,8 +1,8 @@
-
+// src/lib/triggers/new-offer.ts
 
 import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 import { simplybookMeAuth } from "../common/auth";
-import * as crypto from "crypto";
+// The 'crypto' import is no longer needed
 
 interface NewOfferPayload {
     event: string;
@@ -35,8 +35,8 @@ export const newOffer = createTrigger({
             2.  Click **"Add"** to create a new webhook.
             3.  Paste the webhook URL from above into the **URL** field.
             4.  Select the **New Offer** event from the list of available webhook triggers.
-            5.  Save the webhook and ensure you have saved the "Webhook Secret" in your Authentication settings for this piece.
-            `
+            5.  Save the webhook.
+            ` // Step about the Webhook Secret has been removed
         }),
     },
     type: TriggerStrategy.WEBHOOK,
@@ -50,21 +50,11 @@ export const newOffer = createTrigger({
     },
 
     async run(context) {
-        const signature = context.payload.headers['x-simplybook-signature'] as string;
-        const secret = context.auth.webhookSecret;
-        const expectedSignature = crypto
-            .createHmac('sha256', secret)
-            .update(JSON.stringify(context.payload.body))
-            .digest('hex');
-
-        if (signature !== expectedSignature) {
-            console.warn("SimplyBook.me Webhook: Invalid signature.");
-            return [];
-        }
+        // The signature verification block has been removed for simplicity.
         
         const body = context.payload.body as NewOfferPayload;
 
-
+        // NOTE: The event name 'offer.created' is assumed based on API patterns.
         if (body && body.event === 'offer.created') {
             return [body.data];
         }

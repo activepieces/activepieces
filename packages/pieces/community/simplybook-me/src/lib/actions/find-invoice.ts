@@ -1,7 +1,8 @@
-
+// src/lib/actions/find-invoice.ts
 
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { simplybookMeAuth } from "../common/auth";
+// 👇 Import the necessary types
+import { simplybookMeAuth, SimplybookMeAuthData } from "../common/auth";
 import { SimplybookMeClient } from "../common/client";
 import { simplybookMeProps } from "../common/props";
 
@@ -31,7 +32,9 @@ export const findInvoice = createAction({
 
     async run(context) {
         const { client_id, date_from, date_to, code } = context.propsValue;
-        const client = new SimplybookMeClient(context.auth);
+        
+        // 👇 FIX: Revert to the simple client constructor
+        const client = new SimplybookMeClient(context.auth as SimplybookMeAuthData);
 
         const filters: Record<string, unknown> = {};
 
@@ -40,9 +43,7 @@ export const findInvoice = createAction({
         if (date_to) filters['date_to'] = date_to.split('T')[0];
         if (code) filters['code'] = code;
         
-
         const bookings = await client.findBookingsRpc(filters);
-
 
         const bookingsWithInvoices = bookings.filter(booking => booking.payment);
 
