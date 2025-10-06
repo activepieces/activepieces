@@ -9,6 +9,7 @@ export async function getAccountSubdomain(accessToken: string){
             Accept: 'application/json'
         }
     });
+    console.log("this is response" + response.body.accounts[0].subdomain);
 
-    return response.body[0]?.subdomain;
+    return response.body.accounts[0]?.subdomain;
 }
