@@ -31,9 +31,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
             nullable: true,
         },
-        flowDisplayName: {
-            type: String,
-        },
         logsFileId: { 
             ...ApIdSchema, 
             nullable: true,

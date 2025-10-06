@@ -65,6 +65,29 @@ const queryWithDisplayName = (repo: Repository<FlowRun>) => {
             .leftJoin('flow_version', 'flow_version', 'flow_run."flowVersionId" = flow_version.id')
             .addSelect('COALESCE(flow_version."displayName", \'Unknown\')', 'flowDisplayName')
 }
+const rawDataMapper = (rawData: any): FlowRun => ({
+    id: rawData.flow_run_id,
+    projectId: rawData.flow_run_projectId,
+    flowId: rawData.flow_run_flowId,
+    flowVersionId: rawData.flow_run_flowVersionId,
+    environment: rawData.flow_run_environment,
+    status: rawData.flow_run_status,
+    created: rawData.flow_run_created,
+    updated: rawData.flow_run_updated,
+    logsFileId: rawData.flow_run_logsFileId,
+    parentRunId: rawData.flow_run_parentRunId,
+    failParentOnFailure: rawData.flow_run_failParentOnFailure,
+    tags: rawData.flow_run_tags,
+    duration: rawData.flow_run_duration,
+    tasks: rawData.flow_run_tasks,
+    startTime: rawData.flow_run_startTime,
+    finishTime: rawData.flow_run_finishTime,
+    pauseMetadata: rawData.flow_run_pauseMetadata,
+    failedStepName: rawData.flow_run_failedStepName,
+    stepNameToTest: rawData.flow_run_stepNameToTest,
+    steps: rawData.flow_run_steps,
+    flowDisplayName: rawData.flowDisplayName,
+})
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async list(params: ListParams): Promise<SeekPage<FlowRun>> {
@@ -121,7 +144,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        return paginationHelper.createPage<FlowRun>(data, newCursor)
+        return paginationHelper.createPage<FlowRun>(data.map(rawDataMapper), newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
@@ -183,11 +206,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             runId: flowRunId,
         }, '[FlowRunService#resume] adding flow run to queue')
 
-        const flowRunToResume = await queryWithDisplayName(flowRunRepo()).where({
-            id: flowRunId,
-        }).getOne()
+        const rawFlowRunToResume = await queryWithDisplayName(flowRunRepo()).where({
+                id: flowRunId,
+            }).getRawOne()
 
-        if (isNil(flowRunToResume)) {
+        if (isNil(rawFlowRunToResume)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -195,6 +218,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+
+        const flowRunToResume = rawDataMapper(rawFlowRunToResume)
+
         const pauseMetadata = flowRunToResume.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
         if (matchRequestId || !checkRequestId) {
@@ -244,9 +270,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        const flowRun = await queryWithDisplayName(flowRunRepo()).where({
+        const rawFlowRun = await queryWithDisplayName(flowRunRepo()).where({
             id: flowRunId,
-        }).getOneOrFail()
+        }).getRawOne()
+
+        if (isNil(rawFlowRun)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                params: {
+                    id: flowRunId,
+                },
+            })
+        }
+
+        const flowRun = rawDataMapper(rawFlowRun)
         await flowRunSideEffects(log).onFinish(flowRun)
         return flowRun
     },
@@ -328,7 +365,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     flowId: flow.id,
                     failParentOnFailure,
                     stepNameToTest,
-                    flowDisplayName: flowVersion.displayName,
                     environment,
                 })
                 
@@ -346,7 +382,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 
                 span.setAttribute('flowRun.queued', true)
                 await flowRunSideEffects(log).onStart(newFlowRun)
-                return newFlowRun
+                return { ...newFlowRun, flowDisplayName: flowVersion.displayName }
             }
             finally {
                 span.end()
@@ -367,7 +403,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
-            flowDisplayName: flowVersion.displayName,
             environment: RunEnvironment.TESTING,
             parentRunId,
             failParentOnFailure: undefined,
@@ -445,18 +480,24 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
-        return queryWithDisplayName(flowRunRepo()).where({
+        const rawFlowRun = await queryWithDisplayName(flowRunRepo()).where({
             projectId: params.projectId,
             id: params.id,
-        }).getOne()
+        }).getRawOne()
+
+        if (isNil(rawFlowRun)) {
+            return null
+        }
+
+        return rawDataMapper(rawFlowRun)
     },
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
-        const flowRun = await queryWithDisplayName(flowRunRepo()).where({
+        const rawFlowRun = await queryWithDisplayName(flowRunRepo()).where({
             projectId: params.projectId,
             id: params.id,
-        }).getOneOrFail()
+        }).getRawOne()
 
-        if (isNil(flowRun)) {
+        if (isNil(rawFlowRun)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -465,7 +506,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return flowRun
+        return rawDataMapper(rawFlowRun)
     },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
@@ -682,7 +723,6 @@ async function create(params: CreateParams): Promise<FlowRun> {
         flowId: params.flowId,
         flowVersionId: params.flowVersionId,
         environment: params.environment,
-        flowDisplayName: params.flowDisplayName,
         startTime: new Date().toISOString(),
         parentRunId: params.parentRunId,
         failParentOnFailure: params.failParentOnFailure ?? true,
@@ -734,7 +774,6 @@ type CreateParams = {
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     flowId: FlowId
-    flowDisplayName: string
     environment: RunEnvironment
 }
 
