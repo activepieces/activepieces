@@ -95,7 +95,7 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
     await bullMqQueue.waitUntilReady()
 
     const edition = system.getEdition()
-    if (edition !== ApEdition.CLOUD){
+    if (edition !== ApEdition.CLOUD) {
         const queueEvents = new QueueEvents(queueName, options)
         await queueEvents.waitUntilReady()
         await queueMetrics(log, queueEvents).detach()
