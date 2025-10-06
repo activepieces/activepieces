@@ -83,7 +83,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
-                value: true,
+                value: false,
                 created,
                 updated,
             },
