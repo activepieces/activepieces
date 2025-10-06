@@ -91,6 +91,7 @@ export const ExecuteFlowJobData = Type.Object({
     sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
     logsUploadUrl: Type.Optional(Type.String()),
     logsFileId: Type.Optional(Type.String()),
+    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
 
@@ -118,6 +119,7 @@ export const WebhookJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
+    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
