@@ -1,17 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { socialkitAuth } from '../../index'; 
+import { socialkitAuth } from '../../index';
 
 const socialkitApiUrl = 'https://api.socialkit.dev';
 
 export const getYoutubeDetails = createAction({
   name: 'get_youtube_details',
   displayName: 'Get YouTube Details',
-  description: 'Fetch metadata/details of a YouTube video (e.g., title, views, likes).',
+  description:
+    'Get detailed information about any YouTube video including title, description, view count, likes, dislikes, duration, and channel information.',
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',
-      description: 'The URL of the YouTube video you want to get details from.',
+      description:
+        'The URL of the YouTube video you want to get details from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)',
       required: true,
     }),
   },
@@ -20,8 +22,8 @@ export const getYoutubeDetails = createAction({
     const accessKey = context.auth;
 
     const response = await httpClient.sendRequest<{
-        success: boolean;
-        data: unknown;
+      success: boolean;
+      data: unknown;
     }>({
       method: HttpMethod.GET,
       url: `${socialkitApiUrl}/youtube/stats`,
@@ -30,7 +32,6 @@ export const getYoutubeDetails = createAction({
         url: url,
       },
     });
-
 
     return response.body.data;
   },

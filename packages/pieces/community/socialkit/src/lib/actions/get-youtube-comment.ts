@@ -6,16 +6,19 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 export const getYoutubeComments = createAction({
   name: 'get_youtube_comments',
   displayName: 'Get YouTube Comments',
-  description: 'Fetch YouTube video comments.',
+  description:
+    'Fetch comments from  YouTube video with options to sort and limit results.',
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',
-      description: 'The URL of the YouTube video to fetch comments from.',
+      description:
+        'The URL of the YouTube video to fetch comments from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)',
       required: true,
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'The number of comments to retrieve (default is 10, maximum is 100).',
+      description:
+        'The number of comments to retrieve (default is 10, maximum is 100).',
       required: false,
       defaultValue: 10,
     }),
@@ -49,8 +52,8 @@ export const getYoutubeComments = createAction({
     }
 
     const response = await httpClient.sendRequest<{
-        success: boolean;
-        data: unknown;
+      success: boolean;
+      data: unknown;
     }>({
       method: HttpMethod.GET,
       url: `${socialkitApiUrl}/youtube/comments`,

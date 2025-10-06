@@ -10,7 +10,7 @@ export const getYoutubeSummary = createAction({
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',
-      description: 'The URL of the YouTube video to summarize.',
+      description: 'The URL of the YouTube video to summarize. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)',
       required: true,
     }),
   },

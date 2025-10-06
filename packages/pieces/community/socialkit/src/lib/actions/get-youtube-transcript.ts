@@ -6,11 +6,13 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 export const getYoutubeTranscript = createAction({
   name: 'get_youtube_transcript',
   displayName: 'Get YouTube Transcript',
-  description: 'Retrieve the transcript (text + timestamps) of a YouTube video.',
+  description:
+    'Extract the full transcript with timestamps from any YouTube video that has captions or subtitles available.',
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',
-      description: 'The URL of the YouTube video to get the transcript from.',
+      description:
+        'The URL of the YouTube video to get the transcript from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)',
       required: true,
     }),
   },
@@ -19,8 +21,8 @@ export const getYoutubeTranscript = createAction({
     const accessKey = context.auth;
 
     const response = await httpClient.sendRequest<{
-        success: boolean;
-        data: unknown;
+      success: boolean;
+      data: unknown;
     }>({
       method: HttpMethod.GET,
       url: `${socialkitApiUrl}/youtube/transcript`,
