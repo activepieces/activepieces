@@ -143,8 +143,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const { data, cursor: newCursor } = await paginator.paginate(query)
-        return paginationHelper.createPage<FlowRun>(data.map(rawDataMapper), newCursor)
+        const { data, cursor: newCursor } = await paginator.paginate(query, rawDataMapper)
+        return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
