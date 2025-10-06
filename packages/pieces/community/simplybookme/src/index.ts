@@ -12,6 +12,12 @@ import {
   findClient,
   findInvoice
 } from './lib/actions';
+import {
+  bookingCanceled,
+  bookingChanged,
+  newBooking,
+  newClient
+} from './lib/triggers';
 
 export const simplybookme = createPiece({
   displayName: 'Simplybook.me',
@@ -31,6 +37,6 @@ export const simplybookme = createPiece({
     findClient,
     findInvoice
   ],
-  triggers: []
+  triggers: [bookingCanceled, bookingChanged, newBooking, newClient]
 });
     
