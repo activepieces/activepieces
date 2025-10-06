@@ -6,15 +6,19 @@ import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { cacheState } from './cache-state'
-import { PackageInfo, packageManager } from './package-manager'
+import { packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
 
 {
-    "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
-        "lib": ["es2022", "dom"],
+        "module": "Node16", 
+        "target": "es2022",
+        "esModuleInterop": true,
         "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "node16",
+        "lib": ["es2022", "dom"],
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "strict": false,
@@ -109,26 +113,18 @@ const installDependencies = async ({
     packageJson,
     log,
 }: InstallDependenciesParams): Promise<void> => {
+    const packageJsonObject = JSON.parse(packageJson)
+    const dependencies = Object.keys(packageJsonObject.dependencies)
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
-
-    const dependencies: PackageInfo[] = [
-        {
-            alias: '@tsconfig/node18',
-            spec: '1.0.0',
-        },
-        {
-            alias: '@types/node',
-            spec: '18.17.1',
-        },
-        {
-            alias: 'typescript',
-            spec: '4.9.4',
-        },
-    ]
-
+    if (dependencies.length === 0) {
+        return
+    }
     await packageManager(log).add({
         path,
-        dependencies,
+        dependencies: Object.entries(packageJsonObject.dependencies).map(([dependency, spec]) => ({
+            alias: dependency,
+            spec: spec as string,
+        })),
     })
 }
 
