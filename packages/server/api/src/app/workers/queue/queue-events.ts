@@ -1,4 +1,4 @@
-import { isNotUndefined, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
+import { isNil, isNotUndefined, NON_SCHEDULED_JOB_TYPES, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis'
@@ -84,17 +84,17 @@ const onFailed = (args: { jobId: string }) => updateJobState(args.jobId, WorkerJ
 
 const onCompleted = (args: { jobId: string }) => updateJobState(args.jobId, 'completed', true)
 
-const updateJobState = async (jobId: string, status: WorkerJobStatus | 'completed', deleteState = false) => {
+const updateJobState = async (jobId: string, bullState: WorkerJobStatus | 'completed', deleteState = false) => {
 
     const job = await bullMqQueue?.getJob(jobId)
 
     const logger =  system.globalLogger()
 
-    const jobType: WorkerJobType | undefined = job?.data.jobType
+    const jobType = job?.data.jobType
 
-    if (isNotUndefined(jobType) && !(WorkerJobTypeForMetrics.includes(jobType))) return
+    if (isNotUndefined(jobType) && !(WorkerJobTypeForMetrics.includes(jobType) || isNil(jobType))) return
   
-    status = (status === WorkerJobStatus.DELAYED && job?.attemptsMade > 0) ? WorkerJobStatus.RETRYING : status
+    const state = (bullState === WorkerJobStatus.DELAYED && NON_SCHEDULED_JOB_TYPES.includes(jobType)) ? WorkerJobStatus.RETRYING : bullState
 
     const redis = await redisConnections.useExisting()
     
@@ -104,7 +104,7 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
         updateJobStateScript,
         1,
         jobStateKey,
-        String(status),
+        String(state),
         String(jobType || ''),
         String(deleteState),
     ).catch(error => {
