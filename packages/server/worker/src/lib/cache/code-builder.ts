@@ -6,15 +6,19 @@ import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { cacheState } from './cache-state'
-import { PackageInfo, packageManager } from './package-manager'
+import { packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
 
 {
-    "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
-        "lib": ["es2022", "dom"],
+        "module": "Node16", 
+        "target": "es2022",
+        "esModuleInterop": true,
         "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "node16",
+        "lib": ["es2022", "dom"],
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "strict": false,
@@ -110,26 +114,7 @@ const installDependencies = async ({
     log,
 }: InstallDependenciesParams): Promise<void> => {
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
-
-    const dependencies: PackageInfo[] = [
-        {
-            alias: '@tsconfig/node18',
-            spec: '1.0.0',
-        },
-        {
-            alias: '@types/node',
-            spec: '18.17.1',
-        },
-        {
-            alias: 'typescript',
-            spec: '4.9.4',
-        },
-    ]
-
-    await packageManager(log).add({
-        path,
-        dependencies,
-    })
+    
 }
 
 const compileCode = async ({
