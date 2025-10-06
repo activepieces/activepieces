@@ -33,7 +33,7 @@ import { context, propagation, trace } from '@opentelemetry/api'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { In, Not } from 'typeorm'
+import { In, Not, Repository } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -61,6 +61,13 @@ export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
 
+const queryWithDisplayName = (repo:  Repository<FlowRun>) => {
+    return repo.createQueryBuilder('flow_run')
+            .leftJoinAndSelect('flow_run.flow', 'flow')
+            .leftJoinAndSelect('flow.publishedVersion', 'flow_version')
+            .addSelect('COALESCE(flow_version.displayName, \'Untitled\')', 'flowDisplayName')
+}
+
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async list(params: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor)
@@ -75,10 +82,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        let query = flowRunRepo().createQueryBuilder('flow_run').where({
+        let query = queryWithDisplayName(flowRunRepo()).where({
             projectId: params.projectId,
             environment: RunEnvironment.PRODUCTION,
         })
+      
         if (params.flowId) {
             query = query.andWhere({
                 flowId: In(params.flowId),
@@ -177,9 +185,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             runId: flowRunId,
         }, '[FlowRunService#resume] adding flow run to queue')
 
-        const flowRunToResume = await flowRunRepo().findOneBy({
+        const flowRunToResume = await queryWithDisplayName(flowRunRepo()).where({
             id: flowRunId,
-        })
+        }).getOne()
 
         if (isNil(flowRunToResume)) {
             throw new ActivepiecesError({
@@ -238,7 +246,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
+        const flowRun = await queryWithDisplayName(flowRunRepo()).where({
+            id: flowRunId,
+        }).getOneOrFail()
         await flowRunSideEffects(log).onFinish(flowRun)
         return flowRun
     },
@@ -437,16 +447,16 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
-        return flowRunRepo().findOneBy({
+        return queryWithDisplayName(flowRunRepo()).where({
             projectId: params.projectId,
             id: params.id,
-        })
+        }).getOne()
     },
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
-        const flowRun = await flowRunRepo().findOneBy({
+        const flowRun = await queryWithDisplayName(flowRunRepo()).where({
             projectId: params.projectId,
             id: params.id,
-        })
+        }).getOneOrFail()
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
