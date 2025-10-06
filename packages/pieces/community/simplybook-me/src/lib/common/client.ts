@@ -1,4 +1,8 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import {
+  httpClient,
+  HttpRequest,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import {
   Booking,
   Client,
@@ -34,27 +38,16 @@ export interface SimplyBookClientOptions {
 }
 
 export class SimplyBookClient {
-  private client: AxiosInstance;
   private token: string | null = null;
   private tokenExpiry: number = 0;
   private readonly companyLogin: string;
   private readonly apiKey: string;
+  private readonly baseUrl: string;
 
   constructor(options: SimplyBookClientOptions) {
     this.companyLogin = options.companyLogin;
     this.apiKey = options.apiKey;
-
-    this.client = axios.create({
-      baseURL: options.baseUrl || 'https://user-api.simplybook.me',
-      timeout: 30000,
-    });
-
-    this.client.interceptors.response.use(
-      (response) => response,
-      (error: AxiosError) => {
-        throw this.handleError(error);
-      }
-    );
+    this.baseUrl = options.baseUrl || 'https://user-api.simplybook.me';
   }
 
   private async ensureAuthenticated(): Promise<void> {
@@ -63,23 +56,28 @@ export class SimplyBookClient {
     }
 
     try {
-      const response = await this.client.post('/login', {
-        jsonrpc: '2.0',
-        method: 'getToken',
-        params: [this.companyLogin, this.apiKey],
-        id: 1,
-      });
+      const request: HttpRequest = {
+        method: HttpMethod.POST,
+        url: `${this.baseUrl}/login`,
+        body: {
+          jsonrpc: '2.0',
+          method: 'getToken',
+          params: [this.companyLogin, this.apiKey],
+          id: 1,
+        },
+      };
 
-      if (response.data.error) {
+      const response = await httpClient.sendRequest(request);
+
+      if (response.body.error) {
         throw new SimplyBookError(
-          response.data.error.message || 'Authentication failed',
+          response.body.error.message || 'Authentication failed',
           401,
           'AUTH_ERROR'
         );
       }
 
-      this.token = response.data.result;
-
+      this.token = response.body.result;
       this.tokenExpiry = Date.now() + 3600000;
     } catch (error) {
       if (error instanceof SimplyBookError) {
@@ -100,47 +98,44 @@ export class SimplyBookClient {
     await this.ensureAuthenticated();
 
     try {
-      const response = await this.client.post(
-        '/',
-        {
+      const request: HttpRequest = {
+        method: HttpMethod.POST,
+        url: `${this.baseUrl}/`,
+        body: {
           jsonrpc: '2.0',
           method,
           params,
           id: Date.now(),
         },
-        {
-          headers: {
-            'X-Company-Login': this.companyLogin,
-            'X-Token': this.token,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+        headers: {
+          'X-Company-Login': this.companyLogin,
+          'X-Token': this.token!,
+          'Content-Type': 'application/json',
+        },
+      };
 
-      if (response.data.error) {
+      const response = await httpClient.sendRequest(request);
+
+      if (response.body.error) {
         throw new SimplyBookError(
-          response.data.error.message || 'API request failed',
+          response.body.error.message || 'API request failed',
           response.status,
-          response.data.error.code
+          response.body.error.code
         );
       }
 
-      return response.data.result;
-    } catch (error) {
-      if (
-        error instanceof AxiosError &&
-        error.response?.status === 401 &&
-        retryCount < 2
-      ) {
+      return response.body.result;
+    } catch (error: any) {
+      if (error.response?.status === 401 && retryCount < 2) {
         this.token = null;
         this.tokenExpiry = 0;
         return this.makeRequest<T>(method, params, retryCount + 1);
       }
-      throw error;
+      throw this.handleError(error);
     }
   }
 
-  private handleError(error: AxiosError): SimplyBookError {
+  private handleError(error: any): SimplyBookError {
     if (error.response) {
       const status = error.response.status;
       let message = 'API request failed';
@@ -357,10 +352,12 @@ export class SimplyBookClient {
     );
   }
 
-  async getServices(): Promise<Array<{ id: string; name: string; duration: number }>> {
+  async getServices(): Promise<
+    Array<{ id: string; name: string; duration: number }>
+  > {
     return this.retryWithBackoff(async () => {
       const result = await this.makeRequest<any[]>('getUnitList', []);
-      return result.map(service => ({
+      return result.map((service) => ({
         id: service.id.toString(),
         name: service.name,
         duration: service.duration || 60,
@@ -371,17 +368,19 @@ export class SimplyBookClient {
   async getProviders(): Promise<Array<{ id: string; name: string }>> {
     return this.retryWithBackoff(async () => {
       const result = await this.makeRequest<any[]>('getWorkDaysList', []);
-      return result.map(provider => ({
+      return result.map((provider) => ({
         id: provider.id.toString(),
         name: provider.name,
       }));
     });
   }
 
-  async getClients(): Promise<Array<{ id: string; name: string; email: string }>> {
+  async getClients(): Promise<
+    Array<{ id: string; name: string; email: string }>
+  > {
     return this.retryWithBackoff(async () => {
       const result = await this.makeRequest<any[]>('getClientList', []);
-      return result.map(client => ({
+      return result.map((client) => ({
         id: client.id.toString(),
         name: client.name,
         email: client.email,
@@ -389,10 +388,17 @@ export class SimplyBookClient {
     });
   }
 
-  async getBookings(): Promise<Array<{ id: string; client_name: string; service_name: string; start_time: string }>> {
+  async getBookings(): Promise<
+    Array<{
+      id: string;
+      client_name: string;
+      service_name: string;
+      start_time: string;
+    }>
+  > {
     return this.retryWithBackoff(async () => {
       const result = await this.makeRequest<any[]>('getBookingsList', [1, 100]);
-      return result.map(booking => ({
+      return result.map((booking) => ({
         id: booking.id.toString(),
         client_name: booking.client_name || 'Unknown Client',
         service_name: booking.service_name || 'Unknown Service',
