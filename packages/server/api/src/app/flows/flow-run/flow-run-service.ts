@@ -60,12 +60,10 @@ export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
 const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
-
-const queryWithDisplayName = (repo:  Repository<FlowRun>) => {
+const queryWithDisplayName = (repo: Repository<FlowRun>) => {
     return repo.createQueryBuilder('flow_run')
-            .leftJoinAndSelect('flow_run.flow', 'flow')
-            .leftJoinAndSelect('flow.publishedVersion', 'flow_version')
-            .addSelect('COALESCE(flow_version.displayName, \'Untitled\')', 'flowDisplayName')
+            .leftJoin('flow_version', 'flow_version', 'flow_run."flowVersionId" = flow_version.id')
+            .addSelect('COALESCE(flow_version."displayName", \'Unknown\')', 'flowDisplayName')
 }
 
 export const flowRunService = (log: FastifyBaseLogger) => ({

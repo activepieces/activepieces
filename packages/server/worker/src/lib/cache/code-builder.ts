@@ -12,13 +12,12 @@ const TS_CONFIG_CONTENT = `
 
 {
     "compilerOptions": {
-        "module": "Node16", 
+        "lib": ["es2022", "dom"],
+        "module": "commonjs", 
         "target": "es2022",
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "node16",
-        "lib": ["es2022", "dom"],
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "strict": false,
@@ -66,6 +65,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 const cache = cacheState(codePath)
                 const cachedHash = await cache.cacheCheckState(codePath)
                 const currentHash = await cryptoUtils.hashObject(sourceCode)
+
                 if (cachedHash === currentHash) {
                     return
                 }
@@ -114,7 +114,7 @@ const installDependencies = async ({
     log,
 }: InstallDependenciesParams): Promise<void> => {
     const packageJsonObject = JSON.parse(packageJson)
-    const dependencies = Object.keys(packageJsonObject.dependencies)
+    const dependencies = Object.keys(packageJsonObject?.dependencies ?? {})
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     if (dependencies.length === 0) {
         return
