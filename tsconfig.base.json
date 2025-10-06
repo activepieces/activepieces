@@ -378,6 +378,9 @@
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
       "@activepieces/piece-exa": ["packages/pieces/community/exa/src/index.ts"],
+      "@activepieces/piece-extracta-ai": [
+        "packages/pieces/community/extracta-ai/src/index.ts"
+      ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
@@ -1120,7 +1123,7 @@
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
-      "@activepieces/piece-vadoo-ai":[
+      "@activepieces/piece-vadoo-ai": [
         "packages/pieces/community/vadoo-ai/src/index.ts"
       ],
       "@activepieces/piece-vbout": [
