@@ -352,6 +352,11 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           onMoveTo={refetch}
           onDelete={() => {
             if (flowId === flow.id) {
+              // todo(Rupal): Remove this when invalidateFlowsQuery is fixed
+              queryClient.invalidateQueries({
+                queryKey: ['flow', flow.id],
+              });
+
               flowsHooks.invalidateFlowsQuery(queryClient);
             }
             refetch();
