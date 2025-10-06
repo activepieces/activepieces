@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+import { FileX } from 'lucide-react';
 import {
   Navigate,
   RouterProvider,
@@ -124,6 +126,22 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
+    path: '/flows/:flowId/404',
+    element: (
+      <PageTitle title="Flow Not Found">
+        <BuilderNavigationSidebar>
+          <NotFoundPage
+            title={t('Flow not available')}
+            description={t(
+              "The flow you are looking for doesn't exist or was removed.",
+            )}
+            icon={FileX}
+          />
+        </BuilderNavigationSidebar>
+      </PageTitle>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: '/flow-import-redirect/:flowId',
     element: <AfterImportFlowRedirect></AfterImportFlowRedirect>,
   }),
@@ -231,6 +249,22 @@ const routes = [
           </BuilderNavigationSidebar>
         </PageTitle>
       </RoutePermissionGuard>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/tables/:tableId/404',
+    element: (
+      <PageTitle title="Table Not Found">
+        <BuilderNavigationSidebar>
+          <NotFoundPage
+            title={t('Table not available')}
+            description={t(
+              "The table you are looking for doesn't exist or was removed.",
+            )}
+            icon={FileX}
+          />
+        </BuilderNavigationSidebar>
+      </PageTitle>
     ),
   }),
   ...ProjectRouterWrapper({
