@@ -1,5 +1,4 @@
 {
-  "Text Helper": "Sms'en naar Helper",
   "Tools for text processing": "Gereedschappen voor tekstverwerking",
   "Concatenate": "Samenvoegen",
   "Replace": "Vervangen",
@@ -10,6 +9,7 @@
   "Remove HTML Tags": "Verwijder HTML-tags",
   "Slugify": "Slugify",
   "Use Default Value if Input is Empty": "Gebruik standaard waarde als de invoer leeg is",
+  "List to Text Table": "Lijst naar teksttabel",
   "Concatenate two or more texts": "Samenvoegen van twee of meer teksten",
   "Replaces all instances of any word, character or phrase in text, with another.": "Vervangt alle voorbeelden van een woord, teken of zin in tekst, met een ander woord.",
   "Split a text by a delimiter": "Splits tekst door een scheidingsteken",
@@ -19,6 +19,7 @@
   "Removes every HTML tag and returns plain text": "Verwijdert elke HTML-tag en geeft platte tekst terug",
   "Slugifies strings.": "Slugificeert strings.",
   "Checks your input and returns the default value, if the input is an empty text or list": "Controleert uw invoer en geeft de standaardwaarde terug als de invoer een lege tekst of lijst is",
+  "Convert a list of items to a text table": "Een lijst met items omzetten naar een teksttabel",
   "Texts": "Teksten",
   "Separator": "Scheidingsteken",
   "Text": "Tekstveld",
@@ -39,6 +40,7 @@
   "HTML content": "HTML inhoud",
   "Enter value": "Voer waarde in",
   "Default Value": "Standaard waarde",
+  "List": "Klantenlijst",
   "The text that separates the texts you want to concatenate": "De tekst die de teksten scheidt die u wilt samenvoegen",
   "Can be plain text or a regex expression.": "Kan platte tekst of een regex expressie zijn.",
   "Leave empty to delete found results.": "Laat leeg om gevonden resultaten te verwijderen.",
@@ -51,6 +53,7 @@
   "Whether to add an ID to headers during conversion": "Of een ID aan headers toe te voegen tijdens de conversie",
   "Parses line breaks as &lt;br&gt;, without needing 2 spaces at the end of the line": "Parsen regeleinden als &lt;br&gt;, zonder 2 spaties nodig aan het einde van de regel",
   "The HTML to convert to markdown": "De HTML om te converteren naar markdown",
+  "List of items to convert to a text table": "Lijst van items om te zetten naar een teksttabel",
   "Default": "Standaard",
   "Original": "Origineel",
   "GitHub": "GitHub"

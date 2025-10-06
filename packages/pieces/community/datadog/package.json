@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-datadog",
+  "version": "0.0.2",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@datadog/datadog-api-client": "^1.43.0",
+    "tslib": "^2.3.0"
+  }
+}

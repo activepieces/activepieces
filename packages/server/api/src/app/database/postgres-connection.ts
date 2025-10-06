@@ -10,6 +10,7 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
+import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { AddPgLocaleCollation1740031341436 } from './migration/postgres/1740031341436-add-pg-locale-collation'
 import { InitialPg1740031656104 } from './migration/postgres/1740031656104-initial-pg'
 import { AddFlowTemplate1741587483735 } from './migration/postgres/1741587483735-add-flow-template'
@@ -97,6 +98,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddIndexForAppEvents1759392852559,
         DeleteHandshakeFromTriggerSource1758108135968,
         AddFlowIndexToTriggerSource1757555419075,
         AddIndexOnTriggerRun1757557714045,
@@ -214,6 +216,7 @@ export const createPostgresDataSource = (): DataSource => {
             type: 'postgres',
             url,
             ssl: getSslConfig(),
+            ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
         })
@@ -237,6 +240,9 @@ export const createPostgresDataSource = (): DataSource => {
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...migrationConfig,
         ...commonProperties,
+        extra: {
+            idleTimeoutMillis: 5 * 60 * 1000,
+        },
     })
 }
 
