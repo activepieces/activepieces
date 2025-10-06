@@ -2,7 +2,6 @@ import { workableAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getAccountSubdomain } from '../common/get-subdomain';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { STATUS_CODES } from 'http';
 
 export const rateCandidate = createAction({
   auth: workableAuth,
