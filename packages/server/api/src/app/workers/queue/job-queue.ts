@@ -1,5 +1,5 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApId, isNil } from '@activepieces/shared'
+import { ApEdition, ApId, isNil } from '@activepieces/shared'
 import { Queue, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -94,10 +94,13 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
     bullMqQueue = new Queue(queueName, options)
     await bullMqQueue.waitUntilReady()
 
-    const queueEvents = new QueueEvents(queueName, options)
-    await queueEvents.waitUntilReady()
-    await queueMetrics(log, queueEvents).detach()
-    await queueMetrics(log, queueEvents).attach()
+    const edition = system.getEdition()
+    if (edition !== ApEdition.CLOUD){
+        const queueEvents = new QueueEvents(queueName, options)
+        await queueEvents.waitUntilReady()
+        await queueMetrics(log, queueEvents).detach()
+        await queueMetrics(log, queueEvents).attach()
+    }
 
     return bullMqQueue
 }
