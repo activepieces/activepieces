@@ -1,8 +1,9 @@
-import { WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
+import { isNotUndefined, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis'
 import { bullMqQueue } from '../job-queue'
+import { system } from '../../../helper/system/system'
 
 export const metricsRedisKey = (jobType: WorkerJobType, status: WorkerJobStatus) => `metrics:${jobType}:${status}`
 export const jobStateRedisKey = (jobId: string) => `jobState:${jobId}`
@@ -10,13 +11,11 @@ export const jobStateRedisKey = (jobId: string) => `jobState:${jobId}`
 const updateJobStateScript = `-- Lua script to atomically update job state and metrics
 -- Arguments:
 -- KEYS[1] = jobStateRedisKey(jobId)
--- KEYS[2] = newMetricsKey (if status != 'completed')
 -- ARGV[1] = status
 -- ARGV[2] = jobType
 -- ARGV[3] = deleteState ('false' or 'true')
 
 local jobStateKey = KEYS[1]
-local newMetricsKey = KEYS[2]
 
 local status = ARGV[1]
 local jobType = ARGV[2]
@@ -31,27 +30,25 @@ if jobType == '' then
     jobType = prevJobType
 end
 
--- Decrement previous state if it exists
-if prevState and prevState ~= '' then
-    if jobType and jobType ~= '' then
-        local metricsKey = 'metrics:' .. jobType .. ':' .. prevState
+-- Decrement previous state if it exists and value is greater than 0 to handle case where metrics are reset
+if prevState and prevState ~= '' and jobType and jobType ~= '' then
+    local metricsKey = 'metrics:' .. jobType .. ':' .. prevState
+    local currentValue = redis.call('GET', metricsKey)
+    if currentValue and tonumber(currentValue) and tonumber(currentValue) > 0 then
         redis.call('DECR', metricsKey)
     end
 end
 
 -- Increment new state if not completed and jobType exists
 if status ~= 'completed' and jobType and jobType ~= '' then
-    local metricsKey = newMetricsKey
-    if metricsKey == '' then
-        metricsKey = 'metrics:' .. jobType .. ':' .. status
-    end
+    local metricsKey = 'metrics:' .. jobType .. ':' .. status
     redis.call('INCR', metricsKey)
 end
 
 -- Update or delete job state
 if deleteState then
     redis.call('DEL', jobStateKey)
-else
+elseif jobType and jobType ~= '' then
     -- Store both status and jobType for future reference
     redis.call('HMSET', jobStateKey, 'status', status, 'jobType', jobType)
 end
@@ -90,24 +87,26 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
 
     const job = await bullMqQueue?.getJob(jobId)
 
+    const logger =  system.globalLogger()
+
     const jobType: WorkerJobType | undefined = job?.data.jobType
 
-    if (jobType && !(WorkerJobTypeForMetrics.includes(jobType))) return
+    if (isNotUndefined(jobType) && !(WorkerJobTypeForMetrics.includes(jobType))) return
   
     status = (status === WorkerJobStatus.DELAYED && job?.attemptsMade > 0) ? WorkerJobStatus.RETRYING : status
 
     const redis = await redisConnections.useExisting()
     
     const jobStateKey = jobStateRedisKey(jobId)
-    const newMetricsKey = status !== 'completed' && jobType ? metricsRedisKey(jobType, status as WorkerJobStatus) : ''
     
     await redis.eval(
         updateJobStateScript,
-        2,
+        1,
         jobStateKey,
-        newMetricsKey,
         String(status),
-        jobType || '',
+        String(jobType || ''),
         String(deleteState),
-    )
+    ).catch(error => {
+        logger.error(error, `[updateJobState] Error handling event for saving queue metrics`)
+    })
 }

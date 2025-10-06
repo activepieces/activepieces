@@ -94,10 +94,10 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
     bullMqQueue = new Queue(queueName, options)
     await bullMqQueue.waitUntilReady()
 
-    //const queueEvents = new QueueEvents(queueName, options)
-    //await queueEvents.waitUntilReady()
-    //await queueMetrics(log, queueEvents).detach()
-    //await queueMetrics(log, queueEvents).attach()
+    const queueEvents = new QueueEvents(queueName, options)
+    await queueEvents.waitUntilReady()
+    await queueMetrics(log, queueEvents).detach()
+    await queueMetrics(log, queueEvents).attach()
 
     return bullMqQueue
 }
