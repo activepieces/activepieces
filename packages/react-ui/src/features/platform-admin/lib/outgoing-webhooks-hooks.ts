@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CreateOutgoingWebhookRequestBody, UpdateOutgoingWebhookRequestBody } from '@activepieces/ee-shared';
+
+import {
+  CreateOutgoingWebhookRequestBody,
+  TestOutgoingWebhookRequestBody,
+  UpdateOutgoingWebhookRequestBody,
+} from '@activepieces/ee-shared';
+
 import { outgoingWebhooksApi } from './outgoing-webhooks-api';
 
 export const outgoingWebhooksHooks = {
@@ -12,13 +18,26 @@ export const outgoingWebhooksHooks = {
 
   useMutateOutgoingWebhook() {
     const queryClient = useQueryClient();
-    
+
     return useMutation({
-      mutationFn: ({ id, data }: { id?: string, data: UpdateOutgoingWebhookRequestBody | CreateOutgoingWebhookRequestBody}) => {
+      mutationFn: ({
+        id,
+        data,
+      }: {
+        id?: string;
+        data:
+          | UpdateOutgoingWebhookRequestBody
+          | CreateOutgoingWebhookRequestBody;
+      }) => {
         if (id) {
-          return outgoingWebhooksApi.update(id, data as UpdateOutgoingWebhookRequestBody);
+          return outgoingWebhooksApi.update(
+            id,
+            data as UpdateOutgoingWebhookRequestBody,
+          );
         } else {
-          return outgoingWebhooksApi.create(data as CreateOutgoingWebhookRequestBody);
+          return outgoingWebhooksApi.create(
+            data as CreateOutgoingWebhookRequestBody,
+          );
         }
       },
       onSuccess: () => {
@@ -29,12 +48,19 @@ export const outgoingWebhooksHooks = {
 
   useDeleteOutgoingWebhook() {
     const queryClient = useQueryClient();
-    
+
     return useMutation({
       mutationFn: (id: string) => outgoingWebhooksApi.delete(id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['outgoing-webhooks'] });
       },
+    });
+  },
+
+  useTestOutgoingWebhook() {
+    return useMutation({
+      mutationFn: (request: TestOutgoingWebhookRequestBody) =>
+        outgoingWebhooksApi.test(request),
     });
   },
 };

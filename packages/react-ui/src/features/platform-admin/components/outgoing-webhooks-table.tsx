@@ -2,14 +2,17 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Globe } from 'lucide-react';
 import { useState } from 'react';
+
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Badge } from '@/components/ui/badge';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { Badge } from '@/components/ui/badge';
 import { formatUtils } from '@/lib/utils';
 import { OutgoingWebhook, OutgoingWebhookScope } from '@activepieces/ee-shared';
 import { Project, SeekPage } from '@activepieces/shared';
+
 import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
+
 import OutgoingWebhookActions from './outgoing-webhook-actions';
 
 interface OutgoingWebhooksTableProps {
@@ -23,7 +26,6 @@ export const OutgoingWebhooksTable = ({
   isLoading,
   projects,
 }: OutgoingWebhooksTableProps) => {
-
   const columns: ColumnDef<RowDataWithActions<OutgoingWebhook>>[] = [
     {
       accessorKey: 'url',
@@ -42,7 +44,13 @@ export const OutgoingWebhooksTable = ({
         <DataTableColumnHeader column={column} title={t('Scope')} />
       ),
       cell: ({ row }) => (
-        <Badge variant={row.original.scope === OutgoingWebhookScope.PLATFORM ? 'default' : 'outline'}>
+        <Badge
+          variant={
+            row.original.scope === OutgoingWebhookScope.PLATFORM
+              ? 'default'
+              : 'outline'
+          }
+        >
           {row.original.scope}
         </Badge>
       ),

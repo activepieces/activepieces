@@ -1,17 +1,16 @@
-import { DashboardPageHeader } from "@/components/custom/dashboard-page-header"
-import { OutgoingWebhookDialog } from "@/features/platform-admin/components/outgoing-webhook-dialog"
-import { OutgoingWebhooksTable } from "@/features/platform-admin/components/outgoing-webhooks-table"
-import { outgoingWebhooksHooks } from "@/features/platform-admin/lib/outgoing-webhooks-hooks"
-import { t } from "i18next"
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { projectHooks } from "@/hooks/project-hooks"
+import { t } from 'i18next';
+import { Plus } from 'lucide-react';
+
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { Button } from '@/components/ui/button';
+import { OutgoingWebhookDialog } from '@/features/platform-admin/components/outgoing-webhook-dialog';
+import { OutgoingWebhooksTable } from '@/features/platform-admin/components/outgoing-webhooks-table';
+import { outgoingWebhooksHooks } from '@/features/platform-admin/lib/outgoing-webhooks-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 
 const OutgoingWebhooksPage = () => {
-  const {
-    data: webhooks,
-    isLoading,
-  } = outgoingWebhooksHooks.useOutgoingWebhooks()
+  const { data: webhooks, isLoading } =
+    outgoingWebhooksHooks.useOutgoingWebhooks();
   const { data: projects } = projectHooks.useProjects();
 
   return (
@@ -42,7 +41,7 @@ const OutgoingWebhooksPage = () => {
         projects={projects ?? []}
       />
     </div>
-  )
-}
+  );
+};
 
-export default OutgoingWebhooksPage
+export default OutgoingWebhooksPage;

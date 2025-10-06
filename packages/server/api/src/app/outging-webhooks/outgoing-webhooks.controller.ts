@@ -1,4 +1,4 @@
-import { CreateOutgoingWebhookRequestBody, ListOutgoingWebhooksRequestBody, OutgoingWebhook, UpdateOutgoingWebhookRequestBody } from '@activepieces/ee-shared'
+import { CreateOutgoingWebhookRequestBody, ListOutgoingWebhooksRequestBody, OutgoingWebhook, TestOutgoingWebhookRequestBody, UpdateOutgoingWebhookRequestBody } from '@activepieces/ee-shared'
 import { EndpointScope, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { outgoingWebhookService } from './outgoing-webhooks.service'
@@ -26,6 +26,14 @@ export const outgoingWebhooksController: FastifyPluginAsyncTypebox = async (app)
         return outgoingWebhookService(req.log).delete({
             id: req.params.id,
             platformId: req.principal.platform.id,
+        })
+    })
+
+    app.post('/test', TestOutgoingWebhookRequest, async (req) => {
+        return outgoingWebhookService(req.log).test({
+            platformId: req.principal.platform.id,
+            projectId: req.principal.projectId,
+            url: req.body.url,
         })
     })
 }
@@ -83,3 +91,12 @@ export const DeleteOutgoingWebhookRequest = {
     },
 }
 
+export const TestOutgoingWebhookRequest = {
+    schema: {
+        body: TestOutgoingWebhookRequestBody,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
+}

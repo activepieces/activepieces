@@ -42,3 +42,9 @@ export const UpdateOutgoingWebhookRequestBody = Type.Object({
 })
 
 export type UpdateOutgoingWebhookRequestBody = Static<typeof UpdateOutgoingWebhookRequestBody>
+
+export const TestOutgoingWebhookRequestBody = Type.Object({
+    url: Type.String({ format: 'uri' }),
+})
+
+export type TestOutgoingWebhookRequestBody = Static<typeof TestOutgoingWebhookRequestBody>

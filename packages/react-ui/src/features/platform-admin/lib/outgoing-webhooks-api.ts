@@ -2,6 +2,7 @@ import { api } from '@/lib/api';
 import {
   CreateOutgoingWebhookRequestBody,
   OutgoingWebhook,
+  TestOutgoingWebhookRequestBody,
   UpdateOutgoingWebhookRequestBody,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
@@ -18,5 +19,8 @@ export const outgoingWebhooksApi = {
   },
   delete(id: string) {
     return api.delete<void>(`/v1/outgoing-webhooks/${id}`);
+  },
+  test(request: TestOutgoingWebhookRequestBody) {
+    return api.post<void>(`/v1/outgoing-webhooks/test`, request);
   },
 };

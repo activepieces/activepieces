@@ -3,7 +3,9 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -28,13 +31,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { CreateOutgoingWebhookRequestBody, ApplicationEventName, OutgoingWebhook, UpdateOutgoingWebhookRequestBody } from '@activepieces/ee-shared';
-import { Project } from '@activepieces/shared';
-import { OutgoingWebhookScope } from '@activepieces/ee-shared';
-import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
 import { toast } from '@/components/ui/use-toast';
+import {
+  CreateOutgoingWebhookRequestBody,
+  ApplicationEventName,
+  OutgoingWebhook,
+  UpdateOutgoingWebhookRequestBody,
+  OutgoingWebhookScope,
+} from '@activepieces/ee-shared';
+import { Project } from '@activepieces/shared';
+
+import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
 
 const formSchema = z.object({
   url: z.string().url({ message: t('Please enter a valid URL') }),
@@ -53,7 +60,11 @@ interface OutgoingWebhookDialogProps {
   projects: Project[];
 }
 
-export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingWebhookDialogProps) => {
+export const OutgoingWebhookDialog = ({
+  children,
+  webhook,
+  projects,
+}: OutgoingWebhookDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const form = useForm<FormData>({
@@ -62,48 +73,64 @@ export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingW
       url: webhook?.url || '',
       scope: webhook?.scope || OutgoingWebhookScope.PLATFORM,
       events: webhook?.events || [],
-      projectId: webhook?.scope === OutgoingWebhookScope.PROJECT ? webhook?.projectId : undefined,
+      projectId:
+        webhook?.scope === OutgoingWebhookScope.PROJECT
+          ? webhook?.projectId
+          : undefined,
     },
   });
 
-  const { mutate: mutateWebhook, isPending } = outgoingWebhooksHooks.useMutateOutgoingWebhook();
+  const { mutate: testWebhook, isPending: isTesting } =
+    outgoingWebhooksHooks.useTestOutgoingWebhook();
+  const { mutate: mutateWebhook, isPending } =
+    outgoingWebhooksHooks.useMutateOutgoingWebhook();
 
   const watchedScope = form.watch('scope');
 
   const handleSubmit = (data: FormData) => {
-    let request: CreateOutgoingWebhookRequestBody | UpdateOutgoingWebhookRequestBody = {
+    let request:
+      | CreateOutgoingWebhookRequestBody
+      | UpdateOutgoingWebhookRequestBody = {
       url: data.url,
       events: data.events,
-    }
+    };
 
     if (!webhook) {
       request = {
         scope: data.scope,
         ...request,
-        ...(data.scope === OutgoingWebhookScope.PROJECT && data.projectId && {
-          projectId: data.projectId,
-        }),
+        ...(data.scope === OutgoingWebhookScope.PROJECT &&
+          data.projectId && {
+            projectId: data.projectId,
+          }),
       } as CreateOutgoingWebhookRequestBody;
     }
 
-    mutateWebhook({id: webhook?.id || '', data: request}, {
-      onSuccess: () => {
-        toast({
-          title: t('Success'),
-          description: t(`Outgoing webhook ${webhook ? 'updated' : 'created'} successfully`),
-          duration: 3000,
-        });
-        setIsOpen(false);
-        form.reset();
+    mutateWebhook(
+      { id: webhook?.id || '', data: request },
+      {
+        onSuccess: () => {
+          toast({
+            title: t('Success'),
+            description: t(
+              `Outgoing webhook ${
+                webhook ? 'updated' : 'created'
+              } successfully`,
+            ),
+            duration: 3000,
+          });
+          setIsOpen(false);
+          form.reset();
+        },
+        onError: (error: Error) => {
+          toast({
+            title: t('Error'),
+            description: error.message,
+            variant: 'destructive',
+          });
+        },
       },
-      onError: (error: Error) => {
-        toast({
-          title: t('Error'),
-          description: error.message,
-          variant: 'destructive',
-        });
-      },
-    });
+    );
   };
 
   const availableEvents = Object.values(ApplicationEventName);
@@ -116,7 +143,10 @@ export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingW
           <DialogTitle>{t('Create Outgoing Webhook')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="url"
@@ -124,7 +154,10 @@ export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingW
                 <FormItem>
                   <FormLabel>{t('Webhook URL')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/webhook" {...field} />
+                    <Input
+                      placeholder="https://example.com/webhook"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -137,7 +170,11 @@ export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingW
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('Scope')}</FormLabel>
-                  <Select disabled={!!webhook} onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    disabled={!!webhook}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={t('Select scope')} />
@@ -164,7 +201,11 @@ export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingW
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('Project')}</FormLabel>
-                    <Select disabled={!!webhook} onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      disabled={!!webhook}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('Select project')} />
@@ -211,7 +252,9 @@ export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingW
                                     return checked
                                       ? field.onChange([...field.value, event])
                                       : field.onChange(
-                                          field.value?.filter((value) => value !== event)
+                                          field.value?.filter(
+                                            (value) => value !== event,
+                                          ),
                                         );
                                   }}
                                 />
@@ -239,8 +282,20 @@ export const OutgoingWebhookDialog = ({ children, webhook, projects }: OutgoingW
               >
                 {t('Cancel')}
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => testWebhook({ url: form.getValues('url') })}
+                disabled={form.getValues('url') === '' || isTesting}
+              >
+                {isTesting ? t('Testing...') : t('Test Webhook')}
+              </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? t('...') : webhook ? t('Update Webhook') : t('Create Webhook')}
+                {isPending
+                  ? t('...')
+                  : webhook
+                  ? t('Update Webhook')
+                  : t('Create Webhook')}
               </Button>
             </DialogFooter>
           </form>

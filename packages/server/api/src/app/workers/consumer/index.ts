@@ -46,6 +46,7 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     engineToken,
                     timeoutInSeconds: dayjs.duration(workerTimeoutInMs, 'milliseconds').asSeconds(),
                 }
+
                 const response: ConsumeJobResponse[] | undefined = await app!.io.to(workerId).timeout(jobTimeout).emitWithAck(WebsocketClientEvent.CONSUME_JOB_REQUEST, request)
                 log.info({
                     message: 'Consume job response',
@@ -67,6 +68,8 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
             const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
             const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)
             const triggerHooksTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)
+            const outgoingWebhookTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.OUTGOING_WEBHOOK_TIMEOUT_SECONDS)
+
             switch (jobType) {
                 case WorkerJobType.EXECUTE_TRIGGER_HOOK:
                 case WorkerJobType.RENEW_WEBHOOK:
@@ -83,6 +86,8 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     return dayjs.duration(flowTimeoutSandbox, 'seconds').asMilliseconds()
                 case WorkerJobType.EXECUTE_AGENT:
                     return dayjs.duration(agentTimeoutSandbox, 'seconds').asMilliseconds()
+                case WorkerJobType.OUTGOING_WEBHOOK:
+                    return dayjs.duration(outgoingWebhookTimeoutSandbox, 'seconds').asMilliseconds()
             }
         },
     }

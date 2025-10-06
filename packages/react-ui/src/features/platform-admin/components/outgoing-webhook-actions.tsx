@@ -1,22 +1,37 @@
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { OutgoingWebhook } from "@activepieces/ee-shared"
-import { Project } from "@activepieces/shared"
-import { MoreVertical, Pencil, Trash } from "lucide-react"
-import { useState } from "react"
-import { OutgoingWebhookDialog } from "./outgoing-webhook-dialog"
-import { ConfirmationDeleteDialog } from "@/components/delete-dialog"
-import { t } from "i18next"
-import { outgoingWebhooksHooks } from "../lib/outgoing-webhooks-hooks"
+import { t } from 'i18next';
+import { MoreVertical, Pencil, Trash } from 'lucide-react';
+import { useState } from 'react';
 
-const OutgoingWebhookActions = ({ webhook, projects }: { webhook: OutgoingWebhook, projects: Project[] }) => {
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { OutgoingWebhook } from '@activepieces/ee-shared';
+import { Project } from '@activepieces/shared';
+
+import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
+
+import { OutgoingWebhookDialog } from './outgoing-webhook-dialog';
+
+const OutgoingWebhookActions = ({
+  webhook,
+  projects,
+}: {
+  webhook: OutgoingWebhook;
+  projects: Project[];
+}) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { mutate: deleteWebhook, isPending: isDeleting } = outgoingWebhooksHooks.useDeleteOutgoingWebhook();
+  const { mutate: deleteWebhook, isPending: isDeleting } =
+    outgoingWebhooksHooks.useDeleteOutgoingWebhook();
 
   return (
     <div className="flex justify-end">
-      <DropdownMenu 
-        modal={true} 
+      <DropdownMenu
+        modal={true}
         open={dropdownOpen}
         onOpenChange={setDropdownOpen}
       >
@@ -26,9 +41,8 @@ const OutgoingWebhookActions = ({ webhook, projects }: { webhook: OutgoingWebhoo
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-
           <OutgoingWebhookDialog webhook={webhook} projects={projects}>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onSelect={(e) => {
                 e.preventDefault();
               }}
@@ -60,11 +74,10 @@ const OutgoingWebhookActions = ({ webhook, projects }: { webhook: OutgoingWebhoo
               {t('Delete')}
             </DropdownMenuItem>
           </ConfirmationDeleteDialog>
-
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  )
-}
+  );
+};
 
-export default OutgoingWebhookActions
+export default OutgoingWebhookActions;
