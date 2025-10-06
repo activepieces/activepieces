@@ -113,8 +113,19 @@ const installDependencies = async ({
     packageJson,
     log,
 }: InstallDependenciesParams): Promise<void> => {
+    const packageJsonObject = JSON.parse(packageJson)
+    const dependencies = Object.keys(packageJsonObject.dependencies)
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
-    
+    if (dependencies.length === 0) {
+        return
+    }
+    await packageManager(log).add({
+        path,
+        dependencies: Object.entries(packageJsonObject.dependencies).map(([dependency, spec]) => ({
+            alias: dependency,
+            spec: spec as string,
+        })),
+    })
 }
 
 const compileCode = async ({
