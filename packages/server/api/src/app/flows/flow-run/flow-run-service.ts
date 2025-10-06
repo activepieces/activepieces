@@ -29,6 +29,7 @@ import {
     spreadIfDefined,
     WorkerJobType,
 } from '@activepieces/shared'
+import { context, propagation, trace } from '@opentelemetry/api'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -52,6 +53,8 @@ import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
+
+const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
@@ -289,34 +292,58 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         stepNameToTest,
         environment,
     }: StartParams): Promise<FlowRun> {
-        const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
+        return tracer.startActiveSpan('flowRun.start', {
+            attributes: {
+                'flowRun.flowVersionId': flowVersionId,
+                'flowRun.projectId': projectId,
+                'flowRun.environment': environment,
+                'flowRun.executionType': executionType,
+                'flowRun.progressUpdateType': progressUpdateType,
+                'flowRun.executeTrigger': executeTrigger,
+                'flowRun.httpRequestId': httpRequestId ?? 'none',
+            },
+        }, async (span) => {
+            try {
+                const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
-        const flow = await flowService(log).getOneOrThrow({
-            id: flowVersion.flowId,
-            projectId,
-        })
+                const flow = await flowService(log).getOneOrThrow({
+                    id: flowVersion.flowId,
+                    projectId,
+                })
 
-        const newFlowRun = await create({
-            projectId,
-            flowVersionId,
-            parentRunId,
-            flowId: flow.id,
-            failParentOnFailure,
-            stepNameToTest,
-            flowDisplayName: flowVersion.displayName,
-            environment,
+                span.setAttribute('flowRun.flowId', flow.id)
+                
+                const newFlowRun = await create({
+                    projectId,
+                    flowVersionId,
+                    parentRunId,
+                    flowId: flow.id,
+                    failParentOnFailure,
+                    stepNameToTest,
+                    flowDisplayName: flowVersion.displayName,
+                    environment,
+                })
+                
+                span.setAttribute('flowRun.id', newFlowRun.id)
+                
+                await addToQueue({
+                    flowRun: newFlowRun,
+                    payload,
+                    executeTrigger,
+                    executionType,
+                    synchronousHandlerId,
+                    httpRequestId,
+                    progressUpdateType,
+                }, log)
+                
+                span.setAttribute('flowRun.queued', true)
+                await flowRunSideEffects(log).onStart(newFlowRun)
+                return newFlowRun
+            }
+            finally {
+                span.end()
+            }
         })
-        await addToQueue({
-            flowRun: newFlowRun,
-            payload,
-            executeTrigger,
-            executionType,
-            synchronousHandlerId,
-            httpRequestId,
-            progressUpdateType,
-        }, log)
-        await flowRunSideEffects(log).onStart(newFlowRun)
-        return newFlowRun
     },
 
     async test({ projectId, flowVersionId, parentRunId, stepNameToTest }: TestParams): Promise<FlowRun> {
@@ -610,6 +637,9 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     }
     const platformId = await projectService.getPlatformId(params.flowRun.projectId)
 
+    const traceContext: Record<string, string> = {}
+    propagation.inject(context.active(), traceContext)
+
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
@@ -630,6 +660,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             sampleData: params.sampleData,
             logsUploadUrl,
             logsFileId,
+            traceContext,
         },
     })
     return params.flowRun
