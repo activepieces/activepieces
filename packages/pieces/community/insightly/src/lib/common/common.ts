@@ -23,7 +23,7 @@ export const INSIGHTLY_OBJECTS = [
 export async function makeInsightlyRequest(
   apiKey: string, 
   endpoint: string, 
-  pod: string = 'na1',
+  pod = 'na1',
   method: HttpMethod = HttpMethod.GET,
   body?: any
 ) {
