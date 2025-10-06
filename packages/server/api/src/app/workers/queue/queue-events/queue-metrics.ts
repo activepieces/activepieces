@@ -2,8 +2,8 @@ import { isNotUndefined, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics
 import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis'
-import { bullMqQueue } from '../job-queue'
 import { system } from '../../../helper/system/system'
+import { bullMqQueue } from '../job-queue'
 
 export const metricsRedisKey = (jobType: WorkerJobType, status: WorkerJobStatus) => `metrics:${jobType}:${status}`
 export const jobStateRedisKey = (jobId: string) => `jobState:${jobId}`
@@ -107,6 +107,6 @@ const updateJobState = async (jobId: string, status: WorkerJobStatus | 'complete
         String(jobType || ''),
         String(deleteState),
     ).catch(error => {
-        logger.error(error, `[updateJobState] Error handling event for saving queue metrics`)
+        logger.error(error, '[updateJobState] Error handling event for saving queue metrics')
     })
 }

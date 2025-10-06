@@ -1,4 +1,4 @@
-import { QueueMetricsResponse, WorkerJobStats, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
+import { QueueMetricsResponse, WorkerJobStats, WorkerJobStatus, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../database/redis'
 import { metricsRedisKey } from '../workers/queue/queue-events/queue-metrics'
