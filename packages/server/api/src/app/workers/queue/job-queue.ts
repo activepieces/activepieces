@@ -1,13 +1,12 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
 import { ApId, isNil } from '@activepieces/shared'
-import { Queue, QueueEvents } from 'bullmq'
+import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { machineService } from '../machine/machine-service'
-import { queueMetrics } from './queue-events/queue-metrics'
 import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
 
@@ -67,7 +66,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
 })
 
-async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): Promise<Queue> {
+async function ensureQueueExists(queueName: QueueName, _log: FastifyBaseLogger): Promise<Queue> {
     if (!isNil(bullMqQueue)) {
         return bullMqQueue
     }
