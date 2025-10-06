@@ -11,6 +11,7 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
+import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { InitialSqlite1740031972943 } from './migration/sqlite/1740031972943-initial-sqlite'
 import { AddFlowTemplate1741588702453 } from './migration/sqlite/1741588702453-add-flow-template'
 import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-oauth-app'
@@ -95,6 +96,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddIndexForAppEvents1759392852559,
         DeleteHandshakeFromTriggerSourceSqlite1758108281602,
         AddFlowIndexToTriggerSource1757555419075,
         AddIndexOnTriggerRunSqlite1757560231246,

@@ -1,5 +1,4 @@
 {
-  "Telegram Bot": "Bot do Telegram",
   "Build chatbots for Telegram": "Construa Chatbots para o Telegram",
   "\n**Authentication**:\n\n1. Begin a conversation with the [Botfather](https://telegram.me/BotFather).\n2. Type in \"/newbot\"\n3. Choose a name for your bot\n4. Choose a username for your bot.\n5. Copy the token value from the Botfather and use it activepieces connection.\n6. Congratulations! You can now use your new Telegram connection in your flows.\n": "\n**Autenticação**:\n\n1. Comece uma conversa com o [Botfather](https://telegram.me/BotFather).\n2. Digite \"/newbot\"\n3. Escolha um nome para o seu bot\n4. Escolha um nome de usuário para o seu bot.\n5. Copie o valor do token do Botpai e o use a conexão de peças ativas.\n6. Parabéns! Agora você pode usar sua nova conexão com o Telegram em seus fluxos.\n",
   "Send Text Message": "Enviar Mensagem de Texto",

@@ -49,7 +49,7 @@ export class BuilderPage extends BasePage {
 
   async publishFlow() {
     await this.page.getByRole('button', { name: 'Publish' }).click();
-    await this.page.waitForTimeout(5000);
+    await this.page.waitForTimeout(15000);
   }
 
   async waitFor() {

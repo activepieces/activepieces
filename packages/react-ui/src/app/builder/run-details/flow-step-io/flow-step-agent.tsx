@@ -15,11 +15,13 @@ const FlowStepAgent = (props: FlowStepAgentProps) => {
 
   return (
     <>
-      <div className="flex gap-2 items-center px-4 mt-4">
+      <div className="flex gap-2 items-center px-4 my-3">
         <Bot className="size-5" />
         {t('Agent Output')}
       </div>
-      {agentRunId && <AgentTimeline agentRunId={agentRunId} className="p-4" />}
+      {agentRunId && (
+        <AgentTimeline agentRunId={agentRunId} className="px-4 pb-2 mr-2" />
+      )}
     </>
   );
 };

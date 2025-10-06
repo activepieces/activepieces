@@ -52,7 +52,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             <div className="pb-4">
               <ApMarkdown markdown={markdown} variant={MarkdownVariant.INFO} />
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between !mb-2">
               <FormLabel>{t('Inputs')}</FormLabel>
               {isCopilotEnabled && !readonly && (
                 <AskAiButton
