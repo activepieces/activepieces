@@ -1,9 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Activity } from 'lucide-react';
+import { Activity, RotateCcw } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/use-toast';
 import { queueMetricsApi } from '@/features/platform-admin/lib/queue-metrics-api';
 import {
   WorkerJobType,
@@ -74,11 +76,26 @@ export const getStatusColor = (status: WorkerJobStatus) => {
 };
 
 export default function SettingsJobsPage() {
+  const queryClient = useQueryClient();
   const { data: workerJobsStats, isLoading } = useQuery<QueueMetricsResponse>({
     queryKey: ['worker-job-stats'],
     queryFn: async () => queueMetricsApi.getMetrics(),
     staleTime: 5000,
     refetchInterval: 5000,
+  });
+
+  const { mutate: resetMetrics, isPending: isResetting } = useMutation({
+    mutationFn: async () => queueMetricsApi.resetMetrics(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['worker-job-stats'] });
+    },
+    onError: () => {
+      toast({
+        title: t('Error'),
+        description: t('Failed to reset metrics'),
+        variant: 'destructive',
+      });
+    },
   });
 
   return (
@@ -93,17 +110,28 @@ export default function SettingsJobsPage() {
           <Activity className="size-8 animate-spin text-slate-500" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(workerJobsStats?.statsPerJobType ?? {}).map(
-            ([jobType, stats]) => (
-              <WorkerJobCard
-                key={jobType}
-                jobType={jobType as WorkerJobType}
-                stats={stats}
-                description={getJobTypeDescription(jobType as WorkerJobType)}
-              />
-            ),
-          )}
+        <div className="flex flex-col gap-4">
+          <Button
+            className="self-end w-fit"
+            variant="outline"
+            onClick={() => resetMetrics()}
+            loading={isResetting}
+          >
+            <RotateCcw className="size-4" />
+            Reset Metrics
+          </Button>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(workerJobsStats?.statsPerJobType ?? {}).map(
+              ([jobType, stats]) => (
+                <WorkerJobCard
+                  key={jobType}
+                  jobType={jobType as WorkerJobType}
+                  stats={stats}
+                  description={getJobTypeDescription(jobType as WorkerJobType)}
+                />
+              ),
+            )}
+          </div>
         </div>
       )}
       <Separator className="my-4" />
