@@ -21,24 +21,46 @@ function generateSignature(
   consumerKey: string,
   consumerSecret: string,
   tokenId: string,
-  tokenSecret: string
+  tokenSecret: string,
+  queryParams?: Record<string, string | number | boolean>
 ): string {
-  const params = new URLSearchParams({
+  // Parse URL to get base URL and existing query params
+  const parsedUrl = new URL(requestUrl);
+  const baseUrl = `${parsedUrl.origin}${parsedUrl.pathname}`;
+
+  // Collect OAuth parameters
+  const allParams: Record<string, string> = {
     oauth_consumer_key: consumerKey,
     oauth_nonce: oauthNonce,
     oauth_signature_method: SIGN_METHOD,
     oauth_timestamp: timestamp.toString(),
     oauth_token: tokenId,
     oauth_version: OAUTH_VERSION,
+  };
+
+  // Include query parameters from URL
+  parsedUrl.searchParams.forEach((value, key) => {
+    allParams[key] = value;
   });
 
-  const parsedUrl = new URL(requestUrl);
-  const baseUrl = `${parsedUrl.origin}${parsedUrl.pathname}`;
+  // Include additional query parameters (will override URL params if same key)
+  if (queryParams) {
+    Object.entries(queryParams).forEach(([key, value]) => {
+      allParams[key] = String(value);
+    });
+  }
+
+  // Sort parameters by key, then by value (OAuth 1.0 spec)
+  const sortedKeys = Object.keys(allParams).sort();
+  const paramPairs = sortedKeys.map(
+    (key) => `${encodeURIComponent(key)}=${encodeURIComponent(allParams[key])}`
+  );
+  const paramString = paramPairs.join('&');
 
   const signatureBaseString = [
-    httpMethod,
+    httpMethod.toUpperCase(),
     encodeURIComponent(baseUrl),
-    encodeURIComponent(params.toString()),
+    encodeURIComponent(paramString),
   ].join('&');
 
   const signingKey = [
@@ -60,7 +82,8 @@ export function createOAuthHeader(
   tokenId: string,
   tokenSecret: string,
   requestUrl: string,
-  httpMethod: string
+  httpMethod: string,
+  queryParams?: Record<string, string | number | boolean>
 ): string {
   const oauthNonce = generateNonce();
   const timestamp = Math.floor(Date.now() / 1000);
@@ -72,7 +95,8 @@ export function createOAuthHeader(
     consumerKey,
     consumerSecret,
     tokenId,
-    tokenSecret
+    tokenSecret,
+    queryParams
   );
 
   const headerParams = [
