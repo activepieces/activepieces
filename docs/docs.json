@@ -353,6 +353,13 @@
                   "endpoints/mcp-servers/rotate",
                   "endpoints/mcp-servers/update"
                 ]
+              },
+              {
+                "group": "Queue Metrics",
+                "icon": "gauge-high",
+                "pages": [
+                  "endpoints/queue-metrics/metrics"
+                ]
               }
             ]
           }
