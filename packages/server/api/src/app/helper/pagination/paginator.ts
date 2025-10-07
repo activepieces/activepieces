@@ -76,7 +76,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     public async paginate(
         builder: SelectQueryBuilder<Entity>,
-        ...rawFields: string[]
+        ...rawFields: (keyof Entity)[]
     ): Promise<PagingResult<Entity>> {
 
         const entities = 

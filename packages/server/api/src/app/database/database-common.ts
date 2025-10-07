@@ -51,7 +51,7 @@ export function isNotOneOfTheseEditions(editions: ApEdition[]): boolean {
     return !editions.includes(system.getEdition())
 }
 
-export const getEntitiesWithMoreSelectedFieldsOrThrow = async <T extends ObjectLiteral>(query: SelectQueryBuilder<T>, ...moreFields: string[]): Promise<T[]> => {
+export const getEntitiesWithMoreSelectedFieldsOrThrow = async <T extends ObjectLiteral, K extends keyof T>(query: SelectQueryBuilder<T>, ...moreFields: K[]): Promise<T[]> => {
   const { entities, raw } = await query.getRawAndEntities()
   if (isNil(entities) || entities.length === 0) {
     return [] as T[]
@@ -59,7 +59,7 @@ export const getEntitiesWithMoreSelectedFieldsOrThrow = async <T extends ObjectL
   return appendRawFieldsToEntities(entities, raw, ...moreFields)
 }
 
-export const getEntitiesWithMoreSelectedFields = async <T extends ObjectLiteral>(query: SelectQueryBuilder<T>, ...moreFields: string[]): Promise<T[]> => {
+export const getEntitiesWithMoreSelectedFields = async <T extends ObjectLiteral, K extends keyof T>(query: SelectQueryBuilder<T>, ...moreFields: K[]): Promise<T[]> => {
   try {
     const { entities, raw } = await query.getRawAndEntities()
     if (isNil(entities) || entities.length === 0) {
@@ -71,12 +71,13 @@ export const getEntitiesWithMoreSelectedFields = async <T extends ObjectLiteral>
   }
 }
 
-const appendRawFieldsToEntities = <T extends ObjectLiteral>(entities: T[], raw: any[], ...moreFields: string[]): T[] => {
+const appendRawFieldsToEntities = <T extends ObjectLiteral, K extends keyof T>(entities: T[], raw: any[], ...moreFields: K[]): T[] => {
   asserNotEmpty(raw, `Raw`)
+  
   const fullEntities: any[] = []
   for (let i = 0; i < entities.length; i++) {
     const extraFields = moreFields.reduce((acc, field) => {
-      assertNotNullOrUndefined(raw[i]?.[field], `Raw[${i}].${field}`)
+      assertNotNullOrUndefined(raw[i]?.[field], `Raw[${i}].${String(field)}`)
       return { ...acc, [field]: raw[i][field] }
     }, {})
     
