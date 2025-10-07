@@ -8,10 +8,7 @@ import {
   Chatbot,
   Message,
   RetrainJob,
-  RetrainJobStatus,
   FileMeta,
-  WebhookSubscription,
-  EventList,
   UpdateChatbotSettingsDto,
 } from './types';
 
@@ -26,7 +23,7 @@ export class ChatDataClient {
     }
 
     this.baseURL =
-      process.env['CHATDATA_BASE_URL'] || 'https://api.chat-data.com/v1';
+      process.env['CHATDATA_BASE_URL'] || 'https://api.chat-data.com';
   }
 
   private getHeaders() {
@@ -40,27 +37,26 @@ export class ChatDataClient {
     if (error.response) {
       const status = error.response.status;
       const data = error.response.body || error.response.data;
+      const apiMessage = data?.message || data?.error;
 
       switch (status) {
+        case 400:
+          return new Error(apiMessage || 'Bad Request - Check your input parameters or account limits');
         case 401:
-          return new Error('Invalid API key');
+          return new Error(apiMessage || 'Authentication failed - Invalid API key');
         case 403:
-          return new Error('Insufficient permissions');
+          return new Error(apiMessage || 'Insufficient permissions');
         case 422:
-          const details =
-            data?.message || data?.error || 'Invalid request data';
-          return new Error(`Validation error: ${details}`);
+          return new Error(`Validation error: ${apiMessage || 'Invalid request data'}`);
         case 429:
           const retryAfter = error.response.headers?.['retry-after'];
-          const retryMsg = retryAfter
-            ? ` retry after ${retryAfter} seconds`
-            : '';
-          return new Error(`Rate-limited,${retryMsg}`);
+          const retryMsg = retryAfter ? ` Retry after ${retryAfter} seconds.` : '';
+          return new Error(apiMessage || `Rate limit exceeded.${retryMsg}`);
         default:
-          return new Error(data?.message || `HTTP ${status} error`);
+          return new Error(apiMessage || `HTTP ${status} error`);
       }
     }
-    return new Error('Network error occurred');
+    return new Error('Network error occurred - Unable to connect to Chat Data API');
   }
 
   async createChatbot(payload: CreateChatbotDto): Promise<Chatbot> {
@@ -104,12 +100,15 @@ export class ChatDataClient {
         timeout: 30000,
         retries: 3,
       });
-      if (payload.stream) {
+      
+      // Response is text/plain for non-streaming
+      if (typeof response.body === 'string') {
         return {
           response: response.body,
           conversationId: payload.conversationId,
         };
       }
+      
       return Message.parse(response.body);
     } catch (error) {
       throw this.handleError(error);
@@ -145,21 +144,6 @@ export class ChatDataClient {
         retries: 3,
       });
       return RetrainJob.parse(response.body);
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async getRetrainJobStatus(jobId: string): Promise<RetrainJobStatus> {
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${this.baseURL}/retrain-jobs/${jobId}`,
-        headers: this.getHeaders(),
-        timeout: 30000,
-        retries: 3,
-      });
-      return RetrainJobStatus.parse(response.body);
     } catch (error) {
       throw this.handleError(error);
     }
@@ -212,51 +196,6 @@ export class ChatDataClient {
       });
 
       return FileMeta.parse(response.body);
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async subscribeWebhook(
-    chatbotId: string,
-    callbackUrl: string
-  ): Promise<WebhookSubscription> {
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${this.baseURL}/chatbots/${chatbotId}/webhooks`,
-        headers: this.getHeaders(),
-        body: {
-          callbackUrl,
-          events: ['new_message', 'new_lead', 'escalation'],
-        },
-        timeout: 30000,
-        retries: 3,
-      });
-      return WebhookSubscription.parse(response.body);
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async listEvents(
-    chatbotId: string,
-    since?: string,
-    page = 1
-  ): Promise<EventList> {
-    try {
-      const queryParams: Record<string, string> = { page: page.toString() };
-      if (since) queryParams['since'] = since;
-
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${this.baseURL}/chatbots/${chatbotId}/events`,
-        headers: this.getHeaders(),
-        queryParams,
-        timeout: 30000,
-        retries: 3,
-      });
-      return EventList.parse(response.body);
     } catch (error) {
       throw this.handleError(error);
     }

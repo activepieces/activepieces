@@ -49,6 +49,13 @@ export const retrainChatbot = createAction({
       description:
         'List of URLs to extract content from (existing URLs will be recrawled)',
       required: false,
+      properties: {
+        url: Property.ShortText({
+          displayName: 'URL',
+          description: 'Website URL starting with http:// or https://',
+          required: true,
+        }),
+      },
     }),
     cookies: Property.LongText({
       displayName: 'Cookies',
@@ -77,16 +84,65 @@ export const retrainChatbot = createAction({
       description:
         'List of products for training (existing products with same ID will be overwritten)',
       required: false,
+      properties: {
+        id: Property.ShortText({
+          displayName: 'Product ID',
+          description: 'Unique ID for tracking the product',
+          required: true,
+        }),
+        information: Property.Json({
+          displayName: 'Product Information',
+          description: 'Structured product data in key-value format',
+          required: true,
+          defaultValue: {
+            name: 'Product Name',
+            description: 'Product description'
+          },
+        }),
+      },
     }),
     qAndAs: Property.Array({
       displayName: 'Q&As',
       description: 'List of questions and answers for the chatbot to learn',
       required: false,
+      properties: {
+        question: Property.LongText({
+          displayName: 'Question',
+          description: 'The question on a specific topic',
+          required: true,
+        }),
+        answer: Property.LongText({
+          displayName: 'Answer',
+          description: 'The answer to the question',
+          required: true,
+        }),
+      },
     }),
     deletes: Property.Array({
       displayName: 'Knowledge to Delete',
       description: 'List of knowledge sources to remove from the chatbot',
       required: false,
+      properties: {
+        type: Property.StaticDropdown({
+          displayName: 'Type',
+          description: 'The type of knowledge chunk to delete',
+          required: true,
+          options: {
+            options: [
+              { label: 'Website', value: 'website' },
+              { label: 'Q&A', value: 'q&a' },
+              { label: 'Product', value: 'product' },
+              { label: 'Text', value: 'text' },
+              { label: 'File', value: 'file' },
+            ],
+          },
+        }),
+        url: Property.ShortText({
+          displayName: 'URL',
+          description: 'The URL to delete (required if type is website)',
+          required: false,
+        }),
+      },
     }),
   },
   async run(context) {
@@ -95,7 +151,7 @@ export const retrainChatbot = createAction({
     const payload = RetrainOptions.parse({
       chatbotId: context.propsValue.chatbotId,
       sourceText: context.propsValue.sourceText,
-      urlsToScrape: context.propsValue.urlsToScrape,
+      urlsToScrape: context.propsValue.urlsToScrape?.map((item: any) => item.url),
       options: {
         Cookies: context.propsValue.cookies,
         extractMainContent: context.propsValue.extractMainContent,

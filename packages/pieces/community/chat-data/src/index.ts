@@ -7,7 +7,8 @@ import { retrainChatbot } from './lib/actions/retrainChatbot';
 import { uploadFile } from './lib/actions/uploadFile';
 
 export const chatData = createPiece({
-  displayName: 'Chat-data',
+  displayName: 'Chat Data',
+  description: 'Build AI-chatbots with support for live chat escalation, knowledge bases, or custom backend endpoints.',
   auth: PieceAuth.SecretText({
     displayName: 'API Key',
     description: 'Enter your Chat Data API key',
@@ -15,7 +16,7 @@ export const chatData = createPiece({
   }),
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/chat-data.png',
-  authors: ['sparkybug'],
+  authors: ['sparkybug', 'onyedikachi-david'],
   actions: [
     createChatbot,
     deleteChatbot,

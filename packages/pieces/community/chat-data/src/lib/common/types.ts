@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
 export const CreateChatbotDto = z.object({
-  chatbotName: z.string(),
+  chatbotName: z.string().min(1, 'Chatbot name is required'),
   sourceText: z.string().optional(),
-  urlsToScrape: z.array(z.string()).optional(),
+  urlsToScrape: z.array(z.string().url('Invalid URL format')).optional(),
   products: z.array(z.object({
-    id: z.string(),
-    information: z.record(z.any()),
+    id: z.string().min(1, 'Product ID is required'),
+    information: z.record(z.string(), z.unknown()),
   })).optional(),
   qAndAs: z.array(z.object({
-    question: z.string(),
-    answer: z.string(),
+    question: z.string().min(1, 'Question is required'),
+    answer: z.string().min(1, 'Answer is required'),
   })).optional(),
-  customBackend: z.string().optional(),
+  customBackend: z.string().url('Invalid backend URL').optional(),
   bearer: z.string().optional(),
   model: z.enum(['custom-data-upload', 'medical-chat-human', 'medical-chat-vet', 'custom-model']).default('custom-data-upload'),
 });
@@ -103,26 +103,7 @@ export const FileMeta = z.object({
   url: z.string(),
 });
 
-export const WebhookSubscription = z.object({
-  id: z.string(),
-  chatbotId: z.string(),
-  callbackUrl: z.string(),
-  events: z.array(z.string()),
-  createdAt: z.string(),
-});
 
-export const EventList = z.object({
-  events: z.array(z.object({
-    id: z.string(),
-    type: z.string(),
-    chatbotId: z.string(),
-    data: z.record(z.any()),
-    timestamp: z.string(),
-  })),
-  page: z.number(),
-  totalPages: z.number(),
-  totalCount: z.number(),
-});
 
 export type CreateChatbotDto = z.infer<typeof CreateChatbotDto>;
 export type SendMessageDto = z.infer<typeof SendMessageDto>;
@@ -132,8 +113,7 @@ export type Message = z.infer<typeof Message>;
 export type RetrainJob = z.infer<typeof RetrainJob>;
 export type RetrainJobStatus = z.infer<typeof RetrainJobStatus>;
 export type FileMeta = z.infer<typeof FileMeta>;
-export type WebhookSubscription = z.infer<typeof WebhookSubscription>;
-export type EventList = z.infer<typeof EventList>;
+
 
 export const UpdateChatbotSettingsDto = z.object({
   chatbotId: z.string(),
