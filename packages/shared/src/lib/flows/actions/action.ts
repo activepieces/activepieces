@@ -15,6 +15,11 @@ export enum RouterExecutionType {
     EXECUTE_FIRST_MATCH = 'EXECUTE_FIRST_MATCH',
 }
 
+export enum ConditionType {
+    TEXT = 'TEXT',
+    LOGICAL = 'LOGICAL',
+}
+
 export enum BranchExecutionType {
     FALLBACK = 'FALLBACK',
     CONDITION = 'CONDITION',
@@ -248,6 +253,7 @@ export const RouterBranchesSchema = (addMinLength: boolean) =>
             Type.Object({
                 conditions: Type.Array(Type.Array(BranchConditionValid(addMinLength))),
                 branchType: Type.Literal(BranchExecutionType.CONDITION),
+                prompt: Type.String(),
                 branchName: Type.String(),
             }),
             Type.Object({
@@ -261,12 +267,25 @@ export const RouterActionSettings = Type.Object({
     ...commonActionSettings,
     branches: RouterBranchesSchema(false),
     executionType: Type.Enum(RouterExecutionType),
+    conditionType: Type.Enum(ConditionType),
 })
 
-export const RouterActionSettingsWithValidation = Type.Object({
+export const TextRouterActionSettingsValidation = Type.Object({
+    branches: RouterBranchesSchema(false),
+    executionType: Type.Enum(RouterExecutionType),
+    conditionType: Type.Literal(ConditionType.TEXT),
+})
+
+export const LogicalRouterActionSettingsValidation = Type.Object({
     branches: RouterBranchesSchema(true),
     executionType: Type.Enum(RouterExecutionType),
+    conditionType: Type.Literal(ConditionType.LOGICAL),
 })
+
+export const RouterActionSettingsValidation = Type.Union([
+    TextRouterActionSettingsValidation,
+    LogicalRouterActionSettingsValidation,
+])
 
 export type RouterActionSettings = Static<typeof RouterActionSettings>
 

@@ -49,6 +49,10 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         state: {
             type: String,
         },
+        flowContext: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

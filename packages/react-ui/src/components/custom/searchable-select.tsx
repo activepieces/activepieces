@@ -46,6 +46,7 @@ type SearchableSelectProps<T> = {
     setOpen: (open: boolean) => void;
   };
   refreshOnSearch?: (searchValue: string) => void;
+  rightContent?: React.ReactNode;
   /**Use to show the selected option when search doesn't return the selected option */
   cachedOptions?: {
     value: T;
@@ -82,6 +83,7 @@ export const SearchableSelect = <T,>({
   openState: openStateInitializer,
   refreshOnSearch,
   cachedOptions = [],
+  rightContent,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -173,6 +175,7 @@ export const SearchableSelect = <T,>({
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            {rightContent}
           </Button>
           <div className="right-10 top-2 absolute flex gap-2  z-50 items-center">
             {showDeselect && !disabled && selectedOption && !loading && (
@@ -186,19 +189,6 @@ export const SearchableSelect = <T,>({
                 Icon={X}
               ></SelectUtilButton>
             )}
-            {showRefresh && !loading && (
-              <SelectUtilButton
-                tooltipText={t('Refresh')}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  if (onRefresh) {
-                    onRefresh();
-                  }
-                }}
-                Icon={RefreshCcw}
-              ></SelectUtilButton>
-            )}
           </div>
         </div>
       </PopoverTrigger>
@@ -209,16 +199,32 @@ export const SearchableSelect = <T,>({
         }}
         className="min-w-full w-full p-0"
       >
-        <Command className="w-full" shouldFilter={false}>
+        <Command className="w-full flex" shouldFilter={false}>
           <CommandInput
             placeholder={t(placeholder)}
             value={searchTerm}
+            className='w-full'
             onValueChange={(e) => {
               setSearchTerm(e);
               if (refreshOnSearch) {
                 refreshOnSearch(e);
               }
             }}
+            rightContent={
+              showRefresh && !loading ? (
+                <SelectUtilButton
+                  tooltipText={t('Refresh')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (onRefresh) {
+                      onRefresh();
+                    }
+                  }}
+                  Icon={RefreshCcw}
+                />
+              ) : undefined
+            }
           />
           {filterOptionsIndices.length === 0 && (
             <CommandEmpty>{t('No results found.')}</CommandEmpty>

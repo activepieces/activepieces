@@ -148,6 +148,7 @@ import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/175
 import { RemoveAgentRelationToTablesSqlite1755954639833 } from './migration/sqlite/1755954639833-RemoveAgentRelationToTablesSqlite'
 import { AddTriggerNameToTriggerSourceSqlite1757018637559 } from './migration/sqlite/1757018637559-AddTriggerNameToTriggerSourceSqlite'
 import { AddIndexOnTriggerRunSqlite1757560231246 } from './migration/sqlite/1757560231246-AddIndexOnTriggerRunSqlite'
+import { AddFlowContextToFlowVersionSqlite1756341633972 } from './migration/sqlite/1756341633972-AddFlowContextToFlowVersionSqlite'
 import { DeleteHandshakeFromTriggerSourceSqlite1758108281602 } from './migration/sqlite/1758108281602-DeleteHandshakeFromTriggerSourceSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -314,6 +315,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexOnTriggerRunSqlite1757560231246,
         DeleteHandshakeFromTriggerSourceSqlite1758108281602,
         AddIndexForAppEvents1759392852559,
+        AddFlowContextToFlowVersionSqlite1756341633972,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

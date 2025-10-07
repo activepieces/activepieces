@@ -7,8 +7,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { PlayCircle } from 'lucide-react';
 
-type TestButtonProps = {
+type TestButtonWithTooltipProps = {
   onClick: () => void;
   text: string;
   disabled?: boolean;
@@ -16,13 +17,13 @@ type TestButtonProps = {
   showKeyboardShortcut?: boolean;
 };
 
-const TestButton = ({
+const TestButtonWithTooltip = ({
   onClick,
   text,
   disabled = false,
   loading = false,
   showKeyboardShortcut = true,
-}: TestButtonProps) => {
+}: TestButtonWithTooltipProps) => {
   const isMac = /(Mac)/i.test(navigator.userAgent);
 
   useEffect(() => {
@@ -51,13 +52,14 @@ const TestButton = ({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant="ghost"
-          className="h-8 !bg-primary-100/80 text-primary-300 disabled:pointer-events-auto hover:!border-primary hover:!text-primary-300 border-primary/50 border border-solid rounded-full animate-fade"
+          variant="outline"
+          className="h-8 text-primary-300 disabled:pointer-events-auto hover:!border-primary hover:!text-primary-300 hover:!bg-transparent border-primary/50 border border-solid animate-fade"
           disabled={disabled}
           loading={loading}
           onClick={onClick}
         >
           <div className="flex justify-center items-center gap-2">
+            <PlayCircle className="h-4 w-4" />
             {text}
             {showKeyboardShortcut && (
               <span className="text-[10px] tracking-widest whitespace-nowrap">
@@ -76,6 +78,6 @@ const TestButton = ({
   );
 };
 
-TestButton.displayName = 'TestButton';
+TestButtonWithTooltip.displayName = 'TestButtonWithTooltip';
 
-export { TestButton };
+export { TestButtonWithTooltip };

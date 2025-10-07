@@ -22,9 +22,7 @@ import {
   isNil,
   spreadIfDefined,
   RouterActionSchema,
-  RouterBranchesSchema,
   SampleDataSetting,
-  RouterExecutionType,
   UpsertOAuth2Request,
   UpsertCloudOAuth2Request,
   UpsertPlatformOAuth2Request,
@@ -39,6 +37,7 @@ import {
   PropertyExecutionType,
   PropertySettings,
   PieceTriggerSettings,
+  RouterActionSettingsValidation,
 } from '@activepieces/shared';
 
 const addAuthToPieceProps = (
@@ -65,6 +64,7 @@ const buildInputSchemaForStep = (
   type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
   actionNameOrTriggerName: string,
+  propertySettings: Record<string, PropertySettings>,
 ): TSchema => {
   switch (type) {
     case FlowActionType.PIECE: {
@@ -79,6 +79,7 @@ const buildInputSchemaForStep = (
             piece.auth,
             piece.actions[actionNameOrTriggerName].requireAuth,
           ),
+          propertySettings,
         );
       }
       return Type.Object({});
@@ -95,6 +96,7 @@ const buildInputSchemaForStep = (
             piece.auth,
             piece.triggers[actionNameOrTriggerName].requireAuth ?? true,
           ),
+          propertySettings,
         );
       }
       return Type.Object({});
@@ -230,6 +232,7 @@ const buildConnectionSchema = (
             value: Type.Object({
               props: formUtils.buildSchema(
                 (piece.auth as CustomAuthProperty<any>).props,
+                {}
               ),
             }),
           }),
@@ -410,6 +413,7 @@ export const formUtils = {
     type: FlowActionType | FlowTriggerType,
     actionNameOrTriggerName: string,
     piece: PieceMetadataModel | null,
+    propertySettings: Record<string, PropertySettings>,
   ) => {
     switch (type) {
       case FlowActionType.LOOP_ON_ITEMS:
@@ -427,11 +431,12 @@ export const formUtils = {
         return Type.Intersect([
           Type.Omit(RouterActionSchema, ['settings']),
           Type.Object({
-            settings: Type.Object({
-              branches: RouterBranchesSchema(true),
-              executionType: Type.Enum(RouterExecutionType),
-              sampleData: SampleDataSetting,
-            }),
+            settings: Type.Intersect([
+              RouterActionSettingsValidation,
+              Type.Object({
+                sampleData: SampleDataSetting,
+              }),
+            ]),
           }),
         ]);
       case FlowActionType.CODE:
@@ -450,6 +455,7 @@ export const formUtils = {
                   type,
                   piece,
                   actionNameOrTriggerName,
+                  propertySettings,
                 ),
               }),
             ]),
@@ -470,6 +476,7 @@ export const formUtils = {
                   type,
                   piece,
                   actionNameOrTriggerName,
+                  propertySettings,
                 ),
               }),
             ]),
@@ -481,7 +488,7 @@ export const formUtils = {
       }
     }
   },
-  buildSchema: (props: PiecePropertyMap) => {
+  buildSchema: (props: PiecePropertyMap, propertySettings: Record<string, PropertySettings>) => {
     const entries = Object.entries(props);
     const nullableType: TSchema[] = [Type.Null(), Type.Undefined()];
     const nonNullableUnknownPropType = Type.Not(
@@ -490,6 +497,20 @@ export const formUtils = {
     );
     const propsSchema: Record<string, TSchema> = {};
     for (const [name, property] of entries) {
+      const propertySetting = propertySettings?.[name];
+      
+      if (propertySetting?.type === PropertyExecutionType.AUTO) {
+        propsSchema[name] = Type.Optional(
+          Type.Union([
+            Type.Null(),
+            Type.Undefined(),
+            Type.Never(),
+            Type.Unknown(),
+          ]),
+        );
+        continue;
+      }
+
       switch (property.type) {
         case PropertyType.MARKDOWN:
           propsSchema[name] = Type.Optional(
@@ -553,7 +574,7 @@ export const formUtils = {
             ? Type.String({
                 minLength: property.required ? 1 : undefined,
               })
-            : formUtils.buildSchema(property.properties);
+            : formUtils.buildSchema(property.properties, propertySettings);
           propsSchema[name] = Type.Union([
             Type.Array(arrayItemSchema, {
               minItems: property.required ? 1 : undefined,

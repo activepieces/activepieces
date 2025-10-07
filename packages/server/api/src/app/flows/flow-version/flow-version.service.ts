@@ -316,6 +316,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             agentIds: [],
             valid: false,
             state: FlowVersionState.DRAFT,
+            flowContext: '',
         }
         return flowVersionRepo().save(flowVersion)
     },

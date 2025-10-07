@@ -1,9 +1,10 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, ConditionType, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
+import { aiConditionResolver } from '../services/ai-condition-resolver'
 
 export const routerExecuter: BaseExecutor<RouterAction> = {
     async handle({
@@ -39,8 +40,15 @@ async function handleRouterExecution({ action, executionState, constants, censor
 }): Promise<FlowExecutorContext> {
     const stepStartTime = performance.now()
 
-    const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
-        return branch.branchType === BranchExecutionType.FALLBACK ? true : evaluateConditions(branch.conditions)
+    const evaluatedConditionsWithoutFallback = action.settings.conditionType === ConditionType.TEXT ? 
+    await resolveConditionUsingAI({ constants, action, executionState }) :
+    resolvedInput.branches.map((branch) => {
+        switch (branch.branchType) {
+            case BranchExecutionType.CONDITION:
+                return evaluateConditions(branch.conditions)
+            case BranchExecutionType.FALLBACK:
+                return true
+        }
     })
 
     const evaluatedConditions = resolvedInput.branches.map((branch, index) => {
@@ -225,6 +233,20 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
     return Boolean(orOperator)
 }
 
+async function resolveConditionUsingAI({ constants, action, executionState }: ResolveAIConditionParams): Promise<boolean[]> {
+    if (constants.edition === ApEdition.COMMUNITY) {
+        return action.settings.branches.map(() => false)
+    }
+
+    const resolvedConditions = await aiConditionResolver.resolve(constants, {
+        prompts: action.settings.branches.map((branch) => branch.branchType === BranchExecutionType.CONDITION ? branch.prompt : ''),
+        previousStepsResults: executionState.steps,
+    }) ?? action.settings.branches.map(() => false)
+
+    return resolvedConditions
+}
+
+
 function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | undefined): string {
     if (typeof text === 'string') {
         return caseSensitive ? text : text.toLowerCase()
@@ -269,4 +291,10 @@ function isValidDate(date: unknown): boolean {
         return dayjs(date).isValid()
     }
     return false
+}
+
+type ResolveAIConditionParams = {
+    executionState: FlowExecutorContext
+    constants: EngineConstants
+    action: RouterAction
 }
