@@ -764,6 +764,9 @@
       "@activepieces/piece-ntfy": [
         "packages/pieces/community/ntfy/src/index.ts"
       ],
+      "@activepieces/piece-nuelink":[
+        "packages/pieces/community/nuelink/src/index.ts"
+      ],
       "@activepieces/piece-odoo": [
         "packages/pieces/community/odoo/src/index.ts"
       ],
@@ -1011,6 +1014,9 @@
       ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
+      ],
+      "@activepieces/piece-socialkit": [
+        "packages/pieces/community/socialkit/src/index.ts"
       ],
       "@activepieces/piece-softr": [
         "packages/pieces/community/softr/src/index.ts"

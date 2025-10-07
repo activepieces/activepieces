@@ -129,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Se déclenche quand une feuille est créée dans une feuille de calcul.",
   "Trigger Column": "Colonne de déclenchement",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Veuillez noter qu'il peut y avoir un délai de 3 minutes pour que le déclencheur soit activé en raison d'un délai de la part de Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Déclencher seulement en cas de modification aux cellules de cette colonne. Sélectionnez **Toutes les colonnes** si vous voulez que le Flow se déclenche en cas de changement sur n'importe quelle cellule de la ligne."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Déclencher sur les modifications aux cellules de cette colonne seulement. \nSélectionnez **N'importe quelle colonne** si vous voulez que le flux déclenche des changements sur n'importe quelle cellule de la ligne."
 }
