@@ -30,7 +30,6 @@ export const webhookService = {
             attributes: {
                 'webhook.flowId': flowId,
                 'webhook.async': async,
-                'webhook.saveSampleData': saveSampleData,
                 'webhook.execute': execute,
             },
         }, async (span) => {
@@ -42,12 +41,13 @@ export const webhookService = {
 
                 const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
                     flowId: flowId,
-                    simulate: saveSampleData,
+                    simulate: saveSampleData ?? true,
                 })
 
                 if (isNil(triggerSourceResult)) {
                     pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
+                    span.setAttribute('webhook.saveSampleData', saveSampleData ?? false)
                     return {
                         status: StatusCodes.GONE,
                         body: {},
@@ -56,8 +56,9 @@ export const webhookService = {
                 }
 
                 const { flow, ...triggerSource } = triggerSourceResult
-
+                saveSampleData = saveSampleData ?? true
                 span.setAttribute('webhook.flowFound', true)
+                span.setAttribute('webhook.saveSampleData', saveSampleData)
                 span.setAttribute('webhook.projectId', flow.projectId)
                 const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
                 span.setAttribute('webhook.flowVersionId', flowVersionIdToRun)
@@ -162,7 +163,7 @@ export const webhookService = {
 type HandleWebhookParams = {
     flowId: string
     async: boolean
-    saveSampleData: boolean
+    saveSampleData?: boolean
     flowVersionToRun: WebhookFlowVersionToRun
     data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
