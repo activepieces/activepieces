@@ -151,6 +151,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 )
                 const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
                 return this.start({
+                    flowId: oldFlowRun.flowId,
                     payload,
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
@@ -304,6 +305,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
     },
     async start({
+        flowId,
         payload,
         executeTrigger,
         executionType,
@@ -329,20 +331,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             },
         }, async (span) => {
             try {
-                const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
-
-                const flow = await flowService(log).getOneOrThrow({
-                    id: flowVersion.flowId,
-                    projectId,
-                })
-
-                span.setAttribute('flowRun.flowId', flow.id)
+                span.setAttribute('flowRun.flowId', flowId)
                 
                 const newFlowRun = await create({
                     projectId,
                     flowVersionId,
                     parentRunId,
-                    flowId: flow.id,
+                    flowId,
                     failParentOnFailure,
                     stepNameToTest,
                     environment,
@@ -362,7 +357,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 
                 span.setAttribute('flowRun.queued', true)
                 await flowRunSideEffects(log).onStart(newFlowRun)
-                return { ...newFlowRun, flowDisplayName: flowVersion.displayName }
+                return { ...newFlowRun, flowDisplayName: 'Unknown' }
             }
             finally {
                 span.end()
@@ -790,6 +785,7 @@ type AddToQueueParams = {
 }
 
 type StartParams = {
+    flowId: FlowId
     payload: unknown
     environment: RunEnvironment
     flowVersionId: FlowVersionId
