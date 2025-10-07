@@ -89,6 +89,7 @@ import { platformModule } from './platform/platform.module'
 import { projectModule } from './project/project-module'
 import { projectMemberModule } from './project-member/project-member.module'
 import { projectRoleModule } from './project-role/project-role.module'
+import { queueMetricsModule } from './queue-metrics/queue-metrics.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { todoActivityModule } from './todos/activity/todos-activity.module'
@@ -338,6 +339,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             // await app.register(projectRoleModule)
             // await app.register(projectReleaseModule)
             // await app.register(globalConnectionModule)
+            // await app.register(queueMetricsModule)
             // systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             // setPlatformOAuthService(platformOAuth2Service(app.log))
             // projectHooks.set(projectEnterpriseHooks)
@@ -348,6 +350,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await app.register(queueMetricsModule)
             break
     }
 

@@ -129,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "当工作表在电子表格中创建时触发.",
   "Trigger Column": "触发列",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "请注意，由于谷歌的延迟，触发点可能会延迟3分钟。",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "触发对此列单元格的更改。 如果您想要流量触发对行内任何单元格的更改，请选择 **全部列** 。"
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row."
 }
