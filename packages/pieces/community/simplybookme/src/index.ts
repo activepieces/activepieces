@@ -10,7 +10,9 @@ import {
   deleteClient,
   findBooking,
   findClient,
-  findInvoice
+  findInvoice,
+  getCompanyInfo,
+  getTimeframe
 } from './lib/actions';
 import {
   bookingCanceled,
@@ -36,7 +38,9 @@ export const simplybookme = createPiece({
     deleteClient,
     findBooking,
     findClient,
-    findInvoice
+    findInvoice,
+    getCompanyInfo,
+    getTimeframe
   ],
   triggers: [bookingCanceled, bookingChanged, newBooking, newClient, newInvoice]
 });

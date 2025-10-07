@@ -37,16 +37,6 @@ export const findBooking = createAction({
       description: 'Filter by creation date to (format: YYYY-MM-DD)',
       required: false
     }),
-    editedDateFrom: Property.ShortText({
-      displayName: 'Edited Date From',
-      description: 'Filter by edit date from (format: YYYY-MM-DD)',
-      required: false
-    }),
-    editedDateTo: Property.ShortText({
-      displayName: 'Edited Date To',
-      description: 'Filter by edit date to (format: YYYY-MM-DD)',
-      required: false
-    }),
     unitGroupId: Property.Dropdown({
       displayName: 'Provider',
       description: 'Get bookings for a specific service provider (optional)',
@@ -106,11 +96,6 @@ export const findBooking = createAction({
           { label: 'Approved', value: 'approved' }
         ]
       }
-    }),
-    code: Property.ShortText({
-      displayName: 'Booking Code',
-      description: 'Filter by booking code',
-      required: false
     })
   },
   async run(context) {
@@ -122,15 +107,12 @@ export const findBooking = createAction({
       timeTo,
       createdDateFrom,
       createdDateTo,
-      editedDateFrom,
-      editedDateTo,
       unitGroupId,
       eventId,
       isConfirmed,
       clientId,
       order,
-      bookingType,
-      code
+      bookingType
     } = context.propsValue;
 
     // Build filter object
@@ -142,15 +124,12 @@ export const findBooking = createAction({
     if (timeTo) filter.time_to = timeTo;
     if (createdDateFrom) filter.created_date_from = createdDateFrom;
     if (createdDateTo) filter.created_date_to = createdDateTo;
-    if (editedDateFrom) filter.edited_date_from = editedDateFrom;
-    if (editedDateTo) filter.edited_date_to = editedDateTo;
     if (unitGroupId) filter.unit_group_id = unitGroupId;
     if (eventId) filter.event_id = eventId;
     if (isConfirmed !== undefined) filter.is_confirmed = isConfirmed;
     if (clientId) filter.client_id = clientId;
     if (order) filter.order = order;
     if (bookingType) filter.booking_type = bookingType;
-    if (code) filter.code = code;
 
     const params = [filter];
     const bookings = await makeJsonRpcCall(auth, 'getBookings', params);

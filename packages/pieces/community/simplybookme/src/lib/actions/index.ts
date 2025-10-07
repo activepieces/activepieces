@@ -8,3 +8,5 @@ export * from './delete-client';
 export * from './find-booking';
 export * from './find-client';
 export * from './find-invoice';
+export * from './get-company-info';
+export * from './get-timeframe';

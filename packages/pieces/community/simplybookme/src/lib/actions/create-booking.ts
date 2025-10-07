@@ -4,7 +4,8 @@ import {
   makeJsonRpcCall,
   SimplybookAuth,
   serviceDropdown,
-  providerDropdown
+  providerDropdown,
+  clientDropdown
 } from '../common';
 
 export const createBooking = createAction({
@@ -16,54 +17,52 @@ export const createBooking = createAction({
   props: {
     eventId: serviceDropdown,
     unitId: providerDropdown,
-    date: Property.ShortText({
-      displayName: 'Date',
-      description: 'Booking date (format: YYYY-MM-DD, e.g., 2024-03-01)',
+    clientId: clientDropdown,
+    startDate: Property.ShortText({
+      displayName: 'Start Date',
+      description: 'Booking start date (format: YYYY-MM-DD, e.g., 2024-03-01)',
       required: true
     }),
-    time: Property.ShortText({
-      displayName: 'Time',
+    startTime: Property.ShortText({
+      displayName: 'Start Time',
       description:
-        'Booking time slot (format: HH:MM:SS, e.g., 09:00:00). Must be multiple of company timeframe.',
+        'Booking start time (format: HH:MM:SS, e.g., 09:00:00). Must be multiple of company timeframe.',
       required: true
     }),
-    clientName: Property.ShortText({
-      displayName: 'Client Name',
-      description: 'Client full name',
+    endDate: Property.ShortText({
+      displayName: 'End Date',
+      description: 'Booking end date (format: YYYY-MM-DD, e.g., 2024-03-01). Should be later than start date.',
       required: true
     }),
-    clientEmail: Property.ShortText({
-      displayName: 'Client Email',
-      description: 'Client email address',
-      required: true
-    }),
-    clientPhone: Property.ShortText({
-      displayName: 'Client Phone',
-      description: 'Client phone number (e.g., +38099999999)',
+    endTime: Property.ShortText({
+      displayName: 'End Time',
+      description:
+        'Booking end time (format: HH:MM:SS, e.g., 10:00:00). Should be later than start time.',
       required: true
     }),
     clientTimeOffset: Property.Number({
-      displayName: 'Client Time Offset',
+      displayName: 'Client Time Offset (seconds)',
       description:
-        'Difference between client and company time zone in minutes (e.g., 60 for GMT+3 client with GMT+2 company)',
-      required: false
+        'Difference between company and client time zone in seconds (e.g., -3600 for GMT+3 client with GMT+2 company)',
+      required: false,
+      defaultValue: 0
     }),
     additionalFields: Property.Json({
       displayName: 'Additional Fields',
       description:
-        'Additional fields array (e.g., [{"name": "field_name", "value": "value", "type": "text"}]). Include promo code here if needed.',
+        'Additional params and fields as object (e.g., {"promocode": "CODE123", "location_id": "1"}). Use for promo codes, location ID, intake forms.',
       required: false
     }),
     count: Property.Number({
       displayName: 'Count',
-      description: 'Number of bookings for group booking batch (min. 1)',
+      description: 'Number of bookings for group booking batch (min. 1). Cannot be used with Batch ID.',
       required: false,
       defaultValue: 1
     }),
     batchId: Property.Number({
       displayName: 'Batch ID',
       description:
-        'Add booking to existing multiple bookings batch (optional, cannot be used with count > 1)',
+        'Add booking to existing group bookings batch. Cannot be used with Count > 1.',
       required: false
     }),
     recurringData: Property.Json({
@@ -77,11 +76,11 @@ export const createBooking = createAction({
     const {
       eventId,
       unitId,
-      date,
-      time,
-      clientName,
-      clientEmail,
-      clientPhone,
+      clientId,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
       clientTimeOffset,
       additionalFields,
       count,
@@ -89,32 +88,18 @@ export const createBooking = createAction({
       recurringData
     } = context.propsValue;
 
-    // Build client data object
-    const clientData: any = {
-      name: clientName,
-      email: clientEmail,
-      phone: clientPhone
-    };
-
-    if (clientTimeOffset !== undefined) {
-      clientData.client_time_offset = clientTimeOffset;
-    }
-
-    // Build additional params object
-    const additional: any = {};
-    if (additionalFields) {
-      additional.fields = additionalFields;
-    }
-
     // Build params array according to book API signature:
-    // book($eventId, $unitId, $date, $time, $clientData, $additional, $count, $batchId, $recurringData)
+    // book($eventId, $unitId, $clientId, $startDate, $startTime, $endDate, $endTime, $clientTimeOffset, $additional, $count, $batchId, $recurringData)
     const params = [
       eventId,
       unitId,
-      date,
-      time,
-      clientData,
-      additional,
+      clientId,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      clientTimeOffset || 0,
+      additionalFields || {},
       count || 1,
       batchId || null,
       recurringData || null

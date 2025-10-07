@@ -46,12 +46,6 @@ export const createClient = createAction({
       displayName: 'Country ID',
       description: 'Client country ID',
       required: false
-    }),
-    sendEmail: Property.Checkbox({
-      displayName: 'Send Email',
-      description: 'Send notification email to the client',
-      required: false,
-      defaultValue: false
     })
   },
   async run(context) {
@@ -64,8 +58,7 @@ export const createClient = createAction({
       address2,
       city,
       zip,
-      countryId,
-      sendEmail
+      countryId
     } = context.propsValue;
 
     const clientData: any = { name };
@@ -78,7 +71,7 @@ export const createClient = createAction({
     if (zip) clientData.zip = zip;
     if (countryId) clientData.country_id = countryId;
 
-    const params = [clientData, sendEmail || false];
+    const params = [clientData];
     const clientId = await makeJsonRpcCall<number>(auth, 'addClient', params);
 
     return { clientId };
