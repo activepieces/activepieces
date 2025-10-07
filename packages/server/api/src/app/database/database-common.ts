@@ -75,13 +75,14 @@ const appendRawFieldsToEntities = <T extends ObjectLiteral>(entities: T[], raw: 
   asserNotEmpty(raw, `Raw`)
   const fullEntities: any[] = []
   for (let i = 0; i < entities.length; i++) {
-    for (const field of moreFields) {
+    const extraFields = moreFields.reduce((acc, field) => {
       assertNotNullOrUndefined(raw[i]?.[field], `Raw[${i}].${field}`)
-
-      fullEntities[i] = {
-        ...entities[i],
-        [field]: raw[i][field],
-      }
+      return { ...acc, [field]: raw[i][field] }
+    }, {})
+    
+    fullEntities[i] = {
+      ...entities[i],
+      ...extraFields
     }
   }
   return fullEntities as T[]
