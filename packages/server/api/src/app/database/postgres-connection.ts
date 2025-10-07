@@ -462,7 +462,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexOnTriggerRun1757557714045,
         DeleteHandshakeFromTriggerSource1758108135968,
         AddIndexForAppEvents1759392852559,
-        RemoveFlowRunDisplayName1759772332795
+        RemoveFlowRunDisplayName1759772332795,
     ]
 
     const edition = system.getEdition()

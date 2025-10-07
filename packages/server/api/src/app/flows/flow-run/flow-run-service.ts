@@ -49,12 +49,10 @@ import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
-import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
-import { getEntitiesWithMoreSelectedFields, getEntitiesWithMoreSelectedFieldsOrThrow } from '../../database/database-common'
 
 const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -62,11 +60,6 @@ export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
 const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
-const queryWithDisplayName = (repo: Repository<FlowRun>) => {
-    return repo.createQueryBuilder('flow_run')
-            .leftJoin('flow_version', 'flow_version', 'flow_run."flowVersionId" = flow_version.id')
-            .addSelect('COALESCE(flow_version."displayName", \'Unknown\')', 'flowDisplayName')
-}
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async list(params: ListParams): Promise<SeekPage<FlowRun>> {
@@ -82,11 +75,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        let query = queryWithDisplayName(flowRunRepo()).where({
+
+        let query = queryBuilderForFlowRun(flowRunRepo()).where({
             projectId: params.projectId,
             environment: RunEnvironment.PRODUCTION,
         })
-      
+
         if (params.flowId) {
             query = query.andWhere({
                 flowId: In(params.flowId),
@@ -122,7 +116,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const { data, cursor: newCursor } = await paginator.paginate(query, "flowDisplayName")
+        const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
@@ -186,12 +180,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             runId: flowRunId,
         }, '[FlowRunService#resume] adding flow run to queue')
 
-        const query = await queryWithDisplayName(flowRunRepo()).where({
-                id: flowRunId,
-            })
-        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
+        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
 
-        if (flowRuns.length === 0) {
+        if (isNil(flowRun)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -200,23 +191,22 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const flowRunToResume = flowRuns[0]
 
-        const pauseMetadata = flowRunToResume.pauseMetadata
+        const pauseMetadata = flowRun.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
         if (matchRequestId || !checkRequestId) {
             return addToQueue({
                 payload,
-                flowRun: flowRunToResume,
+                flowRun,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
-                httpRequestId: flowRunToResume.pauseMetadata?.requestIdToReply ?? undefined,
+                httpRequestId: flowRun.pauseMetadata?.requestIdToReply ?? undefined,
                 progressUpdateType,
                 executeTrigger: false,
                 executionType,
             }, log)
         }
-        await flowRunSideEffects(log).onResume(flowRunToResume)
-        return flowRunToResume
+        await flowRunSideEffects(log).onResume(flowRun)
+        return flowRun
     },
     updateRunStatusAsync({ flowRunId, status }: UpdateRunStatusParams): void {
         rejectedPromiseHandler(flowRunRepo().update(flowRunId, { status }), log)
@@ -251,12 +241,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        const query = await queryWithDisplayName(flowRunRepo()).where({
-            id: flowRunId,
-        })
-        const flowRuns = await getEntitiesWithMoreSelectedFieldsOrThrow(query, 'flowDisplayName')
-
-        if (flowRuns.length === 0) {
+        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId, projectId }).getOne()
+        if (isNil(flowRun)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -265,8 +251,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await flowRunSideEffects(log).onFinish(flowRuns[0])
-        return flowRuns[0]
+        await flowRunSideEffects(log).onFinish(flowRun)
+        return flowRun
     },
 
     async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
@@ -332,7 +318,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, async (span) => {
             try {
                 span.setAttribute('flowRun.flowId', flowId)
-                
+
                 const newFlowRun = await create({
                     projectId,
                     flowVersionId,
@@ -342,9 +328,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     stepNameToTest,
                     environment,
                 })
-                
+
                 span.setAttribute('flowRun.id', newFlowRun.id)
-                
+
                 await addToQueue({
                     flowRun: newFlowRun,
                     payload,
@@ -354,10 +340,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     httpRequestId,
                     progressUpdateType,
                 }, log)
-                
+
                 span.setAttribute('flowRun.queued', true)
                 await flowRunSideEffects(log).onStart(newFlowRun)
-                return { ...newFlowRun, flowDisplayName: 'Unknown' }
+                return newFlowRun
             }
             finally {
                 span.end()
@@ -455,27 +441,21 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
-        const query = await queryWithDisplayName(flowRunRepo()).where({
+        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({
             id: params.id,
             ...(params.projectId ? { projectId: params.projectId } : {}),
-        })
-        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
-        if (flowRuns.length === 0) {
-            return null
-        }
+        }).getOne()
 
-        return flowRuns[0]
+        return flowRun
     },
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
 
-        const query = await queryWithDisplayName(flowRunRepo()).where({
+        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({
             id: params.id,
             ...(params.projectId ? { projectId: params.projectId } : {}),
-        })
+        }).getOne()
 
-        const flowRuns = await getEntitiesWithMoreSelectedFieldsOrThrow(query, 'flowDisplayName')
-
-        if (flowRuns.length === 0) {
+        if (isNil(flowRun)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -484,7 +464,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return flowRuns[0]
+        return flowRun
     },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
@@ -693,6 +673,11 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     return params.flowRun
 }
 
+function queryBuilderForFlowRun(repo: Repository<FlowRun>) {
+    return repo.createQueryBuilder('flow_run')
+        .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
+        .addSelect(['flowVersion."displayName"'])
+}
 
 async function create(params: CreateParams): Promise<FlowRun> {
     return flowRunRepo().save({

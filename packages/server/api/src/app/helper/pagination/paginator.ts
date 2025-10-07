@@ -8,7 +8,6 @@ import {
 } from 'typeorm'
 import { DatabaseType, system } from '../system/system'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
-import { getEntitiesWithMoreSelectedFields } from '../../database/database-common'
 
 export enum Order {
     ASC = 'ASC',
@@ -76,13 +75,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     public async paginate(
         builder: SelectQueryBuilder<Entity>,
-        ...rawFields: (keyof Entity)[]
     ): Promise<PagingResult<Entity>> {
 
         const entities = 
-            rawFields.length === 0
-                ? await this.appendPagingQuery(builder).getMany()
-                : await getEntitiesWithMoreSelectedFields(this.appendPagingQuery(builder), ...rawFields)
+            await this.appendPagingQuery(builder).getMany()
 
         const hasMore = entities.length > this.limit
 
