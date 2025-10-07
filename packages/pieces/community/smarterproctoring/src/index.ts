@@ -2,6 +2,8 @@ import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework
 import { PieceCategory } from "@activepieces/shared";
 
 import { customApiCallAction } from './lib/actions/custom-api-call';
+import { sessionStatusChangeTrigger } from './lib/triggers/session-status-change';
+import { incidentReportCreatedTrigger } from './lib/triggers/incident-report-created';
 
 export const smarterProctoringAuth = PieceAuth.CustomAuth({
   props: {
@@ -34,5 +36,5 @@ export const smarterproctoring = createPiece({
   ],
   description: 'Online proctoring and exam management platform',
   actions: [customApiCallAction],
-  triggers: [],
+  triggers: [sessionStatusChangeTrigger, incidentReportCreatedTrigger],
 });
