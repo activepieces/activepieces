@@ -34,13 +34,7 @@ export const simplybookme = createPiece({
     // Search Actions
     findBooking,
     findClient,
-    findInvoice,
+    findInvoice
   ],
-  triggers: [
-    newBooking,
-    bookingChanged,
-    bookingCanceled,
-    newClient,
-    newInvoice,
-  ],
+  triggers: [newBooking, bookingChanged, bookingCanceled, newClient, newInvoice]
 });

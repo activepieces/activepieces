@@ -80,10 +80,13 @@ export const serviceDropdown = Property.Dropdown({
     }
 
     try {
+      // getEventList - returns all services
+      // Use public endpoint for this read-only operation
       const services = await makeJsonRpcCall<Service[]>(
         auth as SimplybookAuth,
         'getEventList',
-        []
+        [],
+        true // Use public endpoint
       );
 
       return {
@@ -105,7 +108,7 @@ export const serviceDropdown = Property.Dropdown({
 
 export const providerDropdown = Property.Dropdown({
   displayName: 'Provider',
-  description: 'Select a service provider',
+  description: 'Select a service provider (use Get Available Units action to check availability first)',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -118,10 +121,13 @@ export const providerDropdown = Property.Dropdown({
     }
 
     try {
+      // getUnitList - returns all providers
+      // Use public endpoint for this read-only operation
       const providers = await makeJsonRpcCall<Provider[]>(
         auth as SimplybookAuth,
         'getUnitList',
-        []
+        [],
+        true // Use public endpoint
       );
 
       return {
