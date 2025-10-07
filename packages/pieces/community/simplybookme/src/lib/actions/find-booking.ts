@@ -1,150 +1,160 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
+import { simplybookAuth, makeJsonRpcCall, SimplybookAuth, clientDropdown, serviceDropdown, providerDropdown } from '../common';
 
 export const findBooking = createAction({
   auth: simplybookAuth,
   name: 'find_booking',
-  displayName: 'Find Booking',
-  description: 'Find bookings with filters and pagination',
+  displayName: 'Get Bookings',
+  description: 'Returns list of bookings filtered by given parameters',
   props: {
-    page: Property.Number({
-      displayName: 'Page',
-      description: 'Page number in the list',
-      required: false,
-      defaultValue: 1
+    dateFrom: Property.ShortText({
+      displayName: 'Date From',
+      description: 'Start date (format: YYYY-MM-DD, e.g., 2024-03-01)',
+      required: false
     }),
-    onPage: Property.Number({
-      displayName: 'Items Per Page',
-      description: 'Number of items per page',
-      required: false,
-      defaultValue: 25
+    timeFrom: Property.ShortText({
+      displayName: 'Time From',
+      description: 'Start time (format: HH:MM:SS, e.g., 09:00:00)',
+      required: false
     }),
-    upcomingOnly: Property.Checkbox({
-      displayName: 'Upcoming Only',
-      description: 'Return upcoming bookings only',
-      required: false,
-      defaultValue: false
+    dateTo: Property.ShortText({
+      displayName: 'Date To',
+      description: 'End date (format: YYYY-MM-DD, e.g., 2024-03-31)',
+      required: false
     }),
-    status: Property.StaticDropdown({
-      displayName: 'Status',
-      description: 'Filter by booking status',
+    timeTo: Property.ShortText({
+      displayName: 'Time To',
+      description: 'End time (format: HH:MM:SS, e.g., 18:00:00)',
+      required: false
+    }),
+    createdDateFrom: Property.ShortText({
+      displayName: 'Created Date From',
+      description: 'Filter by creation date from (format: YYYY-MM-DD)',
+      required: false
+    }),
+    createdDateTo: Property.ShortText({
+      displayName: 'Created Date To',
+      description: 'Filter by creation date to (format: YYYY-MM-DD)',
+      required: false
+    }),
+    editedDateFrom: Property.ShortText({
+      displayName: 'Edited Date From',
+      description: 'Filter by edit date from (format: YYYY-MM-DD)',
+      required: false
+    }),
+    editedDateTo: Property.ShortText({
+      displayName: 'Edited Date To',
+      description: 'Filter by edit date to (format: YYYY-MM-DD)',
+      required: false
+    }),
+    unitGroupId: Property.Dropdown({
+      displayName: 'Provider',
+      description: 'Get bookings for a specific service provider (optional)',
+      required: false,
+      refreshers: [],
+      options: providerDropdown.options
+    }),
+    eventId: Property.Dropdown({
+      displayName: 'Service',
+      description: 'Get bookings for a specific service (optional)',
+      required: false,
+      refreshers: [],
+      options: serviceDropdown.options
+    }),
+    isConfirmed: Property.StaticDropdown({
+      displayName: 'Is Confirmed',
+      description: 'Filter by confirmation status',
       required: false,
       options: {
         options: [
-          { label: 'Confirmed', value: 'confirmed' },
-          { label: 'Confirmed Pending', value: 'confirmed_pending' },
-          { label: 'Pending', value: 'pending' },
-          { label: 'Canceled', value: 'canceled' }
+          { label: 'Confirmed (1)', value: 1 },
+          { label: 'Not Confirmed (0)', value: 0 }
         ]
       }
     }),
-    services: Property.Json({
-      displayName: 'Service IDs',
-      description: 'Array of service IDs to filter by (e.g., [1, 2, 3])',
-      required: false
+    clientId: Property.Dropdown({
+      displayName: 'Client',
+      description: 'Get bookings for a specific client (optional)',
+      required: false,
+      refreshers: [],
+      options: clientDropdown.options
     }),
-    providers: Property.Json({
-      displayName: 'Provider IDs',
-      description: 'Array of provider IDs to filter by (e.g., [1, 2, 3])',
-      required: false
+    order: Property.StaticDropdown({
+      displayName: 'Order By',
+      description: 'Sort order for results',
+      required: false,
+      options: {
+        options: [
+          { label: 'Date Start (Descending)', value: 'date_start' },
+          { label: 'Date Start (Ascending)', value: 'date_start_asc' },
+          { label: 'Record Date', value: 'record_date' }
+        ]
+      }
     }),
-    clientId: Property.Number({
-      displayName: 'Client ID',
-      description: 'Filter by client ID',
-      required: false
+    bookingType: Property.StaticDropdown({
+      displayName: 'Booking Type',
+      description: 'Filter by booking type (depends on Approve booking plugin status)',
+      required: false,
+      options: {
+        options: [
+          { label: 'All', value: 'all' },
+          { label: 'Cancelled', value: 'cancelled' },
+          { label: 'Non Cancelled', value: 'non_cancelled' },
+          { label: 'Cancelled by Client', value: 'cancelled_by_client' },
+          { label: 'Cancelled by Admin', value: 'cancelled_by_admin' },
+          { label: 'Non Approved Yet', value: 'non_approved_yet' },
+          { label: 'Approved', value: 'approved' }
+        ]
+      }
     }),
-    date: Property.ShortText({
-      displayName: 'Date',
-      description: 'Filter by date (format: YYYY-MM-DD)',
-      required: false
-    }),
-    search: Property.ShortText({
-      displayName: 'Search',
-      description: 'Search string (by code, client data)',
-      required: false
-    }),
-    additionalFields: Property.Json({
-      displayName: 'Additional Fields',
-      description: 'Search by additional fields (e.g., {"field_id": "value"})',
+    code: Property.ShortText({
+      displayName: 'Booking Code',
+      description: 'Filter by booking code',
       required: false
     })
   },
   async run(context) {
     const auth = context.auth as SimplybookAuth;
-    const accessToken = await getAccessToken(auth);
+    const {
+      dateFrom,
+      timeFrom,
+      dateTo,
+      timeTo,
+      createdDateFrom,
+      createdDateTo,
+      editedDateFrom,
+      editedDateTo,
+      unitGroupId,
+      eventId,
+      isConfirmed,
+      clientId,
+      order,
+      bookingType,
+      code
+    } = context.propsValue;
 
-    // Build query parameters
-    const queryParams: string[] = [];
+    // Build filter object
+    const filter: any = {};
 
-    // Pagination
-    if (context.propsValue.page) {
-      queryParams.push(`page=${context.propsValue.page}`);
-    }
-    if (context.propsValue.onPage) {
-      queryParams.push(`on_page=${context.propsValue.onPage}`);
-    }
+    if (dateFrom) filter.date_from = dateFrom;
+    if (timeFrom) filter.time_from = timeFrom;
+    if (dateTo) filter.date_to = dateTo;
+    if (timeTo) filter.time_to = timeTo;
+    if (createdDateFrom) filter.created_date_from = createdDateFrom;
+    if (createdDateTo) filter.created_date_to = createdDateTo;
+    if (editedDateFrom) filter.edited_date_from = editedDateFrom;
+    if (editedDateTo) filter.edited_date_to = editedDateTo;
+    if (unitGroupId) filter.unit_group_id = unitGroupId;
+    if (eventId) filter.event_id = eventId;
+    if (isConfirmed !== undefined) filter.is_confirmed = isConfirmed;
+    if (clientId) filter.client_id = clientId;
+    if (order) filter.order = order;
+    if (bookingType) filter.booking_type = bookingType;
+    if (code) filter.code = code;
 
-    // Filters
-    if (context.propsValue.upcomingOnly) {
-      queryParams.push('filter[upcoming_only]=1');
-    }
-    if (context.propsValue.status) {
-      queryParams.push(`filter[status]=${context.propsValue.status}`);
-    }
-    if (context.propsValue.services) {
-      const services = Array.isArray(context.propsValue.services)
-        ? context.propsValue.services
-        : [context.propsValue.services];
-      services.forEach((serviceId: any) => {
-        queryParams.push(`filter[services][]=${serviceId}`);
-      });
-    }
-    if (context.propsValue.providers) {
-      const providers = Array.isArray(context.propsValue.providers)
-        ? context.propsValue.providers
-        : [context.propsValue.providers];
-      providers.forEach((providerId: any) => {
-        queryParams.push(`filter[providers][]=${providerId}`);
-      });
-    }
-    if (context.propsValue.clientId) {
-      queryParams.push(`filter[client_id]=${context.propsValue.clientId}`);
-    }
-    if (context.propsValue.date) {
-      queryParams.push(`filter[date]=${context.propsValue.date}`);
-    }
-    if (context.propsValue.search) {
-      queryParams.push(`filter[search]=${encodeURIComponent(context.propsValue.search)}`);
-    }
-    if (context.propsValue.additionalFields) {
-      const fields = context.propsValue.additionalFields as Record<string, any>;
-      Object.entries(fields).forEach(([field, value]) => {
-        queryParams.push(`filter[additional_fields][${field}]=${encodeURIComponent(value)}`);
-      });
-    }
+    const params = [filter];
+    const bookings = await makeJsonRpcCall(auth, 'getBookings', params);
 
-    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
-
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `https://user-api-v2.simplybook.me/admin/bookings${queryString}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': auth.companyLogin,
-          'X-Token': accessToken
-        }
-      });
-
-      return response.body;
-    } catch (error: any) {
-      if (error.response) {
-        throw new Error(
-          `Failed to find bookings: ${error.response.status} - ${JSON.stringify(error.response.body)}`
-        );
-      }
-      throw new Error(`Failed to find bookings: ${error.message}`);
-    }
+    return bookings;
   }
 });

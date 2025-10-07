@@ -1,6 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
+import {
+  simplybookAuth,
+  getAccessToken,
+  SimplybookAuth,
+  clientDropdown
+} from '../common';
 
 export const deleteClient = createAction({
   auth: simplybookAuth,
@@ -8,11 +13,7 @@ export const deleteClient = createAction({
   displayName: 'Delete Client',
   description: 'Delete an existing client',
   props: {
-    clientId: Property.Number({
-      displayName: 'Client ID',
-      description: 'The ID of the client to delete',
-      required: true
-    })
+    clientId: clientDropdown
   },
   async run(context) {
     const auth = context.auth as SimplybookAuth;
@@ -39,7 +40,9 @@ export const deleteClient = createAction({
     } catch (error: any) {
       if (error.response) {
         throw new Error(
-          `Failed to delete client: ${error.response.status} - ${JSON.stringify(error.response.body)}`
+          `Failed to delete client: ${error.response.status} - ${JSON.stringify(
+            error.response.body
+          )}`
         );
       }
       throw new Error(`Failed to delete client: ${error.message}`);

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
+import { simplybookAuth, getAccessToken, SimplybookAuth, clientDropdown } from '../common';
 
 export const findInvoice = createAction({
   auth: simplybookAuth,
@@ -20,10 +20,12 @@ export const findInvoice = createAction({
       required: false,
       defaultValue: 25
     }),
-    clientId: Property.Number({
-      displayName: 'Client ID',
-      description: 'Filter by client ID',
-      required: false
+    clientId: Property.Dropdown({
+      displayName: 'Client',
+      description: 'Filter by client (optional)',
+      required: false,
+      refreshers: [],
+      options: clientDropdown.options
     }),
     datetimeFrom: Property.ShortText({
       displayName: 'Date Time From',

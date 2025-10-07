@@ -1,134 +1,27 @@
 import {
   createTrigger,
-  TriggerStrategy,
-  Property
+  TriggerStrategy
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
-
-interface BookingStatusSnapshot {
-  id: number;
-  status: string;
-}
+import { simplybookAuth, SimplybookAuth, subscribeWebhook } from '../common';
 
 export const bookingCanceled = createTrigger({
   auth: simplybookAuth,
   name: 'booking_canceled',
-  displayName: 'Booking Canceled',
-  description: 'Triggers when a booking is canceled',
-  type: TriggerStrategy.POLLING,
-  props: {
-    includeAllStatuses: Property.Checkbox({
-      displayName: 'Include All Statuses',
-      description:
-        'Monitor all bookings (not just confirmed ones) for cancellations',
-      required: false,
-      defaultValue: false
-    })
-  },
+  displayName: 'Booking Cancellation',
+  description: 'Triggers when a booking is canceled in SimplyBook.me',
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
   async onEnable(context) {
-    // Initialize with empty status snapshots
-    await context.store.put('bookingStatuses', {});
+    const auth = context.auth as SimplybookAuth;
+    await subscribeWebhook(auth, context.webhookUrl, 'cancel');
+    await context.store.put('webhook_registered', true);
   },
   async onDisable(context) {
-    await context.store.delete('bookingStatuses');
+    await context.store.delete('webhook_registered');
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
-    const accessToken = await getAccessToken(auth);
-
-    const storedStatuses =
-      (await context.store.get<Record<number, BookingStatusSnapshot>>(
-        'bookingStatuses'
-      )) || {};
-
-    // Build query parameters - fetch all bookings including canceled ones
-    const queryParams: string[] = ['on_page=100', 'page=1'];
-
-    // If not including all statuses, only monitor confirmed/pending bookings
-    if (!context.propsValue.includeAllStatuses) {
-      // We'll fetch all and filter later since we need to detect transitions to canceled
-    }
-
-    const queryString = `?${queryParams.join('&')}`;
-
-    try {
-      const response = await httpClient.sendRequest<any>({
-        method: HttpMethod.GET,
-        url: `https://user-api-v2.simplybook.me/admin/bookings${queryString}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': auth.companyLogin,
-          'X-Token': accessToken
-        }
-      });
-
-      const bookings = response.body?.data || [];
-      const canceledBookings: any[] = [];
-      const newStatuses: Record<number, BookingStatusSnapshot> = {};
-
-      for (const booking of bookings) {
-        const bookingId = booking.id;
-        const currentStatus = booking.status || 'unknown';
-
-        // Store current status for next comparison
-        newStatuses[bookingId] = {
-          id: bookingId,
-          status: currentStatus
-        };
-
-        // Check if we have a previous status
-        const previousStatus = storedStatuses[bookingId];
-
-        if (previousStatus) {
-          // Detect if booking was changed to canceled
-          const wasCanceled =
-            previousStatus.status !== 'canceled' && currentStatus === 'canceled';
-
-          if (wasCanceled) {
-            canceledBookings.push({
-              ...booking,
-              cancellation_info: {
-                previous_status: previousStatus.status,
-                canceled_at: new Date().toISOString()
-              }
-            });
-          }
-        }
-      }
-
-      // Update stored statuses
-      await context.store.put('bookingStatuses', newStatuses);
-
-      return canceledBookings;
-    } catch (error: any) {
-      throw new Error(`Failed to fetch bookings: ${error.message}`);
-    }
-  },
-  async test(context) {
-    const auth = context.auth as SimplybookAuth;
-    const accessToken = await getAccessToken(auth);
-
-    // Build query parameters - fetch canceled bookings for testing
-    const queryParams: string[] = ['on_page=5', 'page=1', 'filter[status]=canceled'];
-
-    const queryString = `?${queryParams.join('&')}`;
-
-    try {
-      const response = await httpClient.sendRequest<any>({
-        method: HttpMethod.GET,
-        url: `https://user-api-v2.simplybook.me/admin/bookings${queryString}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': auth.companyLogin,
-          'X-Token': accessToken
-        }
-      });
-
-      return response.body?.data || [];
-    } catch (error: any) {
-      throw new Error(`Failed to test trigger: ${error.message}`);
-    }
+    const body = context.payload.body as any;
+    return [body];
   },
   sampleData: {
     id: 123456,

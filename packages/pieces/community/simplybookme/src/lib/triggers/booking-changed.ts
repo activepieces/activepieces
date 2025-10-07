@@ -1,63 +1,29 @@
 import {
   createTrigger,
-  TriggerStrategy,
-  Property
+  TriggerStrategy
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
-
-interface BookingSnapshot {
-  id: number;
-  start_datetime: string;
-  end_datetime: string;
-  service_id: number;
-  provider_id: number;
-  status: string;
-  is_confirmed: boolean;
-  location_id: number;
-  category_id: number;
-  client_id: number;
-}
+import { simplybookAuth, SimplybookAuth, subscribeWebhook } from '../common';
 
 export const bookingChanged = createTrigger({
   auth: simplybookAuth,
   name: 'booking_changed',
-  displayName: 'Booking Changed',
+  displayName: 'Booking Change',
   description:
-    'Triggers when booking details change (date, time, service, provider, status, intake form)',
-  type: TriggerStrategy.POLLING,
-  props: {
-    status: Property.StaticDropdown({
-      displayName: 'Status Filter',
-      description: 'Filter by booking status (optional)',
-      required: false,
-      options: {
-        options: [
-          { label: 'Confirmed', value: 'confirmed' },
-          { label: 'Confirmed Pending', value: 'confirmed_pending' },
-          { label: 'Pending', value: 'pending' },
-          { label: 'Canceled', value: 'canceled' }
-        ]
-      }
-    })
-  },
+    'Triggers when booking details change (date, time, service, provider, status, intake form answers)',
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
   async onEnable(context) {
-    // Initialize with empty snapshots
-    await context.store.put('bookingSnapshots', {});
+    const auth = context.auth as SimplybookAuth;
+    await subscribeWebhook(auth, context.webhookUrl, 'change');
+    await context.store.put('webhook_registered', true);
   },
   async onDisable(context) {
-    await context.store.delete('bookingSnapshots');
+    await context.store.delete('webhook_registered');
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
-    const accessToken = await getAccessToken(auth);
-
-    const storedSnapshots =
-      (await context.store.get<Record<number, BookingSnapshot>>(
-        'bookingSnapshots'
-      )) || {};
-
-    // Build query parameters
+    const body = context.payload.body as any;
+    return [body];
+  },
     const queryParams: string[] = ['on_page=100', 'page=1'];
 
     // Add status filter if provided

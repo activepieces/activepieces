@@ -1,52 +1,26 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
+import { simplybookAuth, makeJsonRpcCall, SimplybookAuth, bookingDropdown } from '../common';
 
 export const createBookingComment = createAction({
   auth: simplybookAuth,
   name: 'create_booking_comment',
-  displayName: 'Create Booking Comment',
-  description: 'Add a comment or note to a booking',
+  displayName: 'Set Booking Comment',
+  description: 'Set a comment for a booking',
   props: {
-    bookingId: Property.Number({
-      displayName: 'Booking ID',
-      description: 'The ID of the booking to add a comment to',
-      required: true
-    }),
+    bookingId: bookingDropdown,
     comment: Property.LongText({
       displayName: 'Comment',
-      description: 'The comment or note to add to the booking',
+      description: 'The comment text to set for the booking',
       required: true
     })
   },
   async run(context) {
     const auth = context.auth as SimplybookAuth;
-    const accessToken = await getAccessToken(auth);
-
     const { bookingId, comment } = context.propsValue;
 
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.PUT,
-        url: `https://user-api-v2.simplybook.me/admin/bookings/${bookingId}/comment`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': auth.companyLogin,
-          'X-Token': accessToken
-        },
-        body: {
-          comment
-        }
-      });
+    const params = [bookingId, comment];
+    const result = await makeJsonRpcCall<number>(auth, 'setBookingComment', params);
 
-      return response.body;
-    } catch (error: any) {
-      if (error.response) {
-        throw new Error(
-          `Failed to add booking comment: ${error.response.status} - ${JSON.stringify(error.response.body)}`
-        );
-      }
-      throw new Error(`Failed to add booking comment: ${error.message}`);
-    }
+    return { id: result };
   }
 });

@@ -1,12 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
+import { simplybookAuth, makeJsonRpcCall, SimplybookAuth } from '../common';
 
 export const createClient = createAction({
   auth: simplybookAuth,
   name: 'create_client',
-  displayName: 'Create Client',
-  description: 'Create a new client record',
+  displayName: 'Add Client',
+  description: 'Add a new client with specified data. Email, phone, or both may be required (check company settings).',
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -16,44 +15,72 @@ export const createClient = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Client email address',
-      required: true
+      required: false
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
-      description: 'Client phone number (e.g., +123456789987)',
-      required: true
+      description: 'Client phone number (e.g., +1502-810-4521)',
+      required: false
+    }),
+    address1: Property.ShortText({
+      displayName: 'Address Line 1',
+      description: 'Client address line 1',
+      required: false
+    }),
+    address2: Property.ShortText({
+      displayName: 'Address Line 2',
+      description: 'Client address line 2',
+      required: false
+    }),
+    city: Property.ShortText({
+      displayName: 'City',
+      description: 'Client city',
+      required: false
+    }),
+    zip: Property.ShortText({
+      displayName: 'ZIP Code',
+      description: 'Client ZIP/postal code',
+      required: false
+    }),
+    countryId: Property.ShortText({
+      displayName: 'Country ID',
+      description: 'Client country ID',
+      required: false
+    }),
+    sendEmail: Property.Checkbox({
+      displayName: 'Send Email',
+      description: 'Send notification email to the client',
+      required: false,
+      defaultValue: false
     })
   },
   async run(context) {
     const auth = context.auth as SimplybookAuth;
-    const accessToken = await getAccessToken(auth);
+    const {
+      name,
+      email,
+      phone,
+      address1,
+      address2,
+      city,
+      zip,
+      countryId,
+      sendEmail
+    } = context.propsValue;
 
-    const clientData = {
-      name: context.propsValue.name,
-      email: context.propsValue.email,
-      phone: context.propsValue.phone
-    };
+    const clientData: any = { name };
 
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: 'https://user-api-v2.simplybook.me/admin/clients',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': auth.companyLogin,
-          'X-Token': accessToken
-        },
-        body: clientData
-      });
+    if (email) clientData.email = email;
+    if (phone) clientData.phone = phone;
+    if (address1) clientData.address1 = address1;
+    if (address2) clientData.address2 = address2;
+    if (city) clientData.city = city;
+    if (zip) clientData.zip = zip;
+    if (countryId) clientData.country_id = countryId;
 
-      return response.body;
-    } catch (error: any) {
-      if (error.response) {
-        throw new Error(
-          `Failed to create client: ${error.response.status} - ${JSON.stringify(error.response.body)}`
-        );
-      }
-      throw new Error(`Failed to create client: ${error.message}`);
-    }
+    const params = [clientData, sendEmail || false];
+    const clientId = await makeJsonRpcCall<number>(auth, 'addClient', params);
+
+    return { clientId };
   }
 });

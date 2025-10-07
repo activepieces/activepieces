@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
+import { simplybookAuth, getAccessToken, SimplybookAuth, serviceDropdown, providerDropdown } from '../common';
 
 export const createNote = createAction({
   auth: simplybookAuth,
@@ -46,15 +46,19 @@ export const createNote = createAction({
       required: false,
       defaultValue: true
     }),
-    providerId: Property.Number({
-      displayName: 'Provider ID',
-      description: 'Provider ID (optional)',
-      required: false
+    providerId: Property.Dropdown({
+      displayName: 'Provider',
+      description: 'Select a provider (optional)',
+      required: false,
+      refreshers: [],
+      options: providerDropdown.options
     }),
-    serviceId: Property.Number({
-      displayName: 'Service ID',
-      description: 'Service ID (optional)',
-      required: false
+    serviceId: Property.Dropdown({
+      displayName: 'Service',
+      description: 'Select a service (optional)',
+      required: false,
+      refreshers: [],
+      options: serviceDropdown.options
     })
   },
   async run(context) {

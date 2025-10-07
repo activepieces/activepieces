@@ -1,44 +1,21 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { simplybookAuth, makeJsonRpcCall, SimplybookAuth, bookingDropdown } from '../common';
 
 export const cancelBooking = createAction({
   auth: simplybookAuth,
   name: 'cancel_booking',
   displayName: 'Cancel Booking',
-  description: 'Cancel an existing booking',
+  description: 'Cancel an existing booking. Returns true on success.',
   props: {
-    bookingId: Property.Number({
-      displayName: 'Booking ID',
-      description: 'The ID of the booking to cancel',
-      required: true
-    })
+    bookingId: bookingDropdown
   },
   async run(context) {
     const auth = context.auth as SimplybookAuth;
-    const accessToken = await getAccessToken(auth);
-
     const { bookingId } = context.propsValue;
 
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `https://user-api-v2.simplybook.me/admin/bookings/${bookingId}`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': auth.companyLogin,
-          'X-Token': accessToken
-        }
-      });
+    const params = [bookingId];
+    const result = await makeJsonRpcCall<boolean>(auth, 'cancelBooking', params);
 
-      return response.body;
-    } catch (error: any) {
-      if (error.response) {
-        throw new Error(
-          `Failed to cancel booking: ${error.response.status} - ${JSON.stringify(error.response.body)}`
-        );
-      }
-      throw new Error(`Failed to cancel booking: ${error.message}`);
-    }
+    return { success: result };
   }
 });
