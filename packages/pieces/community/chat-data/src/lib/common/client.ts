@@ -48,10 +48,11 @@ export class ChatDataClient {
           return new Error(apiMessage || 'Insufficient permissions');
         case 422:
           return new Error(`Validation error: ${apiMessage || 'Invalid request data'}`);
-        case 429:
+        case 429:{
           const retryAfter = error.response.headers?.['retry-after'];
           const retryMsg = retryAfter ? ` Retry after ${retryAfter} seconds.` : '';
           return new Error(apiMessage || `Rate limit exceeded.${retryMsg}`);
+        }
         default:
           return new Error(apiMessage || `HTTP ${status} error`);
       }
