@@ -293,7 +293,7 @@ export const jsonApi = {
     resourceType?: string;
     limit?: number;
   }) {
-    let allEntities: any[] = [];
+    const allEntities: any[] = [];
     const query = options ? buildQueryParams(options) : '';
     let url: string | null = `${auth.website_url.replace(/\/+$/, '')}${collectionPath}${query}`;
 
