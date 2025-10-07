@@ -1,5 +1,6 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { SimplybookAuth, makeJsonRpcCall } from './auth';
+import { Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { SimplybookAuth, makeJsonRpcCall, getAccessToken } from './auth';
 
 interface Client {
   id: number;
@@ -80,15 +81,20 @@ export const serviceDropdown = Property.Dropdown({
     }
 
     try {
-      // getEventList - returns all services
-      // Use public endpoint for this read-only operation
-      const services = await makeJsonRpcCall<Service[]>(
-        auth as SimplybookAuth,
-        'getEventList',
-        [],
-        true // Use public endpoint
-      );
+      const authData = auth as SimplybookAuth;
+      const token = await getAccessToken(authData);
 
+      const response = await httpClient.sendRequest<Service[]>({
+        method: HttpMethod.GET,
+        url: 'https://user-api-v2.simplybook.me/admin/services',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Company-Login': authData.companyLogin,
+          'X-Token': token
+        }
+      });
+
+      const services = response.body || [];
       return {
         disabled: false,
         options: services.map((service) => ({
@@ -96,11 +102,12 @@ export const serviceDropdown = Property.Dropdown({
           value: service.id
         }))
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to load services:', error.message);
       return {
         disabled: true,
         options: [],
-        placeholder: 'Failed to load services'
+        placeholder: `Failed to load services: ${error.message}`
       };
     }
   }
@@ -108,7 +115,7 @@ export const serviceDropdown = Property.Dropdown({
 
 export const providerDropdown = Property.Dropdown({
   displayName: 'Provider',
-  description: 'Select a service provider (use Get Available Units action to check availability first)',
+  description: 'Select a service provider',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -121,15 +128,20 @@ export const providerDropdown = Property.Dropdown({
     }
 
     try {
-      // getUnitList - returns all providers
-      // Use public endpoint for this read-only operation
-      const providers = await makeJsonRpcCall<Provider[]>(
-        auth as SimplybookAuth,
-        'getUnitList',
-        [],
-        true // Use public endpoint
-      );
+      const authData = auth as SimplybookAuth;
+      const token = await getAccessToken(authData);
 
+      const response = await httpClient.sendRequest<Provider[]>({
+        method: HttpMethod.GET,
+        url: 'https://user-api-v2.simplybook.me/admin/providers',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Company-Login': authData.companyLogin,
+          'X-Token': token
+        }
+      });
+
+      const providers = response.body || [];
       return {
         disabled: false,
         options: providers.map((provider) => ({
@@ -137,11 +149,12 @@ export const providerDropdown = Property.Dropdown({
           value: provider.id
         }))
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to load providers:', error.message);
       return {
         disabled: true,
         options: [],
-        placeholder: 'Failed to load providers'
+        placeholder: `Failed to load providers: ${error.message}`
       };
     }
   }
