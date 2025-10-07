@@ -9,7 +9,7 @@ import { isNil, isString } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { googleSheetsAuth } from '../../';
-import { transformWorkSheetValues } from '../triggers/helpers';
+import { mapRowsToColumnLabels } from '../triggers/helpers';
 
 export const googleSheetsCommon = {
 	baseUrl: 'https://sheets.googleapis.com/v4/spreadsheets',
@@ -102,7 +102,7 @@ async function getGoogleSheetRows({
 
 	const startingRow = rowIndex_s ? rowIndex_s - 1 : 0;
 
-	const labeledRowValues = transformWorkSheetValues(
+	const labeledRowValues = mapRowsToColumnLabels(
 		rowsResponse.body.values,
 		startingRow,
 		headerCount,

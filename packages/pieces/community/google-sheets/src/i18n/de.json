@@ -129,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Wird ausgelöst, wenn eine Tabelle in einer Tabelle erstellt wird.",
   "Trigger Column": "Spalte auslösen",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Bitte beachten Sie, dass es aufgrund einer Verzögerung von Google eine Verzögerung von bis zu 3 Minuten geben kann, bis der Trigger angezündet wird.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Trigger nur bei Änderungen an Zellen in dieser Spalte. Wählen Sie **Alle Spalten** aus, wenn der Fluss bei Änderungen an einer Zelle innerhalb der Zelle ausgelöst werden soll."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Trigger nur bei Änderungen an Zellen in dieser Spalte. \nWählen Sie **jede Spalte** aus, wenn der Fluss bei Änderungen an einer Zelle in der Reihe ausgelöst werden soll."
 }
