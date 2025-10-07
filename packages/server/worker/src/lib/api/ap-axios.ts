@@ -1,4 +1,5 @@
 import { isNil, spreadIfDefined } from '@activepieces/shared'
+import { context, propagation } from '@opentelemetry/api'
 import axios, { AxiosError, AxiosInstance, isAxiosError } from 'axios'
 import axiosRetry from 'axios-retry'
 
@@ -19,6 +20,16 @@ export class ApAxiosClient {
                 Authorization: `Bearer ${apiToken}`,
             },
         })
+        
+        this._axios.interceptors.request.use((config) => {
+            const traceHeaders: Record<string, string> = {}
+            propagation.inject(context.active(), traceHeaders)
+            Object.entries(traceHeaders).forEach(([key, value]) => {
+                config.headers.set(key, value)
+            })
+            return config
+        })
+        
         axiosRetry(this._axios, {
             retries: 3,
             retryDelay: (retryCount: number) => {

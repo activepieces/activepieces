@@ -186,6 +186,13 @@ export function PlatformSidebar() {
         },
         {
           type: 'link',
+          to: '/platform/infrastructure/jobs',
+          label: t('Jobs'),
+          isSubItem: true,
+          show: edition !== ApEdition.CLOUD,
+        },
+        {
+          type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
           isSubItem: true,
