@@ -51,33 +51,6 @@ export function isNotOneOfTheseEditions(editions: ApEdition[]): boolean {
     return !editions.includes(system.getEdition())
 }
 
-export const getEntityFromRaw = <
-    T extends ObjectLiteral,
-    Raw = any | any[],
-    Result = Raw extends any[] ? T[] : T
-  >
-  (repo: Repository<T>, query: SelectQueryBuilder<T>, raw: Raw, ...extraFields: string[]): Result => {
-
-  if (Array.isArray(raw) && raw.length === 0) {
-    return [] as Result
-  }
-
-  const transformer = new RawSqlResultsToEntityTransformer(
-    query.expressionMap,
-    repo.manager.connection.driver,
-    [],
-    [],
-  );
-
-  const rawList = Array.isArray(raw) ? raw : [raw]
-
-  const entities: T[] = transformer.transform(rawList, query.expressionMap.mainAlias!);
-  const moreFields = extraFields.reduce((acc, field) => ({...acc, [field]: rawList[0][field] as string}), {});
-  const fullEntities = entities.map(entity => ({...entity, ...moreFields }))
-
-  return Array.isArray(raw) ? fullEntities as Result : fullEntities[0] as Result
-}
-
 export const getEntitiesWithMoreSelectedFieldsOrThrow = async <T extends ObjectLiteral>(query: SelectQueryBuilder<T>, ...moreFields: string[]): Promise<T[]> => {
   const { entities, raw } = await query.getRawAndEntities()
   if (isNil(entities) || entities.length === 0) {
@@ -101,7 +74,6 @@ export const getEntitiesWithMoreSelectedFields = async <T extends ObjectLiteral>
 const appendRawFieldsToEntities = <T extends ObjectLiteral>(entities: T[], raw: any[], ...moreFields: string[]): T[] => {
   asserNotEmpty(raw, `Raw`)
   const fullEntities: any[] = []
-
   for (let i = 0; i < entities.length; i++) {
     for (const field of moreFields) {
       assertNotNullOrUndefined(raw[i]?.[field], `Raw[${i}].${field}`)
@@ -112,6 +84,5 @@ const appendRawFieldsToEntities = <T extends ObjectLiteral>(entities: T[], raw: 
       }
     }
   }
-
   return fullEntities as T[]
 }
