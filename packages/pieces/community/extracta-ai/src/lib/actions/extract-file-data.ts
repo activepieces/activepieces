@@ -2,12 +2,33 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { extractaAiAuth } from '../common/auth';
 
+const SUPPORTED_FILE_TYPES = ['pdf', 'docx', 'doc', 'txt', 'jpeg', 'jpg', 'png', 'tiff', 'bmp'];
+
+interface ExtractionOptions {
+  hasTable: boolean;
+  hasVisuals: boolean;
+  handwrittenTextRecognition: boolean;
+  checkboxRecognition: boolean;
+  longDocument: boolean;
+  splitPdfPages: boolean;
+  specificPageProcessing: boolean;
+  specificPageProcessingOptions?: {
+    from: number;
+    to: number;
+  };
+}
+
 export const extractFileData = createAction({
   auth: extractaAiAuth,
   name: 'extract_file_data',
   displayName: 'Extract File Data',
   description: 'Upload a file and immediately receive extracted content',
   props: {
+    file: Property.File({
+      displayName: 'File',
+      description: 'The file to upload for extraction. Supported: PDF, images (JPEG, PNG, TIFF, BMP), Word docs (DOC, DOCX), text files (TXT)',
+      required: true
+    }),
     name: Property.ShortText({
       displayName: 'Extraction Name',
       description: 'A descriptive name for the extraction',
@@ -87,13 +108,13 @@ export const extractFileData = createAction({
         objectProperties: Property.Json({
           displayName: 'Object Properties',
           description:
-            'For object types: Define nested fields as JSON array. Example: [{"key":"name","type":"string","description":"Full name","example":"John Doe"}]',
+            'For object types: Define nested fields as an array. Example: [{"key":"name","type":"string","description":"Full name","example":"John Doe"}]',
           required: false
         }),
         arrayItemProperties: Property.Json({
           displayName: 'Array Item Properties',
           description:
-            'For array of objects: Define the structure of each array item as JSON array. Example: [{"key":"company","type":"string","description":"Company name","example":"Tech Corp"}]',
+            'For array of objects: Define the structure of each array item as an array. Example: [{"key":"company","type":"string","description":"Company name","example":"Tech Corp"}]',
           required: false
         })
       }
@@ -160,8 +181,27 @@ export const extractFileData = createAction({
   },
   async run(context) {
     const apiKey = context.auth;
+    const file = context.propsValue.file;
 
-    const options: any = {
+    const fileExtension = file.filename.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !SUPPORTED_FILE_TYPES.includes(fileExtension)) {
+      throw new Error(
+        `File type not supported. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`
+      );
+    }
+
+    if (context.propsValue.specificPageProcessing) {
+      if (!context.propsValue.pageFrom || !context.propsValue.pageTo) {
+        throw new Error(
+          'Page From and Page To are required when Specific Page Processing is enabled'
+        );
+      }
+      if (context.propsValue.pageFrom > context.propsValue.pageTo) {
+        throw new Error('Page From must be less than or equal to Page To');
+      }
+    }
+
+    const options: ExtractionOptions = {
       hasTable: context.propsValue.hasTable ?? false,
       hasVisuals: context.propsValue.hasVisuals ?? false,
       handwrittenTextRecognition:
@@ -183,36 +223,45 @@ export const extractFileData = createAction({
       };
     }
 
-    // Convert structured fields to API format
+    if (!context.propsValue.fields || context.propsValue.fields.length === 0) {
+      throw new Error('At least one field must be defined');
+    }
+
+    const fieldKeys = context.propsValue.fields.map((f: any) => f.key);
+    const duplicates = fieldKeys.filter(
+      (key: string, index: number) => fieldKeys.indexOf(key) !== index
+    );
+    if (duplicates.length > 0) {
+      throw new Error(`Duplicate field keys found: ${duplicates.join(', ')}`);
+    }
+
     const apiFields = (context.propsValue.fields || []).map((field: any) => {
-      const baseField = {
+      const baseField: any = {
         key: field.key,
         description: field.description,
         type:
-          field.type === 'array_string'
-            ? 'array'
-            : field.type === 'array_object'
+          field.type === 'array_string' || field.type === 'array_object'
             ? 'array'
             : field.type
       };
 
       if (field.example) {
-        (baseField as any).example = field.example;
+        baseField.example = field.example;
       }
 
       if (field.type === 'object' && field.objectProperties) {
-        (baseField as any).properties = field.objectProperties;
+        baseField.properties = field.objectProperties;
       }
 
       if (field.type === 'array_string') {
-        (baseField as any).items = {
+        baseField.items = {
           type: 'string',
           example: field.example || 'example'
         };
       }
 
       if (field.type === 'array_object' && field.arrayItemProperties) {
-        (baseField as any).items = {
+        baseField.items = {
           type: 'object',
           properties: field.arrayItemProperties
         };
@@ -232,31 +281,68 @@ export const extractFileData = createAction({
       extractionDetails.description = context.propsValue.description;
     }
 
-    const requestBody = {
-      extractionDetails
-    };
-
     try {
-      const response = await httpClient.sendRequest({
+      const createResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: 'https://api.extracta.ai/api/v1/createExtraction',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`
         },
-        body: requestBody
+        body: { extractionDetails }
       });
 
-      return response.body;
+      const extractionId = createResponse.body.extractionId;
+      if (!extractionId) {
+        throw new Error('No extractionId returned from createExtraction');
+      }
+
+      const formData = new FormData();
+      formData.append('extractionId', extractionId);
+      
+      const blob = new Blob([Buffer.from(file.base64, 'base64')], { 
+        type: file.extension ? `application/${file.extension}` : 'application/octet-stream' 
+      });
+      formData.append('files', blob, file.filename);
+
+      const uploadResponse = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://api.extracta.ai/api/v1/uploadFiles',
+        headers: {
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: formData
+      });
+
+      return {
+        extractionId,
+        uploadResult: uploadResponse.body
+      };
     } catch (error: any) {
       if (error.response) {
-        throw new Error(
-          `Failed to create extraction: ${
-            error.response.status
-          } - ${JSON.stringify(error.response.body)}`
-        );
+        const status = error.response.status;
+        const body = error.response.body;
+
+        switch (status) {
+          case 401:
+            throw new Error('Authentication failed. Please check your API key.');
+          case 403:
+            throw new Error(
+              'Access denied. Your API key may not have permission for this operation.'
+            );
+          case 429:
+            throw new Error('Rate limit exceeded. Please try again later.');
+          case 400:
+            throw new Error(
+              `Invalid request: ${body.message || JSON.stringify(body)}`
+            );
+          default:
+            throw new Error(
+              `API error (${status}): ${body.message || 'Unknown error'}`
+            );
+        }
       }
-      throw new Error(`Failed to create extraction: ${error.message}`);
+      throw new Error(`Request failed: ${error.message}`);
     }
   }
 });

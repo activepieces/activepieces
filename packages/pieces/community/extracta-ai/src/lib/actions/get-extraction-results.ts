@@ -2,11 +2,17 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { extractaAiAuth } from '../common/auth';
 
+interface GetResultsBody {
+  extractionId: string;
+  batchId: string;
+  fileId?: string;
+}
+
 export const getExtractionResults = createAction({
   auth: extractaAiAuth,
   name: 'get_extraction_results',
   displayName: 'Get Extraction Results',
-  description: 'Fetches successful data from extraction',
+  description: 'Fetches successful data from extraction. Note: The API recommends a 2-second delay between requests to avoid rate-limiting.',
   props: {
     extractionId: Property.ShortText({
       displayName: 'Extraction ID',
@@ -27,7 +33,7 @@ export const getExtractionResults = createAction({
   async run(context) {
     const apiKey = context.auth;
 
-    const requestBody: any = {
+    const requestBody: GetResultsBody = {
       extractionId: context.propsValue.extractionId,
       batchId: context.propsValue.batchId,
     };
@@ -50,13 +56,29 @@ export const getExtractionResults = createAction({
       return response.body;
     } catch (error: any) {
       if (error.response) {
-        throw new Error(
-          `Failed to get extraction results: ${error.response.status} - ${JSON.stringify(
-            error.response.body
-          )}`
-        );
+        const status = error.response.status;
+        const body = error.response.body;
+
+        switch (status) {
+          case 401:
+            throw new Error('Authentication failed. Please check your API key.');
+          case 403:
+            throw new Error(
+              'Access denied. Your API key may not have permission for this operation.'
+            );
+          case 429:
+            throw new Error('Rate limit exceeded. Please try again later.');
+          case 400:
+            throw new Error(
+              `Invalid request: ${body.message || JSON.stringify(body)}`
+            );
+          default:
+            throw new Error(
+              `API error (${status}): ${body.message || 'Unknown error'}`
+            );
+        }
       }
-      throw new Error(`Failed to get extraction results: ${error.message}`);
+      throw new Error(`Request failed: ${error.message}`);
     }
   },
 });

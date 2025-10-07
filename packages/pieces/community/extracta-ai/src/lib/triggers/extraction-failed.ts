@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { extractaAiAuth } from '../common/auth';
 import crypto from 'crypto';
 
@@ -6,8 +6,26 @@ export const extractionFailed = createTrigger({
   auth: extractaAiAuth,
   name: 'extraction_failed',
   displayName: 'Extraction Failed',
-  description: 'Triggers when a document extraction fails. Configure the webhook URL in your Extracta.ai dashboard.',
-  props: {},
+  description: 'Triggers when a document extraction fails.',
+  props: {
+    webhookInstructions: Property.MarkDown({
+      value: `
+To use this trigger, you need to manually set up a single webhook endpoint in your Extracta.ai account. This endpoint will receive all events, and Activepieces will filter for the correct one.
+
+1.  **Login** to your Extracta.ai dashboard.
+2.  Navigate to the **API** section from the side menu.
+3.  Scroll down to **Webhook Settings**.
+4.  Click **"Create a new webhook"** (or edit an existing one).
+5.  Paste the following URL into the **Endpoint URL** field:
+    \`\`\`text
+    {{webhookUrl}}
+    \`\`\`
+6.  Click **Save**.
+
+This single webhook will now send all events to Activepieces. This trigger will only activate for the **'extraction.failed'** event.
+      `,
+    }),
+  },
   sampleData: {
     event: 'extraction.failed',
     result: [
@@ -23,18 +41,17 @@ export const extractionFailed = createTrigger({
     ],
   },
   type: TriggerStrategy.WEBHOOK,
-  async onEnable() {
-    // Webhook is configured in Extracta.ai dashboard, no registration needed
+  async onEnable(context) {
+    // Does nothing
   },
-  async onDisable() {
-    // Webhook is managed in Extracta.ai dashboard, no cleanup needed
+  async onDisable(context) {
+    // Does nothing
   },
   async run(context) {
     const apiKey = context.auth;
     const signatureHeader = context.payload.headers['x-webhook-signature'];
     const body = context.payload.body as any;
 
-    // Verify webhook signature
     if (signatureHeader && body.result) {
       try {
         const resultString = JSON.stringify(body.result);
@@ -54,9 +71,8 @@ export const extractionFailed = createTrigger({
       }
     }
 
-    // Only process extraction.failed events
     if (body.event === 'extraction.failed' && body.result) {
-      return body.result;
+      return [body.result];
     }
 
     return [];

@@ -2,6 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { extractaAiAuth } from '../common/auth';
 
+const SUPPORTED_FILE_TYPES = ['pdf', 'docx', 'doc', 'txt', 'jpeg', 'jpg', 'png', 'tiff', 'bmp'];
+
 export const uploadFile = createAction({
   auth: extractaAiAuth,
   name: 'upload_file',
@@ -27,21 +29,27 @@ export const uploadFile = createAction({
   },
   async run(context) {
     const apiKey = context.auth;
+    const { file, extractionId, batchId } = context.propsValue;
+
+    const fileExtension = file.filename.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !SUPPORTED_FILE_TYPES.includes(fileExtension)) {
+      throw new Error(
+        `File type not supported. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`
+      );
+    }
+    
     const formData = new FormData();
 
-    formData.append('extractionId', context.propsValue.extractionId);
+    formData.append('extractionId', extractionId);
 
-    if (context.propsValue.batchId) {
-      formData.append('batchId', context.propsValue.batchId);
+    if (batchId) {
+      formData.append('batchId', batchId);
     }
 
-    // Append the file
-    const file = context.propsValue.file;
-    formData.append(
-      'files',
-      new Blob([new Uint8Array(file.data)]),
-      file.filename
-    );
+    const blob = new Blob([Buffer.from(file.base64, 'base64')], { 
+      type: file.extension ? `application/${file.extension}` : 'application/octet-stream' 
+    });
+    formData.append('files', blob, file.filename);
 
     try {
       const response = await httpClient.sendRequest({
@@ -56,13 +64,29 @@ export const uploadFile = createAction({
       return response.body;
     } catch (error: any) {
       if (error.response) {
-        throw new Error(
-          `Failed to upload files: ${error.response.status} - ${JSON.stringify(
-            error.response.body
-          )}`
-        );
+        const status = error.response.status;
+        const body = error.response.body;
+
+        switch (status) {
+          case 401:
+            throw new Error('Authentication failed. Please check your API key.');
+          case 403:
+            throw new Error(
+              'Access denied. Your API key may not have permission for this operation.'
+            );
+          case 429:
+            throw new Error('Rate limit exceeded. Please try again later.');
+          case 400:
+            throw new Error(
+              `Invalid request: ${body.message || JSON.stringify(body)}`
+            );
+          default:
+            throw new Error(
+              `API error (${status}): ${body.message || 'Unknown error'}`
+            );
+        }
       }
-      throw new Error(`Failed to upload files: ${error.message}`);
+      throw new Error(`Request failed: ${error.message}`);
     }
   }
 });

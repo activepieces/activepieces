@@ -9,10 +9,11 @@
 
     export const extractaAi = createPiece({
       displayName: "Extracta-ai",
+      description: "An AI document extraction & content analysis platform that transforms unstructured files (PDFs, images, URLs, etc.) into structured data.",
       auth: extractaAiAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/extracta-ai.png",
-      authors: [],
+      authors: ['fortunamide', 'onyedikachi-david'],
       actions: [extractFileData, uploadFile, getExtractionResults],
       triggers: [newDocumentProcessed, extractionFailed],
     });
