@@ -54,7 +54,7 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
-import { getEntitiesWithMoreSelectedFields } from '../../database/database-common'
+import { getEntitiesWithMoreSelectedFields, getEntitiesWithMoreSelectedFieldsOrThrow } from '../../database/database-common'
 
 const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -253,7 +253,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const query = await queryWithDisplayName(flowRunRepo()).where({
             id: flowRunId,
         })
-        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
+        const flowRuns = await getEntitiesWithMoreSelectedFieldsOrThrow(query, 'flowDisplayName')
 
         if (flowRuns.length === 0) {
             throw new ActivepiecesError({
@@ -477,7 +477,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             id: params.id,
         })
 
-        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
+        const flowRuns = await getEntitiesWithMoreSelectedFieldsOrThrow(query, 'flowDisplayName')
 
         if (flowRuns.length === 0) {
             throw new ActivepiecesError({
