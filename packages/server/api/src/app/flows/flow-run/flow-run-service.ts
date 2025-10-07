@@ -461,8 +461,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
         const query = await queryWithDisplayName(flowRunRepo()).where({
-            projectId: params.projectId,
             id: params.id,
+            ...(params.projectId ? { projectId: params.projectId } : {}),
         })
         const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
         if (flowRuns.length === 0) {
@@ -472,9 +472,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return flowRuns[0]
     },
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
+
         const query = await queryWithDisplayName(flowRunRepo()).where({
-            projectId: params.projectId,
             id: params.id,
+            ...(params.projectId ? { projectId: params.projectId } : {}),
         })
 
         const flowRuns = await getEntitiesWithMoreSelectedFieldsOrThrow(query, 'flowDisplayName')
