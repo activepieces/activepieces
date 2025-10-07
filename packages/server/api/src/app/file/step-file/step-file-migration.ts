@@ -35,7 +35,7 @@ export const stepFileMigration = (log: FastifyBaseLogger) => {
 
                     while (hasMore) {
                         const stepFiles = await queryRunner.query(
-                            `SELECT * FROM step_file LIMIT ${BATCH_SIZE}`,
+                            `SELECT * FROM activepieces.step_file LIMIT ${BATCH_SIZE}`,
                         )
 
                         if (stepFiles.length === 0) {
@@ -57,7 +57,7 @@ export const stepFileMigration = (log: FastifyBaseLogger) => {
                                 },
                             })
                             await queryRunner.query(
-                                `DELETE FROM step_file WHERE id = '${stepFile.id}'`,
+                                `DELETE FROM activepieces.step_file WHERE id = '${stepFile.id}'`,
                             )
                         }
                         log.info({

@@ -9,18 +9,18 @@ export class UpgradePieceVersionsToLatest1748253670449 implements MigrationInter
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const migrationAlreadyRan = await queryRunner.query(
-            'SELECT * FROM "migrations" WHERE "name" = \'ChangeExternalIdsForTables1747346473000\'',
+            'SELECT * FROM "activepieces"."migrations" WHERE "name" = \'ChangeExternalIdsForTables1747346473000\'',
         )
         if (migrationAlreadyRan.length === 0) {
             log.info('ChangeExternalIdsForTables1747346473000: migration already ran')
             return
         }
-        
+
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM "flow_version" WHERE CAST("trigger" AS TEXT) LIKE \'%@activepieces/piece-tables%\'',
         )
         const allPieceVersions = await queryRunner.query('SELECT name, version FROM piece_metadata')
-        
+
         // Create a map of piece names to their latest versions
         const pieceNameToLatestVersion = new Map<string, string>()
         for (const piece of allPieceVersions) {
@@ -116,7 +116,7 @@ const traverseAndUpdateSubFlow = (
 const updateVersionOfPieceStep = (
     step: Step,
     pieceNameToLatestVersion: Map<string, string>,
-): Step => {    
+): Step => {
     if (step.type === 'PIECE' || step.type === 'PIECE_TRIGGER') {
         const pieceStep = step as PieceStep
         const latestVersion = pieceNameToLatestVersion.get(pieceStep.settings.pieceName as string)

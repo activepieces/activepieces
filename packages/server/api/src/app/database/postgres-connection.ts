@@ -1,6 +1,6 @@
-import { TlsOptions } from 'node:tls'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
+import { TlsOptions } from 'node:tls'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -270,6 +270,7 @@ import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1
 import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
 import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
+import { MovePublicToActivepiecesSchema1759878117000 } from './migration/postgres/1759878117000-MovePublicToActivepiecesSchema'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -461,6 +462,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexOnTriggerRun1757557714045,
         DeleteHandshakeFromTriggerSource1758108135968,
         AddIndexForAppEvents1759392852559,
+        MovePublicToActivepiecesSchema1759878117000,
     ]
 
     const edition = system.getEdition()
@@ -589,6 +591,7 @@ export const createPostgresDataSource = (): DataSource => {
             type: 'postgres',
             url,
             ssl: getSslConfig(),
+            schema: 'activepieces',
             ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
@@ -610,6 +613,7 @@ export const createPostgresDataSource = (): DataSource => {
         password,
         database,
         ssl: getSslConfig(),
+        schema: 'activepieces',
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...commonProperties,
         ...migrationConfig,
