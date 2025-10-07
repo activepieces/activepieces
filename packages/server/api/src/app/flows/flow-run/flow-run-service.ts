@@ -54,6 +54,8 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
+import { getEntitiesWithMoreSelectedFields } from '../../database/database-common'
+
 const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
@@ -65,29 +67,6 @@ const queryWithDisplayName = (repo: Repository<FlowRun>) => {
             .leftJoin('flow_version', 'flow_version', 'flow_run."flowVersionId" = flow_version.id')
             .addSelect('COALESCE(flow_version."displayName", \'Unknown\')', 'flowDisplayName')
 }
-const rawDataMapper = (rawData: any): FlowRun => ({
-    id: rawData.flow_run_id,
-    projectId: rawData.flow_run_projectId,
-    flowId: rawData.flow_run_flowId,
-    flowVersionId: rawData.flow_run_flowVersionId,
-    environment: rawData.flow_run_environment,
-    status: rawData.flow_run_status,
-    created: rawData.flow_run_created,
-    updated: rawData.flow_run_updated,
-    logsFileId: rawData.flow_run_logsFileId,
-    parentRunId: rawData.flow_run_parentRunId,
-    failParentOnFailure: rawData.flow_run_failParentOnFailure,
-    tags: rawData.flow_run_tags,
-    duration: rawData.flow_run_duration,
-    tasks: rawData.flow_run_tasks,
-    startTime: rawData.flow_run_startTime,
-    finishTime: rawData.flow_run_finishTime,
-    pauseMetadata: rawData.flow_run_pauseMetadata,
-    failedStepName: rawData.flow_run_failedStepName,
-    stepNameToTest: rawData.flow_run_stepNameToTest,
-    steps: rawData.flow_run_steps,
-    flowDisplayName: rawData.flowDisplayName,
-})
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async list(params: ListParams): Promise<SeekPage<FlowRun>> {
@@ -143,7 +122,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const { data, cursor: newCursor } = await paginator.paginate(query, rawDataMapper)
+        const { data, cursor: newCursor } = await paginator.paginate(query, "flowDisplayName")
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
@@ -206,11 +185,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             runId: flowRunId,
         }, '[FlowRunService#resume] adding flow run to queue')
 
-        const rawFlowRunToResume = await queryWithDisplayName(flowRunRepo()).where({
+        const query = await queryWithDisplayName(flowRunRepo()).where({
                 id: flowRunId,
-            }).getRawOne()
+            })
+        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
 
-        if (isNil(rawFlowRunToResume)) {
+        if (flowRuns.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -219,7 +199,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const flowRunToResume = rawDataMapper(rawFlowRunToResume)
+        const flowRunToResume = flowRuns[0]
 
         const pauseMetadata = flowRunToResume.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
@@ -270,11 +250,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
 
-        const rawFlowRun = await queryWithDisplayName(flowRunRepo()).where({
+        const query = await queryWithDisplayName(flowRunRepo()).where({
             id: flowRunId,
-        }).getRawOne()
+        })
+        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
 
-        if (isNil(rawFlowRun)) {
+        if (flowRuns.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -283,9 +264,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const flowRun = rawDataMapper(rawFlowRun)
-        await flowRunSideEffects(log).onFinish(flowRun)
-        return flowRun
+        await flowRunSideEffects(log).onFinish(flowRuns[0])
+        return flowRuns[0]
     },
 
     async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
@@ -480,24 +460,26 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
-        const rawFlowRun = await queryWithDisplayName(flowRunRepo()).where({
+        const query = await queryWithDisplayName(flowRunRepo()).where({
             projectId: params.projectId,
             id: params.id,
-        }).getRawOne()
-
-        if (isNil(rawFlowRun)) {
+        })
+        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
+        if (flowRuns.length === 0) {
             return null
         }
 
-        return rawDataMapper(rawFlowRun)
+        return flowRuns[0]
     },
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
-        const rawFlowRun = await queryWithDisplayName(flowRunRepo()).where({
+        const query = await queryWithDisplayName(flowRunRepo()).where({
             projectId: params.projectId,
             id: params.id,
-        }).getRawOne()
+        })
 
-        if (isNil(rawFlowRun)) {
+        const flowRuns = await getEntitiesWithMoreSelectedFields(query, 'flowDisplayName')
+
+        if (flowRuns.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -506,7 +488,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        return rawDataMapper(rawFlowRun)
+        return flowRuns[0]
     },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
