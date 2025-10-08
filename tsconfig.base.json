@@ -934,6 +934,9 @@
       "@activepieces/piece-scrapeless": [
         "packages/pieces/community/scrapeless/src/index.ts"
       ],
+      "@activepieces/piece-securitypal": [
+        "packages/pieces/custom/securitypal/src/index.ts"
+      ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
