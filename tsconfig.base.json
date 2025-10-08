@@ -368,6 +368,9 @@
       "@activepieces/piece-dropbox": [
         "packages/pieces/community/dropbox/src/index.ts"
       ],
+      "@activepieces/piece-drupal": [
+        "packages/pieces/community/drupal/src/index.ts"
+      ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
