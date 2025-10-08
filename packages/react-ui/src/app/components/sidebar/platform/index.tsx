@@ -186,7 +186,7 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/jobs',
           label: t('Jobs'),
           isSubItem: true,
-          show: true,
+          show: edition !== ApEdition.CLOUD,
         },
         {
           type: 'link',

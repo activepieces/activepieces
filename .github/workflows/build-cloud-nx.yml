@@ -5,10 +5,14 @@ on:
 permissions:
   actions: read
   contents: read
+  
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
   main:
     runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -18,7 +22,7 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents 
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js"
 
       - run: npm ci
 

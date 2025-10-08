@@ -561,6 +561,7 @@
   "Active": "有効",
   "Retrying": "",
   "Delayed": "",
+  "Failed to reset metrics": "",
   "System jobs overview": "",
   "System Jobs Queue Metrics": "",
   "Zero jobs": "",
