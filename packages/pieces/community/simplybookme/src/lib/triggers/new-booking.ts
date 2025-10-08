@@ -25,7 +25,7 @@ export const newBooking = createTrigger({
     booking_id: '4',
     booking_hash: 'cfae2b34e23ec6e68545d60532234ae8',
     company: 'examplecompany',
-    notification_type: 'cancel',
+    notification_type: 'create',
     webhook_timestamp: 1759919125,
     signature_algo: 'sha256',
   },
