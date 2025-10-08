@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, TriggerSource } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, PopulatedTriggerSource, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -51,12 +51,25 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 },
             })
         },
-        async getByFlowId(params: GetByFlowIdParams): Promise<TriggerSource | null> {
+        async getByFlowId(params: GetFlowIdParamsWithProjectId): Promise<TriggerSource | null> {
+            const { flowId, simulate, projectId } = params
+            return triggerSourceRepo().findOne({
+                where: {
+                    flowId,
+                    simulate,
+                    ...(projectId ? { projectId } : {}),
+                },
+            })
+        },
+        async getByFlowIdPopulated(params: GetByFlowIdParams): Promise<PopulatedTriggerSource | null> {
             const { flowId, simulate } = params
             return triggerSourceRepo().findOne({
                 where: {
                     flowId,
                     simulate,
+                },
+                relations: {
+                    flow: true,
                 },
             })
         },
@@ -121,6 +134,12 @@ type ExistsByFlowIdParams = {
 }
 
 type GetByFlowIdParams = {
+    flowId: string
+    projectId?: string
+    simulate: boolean
+}
+
+type GetFlowIdParamsWithProjectId = {
     flowId: string
     projectId: string
     simulate: boolean

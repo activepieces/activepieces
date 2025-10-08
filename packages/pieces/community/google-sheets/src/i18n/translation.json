@@ -129,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Triggers when a worksheet is created in a spreadsheet.",
   "Trigger Column": "Trigger Column",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row."
 }
