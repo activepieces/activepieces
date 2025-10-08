@@ -77,6 +77,7 @@ export async function makeJsonApiRequest<T = JsonApiResponse>(
         // Remove invalid control characters that violate JSON specification (RFC 8259 Section 7)
         // Workaround for Drupal bug: https://www.drupal.org/project/drupal/issues/3549107
         // TODO: Remove this when Drupal issue is fixed
+        // eslint-disable-next-line no-control-regex
         const cleanedBody = response.body.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
         response.body = JSON.parse(cleanedBody);
       } catch (parseError) {
