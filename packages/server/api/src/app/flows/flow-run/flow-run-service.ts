@@ -676,7 +676,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
 function queryBuilderForFlowRun(repo: Repository<FlowRun>) {
     return repo.createQueryBuilder('flow_run')
         .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
-        .addSelect(['flowVersion."displayName"'])
+        .addSelect(['"flowVersion"."displayName"'])
 }
 
 async function create(params: CreateParams): Promise<FlowRun> {
