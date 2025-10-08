@@ -1,6 +1,14 @@
 import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion, Nullable } from '../common/base-model'
 
+export enum AgentPieceProps {
+    MCP_ID = 'mcpId',
+    MCP_TOOLS = 'mcpTools',
+    STRUCTURED_OUTPUT = 'structuredOutput',
+    PROMPT = 'prompt',
+    MAX_STEPS = 'maxSteps'
+}
+
 export enum ContentBlockType {
     MARKDOWN = 'MARKDOWN',
     TOOL_CALL = 'TOOL_CALL',

@@ -13,7 +13,7 @@ export const McpConfigPage = () => {
 
   return (
     <McpToolsSection
-      mcp={mcp}
+      tools={mcp?.tools}
       isLoading={isLoading}
       description={t('Give capabilities to your server by adding tools')}
       onToolsUpdate={(tools) => updateTools(tools)}

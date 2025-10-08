@@ -4,11 +4,7 @@ import { Hammer } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type {
-  McpTool,
-  McpToolRequest,
-  McpWithTools,
-} from '@activepieces/shared';
+import type { McpTool, McpToolRequest } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpAddToolDropdown } from '../mcp-add-tool-actions';
@@ -17,7 +13,7 @@ import { McpFlowTool } from './mcp-flow-tool';
 import { McpPieceTool } from './mcp-piece-tool';
 
 interface McpToolsSectionProps {
-  mcp: McpWithTools | undefined;
+  tools?: McpTool[];
   isLoading: boolean;
   description: string;
   emptyState?: React.ReactNode;
@@ -25,7 +21,7 @@ interface McpToolsSectionProps {
 }
 
 export const McpToolsSection = ({
-  mcp,
+  tools,
   isLoading,
   description,
   emptyState,
@@ -33,15 +29,7 @@ export const McpToolsSection = ({
 }: McpToolsSectionProps) => {
   const { pieces } = piecesHooks.usePieces({});
 
-  const removeTool = async (toolIds: string[]): Promise<void> => {
-    if (!mcp || !onToolsUpdate) return;
-    const newTools = mcp.tools.filter(
-      (tool: McpTool) => !toolIds.includes(tool.id),
-    );
-    onToolsUpdate(newTools);
-  };
-
-  if (isNil(mcp) || isLoading) {
+  if (isNil(tools) || isLoading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -60,15 +48,21 @@ export const McpToolsSection = ({
     );
   }
 
+  const removeTool = async (toolIds: string[]): Promise<void> => {
+    const newTools = tools.filter(
+      (tool: McpTool) => !toolIds.includes(tool.id),
+    );
+    onToolsUpdate(newTools);
+  };
+
   const piecesCount =
-    mcp?.tools?.filter((tool: McpTool) => tool.type === McpToolType.PIECE)
-      .length || 0;
+    tools.filter((tool: McpTool) => tool.type === McpToolType.PIECE).length ||
+    0;
   const flowsCount =
-    mcp?.tools?.filter((tool: McpTool) => tool.type === McpToolType.FLOW)
-      .length || 0;
+    tools.filter((tool: McpTool) => tool.type === McpToolType.FLOW).length || 0;
   const totalToolsCount = piecesCount + flowsCount;
   const hasTools = totalToolsCount > 0;
-  const pieceToToolMap = mcp?.tools?.reduce((acc, tool) => {
+  const pieceToToolMap = tools.reduce((acc, tool) => {
     const key =
       tool.type === McpToolType.PIECE
         ? tool.pieceMetadata?.pieceName
@@ -94,11 +88,10 @@ export const McpToolsSection = ({
         </div>
         <div className="flex gap-2">
           <McpAddToolDropdown
-            mcp={mcp}
             onToolsUpdate={(tools) => {
               onToolsUpdate?.(tools);
             }}
-            tools={mcp?.tools || []}
+            tools={tools}
           />
         </div>
       </div>
@@ -113,7 +106,6 @@ export const McpToolsSection = ({
                     return (
                       <McpPieceTool
                         key={toolKey}
-                        mcp={mcp}
                         tools={tools}
                         pieces={pieces || []}
                         removeTool={removeTool}

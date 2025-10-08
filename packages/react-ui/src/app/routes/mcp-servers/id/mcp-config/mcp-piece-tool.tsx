@@ -23,7 +23,6 @@ import {
 import { mcpConfigUtils } from './mcp-config-utils';
 
 type McpPieceToolProps = {
-  mcp: McpWithTools;
   tools: McpTool[];
   pieces: PieceMetadataModelSummary[];
   removeTool: (toolIds: string[]) => Promise<void>;
@@ -35,7 +34,6 @@ type PieceInfo = {
 };
 
 export const McpPieceTool = ({
-  mcp,
   tools,
   pieces,
   removeTool,
@@ -60,7 +58,7 @@ export const McpPieceTool = ({
   };
 
   const pieceInfoMap: Record<string, PieceInfo> = {};
-  mcp.tools.forEach((mcpTool: McpTool) => {
+  tools.forEach((mcpTool: McpTool) => {
     pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
   });
 

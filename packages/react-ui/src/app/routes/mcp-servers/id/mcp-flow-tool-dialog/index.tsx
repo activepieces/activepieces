@@ -20,7 +20,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   McpToolType,
-  McpWithTools,
   FlowTriggerType,
 } from '@activepieces/shared';
 import type {
@@ -33,8 +32,8 @@ import { McpFlowDialogContent } from './mcp-flow-dialog-content';
 
 type McpFlowDialogProps = {
   children: React.ReactNode;
-  mcp: McpWithTools;
   selectedFlows: string[];
+  mcpId?: string;
   open: boolean;
   onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
@@ -42,8 +41,8 @@ type McpFlowDialogProps = {
 };
 
 export function McpFlowDialog({
-  mcp,
   open,
+  mcpId,
   selectedFlows: initialSelectedFlows,
   onToolsUpdate,
   children,
@@ -57,7 +56,7 @@ export function McpFlowDialog({
   const projectId = authenticationSession.getProjectId();
 
   const { data: flows } = useQuery({
-    queryKey: ['flows', projectId, mcp.id],
+    queryKey: ['flows', projectId, mcpId],
     queryFn: async () => {
       const flows = await flowsApi
         .list({
@@ -81,7 +80,7 @@ export function McpFlowDialog({
     const newTools: McpToolRequest[] = selectedFlows.map((flowId) => ({
       type: McpToolType.FLOW,
       flowId: flowId,
-      mcpId: mcp.id,
+      mcpId,
     }));
     const nonFlowTools: McpToolRequest[] = tools.filter(
       (tool) => tool.type !== McpToolType.FLOW,

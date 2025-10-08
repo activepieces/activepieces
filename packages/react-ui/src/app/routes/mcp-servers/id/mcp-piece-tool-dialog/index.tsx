@@ -24,8 +24,8 @@ import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import type {
   McpPieceTool,
-  McpWithTools,
   McpToolRequest,
+  McpTool,
 } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
@@ -34,7 +34,8 @@ import { McpPiecesContent } from './mcp-pieces-content';
 
 type McpPieceDialogProps = {
   children: React.ReactNode;
-  mcp: McpWithTools;
+  mcpId?: string;
+  tools: McpTool[];
   open: boolean;
   onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
@@ -46,7 +47,8 @@ export type ActionInfo = {
 };
 
 export function McpPieceDialog({
-  mcp,
+  tools,
+  mcpId,
   open,
   onToolsUpdate,
   children,
@@ -77,7 +79,7 @@ export function McpPieceDialog({
   }, [metadata]);
 
   const handlePieceSelect = (piece: PieceStepMetadataWithSuggestions) => {
-    const existingTools = mcp?.tools?.filter(
+    const existingTools = tools?.filter(
       (tool): tool is McpPieceTool =>
         tool.type === McpToolType.PIECE &&
         tool.pieceMetadata?.pieceName === piece.pieceName,
@@ -134,7 +136,7 @@ export function McpPieceDialog({
 
     const newTools: McpToolRequest[] = selectedActions.map((action) => ({
       type: McpToolType.PIECE,
-      mcpId: mcp.id,
+      mcpId,
       pieceMetadata: {
         pieceName: selectedPiece.pieceName,
         actionName: action.actionName,
@@ -144,7 +146,7 @@ export function McpPieceDialog({
         connectionExternalId: selectedConnectionExternalId ?? undefined,
       },
     }));
-    const oldTools = mcp.tools;
+    const oldTools = tools;
     onToolsUpdate([...oldTools, ...newTools]);
     handleClose();
   };

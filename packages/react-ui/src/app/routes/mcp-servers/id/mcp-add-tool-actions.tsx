@@ -23,13 +23,11 @@ import { McpFlowDialog } from './mcp-flow-tool-dialog';
 import { McpPieceDialog } from './mcp-piece-tool-dialog';
 
 type McpAddToolDropdownProps = {
-  mcp: McpWithTools;
   tools: McpTool[];
   onToolsUpdate: (tools: McpToolRequest[]) => void;
 };
 
 export const McpAddToolDropdown = ({
-  mcp,
   tools,
   onToolsUpdate,
 }: McpAddToolDropdownProps) => {
@@ -57,8 +55,8 @@ export const McpAddToolDropdown = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <McpPieceDialog
+            tools={tools}
             open={showAddPieceDialog}
-            mcp={mcp}
             onToolsUpdate={(tools) => {
               onToolsUpdate(tools);
               setShowAddPieceDialog(false);
@@ -81,7 +79,6 @@ export const McpAddToolDropdown = ({
             </DropdownMenuItem>
           </McpPieceDialog>
           <McpFlowDialog
-            mcp={mcp}
             open={showAddFlowDialog}
             selectedFlows={tools
               .filter((tool) => tool.type === McpToolType.FLOW)

@@ -10,6 +10,7 @@ import { mcpSessionManager } from './mcp-session-manager'
 const HEARTBEAT_INTERVAL = 30 * 1000 // 30 seconds
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
+    // to be deleted
     app.get('/:token/sse', SSERequest, async (req, reply) => {
         const token = req.params.token
         const mcp = await mcpService(req.log).getByToken({
@@ -27,6 +28,7 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
         await handleStreamableHttpRequest(req, reply, mcp.id, mcp.projectId, req.log)
     })
 
+    // to be deleted
     app.post('/messages', MessagesRequest, async (req, reply) => {
         const sessionId = req.query?.sessionId as string
 
@@ -34,10 +36,13 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
             await reply.code(400).send({ message: 'Missing session ID' })
             return
         }
+
         await mcpSessionManager(req.log).publish(sessionId, req.body, 'message')
         await reply.code(202).send()
     })
 }
+
+// there should be an ither one that takes, step_name, flow_id
 
 async function handleStreamableHttpRequest(
     req: FastifyRequest,
@@ -56,7 +61,6 @@ async function handleStreamableHttpRequest(
         const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
         })
-
 
         reply.raw.on('close', async () => {
             await transport.close()

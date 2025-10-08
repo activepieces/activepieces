@@ -50,6 +50,7 @@ const AutoPropertiesFormComponent = React.memo(
     onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
+
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">

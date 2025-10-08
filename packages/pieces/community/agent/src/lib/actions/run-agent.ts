@@ -1,7 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { AIErrorResponse, AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { agentCommon } from '../common';
-import {  AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
+import {  AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { openai } from '@ai-sdk/openai';
 import { APICallError, stepCountIs, streamText } from 'ai';
 
@@ -19,33 +19,25 @@ export const runAgent = createAction({
     },
   },
   props: {
-    agentId: Property.Dropdown({
-      displayName: 'Agent',
-      description: 'Select agent created',
+    [AgentPieceProps.MCP_ID]: Property.ShortText({
+      displayName: 'MCP',
+      description: 'Mcp id',
       required: true,
-      refreshers: [],
-      options: async (_auth, ctx) => {
-        const agentPage = await agentCommon.listAgents({
-          publicUrl: ctx.server.publicUrl,
-          token: ctx.server.token,
-        })
-        return {
-          disabled: false,
-          options: agentPage.body.data.map((agent) => {
-            return {
-              label: agent.displayName,
-              value: agent.id,
-            };
-          }),
-        }
-      },
     }),
-    prompt: Property.LongText({
+    [AgentPieceProps.MCP_TOOLS]: Property.Json({
+      displayName: 'MCP Tools',
+      required: true
+    }),
+    [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Json({
+      displayName: 'Structured Output',
+      required: true
+    }),
+    [AgentPieceProps.PROMPT]: Property.LongText({
       displayName: 'Prompt',
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
-    maxSteps: Property.Number({
+    [AgentPieceProps.MAX_STEPS]: Property.Number({
       displayName: 'Max steps',
       description: 'The numbder of interations the agent can do',
       required: true,
@@ -53,7 +45,10 @@ export const runAgent = createAction({
     })
   },
   async run(context) {
-    const { agentId, prompt, maxSteps } = context.propsValue
+    const { mcpId, prompt, maxSteps, mcpTools } = context.propsValue
+
+    console.log(mcpTools)
+
     const { server } = context
 
     const result: AgentResult = {
@@ -63,15 +58,13 @@ export const runAgent = createAction({
       message: null,
     }
 
-    const agent = await agentCommon.getAgent({ agentId, token: server.token, apiUrl: server.publicUrl })
-    const mcp = await agentCommon.getMcp({ mcpId: agent.mcpId, token: server.token, apiUrl: server.publicUrl })
-
-    const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
-        agent,
-        publicUrl: server.publicUrl,
-        token: server.token,
-        mcp,
-    })
+    const mcp = await agentCommon.getMcp({ mcpId: mcpId, token: server.token, apiUrl: server.publicUrl })
+    // const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
+    //     agent,
+    //     publicUrl: server.publicUrl,
+    //     token: server.token,
+    //     mcp,
+    // })
 
     const baseURL = `${server.apiUrl}v1/ai-providers/proxy/openai`
     const model = createAIModel({
@@ -81,7 +74,7 @@ export const runAgent = createAction({
       baseURL,
       metadata: {
         feature: AIUsageFeature.AGENTS,
-        agentid: agentId,
+        agentid: mcpId,
       },
     })
 
@@ -91,7 +84,7 @@ export const runAgent = createAction({
       system: systemPrompt,
       prompt: prompt,
       stopWhen: stepCountIs(maxSteps),
-      tools: await agentToolInstance.tools()
+      // tools: await agentToolInstance.tools()
     })
 
     let currentText = ''

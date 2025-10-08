@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ToastAction } from '@/components/ui/toast';
 import { toast } from '@/components/ui/use-toast';
-import { agentHooks } from '@/features/agents/lib/agent-hooks';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
 import { ApFlagId } from '@activepieces/shared';
@@ -33,7 +33,8 @@ const CreateAgentActionItem = ({
   const createAgentPieceSelectorItem: PieceSelectorPieceItem = JSON.parse(
     JSON.stringify(pieceSelectorItem),
   );
-  const { mutate: createAgent } = agentHooks.useCreate();
+  const { mutate: createMcp } = mcpHooks.useCreateMcp();
+
   createAgentPieceSelectorItem.actionOrTrigger.displayName = t('Create Agent');
   createAgentPieceSelectorItem.actionOrTrigger.description = t(
     'Create a new agent to run in your flow',
@@ -65,30 +66,22 @@ const CreateAgentActionItem = ({
           });
           return;
         }
-        createAgent(
-          {
-            displayName: 'Fresh Agent',
-            description:
-              'I am a fresh agent, Jack of all trades, master of none (yet)',
-            systemPrompt: '',
+        createMcp('Hello', {
+          onSuccess: (mcp) => {
+            handleAddingOrUpdatingCustomAgentPieceSelectorItem(
+              pieceSelectorItem,
+              mcp.id,
+              operation,
+              handleAddingOrUpdatingStep,
+            );
           },
-          {
-            onSuccess: (agent) => {
-              handleAddingOrUpdatingCustomAgentPieceSelectorItem(
-                pieceSelectorItem,
-                agent,
-                operation,
-                handleAddingOrUpdatingStep,
-              );
-            },
-            onError: () => {
-              toast({
-                variant: 'destructive',
-                description: 'Error creating agent',
-              });
-            },
+          onError: () => {
+            toast({
+              variant: 'destructive',
+              description: 'Error creating agent',
+            });
           },
-        );
+        });
       }}
     />
   );
