@@ -12,7 +12,7 @@ env:
 jobs:
   main:
     runs-on: ubuntu-latest
-    if: github.repository == 'activepieces/activepieces' && github.event.pull_request.head.repo.full_name == 'activepieces/activepieces'
+    if: github.repository == 'activepieces/activepieces'
     steps:
       - uses: actions/checkout@v4
         with:
