@@ -1,7 +1,7 @@
 import {
   createAction,
   Property,
-} from '@Activepieces/pieces-framework';
+} from '@activepieces/pieces-framework';
 import {
   areSheetIdsValid,
   googleSheetsCommon,
@@ -9,7 +9,7 @@ import {
 } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { z } from 'zod';
-import { propsValidation } from '@Activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common';
 import { columnNameProp, commonProps } from '../common/props';
 export const findRowsAction = createAction({
   auth: googleSheetsAuth,
