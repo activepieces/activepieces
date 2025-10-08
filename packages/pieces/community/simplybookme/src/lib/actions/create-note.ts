@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { simplybookAuth, getAccessToken, SimplybookAuth, serviceDropdown, providerDropdown } from '../common';
+import { simplybookAuth, getAccessToken, SimplybookAuth, serviceDropdown, providerDropdown, noteTypeDropdown } from '../common';
 
 export const createNote = createAction({
   auth: simplybookAuth,
@@ -18,11 +18,7 @@ export const createNote = createAction({
       description: 'Note end date and time (format: YYYY-MM-DD HH:MM:SS)',
       required: true
     }),
-    noteTypeId: Property.Number({
-      displayName: 'Note Type ID',
-      description: 'The ID of the note type',
-      required: true
-    }),
+    noteTypeId: noteTypeDropdown,
     note: Property.LongText({
       displayName: 'Note',
       description: 'Note body/content',

@@ -60,7 +60,8 @@ export async function getAccessToken(auth: SimplybookAuth): Promise<string> {
         method: 'getUserToken',
         params: [auth.companyLogin, auth.userLogin, auth.userPassword],
         id: 1
-      }
+      },
+      timeout: 15000
     });
 
     if (response.body?.error) {
@@ -140,7 +141,8 @@ export async function makeJsonRpcCall<T = any>(
         method: method,
         params: params,
         id: 1
-      }
+      },
+      timeout: 20000
     });
 
     if (response.body?.error) {

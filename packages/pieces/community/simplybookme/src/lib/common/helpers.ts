@@ -28,6 +28,12 @@ interface Booking {
   event_name?: string;
 }
 
+interface NoteType {
+  id: number;
+  name: string;
+  color?: string;
+}
+
 export const clientDropdown = Property.Dropdown({
   displayName: 'Client',
   description: 'Select a client',
@@ -81,33 +87,48 @@ export const serviceDropdown = Property.Dropdown({
     }
 
     try {
-      const authData = auth as SimplybookAuth;
-      const token = await getAccessToken(authData);
+      const response = await Promise.race([
+        makeJsonRpcCall<any>(auth as SimplybookAuth, 'getEventList', []),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout after 20s')), 20000)
+        )
+      ]);
 
-      const response = await httpClient.sendRequest<Service[]>({
-        method: HttpMethod.GET,
-        url: 'https://user-api-v2.simplybook.me/admin/services',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': authData.companyLogin,
-          'X-Token': token
+      // Handle different response formats
+      let services: Service[] = [];
+      if (Array.isArray(response)) {
+        services = response;
+      } else if (response && typeof response === 'object') {
+        // Check if it's an object with numeric keys (object-formatted array)
+        const keys = Object.keys(response);
+        if (keys.length > 0 && keys.every((k) => !isNaN(Number(k)))) {
+          services = Object.values(response);
+        } else {
+          services = response.data || response.result || response.items || [];
         }
-      });
+      }
 
-      const services = response.body || [];
+      if (!Array.isArray(services) || services.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: services.length === 0 ? 'No services found' : 'Invalid response format'
+        };
+      }
+
       return {
         disabled: false,
         options: services.map((service) => ({
-          label: service.name,
+          label: service.name || `Service ${service.id}`,
           value: service.id
         }))
       };
     } catch (error: any) {
-      console.error('Failed to load services:', error.message);
+      console.error('Failed to load services:', error);
       return {
         disabled: true,
         options: [],
-        placeholder: `Failed to load services: ${error.message}`
+        placeholder: `Error: ${error.message?.substring(0, 50) || 'Failed to load'}`
       };
     }
   }
@@ -128,33 +149,123 @@ export const providerDropdown = Property.Dropdown({
     }
 
     try {
-      const authData = auth as SimplybookAuth;
-      const token = await getAccessToken(authData);
+      const response = await Promise.race([
+        makeJsonRpcCall<any>(auth as SimplybookAuth, 'getUnitList', []),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout after 20s')), 20000)
+        )
+      ]);
 
-      const response = await httpClient.sendRequest<Provider[]>({
-        method: HttpMethod.GET,
-        url: 'https://user-api-v2.simplybook.me/admin/providers',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Login': authData.companyLogin,
-          'X-Token': token
+      // Handle different response formats
+      let providers: Provider[] = [];
+      if (Array.isArray(response)) {
+        providers = response;
+      } else if (response && typeof response === 'object') {
+        // Check if it's an object with numeric keys (object-formatted array)
+        const keys = Object.keys(response);
+        if (keys.length > 0 && keys.every((k) => !isNaN(Number(k)))) {
+          providers = Object.values(response);
+        } else {
+          providers = response.data || response.result || response.items || [];
         }
-      });
+      }
 
-      const providers = response.body || [];
+      if (!Array.isArray(providers) || providers.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: providers.length === 0 ? 'No providers found' : 'Invalid response format'
+        };
+      }
+
       return {
         disabled: false,
         options: providers.map((provider) => ({
-          label: provider.name,
+          label: provider.name || `Provider ${provider.id}`,
           value: provider.id
         }))
       };
     } catch (error: any) {
-      console.error('Failed to load providers:', error.message);
+      console.error('Failed to load providers:', error);
       return {
         disabled: true,
         options: [],
-        placeholder: `Failed to load providers: ${error.message}`
+        placeholder: `Error: ${error.message?.substring(0, 50) || 'Failed to load'}`
+      };
+    }
+  }
+});
+
+export const noteTypeDropdown = Property.Dropdown({
+  displayName: 'Note Type',
+  description: 'Select a note type',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first'
+      };
+    }
+
+    try {
+      const authData = auth as SimplybookAuth;
+      const token = await getAccessToken(authData);
+
+      const response = await Promise.race([
+        httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: 'https://user-api-v2.simplybook.me/admin/calendar-notes/types',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Company-Login': authData.companyLogin,
+            'X-Token': token
+          },
+          timeout: 20000
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout after 20s')), 20000)
+        )
+      ]);
+
+      // Handle different response formats
+      const responseData = (response as any).body;
+      let noteTypes: NoteType[] = [];
+      
+      if (Array.isArray(responseData)) {
+        noteTypes = responseData;
+      } else if (responseData && typeof responseData === 'object') {
+        const keys = Object.keys(responseData);
+        if (keys.length > 0 && keys.every((k) => !isNaN(Number(k)))) {
+          noteTypes = Object.values(responseData);
+        } else {
+          noteTypes = responseData.data || responseData.result || responseData.items || [];
+        }
+      }
+
+      if (!Array.isArray(noteTypes) || noteTypes.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: noteTypes.length === 0 ? 'No note types found' : 'Invalid response format'
+        };
+      }
+
+      return {
+        disabled: false,
+        options: noteTypes.map((noteType) => ({
+          label: noteType.name || `Note Type ${noteType.id}`,
+          value: noteType.id
+        }))
+      };
+    } catch (error: any) {
+      console.error('Failed to load note types:', error);
+      return {
+        disabled: true,
+        options: [],
+        placeholder: `Error: ${error.message?.substring(0, 50) || 'Failed to load'}`
       };
     }
   }
