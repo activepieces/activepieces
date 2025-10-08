@@ -129,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Triggert wanneer een werkblad wordt aangemaakt in een werkblad.",
   "Trigger Column": "Trigger kolom",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Houd er rekening mee dat er mogelijk een vertraging van maximaal 3 minuten is voordat de trigger wordt afgevuurd, als gevolg van een vertraging van Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Trigger op wijzigingen in cellen alleen in deze kolom. Selecteer **Alle kolommen** als u wilt dat de stroom resulteert in wijzigingen in een cel binnen de rij."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Trigger op wijzigingen in cellen alleen in deze kolom. \nSelecteer **Alle kolom** als u wilt dat de stroom de wijzigingen aan een cel in de rij uitvoert."
 }

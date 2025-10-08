@@ -87,6 +87,8 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
 
   const isLoopStep =
     stepOutput && stepOutput.type === FlowActionType.LOOP_ON_ITEMS;
+  const loopHasNoIterations =
+    isLoopStep && stepOutput.output?.iterations.length === 0;
 
   return (
     <Collapsible open={isOpen} className="w-full">
@@ -140,7 +142,9 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
             <div className="flex gap-1 justify-end  items-center flex-grow">
               {isLoopStep && isStepSelected && (
                 <span className="text-sm font-semibold animate-fade">
-                  {t('All Iterations')}
+                  {loopHasNoIterations
+                    ? t('No Iterations')
+                    : t('All Iterations')}
                 </span>
               )}
               {isLoopStep && !isStepSelected && (
@@ -148,7 +152,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
                   className={cn(
                     'flex gap-1 justify-end  items-center flex-grow',
                     {
-                      hidden: !isChildSelected,
+                      hidden: !isChildSelected || loopHasNoIterations,
                     },
                   )}
                 >

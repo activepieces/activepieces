@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { fileSystemUtils } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -10,7 +10,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { cacheState } from '../cache/cache-state'
 import { PackageInfo, packageManager } from '../cache/package-manager'
-import { CacheState, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../cache/worker-cache'
+import { CacheState } from '../cache/worker-cache'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 
 export class RegistryPieceManager extends PieceManager {
@@ -26,7 +26,7 @@ export class RegistryPieceManager extends PieceManager {
             return
         }
 
-        await fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `pnpm-add-${projectPath}`, async () => {
+        await memoryLock.runExclusive(`pnpm-add-${projectPath}`, async () => {
             const cache = cacheState(projectPath)
 
             const dependencies = await this.filterExistingPieces(projectPath, pieces)
