@@ -51,7 +51,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 },
             })
         },
-        async getByFlowId(params: GetByFlowIdParams): Promise<TriggerSource | null> {
+        async getByFlowId(params: GetFlowIdParamsWithProjectId): Promise<TriggerSource | null> {
             const { flowId, simulate, projectId } = params
             return triggerSourceRepo().findOne({
                 where: {
@@ -62,12 +62,11 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             })
         },
         async getByFlowIdPopulated(params: GetByFlowIdParams): Promise<PopulatedTriggerSource | null> {
-            const { flowId, simulate, projectId } = params
+            const { flowId, simulate } = params
             return triggerSourceRepo().findOne({
                 where: {
                     flowId,
                     simulate,
-                    ...(projectId ? { projectId } : {}),
                 },
                 relations: {
                     flow: true,
@@ -137,6 +136,12 @@ type ExistsByFlowIdParams = {
 type GetByFlowIdParams = {
     flowId: string
     projectId?: string
+    simulate: boolean
+}
+
+type GetFlowIdParamsWithProjectId = {
+    flowId: string
+    projectId: string
     simulate: boolean
 }
 
