@@ -70,7 +70,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 },
                 relations: {
                     flow: true,
-                }
+                },
             })
         },
         async getOrThrow({ projectId, id }: GetTriggerParams): Promise<TriggerSource> {

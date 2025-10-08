@@ -4,7 +4,6 @@ import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
-import { flowService } from '../flows/flow/flow.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
@@ -41,7 +40,7 @@ export const webhookService = {
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
 
                 const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
-                    flowId: flowId,
+                    flowId,
                     simulate: saveSampleData,
                 })
 
