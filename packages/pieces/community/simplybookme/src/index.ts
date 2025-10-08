@@ -22,7 +22,7 @@ export const simplybookme = createPiece({
   auth: simplybookAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/simplybookme.png',
-  authors: [],
+  authors: ['fortunamide','sanket-a11y'],
   actions: [
     // Write Actions
     createBooking,

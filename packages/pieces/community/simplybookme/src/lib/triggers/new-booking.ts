@@ -1,123 +1,32 @@
-import {
-  createTrigger,
-  PiecePropValueSchema,
-  TriggerStrategy
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper
-} from '@activepieces/pieces-common';
-import { simplybookAuth, makeJsonRpcCall } from '../common';
-
-const polling: Polling<
-  PiecePropValueSchema<typeof simplybookAuth>,
-  Record<string, never>
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const authData = auth;
-
-    // Calculate date range based on last fetch time
-    const now = new Date();
-    const lastFetch = lastFetchEpochMS ? new Date(lastFetchEpochMS) : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // Default: 7 days ago
-    
-    const dateFrom = lastFetch.toISOString().split('T')[0];
-    const dateTo = now.toISOString().split('T')[0];
-
-    // Get new bookings using created_date to track when booking was created
-    const bookings = await makeJsonRpcCall<any[]>(authData, 'getBookings', [
-      {
-        created_date_from: dateFrom,
-        created_date_to: dateTo,
-        booking_type: 'non_cancelled',
-        order: 'record_date'
-      }
-    ]);
-
-    // Handle object with numeric keys format
-    let bookingArray: any[] = [];
-    if (Array.isArray(bookings)) {
-      bookingArray = bookings;
-    } else if (bookings && typeof bookings === 'object') {
-      const keys = Object.keys(bookings);
-      if (keys.length > 0 && keys.every((k) => !isNaN(Number(k)))) {
-        bookingArray = Object.values(bookings);
-      }
-    }
-
-    // Filter bookings that were created after last fetch
-    const filteredBookings = bookingArray.filter((booking) => {
-      if (!booking.record_date) return false;
-      const recordTime = new Date(booking.record_date).getTime();
-      return recordTime > lastFetchEpochMS;
-    });
-
-    // Sort by record_date (most recent first)
-    return filteredBookings
-      .sort((a, b) => {
-        const dateA = new Date(a.record_date || 0).getTime();
-        const dateB = new Date(b.record_date || 0).getTime();
-        return dateB - dateA;
-      })
-      .map((booking) => ({
-        epochMilliSeconds: new Date(booking.record_date).getTime(),
-        data: booking
-      }));
-  }
-};
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { simplybookAuth } from '../common';
 
 export const newBooking = createTrigger({
   auth: simplybookAuth,
   name: 'new_booking',
   displayName: 'New Booking',
   description: 'Triggers when a new booking is created in SimplyBook.me',
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   props: {},
-  async test(context) {
-    return await pollingHelper.test(polling, context);
-  },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    // Subscribe to 'change' event webhook will be added through simplybook platform
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+    // Subscribe to 'change' event webhook will be removed through simplybook platform
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const body = context.payload.body as any;
+    if (body.notification_type !== 'create') {
+      return [];
+    }
+    return [body];
   },
   sampleData: {
-    id: 123456,
-    code: 'abc123xyz',
-    is_confirmed: true,
-    start_datetime: '2025-10-05 14:00:00',
-    end_datetime: '2025-10-05 15:00:00',
-    location_id: 1,
-    category_id: 2,
-    service_id: 3,
-    provider_id: 4,
-    client_id: 5,
-    duration: 60,
-    service: {
-      id: 3,
-      name: 'Consultation',
-      description: 'Initial consultation',
-      price: 100.0,
-      currency: 'USD',
-      duration: 60
-    },
-    provider: {
-      id: 4,
-      name: 'John Smith',
-      email: 'john@example.com'
-    },
-    location: {
-      id: 1,
-      name: 'Main Office'
-    },
-    category: {
-      id: 2,
-      name: 'Medical Services'
-    }
-  }
+    booking_id: '4',
+    booking_hash: 'cfae2b34e23ec6e68545d60532234ae8',
+    company: 'examplecompany',
+    notification_type: 'cancel',
+    webhook_timestamp: 1759919125,
+    signature_algo: 'sha256',
+  },
 });
