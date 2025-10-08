@@ -21,6 +21,7 @@ const flowVersionWithBranching: FlowVersion = {
     flowId: 'lod6JEdKyPlvrnErdnrGa',
     updatedBy: '',
     displayName: 'Standup Reminder',
+    agentIds: [],
     trigger: {
         name: 'trigger',
         type: TriggerType.PIECE,
@@ -135,6 +136,7 @@ const emptyScheduleFlowVersion: FlowVersion = {
     flowId: 'lod6JEdKyPlvrnErdnrGa',
     displayName: 'Standup Reminder',
     updatedBy: '',
+    agentIds: [],
     trigger: {
         name: 'trigger',
         type: TriggerType.PIECE,
@@ -184,6 +186,7 @@ describe('Flow Helper', () => {
             updated: '2023-05-24T00:16:41.353Z',
             flowId: 'lod6JEdKyPlvrnErdnrGa',
             displayName: 'Standup Reminder',
+            agentIds: [],
             trigger: {
                 name: 'trigger',
                 type: TriggerType.PIECE,
@@ -331,6 +334,7 @@ test('Duplicate Flow With Loops using Import', () => {
         flowId: 'YGPIPQDfLcPdJ0aJ9AKGb',
         updatedBy: '',
         displayName: 'Flow 1',
+        agentIds: [],
         trigger: {
             name: 'trigger',
             type: TriggerType.PIECE,

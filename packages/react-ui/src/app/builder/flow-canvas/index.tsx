@@ -12,7 +12,6 @@ import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import {
   ActionType,
   flowStructureUtil,
@@ -75,7 +74,7 @@ const createGraphKey = (flowVersion: FlowVersion) => {
           ? step.settings.branches.map((branch) => branch.branchName).join('-')
           : '0';
       const childrenKey = getChildrenKey(step);
-      const agentId = stepUtils.getAgentId(step);
+      const agentId = flowStructureUtil.getExternalAgentId(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
       }-${

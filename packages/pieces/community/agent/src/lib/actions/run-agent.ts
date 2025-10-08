@@ -34,7 +34,7 @@ export const runAgent = createAction({
           options: agentPage.body.data.map((agent) => {
             return {
               label: agent.displayName,
-              value: agent.id,
+              value: agent.externalId,
             };
           }),
         }
@@ -51,7 +51,7 @@ export const runAgent = createAction({
     const serverToken = context.server.token;
 
     const body: RunAgentRequestBody = {
-      agentId,
+      externalId: agentId,
       prompt,
     }
 

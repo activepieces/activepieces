@@ -13,21 +13,22 @@ import { isNil, McpToolType } from '@activepieces/shared';
 
 import { McpAddToolDropdown } from '../mcp-add-tool-actions';
 
-import { EmptyTools } from './empty-tools';
 import { McpFlowTool } from './mcp-flow-tool';
 import { McpPieceTool } from './mcp-piece-tool';
 
 interface McpToolsSectionProps {
   mcp: McpWithTools | undefined;
   isLoading: boolean;
-  showEmptyState?: boolean;
+  description: string;
+  emptyState?: React.ReactNode;
   onToolsUpdate: (tools: McpToolRequest[]) => void;
 }
 
 export const McpToolsSection = ({
   mcp,
   isLoading,
-  showEmptyState = true,
+  description,
+  emptyState,
   onToolsUpdate,
 }: McpToolsSectionProps) => {
   const { pieces } = piecesHooks.usePieces({});
@@ -89,9 +90,7 @@ export const McpToolsSection = ({
             <Hammer className="w-4 h-4" />
             <span>{t('Tools')}</span>
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('Manage your connected tools and flows')}
-          </p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         <div className="flex gap-2">
           <McpAddToolDropdown
@@ -133,8 +132,8 @@ export const McpToolsSection = ({
                 })}
             </div>
           </ScrollArea>
-        ) : showEmptyState ? (
-          <EmptyTools />
+        ) : !isNil(emptyState) ? (
+          emptyState
         ) : null}
       </div>
     </div>

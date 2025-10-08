@@ -429,6 +429,9 @@
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
       ],
+      "@activepieces/piece-grok-xai": [
+        "packages/pieces/community/grok-xai/src/index.ts"
+      ],
       "@activepieces/piece-groq": [
         "packages/pieces/community/groq/src/index.ts"
       ],
@@ -656,6 +659,9 @@
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
+      ],
+      "@activepieces/piece-pdfmonkey": [
+        "packages/pieces/community/pdfmonkey/src/index.ts"
       ],
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
@@ -888,6 +894,9 @@
       ],
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
+      ],
+      "@activepieces/piece-teamleader": [
+        "packages/pieces/community/teamleader/src/index.ts"
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
