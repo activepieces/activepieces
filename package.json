@@ -30,8 +30,6 @@
   "private": true,
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
-    "@activepieces/pieces-common": "0.7.0",
-    "@activepieces/pieces-framework": "0.20.1",
     "@ai-sdk/anthropic": "2.0.3",
     "@ai-sdk/azure": "2.0.12",
     "@ai-sdk/google": "2.0.6",
