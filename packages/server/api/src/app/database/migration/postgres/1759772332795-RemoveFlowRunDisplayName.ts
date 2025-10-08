@@ -9,7 +9,7 @@ export class RemoveFlowRunDisplayName1759772332795 implements MigrationInterface
 
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            ADD CONSTRAINT "fk_flow_run_flow_version_id" FOREIGN KEY ("flowVersionId") REFERENCES "flow_version"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            ADD CONSTRAINT "fk_flow_run_flow_version_id" FOREIGN KEY ("flowVersionId") REFERENCES "flow_version"("id") ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID
         `)
     }
 
