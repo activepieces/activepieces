@@ -27,7 +27,7 @@ import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, pieceSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
+    async executeProps({ params, pieceSource, executionState, constants, searchValue, actionOrTriggerName }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
         const property = await pieceLoader.getPropOrThrow({
             params,
             pieceSource,
@@ -64,6 +64,7 @@ export const pieceHelper = {
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
                 }),
+                stepName: actionOrTriggerName,
             }
 
             switch (property.type) {
@@ -181,5 +182,5 @@ export const pieceHelper = {
 }
 
 
-type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, pieceSource: string, constants: EngineConstants }
+type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, pieceSource: string, constants: EngineConstants, actionOrTriggerName: string }
 

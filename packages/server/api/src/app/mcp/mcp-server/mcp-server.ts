@@ -2,6 +2,7 @@ import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,
+    ExecuteActionResponse,
     isNil,
     McpFlowTool,
     McpPieceTool,
@@ -10,12 +11,14 @@ import {
     McpToolType,
     McpTrigger,
     TelemetryEventName,
+    WorkerJobType,
 } from '@activepieces/shared'       
 import { openai } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
@@ -26,10 +29,11 @@ import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
-import { toolExecutor } from '../tool/tool-execution'
+import { toolInputsResolver } from '../tool/tool-inputs-resolver'
 
 
 export async function createMcpServer({
@@ -134,7 +138,7 @@ async function addPieceToServer(
                 
                 const auth = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
                 
-                const { result, parsedInputs } = await toolExecutor.execute({
+                const parsedInputs = await toolInputsResolver.resolve({
                     auth,
                     userInstructions: params.instructions,
                     actionName: toolPieceMetadata.actionName,
@@ -143,6 +147,20 @@ async function addPieceToServer(
                     aiModel,
                     projectId,
                     platformId,
+                    preDefinedInputs: {},
+                })
+
+                const result = await userInteractionWatcher(logger)
+                    .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                    jobType: WorkerJobType.EXECUTE_TOOL,
+                    platformId,
+                    actionName: toolPieceMetadata.actionName,
+                    pieceName: toolPieceMetadata.pieceName,
+                    pieceVersion: toolPieceMetadata.pieceVersion,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    input: parsedInputs,
+                    projectId,
                 })
 
                 trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })

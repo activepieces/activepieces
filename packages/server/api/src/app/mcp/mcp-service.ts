@@ -45,6 +45,10 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return mcpToolRepo().findOneOrFail({ where: { id: toolId } })
     },
 
+    async getMcpByFlowAndStepOrThrow({ flowId, stepName }: GetMcpByFlowAndStepParams): Promise<McpWithTools> {
+        return mcpRepo().findOneOrFail({where: { flowId, stepName }})
+    },
+
     async deleteFlowTool({ flowId }: DeleteFlowToolsParams): Promise<void> {
         await mcpToolRepo().delete({ flowId })
     },
@@ -252,4 +256,9 @@ type GetOrThrowParams = {
 
 type DeleteFlowToolsParams = {
     flowId: ApId
+}
+
+type GetMcpByFlowAndStepParams = {
+    flowId: ApId
+    stepName: string
 }

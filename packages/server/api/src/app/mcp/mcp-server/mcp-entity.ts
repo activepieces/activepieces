@@ -1,9 +1,10 @@
-import { Agent, McpWithTools } from '@activepieces/shared'
+import { Agent, Flow, McpWithTools } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type McpWithToolsWithSchema = McpWithTools & {  
     agent: Agent
+    flow: Flow
 }
 export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
     name: 'mcp',
@@ -22,6 +23,14 @@ export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
             type: String,
             nullable: false,
         },
+        flowId: {
+            type: String,
+            nullable: true,
+        },
+        stepName: {
+            type: String,
+            nullable: true,
+        },
         externalId: {
             ...ApIdSchema,
             nullable: false,
@@ -37,6 +46,11 @@ export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
             name: 'mcp_agent_id',
             columns: ['agentId'],
             unique: false,
+        },
+        {
+            name: 'mcp_flow_id_step_name',
+            columns: ['flowId', 'stepName'],
+            unique: true,
         },
     ],
     relations: {
@@ -56,6 +70,12 @@ export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
                 name: 'agentId',
                 foreignKeyConstraintName: 'fk_mcp_agent_id',
             },
+        },
+        flow: {
+            type: 'many-to-one',
+            target: 'flow',
+            cascade: true,
+            onDelete: 'CASCADE',
         },
     },
     
