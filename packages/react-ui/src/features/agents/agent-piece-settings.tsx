@@ -3,7 +3,7 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { AutoPropertiesFormComponent } from '@/app/builder/piece-properties/auto-properties-form';
 import { useStepSettingsContext } from '@/app/builder/step-settings/step-settings-context';
-import { FormField } from '@/components/ui/form';
+import { FormControl, FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AgentToolsSettings } from '@/features/agents/agent-tools';
 import { AgentStructuredOutput } from '@/features/agents/structured-output';
@@ -114,6 +114,8 @@ export const AgentPieceSettings = React.memo(
   },
 );
 
+
+
 AgentPieceSettings.displayName = 'AgentPieceSettins';
 
 type selectFormComponentForPropertyParams = {
@@ -133,7 +135,9 @@ const selectFormComponentForProperty = (
 ) => {
   switch (props.propertyName) {
     case AgentPieceProps.MCP_TOOLS:
-      return <AgentToolsSettings field={props.field} />;
+      return (
+        <AgentToolsSettings field={props.field} />
+    );
     case AgentPieceProps.STRUCTURED_OUTPUT:
       return <AgentStructuredOutput field={props.field} />;
     case AgentPieceProps.MAX_STEPS:

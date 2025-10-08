@@ -1,11 +1,10 @@
 import { httpClient, AuthenticationType, HttpMethod } from "@activepieces/pieces-common";
-import { Agent, SeekPage, ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined } from "@activepieces/shared"
+import { Agent, SeekPage, ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool, Mcp, McpState } from "@activepieces/shared"
 import { experimental_createMCPClient, tool } from "ai";
 import { StatusCodes } from "http-status-codes";
 import z, { ZodRawShape, ZodSchema } from "zod";
 
-async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
-    const outputFields = agent.outputFields ?? []
+async function getStructuredOutput(outputFields: AgentOutputField[]): Promise<ZodSchema> {
     const shape: ZodRawShape = {}
 
     for (const field of outputFields) {
@@ -31,8 +30,8 @@ async function buildInternalTools(params: AgentToolsParams) {
     return {
         [agentbuiltInToolsNames.markAsComplete]: tool({
             description: 'Mark the todo as complete',
-            inputSchema: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
-                output: await getStructuredOutput(params.agent),
+            inputSchema: params.outputFields.length > 0 ? z.object({
+                output: await getStructuredOutput(params.outputFields),
             }) : z.object({}),
             execute: async () => {
                 return 'Marked as Complete'
@@ -69,10 +68,11 @@ export const agentCommon = {
   async agentTools(params: AgentToolsParams) {
     const mcpClient = await getMcpClient(params)
     const builtInTools = await buildInternalTools(params)
-    const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
+    const agentTools = isNil(mcpClient) ? {} : params.tools
+
     const tools = {
         ...builtInTools,
-        ...mcpTools,
+        ...agentTools,
     }
     return {
         tools: async () => {
@@ -193,8 +193,9 @@ type GetMcp = {
 }
 
 type AgentToolsParams = {
+    outputFields: AgentOutputField[]
     publicUrl: string
     token: string
-    mcp: McpWithTools
-    agent: Agent
+    mcp: McpWithTools;
+    tools: McpTool[]
 }
