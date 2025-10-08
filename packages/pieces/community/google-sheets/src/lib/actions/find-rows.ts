@@ -49,7 +49,7 @@ export const findRowsAction = createAction({
     displayName: 'Use header names for keys',
     description: 'Map A/B/C… to the actual column headers (row specified below).',
     required: false,
-    defaultValue: true,
+    defaultValue: false,
     }),
     headerRow: Property.Number({
       displayName: 'Header Row',
@@ -67,7 +67,7 @@ export const findRowsAction = createAction({
     const sheetId = propsValue.sheetId;
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
-    const useHeaderNames = propsValue.useHeaderNames ?? true;
+    const useHeaderNames = propsValue.useHeaderNames ?? false;
     const headerRow = propsValue.headerRow ?? 1;
     if (!areSheetIdsValid(spreadsheetId,sheetId)) {
       throw new Error('Please select a spreadsheet and sheet first.');
