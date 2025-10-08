@@ -1,27 +1,64 @@
 import {
   createTrigger,
+  PiecePropValueSchema,
   TriggerStrategy
 } from '@activepieces/pieces-framework';
-import { simplybookAuth, SimplybookAuth, subscribeWebhook } from '../common';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper
+} from '@activepieces/pieces-common';
+import { simplybookAuth, SimplybookAuth, makeJsonRpcCall } from '../common';
+
+const polling: Polling<PiecePropValueSchema<typeof simplybookAuth>, Record<string, never>> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth }) => {
+    const authData = auth;
+    
+    const clients = await makeJsonRpcCall<any[]>(
+      authData,
+      'getClientList',
+      ['', null]
+    );
+    
+    // Handle object with numeric keys format
+    let clientArray: any[] = [];
+    if (Array.isArray(clients)) {
+      clientArray = clients;
+    } else if (clients && typeof clients === 'object') {
+      const keys = Object.keys(clients);
+      if (keys.length > 0 && keys.every((k) => !isNaN(Number(k)))) {
+        clientArray = Object.values(clients);
+      }
+    }
+    
+    return clientArray
+      .sort((a, b) => b.id - a.id)
+      .map((client) => ({
+        id: client.id,
+        data: client
+      }));
+  }
+};
 
 export const newClient = createTrigger({
   auth: simplybookAuth,
   name: 'new_client',
   displayName: 'New Client',
   description: 'Triggers when a new client is added (via booking or manually) in SimplyBook.me',
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
   props: {},
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
   async onEnable(context) {
-    const auth = context.auth as SimplybookAuth;
-    await subscribeWebhook(auth, context.webhookUrl, 'new_client');
-    await context.store.put('webhook_registered', true);
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await context.store.delete('webhook_registered');
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    const body = context.payload.body as any;
-    return [body];
+    return await pollingHelper.poll(polling, context);
   },
   sampleData: {
     id: 12345,

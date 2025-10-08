@@ -1,8 +1,70 @@
 import {
   createTrigger,
+  PiecePropValueSchema,
   TriggerStrategy
 } from '@activepieces/pieces-framework';
-import { simplybookAuth, SimplybookAuth, subscribeWebhook } from '../common';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper
+} from '@activepieces/pieces-common';
+import { simplybookAuth, SimplybookAuth, makeJsonRpcCall } from '../common';
+
+const polling: Polling<PiecePropValueSchema<typeof simplybookAuth>, Record<string, never>> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth, store }) => {
+    const authData = auth;
+    
+    // Get all bookings from the last 7 days
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    
+    const dateFrom = sevenDaysAgo.toISOString().split('T')[0];
+    const dateTo = today.toISOString().split('T')[0];
+    
+    const bookings = await makeJsonRpcCall<any[]>(
+      authData,
+      'getBookings',
+      [{ date_from: dateFrom, date_to: dateTo, booking_type: 'non_cancelled' }]
+    );
+    
+    // Handle object with numeric keys format
+    let bookingArray: any[] = [];
+    if (Array.isArray(bookings)) {
+      bookingArray = bookings;
+    } else if (bookings && typeof bookings === 'object') {
+      const keys = Object.keys(bookings);
+      if (keys.length > 0 && keys.every((k) => !isNaN(Number(k)))) {
+        bookingArray = Object.values(bookings);
+      }
+    }
+    
+    // Store previous state to detect changes
+    const previousBookings = (await store.get<Record<number, string>>('bookings_state')) || {};
+    const currentBookings: Record<number, string> = {};
+    const changedBookings: any[] = [];
+    
+    for (const booking of bookingArray) {
+      const bookingHash = JSON.stringify(booking);
+      currentBookings[booking.id] = bookingHash;
+      
+      // If booking exists and hash changed, it was modified
+      if (previousBookings[booking.id] && previousBookings[booking.id] !== bookingHash) {
+        changedBookings.push(booking);
+      }
+    }
+    
+    await store.put('bookings_state', currentBookings);
+    
+    return changedBookings
+      .sort((a, b) => b.id - a.id)
+      .map((booking) => ({
+        id: booking.id,
+        data: booking
+      }));
+  }
+};
 
 export const bookingChanged = createTrigger({
   auth: simplybookAuth,
@@ -10,19 +72,19 @@ export const bookingChanged = createTrigger({
   displayName: 'Booking Change',
   description:
     'Triggers when booking details change (date, time, service, provider, status, intake form answers)',
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
   props: {},
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
   async onEnable(context) {
-    const auth = context.auth as SimplybookAuth;
-    await subscribeWebhook(auth, context.webhookUrl, 'change');
-    await context.store.put('webhook_registered', true);
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await context.store.delete('webhook_registered');
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    const body = context.payload.body as any;
-    return [body];
+    return await pollingHelper.poll(polling, context);
   },
   sampleData: {
     id: 123456,

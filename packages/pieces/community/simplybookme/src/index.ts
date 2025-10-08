@@ -15,6 +15,7 @@ import { bookingChanged } from './lib/triggers/booking-changed';
 import { newBooking } from './lib/triggers/new-booking';
 import { newClient } from './lib/triggers/new-client';
 import { newInvoice } from './lib/triggers/new-invoice';
+import { newOffer } from './lib/triggers/new-offer';
 
 export const simplybookme = createPiece({
   displayName: 'Simplybook.me',
@@ -36,5 +37,5 @@ export const simplybookme = createPiece({
     findClient,
     findInvoice
   ],
-  triggers: [newBooking, bookingChanged, bookingCanceled, newClient, newInvoice]
+  triggers: [newBooking, bookingChanged, bookingCanceled, newClient, newInvoice, newOffer]
 });

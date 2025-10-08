@@ -1,27 +1,86 @@
 import {
   createTrigger,
+  PiecePropValueSchema,
   TriggerStrategy
 } from '@activepieces/pieces-framework';
-import { simplybookAuth, SimplybookAuth, subscribeWebhook } from '../common';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper
+} from '@activepieces/pieces-common';
+import { simplybookAuth, makeJsonRpcCall } from '../common';
+
+const polling: Polling<
+  PiecePropValueSchema<typeof simplybookAuth>,
+  Record<string, never>
+> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth }) => {
+    const authData = auth;
+
+    // Get canceled bookings - using booking_type filter
+    // This will return bookings with is_confirmed=0 and status='cancelled'
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    const dateFrom = thirtyDaysAgo.toISOString().split('T')[0];
+    const dateTo = today.toISOString().split('T')[0];
+
+    // Use created_date to track when cancellation happened, not booking date
+    const bookings = await makeJsonRpcCall<any[]>(authData, 'getBookings', [
+      { 
+        created_date_from: dateFrom, 
+        created_date_to: dateTo, 
+        booking_type: 'cancelled',
+        order: 'record_date'
+      }
+    ]);
+
+    // Handle object with numeric keys format
+    let bookingArray: any[] = [];
+    if (Array.isArray(bookings)) {
+      bookingArray = bookings;
+    } else if (bookings && typeof bookings === 'object') {
+      const keys = Object.keys(bookings);
+      if (keys.length > 0 && keys.every((k) => !isNaN(Number(k)))) {
+        bookingArray = Object.values(bookings);
+      }
+    }
+
+    // Sort by record_date (most recent first) to ensure proper ordering
+    return bookingArray
+      .sort((a, b) => {
+        const dateA = new Date(a.record_date || 0).getTime();
+        const dateB = new Date(b.record_date || 0).getTime();
+        return dateB - dateA;
+      })
+      .map((booking) => ({
+        // Use record_date + id as unique identifier for better deduplication
+        id: `${booking.record_date}_${booking.id}`,
+        data: booking
+      }));
+  }
+};
 
 export const bookingCanceled = createTrigger({
   auth: simplybookAuth,
   name: 'booking_canceled',
   displayName: 'Booking Cancellation',
   description: 'Triggers when a booking is canceled in SimplyBook.me',
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
   props: {},
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
   async onEnable(context) {
-    const auth = context.auth as SimplybookAuth;
-    await subscribeWebhook(auth, context.webhookUrl, 'cancel');
-    await context.store.put('webhook_registered', true);
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await context.store.delete('webhook_registered');
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    const body = context.payload.body as any;
-    return [body];
+    return await pollingHelper.poll(polling, context);
   },
   sampleData: {
     id: 123456,

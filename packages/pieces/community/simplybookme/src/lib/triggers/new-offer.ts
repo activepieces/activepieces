@@ -10,10 +10,7 @@ import {
 } from '@activepieces/pieces-common';
 import { simplybookAuth, makeJsonRpcCall } from '../common';
 
-const polling: Polling<
-  PiecePropValueSchema<typeof simplybookAuth>,
-  Record<string, never>
-> = {
+const polling: Polling<PiecePropValueSchema<typeof simplybookAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const authData = auth;
@@ -25,7 +22,7 @@ const polling: Polling<
     const dateFrom = lastFetch.toISOString().split('T')[0];
     const dateTo = now.toISOString().split('T')[0];
 
-    // Get new bookings using created_date to track when booking was created
+    // Get bookings with promo: false (offers/proposals)
     const bookings = await makeJsonRpcCall<any[]>(authData, 'getBookings', [
       {
         created_date_from: dateFrom,
@@ -46,32 +43,34 @@ const polling: Polling<
       }
     }
 
-    // Filter bookings that were created after last fetch
-    const filteredBookings = bookingArray.filter((booking) => {
+    // Filter bookings where promo === false (offers/proposals)
+    const filteredOffers = bookingArray.filter((booking) => {
       if (!booking.record_date) return false;
       const recordTime = new Date(booking.record_date).getTime();
-      return recordTime > lastFetchEpochMS;
+      // Check if promo is explicitly false (indicating an offer/proposal)
+      const isOffer = booking.promo === false;
+      return recordTime > lastFetchEpochMS && isOffer;
     });
 
     // Sort by record_date (most recent first)
-    return filteredBookings
+    return filteredOffers
       .sort((a, b) => {
         const dateA = new Date(a.record_date || 0).getTime();
         const dateB = new Date(b.record_date || 0).getTime();
         return dateB - dateA;
       })
-      .map((booking) => ({
-        epochMilliSeconds: new Date(booking.record_date).getTime(),
-        data: booking
+      .map((offer) => ({
+        epochMilliSeconds: new Date(offer.record_date).getTime(),
+        data: offer
       }));
   }
 };
 
-export const newBooking = createTrigger({
+export const newOffer = createTrigger({
   auth: simplybookAuth,
-  name: 'new_booking',
-  displayName: 'New Booking',
-  description: 'Triggers when a new booking is created in SimplyBook.me',
+  name: 'new_offer',
+  displayName: 'New Offer',
+  description: 'Triggers when a new offer (proposal or quote) is created (bookings with promo: false)',
   type: TriggerStrategy.POLLING,
   props: {},
   async test(context) {
@@ -87,37 +86,28 @@ export const newBooking = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
   sampleData: {
-    id: 123456,
-    code: 'abc123xyz',
-    is_confirmed: true,
-    start_datetime: '2025-10-05 14:00:00',
-    end_datetime: '2025-10-05 15:00:00',
-    location_id: 1,
-    category_id: 2,
-    service_id: 3,
-    provider_id: 4,
-    client_id: 5,
-    duration: 60,
-    service: {
-      id: 3,
-      name: 'Consultation',
-      description: 'Initial consultation',
-      price: 100.0,
-      currency: 'USD',
-      duration: 60
-    },
-    provider: {
-      id: 4,
-      name: 'John Smith',
-      email: 'john@example.com'
-    },
-    location: {
-      id: 1,
-      name: 'Main Office'
-    },
-    category: {
-      id: 2,
-      name: 'Medical Services'
-    }
+    id: 2,
+    record_date: '2025-10-08 09:22:32',
+    start_date: '2025-10-08 15:00:00',
+    end_date: '2025-10-08 16:00:00',
+    client_timezone: null,
+    unit_id: '3',
+    text: 'client fort',
+    client: 'client fort',
+    unit: 'providertest',
+    unit_email: 'provider@example.com',
+    event: 'Consultation',
+    event_id: '2',
+    is_confirm: '1',
+    client_id: '1',
+    client_phone: '+1234567890',
+    client_email: 'client@example.com',
+    offset: '0',
+    comment: 'Offer for consultation service',
+    code: '23lt1xy7',
+    event_duration: '60',
+    promo: false,
+    promo_code: 'OFFER2025',
+    discount: 10.00
   }
 });
