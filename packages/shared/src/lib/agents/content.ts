@@ -3,10 +3,12 @@ import { DiscriminatedUnion, Nullable } from '../common/base-model'
 
 export enum AgentPieceProps {
     MCP_ID = 'mcpId',
-    MCP_TOOLS = 'mcpTools',
+    AGENT_TOOLS = 'agentTools',
     STRUCTURED_OUTPUT = 'structuredOutput',
     PROMPT = 'prompt',
-    MAX_STEPS = 'maxSteps'
+    MAX_STEPS = 'maxSteps',
+    AI_PROVIDER = 'aiProvider',
+    AI_MODEL = 'aiModel'
 }
 
 export enum ContentBlockType {

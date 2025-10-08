@@ -134,7 +134,7 @@ const selectFormComponentForProperty = (
   props: selectFormComponentForPropertyParams,
 ) => {
   switch (props.propertyName) {
-    case AgentPieceProps.MCP_TOOLS:
+    case AgentPieceProps.AGENT_TOOLS:
       return (
         <AgentToolsSettings field={props.field} />
     );

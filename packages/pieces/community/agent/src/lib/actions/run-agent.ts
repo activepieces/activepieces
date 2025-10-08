@@ -1,8 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { AIErrorResponse, AIUsageFeature, createAIModel } from '@activepieces/common-ai'
-import { agentCommon } from '../common';
+import { AIErrorResponse } from '@activepieces/common-ai'
+import { agentCommon, ProviderModelMap, AIProvider, AI_MODELS_BY_PROVIDER } from '../common';
 import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
-import { openai } from '@ai-sdk/openai';
 import { APICallError, stepCountIs, streamText } from 'ai';
 
 export const runAgent = createAction({
@@ -24,7 +23,7 @@ export const runAgent = createAction({
       description: 'Mcp id',
       required: true,
     }),
-    [AgentPieceProps.MCP_TOOLS]: Property.Array({
+    [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'MCP Tools',
       required: true
     }),
@@ -42,10 +41,40 @@ export const runAgent = createAction({
       description: 'The numbder of interations the agent can do',
       required: true,
       defaultValue: 20,
+    }),
+    [AgentPieceProps.AI_PROVIDER]: Property.StaticDropdown({
+      displayName: 'AI Provider',
+      required: true,
+      description: 'Choose your AI provider',
+      options: {
+        options: Object.values(AIProvider).map((provider) => ({
+          label: provider.charAt(0).toUpperCase() + provider.slice(1),
+          value: provider,
+        })),
+      },
+    }),
+    [AgentPieceProps.AI_MODEL]: Property.Dropdown({
+      displayName: 'AI Model',
+      required: true,
+      description: 'Select the model based on the chosen provider',
+      refreshers: ['aiProvider'],
+      async options({ aiProvider }) {
+        if (!aiProvider) {
+          return {
+            options: [],
+            disabled: true,
+            placeholder: 'Select a provider first',
+          };
+        }
+
+        return {
+          options: AI_MODELS_BY_PROVIDER[aiProvider as AIProvider],
+        };
+      },
     })
   },
   async run(context) {
-    const { mcpId, prompt, maxSteps, mcpTools, structuredOutput } = context.propsValue
+    const { mcpId, prompt, maxSteps, agentTools, structuredOutput, aiModel, aiProvider } = context.propsValue
 
     const { server } = context
 
@@ -61,21 +90,19 @@ export const runAgent = createAction({
         outputFields: structuredOutput as AgentOutputField[],
         publicUrl: server.publicUrl,
         token: server.token,
-        tools: mcpTools as McpTool[],
+        tools: agentTools as McpTool[],
         mcp
     })
 
-    const baseURL = `${server.apiUrl}v1/ai-providers/proxy/openai`
-    const model = createAIModel({
-      providerName: 'openai',
-      modelInstance: openai('gpt-4.1'),
-      engineToken: server.token,
+    const baseURL = `${server.apiUrl}v1/ai-providers/proxy/${aiProvider}`
+    const model = agentCommon.createModelForProvider({
+      provider: aiProvider as AIProvider,
+      model: aiModel as ProviderModelMap[AIProvider],
+      token: server.token,
       baseURL,
-      metadata: {
-        feature: AIUsageFeature.AGENTS,
-        agentid: mcpId,
-      },
-    })
+      agentId: mcpId,
+    });
+
 
     const systemPrompt = agentCommon.constructSystemPrompt(prompt)
     const { fullStream } = streamText({
