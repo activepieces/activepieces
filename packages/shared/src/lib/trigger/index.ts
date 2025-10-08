@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
+import { Flow } from '../flows'
 
 
 export enum TriggerStrategy {
@@ -47,3 +48,11 @@ export const TriggerSource = Type.Object({
 })
 
 export type TriggerSource = Static<typeof TriggerSource>
+
+export const PopulatedTriggerSource = Type.Composite([
+    TriggerSource,
+    Type.Object({
+        flow: Flow,
+    }),
+])
+export type PopulatedTriggerSource = Static<typeof PopulatedTriggerSource>
