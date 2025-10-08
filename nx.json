@@ -77,7 +77,7 @@
       }
     }
   },
-  "nxCloudAccessToken": "Y2Y3YzhhNjYtZWI4OC00M2Y0LWIwY2ItMWJhNTBjYzA3ZDA0fHJlYWQtb25seQ==",
+  "nxCloudAccessToken": "NDc4YTNmZmItZjY3Zi00Njk3LWFkNzktZDY1ZDUwODE0MGNhfHJlYWQ=",
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",

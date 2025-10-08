@@ -11,7 +11,7 @@ import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/shared';
 import {parse} from 'csv-parse/sync';
 import { commonProps } from '../common/props';
 
@@ -124,8 +124,8 @@ export const insertMultipleRowsAction = createAction({
 
 							for (const key in firstRow) {
 								columns[key] = Property.ShortText({
-									displayName: firstRow[key].toString(),
-									description: firstRow[key].toString(),
+									displayName: firstRow[key],
+									description: firstRow[key],
 									required: false,
 									defaultValue: '',
 								});
