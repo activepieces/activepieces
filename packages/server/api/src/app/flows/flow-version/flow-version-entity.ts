@@ -1,4 +1,4 @@
-import { Flow, FlowVersion, User } from '@activepieces/shared'
+import { File, Flow, FlowVersion, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -11,6 +11,7 @@ import {
 export type FlowVersionSchema = {
     flow: Flow
     updatedByUser: User
+    backupFile: File
 } & FlowVersion
 
 export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
@@ -49,6 +50,11 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         state: {
             type: String,
         },
+        backupFileId: {
+            ...ApIdSchema, 
+            nullable: true,
+            unique: true,
+        },
     },
     indices: [
         {
@@ -81,6 +87,16 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             joinColumn: {
                 name: 'flowId',
                 foreignKeyConstraintName: 'fk_flow_version_flow',
+            },
+        },
+        backupFile: {
+            type: 'one-to-one',
+            target: 'file',
+            cascade: true,
+            onDelete: 'SET NULL',
+            joinColumn: {
+                name: 'backupFileId',
+                foreignKeyConstraintName: 'fk_flow_version_backup_file',
             },
         },
     },
