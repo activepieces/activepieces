@@ -1,7 +1,7 @@
 import { FileCompression, FileType, flowMigrations, FlowVersion, LATEST_SCHEMA_VERSION, spreadIfDefined } from '@activepieces/shared'
+import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { flowVersionRepo } from './flow-version.service'
-import { fileService } from '../../file/file.service'
 
 const log = system.globalLogger()
 

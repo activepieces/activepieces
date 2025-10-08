@@ -464,7 +464,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeleteHandshakeFromTriggerSource1758108135968,
         AddIndexForAppEvents1759392852559,
         RemoveFlowRunDisplayName1759772332795,
-        AddFlowVersionBackupFile1759950638488
+        AddFlowVersionBackupFile1759950638488,
     ]
 
     const edition = system.getEdition()

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInterface {
     name = 'AddFlowVersionBackupFileSqlite1759950921336'
@@ -6,10 +6,10 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_schema_version"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_flow_id_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow_version" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -30,7 +30,7 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow_version"(
                     "id",
@@ -59,26 +59,26 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 "connectionIds",
                 "agentIds"
             FROM "flow_version"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow_version"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow_version"
                 RENAME TO "flow_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_schema_version" ON "flow_version" ("schemaVersion")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id_created_desc" ON "flow_version" ("flowId", "created")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_schema_version"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_flow_id_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow_version" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -101,7 +101,7 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                     CONSTRAINT "fk_flow_version_backup_file" FOREIGN KEY ("backupFileId") REFERENCES "file" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow_version"(
                     "id",
@@ -132,33 +132,33 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 "agentIds",
                 "backupFileId"
             FROM "flow_version"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow_version"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow_version"
                 RENAME TO "flow_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_schema_version" ON "flow_version" ("schemaVersion")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id_created_desc" ON "flow_version" ("flowId", "created")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_flow_id_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_schema_version"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_version"
                 RENAME TO "temporary_flow_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow_version" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -179,7 +179,7 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow_version"(
                     "id",
@@ -210,26 +210,26 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 "agentIds",
                 "backupFileId"
             FROM "temporary_flow_version"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id_created_desc" ON "flow_version" ("flowId", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_schema_version" ON "flow_version" ("schemaVersion")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_flow_id_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_version_schema_version"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_version"
                 RENAME TO "temporary_flow_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow_version" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -248,7 +248,7 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow_version"(
                     "id",
@@ -277,16 +277,16 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 "connectionIds",
                 "agentIds"
             FROM "temporary_flow_version"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id_created_desc" ON "flow_version" ("flowId", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_schema_version" ON "flow_version" ("schemaVersion")
-        `);
+        `)
     }
 
 }

@@ -317,7 +317,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeleteHandshakeFromTriggerSourceSqlite1758108281602,
         AddIndexForAppEvents1759392852559,
         RemoveDisplayNameSqlite1759876386359,
-        AddFlowVersionBackupFileSqlite1759950921336
+        AddFlowVersionBackupFileSqlite1759950921336,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
