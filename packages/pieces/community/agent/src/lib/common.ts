@@ -4,8 +4,7 @@ import { type Schema as AiSchema, experimental_createMCPClient, tool } from "ai"
 import { StatusCodes } from "http-status-codes";
 import z, { ZodRawShape, ZodSchema } from "zod";
 
-async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
-    const outputFields = agent.outputFields ?? []
+async function getStructuredOutput(outputFields: AgentOutputField[]): Promise<ZodSchema> {
     const shape: ZodRawShape = {}
 
     for (const field of outputFields) {
@@ -73,10 +72,11 @@ export const agentCommon = {
   async agentTools(params: AgentToolsParams) {
     const mcpClient = await getMcpClient(params)
     const builtInTools = await buildInternalTools(params)
-    const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
+    const agentTools = isNil(mcpClient) ? {} : params.tools
+
     const tools = {
         ...builtInTools,
-        ...mcpTools,
+        ...agentTools,
     }
     return {
         tools: async () => {
@@ -197,8 +197,9 @@ type GetMcp = {
 }
 
 type AgentToolsParams = {
+    outputFields: AgentOutputField[]
     publicUrl: string
     token: string
-    mcp: McpWithTools
-    agent: Agent
+    mcp: McpWithTools;
+    tools: McpTool[]
 }

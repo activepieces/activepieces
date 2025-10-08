@@ -1,7 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { AIErrorResponse, AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { agentCommon } from '../common';
-import {  AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
+import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { openai } from '@ai-sdk/openai';
 import { APICallError, stepCountIs, streamText } from 'ai';
 
@@ -24,11 +24,11 @@ export const runAgent = createAction({
       description: 'Mcp id',
       required: true,
     }),
-    [AgentPieceProps.MCP_TOOLS]: Property.Json({
+    [AgentPieceProps.MCP_TOOLS]: Property.Array({
       displayName: 'MCP Tools',
       required: true
     }),
-    [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Json({
+    [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
       required: true
     }),
@@ -45,9 +45,7 @@ export const runAgent = createAction({
     })
   },
   async run(context) {
-    const { mcpId, prompt, maxSteps, mcpTools } = context.propsValue
-
-    console.log(mcpTools)
+    const { mcpId, prompt, maxSteps, mcpTools, structuredOutput } = context.propsValue
 
     const { server } = context
 
@@ -59,12 +57,13 @@ export const runAgent = createAction({
     }
 
     const mcp = await agentCommon.getMcp({ mcpId: mcpId, token: server.token, apiUrl: server.publicUrl })
-    // const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
-    //     agent,
-    //     publicUrl: server.publicUrl,
-    //     token: server.token,
-    //     mcp,
-    // })
+    const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
+        outputFields: structuredOutput as AgentOutputField[],
+        publicUrl: server.publicUrl,
+        token: server.token,
+        tools: mcpTools as McpTool[],
+        mcp
+    })
 
     const baseURL = `${server.apiUrl}v1/ai-providers/proxy/openai`
     const model = createAIModel({
@@ -84,7 +83,7 @@ export const runAgent = createAction({
       system: systemPrompt,
       prompt: prompt,
       stopWhen: stepCountIs(maxSteps),
-      // tools: await agentToolInstance.tools()
+      tools: await agentToolInstance.tools()
     })
 
     let currentText = ''
