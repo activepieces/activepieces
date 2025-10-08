@@ -53,7 +53,6 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         backupFileId: {
             ...ApIdSchema, 
             nullable: true,
-            unique: true,
         },
     },
     indices: [
@@ -90,7 +89,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             },
         },
         backupFile: {
-            type: 'one-to-one',
+            type: 'many-to-one',
             target: 'file',
             cascade: true,
             onDelete: 'SET NULL',

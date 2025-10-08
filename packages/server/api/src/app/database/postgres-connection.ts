@@ -271,7 +271,7 @@ import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres
 import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
 import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759772332795-RemoveFlowRunDisplayName'
-import { AddFlowVersionBackupFile1759950638488 } from './migration/postgres/1759950638488-AddFlowVersionBackupFile'
+import { AddFlowVersionBackupFile1759960667140 } from './migration/postgres/1759960667140-AddFlowVersionBackupFile'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -464,7 +464,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeleteHandshakeFromTriggerSource1758108135968,
         AddIndexForAppEvents1759392852559,
         RemoveFlowRunDisplayName1759772332795,
-        AddFlowVersionBackupFile1759950638488,
+        AddFlowVersionBackupFile1759960667140,
     ]
 
     const edition = system.getEdition()

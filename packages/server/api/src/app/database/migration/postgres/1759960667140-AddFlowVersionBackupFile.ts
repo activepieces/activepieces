@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddFlowVersionBackupFile1759950638488 implements MigrationInterface {
-    name = 'AddFlowVersionBackupFile1759950638488'
+export class AddFlowVersionBackupFile1759960667140 implements MigrationInterface {
+    name = 'AddFlowVersionBackupFile1759960667140'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -9,8 +9,8 @@ export class AddFlowVersionBackupFile1759950638488 implements MigrationInterface
             ADD "backupFileId" character varying(21)
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow_version"
-            ADD CONSTRAINT "UQ_40d71d5e05a56b78829ecb53da9" UNIQUE ("backupFileId")
+            ALTER TABLE "platform_plan"
+            ALTER COLUMN "stripeBillingCycle" DROP DEFAULT
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_version"
@@ -24,7 +24,9 @@ export class AddFlowVersionBackupFile1759950638488 implements MigrationInterface
             ALTER TABLE "flow_version" DROP CONSTRAINT "fk_flow_version_backup_file"
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow_version" DROP CONSTRAINT "UQ_40d71d5e05a56b78829ecb53da9"
+            ALTER TABLE "platform_plan"
+            ALTER COLUMN "stripeBillingCycle"
+            SET DEFAULT 'monthly'
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_version" DROP COLUMN "backupFileId"

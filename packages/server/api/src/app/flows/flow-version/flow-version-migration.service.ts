@@ -23,6 +23,10 @@ export const flowVersionMigrationService = {
             type: FileType.FLOW_VERSION_BACKUP,
             data,
             size: data.length,
+            metadata: {
+                flowVersionId: flowVersion.id,
+                ...spreadIfDefined('schemaVersion', flowVersion.schemaVersion),
+            },
             compression: FileCompression.NONE,
         })
         await flowVersionRepo().update(flowVersion.id, {

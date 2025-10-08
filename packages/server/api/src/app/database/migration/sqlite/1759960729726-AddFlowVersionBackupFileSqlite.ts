@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInterface {
-    name = 'AddFlowVersionBackupFileSqlite1759950921336'
+export class AddFlowVersionBackupFileSqlite1759960729726 implements MigrationInterface {
+    name = 'AddFlowVersionBackupFileSqlite1759960729726'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -25,7 +25,6 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 "connectionIds" text NOT NULL,
                 "agentIds" text NOT NULL,
                 "backupFileId" varchar(21),
-                CONSTRAINT "UQ_2fbfdc98015aa910576a1b404d6" UNIQUE ("backupFileId"),
                 CONSTRAINT "fk_flow_version_flow" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
@@ -94,7 +93,6 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 "connectionIds" text NOT NULL,
                 "agentIds" text NOT NULL,
                 "backupFileId" varchar(21),
-                CONSTRAINT "UQ_2fbfdc98015aa910576a1b404d6" UNIQUE ("backupFileId"),
                 CONSTRAINT "fk_flow_version_flow" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION,
@@ -174,7 +172,6 @@ export class AddFlowVersionBackupFileSqlite1759950921336 implements MigrationInt
                 "connectionIds" text NOT NULL,
                 "agentIds" text NOT NULL,
                 "backupFileId" varchar(21),
-                CONSTRAINT "UQ_2fbfdc98015aa910576a1b404d6" UNIQUE ("backupFileId"),
                 CONSTRAINT "fk_flow_version_flow" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
