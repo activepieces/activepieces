@@ -14,7 +14,7 @@ import { JobType } from '../workers/queue/queue-manager'
 
 const tracer = trace.getTracer('webhook-handler')
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
-
+const fs = require('fs');
 export enum WebhookFlowVersionToRun {
     LOCKED_FALL_BACK_TO_LATEST = 'locked_fall_back_to_latest',
     LATEST = 'latest',
@@ -105,19 +105,7 @@ export const webhookHandler = {
             try {
                 const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure } = params
 
-                if (saveSampleData) {
-                    rejectedPromiseHandler(savePayload({
-                        flow,
-                        logger,
-                        webhookRequestId,
-                        payload,
-                        flowVersionIdToRun,
-                        runEnvironment,
-                        parentRunId,
-                        failParentOnFailure,
-                    }), logger)
-                }
-
+     
                 const disabledFlow = flow.status !== FlowStatus.ENABLED && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
 
                 if (disabledFlow) {
@@ -129,7 +117,9 @@ export const webhookHandler = {
                     }
                 }
 
+
                 const createdRun = await flowRunService(logger).start({
+                    now: params.now,
                     environment: runEnvironment,
                     flowId: flow.id,
                     flowVersionId: flowVersionIdToRun,
@@ -195,6 +185,7 @@ type AsyncWebhookParams = {
 
 
 type SyncWebhookParams = {
+    now: number
     payload: unknown
     saveSampleData: boolean
     projectId: ProjectId

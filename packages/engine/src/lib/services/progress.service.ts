@@ -28,21 +28,7 @@ process.on('SIGINT', () => {
 
 export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
-        return updateLock.runExclusive(async () => {
-            if (lastScheduledUpdateId) {
-                clearTimeout(lastScheduledUpdateId)
-            }
-
-            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD) || isGraceShutdownSignalReceived
-            if (shouldUpdateNow || params.updateImmediate) {
-                await sendUpdateRunRequest(params)
-                return
-            }
-
-            lastScheduledUpdateId = setTimeout(async () => {
-                await sendUpdateRunRequest(params)
-            }, DEBOUNCE_THRESHOLD)
-        })
+       
     },
     sendFlowResponse: async (engineConstants: EngineConstants, request: SendFlowResponseRequest): Promise<void> => {
         await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-flow-response`).toString(), {

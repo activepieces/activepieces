@@ -28,19 +28,7 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     },
                 }, async (span) => {
                     try {
-                        const preHandler = preHandlers[jobData.jobType]
-                        const preHandlerResult = await preHandler.handle(jobData, attempsStarted, log)
-                        if (preHandlerResult.shouldSkip) {
-                            log.debug({
-                                message: 'Skipping job execution',
-                                reason: preHandlerResult.reason,
-                                jobId,
-                                queueName,
-                            })
-                            span.setAttribute('job.skipped', true)
-                            span.setAttribute('job.skipReason', preHandlerResult.reason ?? 'unknown')
-                            return
-                        }
+               
                         let workerId: string | undefined
                         try {
                             const engineToken = await accessTokenManager.generateEngineToken({

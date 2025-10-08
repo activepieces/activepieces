@@ -71,6 +71,7 @@ export const machineService = (log: FastifyBaseLogger) => {
             ip,
             freeSandboxes,
         }: OnHeartbeatParams): Promise<WorkerMachineHealthcheckResponse> {
+            console.log('ON HEARTBEAT ' + workerId)
             await machineRouting.onHeartbeat({
                 workerId,
                 totalSandboxes,
