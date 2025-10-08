@@ -22,7 +22,7 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents 
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js"
 
       - run: npm ci
 
