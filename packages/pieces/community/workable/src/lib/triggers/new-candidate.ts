@@ -9,6 +9,14 @@ interface WebhookInformation {
     webhookId: string;
 }
 
+interface WorkableWebhookPayload {
+    data: any;
+    event_type: string;
+    fired_at: string;
+    id: string;
+    resource_type: string;
+}
+
 export const newCandidate = createTrigger({
     auth: workableAuth,
     name: 'newCandidate',
@@ -111,6 +119,7 @@ export const newCandidate = createTrigger({
         return candidates;
     },
     async run(context){
-        return [context.payload.body]
+        const payload = context.payload.body as WorkableWebhookPayload;
+        return [payload.data]
     }
 })
