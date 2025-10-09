@@ -1219,6 +1219,9 @@
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
       ],
+      "@activepieces/piece-workable": [
+        "packages/pieces/community/workable/src/index.ts"
+      ],
       "@activepieces/piece-wrike": [
         "packages/pieces/community/wrike/src/index.ts"
       ],
