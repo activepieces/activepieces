@@ -119,7 +119,6 @@ export const newEmail = createTrigger({
     messageId:
       '<CxE49ifJT5YZN9OE2O6j6Ef+BYgkKWq7X-deg483GkM1ui1xj3g@mail.gmail.com>',
     uid: 123,
-    uid: 123,
   },
 });
 
