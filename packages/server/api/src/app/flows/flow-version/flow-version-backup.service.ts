@@ -29,7 +29,7 @@ export const flowVersionBackupService = {
         log.info({
             flowVersionId: flowVersion.id,
             schemaVersion: flowVersion.schemaVersion,
-        }, "Stored backup version for flow version")
+        }, 'Stored backup version for flow version')
 
         return file.id
     },
@@ -59,7 +59,7 @@ export const flowVersionBackupService = {
         log.info({
             flowVersionId: flowVersion.id,
             schemaVersion,
-        }, "Backup version retrieved for flow version")
+        }, 'Backup version retrieved for flow version')
         return backupFlowVersion
     },
 }
