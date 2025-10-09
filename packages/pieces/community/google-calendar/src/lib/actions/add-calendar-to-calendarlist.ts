@@ -10,7 +10,11 @@ export const addCalendarToCalendarlist = createAction({
   displayName: 'Add Calendar to calendarList',
   description: "Adds other people's calendars to your calendarList",
   props: {
-    id: googleCalendarCommon.calendarDropdown(),
+    id: Property.ShortText({
+      displayName: "Calendar Id",
+      description: "Find calendar id by going to calendar settings",
+      required: true
+    })
   },
   async run(context) {
     
