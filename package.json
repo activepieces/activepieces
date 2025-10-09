@@ -146,6 +146,7 @@
     "axios-retry": "4.4.1",
     "basic-ftp": "5.0.5",
     "bcrypt": "6.0.0",
+    "bloom-filters": "^3.0.4",
     "boring-avatars": "1.11.2",
     "buffer": "6.0.3",
     "bullmq": "5.28.1",
