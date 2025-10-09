@@ -16,7 +16,7 @@ export const workableCommon = {
                 Accept: 'application/json',
             },
             body: {
-                webhookUrl,
+                target: webhookUrl,
                 event,
                 args,
             }
