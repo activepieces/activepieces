@@ -27,6 +27,7 @@ import {
     SampleDataFileType,
     SeekPage,
     spreadIfDefined,
+    UpdateLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
@@ -255,7 +256,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return flowRun
     },
 
-    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
+    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength, updateLogsBehavior }: UpdateLogs): Promise<void> {
         const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
         if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
             const errors = new Error(
@@ -264,31 +265,29 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             exceptionHandler.handle(errors, log)
             throw errors
         }
-        const newLogsFileId = logsFileId ?? apId()
-        await fileService(log).save({
-            fileId: newLogsFileId,
-            projectId,
-            data: executionState ?? null,
-            size: executionStateContentLength,
-            type: FileType.FLOW_RUN_LOG,
-            compression: FileCompression.NONE,
-            metadata: {
-                flowRunId,
+
+        if (updateLogsBehavior === UpdateLogsBehavior.UPDATE_LOGS && !isNil(executionState)) {
+            const newLogsFileId = logsFileId ?? apId()
+            await fileService(log).save({
+                fileId: newLogsFileId,
                 projectId,
-            },
-        })
-        await flowRunRepo().update(flowRunId, {
-            logsFileId: newLogsFileId,
-        })
-    },
-    async updateLogsSizeAndAttachLogsFile({ flowRunId, logsFileId, executionStateContentLength }: UpdateLogsSizeAndAttachLogsFileParams): Promise<void> {
-        await flowRunRepo().update(flowRunId, {
-            logsFileId,
-        })
-        await fileService(log).updateSize({
-            fileId: logsFileId,
-            size: executionStateContentLength,
-        })
+                data: executionState,
+                size: executionStateContentLength,
+                type: FileType.FLOW_RUN_LOG,
+                compression: FileCompression.NONE,
+                metadata: {
+                    flowRunId,
+                    projectId,
+                },
+            })
+        }
+        else if (updateLogsBehavior === UpdateLogsBehavior.UPDATE_LOGS_SIZE) {
+            assertNotNullOrUndefined(logsFileId, 'logsFileId is required for UPDATE_LOGS_SIZE')
+            await fileService(log).updateSize({
+                fileId: logsFileId,
+                size: executionStateContentLength,
+            })
+        }
     },
     async start({
         flowId,
@@ -597,11 +596,15 @@ function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: st
 
 
 
-const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string }> => {
+const createLogsUploadFile = async (params: CreateLogsUploadFileParams, log: FastifyBaseLogger): Promise<{ uploadUrl?: string, fileId: string }> => {
     const file = await getOrCreateLogsFile(params, log)
-    assertNotNullOrUndefined(file.s3Key, 's3Key')
-    const uploadUrl = await s3Helper(log).putS3SignedUrl(file.s3Key)
-    return { uploadUrl, fileId: file.id }
+
+    if (USE_SIGNED_URL) {
+        assertNotNullOrUndefined(file.s3Key, 's3Key')
+        const uploadUrl = await s3Helper(log).putS3SignedUrl(file.s3Key)
+        return { uploadUrl, fileId: file.id }
+    }
+    return { fileId: file.id }
 }
 
 async function getOrCreateLogsFile(params: GetOrCreateLogsFileParams, log: FastifyBaseLogger): Promise<File> {
@@ -632,16 +635,15 @@ type GetOrCreateLogsFileParams = {
 
 
 async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
-    let logsUploadUrl: string | undefined
-    let logsFileId: string | undefined = params.flowRun.logsFileId ?? undefined
-    if (USE_SIGNED_URL) {
-        const logsUploadResult = await createLogsUploadUrl({
-            flowRun: params.flowRun,
-            projectId: params.flowRun.projectId,
-        }, log)
-        logsUploadUrl = logsUploadResult.uploadUrl
-        logsFileId = logsUploadResult.fileId
-    }
+    const logsUploadFile = await createLogsUploadFile({
+        flowRun: params.flowRun,
+        projectId: params.flowRun.projectId,
+    }, log)
+    
+    await flowRunRepo().update(params.flowRun.id, {
+        logsFileId: logsUploadFile.fileId,
+    })
+    
     const platformId = await projectService.getPlatformId(params.flowRun.projectId)
 
     const traceContext: Record<string, string> = {}
@@ -665,12 +667,16 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             progressUpdateType: params.progressUpdateType,
             stepNameToTest: params.flowRun.stepNameToTest,
             sampleData: params.sampleData,
-            logsUploadUrl,
-            logsFileId,
+            logsUploadUrl: logsUploadFile.uploadUrl,
+            logsFileId: logsUploadFile.fileId,
             traceContext,
         },
     })
-    return params.flowRun
+
+    return {
+        ...params.flowRun,
+        logsFileId: logsUploadFile.fileId,
+    }
 }
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>) {
@@ -694,16 +700,17 @@ async function create(params: CreateParams): Promise<FlowRun> {
     })
 }
 
-type CreateLogsUploadUrlParams = {
+type CreateLogsUploadFileParams = {
     flowRun: FlowRun
     projectId: string
 }
 
 type UpdateLogs = {
+    updateLogsBehavior: UpdateLogsBehavior
     flowRunId: FlowRunId
     logsFileId: string | undefined
     projectId: ProjectId
-    executionStateString: string | undefined
+    executionStateString?: string
     executionStateContentLength: number
 }
 
@@ -721,14 +728,6 @@ type FinishParams = {
     tags: string[]
     failedStepName?: string | undefined
 }
-
-type UpdateLogsSizeAndAttachLogsFileParams = {
-    flowRunId: FlowRunId
-    logsFileId: string
-    executionStateContentLength: number
-}
-
-
 
 type CreateParams = {
     projectId: ProjectId

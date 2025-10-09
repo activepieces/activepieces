@@ -1,4 +1,4 @@
-import { ExecuteFlowJobData, FlowRunStatus, JobData } from '@activepieces/shared'
+import { ExecuteFlowJobData, FlowRunStatus, JobData, UpdateLogsBehavior } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectLimitsService } from '../../../ee/projects/project-plan/project-plan.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
@@ -71,5 +71,6 @@ async function saveTriggerPayloadAndMarkQuotaExceeded(oneTimeJob: ExecuteFlowJob
         projectId,
         executionStateString: payloadBuffer,
         executionStateContentLength: payloadBuffer.length,
+        updateLogsBehavior: UpdateLogsBehavior.UPDATE_LOGS,
     })
 }
