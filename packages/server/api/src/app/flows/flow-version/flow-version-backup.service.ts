@@ -26,7 +26,11 @@ export const flowVersionBackupService = {
             compression: FileCompression.NONE,
         })
 
-        log.info(`Stored backup version ${flowVersion.schemaVersion} for flow version ${flowVersion.id}`)
+        log.info({
+            flowVersionId: flowVersion.id,
+            schemaVersion: flowVersion.schemaVersion,
+        }, "Stored backup version for flow version")
+
         return file.id
     },
     
@@ -52,7 +56,10 @@ export const flowVersionBackupService = {
         
         const backupFlowVersion: FlowVersion = JSON.parse(fileData.data.toString('utf-8'))
 
-        log.info(`Backup version ${schemaVersion} retrieved for flow version ${flowVersion.id}`)
+        log.info({
+            flowVersionId: flowVersion.id,
+            schemaVersion,
+        }, "Backup version retrieved for flow version")
         return backupFlowVersion
     },
 }
