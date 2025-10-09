@@ -4,7 +4,6 @@ import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
-import { flowService } from '../flows/flow/flow.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
@@ -39,9 +38,13 @@ export const webhookService = {
                 const webhookRequestId = apId()
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-                const flow = await flowService(pinoLogger).getOneById(flowId)
 
-                if (isNil(flow)) {
+                const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
+                    flowId,
+                    simulate: saveSampleData,
+                })
+
+                if (isNil(triggerSourceResult)) {
                     pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
                     return {
@@ -50,6 +53,8 @@ export const webhookService = {
                         headers: {},
                     }
                 }
+
+                const { flow, ...triggerSource } = triggerSourceResult
 
                 span.setAttribute('webhook.flowFound', true)
                 span.setAttribute('webhook.projectId', flow.projectId)
@@ -66,12 +71,6 @@ export const webhookService = {
                         },
                     })
                 }
-
-                const triggerSource = await triggerSourceService(pinoLogger).getByFlowId({
-                    flowId: flow.id,
-                    projectId: flow.projectId,
-                    simulate: saveSampleData,
-                })
 
                 const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
                     payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
