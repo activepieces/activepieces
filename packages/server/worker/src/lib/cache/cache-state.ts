@@ -49,15 +49,15 @@ export const cacheState = (folderPath: string) => {
                 await this.setCache(cacheAlias, state)
                 return state
             }
+            const cache = await getCache(folderPath)
+            const cachedState = cache[cacheAlias]
+            if (!isNil(cachedState)) {
+                return cachedState
+            }
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
-                const cache = await getCache(folderPath)
-                const cachedState = cache[cacheAlias]
-                if (!isNil(cachedState)) {
-                    return cachedState
-                }
-                bloomFilter.add(cacheAlias)
                 cache[cacheAlias] = state
+                bloomFilter.add(cacheAlias)
                 await saveToCache(JSON.stringify(cache), folderPath, cachePath(folderPath))
                 await saveToCache(JSON.stringify(bloomFilter.saveAsJSON()), folderPath, piecesBloomFilterPath(folderPath))
                 return state
