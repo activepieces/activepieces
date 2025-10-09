@@ -18,7 +18,7 @@ import { newInvoice } from './lib/triggers/new-invoice';
 import { newOffer } from './lib/triggers/new-offer';
 
 export const simplybookme = createPiece({
-  displayName: 'Simplybook.me',
+  displayName: 'SimplyBook.me',
   auth: simplybookAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/simplybookme.png',
