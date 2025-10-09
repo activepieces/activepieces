@@ -26,17 +26,14 @@ export const outgoingWebhookRepo = repoFactory<OutgoingWebhookSchema>(
 
 export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
   create: async (params: CreateParams): Promise<OutgoingWebhook> => {
-  create: async (
-    request: CreateOutgoingWebhookRequestBody,
-    platformId: string
-  ): Promise<OutgoingWebhook> => {
+    assertUrlIsExternal(params.url)
     return outgoingWebhookRepo().save({
       id: apId(),
       ...params,
     });
   },
   update: async ({ id, platformId, url, events, scope, projectId }: UpdateParams): Promise<OutgoingWebhook> => {
-  update: async ({ id, platformId, request }: UpdateParams): Promise<OutgoingWebhook> => {
+    if (url) assertUrlIsExternal(url)
     await outgoingWebhookRepo().update({ id, platformId }, {
       ...spreadIfDefined('url', url),
       ...spreadIfDefined('events', events),
@@ -131,6 +128,19 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
       })
   },
 });
+
+const assertUrlIsExternal = (url: string) => {
+    const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
+    assertNotNullOrUndefined(frontendUrl, 'frontendUrl')
+    if (new URL(url).host === new URL(frontendUrl).host) {
+      throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+          message: 'URL is not allowed',
+        },
+      })
+    }
+}
 
 export const createMockAuditEvent = (): FlowCreatedEvent => {
   return {
