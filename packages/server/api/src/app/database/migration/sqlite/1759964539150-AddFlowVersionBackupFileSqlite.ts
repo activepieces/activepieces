@@ -24,7 +24,7 @@ export class AddFlowVersionBackupFileSqlite1759964539150 implements MigrationInt
                 "schemaVersion" varchar,
                 "connectionIds" text NOT NULL,
                 "agentIds" text NOT NULL,
-                "backupsBySchemaVersion" text,
+                "backupFiles" text,
                 CONSTRAINT "fk_flow_version_flow" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION

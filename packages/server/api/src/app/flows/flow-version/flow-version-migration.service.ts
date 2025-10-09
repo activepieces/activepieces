@@ -18,29 +18,33 @@ export const flowVersionMigrationService = {
         if (flowVersion.schemaVersion === migratedFlowVersion.schemaVersion) {
             return flowVersion
         }
-        const data = Buffer.from(JSON.stringify(flowVersion))
-        const file = await fileService(log).save({
-            type: FileType.FLOW_VERSION_BACKUP,
-            data,
-            size: data.length,
-            metadata: {
-                flowVersionId: flowVersion.id,
-                ...spreadIfDefined('schemaVersion', flowVersion.schemaVersion),
-            },
-            compression: FileCompression.NONE,
-        })
-        const backupsBySchemaVersion = flowVersion.backupsBySchemaVersion ?? {}
+        const backupFiles = flowVersion.backupFiles ?? {}
         if (!isNil(flowVersion.schemaVersion)) {
-            backupsBySchemaVersion[flowVersion.schemaVersion] = file.id
+            backupFiles[flowVersion.schemaVersion] = await storeBackupFile(flowVersion)
         }
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,
             ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
             connectionIds: migratedFlowVersion.connectionIds,
             agentIds: migratedFlowVersion.agentIds,
-            backupsBySchemaVersion,
+            backupFiles,
         })
         log.info('Flow version migration completed')
         return migratedFlowVersion
     },
+}
+
+async function storeBackupFile(flowVersion: FlowVersion): Promise<string> {
+    const data = Buffer.from(JSON.stringify(flowVersion))
+    const file = await fileService(log).save({
+        type: FileType.FLOW_VERSION_BACKUP,
+        data,
+        size: data.length,
+        metadata: {
+            flowVersionId: flowVersion.id,
+            ...spreadIfDefined('schemaVersion', flowVersion.schemaVersion),
+        },
+        compression: FileCompression.NONE,
+    })
+    return file.id
 }

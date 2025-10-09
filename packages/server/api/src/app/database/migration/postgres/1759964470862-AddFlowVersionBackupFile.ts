@@ -6,13 +6,13 @@ export class AddFlowVersionBackupFile1759964470862 implements MigrationInterface
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow_version"
-            ADD "backupsBySchemaVersion" jsonb
+            ADD "backupFiles" jsonb
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "flow_version" DROP COLUMN "backupsBySchemaVersion"
+            ALTER TABLE "flow_version" DROP COLUMN "backupFiles"
         `)
     }
 

@@ -24,7 +24,7 @@ export const FlowVersion = Type.Object({
     agentIds: Type.Array(Type.String()),
     state: Type.Enum(FlowVersionState),
     connectionIds: Type.Array(Type.String()),
-    backupsBySchemaVersion: Nullable(Type.Record(Type.String(), Type.String())),
+    backupFiles: Nullable(Type.Record(Type.String(), Type.String())),
 })
 
 export type FlowVersion = Static<typeof FlowVersion>

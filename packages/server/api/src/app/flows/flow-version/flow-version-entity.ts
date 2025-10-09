@@ -49,7 +49,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         state: {
             type: String,
         },
-        backupsBySchemaVersion: {
+        backupFiles: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
