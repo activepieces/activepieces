@@ -1,10 +1,13 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { GetRunForWorkerRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
 import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
+
+const tracer = trace.getTracer('worker-api-service')
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
@@ -20,29 +23,51 @@ export const workerApiService = (workerToken: string) => {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
-            const limit = pLimit(1)
-            const promises = arrayOfPayloads.map(payloads =>
-                limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
-                    ...request,
-                    payloads,
-                    parentRunId: request.parentRunId,
-                    failParentOnFailure: request.failParentOnFailure,
-                })),
-            )
+            return tracer.startActiveSpan('worker.api.startRuns', {
+                attributes: {
+                    'worker.flowVersionId': request.flowVersionId,
+                    'worker.projectId': request.projectId,
+                    'worker.environment': request.environment,
+                    'worker.payloadsCount': request.payloads.length,
+                    'worker.httpRequestId': request.httpRequestId ?? 'none',
+                },
+            }, async (span) => {
+                try {
+                    const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
+                    span.setAttribute('worker.batchesCount', arrayOfPayloads.length)
+                    
+                    const limit = pLimit(1)
+                    const promises = arrayOfPayloads.map(payloads =>
+                        limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
+                            ...request,
+                            payloads,
+                            parentRunId: request.parentRunId,
+                            failParentOnFailure: request.failParentOnFailure,
+                        })),
+                    )
 
-            const results = await Promise.allSettled(promises)
-            const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+                    const results = await Promise.allSettled(promises)
+                    const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
 
-            if (errors.length > 0) {
-                const errorMessages = errors.map(e => e.reason.message).join(', ')
-                throw new Error(`Failed to start runs: ${errorMessages}`)
-            }
+                    if (errors.length > 0) {
+                        const errorMessages = errors.map(e => e.reason.message).join(', ')
+                        span.setAttribute('worker.error', true)
+                        span.setAttribute('worker.errorMessage', errorMessages)
+                        throw new Error(`Failed to start runs: ${errorMessages}`)
+                    }
 
-            return results
-                .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
-                .map(r => r.value)
-                .flat()
+                    const flowRuns = results
+                        .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
+                        .map(r => r.value)
+                        .flat()
+                    
+                    span.setAttribute('worker.runsCreated', flowRuns.length)
+                    return flowRuns
+                }
+                finally {
+                    span.end()
+                }
+            })
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
