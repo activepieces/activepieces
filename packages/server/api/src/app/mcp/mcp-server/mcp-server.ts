@@ -7,6 +7,7 @@ import {
     McpFlowTool,
     McpPieceTool,
     McpRunStatus,
+    McpTool,
     mcpToolNaming,
     McpToolType,
     McpTrigger,
@@ -31,30 +32,28 @@ import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
-import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
 import { toolInputsResolver } from '../tool/tool-inputs-resolver'
 
 
 export async function createMcpServer({
-    mcpId,
     logger,
     projectId,
+    tools,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
     const server = new McpServer({
         name: 'Activepieces',
         version: '1.0.0',
     })
 
-    const mcp = await mcpService(logger).getOrThrow({ mcpId, projectId })
-    const platformId = await projectService.getPlatformId(mcp.projectId)
-    const addedToolPromise = mcp.tools.map(tool => {
+    const platformId = await projectService.getPlatformId(projectId)
+    const addedToolPromise = tools.map(tool => {
         switch (tool.type) {
             case McpToolType.PIECE: {
-                return addPieceToServer(server, tool, mcp.projectId, platformId, logger)
+                return addPieceToServer(server, tool, projectId, platformId, logger)
             }
             case McpToolType.FLOW: {
-                return addFlowToServer(server, tool, mcpId, mcp.projectId, logger)
+                return addFlowToServer(server, tool, projectId, logger)
             }
         }
     })
@@ -233,7 +232,6 @@ async function addPieceToServer(
 async function addFlowToServer(
     server: McpServer,
     mcpTool: McpFlowTool,
-    mcpId: string,
     projectId: string,
     logger: FastifyBaseLogger,
 ): Promise<void> {
@@ -299,11 +297,11 @@ async function addFlowToServer(
                 failParentOnFailure: false,
             })
 
-            trackToolCall({ mcpId, toolName, projectId, logger })
+            trackToolCall({ mcpId: mcpTool.mcpId, toolName, projectId, logger })
             const success = isOkSuccess(response.status)
 
             await mcpRunService(logger).create({
-                mcpId,
+                mcpId: mcpTool.mcpId,
                 toolId: mcpTool.id,
                 projectId,
                 metadata: {
@@ -363,8 +361,8 @@ type TrackToolCallParams = {
 }
 
 type CreateMcpServerRequest = {
-    mcpId: string
     projectId: string
+    tools: McpTool[]
     logger: FastifyBaseLogger
 }
 
