@@ -991,6 +991,9 @@
       "@activepieces/piece-simpliroute": [
         "packages/pieces/community/simpliroute/src/index.ts"
       ],
+      "@activepieces/piece-simplybookme":[
+        "packages/pieces/community/simplybookme/src/index.ts"
+      ],
       "@activepieces/piece-sitespeakai": [
         "packages/pieces/community/sitespeakai/src/index.ts"
       ],
@@ -1215,6 +1218,9 @@
       ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
+      ],
+      "@activepieces/piece-workable": [
+        "packages/pieces/community/workable/src/index.ts"
       ],
       "@activepieces/piece-wrike": [
         "packages/pieces/community/wrike/src/index.ts"
