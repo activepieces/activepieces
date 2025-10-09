@@ -16,7 +16,7 @@ export const serviceNow = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/service-now.png",
-  authors: ['sparkybug'],
+  authors: ["sparkybug"],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     createRecordAction,
