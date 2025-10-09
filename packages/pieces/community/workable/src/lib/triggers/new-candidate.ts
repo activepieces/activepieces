@@ -13,12 +13,17 @@ export const newCandidate = createTrigger({
     auth: workableAuth,
     name: 'newCandidate',
     displayName: 'New Candidate',
-    description: 'Triggers when new candidate submits application.',
+    description: 'Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.',
     props: {
         shortcode: Property.ShortText({
             displayName: "Shortcode",
-            description: "Shortcode of specific job",
-            required: true
+            description: "Shortcode of specific job. Leave empty to trigger for all jobs.",
+            required: false
+        }),
+        stage_slug: Property.ShortText({
+            displayName: "Stage Slug",
+            description: "Stage slug to filter by specific hiring pipeline stage (e.g., 'applied', 'phone_screen', 'interview', 'offer'). Leave empty to trigger for all stages.",
+            required: false
         })
     },
     sampleData: {
@@ -50,7 +55,8 @@ export const newCandidate = createTrigger({
         const accessToken = context.auth;
         const subdomain = await getAccountSubdomain(accessToken);
 
-        const shortcode = context.propsValue.shortcode;
+        const shortcode = context.propsValue.shortcode || '';
+        const stageSlug = context.propsValue.stage_slug || '';
         const webhookUrl = context.webhookUrl;
         const event = "candidate_created";
 
@@ -59,7 +65,7 @@ export const newCandidate = createTrigger({
             accessToken,
             webhookUrl,
             event,
-            {job_shortcode: shortcode, stage_slug: ''}
+            {job_shortcode: shortcode, stage_slug: stageSlug}
         );
 
         await context.store?.put<WebhookInformation>('_new_candidate_created', {
@@ -80,7 +86,12 @@ export const newCandidate = createTrigger({
     async test(context){
         const accessToken = context.auth;
         const subdomain = await getAccountSubdomain(accessToken);
-        const shortcode = context.propsValue.shortcode;
+        const shortcode = context.propsValue.shortcode || '';
+
+        const queryParams: any = {};
+        if (shortcode) {
+            queryParams.shortcode = shortcode;
+        }
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
@@ -89,9 +100,7 @@ export const newCandidate = createTrigger({
                 Authorization: `Bearer ${accessToken}`,
                 Accept: "application/json"
             },
-            queryParams: {
-                shortcode: shortcode
-            }
+            queryParams: queryParams
         });
 
         const candidates = response.body.candidates?.slice(0, 3) ?? [];
