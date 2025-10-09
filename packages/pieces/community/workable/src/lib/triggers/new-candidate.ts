@@ -87,10 +87,14 @@ export const newCandidate = createTrigger({
         const accessToken = context.auth;
         const subdomain = await getAccountSubdomain(accessToken);
         const shortcode = context.propsValue.shortcode || '';
+        const stageSlug = context.propsValue.stage_slug || '';
 
         const queryParams: any = {};
         if (shortcode) {
             queryParams.shortcode = shortcode;
+        }
+        if (stageSlug) {
+            queryParams.stage = stageSlug;
         }
 
         const response = await httpClient.sendRequest({
