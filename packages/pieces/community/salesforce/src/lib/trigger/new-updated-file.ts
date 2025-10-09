@@ -17,15 +17,14 @@ import { salesforceAuth } from '../..';
 export const newUpdatedFile = createTrigger({
     auth: salesforceAuth,
     name: 'new_updated_file',
-    displayName: 'New or Updated File on Record',
-    description: 'Fires when an attachment, note, or file is added or updated on any record.',
+    displayName: 'New or Updated File',
+    description: 'Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.',
     props: {},
     sampleData: {
-        "Id": "00P7Q000002XyA4UAK",
-        "ParentId": "0017Q00000qM8c9QAC",
-        "Name": "sample_attachment.txt",
+        "Id": "0697Q000002qB9iQAE",
+        "Title": "My Document.pdf",
         "LastModifiedDate": "2025-10-10T12:00:00.000Z",
-        "Type": "Attachment"
+        "Type": "ContentDocument"
     },
     type: TriggerStrategy.POLLING,
     async test(ctx) {
@@ -47,39 +46,20 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     items: async ({ auth, lastFetchEpochMS }) => {
         const isoDate = dayjs(lastFetchEpochMS).toISOString();
 
-
-        const attachmentsQuery = `
-            SELECT FIELDS(ALL) FROM Attachment 
-            WHERE SystemModstamp > ${isoDate} LIMIT 200
+        const query = `
+            SELECT FIELDS(ALL) 
+            FROM ContentDocument 
+            WHERE SystemModstamp > ${isoDate}
+            ORDER BY SystemModstamp ASC
+            LIMIT 200
         `;
-        const attachmentsResponse = await querySalesforceApi<{ records: { SystemModstamp: string }[] }>(HttpMethod.GET, auth, attachmentsQuery);
+        
+        const response = await querySalesforceApi<{ records: { SystemModstamp: string }[] }>(HttpMethod.GET, auth, query);
+        const records = response.body?.['records'] || [];
 
-        const notesQuery = `
-            SELECT FIELDS(ALL) FROM Note 
-            WHERE SystemModstamp > ${isoDate} LIMIT 200
-        `;
-        const notesResponse = await querySalesforceApi<{ records: { SystemModstamp: string }[] }>(HttpMethod.GET, auth, notesQuery);
-
-        const filesQuery = `
-            SELECT FIELDS(ALL) FROM ContentDocumentLink 
-            WHERE SystemModstamp > ${isoDate} LIMIT 200
-        `;
-        const filesResponse = await querySalesforceApi<{ records: { SystemModstamp: string }[] }>(HttpMethod.GET, auth, filesQuery);
-
-        const attachments = (attachmentsResponse.body?.['records'] || []).map((item: any) => ({
-            epochMilliSeconds: dayjs(item.SystemModstamp).valueOf(),
-            data: { ...item, Type: 'Attachment' },
+        return records.map((record: any) => ({
+            epochMilliSeconds: dayjs(record.SystemModstamp).valueOf(),
+            data: { ...record, Type: 'ContentDocument' },
         }));
-        const notes = (notesResponse.body?.['records'] || []).map((item: any) => ({
-            epochMilliSeconds: dayjs(item.SystemModstamp).valueOf(),
-            data: { ...item, Type: 'Note' },
-        }));
-        const files = (filesResponse.body?.['records'] || []).map((item: any) => ({
-            epochMilliSeconds: dayjs(item.SystemModstamp).valueOf(),
-            data: { ...item, Type: 'File' },
-        }));
-
-        const allItems = [...attachments, ...notes, ...files];
-        return allItems.sort((a, b) => a.epochMilliSeconds - b.epochMilliSeconds);
     },
 };

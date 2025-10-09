@@ -32,10 +32,28 @@ export const createTask = createAction({
         }),
     },
     async run(context) {
-        const { ...taskData } = context.propsValue;
+        const {
+            Subject,
+            OwnerId,
+            Status,
+            Priority,
+            Description,
+            WhoId,
+            WhatId
+        } = context.propsValue;
 
-        const cleanedBody = Object.entries(taskData).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null) {
+        const rawBody = {
+            Subject,
+            OwnerId,
+            Status,
+            Priority,
+            Description,
+            WhoId,
+            WhatId
+        };
+
+        const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
                 acc[key] = value;
             }
             return acc;

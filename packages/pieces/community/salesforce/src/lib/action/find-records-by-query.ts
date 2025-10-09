@@ -23,7 +23,7 @@ export const findRecordsByQuery = createAction({
             throw new Error('Object must be selected.');
         }
 
-        const query = `SELECT FIELDS(ALL) FROM ${object} WHERE ${where_clause} LIMIT 2000`;
+        const query = `SELECT FIELDS(ALL) FROM ${object} WHERE ${where_clause} LIMIT 200`;
 
         const response = await querySalesforceApi(
             HttpMethod.GET,

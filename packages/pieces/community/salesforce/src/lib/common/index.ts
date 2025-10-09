@@ -66,7 +66,7 @@ export const salesforcesCommon = {
     }),
     record: Property.Dropdown({
         displayName: 'Record',
-        description: 'The record to which the file will be added. The list shows the 20 most recently created records.',
+        description: 'The record to select. The list shows the 20 most recently created records.',
         required: true,
         refreshers: ['object'],
         options: async ({ auth, object }) => {
@@ -76,18 +76,87 @@ export const salesforcesCommon = {
                     placeholder: 'Select an object first',
                     options: [],
                 };
-              }
-            const response = await querySalesforceApi<{ records: { Id: string, Name?: string }[] }>(
-                HttpMethod.GET,
-                auth as OAuth2PropertyValue,
-                `SELECT Id, Name FROM ${object} ORDER BY CreatedDate DESC LIMIT 20`
-            );
+            }
+
+            try {
+                
+                const describeResponse = await getSalesforceFields(auth as OAuth2PropertyValue, object as string);
+                const fields = describeResponse.body['fields'].map((f: any) => f.name);
+
+                
+                let displayField = 'Id'; 
+                if (fields.includes('Name')) {
+                    displayField = 'Name';
+                } else if (fields.includes('Subject')) {
+                    displayField = 'Subject';
+                } else if (fields.includes('Title')) {
+                    displayField = 'Title';
+                }
+
+                const response = await querySalesforceApi<{ records: { Id: string, [key: string]: any }[] }>(
+                    HttpMethod.GET,
+                    auth as OAuth2PropertyValue,
+                    `SELECT Id, ${displayField} FROM ${object} ORDER BY CreatedDate DESC LIMIT 20`
+                );
+                
+                return {
+                    disabled: false,
+                    options: response.body.records.map((record) => ({
+                        label: record[displayField] ?? record.Id,
+                        value: record.Id,
+                    })),
+                };
+            } catch (e) {
+                console.error(e);
+                const fallbackResponse = await querySalesforceApi<{ records: { Id: string }[] }>(
+                    HttpMethod.GET,
+                    auth as OAuth2PropertyValue,
+                    `SELECT Id FROM ${object} LIMIT 20`
+                );
+                return {
+                    disabled: false,
+                    options: fallbackResponse.body.records.map((record) => ({
+                        label: record.Id,
+                        value: record.Id,
+                    })),
+                }
+            }
+        },
+    }),
+    recipient: Property.Dropdown({
+        displayName: 'Recipient',
+        required: true,
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Connect your account first',
+                    options: [],
+                };
+            }
+
+            const contactQuery = `SELECT Id, Name FROM Contact ORDER BY Name LIMIT 50`;
+            const leadQuery = `SELECT Id, Name FROM Lead ORDER BY Name LIMIT 50`;
+
+            const [contactsResponse, leadsResponse] = await Promise.all([
+                querySalesforceApi<{ records: { Id: string, Name: string }[] }>(HttpMethod.GET, auth as OAuth2PropertyValue, contactQuery),
+                querySalesforceApi<{ records: { Id: string, Name: string }[] }>(HttpMethod.GET, auth as OAuth2PropertyValue, leadQuery)
+            ]);
+
+            const contactOptions = contactsResponse.body.records.map((record) => ({
+                label: `${record.Name} (Contact)`,
+                value: record.Id,
+            }));
+
+            const leadOptions = leadsResponse.body.records.map((record) => ({
+                label: `${record.Name} (Lead)`,
+                value: record.Id,
+            }));
+
             return {
                 disabled: false,
-                options: response.body.records.map((record) => ({
-                    label: record.Name ?? record.Id, 
-                    value: record.Id,
-                })),
+                options: [...contactOptions, ...leadOptions].sort((a, b) => a.label.localeCompare(b.label)),
             };
         },
     }),
@@ -210,16 +279,16 @@ export const salesforcesCommon = {
                     options: [],
                 };
             }
-            const response = await querySalesforceApi<{ records: { Status: string }[] }>(
+            const response = await querySalesforceApi<{ records: { Label: string }[] }>(
                 HttpMethod.GET,
                 auth as OAuth2PropertyValue,
-                `SELECT Status FROM CampaignMemberStatus WHERE CampaignId = '${campaign_id}'`
+                `SELECT Label FROM CampaignMemberStatus WHERE CampaignId = '${campaign_id}'`
             );
             return {
                 disabled: false,
                 options: response.body.records.map((record) => ({
-                    label: record.Status,
-                    value: record.Status,
+                    label: record.Label,
+                    value: record.Label,
                 })),
             };
         },

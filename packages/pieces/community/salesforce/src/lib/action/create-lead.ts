@@ -37,15 +37,30 @@ export const createLead = createAction({
         })
     },
     async run(context) {
-        const { other_fields, ...leadData } = context.propsValue;
+
+        const {
+            LastName,
+            Company,
+            FirstName,
+            Email,
+            Phone,
+            LeadSource,
+            other_fields
+        } = context.propsValue;
+
 
         const rawBody = {
-            ...leadData,
-            ...other_fields
+            LastName,
+            Company,
+            FirstName,
+            Email,
+            Phone,
+            LeadSource,
+            ...(other_fields || {}), 
         };
 
         const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null) {
+            if (value !== undefined && value !== null && value !== '') {
                 acc[key] = value;
             }
             return acc;

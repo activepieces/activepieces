@@ -31,15 +31,27 @@ export const createOpportunity = createAction({
         })
     },
     async run(context) {
-        const { other_fields, ...oppData } = context.propsValue;
+        const {
+            Name,
+            CloseDate,
+            StageName,
+            AccountId,
+            Amount,
+            other_fields
+        } = context.propsValue;
+
 
         const rawBody = {
-            ...oppData,
-            ...other_fields
+            Name,
+            CloseDate,
+            StageName,
+            AccountId,
+            Amount,
+            ...(other_fields || {}), 
         };
 
         const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null) {
+            if (value !== undefined && value !== null && value !== '') {
                 acc[key] = value;
             }
             return acc;

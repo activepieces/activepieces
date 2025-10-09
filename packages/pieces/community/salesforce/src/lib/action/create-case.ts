@@ -29,15 +29,30 @@ export const createCase = createAction({
         })
     },
     async run(context) {
-        const { other_fields, ...caseData } = context.propsValue;
+        const {
+            Subject,
+            Description,
+            Status,
+            Priority,
+            Origin,
+            AccountId,
+            ContactId,
+            other_fields
+        } = context.propsValue;
 
         const rawBody = {
-            ...caseData,
-            ...other_fields
+            Subject,
+            Description,
+            Status,
+            Priority,
+            Origin,
+            AccountId,
+            ContactId,
+            ...(other_fields || {}), 
         };
 
         const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null) {
+            if (value !== undefined && value !== null && value !== '') {
                 acc[key] = value;
             }
             return acc;

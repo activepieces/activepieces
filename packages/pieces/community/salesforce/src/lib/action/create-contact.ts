@@ -37,21 +37,34 @@ export const createContact = createAction({
         })
     },
     async run(context) {
-        const { other_fields, ...contactData } = context.propsValue;
+        const {
+            LastName,
+            FirstName,
+            AccountId,
+            Email,
+            Phone,
+            Title,
+            other_fields
+        } = context.propsValue;
+
 
         const rawBody = {
-            ...contactData,
-            ...other_fields
+            LastName,
+            FirstName,
+            AccountId,
+            Email,
+            Phone,
+            Title,
+            ...(other_fields || {}),
         };
 
-
         const cleanedBody = Object.entries(rawBody).reduce((acc, [key, value]) => {
-            if (value !== undefined && value !== null) {
+            if (value !== undefined && value !== null && value !== '') {
                 acc[key] = value;
             }
             return acc;
         }, {} as Record<string, unknown>);
-        
+
         const response = await callSalesforceApi(
             HttpMethod.POST,
             context.auth,

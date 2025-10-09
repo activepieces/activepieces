@@ -69,7 +69,7 @@ export const salesforceAuth = PieceAuth.OAuth2({
     description: 'Authenticate with Salesforce Production',
     authUrl: 'https://{environment}.salesforce.com/services/oauth2/authorize',
     tokenUrl: 'https://{environment}.salesforce.com/services/oauth2/token',
-    scope: ['refresh_token', 'full'],
+    scope: ['refresh_token', 'full' ,'api'],
 });
 
 export const salesforce = createPiece({
@@ -84,6 +84,7 @@ export const salesforce = createPiece({
         'kishanprmr',
         'khaledmashaly',
         'abuaboud',
+        'Pranith124',
     ],
     categories: [PieceCategory.SALES_AND_CRM],
     auth: salesforceAuth,
