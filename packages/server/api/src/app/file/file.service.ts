@@ -195,12 +195,12 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
-        case FileType.FLOW_VERSION_BACKUP:
             return true
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
+        case FileType.FLOW_VERSION_BACKUP:
             return false
         default:
             throw new Error(`File type ${type} is not supported`)
