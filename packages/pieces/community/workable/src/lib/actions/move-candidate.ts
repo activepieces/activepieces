@@ -7,7 +7,7 @@ export const moveCandidate = createAction({
   auth: workableAuth,
   name: 'moveCandidate',
   displayName: 'Move Candidate',
-  description: 'Move candidate to the specified stage',
+  description: 'Moves candidate to the specified stage.',
   props: {
     id: Property.ShortText({
       displayName: "Candidate's Id",

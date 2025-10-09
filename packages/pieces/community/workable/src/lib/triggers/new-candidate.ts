@@ -13,7 +13,7 @@ export const newCandidate = createTrigger({
     auth: workableAuth,
     name: 'newCandidate',
     displayName: 'New Candidate',
-    description: 'Triggers when new candidate submits application',
+    description: 'Triggers when new candidate submits application.',
     props: {
         shortcode: Property.ShortText({
             displayName: "Shortcode",

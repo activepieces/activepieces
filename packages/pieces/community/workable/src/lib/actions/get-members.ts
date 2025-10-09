@@ -7,7 +7,7 @@ export const getMembers = createAction({
   auth: workableAuth,
   name: 'getMembers',
   displayName: 'Get Members',
-  description: 'Get members of hiring team',
+  description: 'Gets members of hiring team.',
   props: {
     limit: Property.Number({
       displayName: "Limit",
@@ -45,7 +45,7 @@ export const getMembers = createAction({
 
     const accessToken = context.auth;
 
-    let queryParams: Record<string, any> = {};
+    const queryParams: Record<string, any> = {};
 
     if(limit !== undefined && limit !== null) {
       queryParams["limit"] = limit;
@@ -74,6 +74,6 @@ export const getMembers = createAction({
       queryParams
     })
 
-    return response;
+    return response.body;
   },
 });

@@ -7,7 +7,7 @@ export const getCandidate = createAction({
   auth: workableAuth,
   name: 'getCandidate',
   displayName: 'Get Candidate',
-  description: "Get candidate's information",
+  description: "Gets candidate's information.",
   props: {
     id: Property.ShortText({
       displayName: "Candidate's Id",
@@ -30,6 +30,6 @@ export const getCandidate = createAction({
       },
     });
 
-    return response;
+    return response.body;
   },
 });

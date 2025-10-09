@@ -7,7 +7,7 @@ export const rateCandidate = createAction({
   auth: workableAuth,
   name: 'rateCandidate',
   displayName: 'Rate candidate',
-  description: 'Rate the candidate on workable',
+  description: 'Rates the candidate on workable.',
   props: {
     id: Property.ShortText({
       displayName: "Candidate's Id",

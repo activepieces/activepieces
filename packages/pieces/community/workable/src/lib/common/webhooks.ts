@@ -1,5 +1,4 @@
-import { HttpMethod, httpClient, AuthenticationType, HttpRequest} from '@activepieces/pieces-common';
-import { unsubscribe } from 'diagnostics_channel';
+import { HttpMethod, httpClient, HttpRequest} from '@activepieces/pieces-common';
 
 export const workableCommon = {
     subscribeWebhook: async (

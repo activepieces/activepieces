@@ -7,7 +7,7 @@ export const getJob = createAction({
   auth: workableAuth,
   name: 'getJob',
   displayName: 'Get Job',
-  description: 'Get specific job',
+  description: 'Gets specific job deatils.',
   props: {
     shortcode: Property.ShortText({
       displayName: "Shortcode",
@@ -23,7 +23,7 @@ export const getJob = createAction({
     // get account subdomain
     const account = await getAccountSubdomain(accessToken);
 
-    let url = `https://${account}.workable.com/spi/v3/jobs/${shortcode}`;
+    const url = `https://${account}.workable.com/spi/v3/jobs/${shortcode}`;
     
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -34,6 +34,6 @@ export const getJob = createAction({
       },
     });
     
-    return response;
+    return response.body;
   },
 });

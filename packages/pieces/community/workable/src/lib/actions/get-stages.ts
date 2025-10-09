@@ -7,7 +7,7 @@ export const getStages = createAction({
   auth: workableAuth,
   name: 'getStages',
   displayName: 'Get Stages',
-  description: 'Get stages in your recruitment pipeline stages',
+  description: 'Gets stages in your recruitment pipeline stages.',
   props: {
     shortcode: Property.ShortText({
       displayName: "Shortcode",
@@ -30,6 +30,6 @@ export const getStages = createAction({
         Accept: "application/json"
       }
     });
-    return response;
+    return response.body;
   },
 });
