@@ -42,7 +42,7 @@ const getBloomFilter = async (folderPath: string): Promise<ScalableBloomFilter> 
 
 export const cacheState = (folderPath: string) => {
     return {
-        async getOrSetIfNotExists(cacheAlias: string, state: string): Promise<string | undefined> {
+        async getOrSetIfNotExists(cacheAlias: string, state: string): Promise<string> {
             const bloomFilter = await getBloomFilter(folderPath)
             const exists = bloomFilter.has(cacheAlias)
             if (!exists) {
