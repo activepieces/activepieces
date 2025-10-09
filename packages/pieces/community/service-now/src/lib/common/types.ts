@@ -10,7 +10,20 @@ export const AttachmentMetaSchema = z.object({
   size_bytes: z.string(),
   table_name: z.string(),
   table_sys_id: z.string(),
-  download_link: z.string().optional(),
+  download_link: z.string(),
+  average_image_color: z.string().optional(),
+  compressed: z.string().optional(),
+  created_by_name: z.string().optional(),
+  image_height: z.string().optional(),
+  image_width: z.string().optional(),
+  size_compressed: z.string().optional(),
+  sys_created_by: z.string().optional(),
+  sys_created_on: z.string().optional(),
+  sys_mod_count: z.string().optional(),
+  sys_tags: z.string().optional(),
+  sys_updated_by: z.string().optional(),
+  sys_updated_on: z.string().optional(),
+  updated_by_name: z.string().optional(),
 });
 export type AttachmentMeta = z.infer<typeof AttachmentMetaSchema>;
 

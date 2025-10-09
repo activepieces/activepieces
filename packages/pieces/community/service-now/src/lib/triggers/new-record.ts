@@ -16,18 +16,22 @@ const NewRecordTriggerInputSchema = z.object({
   since: z.string().optional(),
   filter: z.string().optional(),
   pollInterval: z.number().optional(),
+  sysparm_display_value: z.enum(['true', 'false', 'all']).optional(),
+  sysparm_exclude_reference_link: z.boolean().optional(),
+  sysparm_fields: z.array(z.string()).optional(),
+  sysparm_query_no_domain: z.boolean().optional(),
 });
 
 export const newRecordTrigger = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
-  description: 'Triggers when a new record is created in a ServiceNow table',
+  description: 'Triggers when a new record is created in a ServiceNow table using polling with ServiceNow Table API',
   props: {
     ...serviceNowAuth,
     table: tableDropdown,
     since: Property.ShortText({
       displayName: 'Since Timestamp',
-      description: 'ISO timestamp to start monitoring from (optional)',
+      description: 'ISO timestamp to start monitoring from (optional, defaults to current time)',
       required: false,
     }),
     filter: Property.LongText({
@@ -42,6 +46,37 @@ export const newRecordTrigger = createTrigger({
         'How often to check for new records in milliseconds (default: 60000)',
       required: false,
       defaultValue: 60000,
+    }),
+    sysparm_display_value: Property.StaticDropdown({
+      displayName: 'Display Value Type',
+      description: 'Type of data to return in trigger events',
+      required: false,
+      defaultValue: 'false',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Actual values from database', value: 'false' },
+          { label: 'Display values (user-friendly)', value: 'true' },
+          { label: 'Both actual and display values', value: 'all' },
+        ],
+      },
+    }),
+    sysparm_exclude_reference_link: Property.Checkbox({
+      displayName: 'Exclude Reference Links',
+      description: 'Exclude Table API links for reference fields to improve performance',
+      required: false,
+      defaultValue: true,
+    }),
+    sysparm_fields: Property.Array({
+      displayName: 'Fields to Include',
+      description: 'Specific fields to include in trigger events (leave empty for all fields)',
+      required: false,
+    }),
+    sysparm_query_no_domain: Property.Checkbox({
+      displayName: 'Query No Domain',
+      description: 'Include records from all domains (requires admin or query_no_domain_table_api role)',
+      required: false,
+      defaultValue: false,
     }),
   },
   sampleData: {
@@ -69,41 +104,63 @@ export const newRecordTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    const { table, since, filter } = context.propsValue;
+    const { table, since, filter, sysparm_display_value, sysparm_exclude_reference_link, sysparm_fields, sysparm_query_no_domain } = context.propsValue;
 
-    const input = NewRecordTriggerInputSchema.parse({ table, since, filter });
+    const input = NewRecordTriggerInputSchema.parse({ 
+      table, 
+      since, 
+      filter,
+      sysparm_display_value,
+      sysparm_exclude_reference_link,
+      sysparm_fields,
+      sysparm_query_no_domain
+    });
+    
     const startTime = input.since || new Date().toISOString();
     await context.store?.put('lastPollTime', startTime);
+    await context.store?.put('triggerConfig', {
+      sysparm_display_value: input.sysparm_display_value,
+      sysparm_exclude_reference_link: input.sysparm_exclude_reference_link,
+      sysparm_fields: input.sysparm_fields,
+      sysparm_query_no_domain: input.sysparm_query_no_domain,
+    });
   },
   async onDisable(context) {
     await context.store?.delete('lastPollTime');
+    await context.store?.delete('triggerConfig');
   },
   async run(context) {
     const { table, filter } = context.propsValue;
+    const triggerConfig = await context.store?.get('triggerConfig') as any;
 
-    const input = NewRecordTriggerInputSchema.parse({ table, filter });
     const client = createServiceNowClient(context.propsValue);
 
     const lastPollTime = (await context.store?.get('lastPollTime')) as string;
     const currentTime = new Date().toISOString();
 
     let query = `sys_created_on>${lastPollTime}`;
-    if (input.filter) {
-      query += `^${input.filter}`;
+    if (filter) {
+      query += `^${filter}`;
     }
 
-    const eventList = await client.pollTableEvents(
-      input.table,
-      lastPollTime,
-      100,
-      {
-        sysparm_query: query,
-      }
-    );
+    const options = {
+      limit: 100,
+      fields: triggerConfig?.sysparm_fields,
+      sysparm_display_value: triggerConfig?.sysparm_display_value,
+      sysparm_exclude_reference_link: triggerConfig?.sysparm_exclude_reference_link,
+      sysparm_query_no_domain: triggerConfig?.sysparm_query_no_domain,
+    };
 
-    const validEvents = eventList.events.map((event) => ({
-      ...event,
+    const records = await client.findRecord(table, query, options);
+
+    const validEvents = records.map((record) => ({
+      eventId: `${record['sys_id']}_${record['sys_created_on']}`,
+      table,
+      sys_id: record['sys_id'],
       operation: 'create' as const,
+      fields: record,
+      timestamp: record['sys_created_on'] || currentTime,
+      raw: record,
     }));
 
     if (validEvents.length > 0) {

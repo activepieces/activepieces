@@ -123,22 +123,128 @@ export class ServiceNowClient {
     }
   }
 
-  async getRecord(table: string, sys_id: string): Promise<ServiceNowRecord> {
+  async getRecord(
+    table: string, 
+    sys_id: string,
+    options?: {
+      sysparm_display_value?: 'true' | 'false' | 'all';
+      sysparm_exclude_reference_link?: boolean;
+      sysparm_fields?: string[];
+      sysparm_query_no_domain?: boolean;
+      sysparm_view?: 'desktop' | 'mobile' | 'both';
+    }
+  ): Promise<ServiceNowRecord> {
     const endpoint = `/api/now/table/${table}/${sys_id}`;
-    const response = await this.makeRequest<{ result: ServiceNowRecord }>(HttpMethod.GET, endpoint);
-    return response.result;
+    const queryParams: Record<string, string> = {};
+
+    if (options?.sysparm_display_value) {
+      queryParams['sysparm_display_value'] = options.sysparm_display_value;
+    }
+    if (options?.sysparm_exclude_reference_link !== undefined) {
+      queryParams['sysparm_exclude_reference_link'] = options.sysparm_exclude_reference_link.toString();
+    }
+    if (options?.sysparm_fields) {
+      queryParams['sysparm_fields'] = options.sysparm_fields.join(',');
+    }
+    if (options?.sysparm_query_no_domain !== undefined) {
+      queryParams['sysparm_query_no_domain'] = options.sysparm_query_no_domain.toString();
+    }
+    if (options?.sysparm_view) {
+      queryParams['sysparm_view'] = options.sysparm_view;
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as { result: ServiceNowRecord };
+    return data.result;
   }
 
-  async createRecord(table: string, fields: Record<string, any>): Promise<ServiceNowRecord> {
+  async createRecord(
+    table: string, 
+    fields: Record<string, any>,
+    options?: {
+      sysparm_display_value?: 'true' | 'false' | 'all';
+      sysparm_fields?: string[];
+      sysparm_input_display_value?: boolean;
+      sysparm_view?: 'desktop' | 'mobile' | 'both';
+    }
+  ): Promise<ServiceNowRecord> {
     const endpoint = `/api/now/table/${table}`;
-    const response = await this.makeRequest<{ result: ServiceNowRecord }>(HttpMethod.POST, endpoint, fields);
-    return response.result;
+    const queryParams: Record<string, string> = {};
+
+    if (options?.sysparm_display_value) {
+      queryParams['sysparm_display_value'] = options.sysparm_display_value;
+    }
+    if (options?.sysparm_fields) {
+      queryParams['sysparm_fields'] = options.sysparm_fields.join(',');
+    }
+    if (options?.sysparm_input_display_value !== undefined) {
+      queryParams['sysparm_input_display_value'] = options.sysparm_input_display_value.toString();
+    }
+    if (options?.sysparm_view) {
+      queryParams['sysparm_view'] = options.sysparm_view;
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      body: fields,
+      queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as { result: ServiceNowRecord };
+    return data.result;
   }
 
-  async updateRecord(table: string, sys_id: string, fields: Record<string, any>): Promise<ServiceNowRecord> {
+  async updateRecord(
+    table: string, 
+    sys_id: string, 
+    fields: Record<string, any>,
+    options?: {
+      sysparm_display_value?: 'true' | 'false' | 'all';
+      sysparm_fields?: string[];
+      sysparm_input_display_value?: boolean;
+      sysparm_view?: 'desktop' | 'mobile' | 'both';
+    }
+  ): Promise<ServiceNowRecord> {
     const endpoint = `/api/now/table/${table}/${sys_id}`;
-    const response = await this.makeRequest<{ result: ServiceNowRecord }>(HttpMethod.PUT, endpoint, fields);
-    return response.result;
+    const queryParams: Record<string, string> = {};
+
+    if (options?.sysparm_display_value) {
+      queryParams['sysparm_display_value'] = options.sysparm_display_value;
+    }
+    if (options?.sysparm_fields) {
+      queryParams['sysparm_fields'] = options.sysparm_fields.join(',');
+    }
+    if (options?.sysparm_input_display_value !== undefined) {
+      queryParams['sysparm_input_display_value'] = options.sysparm_input_display_value.toString();
+    }
+    if (options?.sysparm_view) {
+      queryParams['sysparm_view'] = options.sysparm_view;
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.PATCH,
+      url: `${this.baseURL}${endpoint}`,
+      headers: this.getHeaders(),
+      body: fields,
+      queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+      timeout: 30000,
+      retries: 3,
+    });
+
+    const data = response.body as { result: ServiceNowRecord };
+    return data.result;
   }
 
   async deleteRecord(table: string, sys_id: string): Promise<void> {
@@ -149,18 +255,37 @@ export class ServiceNowClient {
   async findRecord(
     table: string,
     query: string,
-    params?: { limit?: number; fields?: string[] }
+    options?: {
+      limit?: number;
+      fields?: string[];
+      sysparm_display_value?: 'true' | 'false' | 'all';
+      sysparm_exclude_reference_link?: boolean;
+      sysparm_query_no_domain?: boolean;
+      sysparm_view?: 'desktop' | 'mobile' | 'both';
+    }
   ): Promise<ServiceNowRecord[]> {
     const endpoint = `/api/now/table/${table}`;
     const queryParams: Record<string, string> = {
       sysparm_query: query,
     };
 
-    if (params?.limit) {
-      queryParams['sysparm_limit'] = params.limit.toString();
+    if (options?.limit) {
+      queryParams['sysparm_limit'] = options.limit.toString();
     }
-    if (params?.fields) {
-      queryParams['sysparm_fields'] = params.fields.join(',');
+    if (options?.fields) {
+      queryParams['sysparm_fields'] = options.fields.join(',');
+    }
+    if (options?.sysparm_display_value) {
+      queryParams['sysparm_display_value'] = options.sysparm_display_value;
+    }
+    if (options?.sysparm_exclude_reference_link !== undefined) {
+      queryParams['sysparm_exclude_reference_link'] = options.sysparm_exclude_reference_link.toString();
+    }
+    if (options?.sysparm_query_no_domain !== undefined) {
+      queryParams['sysparm_query_no_domain'] = options.sysparm_query_no_domain.toString();
+    }
+    if (options?.sysparm_view) {
+      queryParams['sysparm_view'] = options.sysparm_view;
     }
 
     const response = await httpClient.sendRequest({
@@ -177,46 +302,49 @@ export class ServiceNowClient {
   }
 
   async attachFile(
-    table: string,
-    sys_id: string,
+    table_name: string,
+    table_sys_id: string,
+    file_name: string,
+    content_type: string,
     filePath?: string,
     fileBase64?: string,
-    filename?: string,
-    contentType?: string
+    encryption_context?: string
   ): Promise<AttachmentMeta> {
-    const formData = new FormData();
-    
-    if (filePath) {
-      const fileStream = fs.createReadStream(filePath);
-      formData.append('file', fileStream, {
-        filename: filename || 'attachment',
-        contentType: contentType || 'application/octet-stream',
-      });
-    } else if (fileBase64) {
-      const buffer = Buffer.from(fileBase64.replace(/^data:[^;]+;base64,/, ''), 'base64');
-      formData.append('file', buffer, {
-        filename: filename || 'attachment',
-        contentType: contentType || 'application/octet-stream',
-      });
-    } else {
+    if (!filePath && !fileBase64) {
       throw new Error('Either filePath or fileBase64 must be provided');
     }
 
-    formData.append('table_name', table);
-    formData.append('table_sys_id', sys_id);
+    const queryParams: Record<string, string> = {
+      table_name,
+      table_sys_id,
+      file_name,
+    };
+
+    if (encryption_context) {
+      queryParams['encryption_context'] = encryption_context;
+    }
+
+    let fileData: Buffer | fs.ReadStream;
+    if (filePath) {
+      fileData = fs.createReadStream(filePath);
+    } else {
+      fileData = Buffer.from(fileBase64!.replace(/^data:[^;]+;base64,/, ''), 'base64');
+    }
 
     const headers = {
       'Authorization': this.getHeaders()['Authorization'],
-      ...formData.getHeaders(),
+      'Accept': 'application/json',
+      'Content-Type': content_type,
     };
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${this.baseURL}/api/now/attachment/file`,
       headers,
-      body: formData,
-      timeout: 60000,
-      retries: 3,
+      body: fileData,
+      queryParams,
+      timeout: 120000, // Increased timeout for file uploads
+      retries: 2, // Reduced retries for file uploads
     });
 
     const data = response.body as { result: AttachmentMeta };
@@ -242,19 +370,32 @@ export class ServiceNowClient {
     return data.result;
   }
 
-  async getAttachment(_table: string, _sys_id: string, attachment_sys_id: string): Promise<Buffer> {
+  async getAttachment(
+    attachment_sys_id: string,
+    accept_type: string = '*/*'
+  ): Promise<{ data: Buffer; metadata?: string }> {
     const endpoint = `/api/now/attachment/${attachment_sys_id}/file`;
     
+    const headers = {
+      ...this.getHeaders(),
+      'Accept': accept_type,
+    };
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${this.baseURL}${endpoint}`,
-      headers: this.getHeaders(),
+      headers,
       responseType: 'arraybuffer',
-      timeout: 60000,
-      retries: 3,
+      timeout: 120000, // Increased timeout for large file downloads
+      retries: 2,
     });
 
-    return Buffer.from(response.body as ArrayBuffer);
+    const metadata = response.headers?.['x-attachment-metadata'] as string;
+    
+    return {
+      data: Buffer.from(response.body as ArrayBuffer),
+      metadata,
+    };
   }
 
   async pollTableEvents(
