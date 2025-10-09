@@ -25,6 +25,7 @@ async function getRows(
   memKey: string,
   groupSize: number,
   startRow: number,
+  headerRow: number,
   testing: boolean
 ) {
   const sheetName = await googleSheetsCommon.findSheetName(
@@ -74,6 +75,7 @@ async function getRows(
     spreadsheetId: spreadsheetId,
     rowIndex_s: startingRow,
     rowIndex_e: endRow - 1,
+    headerRow: headerRow,
   });
 
   if (row.length == 0) {
@@ -83,6 +85,7 @@ async function getRows(
       sheetId: sheetId,
       rowIndex_s: undefined,
       rowIndex_e: undefined,
+      headerRow: headerRow,
     });
     const lastRow = allRows.length + 1;
     if (testing == false) await store.put(memKey, lastRow, StoreScope.FLOW);
@@ -110,6 +113,12 @@ export const getRowsAction = createAction({
       required: true,
       defaultValue: 1,
     }),
+    headerRow: Property.Number({
+      displayName: 'Header Row',
+      description: 'Which row contains the headers?',
+      required: true,
+      defaultValue: 1,
+    }),
     markdown: Property.MarkDown({
       value: notes
     }),
@@ -127,7 +136,7 @@ export const getRowsAction = createAction({
     }),
   },
   async run({ store, auth, propsValue }) {
-    const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
+    const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId} = propsValue;
 
     if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -147,6 +156,7 @@ export const getRowsAction = createAction({
         memKey,
         groupSize,
         startRow,
+        headerRow,
         false
       );
     } catch (error) {
@@ -158,7 +168,7 @@ export const getRowsAction = createAction({
     }
   },
   async test({ store, auth, propsValue }) {
-    const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
+    const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId} = propsValue;
 
     if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -173,6 +183,7 @@ export const getRowsAction = createAction({
         memKey,
         groupSize,
         startRow,
+        headerRow,
         true
       );
     } catch (error) {
