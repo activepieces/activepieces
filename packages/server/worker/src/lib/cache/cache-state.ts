@@ -70,12 +70,8 @@ export const cacheState = (folderPath: string) => {
             if (!mightExist) {
                 return undefined
             }
-
-            const lockKey = `${folderPath}-${cacheAlias}`
-            return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
-                const cache = await getCache(folderPath)
-                return cache[cacheAlias]
-            })
+            const cache = await getCache(folderPath)
+            return cache[cacheAlias]
         },
         async setCache(cacheAlias: string, state: string): Promise<void> {
             const lockKey = `${folderPath}-${cacheAlias}`
