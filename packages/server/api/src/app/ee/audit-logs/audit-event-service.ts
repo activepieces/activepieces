@@ -23,7 +23,7 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
-import { outgoingWebhookService } from '../../outging-webhooks/outgoing-webhooks.service'
+import { outgoingWebhookService } from '../outging-webhooks/outgoing-webhooks.service'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
@@ -74,7 +74,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         if (!isNil(action)) {
             queryBuilder.andWhere({ action: In(action) })
         }
-        
+
         if (!isNil(projectId)) {
             queryBuilder.andWhere({ projectId: In(projectId) })
         }

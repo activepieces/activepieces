@@ -1,7 +1,7 @@
 import { OutgoingWebhook, OutgoingWebhookScope } from '@activepieces/ee-shared'
 import { Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, ARRAY_COLUMN_TYPE, BaseColumnSchemaPart, isPostgres } from '../database/database-common'
+import { ApIdSchema, ARRAY_COLUMN_TYPE, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
 
 export type OutgoingWebhookSchema = OutgoingWebhook & {
     platform: Platform
