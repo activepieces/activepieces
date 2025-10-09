@@ -129,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "ワークシートがスプレッドシートに作成されたときにトリガーされます。",
   "Trigger Column": "トリガー列",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Googleからの遅延により、トリガーが発生するまでに最大3分間の遅延が発生する場合がありますのでご注意ください。",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "この列のセルの変更のみをトリガーします。 行内の任意のセルへの変更をトリガーするフローが必要な場合は、**All Columns** を選択します。"
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "この列のセルの変更のみをトリガーします。 \n行内の任意のセルへの変更をトリガーするフローを使用する場合は、**任意の列** を選択します。"
 }

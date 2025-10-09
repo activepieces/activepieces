@@ -34,6 +34,14 @@ const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
     try {
       const isTest = lastFetchEpochMS === 0;
 
+      // use form timezone for storing epochMilliSeconds
+      const formResponse = await makeRequest(
+        accessToken,
+        HttpMethod.GET,
+        `/form/${formId}.json`
+      );
+      const formTimezone = formResponse.timezone;
+
       const queryParams: Record<string, any> = {
         data: 'true',
         sort: 'DESC',
@@ -66,7 +74,9 @@ const polling: Polling<PiecePropValueSchema<typeof formStackAuth>, any> = {
         const submissions: any[] = submissionsResponse.submissions || [];
         submissions.forEach((submission: any) => {
           detailedSubmissions.push({
-            epochMilliSeconds: dayjs(submission.timestamp).valueOf(),
+            epochMilliSeconds: dayjs
+              .tz(submission.timestamp, formTimezone)
+              .valueOf(),
             data: {
               id: submission.id,
               form_id: formId,

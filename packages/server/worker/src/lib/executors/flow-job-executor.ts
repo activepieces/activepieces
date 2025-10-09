@@ -1,5 +1,5 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload, UpdateLogsBehavior } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload, UpdateLogsBehavior } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
@@ -141,9 +141,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
 
 
             const input = await prepareInput(flow.version, jobData, attempsStarted, engineToken, timeoutInSeconds)
-            const { result } = await engineRunner(runLog).executeFlow(engineToken, input)
+            const { result, status } = await engineRunner(runLog).executeFlow(engineToken, input)
 
-            if (result.status === FlowRunStatus.INTERNAL_ERROR) {
+            if (result.status === FlowRunStatus.INTERNAL_ERROR || status === EngineResponseStatus.INTERNAL_ERROR) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {

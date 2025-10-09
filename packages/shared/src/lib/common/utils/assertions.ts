@@ -43,3 +43,13 @@ export function assertNull<T>(
         throw new Error(`${fieldName} should be null`)
     }
 } 
+
+export function asserNotEmpty<T>(
+    value: T[] | null | undefined,
+    fieldName: string,
+): asserts value is T[] {
+    assertNotNullOrUndefined(value, fieldName)
+    if (value.length === 0) {
+        throw new Error(`${fieldName} should be not empty`)
+    }
+} 
