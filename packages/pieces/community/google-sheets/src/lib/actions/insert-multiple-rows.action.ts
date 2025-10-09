@@ -52,8 +52,8 @@ export const insertMultipleRowsAction = createAction({
 			displayName: 'Values',
 			description: 'The values to insert.',
 			required: true,
-			refreshers: ['sheetId', 'spreadsheetId', 'input_type'],
-			props: async ({ auth, sheetId, spreadsheetId, input_type }) => {
+			refreshers: ['sheetId', 'spreadsheetId', 'input_type', 'headerRow'],
+			props: async ({ auth, sheetId, spreadsheetId, input_type, headerRow }) => {
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;
 				const valuesInputType = input_type as unknown as string;
@@ -108,6 +108,7 @@ export const insertMultipleRowsAction = createAction({
 							sheetId: sheet_id,
 							rowIndex_s: 1,
 							rowIndex_e: 1,
+							headerRow: headerRow as number || 1,
 						});
 						const firstRow = headers[0].values ?? {};
 
@@ -158,9 +159,9 @@ export const insertMultipleRowsAction = createAction({
 		check_for_duplicate_column: Property.DynamicProperties({
 			displayName: 'Duplicate Value Column',
 			description: 'The column to check for duplicate values.',
-			refreshers: ['spreadsheetId', 'sheetId', 'check_for_duplicate'],
+			refreshers: ['spreadsheetId', 'sheetId', 'check_for_duplicate', 'headerRow'],
 			required: false,
-			props: async ({ auth, spreadsheetId, sheetId, check_for_duplicate }) => {
+			props: async ({ auth, spreadsheetId, sheetId, check_for_duplicate, headerRow }) => {
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;
 				const authentication = auth as OAuth2PropertyValue;
@@ -182,6 +183,7 @@ export const insertMultipleRowsAction = createAction({
 						sheetId: sheet_id,
 						rowIndex_s: 1,
 						rowIndex_e: 1,
+						headerRow: headerRow as number || 1,
 					});
 					const firstRow = headers[0].values ?? {};
 
@@ -219,6 +221,12 @@ export const insertMultipleRowsAction = createAction({
 				'Inserted values that are dates and formulas will be entered as strings and have no effect',
 			required: false,
 		}),
+		headerRow: Property.Number({
+			displayName: 'Header Row',
+			description: 'Which row contains the headers?',
+			required: true,
+			defaultValue: 1,
+		}),
 	},
 
 	async run(context) {
@@ -230,6 +238,7 @@ export const insertMultipleRowsAction = createAction({
 			check_for_duplicate: checkForDuplicateValues,
 			values: { values: rowValuesInput },
 			as_string: asString,
+			headerRow,
 		} = context.propsValue;
 
 		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
@@ -248,6 +257,7 @@ export const insertMultipleRowsAction = createAction({
 			sheetId: sheetId,
 			rowIndex_s: 1,
 			rowIndex_e: 1,
+			headerRow: headerRow,
 		});
 
 		const sheetHeaders = rowHeaders[0]?.values ?? {};
@@ -274,6 +284,7 @@ export const insertMultipleRowsAction = createAction({
 				sheetId: sheetId,
 				rowIndex_s: 1,
 				rowIndex_e: undefined,
+				headerRow: headerRow,
 			});
 			return handleDuplicates(
 				sheets,
