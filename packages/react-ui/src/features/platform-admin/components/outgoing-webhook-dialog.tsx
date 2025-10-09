@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -33,20 +32,18 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import {
-  CreateOutgoingWebhookRequestBody,
   ApplicationEventName,
   OutgoingWebhook,
-  UpdateOutgoingWebhookRequestBody,
   OutgoingWebhookScope,
 } from '@activepieces/ee-shared';
-import { Project } from '@activepieces/shared';
+import { ApErrorParams, ErrorCode, Project } from '@activepieces/shared';
 
 import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
+import { api } from '@/lib/api';
 
 const formSchema = z.object({
   url: z.string().url({ message: t('Please enter a valid URL') }),
   scope: z.nativeEnum(OutgoingWebhookScope),
-  projectId: z.string().optional(),
   events: z.array(z.nativeEnum(ApplicationEventName)).min(1, {
     message: t('Please select at least one event'),
   }),
@@ -63,7 +60,6 @@ interface OutgoingWebhookDialogProps {
 export const OutgoingWebhookDialog = ({
   children,
   webhook,
-  projects,
 }: OutgoingWebhookDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -73,10 +69,6 @@ export const OutgoingWebhookDialog = ({
       url: webhook?.url || '',
       scope: webhook?.scope || OutgoingWebhookScope.PLATFORM,
       events: webhook?.events || [],
-      projectId:
-        webhook?.scope === OutgoingWebhookScope.PROJECT
-          ? webhook?.projectId
-          : undefined,
     },
   });
 
@@ -85,29 +77,9 @@ export const OutgoingWebhookDialog = ({
   const { mutate: mutateWebhook, isPending } =
     outgoingWebhooksHooks.useMutateOutgoingWebhook();
 
-  const watchedScope = form.watch('scope');
-
   const handleSubmit = (data: FormData) => {
-    let request:
-      | CreateOutgoingWebhookRequestBody
-      | UpdateOutgoingWebhookRequestBody = {
-      url: data.url,
-      events: data.events,
-    };
-
-    if (!webhook) {
-      request = {
-        scope: data.scope,
-        ...request,
-        ...(data.scope === OutgoingWebhookScope.PROJECT &&
-          data.projectId && {
-            projectId: data.projectId,
-          }),
-      } as CreateOutgoingWebhookRequestBody;
-    }
-
     mutateWebhook(
-      { id: webhook?.id || '', data: request },
+      { id: webhook?.id || '', data },
       {
         onSuccess: () => {
           toast({
@@ -123,9 +95,16 @@ export const OutgoingWebhookDialog = ({
           form.reset();
         },
         onError: (error: Error) => {
+          let message = error.message;
+          if (api.isError(error)) {
+            const apError = error.response?.data as ApErrorParams;
+            if (apError.code === ErrorCode.VALIDATION) {
+              message = apError.params.message;
+            }
+          }
           toast({
             title: t('Error'),
-            description: error.message,
+            description: message,
             variant: 'destructive',
           });
         },
@@ -171,7 +150,6 @@ export const OutgoingWebhookDialog = ({
                 <FormItem>
                   <FormLabel>{t('Scope')}</FormLabel>
                   <Select
-                    disabled={!!webhook}
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
@@ -193,37 +171,6 @@ export const OutgoingWebhookDialog = ({
                 </FormItem>
               )}
             />
-
-            {watchedScope === OutgoingWebhookScope.PROJECT && (
-              <FormField
-                control={form.control}
-                name="projectId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Project')}</FormLabel>
-                    <Select
-                      disabled={!!webhook}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('Select project')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {projects?.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.displayName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <FormField
               control={form.control}

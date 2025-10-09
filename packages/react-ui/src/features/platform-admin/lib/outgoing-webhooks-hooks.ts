@@ -25,18 +25,16 @@ export const outgoingWebhooksHooks = {
         data,
       }: {
         id?: string;
-        data:
-          | UpdateOutgoingWebhookRequestBody
-          | CreateOutgoingWebhookRequestBody;
+        data: CreateOutgoingWebhookRequestBody;
       }) => {
         if (id) {
           return outgoingWebhooksApi.update(
             id,
-            data as UpdateOutgoingWebhookRequestBody,
+            data,
           );
         } else {
           return outgoingWebhooksApi.create(
-            data as CreateOutgoingWebhookRequestBody,
+            data,
           );
         }
       },

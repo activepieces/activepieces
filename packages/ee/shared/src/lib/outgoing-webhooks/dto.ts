@@ -1,4 +1,3 @@
-import { DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { ApplicationEventName } from '../audit-events'
 
@@ -14,32 +13,15 @@ export const ListOutgoingWebhooksRequestBody = Type.Object({
 
 export type ListOutgoingWebhooksRequestBody = Static<typeof ListOutgoingWebhooksRequestBody>
 
-const CreateOutgoingWebhookBase = {
+export const CreateOutgoingWebhookRequestBody = Type.Object({
     events: Type.Array(Type.Enum(ApplicationEventName)),
     url: Type.String({ format: 'uri' }),
-}
-
-const CreateOutgoingWebhookPlatformScopeRequestBody = Type.Object({
-    ...CreateOutgoingWebhookBase,
-    scope: Type.Literal(OutgoingWebhookScope.PLATFORM),
+    scope: Type.Enum(OutgoingWebhookScope),
 })
-
-const CreateOutgoingWebhookProjectScopeRequestBody = Type.Object({
-    ...CreateOutgoingWebhookBase,
-    scope: Type.Literal(OutgoingWebhookScope.PROJECT),
-    projectId: Type.String(),
-})
-
-export const CreateOutgoingWebhookRequestBody = DiscriminatedUnion('scope', [
-    CreateOutgoingWebhookProjectScopeRequestBody,
-    CreateOutgoingWebhookPlatformScopeRequestBody,
-])
 
 export type CreateOutgoingWebhookRequestBody = Static<typeof CreateOutgoingWebhookRequestBody>
 
-export const UpdateOutgoingWebhookRequestBody = Type.Object({
-    ...CreateOutgoingWebhookBase,
-})
+export const UpdateOutgoingWebhookRequestBody = Type.Partial(CreateOutgoingWebhookRequestBody)
 
 export type UpdateOutgoingWebhookRequestBody = Static<typeof UpdateOutgoingWebhookRequestBody>
 

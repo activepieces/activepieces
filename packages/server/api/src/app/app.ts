@@ -218,7 +218,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(agentRunsModule)
     await app.register(solutionsModule)
     await app.register(outgoingWebhooksModule)
-    await app.register(queueMetricsModule)
 
     app.get(
         '/redirect',

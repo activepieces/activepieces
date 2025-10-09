@@ -463,7 +463,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexOnTriggerRun1757557714045,
         DeleteHandshakeFromTriggerSource1758108135968,
         AddIndexForAppEvents1759392852559,
-        AddOutgoingWebhooks1759332023650,
         RemoveFlowRunDisplayName1759772332795,
     ]
 
@@ -564,6 +563,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformAnalyticsReportEntity1753091760355,
                 AddBillingCycle1754559781173,
                 EligibileForTrial1754852385518,
+                AddOutgoingWebhooks1759332023650,
             )
             break
         case ApEdition.COMMUNITY:

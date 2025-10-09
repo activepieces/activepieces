@@ -5,9 +5,6 @@ export class AddOutgoingWebhooks1759332023650 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_usage_project_created"
-        `);
-        await queryRunner.query(`
             CREATE TABLE "outgoing_webhook" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -28,17 +25,9 @@ export class AddOutgoingWebhooks1759332023650 implements MigrationInterface {
             CREATE INDEX "idx_outgoing_webhook_project_scope" ON "outgoing_webhook" ("projectId")
             WHERE scope = 'PROJECT'
         `);
-        await queryRunner.query(`
-            ALTER TABLE "ai_usage"
-            ADD "platformId" character varying NOT NULL
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("platformId", "created", "projectId")
-        `);
-        await queryRunner.query(`
-            ALTER TABLE "project"
-            ADD CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
-        `);
+
+
+
         await queryRunner.query(`
             ALTER TABLE "outgoing_webhook"
             ADD CONSTRAINT "fk_outgoing_webhook_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
@@ -56,15 +45,9 @@ export class AddOutgoingWebhooks1759332023650 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "outgoing_webhook" DROP CONSTRAINT "fk_outgoing_webhook_platform_id"
         `);
-        await queryRunner.query(`
-            ALTER TABLE "project" DROP CONSTRAINT "fk_project_platform_id"
-        `);
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_usage_project_created"
-        `);
-        await queryRunner.query(`
-            ALTER TABLE "ai_usage" DROP COLUMN "platformId"
-        `);
+
+
+
         await queryRunner.query(`
             DROP INDEX "public"."idx_outgoing_webhook_project_scope"
         `);
@@ -74,9 +57,7 @@ export class AddOutgoingWebhooks1759332023650 implements MigrationInterface {
         await queryRunner.query(`
             DROP TABLE "outgoing_webhook"
         `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("created", "projectId")
-        `);
+
     }
 
 }
