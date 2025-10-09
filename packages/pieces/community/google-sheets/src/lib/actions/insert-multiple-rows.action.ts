@@ -101,15 +101,15 @@ export const insertMultipleRowsAction = createAction({
 							],
 						});
 						break;
-					case 'column_names': {
-						const headers = await googleSheetsCommon.getGoogleSheetRows({
-							spreadsheetId: spreadsheet_id,
-							accessToken: getAccessTokenOrThrow(authentication),
-							sheetId: sheet_id,
-							rowIndex_s: 1,
-							rowIndex_e: 1,
-							headerRow: headerRow as number || 1,
-						});
+				case 'column_names': {
+					const headers = await googleSheetsCommon.getGoogleSheetRows({
+						spreadsheetId: spreadsheet_id,
+						accessToken: getAccessTokenOrThrow(authentication),
+						sheetId: sheet_id,
+						rowIndex_s: 1,
+						rowIndex_e: 1,
+						headerRow: (headerRow as unknown as number) || 1,
+					});
 						const firstRow = headers[0].values ?? {};
 
 						//check for empty headers
@@ -183,7 +183,7 @@ export const insertMultipleRowsAction = createAction({
 						sheetId: sheet_id,
 						rowIndex_s: 1,
 						rowIndex_e: 1,
-						headerRow: headerRow as number || 1,
+						headerRow: (headerRow as unknown as number) || 1,
 					});
 					const firstRow = headers[0].values ?? {};
 
