@@ -6,7 +6,7 @@ import { google } from 'googleapis';
 export const addCalendarToCalendarlist = createAction({
   auth: googleCalendarAuth,
   name: 'addCalendarToCalendarlist',
-  displayName: 'Add calendar to calendarList',
+  displayName: 'Add Calendar to calendarList',
   description: "Adds other people's calendars to your calendarList",
   props: {
     id: Property.ShortText({
