@@ -100,7 +100,6 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        // This sets the localStorage to keep the sidebar state.
         setSidebarStateToLocalStorage(openState, storagePrefix);
       },
       [setOpenProp, open, storagePrefix],
