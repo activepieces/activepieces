@@ -145,9 +145,9 @@ async function enrichAttachments(items: Message[], files: FilesService) {
         : [];
 
       return {
-        data: { ...rest },
-        epochMilliSeconds: item.epochMilliSeconds,
+        ...rest,
         attachments: convertedAttachments,
+        // epochMilliSeconds: item.epochMilliSeconds,
       };
     })
   );
