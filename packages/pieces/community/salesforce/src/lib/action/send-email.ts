@@ -63,19 +63,18 @@ export const sendEmail = createAction({
       saveAsActivity,
     } = context.propsValue;
 
-    const emailMessage: Record<string, unknown> = {
-      targetObjectIds: targetObjectIds,
-      subject: subject,
-      ...(plainTextBody && { plainTextBody: plainTextBody }),
-      ...(htmlBody && { htmlBody: htmlBody }),
-      ...(whatIds && { whatIds: whatIds }),
+    const inputs = {
+      emailAddresses: targetObjectIds[0], // Single recipient
+      emailSubject: subject,
+      ...(plainTextBody && { emailBody: plainTextBody }),
+      ...(htmlBody && { emailBody: htmlBody }), // Use htmlBody if provided, otherwise plainText
       ...(senderDisplayName && { senderDisplayName: senderDisplayName }),
-      ...(replyTo && { replyTo: replyTo }),
+      ...(replyTo && { emailReplyToAddress: replyTo }),
       ...(saveAsActivity !== undefined && { saveAsActivity: saveAsActivity }),
     };
 
     const requestBody = {
-      messages: [emailMessage],
+      inputs: [inputs],
     };
 
     const response = await callSalesforceApi(
