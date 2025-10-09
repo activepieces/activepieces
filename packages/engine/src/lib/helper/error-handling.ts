@@ -1,4 +1,4 @@
-import { ActivepiecesError, CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { ActivepiecesError, CodeAction, FlowRunStatus, GenericStepOutput, PieceAction, StepOutputStatus } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
 import { ExecutionError, ExecutionErrorType } from './execution-errors'
@@ -26,6 +26,16 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
     return resultExecutionState
 }
 
+const parseJsonInErrorMessage = (errorMessage: string | undefined): unknown => {
+    if (!errorMessage) {
+        return undefined;
+    }
+    try {
+        return JSON.parse(errorMessage);
+    } catch (error) {
+        return errorMessage;
+    }   
+}
 export async function continueIfFailureHandler(
     executionState: FlowExecutorContext,
     action: CodeAction | PieceAction,
@@ -38,6 +48,17 @@ export async function continueIfFailureHandler(
         continueOnFailure &&
         !constants.testSingleStepMode
     ) {
+        const errorMessage = executionState.error?.message;
+        if (errorMessage) {
+            const newStepOutput = GenericStepOutput.create({
+                input: action.settings.input,
+                type: action.type,
+                status: StepOutputStatus.FAILED,
+            });
+            const errorJson = parseJsonInErrorMessage(errorMessage);
+            newStepOutput.output = errorJson;
+            return executionState.upsertStep(action.name, newStepOutput).setVerdict(ExecutionVerdict.RUNNING, undefined).increaseTask()
+        }
         return executionState
             .setVerdict(ExecutionVerdict.RUNNING, undefined)
             .increaseTask()
