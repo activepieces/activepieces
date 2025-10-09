@@ -10,7 +10,12 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
         const mcp = await mcpService(req.log).getByToken({
             token,
         })
-        await mcpServerHandler.handleSSERequest(reply, mcp.id, mcp.projectId, req.log)
+        await mcpServerHandler.handleSSERequest({
+            reply, 
+            projectId: mcp.projectId, 
+            tools: mcp.tools, 
+            logger: req.log,
+        })
     })
 
     app.post('/:token/sse', SSERequest, async (req, reply) => {
@@ -19,7 +24,13 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
             token,
         })
 
-        await mcpServerHandler.handleStreamableHttpRequest(req, reply, mcp.id, mcp.projectId, req.log)
+        await mcpServerHandler.handleStreamableHttpRequest({
+            req, 
+            reply, 
+            projectId: mcp.projectId, 
+            tools: mcp.tools, 
+            logger: req.log,
+        })
     })
 
     app.post('/messages', MessagesRequest, async (req, reply) => {

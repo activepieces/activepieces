@@ -23,7 +23,6 @@ type BaseContext<
   Props extends InputPropertyMap
 > = {
   flows: FlowsContext;
-  stepName: string;
   auth: PiecePropValueSchema<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
   store: Store;

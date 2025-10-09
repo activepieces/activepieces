@@ -3,22 +3,17 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { createMcpServer } from './mcp-server'
 import { mcpSessionManager } from './mcp-session-manager'
+import { McpTool } from '@activepieces/shared'
 
 const HEARTBEAT_INTERVAL = 30 * 1000
 
 export const mcpServerHandler = {
-    async handleStreamableHttpRequest(
-        req: FastifyRequest,
-        reply: FastifyReply,
-        mcpId: string,
-        projectId: string,
-        logger: FastifyBaseLogger,
-    ): Promise<void> {
+    async handleStreamableHttpRequest({ req, reply, projectId, tools, logger }: HandleStreamableHttpRequestParams): Promise<void> {
         try {
             const { server } = await createMcpServer({
-                mcpId,
                 logger,
                 projectId,
+                tools,
             })
     
             const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
@@ -48,17 +43,12 @@ export const mcpServerHandler = {
         }
     },
     
-    async handleSSERequest(
-        reply: FastifyReply,
-        mcpId: string,
-        projectId: string,
-        logger: FastifyBaseLogger,
-    ): Promise<void> {
+    async handleSSERequest({ reply, projectId, tools, logger }: HandleSSERequestParams): Promise<void> {
         const transport = new SSEServerTransport('/api/v1/mcp/messages', reply.raw)
         const { server } = await createMcpServer({
-            mcpId,
             projectId,
             logger,
+            tools,
         })
     
         await mcpSessionManager(logger).add(transport.sessionId, server, transport)
@@ -77,3 +67,17 @@ export const mcpServerHandler = {
     }
 }
 
+type HandleStreamableHttpRequestParams = {
+    req: FastifyRequest
+    reply: FastifyReply
+    projectId: string
+    logger: FastifyBaseLogger
+    tools: McpTool[]
+}
+
+type HandleSSERequestParams = {
+    reply: FastifyReply
+    projectId: string
+    logger: FastifyBaseLogger
+    tools: McpTool[]
+}

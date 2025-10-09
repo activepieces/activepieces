@@ -269,7 +269,6 @@ import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1
 import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
 import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
-import { AddFlowIdAndStepNameIntoMCPEntity1759923770044 } from './migration/postgres/1759923770044-AddFlowIdAndStepNameIntoMCPEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -460,7 +459,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowIndexToTriggerSource1757555419075,
         AddIndexOnTriggerRun1757557714045,
         DeleteHandshakeFromTriggerSource1758108135968,
-        AddFlowIdAndStepNameIntoMCPEntity1759923770044
     ]
 
     const edition = system.getEdition()
