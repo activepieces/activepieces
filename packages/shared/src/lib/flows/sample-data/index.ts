@@ -6,10 +6,18 @@ export enum SampleDataFileType {
     OUTPUT = 'OUTPUT',
 }
 
+export const DATA_TYPE_KEY_IN_FILE_METADATA = 'dataType'
+
+
+export enum SampleDataDataType {
+    JSON = 'JSON',
+    STRING = 'STRING',
+}
 export const SaveSampleDataRequest = Type.Object({
     stepName: Type.String(),
     payload: Type.Unknown(),
     type: Type.Enum(SampleDataFileType),
+    dataType: Type.Enum(SampleDataDataType),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
@@ -25,13 +33,12 @@ export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
 export const CreateStepRunRequestBody = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
-    id: Type.String(),
 })
 
 export type CreateStepRunRequestBody = Static<typeof CreateStepRunRequestBody>
 
 export const StepRunResponse = Type.Object({
-    id: Type.String(),
+    runId: Type.String(),
     success: Type.Boolean(),
     input: Type.Unknown(),
     output: Type.Unknown(),
@@ -50,12 +57,6 @@ export const SampleDataSetting = Type.Object(
         sampleDataFileId: Type.Optional(Type.String()),
         sampleDataInputFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
-        customizedInputs: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-        schema: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-        /**
-         * @deprecated This field is deprecated and will be removed in 2025.
-         */
-        currentSelectedData: Type.Optional(Type.Unknown()),
     },
     {
         additionalProperties: true,
@@ -67,8 +68,8 @@ export type SampleDataSettings = Static<typeof SampleDataSetting>
 export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
     sampleDataFileId: undefined,
     sampleDataInputFileId: undefined,
-    customizedInputs: undefined,
 }
 
 export const SaveSampleDataResponse = Pick(File, ['id', 'size', 'type'])
 export type SaveSampleDataResponse = Static<typeof SaveSampleDataResponse>
+

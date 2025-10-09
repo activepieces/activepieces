@@ -14,12 +14,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
   FlowOperationType,
-  Trigger,
-  TriggerType,
-  debounce,
+  FlowTrigger,
+  FlowTriggerType,
   isNil,
 } from '@activepieces/shared';
 
@@ -36,7 +35,6 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
-
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectHooks.useCurrentProject();
@@ -68,44 +66,20 @@ const StepSettingsContainer = () => {
     currentValuesRef.current = defaultValues;
     form.reset(defaultValues);
     form.trigger();
-    if (defaultValues.type === ActionType.LOOP_ON_ITEMS) {
-      //TODO: fix this, for some reason if the form is not triggered, the items input error is not shown
-      setTimeout(() => {
-        form.trigger('settings.items');
-      }, 1);
-    }
   }, [defaultValues]);
 
   //Needed to show new code from Ask AI
   useEffect(() => {
     form.reset(selectedStep);
     form.trigger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshStepFormSettingsToggle]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
-  const debouncedTrigger = useMemo(() => {
-    return debounce((newTrigger: Trigger) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: newTrigger,
-      });
-    }, 200);
-  }, [applyOperation]);
-
-  const debouncedAction = useMemo(() => {
-    return debounce((newAction: Action) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_ACTION,
-        request: newAction,
-      });
-    }, 200);
-  }, [applyOperation]);
-  const currentValuesRef = useRef<Action | Trigger>(defaultValues);
-  const form = useForm<Action | Trigger>({
+  const currentValuesRef = useRef<FlowAction | FlowTrigger>(defaultValues);
+  const form = useForm<FlowAction | FlowTrigger>({
     mode: 'all',
     disabled: readonly,
     reValidateMode: 'onChange',
@@ -121,10 +95,10 @@ const StepSettingsContainer = () => {
         currentValuesRef.current,
       );
       if (
-        cleanedNewValues.type === TriggerType.EMPTY ||
+        cleanedNewValues.type === FlowTriggerType.EMPTY ||
         (isNil(pieceModel) &&
-          (cleanedNewValues.type === ActionType.PIECE ||
-            cleanedNewValues.type === TriggerType.PIECE))
+          (cleanedNewValues.type === FlowActionType.PIECE ||
+            cleanedNewValues.type === FlowTriggerType.PIECE))
       ) {
         return result;
       }
@@ -134,12 +108,17 @@ const StepSettingsContainer = () => {
       const valid = Object.keys(result.errors).length === 0;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
-      if (cleanedNewValues.type === TriggerType.PIECE) {
-        debouncedTrigger({ ...cleanedNewValues, valid });
+      if (cleanedNewValues.type === FlowTriggerType.PIECE) {
+        applyOperation({
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: { ...cleanedNewValues, valid },
+        });
       } else {
-        debouncedAction({ ...cleanedNewValues, valid });
+        applyOperation({
+          type: FlowOperationType.UPDATE_ACTION,
+          request: { ...cleanedNewValues, valid },
+        });
       }
-
       return result;
     },
   });
@@ -149,8 +128,8 @@ const StepSettingsContainer = () => {
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
-    [ActionType.CODE, ActionType.PIECE].includes(
-      modifiedStep.type as ActionType,
+    [FlowActionType.CODE, FlowActionType.PIECE].includes(
+      modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
   return (
     <Form {...form}>
@@ -197,45 +176,48 @@ const StepSettingsContainer = () => {
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={55}>
+            <ResizablePanel defaultSize={55} className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="flex flex-col gap-4 px-4 pb-6">
                   <StepCard step={modifiedStep}></StepCard>
 
-                  {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
+                  {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}
-                  {modifiedStep.type === ActionType.CODE && (
+                  {modifiedStep.type === FlowActionType.CODE && (
                     <CodeSettings readonly={readonly}></CodeSettings>
                   )}
-                  {modifiedStep.type === ActionType.PIECE && modifiedStep && (
-                    <PieceSettings
-                      step={modifiedStep}
-                      flowId={flowVersion.flowId}
-                      readonly={readonly}
-                    ></PieceSettings>
-                  )}
-                  {modifiedStep.type === ActionType.ROUTER && modifiedStep && (
-                    <RouterSettings readonly={readonly}></RouterSettings>
-                  )}
-                  {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
-                    <PieceSettings
-                      step={modifiedStep}
-                      flowId={flowVersion.flowId}
-                      readonly={readonly}
-                    ></PieceSettings>
-                  )}
+                  {modifiedStep.type === FlowActionType.PIECE &&
+                    modifiedStep && (
+                      <PieceSettings
+                        step={modifiedStep}
+                        flowId={flowVersion.flowId}
+                        readonly={readonly}
+                      ></PieceSettings>
+                    )}
+                  {modifiedStep.type === FlowActionType.ROUTER &&
+                    modifiedStep && (
+                      <RouterSettings readonly={readonly}></RouterSettings>
+                    )}
+                  {modifiedStep.type === FlowTriggerType.PIECE &&
+                    modifiedStep && (
+                      <PieceSettings
+                        step={modifiedStep}
+                        flowId={flowVersion.flowId}
+                        readonly={readonly}
+                      ></PieceSettings>
+                    )}
                   {showActionErrorHandlingForm && (
                     <ActionErrorHandlingForm
                       hideContinueOnFailure={
-                        stepMetadata.type === ActionType.PIECE
+                        stepMetadata.type === FlowActionType.PIECE
                           ? stepMetadata.errorHandlingOptions?.continueOnFailure
                               ?.hide
                           : false
                       }
                       disabled={readonly}
                       hideRetryOnFailure={
-                        stepMetadata.type === ActionType.PIECE
+                        stepMetadata.type === FlowActionType.PIECE
                           ? stepMetadata.errorHandlingOptions?.retryOnFailure
                               ?.hide
                           : false
@@ -248,7 +230,7 @@ const StepSettingsContainer = () => {
             {!readonly && (
               <>
                 <ResizableHandle withHandle={true} />
-                <ResizablePanel defaultSize={45}>
+                <ResizablePanel defaultSize={45} className="min-h-[130px]">
                   <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
                     {modifiedStep.type && (
                       <TestStepContainer

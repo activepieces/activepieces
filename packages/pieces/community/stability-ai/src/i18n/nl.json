@@ -1,5 +1,4 @@
 {
-  "Stability AI": "Stabiliteit AI",
   "Generative AI video model based on the image model Stable Diffusion.": "Generatief AI videomodel gebaseerd op het afbeeldingsmodel Stabiele Diffusie.",
   "API Key": "API Sleutel",
   "Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key": "Bezoek https://platform.stability.ai/docs/getting-started/authenticatie om uw API Key te krijgen",
@@ -21,6 +20,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "The text to transform in image.": "De tekst om te zetten in afbeelding.",
@@ -31,6 +31,7 @@
   "Number of diffusion steps to run (MIN:10; MAX:150)": "Aantal diffusie stappen uit te voeren (MIN: 10; MAX: 150)",
   "Pass in a style preset to guide the image model towards a particular style.": "Geef een voorinstelling in de stijl om het afbeeldingsmodel naar een bepaalde stijl te leiden.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "NONE": "GEEN",
   "FAST_BLUE": "FAST_BLUUW",
   "FAST_GREEN": "VIP_FRIEND_POPUP_BODY",

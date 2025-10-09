@@ -1,39 +1,69 @@
 import { t } from 'i18next';
-import { Bot, Database, LayoutGrid, Users, Workflow } from 'lucide-react';
+import {
+  Bot,
+  ClipboardCheck,
+  Database,
+  LayoutGrid,
+  Users,
+  Workflow,
+} from 'lucide-react';
 
-import mcpDark from '@/assets/img/custom/mcp-dark.svg';
-import mcpLight from '@/assets/img/custom/mcp-light.svg';
-import { useTheme } from '@/components/theme-provider';
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 
 export const UsageCards = ({
   platformSubscription,
 }: {
   platformSubscription: PlatformBillingInformation;
 }) => {
-  const { theme } = useTheme();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { usage, plan } = platformSubscription;
   const isBusinessPlan = plan.plan === PlanName.BUSINESS;
+  const isPlusPlan = plan.plan === PlanName.PLUS;
+  const isFree = plan.plan === PlanName.FREE;
+  const isTrial =
+    plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
+  const isEnterprise =
+    !isNil(plan?.licenseKey) ||
+    plan?.plan === PlanName.ENTERPRISE ||
+    edition === ApEdition.ENTERPRISE;
 
   return (
     <div
-      className={cn(
-        'grid grid-cols-3 gap-6',
-        isBusinessPlan ? 'xl:grid-cols-5' : '2xl:grid-cols-6',
-      )}
+      className={cn('grid gap-6', {
+        'grid-cols-3': true,
+        'grid-cols-4': isBusinessPlan,
+        '2xl:grid-cols-3': plan.plan === PlanName.PLUS,
+        '2xl:grid-cols-7': isFree,
+      })}
     >
       <UsageCard
-        icon={<Workflow className="w-4 h-4" />}
-        title={t('Active flows')}
-        used={usage.activeFlows}
-        total={plan.activeFlowsLimit}
+        icon={<ClipboardCheck className="w-5 h-5" />}
+        title={t('Tasks')}
+        used={usage.tasks}
+        total={plan.tasksLimit}
       />
 
-      {!isBusinessPlan && (
+      {(isFree || isTrial || isEnterprise) && (
+        <UsageCard
+          icon={<Workflow className="w-4 h-4" />}
+          title={t('Active flows')}
+          used={usage.activeFlows}
+          total={plan.activeFlowsLimit}
+        />
+      )}
+
+      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
         <UsageCard
           icon={<Users className="w-4 h-4" />}
           title={t('Users')}
@@ -42,21 +72,17 @@ export const UsageCards = ({
         />
       )}
 
-      <UsageCard
-        icon={<LayoutGrid className="w-4 h-4" />}
-        title={t('Projects')}
-        used={usage.projects}
-        total={plan.projectsLimit}
-      />
+      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
+        <UsageCard
+          icon={<LayoutGrid className="w-4 h-4" />}
+          title={t('Projects')}
+          used={usage.projects}
+          total={plan.projectsLimit}
+        />
+      )}
 
       <UsageCard
-        icon={
-          <img
-            src={theme === 'dark' ? mcpDark : mcpLight}
-            alt="MCP"
-            className="w-4 h-4"
-          />
-        }
+        icon={<McpSvg className="size-4" />}
         title={t('MCP Servers')}
         used={usage.mcps}
         total={plan.mcpLimit}

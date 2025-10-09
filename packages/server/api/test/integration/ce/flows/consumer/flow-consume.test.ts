@@ -1,18 +1,20 @@
 import { fileCompressor } from '@activepieces/server-shared'
 import {
-    ActionType,
     ExecutionType,
+    FlowActionType,
     FlowRunStatus,
     FlowStatus,
+    FlowTriggerType,
     FlowVersionState,
     PackageType,
     PieceType,
     ProgressUpdateType,
+    PropertyExecutionType,
     RunEnvironment,
-    TriggerType,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { flowJobExecutor, flowWorker } from 'server-worker'
+import { flowJobExecutor, flowWorker, workerMachine } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
@@ -21,6 +23,7 @@ import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
+    createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 
@@ -58,12 +61,28 @@ describe('flow execution', () => {
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
 
+        const mockPieceMetadata1 = createMockPieceMetadata({
+            name: '@activepieces/piece-schedule',
+            version: '0.1.5',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        const mockPieceMetadata2 = createMockPieceMetadata({
+            name: '@activepieces/piece-data-mapper',
+            version: '0.3.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        await databaseConnection()
+            .getRepository('piece_metadata')
+            .save([mockPieceMetadata1, mockPieceMetadata2])
+
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
             updatedBy: mockOwner.id,
             state: FlowVersionState.LOCKED,
             trigger: {
-                type: TriggerType.PIECE,
+                type: FlowTriggerType.PIECE,
                 settings: {
                     pieceName: '@activepieces/piece-schedule',
                     pieceVersion: '0.1.5',
@@ -71,9 +90,11 @@ describe('flow execution', () => {
                         run_on_weekends: false,
                     },
                     triggerName: 'every_hour',
-                    'pieceType': PieceType.OFFICIAL,
-                    'packageType': PackageType.REGISTRY,
-                    inputUiInfo: {},
+                    propertySettings: {
+                        'run_on_weekends': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
+                    },
                 },
                 valid: true,
                 name: 'webhook',
@@ -81,9 +102,8 @@ describe('flow execution', () => {
                 nextAction: {
                     name: 'echo_step',
                     displayName: 'Echo Step',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     settings: {
-                        inputUiInfo: {},
                         input: {
                             key: '{{ 1 + 2 }}',
                         },
@@ -99,17 +119,19 @@ describe('flow execution', () => {
                     nextAction: {
                         name: 'datamapper',
                         displayName: 'Datamapper',
-                        type: ActionType.PIECE,
+                        type: FlowActionType.PIECE,
                         settings: {
-                            inputUiInfo: {},
                             pieceName: '@activepieces/piece-data-mapper',
                             pieceVersion: '0.3.0',
-                            packageType: 'REGISTRY',
-                            pieceType: 'OFFICIAL',
                             actionName: 'advanced_mapping',
                             input: {
                                 mapping: {
                                     key: '{{ 1 + 2 }}',
+                                },
+                            },
+                            propertySettings: {
+                                'mapping': {
+                                    type: PropertyExecutionType.MANUAL,
                                 },
                             },
                         },
@@ -139,23 +161,33 @@ describe('flow execution', () => {
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
 
+        await waitForSocketConnection()
+        
+
         await flowJobExecutor(mockLog).executeFlow({
-            flowVersionId: mockFlowVersion.id,
-            projectId: mockProject.id,
-            environment: RunEnvironment.PRODUCTION,
-            runId: mockFlowRun.id,
-            payload: {},
-            synchronousHandlerId: null,
-            progressUpdateType: ProgressUpdateType.NONE,
-            executionType: ExecutionType.BEGIN,
-        }, 1, engineToken)
+            jobData: {
+                flowVersionId: mockFlowVersion.id,
+                projectId: mockProject.id,
+                platformId: mockPlatform.id,
+                jobType: WorkerJobType.EXECUTE_FLOW,
+                environment: RunEnvironment.PRODUCTION,
+                runId: mockFlowRun.id,
+                payload: {},
+                synchronousHandlerId: null,
+                progressUpdateType: ProgressUpdateType.NONE,
+                executionType: ExecutionType.BEGIN,
+            },
+            attempsStarted: 1,
+            engineToken,
+            timeoutInSeconds: 1000,
+        })
 
         const flowRun = await databaseConnection()
             .getRepository('flow_run')
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
-      
+
         expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection()
@@ -205,3 +237,26 @@ describe('flow execution', () => {
         })
     }, 60000)
 })
+
+
+async function waitForSocketConnection(maxAttempts = 60, intervalMs = 1000): Promise<void> {
+    let attempts = 0
+    while (attempts < maxAttempts) {
+        try {
+            const settings = workerMachine.getSettings()
+            if (settings) {
+                break
+            }
+        }
+        catch (error) {
+            // Settings not ready yet
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs))
+        attempts++
+    }
+    
+    if (attempts >= maxAttempts) {
+        throw new Error(`Worker settings not initialized after ${maxAttempts} seconds`)
+    }
+}
+

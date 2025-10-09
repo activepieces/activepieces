@@ -1,0 +1,8 @@
+{
+  "Gameball": "Геймбол",
+  "Please use your gameball api key. visit [help center](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) for more information": "Пожалуйста, используйте ключ api геймбола. Посетите [Центр поддержки](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) для получения дополнительной информации",
+  "Send event": "Отправить событие",
+  "Send an event to gameball": "Отправить событие в геймбол",
+  "Your Player Unique Id": "Уникальный Id игрока",
+  "Event Name": "Название события"
+}

@@ -1,0 +1,80 @@
+name: Generate Translation Files for Community Pieces and UI
+
+on:
+  schedule:
+    - cron: '5 15 * * *'
+  workflow_dispatch:
+
+jobs:
+  shard-0:
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 0
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-1:
+    needs: shard-0
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 1
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-2:
+    needs: shard-1
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 2
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-3:
+    needs: shard-2
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 3
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-4:
+    needs: shard-3
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 4
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  shard-5:
+    needs: shard-4
+    uses: ./.github/workflows/reusable-generate-translations-shard.yml
+    with:
+      shard_index: 5
+      shard_total: 6
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  finalize:
+    needs: shard-5
+    uses: ./.github/workflows/reusable-finalize-translations-pr.yml
+    with:
+      branch_name: auto/translation-files-${{ github.run_id }}
+    secrets: inherit
+
+  notify-failure:
+    # Only run when any of the shards failed; still evaluate even if they failed
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    needs: [shard-0, shard-1, shard-2, shard-3, shard-4, shard-5]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord on shard failure
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Generate Translations Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nOne or more shards failed. Please check the logs for details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}

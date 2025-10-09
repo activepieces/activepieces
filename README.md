@@ -28,7 +28,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
     target="_blank"
   ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
    <a
-    href="https://www.activepieces.com/docs/developers/overview"
+    href="https://www.activepieces.com/docs/developers/building-pieces/overview"
     target="_blank"
   ><b>Create a Piece</b></a>&nbsp;&nbsp;&nbsp;🖉&nbsp;&nbsp;&nbsp;
   <a
@@ -102,7 +102,7 @@ Activepieces supports integrations with Google Sheets, OpenAI, Discord, RSS, and
 
 As an **open ecosystem**, all integration source code is accessible in our repository. These integrations are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contribution.
 
-You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview).
+You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/developers/building-pieces/overview).
 
 <br>
 <br>
@@ -437,6 +437,15 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/owuzo"><img src="https://avatars.githubusercontent.com/u/173556464?v=4?s=100" width="100px;" alt="Owuzo Joy"/><br /><sub><b>Owuzo Joy</b></sub></a><br /><a href="#plugin-owuzo" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/helenedurand-smet"><img src="https://avatars.githubusercontent.com/u/206527847?v=4?s=100" width="100px;" alt="helenedurand-smet"/><br /><sub><b>helenedurand-smet</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=helenedurand-smet" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nuvex-dev"><img src="https://avatars.githubusercontent.com/u/181783827?v=4?s=100" width="100px;" alt="Nuvex"/><br /><sub><b>Nuvex</b></sub></a><br /><a href="#plugin-nuvex-dev" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Zebi15"><img src="https://avatars.githubusercontent.com/u/80625145?v=4?s=100" width="100px;" alt="Apostol Eusebiu"/><br /><sub><b>Apostol Eusebiu</b></sub></a><br /><a href="#plugin-Zebi15" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fortunamide"><img src="https://avatars.githubusercontent.com/u/122938302?v=4?s=100" width="100px;" alt="Fortunate"/><br /><sub><b>Fortunate</b></sub></a><br /><a href="#plugin-fortunamide" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://jaachiwrites.com"><img src="https://avatars.githubusercontent.com/u/173014495?v=4?s=100" width="100px;" alt="Jaachịmmá Anyatọnwụ"/><br /><sub><b>Jaachịmmá Anyatọnwụ</b></sub></a><br /><a href="#plugin-thejaachi" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://luizmainart.com"><img src="https://avatars.githubusercontent.com/u/55499897?v=4?s=100" width="100px;" alt="Luiz D. M. Mainart"/><br /><sub><b>Luiz D. M. Mainart</b></sub></a><br /><a href="#plugin-LuizDMM" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/uvenkatateja"><img src="https://avatars.githubusercontent.com/u/118493739?v=4?s=100" width="100px;" alt="uvenkatateja"/><br /><sub><b>uvenkatateja</b></sub></a><br /><a href="#plugin-uvenkatateja" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

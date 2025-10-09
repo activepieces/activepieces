@@ -25,6 +25,9 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
+import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
+import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
+import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -137,6 +140,16 @@ import { AddExternalAgentIdSqlite1753643287673 } from './migration/sqlite/175364
 import { AddParentRunIdToFlowRunSqlite1753719777841 } from './migration/sqlite/1753719777841-AddParentRunIdToFlowRunSqlite'
 import { AddCascadeOnAgentsSqlite1753727589109 } from './migration/sqlite/1753727589109-AddCascadeOnAgentsSqlite'
 import { AddExternalIdToMCPSqlite1753786833156 } from './migration/sqlite/1753786833156-AddExternalIdToMCPSqlite'
+import { AddExternalidToMCPToolSQLite1754220095236 } from './migration/sqlite/1754220095236-AddExternalidToMCPToolSQLite'
+import { AddStepNameToTestInFlowRunEntitySqlite1754355397885 } from './migration/sqlite/1754355397885-AddStepNameToTestInFlowRunEntitySqlite'
+import { AddTriggerSqlite1754477404726 } from './migration/sqlite/1754477404726-AddTriggerSqlite'
+import { AddJobIdToTriggerRun1754510243053 } from './migration/sqlite/1754510243053-AddJobIdToTriggerRun'
+import { RemoveAgentTestPromptSqlite1754863757450 } from './migration/sqlite/1754863757450-RemoveAgentTestPromptSqlite'
+import { RemoveAgentRelationToTablesSqlite1755954639833 } from './migration/sqlite/1755954639833-RemoveAgentRelationToTablesSqlite'
+import { AddTriggerNameToTriggerSourceSqlite1757018637559 } from './migration/sqlite/1757018637559-AddTriggerNameToTriggerSourceSqlite'
+import { AddIndexOnTriggerRunSqlite1757560231246 } from './migration/sqlite/1757560231246-AddIndexOnTriggerRunSqlite'
+import { DeleteHandshakeFromTriggerSourceSqlite1758108281602 } from './migration/sqlite/1758108281602-DeleteHandshakeFromTriggerSourceSqlite'
+import { RemoveDisplayNameSqlite1759876386359 } from './migration/sqlite/1759876386359-RemoveDisplayNameSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -290,6 +303,19 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddParentRunIdToFlowRunSqlite1753719777841,
         AddCascadeOnAgentsSqlite1753727589109,
         AddExternalIdToMCPSqlite1753786833156,
+        AddExternalidToMCPToolSQLite1754220095236,
+        AddTriggerSqlite1754477404726,
+        AddStepNameToTestInFlowRunEntitySqlite1754355397885,
+        AddJobIdToTriggerRun1754510243053,
+        RemoveAgentTestPromptSqlite1754863757450,
+        RemoveAgentRelationToTablesSqlite1755954639833,
+        AddIndexToIssues1756775080449,
+        AddTriggerNameToTriggerSourceSqlite1757018637559,
+        AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRunSqlite1757560231246,
+        DeleteHandshakeFromTriggerSourceSqlite1758108281602,
+        AddIndexForAppEvents1759392852559,
+        RemoveDisplayNameSqlite1759876386359,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -312,6 +338,17 @@ const getMigrationConfig = (): MigrationConfig => {
     }
 }
 
+const getSynchronize = (): boolean => {
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+
+    const value: Partial<Record<ApEnvironment, boolean>> = {
+        [ApEnvironment.TESTING]: true,
+    }
+
+    return value[env] ?? false
+}
+
+
 export const createSqlLiteDataSource = (): DataSource => {
     const migrationConfig = getMigrationConfig()
 
@@ -320,6 +357,7 @@ export const createSqlLiteDataSource = (): DataSource => {
         database: getSqliteDatabase(),
         ...migrationConfig,
         ...commonProperties,
+        synchronize: getSynchronize(),
     })
 }
 

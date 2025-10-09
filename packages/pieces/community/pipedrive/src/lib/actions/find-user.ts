@@ -7,7 +7,7 @@ export const findUserAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-user',
 	displayName: 'Find User',
-	description: 'Find a user by name or email.',
+	description: 'Finds a user by name or email.',
 	props: {
 		field: Property.StaticDropdown({
 			displayName: 'Field to search by',
@@ -39,7 +39,7 @@ export const findUserAction = createAction({
 				accessToken: context.auth.access_token,
 				apiDomain: context.auth.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: '/users/find',
+				resourceUri: '/v1/users/find',
 				query: {
 					term: fieldValue,
 					search_by_email: field == 'email' ? 1 : 0,
@@ -48,8 +48,8 @@ export const findUserAction = createAction({
 		);
 
 		return {
-            found: response.data.length === 0? false: true,
-            data: response.data
-        };
+			found: response.data && response.data.length > 0, 
+			data: response.data,
+		};
 	},
 });

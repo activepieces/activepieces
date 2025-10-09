@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trigger, TriggerEventWithPayload } from '@activepieces/shared';
+import { FlowTrigger, TriggerEventWithPayload } from '@activepieces/shared';
 
 import { testStepHooks } from '../test-step-hooks';
 
@@ -24,22 +24,22 @@ export const TriggerEventSelect = React.memo(
   ({ pollResults, sampleData }: TriggerEventSelectProps) => {
     const selectedId = getSelectedId(sampleData, pollResults?.data ?? []);
 
-    const form = useFormContext<Trigger>();
+    const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
     const formValues = form.getValues();
 
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
       formValues.name,
       (step) => {
-        const sampleDataFileId = step.settings.inputUiInfo?.sampleDataFileId;
+        const sampleDataFileId = step.settings.sampleData?.sampleDataFileId;
         const sampleDataInputFileId =
-          step.settings.inputUiInfo?.sampleDataInputFileId;
+          step.settings.sampleData?.sampleDataInputFileId;
+
         form.setValue(
-          'settings.inputUiInfo',
+          'settings.sampleData',
           {
-            ...formValues.settings.inputUiInfo,
+            ...(formValues.settings.sampleData ?? {}),
             sampleDataFileId,
             sampleDataInputFileId,
-            currentSelectedData: undefined,
             lastTestDate: dayjs().toISOString(),
           },
           { shouldValidate: true },

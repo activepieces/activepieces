@@ -45,6 +45,7 @@ export const GiftTrialByEmailRequestBody = Type.Object({
     gifts: Type.Array(Type.Object({
         email: Type.String(),
         trialPeriod: Type.Number(),
+        trialPlan: Type.String(),
     })),
 })
 export type GiftTrialByEmailRequestBody = Static<typeof GiftTrialByEmailRequestBody>

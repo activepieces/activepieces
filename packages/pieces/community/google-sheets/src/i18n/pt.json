@@ -1,5 +1,4 @@
 {
-  "Google Sheets": "Planilhas Google",
   "Create, edit, and collaborate on spreadsheets online": "Criar, editar e colaborar em planilhas online",
   "Insert Row": "Insert Row",
   "Insert Multiple Rows": "Inserir Linhas Múltiplas",
@@ -71,6 +70,7 @@
   "Method": "Método",
   "Query Parameters": "Parâmetros da consulta",
   "Body": "Conteúdo",
+  "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "Determines if sheets from Team Drives should be included in the results.": "Determina se as folhas do disco do time devem ser incluídas nos resultados.",
@@ -107,6 +107,7 @@
   "The format to export the sheet to.": "O formato para o qual exportar a planilha.",
   "Return the exported data as text instead of a file.": "Retornar os dados exportados como texto em vez de um arquivo.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "CSV": "Csv",
   "JSON": "JSON",
   "Column Names": "Nomes das colunas",
@@ -128,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Dispara quando uma planilha é criada em uma planilha.",
   "Trigger Column": "Coluna de Disparo",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Observe que pode haver um atraso de até 3 minutos para o gatilho ser disparado, devido a um atraso do Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Acionar mudanças em células apenas nesta coluna. Selecione **Todas as Colunas** se você quiser que o fluxo ative em mudanças para qualquer célula na linha."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Acionar mudanças em células apenas nesta coluna. \nSelecione **Qualquer coluna** se você quiser que o fluxo acione mudanças para qualquer célula na linha."
 }

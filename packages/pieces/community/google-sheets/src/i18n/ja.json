@@ -1,5 +1,4 @@
 {
-  "Google Sheets": "Google シート",
   "Create, edit, and collaborate on spreadsheets online": "スプレッドシートをオンラインで作成、編集、共同編集します",
   "Insert Row": "Insert Row",
   "Insert Multiple Rows": "複数の行を挿入",
@@ -71,6 +70,7 @@
   "Method": "方法",
   "Query Parameters": "クエリパラメータ",
   "Body": "本文",
+  "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
   "Determines if sheets from Team Drives should be included in the results.": "Team Drives のシートを結果に含めるかどうかを指定します。",
@@ -107,6 +107,7 @@
   "The format to export the sheet to.": "シートをエクスポートする書式。",
   "Return the exported data as text instead of a file.": "エクスポートされたデータをファイルの代わりにテキストとして返します。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "CSV": "CSV",
   "JSON": "JSON",
   "Column Names": "列名",
@@ -128,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "ワークシートがスプレッドシートに作成されたときにトリガーされます。",
   "Trigger Column": "トリガー列",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Googleからの遅延により、トリガーが発生するまでに最大3分間の遅延が発生する場合がありますのでご注意ください。",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "この列のセルの変更のみをトリガーします。 行内の任意のセルへの変更をトリガーするフローが必要な場合は、**All Columns** を選択します。"
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "この列のセルの変更のみをトリガーします。 \n行内の任意のセルへの変更をトリガーするフローを使用する場合は、**任意の列** を選択します。"
 }

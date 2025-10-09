@@ -4,16 +4,7 @@
   "sourceRoot": "packages/tests-e2e",
   "projectType": "application",
   "targets": {
-    "test-local": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "export $(cat packages/tests-e2e/.env.e2e | xargs) && npm start",
-          "sleep 60 && curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/v1/flags | grep -q \"2[0-9][0-9]\" && npx nx run tests-e2e:test-scenarios"
-        ]
-      }
-    },
-    "test-scenarios": {
+    "test-e2e": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [

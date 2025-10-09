@@ -28,6 +28,7 @@ export const deleteRecord = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
+      retries: 5,
     });
 
     return {

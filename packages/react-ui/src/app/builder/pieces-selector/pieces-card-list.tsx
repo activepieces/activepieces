@@ -20,10 +20,10 @@ import {
   CategorizedStepMetadataWithSuggestions,
 } from '@/lib/types';
 import {
-  ActionType,
+  FlowActionType,
   Agent,
   FlowOperationType,
-  TriggerType,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
@@ -37,14 +37,12 @@ type PiecesCardListProps = {
   searchQuery: string;
   operation: PieceSelectorOperation;
   stepToReplacePieceDisplayName?: string;
-  listHeight: number;
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   searchQuery,
   operation,
   stepToReplacePieceDisplayName,
-  listHeight,
 }) => {
   const isMobile = useIsMobile();
   const [selectedPieceMetadataInPieceSelector] = useBuilderStateContext(
@@ -108,7 +106,6 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
             items={virtualizedItems}
             estimateSize={(index) => virtualizedItems[index].height}
             getItemKey={(index) => virtualizedItems[index].id}
-            listHeight={listHeight}
             renderItem={(item) => {
               if (item.isCategory) {
                 return (
@@ -122,7 +119,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
               }
               return (
                 <PieceCardListItem
-                  pieceMetadata={item}
+                  pieceMetadata={item.pieceMetadata}
                   searchQuery={searchQuery}
                   operation={operation}
                   isTemporaryDisabledUntilNextCursorMove={!mouseMoved}
@@ -153,8 +150,15 @@ type VirtualizedItem = {
   id: string;
   displayName: string;
   height: number;
-  isCategory: boolean;
-};
+} & (
+  | {
+      isCategory: true;
+    }
+  | {
+      isCategory: false;
+      pieceMetadata: StepMetadataWithSuggestions;
+    }
+);
 const transformPiecesMetadataToVirtualizedItems = (
   searchResult: CategorizedStepMetadataWithSuggestions[],
   showActionsOrTriggersInsidePiecesList: boolean,
@@ -172,13 +176,14 @@ const transformPiecesMetadataToVirtualizedItems = (
     category.metadata.forEach((pieceMetadata, index) => {
       result.push({
         id: `${pieceMetadata.displayName}-${index}`,
-        ...pieceMetadata,
         height: getItemHeight(
           pieceMetadata,
           showActionsOrTriggersInsidePiecesList,
           agents,
         ),
         isCategory: false,
+        pieceMetadata,
+        displayName: pieceMetadata.displayName,
       });
     });
     return result;
@@ -193,7 +198,7 @@ const getItemHeight = (
   const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
     PIECE_SELECTOR_ELEMENTS_HEIGHTS;
   if (
-    pieceMetadata.type === ActionType.PIECE &&
+    pieceMetadata.type === FlowActionType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
     const actionsListWithoutHiddenActions =
@@ -207,7 +212,7 @@ const getItemHeight = (
     );
   }
   if (
-    pieceMetadata.type === TriggerType.PIECE &&
+    pieceMetadata.type === FlowTriggerType.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
     return (
@@ -217,9 +222,9 @@ const getItemHeight = (
     );
   }
   const isCoreAction =
-    pieceMetadata.type === ActionType.CODE ||
-    pieceMetadata.type === ActionType.LOOP_ON_ITEMS ||
-    pieceMetadata.type === ActionType.ROUTER;
+    pieceMetadata.type === FlowActionType.CODE ||
+    pieceMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
+    pieceMetadata.type === FlowActionType.ROUTER;
   if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
     return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
   }
@@ -231,7 +236,7 @@ const getNumberOfExtraActions = (
   agents: Agent[] | undefined,
 ) => {
   if (
-    pieceMetadata.type === ActionType.PIECE &&
+    pieceMetadata.type === FlowActionType.PIECE &&
     pieceMetadata.pieceName === '@activepieces/piece-agent'
   ) {
     return agents?.length ?? 0;

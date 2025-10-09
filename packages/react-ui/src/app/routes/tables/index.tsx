@@ -1,13 +1,20 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  CheckIcon,
+  Table2,
+  UploadCloud,
+  EllipsisVertical,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -129,11 +136,11 @@ const ApTablesPage = () => {
             }}
             className="flex items-center justify-end w-full"
           >
-            <ApTableActionsMenu
-              table={row.original}
-              refetch={refetch}
-              deleteMutation={bulkDeleteMutation}
-            />
+            <ApTableActionsMenu table={row.original} refetch={refetch}>
+              <Button variant="ghost" size="icon">
+                <EllipsisVertical />
+              </Button>
+            </ApTableActionsMenu>
           </div>
         );
       },
@@ -151,6 +158,20 @@ const ApTablesPage = () => {
 
   const bulkActions: BulkAction<Table>[] = useMemo(
     () => [
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
       {
         render: (_, resetSelection) => (
           <div onClick={(e) => e.stopPropagation()}>
@@ -218,25 +239,13 @@ const ApTablesPage = () => {
       )}
     >
       <div className="flex-col w-full gap-4">
-        <div className="flex justify-between items-center">
-          <TableTitle
-            description={t(
-              'Create and manage your tables to store your automation data',
-            )}
-          >
-            {t('Tables')}
-          </TableTitle>
-          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Button
-              onClick={() => createTable({ name: t('New Table') })}
-              className="flex items-center gap-2"
-              disabled={!userHasTableWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New Table')}
-            </Button>
-          </PermissionNeededTooltip>
-        </div>
+        <DashboardPageHeader
+          description={t(
+            'Create and manage your tables to store your automation data',
+          )}
+          title={t('Tables')}
+          tutorialTab="tables"
+        ></DashboardPageHeader>
         <DataTable
           filters={[
             {
@@ -244,7 +253,6 @@ const ApTablesPage = () => {
               type: 'input',
               title: t('Name'),
               icon: CheckIcon,
-              options: [],
             },
           ]}
           emptyStateIcon={<Table2 className="size-14" />}

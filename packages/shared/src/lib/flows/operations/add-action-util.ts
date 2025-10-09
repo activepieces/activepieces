@@ -1,10 +1,10 @@
 import { applyFunctionToValuesSync, isString } from '../../common'
-import { Action } from '../actions/action'
+import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 
 
-function mapToNewNames(flowVersion: FlowVersion, clonedActions: Action[]): Record<string, string> {
+function mapToNewNames(flowVersion: FlowVersion, clonedActions: FlowAction[]): Record<string, string> {
     const existingNames = flowStructureUtil.getAllSteps(flowVersion.trigger)
         .map(step => step.name)
 
@@ -41,7 +41,7 @@ function replaceOldStepNameWithNewOne({
 }
 
 
-function clone(step: Action, oldNameToNewName: Record<string, string>): Action {
+function clone(step: FlowAction, oldNameToNewName: Record<string, string>): FlowAction {
     step.displayName = `${step.displayName} Copy`
     step.name = oldNameToNewName[step.name]
     if ('input' in step.settings) {
@@ -62,12 +62,11 @@ function clone(step: Action, oldNameToNewName: Record<string, string>): Action {
             )
         })
     }
-    if (step.settings.inputUiInfo) {
+    if (step.settings.sampleData) {
         step.settings = {
             ...step.settings,
-            inputUiInfo: {
-                ...step.settings.inputUiInfo,
-                currentSelectedData: undefined,
+            sampleData: {
+                ...step.settings.sampleData,
                 sampleDataFileId: undefined,
                 sampleDataInputFileId: undefined,
                 lastTestDate: undefined,

@@ -20,7 +20,7 @@ export const AiCreditsLimitAlert = () => {
       )}
       usagePercentage={aiCreditsUsagePercentage}
       getPercentageNote={(limitWarningPercentage) => {
-        return `${t('Ai Credits Usage Exceeded')} ${
+        return `${t('AI Credits Usage Exceeded')} ${
           limitWarningPercentage * 100
         }% ${t('of the Allowed Limit.')} `;
       }}

@@ -1,5 +1,4 @@
 {
-  "Google Sheets": "Google Sheets",
   "Create, edit, and collaborate on spreadsheets online": "Creëer, bewerk en werk online samen op spreadsheets",
   "Insert Row": "Rijen invoegen",
   "Insert Multiple Rows": "Meerdere rijen invoegen",
@@ -71,6 +70,7 @@
   "Method": "Methode",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Determines if sheets from Team Drives should be included in the results.": "Bepaalt of sheets van Team Drives moeten worden opgenomen in de resultaten.",
@@ -107,6 +107,7 @@
   "The format to export the sheet to.": "Het formaat om het blad naar te exporteren.",
   "Return the exported data as text instead of a file.": "Geeft de geëxporteerde data als tekst in plaats van een bestand.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "CSV": "csv",
   "JSON": "JSON",
   "Column Names": "Namen van kolommen",
@@ -128,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Triggert wanneer een werkblad wordt aangemaakt in een werkblad.",
   "Trigger Column": "Trigger kolom",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Houd er rekening mee dat er mogelijk een vertraging van maximaal 3 minuten is voordat de trigger wordt afgevuurd, als gevolg van een vertraging van Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Trigger op wijzigingen in cellen alleen in deze kolom. Selecteer **Alle kolommen** als u wilt dat de stroom resulteert in wijzigingen in een cel binnen de rij."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Trigger op wijzigingen in cellen alleen in deze kolom. \nSelecteer **Alle kolom** als u wilt dat de stroom de wijzigingen aan een cel in de rij uitvoert."
 }

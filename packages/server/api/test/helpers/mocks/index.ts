@@ -1,7 +1,9 @@
+import { AIProvider } from '@activepieces/common-ai'
 import {
     ApiKey,
     ApplicationEvent,
     ApplicationEventName,
+    BillingCycle,
     CustomDomain,
     CustomDomainStatus,
     GitBranchType,
@@ -16,7 +18,6 @@ import {
 } from '@activepieces/ee-shared'
 import {
     AiOverageState,
-    AIProvider,
     apId,
     assertNotNullOrUndefined,
     File,
@@ -29,6 +30,7 @@ import {
     FlowRunStatus,
     FlowStatus,
     FlowTemplate,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionState,
     InvitationStatus,
@@ -48,7 +50,6 @@ import {
     RoleType,
     RunEnvironment,
     TemplateType,
-    TriggerType,
     User,
     UserIdentity,
     UserIdentityProvider,
@@ -66,8 +67,8 @@ import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/p
 import { apDayjs } from '../../../src/app/helper/dayjs-helper'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
-import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
-import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
+import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
+import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -103,9 +104,9 @@ export const createMockUser = (user?: Partial<User>): User => {
     }
 }
 
-export const createMockOAuthApp = (
+export const createMockOAuthApp = async (
     oAuthApp?: Partial<OAuthApp>,
-): OAuthAppWithEncryptedSecret => {
+): Promise<OAuthAppWithEncryptedSecret> => {
     return {
         id: oAuthApp?.id ?? apId(),
         created: oAuthApp?.created ?? faker.date.recent().toISOString(),
@@ -113,7 +114,7 @@ export const createMockOAuthApp = (
         platformId: oAuthApp?.platformId ?? apId(),
         pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
         clientId: oAuthApp?.clientId ?? apId(),
-        clientSecret: encryptUtils.encryptString(faker.lorem.word()),
+        clientSecret: await encryptUtils.encryptString(faker.lorem.word()),
     }
 }
 
@@ -200,7 +201,8 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        eligibleForTrial: platformPlan?.eligibleForTrial ?? false,
+        eligibleForTrial: platformPlan?.eligibleForTrial ?? null,
+        stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
@@ -466,7 +468,7 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         failParentOnFailure: flowRun?.failParentOnFailure ?? false,
         parentRunId: flowRun?.parentRunId ?? undefined,
         flowVersionId: flowRun?.flowVersionId ?? apId(),
-        flowDisplayName: flowRun?.flowDisplayName ?? faker.lorem.word(),
+        flowVersion: flowRun?.flowVersion,
         logsFileId: flowRun?.logsFileId ?? null,
         tasks: flowRun?.tasks,
         status: flowRun?.status ?? faker.helpers.enumValue(FlowRunStatus),
@@ -485,7 +487,6 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
         projectId: flow?.projectId ?? apId(),
         status: flow?.status ?? faker.helpers.enumValue(FlowStatus),
         folderId: flow?.folderId ?? null,
-        schedule: flow?.schedule ?? null,
         publishedVersionId: flow?.publishedVersionId ?? null,
         externalId: flow?.externalId ?? apId(),
     }
@@ -495,7 +496,7 @@ export const createMockFlowVersion = (
     flowVersion?: Partial<FlowVersion>,
 ): FlowVersion => {
     const emptyTrigger = {
-        type: TriggerType.EMPTY,
+        type: FlowTriggerType.EMPTY,
         name: 'trigger',
         settings: {},
         valid: false,
@@ -561,6 +562,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             customRolesEnabled: true,
             manageProjectsEnabled: true,
             customDomainsEnabled: true,
+            includedAiCredits: 1000,
             ...params?.plan,
         })
         await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])
@@ -639,21 +641,21 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = (aiProvider?: Partial<AIProvider>): Omit<AIProviderSchema, 'platform'> => {
+export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
         updated: aiProvider?.updated ?? faker.date.recent().toISOString(),
         platformId: aiProvider?.platformId ?? apId(),
         provider: aiProvider?.provider ?? 'openai',
-        config: encryptUtils.encryptObject({
+        config: await encryptUtils.encryptObject({
             apiKey: aiProvider?.config?.apiKey ?? process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
     }
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
-    const mockAIProvider = createMockAIProvider(params)
+    const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
 }

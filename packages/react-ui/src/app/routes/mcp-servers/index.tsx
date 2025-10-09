@@ -5,8 +5,8 @@ import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -164,6 +164,20 @@ const McpServersPage = () => {
   const bulkActions: BulkAction<McpWithTools>[] = useMemo(
     () => [
       {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
+            <Button
+              className="flex items-center gap-2"
+              onClick={() => createMcp('Untitled')}
+              disabled={!userHasMcpWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New MCP Server')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
+      {
         render: (_, resetSelection) => (
           <ConfirmationDeleteDialog
             title={t('Delete MCP Servers')}
@@ -185,8 +199,8 @@ const McpServersPage = () => {
             }}
           >
             {selectedRows.length > 0 && (
-              <Button className="w-full mr-2" size="sm" variant="destructive">
-                <Trash2 className="mr-2 w-4" />
+              <Button variant="destructive">
+                <Trash2 className="w-4" />
                 {`${t('Delete')} (${selectedRows.length})`}
               </Button>
             )}
@@ -209,24 +223,12 @@ const McpServersPage = () => {
       lockDescription={t('Create and manage your MCP servers')}
     >
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between">
-          <TableTitle
-            beta={true}
-            description={t('Create and manage your MCP servers')}
-          >
-            {t('MCP Servers')}
-          </TableTitle>
-          <PermissionNeededTooltip hasPermission={userHasMcpWritePermission}>
-            <Button
-              className="flex items-center gap-2"
-              onClick={() => createMcp('Untitled')}
-              disabled={!userHasMcpWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New MCP Server')}
-            </Button>
-          </PermissionNeededTooltip>
-        </div>
+        <DashboardPageHeader
+          title={t('MCP Servers')}
+          description={t('Create and manage your MCP servers')}
+          tutorialTab="mcpServers"
+        ></DashboardPageHeader>
+
         <DataTable
           filters={[]}
           emptyStateIcon={<Table2 className="size-14" />}

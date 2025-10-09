@@ -1,7 +1,7 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { isNil } from '../../common'
 import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
-import { Action, ActionType, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
+import { FlowAction, FlowActionType, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 import { AddActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
@@ -9,49 +9,52 @@ import { AddActionRequest, StepLocationRelativeToParent, UpdateActionRequest } f
 const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema)
 
 type ActionCreationProps = {
-    nextAction?: Action
+    nextAction?: FlowAction
 }
 
 function createAction(request: UpdateActionRequest, {
     nextAction,
-}: ActionCreationProps): Action {
+}: ActionCreationProps): FlowAction {
     const baseProperties = {
         displayName: request.displayName,
         name: request.name,
         valid: false,
         skip: request.skip,
-        customLogoUrl: request.customLogoUrl,
+        settings: {
+            ...request.settings,
+            customLogoUrl: request.settings.customLogoUrl,
+        },
         nextAction,
     }
-    let action: Action
+    let action: FlowAction
     switch (request.type) {
-        case ActionType.ROUTER:
+        case FlowActionType.ROUTER:
             action = {
                 ...baseProperties,
-                type: ActionType.ROUTER,
+                type: FlowActionType.ROUTER,
                 settings: request.settings,
                 children: request.settings.branches.map(() => null),
             }
 
             break
-        case ActionType.LOOP_ON_ITEMS:
+        case FlowActionType.LOOP_ON_ITEMS:
             action = {
                 ...baseProperties,
-                type: ActionType.LOOP_ON_ITEMS,
+                type: FlowActionType.LOOP_ON_ITEMS,
                 settings: request.settings,
             }
             break
-        case ActionType.PIECE:
+        case FlowActionType.PIECE:
             action = {
                 ...baseProperties,
-                type: ActionType.PIECE,
+                type: FlowActionType.PIECE,
                 settings: request.settings,
             }
             break
-        case ActionType.CODE:
+        case FlowActionType.CODE:
             action = {
                 ...baseProperties,
-                type: ActionType.CODE,
+                type: FlowActionType.CODE,
                 settings: request.settings,
             }
             break
@@ -114,9 +117,9 @@ function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVe
             return parentStep
         }
         switch (parentStep.type) {
-            case ActionType.LOOP_ON_ITEMS:
+            case FlowActionType.LOOP_ON_ITEMS:
                 return handleLoopOnItems(parentStep, request)
-            case ActionType.ROUTER:
+            case FlowActionType.ROUTER:
                 return handleRouter(parentStep, request)
             default: {
                 parentStep.nextAction = createAction(request.action, {

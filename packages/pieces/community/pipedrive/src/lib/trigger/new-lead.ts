@@ -3,11 +3,52 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
+    pipedriveTransformV1CustomFields,
 } from '../common';
-import { GetDealResponse, GetField, LeadListResponse } from '../common/types';
+import { GetField } from '../common/types';
 import { isNil } from '@activepieces/shared';
+
+interface PipedriveLeadV2 {
+	id: string;
+	title: string;
+	owner_id: number;
+	creator_id: number;
+	label_ids: string[];
+	value: number | null;
+	expected_close_date: string | null;
+	person_id: number | null;
+	organization_id: number | null;
+	is_archived: boolean;
+	source_name: string;
+	origin: string;
+	origin_id: string | null;
+	channel: number | null;
+	channel_id: string | null;
+	was_seen: boolean;
+	next_activity_id: number | null;
+	add_time: string;
+	update_time: string;
+	visible_to: number;
+	custom_fields?: Record<string, unknown>;
+}
+
+interface LeadListResponseV2 {
+	data: PipedriveLeadV2[];
+	additional_data?: {
+		pagination?: {
+			start: number;
+			limit: number;
+			more_items_in_collection: boolean;
+			next_cursor?: string;
+		};
+	};
+}
+
+interface GetLeadResponseV2 {
+	data: PipedriveLeadV2;
+}
 
 export const newLeadTrigger = createTrigger({
 	auth: pipedriveAuth,
@@ -54,28 +95,31 @@ export const newLeadTrigger = createTrigger({
 		}
 	},
 	async test(context) {
-		const response = await pipedriveApiCall<LeadListResponse>({
+		const response = await pipedriveApiCall<LeadListResponseV2>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/leads',
-			query: { limit: 10, sort: 'update_time DESC' },
+			resourceUri: '/v1/leads',
+			query: {
+				limit: 10,
+				sort: 'update_time DESC',
+			},
 		});
 
 		if (isNil(response.data)) {
 			return [];
 		}
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
 		const result = [];
 
 		for (const lead of response.data) {
-			const updatedLeadProperties = pipedriveTransformCustomFields(customFieldsResponse, lead);
+			const updatedLeadProperties = pipedriveTransformV1CustomFields(customFieldsResponse, lead);
 			result.push(updatedLeadProperties);
 		}
 
@@ -83,25 +127,29 @@ export const newLeadTrigger = createTrigger({
 	},
 	async run(context) {
 		const payloadBody = context.payload.body as {
-			data: Record<string, unknown>;
-			previous: Record<string, unknown>;
+			data: PipedriveLeadV2;
+			previous: PipedriveLeadV2;
+			meta: {
+				action: string;
+				entity: string;
+			};
 		};
 
-		const leadResponse = await pipedriveApiCall<GetDealResponse>({
+		const leadResponse = await pipedriveApiCall<GetLeadResponseV2>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: `/leads/${payloadBody.data.id}`,
+			resourceUri: `/v1/leads/${payloadBody.data.id}`,
 		});
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
-		const updatedLeadProperties = pipedriveTransformCustomFields(
+		const updatedLeadProperties = pipedriveTransformV1CustomFields(
 			customFieldsResponse,
 			leadResponse.data,
 		);
@@ -128,6 +176,6 @@ export const newLeadTrigger = createTrigger({
 		next_activity_id: null,
 		add_time: '2025-01-03T09:06:00.776Z',
 		update_time: '2025-01-03T09:06:00.776Z',
-		visible_to: '3',
+		visible_to: 3,
 	},
 });

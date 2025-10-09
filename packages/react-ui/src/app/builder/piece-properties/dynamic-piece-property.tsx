@@ -8,7 +8,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
@@ -21,13 +21,29 @@ type DynamicPropertiesProps = {
   disabled: boolean;
 };
 
+const removeOptionsFromDropdownPropertiesSchema = (
+  schema: PiecePropertyMap,
+) => {
+  return Object.fromEntries(
+    Object.entries(schema).map(([key, value]) => {
+      if (
+        value.type === PropertyType.STATIC_DROPDOWN ||
+        value.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
+      ) {
+        return [key, { ...value, options: { disabled: false, options: [] } }];
+      }
+      return [key, value];
+    }),
+  );
+};
+
 const DynamicPropertiesImplementation = React.memo(
   (props: DynamicPropertiesProps) => {
     const [flowVersion, readonly] = useBuilderStateContext((state) => [
       state.flowVersion,
       state.readonly,
     ]);
-    const form = useFormContext<Action | Trigger>();
+    const form = useFormContext<FlowAction | FlowTrigger>();
     const { updateFormSchema } = useStepSettingsContext();
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
@@ -81,7 +97,8 @@ const DynamicPropertiesImplementation = React.memo(
               `settings.input.${props.propertyName}.${childPropName}` as const,
               null,
               {
-                shouldValidate: true,
+                //never validate for each prop, it can be a long list of props and cause the browser to freeze
+                shouldValidate: false,
               },
             );
           });
@@ -95,14 +112,12 @@ const DynamicPropertiesImplementation = React.memo(
       isFirstRender.current = false;
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-      const { pieceName, pieceVersion, pieceType, packageType } = settings;
+      const { pieceName, pieceVersion } = settings;
       mutate(
         {
           request: {
             pieceName,
             pieceVersion,
-            pieceType,
-            packageType,
             propertyName: props.propertyName,
             actionOrTriggerName: actionOrTriggerName,
             input,
@@ -116,28 +131,27 @@ const DynamicPropertiesImplementation = React.memo(
             const currentValue = form.getValues(
               `settings.input.${props.propertyName}`,
             );
-            const customizedInput = form.getValues(
-              'settings.inputUiInfo.customizedInputs',
-            );
-            const defaultValue = formUtils.getDefaultValueForStep(
-              response.options,
-              currentValue ?? {},
-              customizedInput,
-            );
+            const defaultValue = formUtils.getDefaultValueForStep({
+              props: response.options,
+              existingInput: currentValue ?? {},
+              propertySettings:
+                form.getValues().settings?.propertySettings?.[
+                  props.propertyName
+                ],
+            });
             setPropertyMap(response.options);
-
+            const schemaWithoutDropdownOptions =
+              removeOptionsFromDropdownPropertiesSchema(response.options);
             updateFormSchema(
               `settings.input.${props.propertyName}`,
-              response.options,
+              schemaWithoutDropdownOptions,
             );
 
             if (!readonly) {
-              const schemaInput: Record<string, unknown> =
-                form.getValues()?.settings?.inputUiInfo?.schema ?? {};
-              form.setValue(`settings.inputUiInfo.schema`, {
-                ...schemaInput,
-                [props.propertyName]: response.options,
-              } as Record<string, unknown>);
+              form.setValue(
+                `settings.propertySettings.${props.propertyName}.schema`,
+                schemaWithoutDropdownOptions,
+              );
             }
 
             form.setValue(

@@ -1,69 +1,76 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
-	pipedriveTransformCustomFields,
+    pipedriveApiCall,
+    pipedrivePaginatedV1ApiCall,
+    pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { GetDealResponse, GetField } from '../common/types';
+import { GetField } from '../common/types'; 
+import { isNil } from '@activepieces/shared'; 
 
 export const findProductAction = createAction({
-	auth: pipedriveAuth,
-	name: 'find-product',
-	displayName: 'Find Product',
-	description: 'Find a product by name.',
-	props: {
-		searchTerm: Property.ShortText({
-			displayName: 'Search Term',
-			required: true,
-		}),
-	},
-	async run(context) {
-		const response = await pipedriveApiCall<{
-			success: boolean;
-			data: { items: Array<{ item: { id: number } }> };
-		}>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/products/search',
-			query: {
-				term: context.propsValue.searchTerm,
-				fields: 'name',
-				limit: 1,
-			},
-		});
+    auth: pipedriveAuth,
+    name: 'find-product',
+    displayName: 'Find Product',
+    description: 'Finds a product by name ', 
+    props: {
+        searchTerm: Property.ShortText({
+            displayName: 'Search Term',
+            required: true,
+        }),
+        
+    },
+    async run(context) {
+        const { searchTerm } = context.propsValue;
 
-		if (response.data.items.length === 0) {
-			return {
-				found: false,
-				data: [],
-			};
-		}
+        
+        const searchResponse = await pipedriveApiCall<{
+            success: boolean;
+            data: { items: Array<{ item: { id: number; name: string; } }> }; 
+        }>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: '/v2/products/search', 
+            query: {
+                term: searchTerm,
+                fields: 'name',
+                limit: 1,
+                include_fields:'product.price'
+            },
+        });
 
-		const productResponse = await pipedriveApiCall<GetDealResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: `/products/${response.data.items[0].item.id}`,
-		});
+        if (isNil(searchResponse.data) || isNil(searchResponse.data.items) || searchResponse.data.items.length === 0) {
+            return {
+                found: false,
+                data: [],
+            };
+        }
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/productFields',
-		});
+        const productDetailsResponse = await pipedriveApiCall<Record<string, any>>({ 
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: `/v2/products/${searchResponse.data.items[0].item.id}`, 
+        });
 
-		const updatedProductProperties = pipedriveTransformCustomFields(
-			customFieldsResponse,
-			productResponse.data,
-		);
+        const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: '/v1/productFields', 
+        });
 
-		return {
-			found: true,
-			data: [updatedProductProperties],
-		};
-	},
+        // Transform custom fields in the response data
+        const updatedProductProperties = pipedriveTransformCustomFields(
+            customFieldsResponse,
+            productDetailsResponse.data,
+        );
+
+        return {
+            found: true,
+            data: [updatedProductProperties], 
+        };
+    },
 });

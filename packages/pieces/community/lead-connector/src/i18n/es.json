@@ -1,5 +1,4 @@
 {
-  "LeadConnector": "Conector líder",
   "Lead Connector - Go High Level": "Conector líder - Ve a alto nivel",
   "\n1. Go to the [Marketplace](https://marketplace.gohighlevel.com/) and sign up for a developer account.\n2. Navigate to **My Apps** and click on **Create App**.\n3. Provide app name.Then select **Private** as App Type, **Sub-Account** as Distribution Type. Click **Create App** Button.\n4. Add following scopes.\n   - campaigns.readonly\n   - contacts.write\n   - contacts.readonly\n   - locations.readonly\n   - locations/tags.readonly\n   - locations/tags.write\n   - opportunities.readonly\n   - opportunities.write\n   - ": "\n1. Go to the [Marketplace](https://marketplace.gohighlevel.com/) and sign up for a developer account.\n2. Navigate to **My Apps** and click on **Create App**.\n3. Provide app name.Then select **Private** as App Type, **Sub-Account** as Distribution Type. Click **Create App** Button.\n4. Add following scopes.\n   - campaigns.readonly\n   - contacts.write\n   - contacts.readonly\n   - locations.readonly\n   - locations/tags.readonly\n   - locations/tags.write\n   - opportunities.readonly\n   - opportunities.write\n   - users.readonly\n   - workflows.readonly\n   - forms.readonly\n5. Add redirect URLs.\n6. Create new Client key with valid name.Copy Client ID and Client Secret.\n",
   "Create Contact": "Crear contacto",
@@ -60,6 +59,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "When using a dynamic value, make sure to use the ISO-2 country code, and not the country name.": "Cuando utilice un valor dinámico, asegúrese de usar el código de país ISO-2, y no el nombre del país.",
@@ -69,6 +69,7 @@
   "The ID of the pipeline to use.": "El ID del pipeline a utilizar.",
   "The stage of the pipeline to use.": "La etapa del pipeline a utilizar.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

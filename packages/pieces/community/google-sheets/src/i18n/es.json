@@ -1,5 +1,4 @@
 {
-  "Google Sheets": "Hojas de Google",
   "Create, edit, and collaborate on spreadsheets online": "Crear, editar y colaborar en hojas de cálculo en línea",
   "Insert Row": "Insert Row",
   "Insert Multiple Rows": "Insertar múltiples filas",
@@ -71,6 +70,7 @@
   "Method": "Método",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Determines if sheets from Team Drives should be included in the results.": "Determina si las hojas de Team Drives deben ser incluidas en los resultados.",
@@ -107,6 +107,7 @@
   "The format to export the sheet to.": "El formato al que exportar la hoja.",
   "Return the exported data as text instead of a file.": "Devuelve los datos exportados como texto en lugar de un archivo.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "CSV": "CSV",
   "JSON": "JSON",
   "Column Names": "Nombres de columna",
@@ -128,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Se activa cuando se crea una hoja de cálculo en una hoja de cálculo.",
   "Trigger Column": "Columna de gatillo",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Tenga en cuenta que puede haber un retraso de hasta 3 minutos para que el disparador se dispare, debido a un retraso de Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Activar sólo en los cambios a las celdas de esta columna. Selecciona **Todas las Columnas** si quieres que el flujo se active al realizar cambios en cualquier celda dentro de la fila."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row."
 }

@@ -1,5 +1,4 @@
 {
-  "SendGrid": "SendGrid",
   "Email delivery service for sending transactional and marketing emails": "Email delivery service for sending transactional and marketing emails",
   "API key acquired from your SendGrid settings": "API key acquired from your SendGrid settings",
   "Send Email": "Send Email",
@@ -21,6 +20,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "Emails of the recipients": "Emails of the recipients",
@@ -31,6 +31,7 @@
   "Dynamic template id": "Dynamic template id",
   "Dynamic template data": "Dynamic template data",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

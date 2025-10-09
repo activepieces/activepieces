@@ -1,15 +1,17 @@
 import {
-    Action,
-    ActionType,
     ActivepiecesError,
     apId,
     Cursor,
     ErrorCode,
+    FlowAction,
+    FlowActionType,
     FlowId,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
     flowStructureUtil,
+    FlowTrigger,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -19,8 +21,6 @@ import {
     ProjectId,
     sanitizeObjectForPostgresql,
     SeekPage,
-    Trigger,
-    TriggerType,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -54,7 +54,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         const platformId = await projectService.getPlatformId(projectId)
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         for (const step of steps) {
-            const stepTypeIsPiece = [ActionType.PIECE, TriggerType.PIECE].includes(
+            const stepTypeIsPiece = [FlowActionType.PIECE, FlowTriggerType.PIECE].includes(
                 step.type,
             )
             if (stepTypeIsPiece) {
@@ -106,23 +106,24 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 break
             }
             case FlowOperationType.SAVE_SAMPLE_DATA: {
-                const modifiedStep = await sampleDataService(log).modifyStep({
+                const modifiedStep = await sampleDataService(log).saveSampleDataFileIdsInStep({
                     projectId,
                     flowVersionId: mutatedFlowVersion.id,
                     stepName: userOperation.request.stepName,
                     payload: userOperation.request.payload,
                     type: userOperation.request.type,
+                    dataType: userOperation.request.dataType,
                 })
                 if (flowStructureUtil.isAction(modifiedStep.type)) {
                     operations = [{
                         type: FlowOperationType.UPDATE_ACTION,
-                        request: modifiedStep as Action,
+                        request: modifiedStep as FlowAction,
                     }]
                 }
                 else {
                     operations = [{
                         type: FlowOperationType.UPDATE_TRIGGER,
-                        request: modifiedStep as Trigger,
+                        request: modifiedStep as FlowTrigger,
                     }]
                 }
                 break
@@ -304,7 +305,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
             flowId,
             trigger: {
-                type: TriggerType.EMPTY,
+                type: FlowTriggerType.EMPTY,
                 name: 'trigger',
                 settings: {},
                 valid: false,
@@ -328,11 +329,10 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             if (removeConnectionNames) {
                 clonedStep.settings.input = removeConnectionsFromInput(clonedStep.settings.input)
             }
-            if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
-                clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
-                clonedStep.settings.inputUiInfo.sampleDataInputFileId = undefined
-                clonedStep.settings.inputUiInfo.currentSelectedData = undefined
-                clonedStep.settings.inputUiInfo.lastTestDate = undefined
+            if (removeSampleData && !isNil(clonedStep?.settings?.sampleData)) {
+                clonedStep.settings.sampleData.sampleDataFileId = undefined
+                clonedStep.settings.sampleData.sampleDataInputFileId = undefined
+                clonedStep.settings.sampleData.lastTestDate = undefined
             }
             return clonedStep
         })

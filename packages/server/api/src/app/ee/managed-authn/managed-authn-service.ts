@@ -15,9 +15,9 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
@@ -35,14 +35,23 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         })
-        await updateProjectLimits({ platformId: project.platformId,
-            projectId: project.id, 
+
+        if (!isNil(externalPrincipal.projectDisplayName)) {
+            await projectService.update(project.id, {
+                displayName: externalPrincipal.projectDisplayName,
+            })
+        }
+
+        await updateProjectLimits({
+            platformId: project.platformId,
+            projectId: project.id,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
             tasks: externalPrincipal.tasks,
-            aiCredits: externalPrincipal.aiCredits, 
-            log, 
-            isNewProject })
+            aiCredits: externalPrincipal.aiCredits,
+            log,
+            isNewProject,
+        })
 
         const user = await getOrCreateUser(externalPrincipal, log)
 

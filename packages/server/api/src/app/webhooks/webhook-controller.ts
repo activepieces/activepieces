@@ -10,12 +10,15 @@ import {
     WebsocketClientEvent,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { trace } from '@opentelemetry/api'
 import { FastifyRequest } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
-import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { webhookService } from './webhook.service'
+
+const tracer = trace.getTracer('webhook-controller')
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -23,22 +26,38 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId/sync',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const response = await webhookService.handleWebhook({
-                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
-                logger: request.log,
-                flowId: request.params.flowId,
-                async: false,
-                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: await webhookSimulationService(request.log).exists(
-                    request.params.flowId,
-                ),
-                execute: true,
-                ...extractHeaderFromRequest(request),
+            return tracer.startActiveSpan('webhook.receive.sync', {
+                attributes: {
+                    'webhook.flowId': request.params.flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'sync',
+                },
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                        logger: request.log,
+                        flowId: request.params.flowId,
+                        async: false,
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId: request.params.flowId,
+                            simulate: true,
+                        },
+                        ),
+                        execute: true,
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
             })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
         },
     )
 
@@ -46,22 +65,38 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const response = await webhookService.handleWebhook({
-                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
-                logger: request.log,
-                flowId: request.params.flowId,
-                async: true,
-                saveSampleData: await webhookSimulationService(request.log).exists(
-                    request.params.flowId,
-                ),
-                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                execute: true,
-                ...extractHeaderFromRequest(request),
+            return tracer.startActiveSpan('webhook.receive.async', {
+                attributes: {
+                    'webhook.flowId': request.params.flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'async',
+                },
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                        logger: request.log,
+                        flowId: request.params.flowId,
+                        async: true,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId: request.params.flowId,
+                            simulate: true,
+                        },
+                        ),
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        execute: true,
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
             })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
         },
     )
 

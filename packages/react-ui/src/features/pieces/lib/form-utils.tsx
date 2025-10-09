@@ -13,17 +13,12 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
-  Action,
-  ActionType,
   CodeActionSchema,
   isEmpty,
   LoopOnItemsActionSchema,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
-  PieceTriggerSettings,
-  Trigger,
-  TriggerType,
   isNil,
   spreadIfDefined,
   RouterActionSchema,
@@ -37,13 +32,20 @@ import {
   UpsertCustomAuthRequest,
   UpsertBasicAuthRequest,
   UpsertSecretTextRequest,
+  FlowTriggerType,
+  FlowActionType,
+  FlowAction,
+  FlowTrigger,
+  PropertyExecutionType,
+  PropertySettings,
+  PieceTriggerSettings,
 } from '@activepieces/shared';
 
-function addAuthToPieceProps(
+const addAuthToPieceProps = (
   props: PiecePropertyMap,
   auth: PieceAuthProperty | undefined,
   requireAuth: boolean,
-): PiecePropertyMap {
+): PiecePropertyMap => {
   if (!requireAuth || isNil(auth)) {
     const newProps = Object.keys(props).reduce((acc, key) => {
       if (key !== 'auth') {
@@ -57,15 +59,15 @@ function addAuthToPieceProps(
     ...props,
     ...spreadIfDefined('auth', auth),
   };
-}
+};
 
-function buildInputSchemaForStep(
-  type: ActionType | TriggerType,
+const buildInputSchemaForStep = (
+  type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
   actionNameOrTriggerName: string,
-): TSchema {
+): TSchema => {
   switch (type) {
-    case ActionType.PIECE: {
+    case FlowActionType.PIECE: {
       if (
         piece &&
         actionNameOrTriggerName &&
@@ -81,7 +83,7 @@ function buildInputSchemaForStep(
       }
       return Type.Object({});
     }
-    case TriggerType.PIECE: {
+    case FlowTriggerType.PIECE: {
       if (
         piece &&
         actionNameOrTriggerName &&
@@ -100,11 +102,90 @@ function buildInputSchemaForStep(
     default:
       throw new Error('Unsupported type: ' + type);
   }
-}
+};
 
-function buildConnectionSchema(
+const getDefaultValueForStep = ({
+  props,
+  existingInput,
+  propertySettings,
+}: {
+  props: PiecePropertyMap | OAuth2Props;
+  existingInput: Record<string, unknown>;
+  propertySettings?: Record<string, PropertySettings>;
+}): Record<string, unknown> => {
+  const defaultValues: Record<string, unknown> = {};
+  const entries = Object.entries(props);
+  for (const [name, property] of entries) {
+    switch (property.type) {
+      case PropertyType.CHECKBOX: {
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? false;
+        break;
+      }
+      case PropertyType.ARRAY: {
+        const isInlineInputArray =
+          !isNil(propertySettings) && propertySettings[name];
+        const existingValue = existingInput[name];
+        if (!isNil(existingValue)) {
+          defaultValues[name] = existingValue;
+        } else if (isInlineInputArray && !isNil(property.properties)) {
+          defaultValues[name] = {};
+        } else {
+          defaultValues[name] = property.defaultValue ?? [];
+        }
+        break;
+      }
+      case PropertyType.MARKDOWN:
+      case PropertyType.DATE_TIME:
+      case PropertyType.SHORT_TEXT:
+      case PropertyType.LONG_TEXT:
+      case PropertyType.FILE:
+      case PropertyType.STATIC_DROPDOWN:
+      case PropertyType.DROPDOWN:
+      case PropertyType.BASIC_AUTH:
+      case PropertyType.CUSTOM_AUTH:
+      case PropertyType.SECRET_TEXT:
+      case PropertyType.CUSTOM:
+      case PropertyType.COLOR:
+      case PropertyType.MULTI_SELECT_DROPDOWN:
+      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+      case PropertyType.JSON:
+      case PropertyType.NUMBER:
+      case PropertyType.OAUTH2: {
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
+        break;
+      }
+      case PropertyType.OBJECT:
+      case PropertyType.DYNAMIC:
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? {};
+        break;
+    }
+  }
+  return defaultValues;
+};
+
+const createPropertySettingsForStep = ({
+  propertySettings,
+  values,
+}: {
+  propertySettings: Record<string, PropertySettings>;
+  values: Record<string, unknown>;
+}) => {
+  return Object.fromEntries(
+    Object.entries(values).map(([key]) => [
+      key,
+      {
+        type: propertySettings[key]?.type ?? PropertyExecutionType.MANUAL,
+        schema: propertySettings[key]?.schema,
+      },
+    ]),
+  );
+};
+
+const buildConnectionSchema = (
   piece: PieceMetadataModelSummary | PieceMetadataModel,
-) {
+) => {
   const auth = piece.auth;
   if (isNil(auth)) {
     return Type.Object({
@@ -179,15 +260,17 @@ function buildConnectionSchema(
         ]),
       });
   }
-}
+};
 
 export const formUtils = {
   /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
-  removeUndefinedFromInput: (step: Action | Trigger) => {
-    const copiedStep = JSON.parse(JSON.stringify(step));
+  removeUndefinedFromInput: (step: FlowAction | FlowTrigger) => {
+    const copiedStep = JSON.parse(JSON.stringify(step)) as
+      | FlowAction
+      | FlowTrigger;
     if (
-      copiedStep.type !== TriggerType.PIECE &&
-      copiedStep.type !== ActionType.PIECE
+      copiedStep.type !== FlowTriggerType.PIECE &&
+      copiedStep.type !== FlowActionType.PIECE
     ) {
       return step;
     }
@@ -200,10 +283,10 @@ export const formUtils = {
     return copiedStep;
   },
   buildPieceDefaultValue: (
-    selectedStep: Action | Trigger,
+    selectedStep: FlowAction | FlowTrigger,
     piece: PieceMetadata | null | undefined,
     includeCurrentInput: boolean,
-  ): Action | Trigger => {
+  ): FlowAction | FlowTrigger => {
     const { type } = selectedStep;
     const defaultErrorOptions = {
       continueOnFailure: {
@@ -218,7 +301,7 @@ export const formUtils = {
       },
     };
     switch (type) {
-      case ActionType.LOOP_ON_ITEMS:
+      case FlowActionType.LOOP_ON_ITEMS:
         return {
           ...selectedStep,
           settings: {
@@ -226,11 +309,11 @@ export const formUtils = {
             items: selectedStep.settings.items ?? '',
           },
         };
-      case ActionType.ROUTER:
+      case FlowActionType.ROUTER:
         return {
           ...selectedStep,
         };
-      case ActionType.CODE: {
+      case FlowActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
   return true;
 };`;
@@ -246,7 +329,7 @@ export const formUtils = {
           },
         };
       }
-      case ActionType.PIECE: {
+      case FlowActionType.PIECE: {
         const actionName = selectedStep?.settings?.actionName;
         const requireAuth = isNil(actionName)
           ? false
@@ -264,20 +347,26 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(
-          props ?? {},
-          includeCurrentInput ? input : {},
-        );
+        const defaultValues = getDefaultValueForStep({
+          props: props ?? {},
+          existingInput: includeCurrentInput ? input : {},
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+        });
+        const propertySettings = createPropertySettingsForStep({
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+          values: defaultValues,
+        });
         return {
           ...selectedStep,
           settings: {
             ...selectedStep.settings,
             input: defaultValues,
             errorHandlingOptions: defaultErrorOptions,
+            propertySettings,
           },
         };
       }
-      case TriggerType.PIECE: {
+      case FlowTriggerType.PIECE: {
         const triggerName = selectedStep?.settings?.triggerName;
         const requireAuth = isNil(triggerName)
           ? false
@@ -295,16 +384,21 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(
-          props ?? {},
-          includeCurrentInput ? input : {},
-        );
-
+        const defaultValues = getDefaultValueForStep({
+          props: props ?? {},
+          existingInput: includeCurrentInput ? input : {},
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+        });
+        const propertySettings = createPropertySettingsForStep({
+          propertySettings: selectedStep.settings.propertySettings ?? {},
+          values: defaultValues,
+        });
         return {
           ...selectedStep,
           settings: {
             ...selectedStep.settings,
             input: defaultValues,
+            propertySettings,
           },
         };
       }
@@ -313,14 +407,14 @@ export const formUtils = {
     }
   },
   buildPieceSchema: (
-    type: ActionType | TriggerType,
+    type: FlowActionType | FlowTriggerType,
     actionNameOrTriggerName: string,
     piece: PieceMetadataModel | null,
   ) => {
     switch (type) {
-      case ActionType.LOOP_ON_ITEMS:
+      case FlowActionType.LOOP_ON_ITEMS:
         return Type.Composite([
-          LoopOnItemsActionSchema,
+          Type.Omit(LoopOnItemsActionSchema, ['settings']),
           Type.Object({
             settings: Type.Object({
               items: Type.String({
@@ -329,20 +423,20 @@ export const formUtils = {
             }),
           }),
         ]);
-      case ActionType.ROUTER:
+      case FlowActionType.ROUTER:
         return Type.Intersect([
           Type.Omit(RouterActionSchema, ['settings']),
           Type.Object({
             settings: Type.Object({
               branches: RouterBranchesSchema(true),
               executionType: Type.Enum(RouterExecutionType),
-              inputUiInfo: SampleDataSetting,
+              sampleData: SampleDataSetting,
             }),
           }),
         ]);
-      case ActionType.CODE:
+      case FlowActionType.CODE:
         return CodeActionSchema;
-      case ActionType.PIECE: {
+      case FlowActionType.PIECE: {
         return Type.Composite([
           Type.Omit(PieceActionSchema, ['settings']),
           Type.Object({
@@ -362,7 +456,7 @@ export const formUtils = {
           }),
         ]);
       }
-      case TriggerType.PIECE: {
+      case FlowTriggerType.PIECE: {
         return Type.Composite([
           Type.Omit(PieceTrigger, ['settings']),
           Type.Object({
@@ -491,7 +585,9 @@ export const formUtils = {
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
           propsSchema[name] = Type.Union([
-            Type.Array(Type.Any()),
+            Type.Array(Type.Any(), {
+              minItems: property.required ? 1 : undefined,
+            }),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),
@@ -521,62 +617,3 @@ export const formUtils = {
   getDefaultValueForStep,
   buildConnectionSchema,
 };
-
-export function getDefaultValueForStep(
-  props: PiecePropertyMap | OAuth2Props,
-  existingInput: Record<string, unknown>,
-  customizedInput?: Record<string, boolean>,
-): Record<string, unknown> {
-  const defaultValues: Record<string, unknown> = {};
-  const entries = Object.entries(props);
-  for (const [name, property] of entries) {
-    switch (property.type) {
-      case PropertyType.CHECKBOX: {
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? false;
-        break;
-      }
-      case PropertyType.ARRAY: {
-        const isCustomizedArrayOfProperties =
-          !isNil(customizedInput) &&
-          customizedInput[name] &&
-          !isNil(property.properties);
-        const existingValue = existingInput[name];
-        if (!isNil(existingValue)) {
-          defaultValues[name] = existingValue;
-        } else if (isCustomizedArrayOfProperties) {
-          defaultValues[name] = {};
-        } else {
-          defaultValues[name] = property.defaultValue ?? [];
-        }
-        break;
-      }
-      case PropertyType.MARKDOWN:
-      case PropertyType.DATE_TIME:
-      case PropertyType.SHORT_TEXT:
-      case PropertyType.LONG_TEXT:
-      case PropertyType.FILE:
-      case PropertyType.STATIC_DROPDOWN:
-      case PropertyType.DROPDOWN:
-      case PropertyType.BASIC_AUTH:
-      case PropertyType.CUSTOM_AUTH:
-      case PropertyType.SECRET_TEXT:
-      case PropertyType.CUSTOM:
-      case PropertyType.COLOR:
-      case PropertyType.MULTI_SELECT_DROPDOWN:
-      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      case PropertyType.JSON:
-      case PropertyType.NUMBER:
-      case PropertyType.OAUTH2: {
-        defaultValues[name] = existingInput[name] ?? property.defaultValue;
-        break;
-      }
-      case PropertyType.OBJECT:
-      case PropertyType.DYNAMIC:
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? {};
-        break;
-    }
-  }
-  return defaultValues;
-}

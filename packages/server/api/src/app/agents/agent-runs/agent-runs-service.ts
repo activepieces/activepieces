@@ -1,11 +1,12 @@
-import { AgentJobSource, JobType } from '@activepieces/server-shared'
-import { ActivepiecesError, AgentRun, AgentTaskStatus, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, UpdateAgentRunRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, AgentRun, AgentTaskStatus, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, UpdateAgentRunRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { jobQueue } from '../../workers/queue'
+import { projectService } from '../../project/project-service'
+import { jobQueue } from '../../workers/queue/job-queue'
+import { JobType } from '../../workers/queue/queue-manager'
 import { AgentRunEntity } from './agent-run.entity'
 
 const agentRunsRepo = repoFactory(AgentRunEntity)
@@ -18,7 +19,7 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             entity: AgentRunEntity,
             query: {
                 limit: params.limit,
-                order: 'ASC',
+                order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -73,19 +74,17 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             prompt: params.prompt,
             steps: [],
             status: AgentTaskStatus.IN_PROGRESS,
-            metadata: params.source === AgentJobSource.TABLE ? {
-                recordId: params.recordId,
-                tableId: params.tableId,
-            } : undefined,
         })
 
+        const platformId = await projectService.getPlatformId(params.projectId)
         await jobQueue(log).add({
             id: agentRun.id,
-            type: JobType.AGENTS,
-            priority: 'high',
+            type: JobType.ONE_TIME,
             data: {
                 ...params,
+                jobType: WorkerJobType.EXECUTE_AGENT,
                 agentId: params.agentId,
+                platformId,
                 agentRunId: agentRun.id,
             },
         })
@@ -130,14 +129,6 @@ type RunParams = {
     agentId: string
     projectId: string
     prompt: string
-    source: AgentJobSource.DIRECT
-} | {
-    agentId: string
-    projectId: string
-    prompt: string
-    source: AgentJobSource.TABLE
-    recordId: string
-    tableId: string
 }
 
 type UpdateParams = {

@@ -85,6 +85,82 @@ export const microsoftTeamsCommon = {
 			};
 		},
 	}),
+	memberId:(isRequired=false) =>Property.Dropdown({
+		displayName: 'Member',
+		refreshers: ['teamId'],
+		required: isRequired,
+		options: async ({ auth, teamId }) => {
+			if (!auth || !teamId) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your account first and select team.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			let response: PageCollection = await client.api(`/teams/${teamId}/members`).get();
+			while (response.value.length > 0) {
+				for (const member of response.value as ConversationMember[]) {
+					options.push({ label: member.displayName!, value: member.id! });
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
+	memberIds:(isRequired=false) =>Property.MultiSelectDropdown({
+		displayName: 'Member',
+		refreshers: ['teamId'],
+		required: isRequired,
+		options: async ({ auth, teamId }) => {
+			if (!auth || !teamId) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your account first and select team.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			let response: PageCollection = await client.api(`/teams/${teamId}/members`).get();
+			while (response.value.length > 0) {
+				for (const member of response.value as ConversationMember[]) {
+					options.push({ label: member.displayName!, value: member.id! });
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
 	chatId: Property.Dropdown({
 		displayName: 'Chat ID',
 		refreshers: [],

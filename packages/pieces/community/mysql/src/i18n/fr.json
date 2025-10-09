@@ -1,5 +1,4 @@
 {
-  "MySQL": "MySQL",
   "The world's most popular open-source database": "La base de données open-source la plus populaire au monde",
   "Host": "Hôte",
   "Port": "Port",
@@ -24,7 +23,7 @@
   "Returns a list of tables in the database": "Retourne une liste des tables dans la base de données",
   "Executes a query on the mysql database and returns the results": "Exécute une requête sur la base de données mysql et retourne les résultats",
   "Markdown": "Markdown",
-  "Timezone": "Timezone",
+  "Timezone": "Fuseau horaire",
   "Table": "Tableau",
   "Condition": "Condition",
   "Arguments": "Arguments",

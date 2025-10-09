@@ -381,7 +381,7 @@ export const updateCertificationFolder = createAction({
       badgeAssertion,
     } = dynamicFields || {};
 
-    const message: Record<string, any> = {};
+    const message: Record<string, unknown> = {};
     const selectedFields = (fieldsToUpdate as string[]) || [];
     
     selectedFields.forEach((fieldName) => {

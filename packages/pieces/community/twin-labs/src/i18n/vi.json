@@ -1,0 +1,10 @@
+{
+  "Twin Web Agent": "Twin Web Agent",
+  "Please use ***your-twin-labs-api-key*** as value for API Key": "Please use ***your-twin-labs-api-key*** as value for API Key",
+  "Browse": "Browse",
+  "Browse the internet with an AI web navigation agent that can find information for you": "Browse the internet with an AI web navigation agent that can find information for you",
+  "startUrl": "startUrl",
+  "Goal": "Mục tiêu",
+  "The URL where the browsing task should begin": "The URL where the browsing task should begin",
+  "The goal or objective of the browsing task": "The goal or objective of the browsing task"
+}

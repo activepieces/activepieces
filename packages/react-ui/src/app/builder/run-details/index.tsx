@@ -108,8 +108,8 @@ const FlowRunDetails = React.memo(() => {
           <span>{t('Run Details')}</span>
         </div>
       </SidebarHeader>
-      <ResizablePanel className="h-full">
-        <CardList className="p-0 h-full" listClassName="gap-0.5">
+      <ResizablePanel className="h-full min-h-[80px]">
+        <CardList className="pr-2 h-full" listClassName="gap-0.5">
           {steps.length > 0 &&
             steps
               .filter((path) => !isNil(path))
@@ -130,7 +130,7 @@ const FlowRunDetails = React.memo(() => {
       {selectedStepOutput && (
         <>
           <ResizableHandle withHandle={true} />
-          <ResizablePanel defaultValue={25}>
+          <ResizablePanel defaultValue={25} className="min-h-[100px]">
             <FlowStepIO stepDetails={selectedStepOutput}></FlowStepIO>
           </ResizablePanel>
         </>

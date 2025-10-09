@@ -1,16 +1,16 @@
 import { api } from '@/lib/api';
 import {
+  ListAICreditsUsageRequest,
+  ListAICreditsUsageResponse,
+} from '@activepieces/common-ai';
+import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
+  StartTrialParams,
 } from '@activepieces/ee-shared';
-import {
-  PlatformPlan,
-  PlatformBillingInformation,
-  ListAICreditsUsageRequest,
-  ListAICreditsUsageResponse,
-} from '@activepieces/shared';
+import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
@@ -37,8 +37,11 @@ export const platformBillingApi = {
       params,
     );
   },
-  startTrial() {
-    return api.post<{ success: boolean }>('/v1/platform-billing/start-trial');
+  startTrial(params: StartTrialParams) {
+    return api.post<{ success: boolean }>(
+      '/v1/platform-billing/start-trial',
+      params,
+    );
   },
   listAiCreditsUsage(
     params: ListAICreditsUsageRequest,

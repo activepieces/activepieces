@@ -1,14 +1,12 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { ActionType, assertNotNullOrUndefined, FileLocation, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateLogsBehavior, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { ProgressUpdateError } from '../helper/execution-errors'
 
-const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
-const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_STORAGE_LOCATION === FileLocation.S3
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
@@ -60,29 +58,11 @@ export const progressService = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-
-                if (engineConstants.testSingleStepMode) {
-                    assertNotNullOrUndefined(engineConstants.httpRequestId, 'httpRequestId is required when running in test single step mode')
-                    await notifyFrontend(engineConstants, {
-                        type: WebsocketClientEvent.TEST_STEP_PROGRESS,
-                        data: {
-                            id: engineConstants.httpRequestId,
-                            success: true,
-                            input: stepOutput.input,
-                            output: params.data,
-                            standardError: '',
-                            standardOutput: '',
-                            sampleDataFileId: undefined,
-                        },
-                    })
-                }
-                else {
-                    await sendUpdateRunRequest({
-                        engineConstants,
-                        flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
-                        updateImmediate: true,
-                    })
-                }
+                await sendUpdateRunRequest({
+                    engineConstants,
+                    flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
+                    updateImmediate: true,
+                })
             },
         }
     },
@@ -92,16 +72,17 @@ type CreateOutputContextParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepName: string
-    stepOutput: GenericStepOutput<ActionType.PIECE, unknown>
+    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
 }
 
 const queueUpdates: UpdateStepProgressParams[] = []
 
-const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Promise<void> => {
-    if (_updateParams.engineConstants.isRunningApTests || _updateParams.engineConstants.testSingleStepMode) {
+const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Promise<void> => {
+    const isRunningMcp = updateParams.engineConstants.flowRunId === DEFAULT_MCP_DATA.flowRunId
+    if (updateParams.engineConstants.isRunningApTests || isRunningMcp) {
         return
     }
-    queueUpdates.push(_updateParams)
+    queueUpdates.push(updateParams)
     await lock.runExclusive(async () => {
         const params = queueUpdates.pop()
         while (queueUpdates.length > 0) {
@@ -119,15 +100,27 @@ const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Pr
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
         })
+
+        const uploadLogsDirectly = !isNil(engineConstants.logsUploadUrl)
+        if (uploadLogsDirectly) {
+            const response = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+            if (!response.ok) {
+                throw new ProgressUpdateError('Failed to upload execution state', response)
+            }
+        }
+
         const request = {
             runId: engineConstants.flowRunId,
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
-            executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
+            executionStateBuffer: uploadLogsDirectly ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
+            updateLogsBehavior: uploadLogsDirectly ? UpdateLogsBehavior.UPDATE_LOGS_SIZE : UpdateLogsBehavior.UPDATE_LOGS,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
+            logsFileId: engineConstants.logsFileId,
+            testSingleStepMode: engineConstants.testSingleStepMode,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -138,19 +131,7 @@ const sendUpdateRunRequest = async (_updateParams: UpdateStepProgressParams): Pr
         if (!response.ok) {
             throw new ProgressUpdateError('Failed to send progress update', response)
         }
-        if (USE_SIGNED_URL) {
-            const responseBody: UpdateRunProgressResponse = await response.json()
-            if (isNil(responseBody.uploadUrl)) {
-                throw new ProgressUpdateError('Upload URL is not available', response)
-            }
-            await uploadExecutionState(responseBody.uploadUrl, executionState)
-        }
-        await notifyFrontend(engineConstants, {
-            type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
-            data: {
-                runId: engineConstants.flowRunId,
-            },
-        })
+
     })
 }
 
@@ -167,8 +148,8 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<void> => {
-    await fetchWithRetry(uploadUrl, {
+const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<Response> => {
+    return fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,
         headers: {
@@ -179,16 +160,6 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): 
     })
 }
 
-const notifyFrontend = async (engineConstants: EngineConstants, request: NotifyFrontendRequest): Promise<void> => {
-    await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/notify-frontend`).toString(), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineConstants.engineToken}`,
-        },
-        body: JSON.stringify(request),
-    })
-}
 
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
@@ -203,7 +174,7 @@ export const extractFailedStepName = (steps: Record<string, StepOutput>): string
 
     const failedStep = Object.entries(steps).find(([_, step]) => {
         const stepOutput = step as StepOutput
-        if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
+        if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
             const loopOutput = stepOutput as LoopStepOutput
             return loopOutput.output?.iterations.some(iteration =>
                 Object.values(iteration).some(iterationStep =>

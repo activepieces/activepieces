@@ -48,6 +48,7 @@ const systemPropValidators: {
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.AGENT_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
@@ -57,9 +58,13 @@ const systemPropValidators: {
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
     [AppSystemProp.SENTRY_DSN]: urlValidator,
+    
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
+    
+    [AppSystemProp.OTEL_ENABLED]: booleanValidator,    
+    [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
@@ -86,6 +91,7 @@ const systemPropValidators: {
     [AppSystemProp.POSTGRES_URL]: stringValidator,
     [AppSystemProp.POSTGRES_USERNAME]: stringValidator,
     [AppSystemProp.POSTGRES_USE_SSL]: booleanValidator,
+    [AppSystemProp.POSTGRES_POOL_SIZE]: numberValidator,
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_MODE]: enumValidator(Object.values(QueueMode)),
     [AppSystemProp.QUEUE_UI_ENABLED]: booleanValidator,
@@ -121,7 +127,6 @@ const systemPropValidators: {
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
     [AppSystemProp.TEMPLATES_SOURCE_URL]: stringValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
-    [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: numberValidator,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
@@ -131,15 +136,14 @@ const systemPropValidators: {
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
+    [AppSystemProp.PM2_ENABLED]: booleanValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     // Copilot
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
     // AppSystemProp
-    [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
-    [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
-    [WorkerSystemProp.AGENTS_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
 
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
@@ -192,9 +196,9 @@ const validateSystemPropTypes = () => {
 
 export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise<void> => {
 
-    const test = system.get(AppSystemProp.ENVIRONMENT)
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION
-    if (test !== ApEnvironment.TESTING && fileStorageLocation === FileLocation.S3) {
+    if (environment !== ApEnvironment.TESTING && fileStorageLocation === FileLocation.S3) {
         try {
             await s3Helper(log).validateS3Configuration()
         }
@@ -220,8 +224,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
             docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
         }))
     }
-    const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-    const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
+    const encryptionKey = await encryptUtils.getEncryptionKey()
     const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
@@ -249,9 +252,9 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     }
 
     const edition = system.getEdition()
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
+    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && environment === ApEnvironment.PRODUCTION) {
         const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
+        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode) ) {
             throw new Error(JSON.stringify({
                 message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',

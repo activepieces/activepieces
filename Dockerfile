@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         procps && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.15.0
+RUN npm i -g npm@9.9.3 pnpm@9.15.0 pm2@6.0.10 typescript@4.9.4
 
 # Set the locale
 ENV LANG en_US.UTF-8
@@ -48,6 +48,9 @@ COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+
+# Set NX_NO_CLOUD environment variable
+ENV NX_NO_CLOUD=true
 
 RUN npx nx run-many --target=build --projects=server-api --configuration production
 RUN npx nx run-many --target=build --projects=react-ui

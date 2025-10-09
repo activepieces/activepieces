@@ -1,5 +1,7 @@
-import { METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
+import { ApSubscriptionStatus, BILLING_CYCLE_HIERARCHY, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PlanName, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformRole, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
+import Stripe from 'stripe'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
@@ -9,6 +11,44 @@ import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 
 const edition = system.getEdition()
+const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
+
+export const PLUS_PLAN_PRICE_ID = getPriceIdFor(PRICE_NAMES.PLUS_PLAN)
+export const BUSINESS_PLAN_PRICE_ID = getPriceIdFor(PRICE_NAMES.BUSINESS_PLAN)
+export const AI_CREDIT_PRICE_ID = getPriceIdFor(PRICE_NAMES.AI_CREDITS)
+export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
+export const PROJECT_PRICE_ID = getPriceIdFor(PRICE_NAMES.PROJECT)
+export const USER_SEAT_PRICE_ID = getPriceIdFor(PRICE_NAMES.USER_SEAT)
+
+export const AI_CREDIT_PRICE_IDS = [
+    AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL],
+    AI_CREDIT_PRICE_ID[BillingCycle.MONTHLY],
+]
+
+export const PLUS_PLAN_PRICE_IDS = [
+    PLUS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
+    PLUS_PLAN_PRICE_ID[BillingCycle.MONTHLY],
+]
+
+export const BUSINESS_PLAN_PRICE_IDS = [
+    BUSINESS_PLAN_PRICE_ID[BillingCycle.ANNUAL],
+    BUSINESS_PLAN_PRICE_ID[BillingCycle.MONTHLY],
+]
+
+export const ACTIVE_FLOW_PRICE_IDS = [
+    ACTIVE_FLOW_PRICE_ID[BillingCycle.ANNUAL],
+    ACTIVE_FLOW_PRICE_ID[BillingCycle.MONTHLY],
+]
+
+export const USER_SEAT_PRICE_IDS = [
+    USER_SEAT_PRICE_ID[BillingCycle.ANNUAL],
+    USER_SEAT_PRICE_ID[BillingCycle.MONTHLY],
+]
+
+export const PROJECT_PRICE_IDS = [
+    PROJECT_PRICE_ID[BillingCycle.ANNUAL],
+    PROJECT_PRICE_ID[BillingCycle.MONTHLY],
+]
 
 export const PlatformPlanHelper = {
     checkQuotaOrThrow: async (params: QuotaCheckParams): Promise<void> => {
@@ -83,6 +123,22 @@ export const PlatformPlanHelper = {
             })
         }
     },
+    checkLegitSubscriptionUpdateOrThrow: async (params: CheckLegitSubscriptionUpdateOrThrowParams) => {
+        const { projectsAddon, userSeatsAddon, newPlan } = params
+
+        const isNotBusinessPlan = newPlan !== PlanName.BUSINESS
+        const requestUserSeatAddon = !isNil(userSeatsAddon) && userSeatsAddon > 0
+        const requestProjectAddon = !isNil(projectsAddon) && projectsAddon > 0
+
+        if (isNotBusinessPlan && (requestUserSeatAddon || requestProjectAddon)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Extra users and projects are only available for the Business plan',
+                },
+            })
+        }
+    },
     handleResourceLocking: async ({ platformId, newLimits }: HandleResourceLockingParams): Promise<void> => {
         const usage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
@@ -91,6 +147,90 @@ export const PlatformPlanHelper = {
         await handleActiveFlows(projectIds, usage.activeFlows, newLimits.activeFlowsLimit)
         await handleUserSeats(projectIds, usage.seats, platformId, newLimits.userSeatsLimit)
     },
+    isUpgradeExperience: (params: IsUpgradeEperienceParams): boolean => {
+        const {
+            currentActiveFlowsLimit,
+            currentPlan,
+            currentCycle,
+            newCycle,
+            currentProjectsLimit,
+            currentUserSeatsLimit,
+            newActiveFlowsLimit,
+            newPlan,
+            newProjectsLimit,
+            newUserSeatsLimit,
+        } = params
+
+        const currentPlanTier = PLAN_HIERARCHY[currentPlan]
+        const newPlanTier = PLAN_HIERARCHY[newPlan]
+        const currentCycleTier = BILLING_CYCLE_HIERARCHY[currentCycle]
+        const newCycleTier = BILLING_CYCLE_HIERARCHY[newCycle]
+
+        if (newCycleTier > currentCycleTier) {
+            return true
+        }
+
+        if (newCycleTier < currentCycleTier) {
+            return false
+        }
+
+        if (newPlanTier > currentPlanTier) {
+            return true
+        }
+
+        if (newPlanTier < currentPlanTier) {
+            return false
+        }
+
+        const isAddonUpgrade =
+            (!isNil(newActiveFlowsLimit) && newActiveFlowsLimit > currentActiveFlowsLimit) ||
+            (!isNil(newProjectsLimit) && newProjectsLimit > currentProjectsLimit) ||
+            (!isNil(newUserSeatsLimit) && newUserSeatsLimit > currentUserSeatsLimit)
+
+        return isAddonUpgrade
+    },
+    checkIsTrialSubscription: (subscription: Stripe.Subscription): boolean => {
+        return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
+    },
+    getPlanFromSubscription: (subscription: Stripe.Subscription): { plan: PlanName, cycle: BillingCycle } => {
+        const isDev = stripeSecretKey?.startsWith('sk_test')
+        const env = isDev ? 'dev' : 'prod'
+
+        if (![ApSubscriptionStatus.ACTIVE, ApSubscriptionStatus.TRIALING].includes(subscription.status as ApSubscriptionStatus)) {
+            return { plan: PlanName.FREE, cycle: BillingCycle.MONTHLY }
+        }
+
+        const priceId = subscription.items.data[0].price.id
+        switch (priceId) {
+            case PRICE_ID_MAP[PRICE_NAMES.PLUS_PLAN][BillingCycle.ANNUAL][env]:
+                return { plan: PlanName.PLUS, cycle: BillingCycle.ANNUAL }
+            case PRICE_ID_MAP[PRICE_NAMES.PLUS_PLAN][BillingCycle.MONTHLY][env]:
+                return { plan: PlanName.PLUS, cycle: BillingCycle.MONTHLY }
+            case PRICE_ID_MAP[PRICE_NAMES.BUSINESS_PLAN][BillingCycle.ANNUAL][env]:
+                return { plan: PlanName.BUSINESS, cycle: BillingCycle.ANNUAL }
+            case PRICE_ID_MAP[PRICE_NAMES.BUSINESS_PLAN][BillingCycle.MONTHLY][env]:
+                return { plan: PlanName.BUSINESS, cycle: BillingCycle.MONTHLY }
+            default:
+                return { plan: PlanName.FREE, cycle: BillingCycle.MONTHLY }
+        }
+    },
+    
+}
+
+function getPriceIdFor(price: PRICE_NAMES): Record<BillingCycle, string> {
+    const isDev = stripeSecretKey?.startsWith('sk_test')
+    const env = isDev ? 'dev' : 'prod'
+
+    const entry = PRICE_ID_MAP[price]
+
+    if (!entry) {
+        throw new Error(`No price with the given price name '${price}' is available`)
+    }
+
+    return {
+        [BillingCycle.MONTHLY]: entry[BillingCycle.MONTHLY][env],
+        [BillingCycle.ANNUAL]: entry[BillingCycle.ANNUAL][env],
+    }
 }
 
 async function handleProjects(projectIds: string[], currentUsage: number, newLimit?: number | null): Promise<void> {
@@ -148,14 +288,14 @@ async function handleUserSeats(
 ): Promise<void> {
     if (isNil(newLimit) || currentUsage <= newLimit) return
 
-    const getAllActiveUsers = projectIds.map(id => {
+    const activeUserUnfiltered = await Promise.all(projectIds.map(id => {
         return userService.listProjectUsers({
             projectId: id, 
             platformId,
         })
-    })
+    }))
 
-    const activeUsers = (await Promise.all(getAllActiveUsers)).flatMap(user => user)
+    const activeUsers = activeUserUnfiltered.flatMap(user => user).filter(user => user.platformRole !== PlatformRole.ADMIN)
     const usersToDeactivate = activeUsers.slice(newLimit)
 
     const deactivateUsers = usersToDeactivate.map(user => {
@@ -183,4 +323,23 @@ type QuotaCheckParams = {
 type CheckResourceLockedParams = {
     platformId: string
     resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS | PlatformUsageMetric.USER_SEATS | PlatformUsageMetric.ACTIVE_FLOWS>
+}
+
+type CheckLegitSubscriptionUpdateOrThrowParams = {
+    newPlan: PlanName
+    projectsAddon?: number
+    userSeatsAddon?: number
+}
+
+type IsUpgradeEperienceParams = {
+    currentPlan: PlanName 
+    newPlan: PlanName
+    currentCycle: BillingCycle
+    newCycle: BillingCycle
+    newUserSeatsLimit?: number
+    newProjectsLimit?: number
+    newActiveFlowsLimit?: number
+    currentUserSeatsLimit: number
+    currentProjectsLimit: number
+    currentActiveFlowsLimit: number
 }

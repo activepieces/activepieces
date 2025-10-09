@@ -2,13 +2,14 @@ import { createAction } from '@activepieces/pieces-framework';
 import { pipedriveAuth } from '../../index';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 import { searchFieldProp, searchFieldValueProp } from '../common/props';
+import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
 
 export const findOrganizationAction = createAction({
 	auth: pipedriveAuth,
@@ -32,7 +33,7 @@ export const findOrganizationAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
-			resourceUri: '/filters',
+			resourceUri: '/v1/filters',
 			body: {
 				name: 'Activepieces Find Organization Filter',
 				type: 'org',
@@ -66,16 +67,17 @@ export const findOrganizationAction = createAction({
 			},
 		});
 
-		// search for organizations using the filter
 		const organizations = await pipedriveApiCall<{ data: { id: number }[] }>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/organizations',
+			resourceUri: '/v2/organizations',
 			query: {
 				filter_id: filter.data.id,
 				limit: 1,
-				sort: 'update_time DESC',
+				sort_by: 'update_time',
+				sort_direction: 'desc',
+				include_fields: ORGANIZATION_OPTIONAL_FIELDS.join(','),
 			},
 		});
 
@@ -84,7 +86,7 @@ export const findOrganizationAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.DELETE,
-			resourceUri: `/filters/${filter.data.id}`,
+			resourceUri: `/v1/filters/${filter.data.id}`,
 		});
 
 		if (isNil(organizations.data) || organizations.data.length === 0) {
@@ -94,11 +96,11 @@ export const findOrganizationAction = createAction({
 			};
 		}
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/organizationFields',
+			resourceUri: '/v1/organizationFields',
 		});
 
 		const updatedOrganizationProperties = pipedriveTransformCustomFields(

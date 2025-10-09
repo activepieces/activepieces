@@ -27,10 +27,10 @@ import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
+    async executeProps({ params, pieceSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
         const property = await pieceLoader.getPropOrThrow({
             params,
-            piecesSource,
+            pieceSource,
         })
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
             throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
@@ -110,11 +110,11 @@ export const pieceHelper = {
     },
 
     async executeValidateAuth(
-        { params, piecesSource }: { params: ExecuteValidateAuthOperation, piecesSource: string },
+        { params, pieceSource }: { params: ExecuteValidateAuthOperation, pieceSource: string },
     ): Promise<ExecuteValidateAuthResponse> {
         const { piece: piecePackage } = params
 
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, pieceSource })
         const server = {
             apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
             publicUrl: params.publicApiUrl,
@@ -163,11 +163,12 @@ export const pieceHelper = {
         }
     },
 
-    async extractPieceMetadata({ piecesSource, params }: { piecesSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
+    async extractPieceMetadata({ pieceSource, params }: { pieceSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
         const { pieceName, pieceVersion } = params
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
-        const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, piecesSource })
-        const i18n = await pieceTranslation.initializeI18n(pieceAlias)
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, pieceSource })
+        const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, pieceSource })
+        const pieceFolderPath = await pieceLoader.getPiecePath({ packageName: pieceAlias, pieceSource })
+        const i18n = await pieceTranslation.initializeI18n(pieceFolderPath)
         const fullMetadata = piece.metadata()
         return {
             ...fullMetadata,
@@ -180,5 +181,5 @@ export const pieceHelper = {
 }
 
 
-type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }
+type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, pieceSource: string, constants: EngineConstants }
 

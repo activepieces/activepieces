@@ -1,7 +1,6 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { encryptUtils } from '../../../helper/encryption'
-import { QueueMode, system } from '../../../helper/system/system'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
@@ -19,9 +18,7 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
     public async up(queryRunner: QueryRunner): Promise<void> {
         log.info('AIProviderRefactorSqlite1748824241409 up: started')
 
-        const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-        await encryptUtils.loadEncryptionKey(queueMode)
-
+    
         // Create backup table first
         await queryRunner.query(`
             CREATE TABLE "ai_provider_backup" AS 
@@ -39,7 +36,7 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
 
             for (const provider of aiProviders) {
                 try {
-                    const decryptedConfig: OldAiProviderConfig = encryptUtils.decryptObject(JSON.parse(provider.config))
+                    const decryptedConfig: OldAiProviderConfig = await encryptUtils.decryptObject(JSON.parse(provider.config))
                     
                     // Validate that we have the expected structure
                     if (!decryptedConfig.defaultHeaders || typeof decryptedConfig.defaultHeaders !== 'object') {
@@ -111,9 +108,6 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
     public async down(queryRunner: QueryRunner): Promise<void> {
         log.info('AIProviderRefactorSqlite1748824241409 down: started')
 
-        const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-        await encryptUtils.loadEncryptionKey(queueMode)
-
         // Create backup table first
         await queryRunner.query(`
             CREATE TABLE "ai_provider_backup" AS 
@@ -131,7 +125,7 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
 
             for (const provider of aiProviders) {
                 try {
-                    const decryptedConfig: NewAiProviderConfig = encryptUtils.decryptObject(JSON.parse(provider.config))
+                    const decryptedConfig: NewAiProviderConfig = await encryptUtils.decryptObject(JSON.parse(provider.config))
                     
                     if (!decryptedConfig.apiKey || typeof decryptedConfig.apiKey !== 'string') {
                         throw new Error(`Invalid config structure for provider ${provider.id}: missing or invalid apiKey`)

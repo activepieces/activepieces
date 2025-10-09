@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Activity } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { DataTable } from '@/components/ui/data-table';
@@ -46,13 +46,13 @@ export const McpHistoryPage = () => {
     enabled: !!mcpId,
   });
 
-  const columns = useMemo(() => mcpRunColumns(metadata ?? []), [metadata]);
-  const filters = useMemo(() => mcpRunFilters(), []);
+  const columns = mcpRunColumns(metadata ?? []);
+  const filters = mcpRunFilters();
 
   return (
     <div className="w-full ">
       <div className="flex items-center justify-between">
-        <div className="space-y-0">
+        <div className="space-y-0 mb-4">
           <h1 className="text-xl font-semibold tracking-tight">
             {t('Tool Usage History')}
           </h1>

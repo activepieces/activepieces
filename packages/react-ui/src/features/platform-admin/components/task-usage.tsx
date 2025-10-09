@@ -29,10 +29,14 @@ export function TaskUsage({ report }: TaskUsageProps) {
   });
 
   const chartData =
-    report?.tasksUsage.map((data) => ({
-      date: data.day,
-      tasks: data.totalTasks,
-    })) || [];
+    report?.tasksUsage
+      .map((data) => ({
+        date: data.day,
+        tasks: data.totalTasks,
+      }))
+      .sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      ) || [];
 
   const chartConfig = {
     views: {

@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../tsconfig.server.json",
   "files": [],
   "include": [],
   "references": [
@@ -12,10 +12,6 @@
   ],
   "compilerOptions": {
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "strict": true
+    "noImplicitThis": true
   }
 }

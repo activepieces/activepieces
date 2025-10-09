@@ -1,9 +1,9 @@
 import {
-  Action,
-  ActionType,
   isNil,
-  Trigger,
   isObject,
+  FlowAction,
+  FlowActionType,
+  FlowTrigger,
 } from '@activepieces/shared';
 
 import {
@@ -309,16 +309,16 @@ function getSearchableValue(
 }
 
 function traverseStep(
-  step: (Action | Trigger) & { dfsIndex: number },
+  step: (FlowAction | FlowTrigger) & { dfsIndex: number },
   sampleData: Record<string, unknown>,
   zipArraysOfProperties: boolean,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-  const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate);
+  const stepNeedsTesting = isNil(step.settings.sampleData?.lastTestDate);
   if (stepNeedsTesting) {
     return buildTestStepNode(displayName, step.name);
   }
-  if (step.type === ActionType.LOOP_ON_ITEMS) {
+  if (step.type === FlowActionType.LOOP_ON_ITEMS) {
     const copiedSampleData = JSON.parse(JSON.stringify(sampleData[step.name]));
     delete copiedSampleData['iterations'];
     const headNode = traverseOutput(

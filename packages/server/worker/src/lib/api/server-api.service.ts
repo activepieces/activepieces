@@ -1,15 +1,13 @@
-import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, Agent, AgentRun, ErrorCode, Field, FlowRun, FlowVersionId, FlowVersionState, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, isNil, McpWithTools, PlatformUsageMetric, PopulatedFlow, Record, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRecordRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { GetRunForWorkerRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
-import { cacheState } from '../cache/cache-state'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
-const globalCacheFlowPath = path.resolve('cache', 'flows')
+const tracer = trace.getTracer('worker-api-service')
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
@@ -21,63 +19,55 @@ export const workerApiService = (workerToken: string) => {
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
-        async heartbeat(): Promise<WorkerMachineHealthcheckResponse | null> {
-            const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-            try {
-                return await client.post<WorkerMachineHealthcheckResponse>('/v1/worker-machines/heartbeat', request)
-            }
-            catch (error) {
-                if (ApAxiosClient.isApAxiosError(error) && error.error.code === 'ECONNREFUSED') {
-                    return null
-                }
-                throw error
-            }
-        },
-        async poll(queueName: QueueName): Promise<ApQueueJob | null> {
-            try {
-                const request: PollJobRequest = {
-                    queueName,
-                }
-                const response = await client.get<ApQueueJob | null>('/v1/workers/poll', {
-                    params: request,
-                })
-                return response
-            }
-            catch (error) {
-                await new Promise((resolve) => setTimeout(resolve, 2000))
-                return null
-            }
-        },
-        async resumeRun(request: ResumeRunRequest): Promise<void> {
-            await client.post<unknown>('/v1/workers/resume-run', request)
-        },
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
-            const limit = pLimit(1)
-            const promises = arrayOfPayloads.map(payloads =>
-                limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
-                    ...request,
-                    payloads,
-                    parentRunId: request.parentRunId,
-                    failParentOnFailure: request.failParentOnFailure,
-                })),
-            )
+            return tracer.startActiveSpan('worker.api.startRuns', {
+                attributes: {
+                    'worker.flowVersionId': request.flowVersionId,
+                    'worker.projectId': request.projectId,
+                    'worker.environment': request.environment,
+                    'worker.payloadsCount': request.payloads.length,
+                    'worker.httpRequestId': request.httpRequestId ?? 'none',
+                },
+            }, async (span) => {
+                try {
+                    const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
+                    span.setAttribute('worker.batchesCount', arrayOfPayloads.length)
+                    
+                    const limit = pLimit(1)
+                    const promises = arrayOfPayloads.map(payloads =>
+                        limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
+                            ...request,
+                            payloads,
+                            parentRunId: request.parentRunId,
+                            failParentOnFailure: request.failParentOnFailure,
+                        })),
+                    )
 
-            const results = await Promise.allSettled(promises)
-            const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+                    const results = await Promise.allSettled(promises)
+                    const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
 
-            if (errors.length > 0) {
-                const errorMessages = errors.map(e => e.reason.message).join(', ')
-                throw new Error(`Failed to start runs: ${errorMessages}`)
-            }
+                    if (errors.length > 0) {
+                        const errorMessages = errors.map(e => e.reason.message).join(', ')
+                        span.setAttribute('worker.error', true)
+                        span.setAttribute('worker.errorMessage', errorMessages)
+                        throw new Error(`Failed to start runs: ${errorMessages}`)
+                    }
 
-            return results
-                .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
-                .map(r => r.value)
-                .flat()
+                    const flowRuns = results
+                        .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
+                        .map(r => r.value)
+                        .flat()
+                    
+                    span.setAttribute('worker.runsCreated', flowRuns.length)
+                    return flowRuns
+                }
+                finally {
+                    span.end()
+                }
+            })
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
@@ -104,23 +94,9 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
     return batches
 }
 
-// We have a file for each flow version to prevent the cache from growing too large, and then JS stringify error
-async function getDedicatedCacheFileForFlow(flowVersionIdToRun: FlowVersionId): Promise<ReturnType<typeof cacheState>> {
-    return cacheState(path.join(globalCacheFlowPath, flowVersionIdToRun))
-}
 
-async function readFlowFromCache(flowVersionIdToRun: FlowVersionId): Promise<PopulatedFlow | null> {
-    try {
-        const flowCache = await getDedicatedCacheFileForFlow(flowVersionIdToRun)
-        const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
-        return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
-    }
-    catch (error) {
-        return null
-    }
-}
 
-export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
+export const engineApiService = (engineToken: string) => {
     const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
@@ -130,14 +106,11 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                 responseType: 'arraybuffer',
             })
         },
-        async updateJobStatus(request: UpdateJobRequest): Promise<void> {
-            await client.post('/v1/engine/update-job', request)
-        },
-        async updateFailureCount(request: UpdateFailureCountRequest): Promise<void> {
-            await client.post('/v1/engine/update-failure-count', request)
-        },
         async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
             return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})
+        },
+        async createTriggerRun(request: CreateTriggerRunRequestBody): Promise<TriggerRun> {
+            return client.post<TriggerRun>('/v1/engine/create-trigger-run', request)
         },
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
@@ -147,54 +120,10 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                 params: options,
             })
         },
-        async checkTaskLimit(): Promise<void> {
-            try {
-                await client.get<unknown>('/v1/engine/check-task-limit', {})
-            }
-            catch (e) {
-                if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === StatusCodes.PAYMENT_REQUIRED) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.QUOTA_EXCEEDED,
-                        params: {
-                            metric: PlatformUsageMetric.TASKS,
-                        },
-                    })
-                }
-                exceptionHandler.handle(e, log)
-            }
-        },
-        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
-            const startTime = performance.now()
-            log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
-
-            const cachedFlow = await readFlowFromCache(request.versionId)
-            if (!isNil(cachedFlow)) {
-                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
-                return cachedFlow
-            }
-
-            try {
-                const flow = await client.get<PopulatedFlow | null>('/v1/engine/flows', {
-                    params: request,
-                })
-
-                const flowCache = await getDedicatedCacheFileForFlow(request.versionId)
-                const isCachableFlow = !isNil(flow) && flow.version.state === FlowVersionState.LOCKED
-                if (isCachableFlow) {
-                    await flowCache.setCache(flow.version.id, JSON.stringify(flow))
-                }
-
-                return flow
-            }
-            catch (e) {
-                if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === 404) {
-                    return null
-                }
-                throw e
-            }
-            finally {
-                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache miss')
-            }
+        async getFlow(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
+            return client.get<PopulatedFlow | null>('/v1/engine/flows', {
+                params: request,
+            })
         },
     }
 }
@@ -212,31 +141,11 @@ export const agentsApiService = (workerToken: string, _log: FastifyBaseLogger) =
             return client.get<McpWithTools>(`/v1/mcp-servers/${mcpId}`, {})
         },
 
-        async getAgentRun(agentRunId: string): Promise<AgentRun> {
-            return client.get<AgentRun>(`/v1/agent-runs/${agentRunId}`, {})
-        },
         async createAgentRun(agentRun: RunAgentRequestBody): Promise<AgentRun> {
             return client.post<AgentRun>('/v1/agent-runs', agentRun)
         },
         async updateAgentRun(agentRunId: string, agentRun: UpdateAgentRunRequestBody): Promise<AgentRun> {
             return client.post<AgentRun>(`/v1/agent-runs/${agentRunId}/update`, agentRun)
-        },
-    }
-}
-
-export const tablesApiService = (workerToken: string) => {
-    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
-    const client = new ApAxiosClient(apiUrl, workerToken)
-
-    return {
-        async getFields(tableId: string): Promise<Field[]> {
-            return client.get<Field[]>(`/v1/fields?tableId=${tableId}`, {})
-        },
-        async getRecord(recordId: string): Promise<Record> {
-            return client.get<Record>(`/v1/records/${recordId}`, {})
-        },
-        async updateRecord(recordId: string, record: UpdateRecordRequest): Promise<Record> {
-            return client.post<Record>(`/v1/records/${recordId}`, { ...record, agentUpdate: true })
         },
     }
 }

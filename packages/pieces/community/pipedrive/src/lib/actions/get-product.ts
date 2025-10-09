@@ -2,17 +2,17 @@ import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { GetDealResponse, GetField } from '../common/types';
+import { GetField } from '../common/types';
 
 export const getProductAction = createAction({
 	auth: pipedriveAuth,
 	name: 'get-product',
 	displayName: 'Retrieve a Product',
-	description: ' Finds a product by ID.',
+	description: 'Finds a product by ID.',
 	props: {
 		productId: Property.Number({
 			displayName: 'Product ID',
@@ -21,18 +21,18 @@ export const getProductAction = createAction({
 	},
 	async run(context) {
 		try {
-			const response = await pipedriveApiCall<GetDealResponse>({
+			const response = await pipedriveApiCall<Record<string, any>>({
 				accessToken: context.auth.access_token,
 				apiDomain: context.auth.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: `/products/${context.propsValue.productId}`,
+				resourceUri: `/v2/products/${context.propsValue.productId}`,
 			});
 
-			const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+			const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 				accessToken: context.auth.access_token,
 				apiDomain: context.auth.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: '/productFields',
+				resourceUri: '/v1/productFields',
 			});
 
 			const updatedProductProperties = pipedriveTransformCustomFields(
@@ -47,7 +47,7 @@ export const getProductAction = createAction({
 		} catch (error) {
 			return {
 				found: false,
-                data:[]
+				data: [],
 			};
 		}
 	},

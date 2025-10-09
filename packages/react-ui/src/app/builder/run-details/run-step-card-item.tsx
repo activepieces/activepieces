@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/collapsible';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ActionType, flowStructureUtil } from '@activepieces/shared';
+import { FlowActionType, flowStructureUtil } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
@@ -55,7 +55,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   });
   const { fitView } = useReactFlow();
   const isChildSelected = useMemo(() => {
-    return step?.type === ActionType.LOOP_ON_ITEMS && selectedStep
+    return step?.type === FlowActionType.LOOP_ON_ITEMS && selectedStep
       ? flowStructureUtil.isChildOf(step, selectedStep)
       : false;
   }, [step, selectedStep]);
@@ -76,7 +76,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   const children =
     stepOutput &&
     stepOutput.output &&
-    stepOutput.type === ActionType.LOOP_ON_ITEMS &&
+    stepOutput.type === FlowActionType.LOOP_ON_ITEMS &&
     stepOutput.output.iterations[loopsIndexes[stepName]]
       ? Object.keys(stepOutput.output.iterations[loopsIndexes[stepName]])
       : [];
@@ -85,7 +85,10 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   });
   const [isOpen, setIsOpen] = React.useState(true);
 
-  const isLoopStep = stepOutput && stepOutput.type === ActionType.LOOP_ON_ITEMS;
+  const isLoopStep =
+    stepOutput && stepOutput.type === FlowActionType.LOOP_ON_ITEMS;
+  const loopHasNoIterations =
+    isLoopStep && stepOutput.output?.iterations.length === 0;
 
   return (
     <Collapsible open={isOpen} className="w-full">
@@ -130,10 +133,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
             <img
               alt={stepMetadata?.displayName}
               className="w-6 h-6 object-contain"
-              src={
-                step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
-                stepMetadata?.logoUrl
-              }
+              src={step?.settings?.customLogoUrl ?? stepMetadata?.logoUrl}
             />
             <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
               stepIndex + 1
@@ -142,7 +142,9 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
             <div className="flex gap-1 justify-end  items-center flex-grow">
               {isLoopStep && isStepSelected && (
                 <span className="text-sm font-semibold animate-fade">
-                  {t('All Iterations')}
+                  {loopHasNoIterations
+                    ? t('No Iterations')
+                    : t('All Iterations')}
                 </span>
               )}
               {isLoopStep && !isStepSelected && (
@@ -150,7 +152,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
                   className={cn(
                     'flex gap-1 justify-end  items-center flex-grow',
                     {
-                      hidden: !isChildSelected,
+                      hidden: !isChildSelected || loopHasNoIterations,
                     },
                   )}
                 >

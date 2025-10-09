@@ -1,7 +1,7 @@
-import { spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/shared'
+import { context, propagation } from '@opentelemetry/api'
 import axios, { AxiosError, AxiosInstance, isAxiosError } from 'axios'
 import axiosRetry from 'axios-retry'
-import { StatusCodes } from 'http-status-codes'
 
 export class ApAxiosError extends Error {
     constructor(public error: AxiosError, message?: string) {
@@ -20,14 +20,24 @@ export class ApAxiosClient {
                 Authorization: `Bearer ${apiToken}`,
             },
         })
+        
+        this._axios.interceptors.request.use((config) => {
+            const traceHeaders: Record<string, string> = {}
+            propagation.inject(context.active(), traceHeaders)
+            Object.entries(traceHeaders).forEach(([key, value]) => {
+                config.headers.set(key, value)
+            })
+            return config
+        })
+        
         axiosRetry(this._axios, {
-            retries: 3, 
+            retries: 3,
             retryDelay: (retryCount: number) => {
-                return retryCount * 10000 
+                return retryCount * 5000
             },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             retryCondition: (error: any) => {
-                return error?.response?.status && error?.response?.status === StatusCodes.GATEWAY_TIMEOUT
+                return !isNil(error?.response?.status) && (error?.response?.status >= 500)
             },
         })
     }

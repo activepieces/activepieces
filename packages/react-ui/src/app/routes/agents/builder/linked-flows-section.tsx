@@ -9,14 +9,14 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  ActionType,
+  FlowActionType,
   FlowOperationType,
   PackageType,
   PieceType,
-  TriggerType,
   LATEST_SCHEMA_VERSION,
   PopulatedFlow,
   Agent,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 const template = {
@@ -32,7 +32,7 @@ const template = {
       name: 'trigger',
       valid: true,
       displayName: 'Chat UI',
-      type: TriggerType.PIECE,
+      type: FlowTriggerType.PIECE,
       settings: {
         pieceName: '@activepieces/piece-forms',
         pieceVersion: '~0.4.3',
@@ -40,9 +40,6 @@ const template = {
         packageType: PackageType.REGISTRY,
         input: {
           botName: 'AI Bot',
-        },
-        inputUiInfo: {
-          customizedInputs: {},
         },
         triggerName: 'chat_submission',
       },
@@ -68,11 +65,8 @@ const template = {
               value: false,
             },
           },
-          inputUiInfo: {
-            customizedInputs: {},
-          },
         },
-        type: ActionType.PIECE,
+        type: FlowActionType.PIECE,
         nextAction: {
           displayName: 'Respond on UI',
           name: 'step_1',
@@ -95,11 +89,8 @@ const template = {
                 value: false,
               },
             },
-            inputUiInfo: {
-              customizedInputs: {},
-            },
           },
-          type: ActionType.PIECE,
+          type: FlowActionType.PIECE,
         },
       },
     },

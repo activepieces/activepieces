@@ -25,7 +25,9 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     isFetching,
   } = projectHooks.useSwitchToProjectInParams();
+
   const { checkAccess } = useAuthorization();
+
   if (isNil(projectIdFromParams) || isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
@@ -115,9 +117,6 @@ export const ProjectRouterWrapper = ({
 ];
 
 export const projectSettingsRoutes = {
-  general: '/settings/general',
-  team: '/settings/team',
   pieces: '/settings/pieces',
   environments: '/settings/environments',
-  alerts: '/settings/alerts',
 } as const;

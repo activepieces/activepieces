@@ -92,10 +92,17 @@ const polling: Polling<OAuth2PropertyValue, { form_id: string }> = {
       propsValue.form_id,
       lastFetchEpochMS === 0 ? null : dayjs(lastFetchEpochMS).toISOString()
     );
-    return items.map((item) => ({
-      epochMilliSeconds: dayjs(item.lastSubmittedTime).valueOf(),
-      data: item,
-    }));
+
+    return items
+      .sort(
+        (a, b) =>
+          new Date(b.lastSubmittedTime).getTime() -
+          new Date(a.lastSubmittedTime).getTime()
+      )
+      .map((item) => ({
+        epochMilliSeconds: dayjs(item.lastSubmittedTime).valueOf(),
+        data: item,
+      }));
   },
 };
 

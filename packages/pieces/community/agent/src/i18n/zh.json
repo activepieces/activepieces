@@ -1,9 +1,9 @@
 {
-  "Agent": "代理",
-  "Let an AI assistant help you with tasks using tools.": "讓 AI 助手使用工具幫助您完成任務。",
-  "Run Agent": "運行代理",
-  "Run the AI assistant to complete your task.": "運行 AI 助手以完成您的任務。",
-  "Prompt": "提示",
-  "Select agent created": "選擇已創建的代理",
-  "Describe what you want the assistant to do.": "描述您希望助手完成的工作。"
+  "Let an AI assistant help you with tasks using tools.": "Let an AI assistant help you with tasks using tools.",
+  "Run Agent": "Run Agent",
+  "Run the AI assistant to complete your task.": "Run the AI assistant to complete your task.",
+  "Agent": "Agent",
+  "Prompt": "Prompt",
+  "Select agent created": "Select agent created",
+  "Describe what you want the assistant to do.": "Describe what you want the assistant to do."
 }

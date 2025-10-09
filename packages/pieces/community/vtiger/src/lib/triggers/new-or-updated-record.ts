@@ -1,5 +1,7 @@
 import {
+  AuthenticationType,
   DedupeStrategy,
+  HttpMethod,
   Polling,
   httpClient,
   pollingHelper,
@@ -37,6 +39,19 @@ export const newOrUpdatedRecord = createTrigger({
         ],
       },
     }),
+    syncType: Property.StaticDropdown({
+      displayName: 'Sync Scope',
+      description: 'Records visibility scope for sync',
+      required: false,
+      options: {
+        options: [
+          { value: 'application', label: 'Application (all records)' },
+          { value: 'userandgroup', label: "User's groups" },
+          { value: 'user', label: 'User only' },
+        ],
+      },
+      defaultValue: 'application',
+    }),
     limit: Property.Number({
       displayName: 'Limit',
       description: 'Enter the maximum number of records to return.',
@@ -71,7 +86,7 @@ export const newOrUpdatedRecord = createTrigger({
 
 const polling: Polling<
   PiecePropValueSchema<typeof vtigerAuth>,
-  { elementType?: string; watchBy?: string; limit?: number }
+  { elementType?: string; watchBy?: string; limit?: number; syncType?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
@@ -99,54 +114,77 @@ const fetchRecords = async ({
   propsValue: Record<string, unknown>;
   lastFetchEpochMS: number;
 }) => {
-  const vtigerInstance = await instanceLogin(
-    auth['instance_url'],
-    auth['username'],
-    auth['password']
-  );
-  if (vtigerInstance === null) {
-    return [];
+  const elementType = propsValue['elementType'] as string;
+  const limit = (propsValue['limit'] as number) ?? 100;
+  const syncType = (propsValue['syncType'] as string) ?? 'application';
+
+  const baseUrl = `${auth['instance_url']}/restapi/v1/vtiger/default`;
+
+  // Vtiger expects UNIX timestamp (seconds)
+  let modifiedTimeSec = Math.floor((lastFetchEpochMS || 0) / 1000);
+
+  const updatedIds: string[] = [];
+  let more = true;
+  let safety = 0;
+
+  while (more && updatedIds.length < limit && safety < 10) {
+    const syncResp = await httpClient.sendRequest<{
+      success: boolean;
+      result: { updated: string[]; deleted: string[]; more: boolean; lastModifiedTime: number };
+    }>({
+      method: HttpMethod.GET,
+      url: `${baseUrl}/sync`,
+      authentication: {
+        type: AuthenticationType.BASIC,
+        username: auth['username'],
+        password: auth['password'],
+      },
+      queryParams: {
+        modifiedTime: String(modifiedTimeSec),
+        elementType,
+        syncType,
+      },
+    });
+
+    if (!syncResp.body?.success) break;
+
+    const res = syncResp.body.result;
+    more = res.more === true;
+    modifiedTimeSec = res.lastModifiedTime || modifiedTimeSec;
+
+    for (const id of res.updated ?? []) {
+      if (updatedIds.length < limit) updatedIds.push(id);
+    }
+
+    safety++;
   }
 
-  const query = `SELECT * FROM ${propsValue['elementType']} ;`;
+  if (updatedIds.length === 0) return [];
 
-  const httpRequest = prepareHttpRequest(
-    auth['instance_url'],
-    vtigerInstance.sessionId ?? vtigerInstance.sessionName,
-    'query',
-    { query }
-  );
-  const response = await httpClient.sendRequest<{
-    success: boolean;
-    result: Record<string, string>[];
-  }>(httpRequest);
+  const idsToFetch = updatedIds.slice(0, limit);
 
-  if (response.body.success) {
-    const lastFetch = dayjs(lastFetchEpochMS);
-    const records = response.body.result;
-    const limit = propsValue['limit'] as number;
-
-    const newOrUpdatedRecords = records.filter((record) => {
-      const watchTime = dayjs(record[propsValue['watchBy'] as string] ?? 0);
-      return watchTime.diff(lastFetch) >= 0;
-    });
-    const sortedRecords = newOrUpdatedRecords.sort((a, b) => {
-      const key = propsValue['watchBy'] as string;
-      if (a[key] < b[key]) {
-        return -1;
-      }
-      if (a[key] > b[key]) {
-        return 1;
-      }
-      return 0;
+  const results: Record<string, any>[] = [];
+  for (const id of idsToFetch) {
+    const retrieveResp = await httpClient.sendRequest<{
+      success: boolean;
+      result: Record<string, any>;
+    }>({
+      method: HttpMethod.GET,
+      url: `${baseUrl}/retrieve`,
+      authentication: {
+        type: AuthenticationType.BASIC,
+        username: auth['username'],
+        password: auth['password'],
+      },
+      queryParams: {
+        id,
+      },
     });
 
-    if (limit > 0) {
-      return sortedRecords.slice(0, limit);
-    } else {
-      return sortedRecords;
+    if (retrieveResp.body?.success && retrieveResp.body.result) {
+      results.push(retrieveResp.body.result);
     }
   }
 
-  return [];
+  return results;
 };

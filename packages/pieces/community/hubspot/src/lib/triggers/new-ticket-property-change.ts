@@ -7,6 +7,7 @@ import {
 import { standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { chunk } from '@activepieces/shared';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -19,7 +20,7 @@ type Props = {
 const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		const propertyToCheck = propsValue.propertyName as string;
 
@@ -71,18 +72,29 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			return [];
 		}
 
-		// Fetch tickets with property history
-		const updatedTicketsWithPropertyHistory = await client.crm.tickets.batchApi.read({
-			propertiesWithHistory: [propertyToCheck],
-			properties: propertiesToRetrieve,
-			inputs: updatedTickets.map((ticket) => {
-				return {
-					id: ticket.id,
-				};
-			}),
-		});
+    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
+    const batchApiChunks = chunk(updatedTickets, 50);
 
-		for (const ticket of updatedTicketsWithPropertyHistory.results) {
+    // Fetch tickets with property history
+    const batchApiResps = await Promise.all(
+      batchApiChunks.map((batch) => {
+        return client.crm.tickets.batchApi.read({
+          propertiesWithHistory: [propertyToCheck],
+          properties: propertiesToRetrieve,
+          inputs: batch.map((ticket) => {
+            return {
+              id: ticket.id,
+            };
+          }),
+        });
+      })
+    );
+
+    const updatedTicketsWithPropertyHistory = batchApiResps.flatMap(
+      (resp) => resp.results
+    );
+
+		for (const ticket of updatedTicketsWithPropertyHistory) {
 			const history = ticket.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;
