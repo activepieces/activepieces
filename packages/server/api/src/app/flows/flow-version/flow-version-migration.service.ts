@@ -1,4 +1,15 @@
-import { FileCompression, FileType, flowMigrations, FlowVersion, isNil, LATEST_SCHEMA_VERSION, spreadIfDefined } from '@activepieces/shared'
+import { 
+    FileCompression, 
+    FileType, 
+    flowMigrations, 
+    FlowVersion, 
+    FlowVersionId,
+    isNil, 
+    LATEST_SCHEMA_VERSION, 
+    spreadIfDefined,
+    ActivepiecesError,
+    ErrorCode,
+} from '@activepieces/shared'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { flowVersionRepo } from './flow-version.service'
@@ -18,10 +29,12 @@ export const flowVersionMigrationService = {
         if (flowVersion.schemaVersion === migratedFlowVersion.schemaVersion) {
             return flowVersion
         }
+
         const backupFiles = flowVersion.backupFiles ?? {}
         if (!isNil(flowVersion.schemaVersion)) {
             backupFiles[flowVersion.schemaVersion] = await storeBackupFile(flowVersion)
         }
+        
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,
             ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
@@ -31,6 +44,45 @@ export const flowVersionMigrationService = {
         })
         log.info('Flow version migration completed')
         return migratedFlowVersion
+    },
+    
+    async getBackupBySchemaVersionOrThrow(params: GetBackupVersionParams): Promise<FlowVersion> {
+        const flowVersion = await flowVersionRepo().findOneBy({
+            id: params.flowVersionId,
+        })
+        
+        if (isNil(flowVersion)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: params.flowVersionId,
+                    entityType: 'flow_version',
+                },
+            })
+        }
+        
+        const backupFileId = flowVersion.backupFiles?.[params.schemaVersion]
+        
+        if (isNil(backupFileId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: `${params.flowVersionId}:${params.schemaVersion}`,
+                    entityType: 'flow_version',
+                    message: `No backup found for schema version ${params.schemaVersion}`,
+                },
+            })
+        }
+        
+        const fileData = await fileService(log).getDataOrThrow({
+            fileId: backupFileId,
+            type: FileType.FLOW_VERSION_BACKUP,
+        })
+        
+        const backupFlowVersion: FlowVersion = JSON.parse(fileData.data.toString('utf-8'))
+
+        log.info(`Backup version ${params.schemaVersion} retrieved for flow version ${params.flowVersionId}`)
+        return backupFlowVersion
     },
 }
 
@@ -47,4 +99,9 @@ async function storeBackupFile(flowVersion: FlowVersion): Promise<string> {
         compression: FileCompression.NONE,
     })
     return file.id
+}
+
+type GetBackupVersionParams = {
+    flowVersionId: FlowVersionId
+    schemaVersion: string
 }
