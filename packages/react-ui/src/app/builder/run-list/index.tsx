@@ -14,7 +14,11 @@ import { Button } from '@/components/ui/button';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { FlowRun, FlowRunStatus, SeekPage } from '@activepieces/shared';
+import {
+  FlowRun,
+  isFlowRunStateTerminal,
+  SeekPage,
+} from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 
@@ -55,13 +59,15 @@ const RunsList = React.memo(() => {
         cursor: pageParam as string | undefined,
       }),
     refetchOnMount: true,
-    staleTime: 15 * 1000,
+    staleTime: 0,
     refetchInterval: (query) => {
       const allRuns = query.state.data?.pages.flatMap((page) => page.data);
       const runningRuns = allRuns?.filter(
         (run) =>
-          run.status === FlowRunStatus.RUNNING ||
-          run.status === FlowRunStatus.QUEUED,
+          !isFlowRunStateTerminal({
+            status: run.status,
+            ignoreInternalError: false,
+          }),
       );
       return runningRuns?.length ? 15 * 1000 : false;
     },
@@ -72,7 +78,6 @@ const RunsList = React.memo(() => {
       (run) => ({ type: 'flowRun' as const, run }),
     );
     if (hasNextPage) {
-      console.log('hasNextPage', hasNextPage);
       return [
         ...allRuns,
         { type: 'loadMoreButton' as const, id: 'loadMoreButton' },

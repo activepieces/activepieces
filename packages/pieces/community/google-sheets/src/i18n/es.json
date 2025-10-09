@@ -129,5 +129,5 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Se activa cuando se crea una hoja de cálculo en una hoja de cálculo.",
   "Trigger Column": "Columna de gatillo",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Tenga en cuenta que puede haber un retraso de hasta 3 minutos para que el disparador se dispare, debido a un retraso de Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Activar sólo en los cambios a las celdas de esta columna. Selecciona **Todas las Columnas** si quieres que el flujo se active al realizar cambios en cualquier celda dentro de la fila."
+  "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.": "Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row."
 }
