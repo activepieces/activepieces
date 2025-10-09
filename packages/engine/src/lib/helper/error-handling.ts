@@ -28,12 +28,13 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
 
 const parseJsonInErrorMessage = (errorMessage: string | undefined): unknown => {
     if (!errorMessage) {
-        return undefined;
+        return undefined
     }
     try {
-        return JSON.parse(errorMessage);
-    } catch (error) {
-        return errorMessage;
+        return JSON.parse(errorMessage)
+    }
+    catch (error) {
+        return errorMessage
     }   
 }
 export async function continueIfFailureHandler(
@@ -48,15 +49,15 @@ export async function continueIfFailureHandler(
         continueOnFailure &&
         !constants.testSingleStepMode
     ) {
-        const errorMessage = executionState.error?.message;
+        const errorMessage = executionState.error?.message
         if (errorMessage) {
             const newStepOutput = GenericStepOutput.create({
                 input: action.settings.input,
                 type: action.type,
                 status: StepOutputStatus.FAILED,
-            });
-            const errorJson = parseJsonInErrorMessage(errorMessage);
-            newStepOutput.output = errorJson;
+            })
+            const errorJson = parseJsonInErrorMessage(errorMessage)
+            newStepOutput.output = errorJson
             return executionState.upsertStep(action.name, newStepOutput).setVerdict(ExecutionVerdict.RUNNING, undefined).increaseTask()
         }
         return executionState
