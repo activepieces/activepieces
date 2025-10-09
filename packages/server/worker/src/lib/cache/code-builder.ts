@@ -60,7 +60,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        return memoryLock.runExclusive(`code-builder-${flowVersionId}-${name}`, async () => {
+        return fileSystemUtils.runExclusive(codePath, `code-builder`, async () => {
             try {
                 const cache = cacheState(codePath)
                 const cachedHash = await cache.cacheCheckState(codePath)
