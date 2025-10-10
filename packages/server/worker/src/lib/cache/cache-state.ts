@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 
@@ -24,16 +24,26 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
 
 export const cacheState = (folderPath: string) => {
     return {
-        async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
-                const cache = await getCache(folderPath)
+        async cache(cacheAlias: string, state: string): Promise<string> {
+            const cache = await getCache(folderPath)
+            if (!isNil(cache[cacheAlias])) {
                 return cache[cacheAlias]
+            }
+            
+            const lockKey = `${folderPath}-${cacheAlias}`
+            return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
+                cache[cacheAlias] = state
+                await saveToCache(cache, folderPath)
+                return state
             })
         },
+        async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
+            const cache = await getCache(folderPath)
+            return cache[cacheAlias]
+        },
         async setCache(cacheAlias: string, state: string): Promise<void> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
+            const lockKey = `${folderPath}-${cacheAlias}`
+            return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
                 const cache = await getCache(folderPath)
                 cache[cacheAlias] = state
                 await saveToCache(cache, folderPath)
