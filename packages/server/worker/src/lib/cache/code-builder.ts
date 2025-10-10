@@ -75,11 +75,10 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 await fileSystemUtils.threadSafeMkdir(codePath)
     
     
-                const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
     
                 await installDependencies({
                     path: codePath,
-                    packageJson: isPackagesAllowed ? packageJson : '{"dependencies":{}}',
+                    packageJson: getPackageJson(packageJson),
                     log,
                 })
     
@@ -91,7 +90,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             })
         }
         catch (error: unknown) {
-            log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
+            log.error(error,`[CodeBuilder#processCodeStep], codePath: ${codePath}`)
 
             await handleCompilationError({
                 codePath,
@@ -102,6 +101,21 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
     },
 })
 
+function getPackageJson(packageJson: string): string {
+    const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
+    if(isPackagesAllowed) {
+        const packageJsonObject = JSON.parse(packageJson)
+        return JSON.stringify({
+            ...packageJsonObject,
+            dependencies: {
+                "@types/node": "18.17.1",
+                ...(packageJsonObject?.dependencies ?? {}),
+            }
+        })
+    }
+
+    return '{"dependencies":{}}'
+}
 
 const installDependencies = async ({
     path,
