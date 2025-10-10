@@ -1,7 +1,11 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  Property,
+} from '@activepieces/pieces-framework';
 import { oktaAuth, makeOktaRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-
+import { WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const newEventTrigger = createTrigger({
   auth: oktaAuth,
@@ -21,58 +25,186 @@ export const newEventTrigger = createTrigger({
           { label: 'User Deactivated', value: 'user.lifecycle.deactivate' },
           { label: 'User Suspended', value: 'user.lifecycle.suspend' },
           { label: 'User Unsuspended', value: 'user.lifecycle.unsuspend' },
-          { label: 'User Updated', value: 'user.lifecycle.update' },
-          { label: 'User Deleted', value: 'user.lifecycle.delete' },
+          { label: 'User Deleted', value: 'user.lifecycle.delete.completed' },
           { label: 'User Added to Group', value: 'group.user_membership.add' },
           { label: 'User Removed from Group', value: 'group.user_membership.remove' },
           { label: 'Group Created', value: 'group.lifecycle.create' },
-          { label: 'Group Updated', value: 'group.lifecycle.update' },
           { label: 'Group Deleted', value: 'group.lifecycle.delete' },
           { label: 'User Login', value: 'user.session.start' },
           { label: 'User Logout', value: 'user.session.end' },
-          { label: 'Authentication Failed', value: 'user.authentication.auth_failed' },
         ],
       },
     }),
-    instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
-
-1. Copy the webhook URL below
-2. Go to your Okta Admin Dashboard
-3. Navigate to **Security** → **API** → **Hooks** (or **Event Hooks** depending on your Okta version)
-4. Create a new webhook with the following settings:
-   - **Name**: Activepieces Webhook
-   - **URL**: {{webhookUrl}}
-   - **Event Type**: Select the event types you want to monitor (or use all)
-   - **Authentication**: None (Activepieces validates the webhook)
-5. Test the webhook connection
-6. Save and activate the webhook
-
-The trigger will now fire whenever the selected Okta events occur.
-      `,
+    hookName: Property.ShortText({
+      displayName: 'Hook Name',
+      description: 'Name for the Okta Event Hook (optional)',
+      required: false,
+      defaultValue: 'Activepieces Webhook',
     }),
   },
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.HEADER_PRESENT,
+    paramName: 'x-okta-verification-challenge',
+  },
+  async onHandshake(context) {
+    const challengeValue =
+      context.payload.headers['x-okta-verification-challenge'];
+
+    if (challengeValue) {
+      console.log('Okta verification challenge received:', challengeValue);
+      return {
+        status: 200,
+        body: {
+          verification: challengeValue,
+        },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+    }
+
+    return {
+      status: 400,
+      body: { error: 'No verification challenge found' },
+    };
+  },
   async onEnable(context) {
-    await context.store.put('webhookUrl', context.webhookUrl);
-    await context.store.put('eventTypes', JSON.stringify(context.propsValue.eventTypes || []));
+    try {
+      const eventTypes = context.propsValue.eventTypes || [];
+      const hookName = context.propsValue.hookName || 'Webhook';
+
+      const existingHooks = await makeOktaRequest(
+        context.auth,
+        '/eventHooks',
+        HttpMethod.GET
+      );
+
+      const existingHook = existingHooks.body?.find(
+        (hook: any) =>
+          hook.name === hookName &&
+          hook.channel?.config?.uri === context.webhookUrl
+      );
+
+      let hookId: string;
+
+      if (existingHook) {
+        hookId = existingHook.id;
+      } else {
+        const eventHookPayload = {
+          name: hookName,
+          events: {
+            type: 'EVENT_TYPE',
+            items:
+              eventTypes.length > 0
+                ? eventTypes
+                : [
+                    'user.lifecycle.create',
+                    'user.lifecycle.activate',
+                    'user.lifecycle.deactivate',
+                    'user.lifecycle.suspend',
+                    'user.lifecycle.unsuspend',
+                    'user.lifecycle.update',
+                    'user.lifecycle.delete',
+                    'group.user_membership.add',
+                    'group.user_membership.remove',
+                    'group.lifecycle.create',
+                    'group.lifecycle.update',
+                    'group.lifecycle.delete',
+                    'user.session.start',
+                    'user.session.end',
+                    'user.authentication.auth_failed',
+                  ],
+          },
+          channel: {
+            type: 'HTTP',
+            version: '1.0.0',
+            config: {
+              uri: context.webhookUrl,
+              method: 'POST',
+            },
+          },
+        };
+
+        const response = await makeOktaRequest(
+          context.auth,
+          '/eventHooks',
+          HttpMethod.POST,
+          eventHookPayload
+        );
+
+        if (!response.body?.id) {
+          throw new Error(
+            'Failed to create event hook: ' + JSON.stringify(response.body)
+          );
+        }
+
+        hookId = response.body.id;
+        console.log(`Created new event hook: ${hookId}`);
+      }
+
+      await context.store.put('hookId', hookId);
+    } catch (error) {
+      console.error('Error creating Okta event hook:', error);
+      throw new Error(`Failed to setup Okta event hook: ${error}`);
+    }
   },
+
   async onDisable(context) {
-    await context.store.delete('webhookUrl');
-    await context.store.delete('eventTypes');
+    try {
+      const hookId = await context.store.get('hookId');
+
+      if (hookId) {
+        try {
+          await makeOktaRequest(
+            context.auth,
+            `/eventHooks/${hookId}/lifecycle/deactivate`,
+            HttpMethod.POST
+          );
+          console.log(`Deactivated event hook: ${hookId}`);
+        } catch (deactivateError) {
+          console.warn('Failed to deactivate event hook:', deactivateError);
+        }
+
+        try {
+          await makeOktaRequest(
+            context.auth,
+            `/eventHooks/${hookId}`,
+            HttpMethod.DELETE
+          );
+          console.log(`Deleted event hook: ${hookId}`);
+        } catch (deleteError) {
+          console.warn('Failed to delete event hook:', deleteError);
+        }
+      }
+      await context.store.delete('hookId');
+    } catch (error) {
+      console.error('Error cleaning up Okta event hook:', error);
+    }
   },
+
   async run(context) {
-    const payload:any = context.payload.body;
-    const storedEventTypes = JSON.parse(await context.store.get('eventTypes') || '[]');
-    if (storedEventTypes && storedEventTypes.length > 0) {
+    const payload: any = context.payload.body;
+
+    if (payload.verification) {
+      console.log('Received Okta verification challenge');
+      return [];
+    }
+
+    const EventTypes = context.propsValue.eventTypes || '[]';
+
+    if (EventTypes && EventTypes.length > 0) {
       const eventType = payload.eventType || payload.data?.eventType;
-      if (!storedEventTypes.includes(eventType)) {
+      if (!EventTypes.includes(eventType)) {
+        console.log(
+          `Event type ${eventType} not in configured types, skipping`
+        );
         return [];
       }
     }
 
     return [payload];
   },
+
   async test(context) {
     try {
       const response = await makeOktaRequest(
@@ -82,9 +214,11 @@ The trigger will now fire whenever the selected Okta events occur.
       );
       return response.body || [];
     } catch (error) {
+      console.error('Test error:', error);
       return [];
     }
   },
+
   sampleData: {
     eventId: 'evt_123456789',
     timestamp: new Date().toISOString(),
