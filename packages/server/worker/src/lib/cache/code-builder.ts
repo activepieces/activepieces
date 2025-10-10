@@ -1,21 +1,23 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
+import { cryptoUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { cacheState } from './cache-state'
-import { PackageInfo, packageManager } from './package-manager'
-import { GLOBAL_CACHE_PATH_LATEST_VERSION } from './worker-cache'
+import { packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
 
 {
-    "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
         "lib": ["es2022", "dom"],
+        "module": "commonjs", 
+        "target": "es2022",
+        "esModuleInterop": true,
         "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "strict": false,
@@ -58,11 +60,12 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        return fileSystemUtils.runExclusive(GLOBAL_CACHE_PATH_LATEST_VERSION, `code-builder-${flowVersionId}-${name}`, async () => {
+        return memoryLock.runExclusive(`code-builder-${flowVersionId}-${name}`, async () => {
             try {
                 const cache = cacheState(codePath)
                 const cachedHash = await cache.cacheCheckState(codePath)
                 const currentHash = await cryptoUtils.hashObject(sourceCode)
+
                 if (cachedHash === currentHash) {
                     return
                 }
@@ -110,26 +113,18 @@ const installDependencies = async ({
     packageJson,
     log,
 }: InstallDependenciesParams): Promise<void> => {
+    const packageJsonObject = JSON.parse(packageJson)
+    const dependencies = Object.keys(packageJsonObject?.dependencies ?? {})
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
-
-    const dependencies: PackageInfo[] = [
-        {
-            alias: '@tsconfig/node18',
-            spec: '1.0.0',
-        },
-        {
-            alias: '@types/node',
-            spec: '18.17.1',
-        },
-        {
-            alias: 'typescript',
-            spec: '4.9.4',
-        },
-    ]
-
+    if (dependencies.length === 0) {
+        return
+    }
     await packageManager(log).add({
         path,
-        dependencies,
+        dependencies: Object.entries(packageJsonObject.dependencies).map(([dependency, spec]) => ({
+            alias: dependency,
+            spec: spec as string,
+        })),
     })
 }
 

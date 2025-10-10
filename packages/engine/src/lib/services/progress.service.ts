@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateLogsBehavior, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -101,8 +101,12 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             },
         })
 
-        if (!isNil(engineConstants.logsUploadUrl)) {
-            await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+        const uploadLogsDirectly = !isNil(engineConstants.logsUploadUrl)
+        if (uploadLogsDirectly) {
+            const response = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+            if (!response.ok) {
+                throw new ProgressUpdateError('Failed to upload execution state', response)
+            }
         }
 
         const request = {
@@ -110,9 +114,10 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
-            executionStateBuffer: !isNil(engineConstants.logsUploadUrl) ? undefined : executionState.toString(),
+            executionStateBuffer: uploadLogsDirectly ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
+            updateLogsBehavior: uploadLogsDirectly ? UpdateLogsBehavior.UPDATE_LOGS_SIZE : UpdateLogsBehavior.UPDATE_LOGS,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
             logsFileId: engineConstants.logsFileId,
             testSingleStepMode: engineConstants.testSingleStepMode,
@@ -143,9 +148,8 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<void> => {
-
-    await fetchWithRetry(uploadUrl, {
+const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<Response> => {
+    return fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,
         headers: {

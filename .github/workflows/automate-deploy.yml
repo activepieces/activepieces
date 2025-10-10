@@ -80,7 +80,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run Checkly Deploy
-        run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts
+        run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts --force
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}

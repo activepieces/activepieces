@@ -1,11 +1,35 @@
 import {
+  ActionContext,
   createAction,
+  PieceAuthProperty,
   Property,
+  ShortTextProperty,
+  StaticDropdownProperty,
   StoreScope,
 } from '@activepieces/pieces-framework';
 import { getScopeAndKey, PieceStoreScope } from './common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+
+async function executeStorageGet(context: ActionContext<PieceAuthProperty, {
+  key: ShortTextProperty<true>;
+  defaultValue: ShortTextProperty<false>;
+  store_scope: StaticDropdownProperty<PieceStoreScope, true>;
+}>, isTestMode = false) {
+  await propsValidation.validateZod(context.propsValue, {
+    key: z.string().max(128),
+  });
+
+  const { key, scope } = getScopeAndKey({
+    runId: context.run.id,
+    key: context.propsValue['key'],
+    scope: context.propsValue.store_scope,
+    isTestMode,
+  });
+  return (
+    (await context.store.get(key, scope)) ?? context.propsValue['defaultValue']
+  );
+}
 
 export const storageGetAction = createAction({
   name: 'get',
@@ -52,17 +76,9 @@ export const storageGetAction = createAction({
     }),
   },
   async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      key: z.string().max(128),
-    });
-
-    const { key, scope } = getScopeAndKey({
-      runId: context.run.id,
-      key: context.propsValue['key'],
-      scope: context.propsValue.store_scope,
-    });
-    return (
-      (await context.store.get(key, scope)) ?? context.propsValue['defaultValue']
-    );
+    return await executeStorageGet(context, false);
+  },
+  async test(context) {
+    return await executeStorageGet(context, true);
   },
 });
