@@ -79,11 +79,10 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 await fileSystemUtils.threadSafeMkdir(codePath)
 
 
-                const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
 
                 await installDependencies({
                     path: codePath,
-                    packageJson: isPackagesAllowed ? packageJson : '{"dependencies":{}}',
+                    packageJson: getPackageJson(packageJson),
                     log,
                 })
 
@@ -107,6 +106,21 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
     },
 })
 
+function getPackageJson(packageJson: string): string {
+    const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
+    if(isPackagesAllowed) {
+        const packageJsonObject = JSON.parse(packageJson)
+        return {
+            ...packageJsonObject,
+            dependencies: {
+                '@types/node': '18.17.1',
+                ...(packageJsonObject?.dependencies ?? {}),
+            }
+        }
+    }
+
+    return '{"dependencies":{}}'
+}
 
 const installDependencies = async ({
     path,
