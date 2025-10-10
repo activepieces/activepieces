@@ -8,6 +8,7 @@ import { platformUsageService } from '../../ee/platform/platform-usage-service'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
+import { projectLimitsService } from '../../ee/projects/project-plan/project-plan.service'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -28,6 +29,8 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             return
         }
         const { projectTasksUsage } = await platformUsageService(log).increaseTasksUsage(flowRun.projectId, flowRun.tasks)
+        await projectLimitsService(log).cacheTasksExceededLimit(flowRun.projectId)
+
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,
             consumedTasks: projectTasksUsage,

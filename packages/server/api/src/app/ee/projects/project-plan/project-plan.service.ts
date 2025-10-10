@@ -21,6 +21,7 @@ import { projectService } from '../../../project/project-service'
 import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { platformUsageService } from '../../platform/platform-usage-service'
 import { ProjectPlanEntity } from './project-plan.entity'
+import { redisConnections } from '../../../database/redis'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 const edition = system.getEdition()
@@ -102,6 +103,21 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async cacheTasksExceededLimit(projectId: string): Promise<void> {
+        const redisConnection = await redisConnections.useExisting()
+        const limitExceeded = await this.checkTasksExceededLimit(projectId) ? 1 : 0
+        await redisConnection.set(this.getRedisLimitExceededKey(projectId), limitExceeded)
+    },
+
+    async checkCachedTasksExceededLimit(projectId: string): Promise<boolean> {
+        const redisConnection = await redisConnections.useExisting()
+        const limitExceeded = await redisConnection.get(this.getRedisLimitExceededKey(projectId))
+        return limitExceeded === '1'
+    },
+
+    getRedisLimitExceededKey(projectId: string): string {
+        return `project_limit_exceeded:${projectId}`
+    },
 
     async checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring }: { projectId: string, requestCostBeforeFiring: number }): Promise<boolean> {
         if (edition === ApEdition.COMMUNITY) {
