@@ -26,18 +26,29 @@ type CacheResult = {
     cacheHit: boolean
     state: string
 }
-export const cacheState = (folderPath: string) => {
+
+const isCacheHit = (key: string | undefined, cacheMiss?: (key: string) => boolean): boolean => {
+    if (key === undefined) {
+        return false
+    }
+    return cacheMiss ? !cacheMiss(key) : true
+}
+
+export const cacheState = (folderPath: string): {
+    cache: (cacheAlias: string, state: string, cacheMiss?: (key: string) => boolean, installFn?: () => Promise<void>) => Promise<CacheResult>
+    cacheCheckState: (cacheAlias: string) => Promise<string | undefined>
+    setCache: (cacheAlias: string, state: string) => Promise<void>
+} => {
     return {
         async cache(
             cacheAlias: string,
             state: string,
-            cacheMiss: (key: string) => boolean,
+            cacheMiss?: (key: string) => boolean,
             installFn?: () => Promise<void>,
         ): Promise<CacheResult> {
             const cache = await getCache(folderPath)
             const key = cache[cacheAlias]
-            const validCacheHit = key !== undefined && !cacheMiss(key)
-            if (validCacheHit) {
+            if (isCacheHit(key, cacheMiss)) {
                 return {
                     cacheHit: true,
                     state: key,
@@ -46,7 +57,7 @@ export const cacheState = (folderPath: string) => {
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
                 const freshKey = cache[cacheAlias]
-                if (freshKey !== undefined && !cacheMiss(freshKey)) {
+                if (isCacheHit(freshKey, cacheMiss)) {
                     return { cacheHit: true, state: freshKey }
                 }            
                 await installFn?.()
