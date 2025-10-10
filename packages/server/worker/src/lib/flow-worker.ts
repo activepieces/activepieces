@@ -14,6 +14,7 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
+import { outgoingWebhookExecutor } from './executors/outgoing-webhook-job-executor'
 
 const tracer = trace.getTracer('flow-worker')
 
@@ -197,6 +198,12 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                             workerToken,
                         })
                         span.setAttribute('worker.completed', true)
+                        return {
+                            status: ConsumeJobResponseStatus.OK,
+                        }
+                    }
+                    case WorkerJobType.OUTGOING_WEBHOOK: {
+                        await outgoingWebhookExecutor(log).execute(jobId, jobData)
                         return {
                             status: ConsumeJobResponseStatus.OK,
                         }

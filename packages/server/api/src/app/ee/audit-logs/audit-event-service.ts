@@ -23,6 +23,7 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
+import { outgoingWebhookService } from '../outging-webhooks/outgoing-webhooks.service'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
@@ -73,7 +74,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         if (!isNil(action)) {
             queryBuilder.andWhere({ action: In(action) })
         }
-        
+
         if (!isNil(projectId)) {
             queryBuilder.andWhere({ projectId: In(projectId) })
         }
@@ -132,7 +133,16 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: 
     const clonedAndSerializedDates = JSON.parse(JSON.stringify(eventToSave))
     const cleanedEvent = Value.Clean(ApplicationEvent, clonedAndSerializedDates) as ApplicationEvent
 
-    await auditLogRepo().save(cleanedEvent)
+    await Promise.all([
+        auditLogRepo().save(cleanedEvent),
+        outgoingWebhookService(log).trigger({
+            platformId: info.platformId,
+            projectId: info.projectId,
+            event: cleanedEvent.action,
+            payload: cleanedEvent,
+        }),
+    ])
+
     log.info({
         action: cleanedEvent.action,
         message: '[AuditEventService#saveEvent] Audit event saved',

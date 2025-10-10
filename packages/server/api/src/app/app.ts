@@ -92,6 +92,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { jobQueueWorker } from './workers/queue/job-queue-worker'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import { outgoingWebhooksModule } from './ee/outging-webhooks/outgoing-webhooks.module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -319,6 +320,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             await app.register(queueMetricsModule)
+            await app.register(outgoingWebhooksModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
