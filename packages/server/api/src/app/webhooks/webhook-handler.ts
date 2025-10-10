@@ -131,6 +131,7 @@ export const webhookHandler = {
 
                 const createdRun = await flowRunService(logger).start({
                     environment: runEnvironment,
+                    flowId: flow.id,
                     flowVersionId: flowVersionIdToRun,
                     payload,
                     synchronousHandlerId,

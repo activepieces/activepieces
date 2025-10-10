@@ -32,3 +32,12 @@ export const PopulatedFlow = Type.Composite([
 ])
 
 export type PopulatedFlow = Static<typeof PopulatedFlow>
+
+
+export const PopulatedTriggerSource = Type.Composite([
+    TriggerSource,
+    Type.Object({
+        flow: Flow,
+    }),
+])
+export type PopulatedTriggerSource = Static<typeof PopulatedTriggerSource>

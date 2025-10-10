@@ -46,6 +46,12 @@ export const findRowsAction = createAction({
       required: false,
       defaultValue: 1,
     }),
+    headerRow: Property.Number({
+      displayName: 'Header Row',
+      description: 'Which row contains the headers?',
+      required: true,
+      defaultValue: 1,
+    }),
   },
   async run({ propsValue, auth }) {
     await propsValidation.validateZod(propsValue, {
@@ -57,6 +63,7 @@ export const findRowsAction = createAction({
     const sheetId = propsValue.sheetId;
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
+    const headerRow = propsValue.headerRow;
 
     if (!areSheetIdsValid(spreadsheetId,sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -68,6 +75,7 @@ export const findRowsAction = createAction({
       sheetId: sheetId as number,
       rowIndex_s: startingRow,
       rowIndex_e: undefined,
+      headerRow: headerRow,
     });
 
     const values = rows.map((row) => {
