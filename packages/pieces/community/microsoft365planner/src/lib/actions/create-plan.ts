@@ -1,10 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { MicrosoftPlannerAuth } from '../common/auth';
-
+import { Client } from '@microsoft/microsoft-graph-client';
 export const createPlan = createAction({
-  auth:MicrosoftPlannerAuth,
+  auth: MicrosoftPlannerAuth,
   name: 'create_plan',
   displayName: 'Create Planner Plan',
   description: 'Creates a new plan in Microsoft 365 Planner under a specified container (Group or Roster).',
@@ -36,24 +34,24 @@ export const createPlan = createAction({
 
   async run(context) {
 
-    const accessToken = (context.auth as { access_token: string }).access_token;
-
     const { title, containerType, containerId } = context.propsValue;
 
-    const bodyPayload = {
+    const payload = {
       title,
       container: {
         containerId,
         type: containerType,
       },
     };
+    const client = Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: () => Promise.resolve(context.auth.access_token),
+      },
+    });
 
-    const response = await makeRequest(
-      accessToken,
-      HttpMethod.POST,
-      '/planner/plans',
-      bodyPayload
-    );
+    const response = await client
+      .api(`/planner/plans`)
+      .post(payload);
 
     return response;
   },

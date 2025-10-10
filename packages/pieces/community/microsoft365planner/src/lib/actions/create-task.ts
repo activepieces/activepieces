@@ -1,10 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
 import { MicrosoftPlannerAuth } from '../common/auth';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 export const createTask = createAction({
-  auth:MicrosoftPlannerAuth,
+  auth: MicrosoftPlannerAuth,
   name: 'create_task',
   displayName: 'Create Planner Task',
   description: 'Creates a new task in a specified Planner plan and bucket',
@@ -53,7 +52,6 @@ export const createTask = createAction({
   },
 
   async run(context) {
-    const accessToken = (context.auth as { access_token: string }).access_token;
 
     const {
       planId,
@@ -87,13 +85,15 @@ export const createTask = createAction({
     if (appliedCategories) {
       payload.appliedCategories = appliedCategories;
     }
-
-    const response = await makeRequest(
-      accessToken,
-      HttpMethod.POST,
-      '/planner/tasks',
-      payload
-    );
+    const client = Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: () => Promise.resolve(context.auth.access_token),
+      },
+    });
+    
+    const response = await client
+      .api(`/planner/tasks`)
+      .post(payload);
 
     return response;
   },

@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
 import { MicrosoftPlannerAuth } from '../common/auth';
+import { Client } from '@microsoft/microsoft-graph-client';
 export const findPlannerPlan = createAction({
-   auth: MicrosoftPlannerAuth,
+  auth: MicrosoftPlannerAuth,
   name: 'find_planner_plan',
   displayName: 'Find Planner Plan',
   description: 'Retrieve a specific Planner plan by its ID.',
@@ -17,15 +16,18 @@ export const findPlannerPlan = createAction({
   },
 
   async run(context) {
-    const accessToken = (context.auth as { access_token: string }).access_token;
     const { planId } = context.propsValue;
+    const client = Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: () =>
+          Promise.resolve((context.auth as { access_token: string }).access_token),
+      },
+    });
 
-    const url = `/planner/plans/${planId}`;
-    const response = await makeRequest(accessToken, HttpMethod.GET, url);
-    return {
-      success: true,
-      message: `Plan with ID ${planId} retrieved successfully.`,
-      plan: response,
-    };
+    const response = await client
+      .api(`/planner/plans/${planId}`)
+      .get();
+
+    return response;
   },
 });

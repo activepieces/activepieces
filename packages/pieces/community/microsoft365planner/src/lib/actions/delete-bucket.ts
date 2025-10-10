@@ -1,12 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
 import { MicrosoftPlannerAuth } from '../common/auth';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 export const deleteBucket = createAction({
-  auth:MicrosoftPlannerAuth,
+  auth: MicrosoftPlannerAuth,
   name: 'delete_bucket',
-  displayName: 'Delete Planner Bucket',
+  displayName: 'Delete Bucket',
   description: 'Deletes an existing Planner bucket by its ID.',
 
   props: {
@@ -17,29 +16,28 @@ export const deleteBucket = createAction({
     }),
     etag: Property.ShortText({
       displayName: 'ETag',
-      description: 'The ETag of the bucket (use GET /planner/buckets/{bucketId} to retrieve it).',
+      description:
+        'The ETag of the bucket (use GET /planner/buckets/{bucketId} to retrieve it). Required for concurrency.',
       required: true,
     }),
   },
 
   async run(context) {
-    const accessToken = (context.auth as { access_token: string }).access_token;
     const { bucketId, etag } = context.propsValue;
 
-    const response = await makeRequest(
-      accessToken,
-      HttpMethod.DELETE,
-      `/planner/buckets/${bucketId}`,
-      undefined,
-      {
-        'If-Match': etag,
-      }
-    );
+    const client = Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: () =>
+          Promise.resolve((context.auth as { access_token: string }).access_token),
+      },
+    });
 
-    return {
-      success: true,
-      message: `Bucket with ID ${bucketId} deleted successfully.`,
-      response,
-    };
+    const response = await client
+      .api(`/planner/buckets/${bucketId}`)
+      .header('If-Match', etag)
+      .delete();
+
+    return response;
+
   },
 });

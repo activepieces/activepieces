@@ -1,10 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
 import { MicrosoftPlannerAuth } from '../common/auth';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 export const createBucket = createAction({
-  auth:MicrosoftPlannerAuth,
+  auth: MicrosoftPlannerAuth,
   name: 'create_bucket',
   displayName: 'Create Bucket',
   description: 'Creates a new bucket under a specified planner plan',
@@ -28,8 +27,6 @@ export const createBucket = createAction({
   },
 
   async run(context) {
-    const accessToken = (context.auth as { access_token: string }).access_token;
-
     const { planId, name, orderHint } = context.propsValue;
 
     const payload: any = {
@@ -39,13 +36,14 @@ export const createBucket = createAction({
     if (orderHint) {
       payload.orderHint = orderHint;
     }
-
-    const response = await makeRequest(
-      accessToken,
-      HttpMethod.POST,
-      '/planner/buckets',
-      payload
-    );
+    const client = Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: () => Promise.resolve(context.auth.access_token),
+      },
+    });
+    const response = await client
+      .api(`/planner/buckets`)
+      .post(payload);
 
     return response;
   }

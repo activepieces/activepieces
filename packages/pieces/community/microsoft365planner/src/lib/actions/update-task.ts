@@ -1,10 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
 import { MicrosoftPlannerAuth } from '../common/auth';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 export const updateTask = createAction({
-  auth:MicrosoftPlannerAuth,
+  auth: MicrosoftPlannerAuth,
   name: 'update_task',
   displayName: 'Update Planner Task',
   description: 'Modify existing task fields: title, due date, assignments, descriptions.',
@@ -48,8 +47,14 @@ export const updateTask = createAction({
   },
 
   async run(context) {
-    const accessToken = (context.auth as { access_token: string }).access_token;
+  
     const { taskId, etag, title, dueDateTime, assignments, appliedCategories, percentComplete } = context.propsValue;
+    const client = Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: () =>
+          Promise.resolve((context.auth as { access_token: string }).access_token),
+      },
+    });
 
     const payload: Record<string, any> = {};
     if (title) payload['title'] = title;
@@ -58,20 +63,12 @@ export const updateTask = createAction({
     if (appliedCategories) payload['appliedCategories'] = appliedCategories;
     if (percentComplete !== undefined) payload['percentComplete'] = percentComplete;
 
-    const response = await makeRequest(
-      accessToken,
-      HttpMethod.PATCH,
-      `/planner/tasks/${taskId}`,
-      payload,
-      {
-        'If-Match': etag,
-      }
-    );
 
-    return {
-      success: true,
-      message: `Task with ID ${taskId} updated successfully.`,
-      response,
-    };
+    const response = await client
+      .api(`/planner/tasks/${taskId}`)
+      .header('If-Match', etag)
+      .patch(payload);
+
+    return response;
   },
 });

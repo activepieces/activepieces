@@ -9,9 +9,9 @@ export const MicrosoftPlannerAuth = PieceAuth.OAuth2({
     required: true,
 
     scope: [
-        'https://graph.microsoft.com/Tasks.ReadWrite',
-        'https://graph.microsoft.com/Group.ReadWrite.All',
-        'https://graph.microsoft.com/User.Read',
+        'Tasks.ReadWrite',
+        'Group.ReadWrite.All',
+        'User.Read',
         'offline_access',
         'openid',
         'email',

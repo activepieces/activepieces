@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
 import { MicrosoftPlannerAuth } from '../common/auth';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 export const getPlannerBucket = createAction({
   auth: MicrosoftPlannerAuth,
@@ -18,18 +17,18 @@ export const getPlannerBucket = createAction({
   },
 
   async run(context) {
-    const accessToken = (context.auth as { access_token: string }).access_token;
+
     const { bucketId } = context.propsValue;
+    const client = Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: () =>
+          Promise.resolve((context.auth as { access_token: string }).access_token),
+      },
+    });
+    const response = await client
+      .api(`/planner/buckets/${bucketId}`)
+      .get();
 
-    const url = `/planner/buckets/${bucketId}`;
-
-      const response = await makeRequest(accessToken, HttpMethod.GET, url);
-
-      return {
-        success: true,
-        message: `Bucket with ID ${bucketId} retrieved successfully.`,
-        bucket: response,
-      };
-    
+    return response;
   },
 });
