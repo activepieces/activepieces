@@ -1,18 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { FileX } from 'lucide-react';
 import { createContext, useContext, useRef } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
-import { buttonVariants } from '@/components/ui/button';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import {
   TableState,
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/lib/store/ap-tables-client-state';
-import { cn } from '@/lib/utils';
 import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
 
 import { fieldsApi } from '../lib/fields-api';
@@ -47,6 +43,7 @@ export function ApTableStateProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const location = useLocation();
   const tableId = useParams().tableId;
   const {
     data: table,
@@ -110,29 +107,7 @@ export function ApTableStateProvider({
     isNil(fields) ||
     isNil(records)
   ) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-        <div className="rounded-full bg-muted p-4">
-          <FileX className="h-10 w-10 text-muted-foreground" />
-        </div>
-
-        <div>
-          <h2 className="text-lg font-semibold">{t('Table not available')}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              'We couldn’t load this table. It may have been removed or is unavailable.',
-            )}
-          </p>
-        </div>
-
-        <Link
-          className={cn(buttonVariants({ variant: 'outline' }))}
-          to="/tables"
-        >
-          {t('Go to Tables')}
-        </Link>
-      </div>
-    );
+    return <Navigate to={`${location.pathname}/404`} />;
   }
 
   return (

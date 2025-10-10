@@ -27,16 +27,30 @@ import {
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
 
-const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
+const createFlowsQueryKey = () => [
+  'flows',
+  authenticationSession.getProjectId(),
+];
+const createSingleFlowQueryKey = (flowId: string) => [
+  'flow',
+  flowId,
+  authenticationSession.getProjectId(),
+];
+
 export const flowsHooks = {
   invalidateFlowsQuery: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({
-      queryKey: createFlowsQueryKey(authenticationSession.getProjectId()!),
+      queryKey: createFlowsQueryKey(),
+    });
+  },
+  invalidateSingleFlowQuery: (queryClient: QueryClient, flowId: string) => {
+    queryClient.invalidateQueries({
+      queryKey: createSingleFlowQueryKey(flowId),
     });
   },
   useFlows: (request: Omit<ListFlowsRequest, 'projectId'>) => {
     return useQuery({
-      queryKey: createFlowsQueryKey(authenticationSession.getProjectId()!),
+      queryKey: createFlowsQueryKey(),
       queryFn: async () => {
         return await flowsApi.list({
           ...request,
