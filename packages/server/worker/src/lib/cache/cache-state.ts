@@ -45,6 +45,10 @@ export const cacheState = (folderPath: string) => {
             }
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
+                const freshKey = cache[cacheAlias]
+                if (freshKey !== undefined && !cacheMiss(freshKey)) {
+                    return { cacheHit: true, state: freshKey }
+                }            
                 await installFn?.()
                 cache[cacheAlias] = state
                 await saveToCache(cache, folderPath)
