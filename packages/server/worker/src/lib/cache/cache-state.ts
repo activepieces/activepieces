@@ -22,19 +22,36 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
     return cache
 }
 
+type CacheResult = {
+    cacheHit: boolean
+    state: string
+}
 export const cacheState = (folderPath: string) => {
     return {
-        async cache(cacheAlias: string, state: string): Promise<string> {
+        async cache(
+            cacheAlias: string,
+            state: string,
+            cacheMiss: (key: string) => boolean,
+            installFn?: () => Promise<void>,
+        ): Promise<CacheResult> {
             const cache = await getCache(folderPath)
-            if (!isNil(cache[cacheAlias])) {
-                return cache[cacheAlias]
+            const key = cache[cacheAlias]
+            const validCacheHit = key !== undefined && !cacheMiss(key)
+            if (validCacheHit) {
+                return {
+                    cacheHit: true,
+                    state: key,
+                }
             }
-            
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
+                await installFn?.()
                 cache[cacheAlias] = state
                 await saveToCache(cache, folderPath)
-                return state
+                return {
+                    cacheHit: false,
+                    state: state,
+                }
             })
         },
         async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
