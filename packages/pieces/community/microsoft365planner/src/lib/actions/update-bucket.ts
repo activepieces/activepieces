@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { bucketIdDropdown, planIdDropdown } from '../common/dropdown';
 
 export const updateBucket = createAction({
   auth:MicrosoftPlannerAuth,
@@ -9,11 +10,8 @@ export const updateBucket = createAction({
   description: 'Modify the name or orderHint of an existing Planner bucket.',
 
   props: {
-    bucketId: Property.ShortText({
-      displayName: 'Bucket ID',
-      description: 'The ID of the bucket you want to update.',
-      required: true,
-    }),
+    planId: planIdDropdown,
+    bucketId: bucketIdDropdown,
     etag: Property.ShortText({
       displayName: 'ETag',
       description:

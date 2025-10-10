@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { bucketIdDropdown, planIdDropdown } from '../common/dropdown';
 
 export const getPlannerBucket = createAction({
   auth: MicrosoftPlannerAuth,
@@ -9,11 +10,8 @@ export const getPlannerBucket = createAction({
   description: 'Retrieve details about a specific Planner bucket by its ID.',
 
   props: {
-    bucketId: Property.ShortText({
-      displayName: 'Bucket ID',
-      description: 'The ID of the bucket to retrieve.',
-      required: true,
-    }),
+    planId: planIdDropdown,
+    bucketId: bucketIdDropdown,
   },
 
   async run(context) {

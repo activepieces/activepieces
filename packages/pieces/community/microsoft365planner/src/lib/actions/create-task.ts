@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { bucketIdDropdown, planIdDropdown } from '../common/dropdown';
 
 export const createTask = createAction({
   auth: MicrosoftPlannerAuth,
@@ -9,16 +10,8 @@ export const createTask = createAction({
   description: 'Creates a new task in a specified Planner plan and bucket',
 
   props: {
-    planId: Property.ShortText({
-      displayName: 'Plan ID',
-      description: 'ID of the Planner plan in which the task will be created',
-      required: true,
-    }),
-    bucketId: Property.ShortText({
-      displayName: 'Bucket ID',
-      description: 'ID of the bucket in the plan',
-      required: true,
-    }),
+    planId:planIdDropdown,
+    bucketId: bucketIdDropdown,
     title: Property.ShortText({
       displayName: 'Title',
       description: 'Title of the task',

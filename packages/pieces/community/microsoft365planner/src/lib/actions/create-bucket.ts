@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { planIdDropdown } from '../common/dropdown';
 
 export const createBucket = createAction({
   auth: MicrosoftPlannerAuth,
@@ -9,11 +10,7 @@ export const createBucket = createAction({
   description: 'Creates a new bucket under a specified planner plan',
 
   props: {
-    planId: Property.ShortText({
-      displayName: 'Plan ID',
-      description: 'ID of the Planner plan under which to create the bucket',
-      required: true,
-    }),
+    planId: planIdDropdown,
     name: Property.ShortText({
       displayName: 'Bucket Name',
       description: 'Name/title for the new bucket',

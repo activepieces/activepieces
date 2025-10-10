@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { planIdDropdown, taskIdDropdown } from '../common/dropdown';
 
 export const updateTask = createAction({
   auth: MicrosoftPlannerAuth,
@@ -9,11 +10,8 @@ export const updateTask = createAction({
   description: 'Modify existing task fields: title, due date, assignments, descriptions.',
 
   props: {
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task you want to update.',
-      required: true,
-    }),
+    planId: planIdDropdown,
+    taskId: taskIdDropdown,
     etag: Property.ShortText({
       displayName: 'ETag',
       description: 'The ETag value of the task. Required for concurrency. Retrieve it via GET /planner/tasks/{taskId}.',

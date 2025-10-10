@@ -3,9 +3,10 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { PlannerPlan } from '@microsoft/microsoft-graph-types';
+import dayjs from 'dayjs';
 
 const polling: Polling<PiecePropValueSchema<typeof MicrosoftPlannerAuth>, Record<string, never>> = {
-    strategy: DedupeStrategy.LAST_ITEM,
+    strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth }) => {
         const client = Client.initWithMiddleware({
             authProvider: {
@@ -17,7 +18,9 @@ const polling: Polling<PiecePropValueSchema<typeof MicrosoftPlannerAuth>, Record
         const plans = response.value as PlannerPlan[];
 
         return plans.map((plan) => ({
-            id: plan.id!,
+            epochMilliSeconds: plan.createdDateTime
+                ? dayjs(plan.createdDateTime).valueOf()
+                : Date.now(), 
             data: plan,
         }));
     },
@@ -27,7 +30,7 @@ export const newPlanCreatedTrigger = createTrigger({
     auth: MicrosoftPlannerAuth,
     name: 'new_plan_created',
     displayName: 'New Plan Created',
-    description: 'Triggers when a new Planner plan is created.',
+    description: 'Triggers when a new Planner plan is created in Microsoft 365 Planner.',
     props: {},
     type: TriggerStrategy.POLLING,
     sampleData: {

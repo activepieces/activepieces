@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { planIdDropdown } from '../common/dropdown';
 
 export const updatePlan = createAction({
   auth: MicrosoftPlannerAuth,
@@ -9,11 +10,7 @@ export const updatePlan = createAction({
   description: 'Update metadata of an existing Planner plan (e.g., title).',
 
   props: {
-    planId: Property.ShortText({
-      displayName: 'Plan ID',
-      description: 'The ID of the plan you want to update.',
-      required: true,
-    }),
+    planId: planIdDropdown,
     etag: Property.ShortText({
       displayName: 'ETag',
       description:

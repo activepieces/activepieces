@@ -18,7 +18,9 @@ const polling: Polling<PiecePropValueSchema<typeof MicrosoftPlannerAuth>, Record
         const tasks = response.value as PlannerTask[];
 
         return tasks.map((task) => ({
-            epochMilliSeconds: dayjs(task.createdDateTime).valueOf(),
+            epochMilliSeconds: task.createdDateTime
+                ? dayjs(task.createdDateTime).valueOf()
+                : Date.now(),
             data: task,
         }));
     },

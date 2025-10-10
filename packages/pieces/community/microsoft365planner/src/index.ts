@@ -12,10 +12,11 @@ import { getPlannerBucket } from "./lib/actions/get-a-bucket";
 import { newPlanCreatedTrigger } from "./lib/triggers/new-plan-created";
 import { newTaskAssignedToUserTrigger } from "./lib/triggers/new-task-assigned-to-user";
 import { newTaskCreatedTrigger } from "./lib/triggers/new-task-created";
+import { MicrosoftPlannerAuth } from "./lib/common/auth";
 
     export const microsoft365planner = createPiece({
       displayName: "Microsoft365planner",
-      auth: PieceAuth.None(),
+      auth: MicrosoftPlannerAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/microsoft365planner.png",
       authors: ["Niket2035"],

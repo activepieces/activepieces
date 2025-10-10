@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MicrosoftPlannerAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { planIdDropdown, taskIdDropdown } from '../common/dropdown';
 
 export const findPlannerTask = createAction({
   auth: MicrosoftPlannerAuth,
@@ -9,11 +10,8 @@ export const findPlannerTask = createAction({
   description: 'Retrieve details about a specific Planner task by its ID.',
 
   props: {
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task to retrieve.',
-      required: true,
-    }),
+    planId:planIdDropdown,
+    taskId: taskIdDropdown,
   },
 
   async run(context) {
