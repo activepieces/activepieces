@@ -24,7 +24,7 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
 
 type CacheResult = {
     cacheHit: boolean
-    state: string
+    state: string | null
 }
 
 const isCacheHit = (key: string | undefined, cacheMiss?: (key: string) => boolean): boolean => {
@@ -35,7 +35,7 @@ const isCacheHit = (key: string | undefined, cacheMiss?: (key: string) => boolea
 }
 
 export const cacheState = (folderPath: string): {
-    getOrSetCacheIfMissed: (cacheAlias: string, state: string, cacheMiss?: (key: string) => boolean, installFn?: () => Promise<void>) => Promise<CacheResult>
+    getOrSetCacheIfMissed: (cacheAlias: string, state: string, cacheMiss?: (key: string) => boolean, installFn?: () => Promise<void>, saveGuard?: (key: string) => boolean) => Promise<CacheResult>
     cacheCheckState: (cacheAlias: string) => Promise<string | undefined>
     setCache: (cacheAlias: string, state: string) => Promise<void>
 } => {
@@ -45,6 +45,8 @@ export const cacheState = (folderPath: string): {
             state: string,
             cacheMiss?: (key: string) => boolean,
             installFn?: () => Promise<void>,
+            saveGuard?: (key: string) => boolean,
+            
         ): Promise<CacheResult> {
             const cache = await getCache(folderPath)
             const key = cache[cacheAlias]
@@ -52,6 +54,12 @@ export const cacheState = (folderPath: string): {
                 return {
                     cacheHit: true,
                     state: key,
+                }
+            }
+            if (saveGuard?.(key) === false) {
+                return {
+                    cacheHit: false,
+                    state: null,
                 }
             }
             const lockKey = `${folderPath}-${cacheAlias}`
