@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { oktaAuth, makeOktaRequest } from '../common/common';
+import { createAction } from '@activepieces/pieces-framework';
+import { oktaAuth, makeOktaRequest, userIdDropdown, groupIdDropdown } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 
@@ -10,16 +10,8 @@ export const addUserToGroupAction = createAction({
   displayName: 'Add User to Group',
   description: 'Add a user to a specific Okta group',
   props: {
-    userId: Property.ShortText({
-      displayName: 'User ID or Email',
-      description: 'The Okta user ID or email address',
-      required: true,
-    }),
-    groupId: Property.ShortText({
-      displayName: 'Group ID',
-      description: 'The Okta group ID',
-      required: true,
-    }),
+    userId: userIdDropdown(),
+    groupId: groupIdDropdown,
   },
   async run(context) {
     const userId = context.propsValue.userId;

@@ -11,15 +11,14 @@ import { updateUserAction } from './lib/actions/update-user';
 import { findUserByEmailAction } from './lib/actions/find-user-by-email';
 import { findGroupByNameAction } from './lib/actions/find-group-by-name';
 import { newEventTrigger } from './lib/triggers/new-event';
-
-
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const okta = createPiece({
   displayName: 'Okta',
   auth: oktaAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/okta.png',
-  authors: ['Ani-4x'],
+  authors: ['Ani-4x', 'sanket-a11y'],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     createUserAction,
@@ -31,8 +30,13 @@ export const okta = createPiece({
     updateUserAction,
     findUserByEmailAction,
     findGroupByNameAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => `${(auth as any).domain}/api/v1`,
+      auth: oktaAuth,
+      authMapping: async (auth) => ({
+        Authorization: `SSWS ${(auth as any).apiToken}`,
+      }),
+    }),
   ],
-  triggers: [
-    newEventTrigger,
-  ],
+  triggers: [newEventTrigger],
 });

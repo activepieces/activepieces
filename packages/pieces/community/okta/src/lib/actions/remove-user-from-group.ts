@@ -1,7 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { oktaAuth, makeOktaRequest } from '../common/common';
+import {
+  oktaAuth,
+  makeOktaRequest,
+  userIdDropdown,
+  groupIdDropdown,
+} from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-
 
 export const removeUserFromGroupAction = createAction({
   auth: oktaAuth,
@@ -9,16 +13,8 @@ export const removeUserFromGroupAction = createAction({
   displayName: 'Remove User from Group',
   description: 'Remove a user from an Okta group',
   props: {
-    userId: Property.ShortText({
-      displayName: 'User ID or Email',
-      description: 'The Okta user ID or email address',
-      required: true,
-    }),
-    groupId: Property.ShortText({
-      displayName: 'Group ID',
-      description: 'The Okta group ID',
-      required: true,
-    }),
+    groupId: groupIdDropdown,
+    userId: userIdDropdown(true),
   },
   async run(context) {
     const userId = context.propsValue.userId;

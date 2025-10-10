@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { oktaAuth, makeOktaRequest } from '../common/common';
+import { oktaAuth, makeOktaRequest, userIdDropdown } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 
@@ -10,11 +10,7 @@ export const updateUserAction = createAction({
   displayName: 'Update User',
   description: 'Update user profile information',
   props: {
-    userId: Property.ShortText({
-      displayName: 'User ID or Email',
-      description: 'The Okta user ID or email address',
-      required: true,
-    }),
+    userId: userIdDropdown(),
     firstName: Property.ShortText({
       displayName: 'First Name',
       description: 'Updated first name',

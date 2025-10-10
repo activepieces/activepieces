@@ -48,3 +48,113 @@ export async function makeOktaRequest(
     body,
   });
 }
+
+export const userIdDropdown = (groupusers = false) =>
+  Property.Dropdown({
+    displayName: 'User',
+    description: 'Select a user',
+    required: true,
+    refreshers: ['auth', 'groupId'],
+    options: async ({ auth, groupId }) => {
+      try {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'select auth first',
+          };
+        }
+        if (groupusers && !groupId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'please select groupId first',
+          };
+        }
+        const path = groupusers
+          ? `/groups/${groupId}/users`
+          : '/users';
+        const response = await makeOktaRequest(
+          auth,
+          path,
+          HttpMethod.GET,
+          undefined
+        );
+
+        const users = await response.body;
+        console.log(JSON.stringify(users, null, 2));
+        if (!Array.isArray(users)) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No users found',
+          };
+        }
+        return {
+          disabled: false,
+          options: users.map((user: any) => ({
+            label:
+              user.profile.firstName +
+              ' ' +
+              user.profile.lastName +
+              ' (' +
+              user.profile.email +
+              ')',
+            value: user.id,
+          })),
+        };
+      } catch (e) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error fetching users',
+        };
+      }
+    },
+  });
+
+export const groupIdDropdown = 
+  Property.Dropdown({
+    displayName: 'Group',
+    description: 'Select a group',
+    required: true,
+    refreshers: ['auth'],
+    options: async ({ auth }) => {
+      try {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No groups found',
+          };
+        }
+        const response = await makeOktaRequest(
+          auth,
+          '/groups',
+          HttpMethod.GET
+        );
+
+        const groups = await response.body;
+        if (!Array.isArray(groups)) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No groups found',
+          };
+        }
+        return {
+          disabled: false,
+          options: groups.map((group: any) => ({
+            label: group.profile.name,
+            value: group.id,
+          })),
+        };
+      } catch (e) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error fetching groups',
+        };
+      }
+    },
+  });

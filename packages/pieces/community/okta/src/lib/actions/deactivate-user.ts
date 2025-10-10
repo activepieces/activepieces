@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { oktaAuth, makeOktaRequest } from '../common/common';
+import { oktaAuth, makeOktaRequest, userIdDropdown } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 
@@ -9,11 +9,7 @@ export const deactivateUserAction = createAction({
   displayName: 'Deactivate User',
   description: 'Deactivate (disable) a user in Okta',
   props: {
-    userId: Property.ShortText({
-      displayName: 'User ID or Email',
-      description: 'The Okta user ID or email address',
-      required: true,
-    }),
+    userId: userIdDropdown(),
     sendEmail: Property.Checkbox({
       displayName: 'Send Email',
       description: 'Send deactivation email to user',

@@ -43,7 +43,7 @@ export const newEventTrigger = createTrigger({
 3. Navigate to **Security** → **API** → **Hooks** (or **Event Hooks** depending on your Okta version)
 4. Create a new webhook with the following settings:
    - **Name**: Activepieces Webhook
-   - **URL**: [Paste the webhook URL here]
+   - **URL**: {{webhookUrl}}
    - **Event Type**: Select the event types you want to monitor (or use all)
    - **Authentication**: None (Activepieces validates the webhook)
 5. Test the webhook connection
