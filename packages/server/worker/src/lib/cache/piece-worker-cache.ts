@@ -15,7 +15,7 @@ export const pieceWorkerCache = {
         const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
             version: pieceVersion,
         })
-        await cache.getOrSetCacheIfMissed(cacheKey, JSON.stringify(pieceMetadata), (_) => {
+        await cache.getOrSetCache(cacheKey, JSON.stringify(pieceMetadata), (_: string) => {
             const environment = environmentVariables.getEnvironment(AppSystemProp.ENVIRONMENT)
             if (environment === ApEnvironment.TESTING) {
                 return true

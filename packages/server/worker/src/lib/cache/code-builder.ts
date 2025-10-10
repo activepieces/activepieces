@@ -62,7 +62,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
         try {
             const currentHash = await cryptoUtils.hashObject(sourceCode)
             const cache = cacheState(codePath)
-            await cache.getOrSetCacheIfMissed(codePath, currentHash, (key) => {
+            await cache.getOrSetCache(codePath, currentHash, (key: string) => {
                 return key === currentHash
             }, async () => {
                 const { code, packageJson } = sourceCode

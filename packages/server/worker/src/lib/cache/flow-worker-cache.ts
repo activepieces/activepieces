@@ -12,10 +12,10 @@ export const flowWorkerCache = {
             const flow = await engineApiService(engineToken).getFlow({
                 versionId: flowVersionId,
             })
-            await cache.getOrSetCacheIfMissed(flowVersionId, JSON.stringify(flow), (flow) => {
+            await cache.getOrSetCache(flowVersionId, JSON.stringify(flow), (flow: string) => {
                 const parsedFlow = JSON.parse(flow) as PopulatedFlow
                 return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
-            }, undefined, (flow) => {
+            }, undefined, (flow: string) => {
                 const parsedFlow = JSON.parse(flow) as PopulatedFlow
                 return parsedFlow.version.state !== FlowVersionState.LOCKED
             })

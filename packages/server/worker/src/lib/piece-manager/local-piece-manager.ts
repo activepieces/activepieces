@@ -74,7 +74,7 @@ const linkPackages = async (
         return
     }
     const cache = cacheState(projectPath)
-    await cache.getOrSetCacheIfMissed(packageName, CacheState.READY, (key) => {
+    await cache.getOrSetCache(packageName, CacheState.READY, (key: string) => {
         return key !== CacheState.READY
     }, async () => {
         await updatePackageJson(linkPath, packages)

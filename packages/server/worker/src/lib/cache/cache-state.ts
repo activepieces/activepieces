@@ -35,12 +35,11 @@ const isCacheHit = (key: string | undefined, cacheMiss?: (key: string) => boolea
 }
 
 export const cacheState = (folderPath: string): {
-    getOrSetCacheIfMissed: (cacheAlias: string, state: string, cacheMiss?: (key: string) => boolean, installFn?: () => Promise<void>, saveGuard?: (key: string) => boolean) => Promise<CacheResult>
-    cacheCheckState: (cacheAlias: string) => Promise<string | undefined>
+    getOrSetCache: (cacheAlias: string, state: string, cacheMiss?: (key: string) => boolean, installFn?: () => Promise<void>, saveGuard?: (key: string) => boolean) => Promise<CacheResult>
     setCache: (cacheAlias: string, state: string) => Promise<void>
 } => {
     return {
-        async getOrSetCacheIfMissed(
+        async getOrSetCache(
             cacheAlias: string,
             state: string,
             cacheMiss?: (key: string) => boolean,
@@ -76,10 +75,6 @@ export const cacheState = (folderPath: string): {
                     state,
                 }
             })
-        },
-        async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-            const cache = await getCache(folderPath)
-            return cache[cacheAlias]
         },
         async setCache(cacheAlias: string, state: string): Promise<void> {
             const lockKey = `${folderPath}-${cacheAlias}`
