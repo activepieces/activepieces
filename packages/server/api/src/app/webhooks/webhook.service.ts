@@ -11,6 +11,8 @@ import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
 
 const tracer = trace.getTracer('webhook-service')
 
+let _cacheTriggerSource: any;
+
 export const webhookService = {
     async handleWebhook({
         logger,
@@ -25,6 +27,7 @@ export const webhookService = {
         parentRunId,
         failParentOnFailure,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
+        const now = performance.now()
         return tracer.startActiveSpan('webhook.service.handle', {
             attributes: {
                 'webhook.flowId': flowId,
@@ -39,11 +42,11 @@ export const webhookService = {
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
 
-                const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
+                const triggerSourceResult = _cacheTriggerSource ?? await triggerSourceService(pinoLogger).getByFlowIdPopulated({
                     flowId,
                     simulate: saveSampleData,
                 })
-
+                _cacheTriggerSource = triggerSourceResult
                 if (isNil(triggerSourceResult)) {
                     pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
@@ -70,28 +73,6 @@ export const webhookService = {
                             metric: PlatformUsageMetric.TASKS,
                         },
                     })
-                }
-
-                const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
-                    payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-                    handshakeConfiguration: await handshakeHandler(pinoLogger).getWebhookHandshakeConfiguration(triggerSource),
-                    flowId: flow.id,
-                    flowVersionId: flowVersionIdToRun,
-                    projectId: flow.projectId,
-                })
-                if (!isNil(response)) {
-                    logger.info({
-                        message: 'Handshake request completed',
-                        flowId: flow.id,
-                        flowVersionId: flowVersionIdToRun,
-                        webhookRequestId,
-                    }, 'Handshake request completed')
-                    span.setAttribute('webhook.handshake', true)
-                    return {
-                        status: response.status,
-                        body: response.body,
-                        headers: response.headers ?? {},
-                    }
                 }
 
                 const flowDisabledAndNoSaveSampleData = flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
@@ -128,6 +109,7 @@ export const webhookService = {
 
                 span.setAttribute('webhook.mode', 'sync')
                 const flowHttpResponse = await webhookHandler.handleSync({
+                    now,
                     payload: payload ?? await data(flow.projectId),
                     projectId: flow.projectId,
                     flow,

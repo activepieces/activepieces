@@ -27,6 +27,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     },
 })
 
+const fs = require('fs');
 
 async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger): Promise<Worker> {
     if (!isNil(consumer[queueName])) {
@@ -37,12 +38,17 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
         try {
             const jobId = job.id
             assertNotNullOrUndefined(jobId, 'jobId')
+
+            const waitingTime = Date.now() - job.timestamp;
+          //  fs.appendFileSync('log.txt', `Job ID: ${jobId}, Total Waiting Time: ${waitingTime}ms\n`);
             const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
             if (shouldRateLimit) {
                 await job.moveToDelayed(dayjs().add(20, 'seconds').valueOf(), token)
                 throw new DelayedError('Thie job is rate limited and will be retried in 15 seconds')
             }
             await jobConsumer(log).consume(jobId, queueName, job.data, job.attemptsStarted)
+            const completeTime = Date.now() - job.timestamp;
+        //    fs.appendFileSync('hello.txt', `Job ID: ${jobId}, Total CompleteTime: ${completeTime}ms\n`);
         }
         finally {
             await workerJobRateLimiter(log).onCompleteOrFailedJob(job.data, job.id)

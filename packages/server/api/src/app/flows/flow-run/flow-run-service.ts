@@ -53,7 +53,7 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
-
+const fs = require('fs');
 const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
@@ -304,6 +304,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         failParentOnFailure,
         stepNameToTest,
         environment,
+        now,
     }: StartParams): Promise<FlowRun> {
         return tracer.startActiveSpan('flowRun.start', {
             attributes: {
@@ -319,6 +320,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             try {
                 span.setAttribute('flowRun.flowId', flowId)
 
+
+                const start = performance.now()
                 const newFlowRun = await create({
                     projectId,
                     flowVersionId,
@@ -330,6 +333,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 })
 
                 span.setAttribute('flowRun.id', newFlowRun.id)
+                //fs.appendFileSync('queued.txt', `Webhook request ID: ${httpRequestId}, Total Queued Time: ${performance.now() - (now ?? performance.now())}ms\n and create time: ${performance.now() - start}ms\n` );
 
                 await addToQueue({
                     flowRun: newFlowRun,
@@ -342,7 +346,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 }, log)
 
                 span.setAttribute('flowRun.queued', true)
-                await flowRunSideEffects(log).onStart(newFlowRun)
+               // await flowRunSideEffects(log).onStart(newFlowRun)
                 return newFlowRun
             }
             finally {
@@ -630,6 +634,7 @@ type GetOrCreateLogsFileParams = {
     projectId: ProjectId
 }
 
+let _cachedPlatformId: string | undefined = undefined
 
 async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
     let logsUploadUrl: string | undefined
@@ -642,7 +647,8 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         logsUploadUrl = logsUploadResult.uploadUrl
         logsFileId = logsUploadResult.fileId
     }
-    const platformId = await projectService.getPlatformId(params.flowRun.projectId)
+    const platformId = _cachedPlatformId ?? await projectService.getPlatformId(params.flowRun.projectId)
+    _cachedPlatformId = platformId
 
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
@@ -680,7 +686,7 @@ function queryBuilderForFlowRun(repo: Repository<FlowRun>) {
 }
 
 async function create(params: CreateParams): Promise<FlowRun> {
-    return flowRunRepo().save({
+    return {
         id: apId(),
         projectId: params.projectId,
         flowId: params.flowId,
@@ -691,7 +697,10 @@ async function create(params: CreateParams): Promise<FlowRun> {
         failParentOnFailure: params.failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
         stepNameToTest: params.stepNameToTest,
-    })
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        steps: {},
+    }
 }
 
 type CreateLogsUploadUrlParams = {
@@ -784,6 +793,7 @@ type StartParams = {
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     sampleData?: Record<string, unknown>
+    now?: number
 }
 
 

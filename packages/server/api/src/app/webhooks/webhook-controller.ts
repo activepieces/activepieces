@@ -19,6 +19,7 @@ import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookService } from './webhook.service'
 
 const tracer = trace.getTracer('webhook-controller')
+const fs = require('fs');
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -26,6 +27,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId/sync',
         WEBHOOK_PARAMS,
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+            const now = performance.now()
             return tracer.startActiveSpan('webhook.receive.sync', {
                 attributes: {
                     'webhook.flowId': request.params.flowId,
@@ -56,6 +58,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 }
                 finally {
                     span.end()
+                    const finishTime = performance.now() - now;
+               //     fs.appendFileSync('finish.txt', `Flow ID: ${request.params.flowId}, Total Finish Time: ${finishTime}ms\n`);
                 }
             })
         },
