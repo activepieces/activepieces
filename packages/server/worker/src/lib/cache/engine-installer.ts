@@ -13,7 +13,7 @@ const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
 
-export const engineInstaller = (_log: FastifyBaseLogger) => ({
+export const engineInstaller = (_log: FastifyBaseLogger): { install: ({ path }: InstallParams) => Promise<EngineInstallResult> } => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
         const cache = cacheState(path)
@@ -24,7 +24,7 @@ export const engineInstaller = (_log: FastifyBaseLogger) => ({
             await atomicCopy(engineExecutablePath, `${path}/main.js`)
             await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
         })     
-        return { cacheHit: cacheHit }
+        return { cacheHit }
     },
 })
 
