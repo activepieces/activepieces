@@ -6,6 +6,7 @@ import {
   areSheetIdsValid,
   googleSheetsCommon,
   labelToColumn,
+  mapRowsToHeaderNames,
 } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { z } from 'zod';
@@ -52,6 +53,12 @@ export const findRowsAction = createAction({
       required: true,
       defaultValue: 1,
     }),
+    useHeaderNames: Property.Checkbox({
+      displayName: 'Use header names for keys',
+      description: 'Map A/B/C… to the actual column headers (row specified above).',
+      required: false,
+      defaultValue: true,
+    }),
   },
   async run({ propsValue, auth }) {
     await propsValidation.validateZod(propsValue, {
@@ -64,6 +71,7 @@ export const findRowsAction = createAction({
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
     const headerRow = propsValue.headerRow;
+    const useHeaderNames = propsValue.useHeaderNames as boolean;
 
     if (!areSheetIdsValid(spreadsheetId,sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -77,6 +85,20 @@ export const findRowsAction = createAction({
       rowIndex_e: undefined,
       headerRow: headerRow,
     });
+
+    let headers: string[] | undefined = undefined; // headers will be undefined when useHeaderNames = false
+    if (useHeaderNames) {
+      const headerRows = await googleSheetsCommon.getGoogleSheetRows({
+        spreadsheetId: spreadsheetId as string,
+        accessToken: auth.access_token,
+        sheetId: sheetId as number,
+        rowIndex_s: headerRow,
+        rowIndex_e: headerRow,
+      });
+      if (headerRows.length > 0) {
+        headers = Object.values(headerRows[0].values);
+      }
+    }
 
     const values = rows.map((row) => {
       return row.values;
@@ -120,6 +142,12 @@ export const findRowsAction = createAction({
       }
     }
 
-    return matchingRows;
+    const finalRows = mapRowsToHeaderNames(
+      matchingRows,
+      useHeaderNames,
+      headers
+    );
+
+    return finalRows;
   },
 });
