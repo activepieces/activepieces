@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, ExecuteCleanupOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { EngineGenericError } from '../../helper/execution-errors'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
@@ -190,6 +190,32 @@ export class EngineConstants {
     }
 
     public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
+        return new EngineConstants({
+            flowId: input.flowVersion.flowId,
+            flowVersionId: input.flowVersion.id,
+            flowVersionState: input.flowVersion.state,
+            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
+            flowRunId: DEFAULT_TRIGGER_EXECUTION,
+            publicApiUrl: input.publicApiUrl,
+            internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            retryConstants: DEFAULT_RETRY_CONSTANTS,
+            engineToken: input.engineToken,
+            projectId: input.projectId,
+            propsResolver: createPropsResolver({
+                projectId: input.projectId,
+                engineToken: input.engineToken,
+                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            }),
+            progressUpdateType: ProgressUpdateType.NONE,
+            serverHandlerId: null,
+            httpRequestId: null,
+            resumePayload: undefined,
+            runEnvironment: undefined,
+            stepNameToTest: undefined,
+        })
+    }
+
+    public static fromExecuteCleanupInput(input: ExecuteCleanupOperation): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion.flowId,
             flowVersionId: input.flowVersion.id,

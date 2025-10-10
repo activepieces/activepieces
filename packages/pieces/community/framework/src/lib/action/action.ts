@@ -1,11 +1,14 @@
 import { Static, Type } from '@sinclair/typebox';
-import { ActionContext } from '../context';
+import { ActionContext, CleanupContext } from '../context';
 import { ActionBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
+
+export type CleanupRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
+  (ctx: CleanupContext<PieceAuth, ActionProps>) => Promise<void>
 
 export const ErrorHandlingOptionsParam = Type.Object({
   retryOnFailure: Type.Object({
@@ -30,6 +33,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   props: ActionProps
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
+  onCleanup?: CleanupRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
@@ -42,6 +46,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
     public readonly props: ActionProps,
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
+    public readonly onCleanup: CleanupRunner<PieceAuth, ActionProps> | undefined,
     public readonly requireAuth: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
   ) { }
@@ -65,6 +70,7 @@ export const createAction = <
     params.props,
     params.run,
     params.test ?? params.run,
+    params.onCleanup,
     params.requireAuth ?? true,
     params.errorHandlingOptions ?? {
       continueOnFailure: {

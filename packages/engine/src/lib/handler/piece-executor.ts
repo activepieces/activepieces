@@ -1,6 +1,6 @@
 import { URL } from 'url'
-import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ActionContext, CleanupContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, ExecuteCleanupOperation, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -12,7 +12,8 @@ import { createContextStore } from '../services/storage.service'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { ExecutionVerdict } from './context/flow-execution-context'
+import { EngineConstants } from './context/engine-constants'
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -305,4 +306,72 @@ function createPauseHook(params: CreatePauseHookParams, pauseId: string, request
 
 type CreatePauseHookParams = {
     hookResponse: HookResponse
+}
+
+export async function executeCleanup(params: {
+    operation: ExecuteCleanupOperation
+    constants: EngineConstants
+    pieceSource: string
+}): Promise<void> {
+    const { operation, constants, pieceSource } = params
+
+    const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
+        pieceName: operation.piece.pieceName,
+        pieceVersion: operation.piece.pieceVersion,
+        actionName: operation.actionName,
+        pieceSource,
+    })
+
+    if (isNil(pieceAction.onCleanup)) {
+        return
+    }
+
+    const { resolvedInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
+        unresolvedInput: operation.input,
+        executionState: FlowExecutorContext.empty(),
+    })
+
+    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
+        resolvedInput,
+        pieceAction.props,
+        piece.auth,
+        pieceAction.requireAuth,
+        {},
+    )
+
+    if (Object.keys(errors).length > 0) {
+        throw new Error(JSON.stringify(errors, null, 2))
+    }
+
+    const cleanupContext: CleanupContext = {
+        auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+        propsValue: processedInput,
+        store: createContextStore({
+            apiUrl: constants.internalApiUrl,
+            prefix: '',
+            flowId: operation.flowVersion.flowId,
+            engineToken: constants.engineToken,
+        }),
+        server: {
+            token: constants.engineToken,
+            apiUrl: constants.internalApiUrl,
+            publicUrl: constants.publicApiUrl,
+        },
+        project: {
+            id: operation.projectId,
+            externalId: constants.externalProjectId,
+        },
+        connections: utils.createConnectionManager({
+            apiUrl: constants.internalApiUrl,
+            projectId: operation.projectId,
+            engineToken: constants.engineToken,
+            target: 'cleanup',
+        }),
+        run: {
+            id: operation.flowVersion.flowId,
+            reason: operation.cleanupReason,
+        },
+    }
+
+    await pieceAction.onCleanup(cleanupContext)
 }
