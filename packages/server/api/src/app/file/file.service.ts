@@ -200,6 +200,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
+        case FileType.FLOW_VERSION_BACKUP:
             return false
         default:
             throw new Error(`File type ${type} is not supported`)
