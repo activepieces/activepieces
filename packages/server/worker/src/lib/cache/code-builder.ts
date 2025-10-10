@@ -1,6 +1,6 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { cryptoUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
@@ -62,7 +62,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
         try {
             const currentHash = await cryptoUtils.hashObject(sourceCode)
             const cache = cacheState(codePath)
-            cache.cache(codePath, currentHash, (key) => {
+            await cache.cache(codePath, currentHash, (key) => {
                 return key === currentHash
             }, async () => {
                 const { code, packageJson } = sourceCode
@@ -90,7 +90,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             })
         }
         catch (error: unknown) {
-            log.error(error,`[CodeBuilder#processCodeStep], codePath: ${codePath}`)
+            log.error(error, `[CodeBuilder#processCodeStep], codePath: ${codePath}`)
 
             await handleCompilationError({
                 codePath,
@@ -103,14 +103,14 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
 function getPackageJson(packageJson: string): string {
     const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
-    if(isPackagesAllowed) {
+    if (isPackagesAllowed) {
         const packageJsonObject = JSON.parse(packageJson)
         return JSON.stringify({
             ...packageJsonObject,
             dependencies: {
-                "@types/node": "18.17.1",
+                '@types/node': '18.17.1',
                 ...(packageJsonObject?.dependencies ?? {}),
-            }
+            },
         })
     }
 
