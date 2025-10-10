@@ -182,6 +182,30 @@ export function stringifyArray(object: unknown[]): string[] {
 	});
 }
 
+export function mapRowsToHeaderNames(
+	rows: any[],
+	useHeaderNames: boolean,
+	headers: string[] | undefined
+): any[] {
+	// if we don't need to map headers or headers are not available
+	if (!useHeaderNames || !headers || headers.length === 0) {
+		return rows;
+	}
+
+	// map rows to use header names as keys instead of column letters
+	return rows.map(row => {
+		const newValues: Record<string, any> = {};
+		Object.keys(row.values).forEach((columnLetter) => {
+			const columnIndex = labelToColumn(columnLetter);
+			const headerName = headers[columnIndex];
+			if (headerName) {
+				newValues[headerName] = row.values[columnLetter];
+			}
+		});
+		return { ...row, values: newValues };
+	});
+}
+
 async function deleteRow(
 	spreadsheetId: string,
 	sheetId: number,

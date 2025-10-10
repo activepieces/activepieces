@@ -9,6 +9,7 @@ import { googleSheetsAuth } from '../..';
 import {
   areSheetIdsValid,
   googleSheetsCommon,
+  mapRowsToHeaderNames,
 } from '../common/common';
 import { isNil } from '@activepieces/shared';
 import { HttpError } from '@activepieces/pieces-common';
@@ -26,6 +27,7 @@ async function getRows(
   groupSize: number,
   startRow: number,
   headerRow: number,
+  useHeaderNames: boolean,
   testing: boolean
 ) {
   const sheetName = await googleSheetsCommon.findSheetName(
@@ -69,6 +71,20 @@ async function getRows(
 
   if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
 
+  let headers: string[] | undefined = undefined;
+  if (useHeaderNames) {
+    const headerRows = await googleSheetsCommon.getGoogleSheetRows({
+      spreadsheetId: spreadsheetId,
+      accessToken: auth.access_token,
+      sheetId: sheetId,
+      rowIndex_s: headerRow,
+      rowIndex_e: headerRow,
+    });
+    if (headerRows.length > 0) {
+      headers = Object.values(headerRows[0].values);
+    }
+  }
+
   const row = await googleSheetsCommon.getGoogleSheetRows({
     accessToken: auth.access_token,
     sheetId: sheetId,
@@ -91,7 +107,8 @@ async function getRows(
     if (testing == false) await store.put(memKey, lastRow, StoreScope.FLOW);
   }
 
-  return row;
+  const finalRows = mapRowsToHeaderNames(row, useHeaderNames, headers);
+  return finalRows;
 }
 
 const notes = `
@@ -119,6 +136,12 @@ export const getRowsAction = createAction({
       required: true,
       defaultValue: 1,
     }),
+    useHeaderNames: Property.Checkbox({
+    displayName: 'Use header names for keys',
+    description: 'Map A/B/C… to the actual column headers (row specified above).',
+    required: false,
+    defaultValue: false,
+    }),
     markdown: Property.MarkDown({
       value: notes
     }),
@@ -136,7 +159,7 @@ export const getRowsAction = createAction({
     }),
   },
   async run({ store, auth, propsValue }) {
-    const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId} = propsValue;
+    const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId, useHeaderNames} = propsValue;
 
     if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -157,6 +180,7 @@ export const getRowsAction = createAction({
         groupSize,
         startRow,
         headerRow,
+        useHeaderNames as boolean,
         false
       );
     } catch (error) {
@@ -168,7 +192,7 @@ export const getRowsAction = createAction({
     }
   },
   async test({ store, auth, propsValue }) {
-    const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId} = propsValue;
+    const { startRow, groupSize, memKey, headerRow, spreadsheetId, sheetId, useHeaderNames} = propsValue;
 
     if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -184,6 +208,7 @@ export const getRowsAction = createAction({
         groupSize,
         startRow,
         headerRow,
+        useHeaderNames as boolean,
         true
       );
     } catch (error) {
