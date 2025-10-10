@@ -39,6 +39,14 @@ function buildImapClient(auth: ImapAuth): ImapFlow {
   return new ImapFlow({ ...imapConfig, logger: false });
 }
 
+async function confirmEmailExists(imapClient: ImapFlow, uid: string) {
+  const searchResult = await imapClient.search({ uid }, { uid: true });
+
+  if (!searchResult || searchResult.length === 0) {
+    throw new ImapEmailNotFoundError();
+  }
+}
+
 function detectMissingMailbox(error: unknown): void {
   if (error && typeof error === 'object' && 'mailboxMissing' in error && (error as { mailboxMissing: boolean }).mailboxMissing) {
     throw new ImapMailboxNotFoundError();
@@ -162,6 +170,30 @@ async function performMailboxOperation<T>(
   }) as T;
 }
 
+async function setEmailReadStatus<T extends { success: true }>({
+  auth,
+  mailbox,
+  uid,
+  markAsRead,
+}: {
+  auth: ImapAuth;
+  mailbox: string;
+  uid: number;
+  markAsRead: boolean;
+}): Promise<T> {
+  return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
+    await confirmEmailExists(imapClient, uid);
+
+    if (markAsRead) {
+      await imapClient.messageFlagsAdd({ uid }, ['\\Seen'], { uid: true });
+    } else {
+      await imapClient.messageFlagsRemove({ uid }, ['\\Seen'], { uid: true });
+    }
+
+    return { success: true };
+  })) as T;
+}
+
 export {
   // Types
   type Attachment,
@@ -173,6 +205,7 @@ export {
 
   // Email actions
   fetchEmails,
+  setEmailReadStatus,
 
   // Mailbox actions
   fetchMailboxes,
