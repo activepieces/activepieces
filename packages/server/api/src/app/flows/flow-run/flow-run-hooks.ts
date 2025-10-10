@@ -8,6 +8,7 @@ import { platformUsageService } from '../../ee/platform/platform-usage-service'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
+import { flowRunCleanupService } from './flow-run-cleanup.service'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -18,6 +19,12 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         })) {
             return
         }
+
+        // Invoke cleanup for any paused steps when flow terminates
+        if (!isNil(flowRun.pauseMetadata)) {
+            await flowRunCleanupService(log).invokeCleanupForPausedSteps(flowRun)
+        }
+
         if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStepName)) {
             const issue = await issuesService(log).add(flowRun)
             if (paidEditions) {
