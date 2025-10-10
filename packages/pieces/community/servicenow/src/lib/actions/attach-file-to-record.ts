@@ -53,7 +53,7 @@ export const attachFileToRecord = createAction({
     }),
     fileContent: Property.LongText({
       displayName: 'File Content',
-      description: 'Base64 encoded file content or file data',
+      description: 'File content as text or base64 encoded data',
       required: true,
     }),
     contentType: Property.ShortText({
@@ -94,13 +94,25 @@ export const attachFileToRecord = createAction({
       const attachmentId = response.result.sys_id;
 
       // Upload the file content
+      let uploadBody: string | Buffer = fileContent;
+      
+      // Check if content is base64 encoded
+      if (fileContent.match(/^[A-Za-z0-9+/]*={0,2}$/)) {
+        try {
+          uploadBody = Buffer.from(fileContent, 'base64');
+        } catch (error) {
+          // If base64 decode fails, use as text
+          uploadBody = fileContent;
+        }
+      }
+
       const uploadResponse = await fetch(`${auth.instanceUrl}/api/now/attachment/file?table_name=${table}&table_sys_id=${recordId}&file_name=${fileName}`, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`,
           'Content-Type': contentType || 'text/plain',
         },
-        body: fileContent,
+        body: uploadBody,
       });
 
       if (!uploadResponse.ok) {

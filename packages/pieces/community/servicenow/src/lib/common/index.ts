@@ -75,10 +75,35 @@ export async function getServiceNowTables(auth: ServiceNowAuth): Promise<string[
       'cmdb_ci',
       'kb_knowledge',
       'sys_attachment',
+      'sc_cat_item',
+      'sc_req_item',
+      'change_task',
+      'problem_task',
+      'incident_task',
     ];
   }
 }
 
 export function formatServiceNowDate(date: Date): string {
   return date.toISOString().replace('T', ' ').replace('Z', '');
+}
+
+export function getErrorMessage(error: any): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error?.response?.body) {
+    try {
+      const body = typeof error.response.body === 'string' 
+        ? JSON.parse(error.response.body) 
+        : error.response.body;
+      return body.error?.message || body.message || 'Unknown error';
+    } catch {
+      return error.response.body;
+    }
+  }
+  return 'Unknown error occurred';
 }
