@@ -54,7 +54,7 @@ export const cacheState = (folderPath: string) => {
                 await saveToCache(cache, folderPath)
                 return {
                     cacheHit: false,
-                    state: state,
+                    state,
                 }
             })
         },
