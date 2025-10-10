@@ -56,5 +56,8 @@
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
   "New Candidate": "Novo Candidato",
-  "Triggers when new candidate submits application.": "Dispara quando novo candidato enviar uma aplicação."
+  "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.": "Dispara quando um novo candidato enviar uma aplicação. Pode ser filtrado por profissão e/ou estágio específico de contratação.",
+  "Stage Slug": "Slug da Fase",
+  "Shortcode of specific job. Leave empty to trigger for all jobs.": "Código de atalho de uma tarefa específica. Deixe em branco para acionar todas as tarefas.",
+  "Stage slug to filter by specific hiring pipeline stage (e.g., 'applied', 'phone_screen', 'interview', 'offer'). Leave empty to trigger for all stages.": "Slug do estágio para filtrar por estágio de contratação específica de pipeline (por exemplo, 'aplicado', 'phone_screen', 'entrevte', 'oferta'). Deixe em branco para acionar em todos os estágios."
 }
