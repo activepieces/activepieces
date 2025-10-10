@@ -59,51 +59,46 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             name,
             codePath,
         })
-
-        return memoryLock.runExclusive(`code-builder-${flowVersionId}-${name}`, async () => {
-            try {
-                const cache = cacheState(codePath)
-                const cachedHash = await cache.cacheCheckState(codePath)
-                const currentHash = await cryptoUtils.hashObject(sourceCode)
-
-                if (cachedHash === currentHash) {
-                    return
-                }
+        try {
+            const currentHash = await cryptoUtils.hashObject(sourceCode)
+            const cache = cacheState(codePath)
+            cache.cache(codePath, currentHash, (key) => {
+                return key === currentHash
+            }, async () => {
                 const { code, packageJson } = sourceCode
-
+    
                 const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
                 if (codeNeedCleanUp) {
                     await rm(codePath, { recursive: true })
                 }
-
+    
                 await fileSystemUtils.threadSafeMkdir(codePath)
-
-
+    
+    
                 const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
-
+    
                 await installDependencies({
                     path: codePath,
                     packageJson: isPackagesAllowed ? packageJson : '{"dependencies":{}}',
                     log,
                 })
-
+    
                 await compileCode({
                     path: codePath,
                     code,
                     log,
                 })
+            })
+        }
+        catch (error: unknown) {
+            log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
 
-                await cache.setCache(codePath, currentHash)
-            }
-            catch (error: unknown) {
-                log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
-
-                await handleCompilationError({
-                    codePath,
-                    error,
-                })
-            }
-        })
+            await handleCompilationError({
+                codePath,
+                error,
+            })
+        }
+        
     },
 })
 
