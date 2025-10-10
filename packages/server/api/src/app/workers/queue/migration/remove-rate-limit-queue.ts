@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
 import { jobQueue } from '../job-queue'
 import { RATE_LIMIT_PRIORITY } from '../queue-manager'
+import { redisConnections } from '../../../database/redis-connections'
 
 const REMOVE_RATE_LIMIT_QUEUE_KEY = 'remove_rate_limit_queue'
 

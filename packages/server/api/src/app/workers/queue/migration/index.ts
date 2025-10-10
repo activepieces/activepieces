@@ -1,12 +1,12 @@
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
 import { distributedLock } from '../../../helper/lock'
 import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'
 import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
 import { removeRateLimitJobsQueue } from './remove-rate-limit-queue'
 import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
+import { redisConnections } from '../../../database/redis-connections'
 
 const QUEUE_MIGRATION_VERSION = '1'
 const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
