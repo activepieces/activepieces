@@ -17,6 +17,7 @@ const getCache = async ({ folderPath, forceReload }: GetCacheParams): Promise<Ca
         return cached[folderPath]
     }
     return memoryLock.runExclusive(`cache-read-${folderPath}`, async () => {
+        // double check with lock because it's possible that another thread modified the cache after the first check since it's not atomic
         if (!isNil(cached[folderPath]) && !forceReload) {
             return cached[folderPath]
         }
