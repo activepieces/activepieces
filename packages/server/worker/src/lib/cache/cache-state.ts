@@ -32,7 +32,7 @@ export const NO_SAVE_GUARD = (_: string): boolean => false
 export const NO_INSTALL_FN = (): Promise<void> => Promise.resolve()
 
 export const cacheState = (folderPath: string): {
-    getOrSetCache: (cacheAlias: string, state: ( () => Promise<string>) | string, cacheMiss: (key: string) => boolean, installFn: () => Promise<void>, saveGuard: (key: string) => boolean) => Promise<CacheResult>
+    getOrSetCache: (cacheAlias: string, state: (() => Promise<string>) | string, cacheMiss: (key: string) => boolean, installFn: () => Promise<void>, saveGuard: (key: string) => boolean) => Promise<CacheResult>
 } => {
     return {
         async getOrSetCache(
