@@ -7,7 +7,7 @@ import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
-import { cacheState } from '../../cache/cache-state'
+import { ALWAYS_CACHE_MISS, cacheState, NO_INSTALL_FN, NO_SAVE_GUARD } from '../../cache/cache-state'
 import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../cache/worker-cache'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
@@ -55,11 +55,11 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH)
-        await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
-        await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
-        await cache.setCache('@activepieces/shared', CacheState.PENDING)
-        await cache.setCache('@activepieces/common-ai', CacheState.PENDING)
-        await cache.setCache(piecePackageName, CacheState.PENDING)
+        await cache.getOrSetCache('@activepieces/pieces-framework', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
+        await cache.getOrSetCache('@@activepieces/pieces-common', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
+        await cache.getOrSetCache('@activepieces/shared', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
+        await cache.getOrSetCache('@activepieces/common-ai', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
+        await cache.getOrSetCache(piecePackageName, CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
 
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }

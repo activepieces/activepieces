@@ -33,7 +33,6 @@ export const NO_INSTALL_FN = (): Promise<void> => Promise.resolve()
 
 export const cacheState = (folderPath: string): {
     getOrSetCache: (cacheAlias: string, state: string, cacheMiss: (key: string) => boolean, installFn: () => Promise<void>, saveGuard: (key: string) => boolean) => Promise<CacheResult>
-    setCache: (cacheAlias: string, state: string) => Promise<void>
 } => {
     return {
         async getOrSetCache(
@@ -71,14 +70,6 @@ export const cacheState = (folderPath: string): {
                     cacheHit: false,
                     state,
                 }
-            })
-        },
-        async setCache(cacheAlias: string, state: string): Promise<void> {
-            const lockKey = `${folderPath}-${cacheAlias}`
-            return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
-                const cache = await getCache(folderPath)
-                cache[cacheAlias] = state
-                await saveToCache(cache, folderPath)
             })
         },
     }
