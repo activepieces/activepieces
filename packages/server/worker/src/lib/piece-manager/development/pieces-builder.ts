@@ -55,11 +55,11 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH)
-        await cache.getOrSetCache('@activepieces/pieces-framework', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
-        await cache.getOrSetCache('@@activepieces/pieces-common', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
-        await cache.getOrSetCache('@activepieces/shared', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
-        await cache.getOrSetCache('@activepieces/common-ai', CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
-        await cache.getOrSetCache(piecePackageName, CacheState.PENDING, ALWAYS_CACHE_MISS, NO_INSTALL_FN, NO_SAVE_GUARD)
+        await cache.getOrSetCache({ cacheAlias: '@activepieces/pieces-framework', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
+        await cache.getOrSetCache({ cacheAlias: '@@activepieces/pieces-common', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
+        await cache.getOrSetCache({ cacheAlias: '@activepieces/shared', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
+        await cache.getOrSetCache({ cacheAlias: '@activepieces/common-ai', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
+        await cache.getOrSetCache({ cacheAlias: piecePackageName, state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
 
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }

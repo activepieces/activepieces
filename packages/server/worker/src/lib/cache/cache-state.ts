@@ -27,25 +27,26 @@ type CacheResult = {
     state: string | null
 }
 
+type CacheStateParams = {
+    cacheAlias: string
+    state: (() => Promise<string>) | string
+    cacheMiss: (key: string) => boolean
+    installFn: () => Promise<void>
+    saveGuard: (key: string) => boolean
+}
+
 export const ALWAYS_CACHE_MISS = (_: string): boolean => true
 export const NO_SAVE_GUARD = (_: string): boolean => false
 export const NO_INSTALL_FN = (): Promise<void> => Promise.resolve()
 
 export const cacheState = (folderPath: string): {
-    getOrSetCache: (cacheAlias: string, state: (() => Promise<string>) | string, cacheMiss: (key: string) => boolean, installFn: () => Promise<void>, saveGuard: (key: string) => boolean) => Promise<CacheResult>
+    getOrSetCache: (cacheStateParams: CacheStateParams) => Promise<CacheResult>
 } => {
     return {
-        async getOrSetCache(
-            cacheAlias: string,
-            state: ( () => Promise<string>) | string,
-            cacheMiss: (key: string) => boolean = ALWAYS_CACHE_MISS,
-            installFn: () => Promise<void> = NO_INSTALL_FN,
-            saveGuard: (key: string) => boolean = NO_SAVE_GUARD,
-            
-        ): Promise<CacheResult> {
+        async getOrSetCache({ cacheAlias, state, cacheMiss, installFn, saveGuard }: CacheStateParams): Promise<CacheResult> {
             const cache = await getCache(folderPath)
             const key = cache[cacheAlias]
-            if (key === undefined && !cacheMiss(cacheAlias)) {
+            if (key === undefined && !cacheMiss(key)) {
                 return {
                     cacheHit: true,
                     state: key,
@@ -54,7 +55,7 @@ export const cacheState = (folderPath: string): {
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
                 const freshKey = cache[cacheAlias]
-                if (key === undefined && !cacheMiss(cacheAlias)) {
+                if (key === undefined && !cacheMiss(key)) {
                     return { cacheHit: true, state: freshKey }
                 }            
                 const stateValue = typeof state === 'string' ? state : await state()

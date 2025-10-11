@@ -62,32 +62,38 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
         try {
             const currentHash = await cryptoUtils.hashObject(sourceCode)
             const cache = cacheState(codePath)
-            await cache.getOrSetCache(codePath, currentHash, (key: string) => {
-                return key === currentHash
-            }, async () => {
-                const { code, packageJson } = sourceCode
+            await cache.getOrSetCache({
+                cacheAlias: codePath,
+                state: currentHash,
+                cacheMiss: (key: string) => {
+                    return key === currentHash
+                },
+                installFn: async () => {
+                    const { code, packageJson } = sourceCode
     
-                const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
-                if (codeNeedCleanUp) {
-                    await rm(codePath, { recursive: true })
-                }
+                    const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
+                    if (codeNeedCleanUp) {
+                        await rm(codePath, { recursive: true })
+                    }
     
-                await fileSystemUtils.threadSafeMkdir(codePath)
+                    await fileSystemUtils.threadSafeMkdir(codePath)
     
     
     
-                await installDependencies({
-                    path: codePath,
-                    packageJson: getPackageJson(packageJson),
-                    log,
-                })
+                    await installDependencies({
+                        path: codePath,
+                        packageJson: getPackageJson(packageJson),
+                        log,
+                    })
     
-                await compileCode({
-                    path: codePath,
-                    code,
-                    log,
-                })
-            }, NO_SAVE_GUARD)
+                    await compileCode({
+                        path: codePath,
+                        code,
+                        log,
+                    })
+                },
+                saveGuard: NO_SAVE_GUARD,
+            })
         }
         catch (error: unknown) {
             log.error(error, `[CodeBuilder#processCodeStep], codePath: ${codePath}`)

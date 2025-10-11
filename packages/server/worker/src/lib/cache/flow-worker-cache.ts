@@ -10,17 +10,23 @@ export const flowWorkerCache = {
         try {
             const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
             
-            const { state } = await cache.getOrSetCache(flowVersionId, async () => {
-                const flow = await engineApiService(engineToken).getFlow({
-                    versionId: flowVersionId,
-                })
-                return JSON.stringify(flow)
-            }, (flow: string) => {
-                const parsedFlow = JSON.parse(flow) as PopulatedFlow
-                return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
-            }, NO_INSTALL_FN, (flow: string) => {
-                const parsedFlow = JSON.parse(flow) as PopulatedFlow
-                return parsedFlow.version.state !== FlowVersionState.LOCKED
+            const { state } = await cache.getOrSetCache({
+                cacheAlias: flowVersionId,
+                state: async () => {
+                    const flow = await engineApiService(engineToken).getFlow({
+                        versionId: flowVersionId,
+                    })
+                    return JSON.stringify(flow)
+                },
+                cacheMiss: (flow: string) => {
+                    const parsedFlow = JSON.parse(flow) as PopulatedFlow
+                    return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
+                },
+                installFn: NO_INSTALL_FN,
+                saveGuard: (flow: string) => {
+                    const parsedFlow = JSON.parse(flow) as PopulatedFlow
+                    return parsedFlow.version.state !== FlowVersionState.LOCKED
+                },
             })
 
             const flow = JSON.parse(state as string) as PopulatedFlow

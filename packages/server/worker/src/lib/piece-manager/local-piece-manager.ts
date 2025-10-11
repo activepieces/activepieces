@@ -74,16 +74,22 @@ const linkPackages = async (
         return
     }
     const cache = cacheState(projectPath)
-    await cache.getOrSetCache(packageName, CacheState.READY, (key: string) => {
-        return key !== CacheState.READY
-    }, async () => {
-        await updatePackageJson(linkPath, packages)
-        await packageManager(log).link({
-            packageName,
-            path: projectPath,
-            linkPath,
-        })
-    }, NO_SAVE_GUARD)
+    await cache.getOrSetCache({
+        cacheAlias: packageName,
+        state: CacheState.READY,
+        cacheMiss: (key: string) => {
+            return key !== CacheState.READY
+        },
+        installFn: async () => {
+            await updatePackageJson(linkPath, packages)
+            await packageManager(log).link({
+                packageName,
+                path: projectPath,
+                linkPath,
+            })
+        },
+        saveGuard: NO_SAVE_GUARD,
+    })
 }
 
 const updatePackageJson = async (

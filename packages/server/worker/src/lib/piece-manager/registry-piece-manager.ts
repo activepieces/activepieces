@@ -27,11 +27,11 @@ export class RegistryPieceManager extends PieceManager {
             pieces.map(async (piece) => {
                 const pkg = this.pieceToDependency(piece)
                 
-                await cache.getOrSetCache(
-                    pkg.alias,
-                    CacheState.READY,
-                    ALWAYS_CACHE_MISS,
-                    async () => {
+                await cache.getOrSetCache({
+                    cacheAlias: pkg.alias,
+                    state: CacheState.READY,
+                    cacheMiss: ALWAYS_CACHE_MISS,
+                    installFn: async () => {
                         const exactVersionPath = join(projectPath, 'pieces', pkg.alias)
                         await mkdir(exactVersionPath, { recursive: true })
 
@@ -45,8 +45,8 @@ export class RegistryPieceManager extends PieceManager {
                             installDir: exactVersionPath,
                         })
                     },
-                    NO_SAVE_GUARD,
-                )
+                    saveGuard: NO_SAVE_GUARD,
+                })
             }),
         )
     }
