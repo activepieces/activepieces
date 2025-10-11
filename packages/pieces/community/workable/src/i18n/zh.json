@@ -56,5 +56,8 @@
   "DELETE": "删除",
   "HEAD": "黑色",
   "New Candidate": "New Candidate",
-  "Triggers when new candidate submits application.": "Triggers when new candidate submits application."
+  "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.": "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.",
+  "Stage Slug": "Stage Slug",
+  "Shortcode of specific job. Leave empty to trigger for all jobs.": "Shortcode of specific job. Leave empty to trigger for all jobs.",
+  "Stage slug to filter by specific hiring pipeline stage (e.g., 'applied', 'phone_screen', 'interview', 'offer'). Leave empty to trigger for all stages.": "Stage slug to filter by specific hiring pipeline stage (e.g., 'applied', 'phone_screen', 'interview', 'offer'). Leave empty to trigger for all stages."
 }

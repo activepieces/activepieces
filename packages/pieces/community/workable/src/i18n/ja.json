@@ -56,5 +56,8 @@
   "DELETE": "削除",
   "HEAD": "頭",
   "New Candidate": "新規候補",
-  "Triggers when new candidate submits application.": "新しい候補者がアプリケーションを送信したときにトリガーします。"
+  "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.": "新しい候補者が申請を提出するときにトリガーします。特定のジョブおよび/またはパイプラインの段階を採用することでフィルタリングできます。",
+  "Stage Slug": "ステージスラグ",
+  "Shortcode of specific job. Leave empty to trigger for all jobs.": "特定のジョブのショートコード。すべてのジョブをトリガーするには空のままにしてください。",
+  "Stage slug to filter by specific hiring pipeline stage (e.g., 'applied', 'phone_screen', 'interview', 'offer'). Leave empty to trigger for all stages.": "特定の採用パイプラインステージによってフィルタリングするためのステージスラグ（例：「適用」、「電話」、「面接」、「提供」）。すべてのステージでトリガーするには空のままにしてください。"
 }
