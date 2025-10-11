@@ -148,7 +148,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {
-                        message: inspect(result?.error),
+                        message: JSON.stringify(result),
                     },
                 })
             }
