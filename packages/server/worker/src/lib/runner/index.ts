@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { BeginExecuteFlowOperation, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, EngineOperation, EngineOperationType, ExecuteCleanupOperation, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { executionFiles } from '../cache/execution-files'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
@@ -99,6 +99,28 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
             engineToken,
         }
         return execute(log, input, EngineOperationType.EXECUTE_VALIDATE_AUTH, operation.timeoutInSeconds)
+    },
+    async executeCleanup(engineToken: string, operation: Omit<ExecuteCleanupOperation, EngineConstants>): Promise<EngineHelperResponse<{ success: boolean, message?: string }>> {
+        log.debug({
+            piece: operation.piece,
+            actionName: operation.actionName,
+            cleanupReason: operation.cleanupReason,
+        }, '[threadEngineRunner#executeCleanup]')
+
+        const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, operation.piece)
+        await executionFiles(log).provision({
+            pieces: [lockedPiece],
+            codeSteps: [],
+            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
+        })
+
+        const input: ExecuteCleanupOperation = {
+            ...operation,
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
+            engineToken,
+        }
+        return execute(log, input, EngineOperationType.EXECUTE_CLEANUP, operation.timeoutInSeconds)
     },
     async executeProp(engineToken: string, operation: Omit<ExecutePropsOptions, EngineConstants>): Promise<EngineHelperResponse<EngineHelperPropResult>> {
         log.debug({

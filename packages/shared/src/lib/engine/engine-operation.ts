@@ -15,6 +15,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_CLEANUP = 'EXECUTE_CLEANUP',
 }
 
 export enum TriggerHookType {
@@ -26,6 +27,19 @@ export enum TriggerHookType {
     TEST = 'TEST',
 }
 
+export enum CleanupReason {
+    TIMEOUT = 'TIMEOUT',
+    FAILURE = 'FAILURE',
+}
+
+export type ExecuteCleanupOperation = BaseEngineOperation & {
+    piece: PiecePackage
+    actionName: string
+    flowVersion: FlowVersion
+    cleanupReason: CleanupReason
+    input: Record<string, unknown>
+}
+
 export type EngineOperation =
     | ExecuteToolOperation
     | ExecuteFlowOperation
@@ -33,6 +47,7 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadataOperation
     | ExecuteValidateAuthOperation
+    | ExecuteCleanupOperation
 
 export const enum EngineSocketEvent {
     ENGINE_RESPONSE = 'engine-response',
@@ -213,6 +228,11 @@ export type ExecuteActionResponse = {
     success: boolean
     input: unknown
     output: unknown
+    message?: string
+}
+
+export type ExecuteCleanupResponse = {
+    success: boolean
     message?: string
 }
 
