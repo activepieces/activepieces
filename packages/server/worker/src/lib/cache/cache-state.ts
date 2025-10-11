@@ -13,6 +13,9 @@ type GetCacheParams = {
 }
 const cached: Record<string, CacheMap | null> = {}
 const getCache = async ({ folderPath, forceReload }: GetCacheParams): Promise<CacheMap> => {
+    if (!isNil(cached[folderPath]) && !forceReload) {
+        return cached[folderPath]
+    }
     return memoryLock.runExclusive(`cache-read-${folderPath}`, async () => {
         if (!isNil(cached[folderPath]) && !forceReload) {
             return cached[folderPath]
