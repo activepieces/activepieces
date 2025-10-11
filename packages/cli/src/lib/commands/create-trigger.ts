@@ -10,6 +10,13 @@ import {
   displayNameToKebabCase, findPiece,
 } from '../utils/piece-utils';
 
+interface CreateTriggerAnswers {
+  pieceName: string;
+  triggerName: string;
+  triggerDescription: string;
+  triggerTechnique: 'polling' | 'webhook';
+}
+
 function createTriggerTemplate(displayName: string, description: string, technique: string) {
     const camelCase = displayNameToCamelCase(displayName)
     let triggerTemplate = ''
@@ -115,7 +122,7 @@ export const createTriggerCommand = new Command('create')
                 type: 'input',
                 name: 'pieceName',
                 message: 'Enter the piece folder name:',
-                placeholder: 'google-drive',
+                default: 'google-drive',
             },
             {
                 type: 'input',
@@ -136,6 +143,6 @@ export const createTriggerCommand = new Command('create')
             },
         ];
 
-        const answers = await inquirer.prompt(questions);
+        const answers: any = await (inquirer as any).prompt(questions);
         createTrigger(answers.pieceName, answers.triggerName, answers.triggerDescription, answers.triggerTechnique);
     });

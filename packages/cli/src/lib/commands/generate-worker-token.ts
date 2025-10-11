@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { prompt } from 'inquirer';
+import inquirer from 'inquirer';
 import { nanoid } from 'nanoid';
 import jwtLibrary from 'jsonwebtoken';
 
@@ -11,7 +11,7 @@ const ALGORITHM = 'HS256'
 export const generateWorkerTokenCommand = new Command('token')
     .description('Generate a JWT token for worker authentication')
     .action(async () => {
-        const answers = await prompt([
+        const answers: any = await (inquirer as any).prompt([
             {
                 type: 'input',
                 name: 'jwtSecret',
@@ -42,9 +42,9 @@ export const generateWorkerTokenCommand = new Command('token')
             });
             console.log(chalk.green('\nGenerated Worker Token, Please use it in AP_WORKER_TOKEN environment variable:'));
             console.log(chalk.yellow(token));
-           
+
         } catch (error) {
             console.error(chalk.red('Failed to generate token:'), error);
             process.exit(1);
         }
-    }); 
+    });

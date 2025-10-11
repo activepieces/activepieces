@@ -12,6 +12,12 @@ import {
 } from '../utils/files';
 import { findPiece } from '../utils/piece-utils';
 
+interface CreatePieceAnswers {
+  pieceName: string;
+  packageName: string;
+  pieceType: 'community' | 'custom';
+}
+
 const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
   const pieceNamePattern = /^(?![._])[a-z0-9-]{1,214}$/;
@@ -138,7 +144,7 @@ const updateProjectJsonConfig = async (
    }
 
     const lintFilePatterns = projectJson.targets.lint?.options?.lintFilePatterns;
-    
+
     if (lintFilePatterns) {
     const patternIndex = lintFilePatterns.findIndex((item) =>
       item.endsWith('package.json')
@@ -175,8 +181,8 @@ const addEslintFile = async (pieceName: string, pieceType: string) => {
       }
     ]
   }
-  
- 
+
+
   await writePackageEslint(
     `packages/pieces/${pieceType}/${pieceName}`,
     eslintFile
@@ -232,6 +238,6 @@ export const createPieceCommand = new Command('create')
       },
     ];
 
-    const answers = await inquirer.prompt(questions);
+    const answers: any = await (inquirer as any).prompt(questions);
     createPiece(answers.pieceName, answers.packageName, answers.pieceType);
   });

@@ -6,6 +6,13 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({path: 'packages/server/api/.env'});
 
+interface PublishPieceAnswers {
+  name: string;
+  apiUrl: string;
+  apiKeySource: 'Env Variable (AP_API_KEY)' | 'Manually';
+  apiKey?: string;
+}
+
 async function publishPiece(
     {apiUrl, apiKey, pieceName, failOnError}:
     {apiUrl: string,
@@ -39,13 +46,13 @@ export const publishPieceCommand = new Command('publish')
                 type: 'input',
                 name: 'name',
                 message: 'Enter the piece folder name',
-                placeholder: 'google-drive',
+                default: 'google-drive',
             },
             {
                 type: 'input',
                 name: 'apiUrl',
                 message: 'Enter the API URL',
-                placeholder: 'https://cloud.activepieces.com/api',
+                default: 'https://cloud.activepieces.com/api',
             },
             {
                 type: 'list',
@@ -54,11 +61,11 @@ export const publishPieceCommand = new Command('publish')
                 choices: ['Env Variable (AP_API_KEY)', 'Manually'],
                 default: 'Env Variable (AP_API_KEY)'
             }
-        ]
+        ];
 
-        const answers = await inquirer.prompt(questions);
+        const answers: any = await (inquirer as any).prompt(questions);
         if (answers.apiKeySource === 'Manually') {
-            const apiKeyAnswers = await inquirer.prompt([{
+            const apiKeyAnswers: any = await (inquirer as any).prompt([{
                 type: 'input',
                 name: 'apiKey',
                 message: 'Enter the API Key',
