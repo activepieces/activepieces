@@ -56,5 +56,8 @@
   "DELETE": "BORRAR",
   "HEAD": "LIMPIO",
   "New Candidate": "Nuevo comando",
-  "Triggers when new candidate submits application.": "Dispara cuando el nuevo candidato presenta la solicitud."
+  "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.": "Dispara cuando el nuevo candidato presenta la solicitud. Puede ser filtrado por un trabajo específico y/o contratando tuberías etapas.",
+  "Stage Slug": "Fase de Slug",
+  "Shortcode of specific job. Leave empty to trigger for all jobs.": "Código corto de trabajo específico. Dejar en blanco para activar todos los trabajos.",
+  "Stage slug to filter by specific hiring pipeline stage (e.g., 'applied', 'phone_screen', 'interview', 'offer'). Leave empty to trigger for all stages.": "Fase de slug para filtrar por una etapa específica del tubo de contratación (por ejemplo, 'aplicado', 'pantalla_teléfono', 'entrevista', 'oferta'). Dejar vacío para activar todas las etapas."
 }
