@@ -3,7 +3,7 @@ import { join, resolve, sep } from 'node:path'
 import { ApLock, filePiecesUtils, fileSystemUtils } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheState } from '../cache/cache-state'
+import { cacheState, NO_SAVE_GUARD } from '../cache/cache-state'
 import { packageManager } from '../cache/package-manager'
 import { CacheState } from '../cache/worker-cache'
 import { workerMachine } from '../utils/machine'
@@ -83,7 +83,7 @@ const linkPackages = async (
             path: projectPath,
             linkPath,
         })
-    })
+    }, NO_SAVE_GUARD)
 }
 
 const updatePackageJson = async (

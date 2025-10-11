@@ -6,7 +6,7 @@ import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { workerMachine } from '../utils/machine'
-import { cacheState } from './cache-state'
+import { cacheState, NO_SAVE_GUARD } from './cache-state'
 
 const engineExecutablePath = systemConstants.ENGINE_EXECUTABLE_PATH
 const ENGINE_CACHE_ID = nanoid()
@@ -23,7 +23,7 @@ export const engineInstaller = (_log: FastifyBaseLogger) => ({
         }, async () => {
             await atomicCopy(engineExecutablePath, `${path}/main.js`)
             await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
-        })     
+        }, NO_SAVE_GUARD)     
         return { cacheHit }
     },
 })

@@ -4,7 +4,7 @@ import { AppSystemProp, environmentVariables, PiecesSource } from '@activepieces
 import { ApEnvironment, ProjectId } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
-import { cacheState } from './cache-state'
+import { cacheState, NO_INSTALL_FN, NO_SAVE_GUARD } from './cache-state'
 import { GLOBAL_CACHE_PIECES_PATH } from './worker-cache'
 
 
@@ -25,7 +25,7 @@ export const pieceWorkerCache = {
                 return true
             }
             return false        
-        })
+        }, NO_INSTALL_FN, NO_SAVE_GUARD)
         return pieceMetadata
     },
 }

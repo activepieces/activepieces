@@ -8,7 +8,7 @@ import {
     PrivatePiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheState } from '../cache/cache-state'
+import { ALWAYS_CACHE_MISS, cacheState, NO_SAVE_GUARD } from '../cache/cache-state'
 import { packageManager } from '../cache/package-manager'
 import { CacheState } from '../cache/worker-cache'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
@@ -30,7 +30,7 @@ export class RegistryPieceManager extends PieceManager {
                 await cache.getOrSetCache(
                     pkg.alias,
                     CacheState.READY,
-                    undefined,
+                    ALWAYS_CACHE_MISS,
                     async () => {
                         const exactVersionPath = join(projectPath, 'pieces', pkg.alias)
                         await mkdir(exactVersionPath, { recursive: true })
@@ -45,6 +45,7 @@ export class RegistryPieceManager extends PieceManager {
                             installDir: exactVersionPath,
                         })
                     },
+                    NO_SAVE_GUARD,
                 )
             }),
         )

@@ -5,7 +5,7 @@ import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
-import { cacheState } from './cache-state'
+import { cacheState, NO_SAVE_GUARD } from './cache-state'
 import { packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
@@ -87,7 +87,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                     code,
                     log,
                 })
-            })
+            }, NO_SAVE_GUARD)
         }
         catch (error: unknown) {
             log.error(error, `[CodeBuilder#processCodeStep], codePath: ${codePath}`)

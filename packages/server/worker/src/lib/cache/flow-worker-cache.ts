@@ -2,7 +2,7 @@ import path from 'path'
 import { FlowVersionId, FlowVersionState, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
 import { ApAxiosClient } from '../api/ap-axios'
 import { engineApiService } from '../api/server-api.service'
-import { cacheState } from './cache-state'
+import { cacheState, NO_INSTALL_FN } from './cache-state'
 import { GLOBAL_CACHE_FLOWS_PATH } from './worker-cache'
 
 export const flowWorkerCache = {
@@ -15,7 +15,7 @@ export const flowWorkerCache = {
             await cache.getOrSetCache(flowVersionId, JSON.stringify(flow), (flow: string) => {
                 const parsedFlow = JSON.parse(flow) as PopulatedFlow
                 return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
-            }, undefined, (flow: string) => {
+            }, NO_INSTALL_FN, (flow: string) => {
                 const parsedFlow = JSON.parse(flow) as PopulatedFlow
                 return parsedFlow.version.state !== FlowVersionState.LOCKED
             })
