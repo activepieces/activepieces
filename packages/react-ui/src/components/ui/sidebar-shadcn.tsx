@@ -23,12 +23,23 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '18rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+
+function getSidebarStateFromLocalStorage(prefix?: string) {
+  if (typeof window === 'undefined') return true;
+  const localStorageKey = `${prefix ?? 'default'}_sidebarIsOpen`;
+  const stored = localStorage.getItem(localStorageKey);
+  return stored ? stored === 'true' : true;
+}
+
+function setSidebarStateToLocalStorage(isOpen: boolean, prefix?: string) {
+  if (typeof window === 'undefined') return;
+  const localStorageKey = `${prefix ?? 'default'}_sidebarIsOpen`;
+  localStorage.setItem(localStorageKey, isOpen.toString());
+}
 
 type SidebarContextProps = {
   state: 'expanded' | 'collapsed';
@@ -57,13 +68,15 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    storagePrefix?: string;
   }
 >(
   (
     {
-      defaultOpen = true,
+      defaultOpen,
       open: openProp,
       onOpenChange: setOpenProp,
+      storagePrefix,
       className,
       style,
       children,
@@ -76,7 +89,7 @@ const SidebarProvider = React.forwardRef<
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen);
+    const [_open, _setOpen] = React.useState(defaultOpen ?? getSidebarStateFromLocalStorage(storagePrefix));
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -87,10 +100,9 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        setSidebarStateToLocalStorage(openState, storagePrefix);
       },
-      [setOpenProp, open],
+      [setOpenProp, open, storagePrefix],
     );
 
     // Helper to toggle the sidebar.
