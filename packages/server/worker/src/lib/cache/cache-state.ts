@@ -46,7 +46,7 @@ export const cacheState = (folderPath: string): {
         async getOrSetCache({ cacheAlias, state, cacheMiss, installFn, saveGuard }: CacheStateParams): Promise<CacheResult> {
             const cache = await getCache(folderPath)
             const key = cache[cacheAlias]
-            if (key === undefined && !cacheMiss(key)) {
+            if (!isNil(key) && !cacheMiss(key)) {
                 return {
                     cacheHit: true,
                     state: key,
@@ -55,7 +55,7 @@ export const cacheState = (folderPath: string): {
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
                 const freshKey = cache[cacheAlias]
-                if (key === undefined && !cacheMiss(key)) {
+                if (!isNil(key) && !cacheMiss(key)) {
                     return { cacheHit: true, state: freshKey }
                 }            
                 const stateValue = typeof state === 'string' ? state : await state()
