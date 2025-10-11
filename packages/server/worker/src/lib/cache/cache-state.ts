@@ -32,12 +32,12 @@ export const NO_SAVE_GUARD = (_: string): boolean => false
 export const NO_INSTALL_FN = (): Promise<void> => Promise.resolve()
 
 export const cacheState = (folderPath: string): {
-    getOrSetCache: (cacheAlias: string, state: string, cacheMiss: (key: string) => boolean, installFn: () => Promise<void>, saveGuard: (key: string) => boolean) => Promise<CacheResult>
+    getOrSetCache: (cacheAlias: string, state: () => Promise<string>, cacheMiss: (key: string) => boolean, installFn: () => Promise<void>, saveGuard: (key: string) => boolean) => Promise<CacheResult>
 } => {
     return {
         async getOrSetCache(
             cacheAlias: string,
-            state: string,
+            state: () => Promise<string>,
             cacheMiss: (key: string) => boolean = ALWAYS_CACHE_MISS,
             installFn: () => Promise<void> = NO_INSTALL_FN,
             saveGuard: (key: string) => boolean = NO_SAVE_GUARD,
@@ -64,11 +64,11 @@ export const cacheState = (folderPath: string): {
                     return { cacheHit: true, state: freshKey }
                 }            
                 await installFn()
-                cache[cacheAlias] = state
+                cache[cacheAlias] = await state()
                 await saveToCache(cache, folderPath)
                 return {
                     cacheHit: false,
-                    state,
+                    state: cache[cacheAlias],
                 }
             })
         },

@@ -12,10 +12,13 @@ export const pieceWorkerCache = {
     async getPiece({ engineToken, pieceName, pieceVersion, projectId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel> {
         const cacheKey = `${pieceName}-${pieceVersion}-${projectId}`
         const cache = cacheState(path.join(GLOBAL_CACHE_PIECES_PATH, cacheKey))
-        const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
-            version: pieceVersion,
-        })
-        await cache.getOrSetCache(cacheKey, JSON.stringify(pieceMetadata), (_: string) => {
+
+        const { state } = await cache.getOrSetCache(cacheKey, async () => {
+            const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
+                version: pieceVersion,
+            })
+            return JSON.stringify(pieceMetadata)
+        }, (_: string) => {
             const environment = environmentVariables.getEnvironment(AppSystemProp.ENVIRONMENT)
             if (environment === ApEnvironment.TESTING) {
                 return true
@@ -26,6 +29,7 @@ export const pieceWorkerCache = {
             }
             return false        
         }, NO_INSTALL_FN, NO_SAVE_GUARD)
+        const pieceMetadata = JSON.parse(state as string) as PieceMetadataModel
         return pieceMetadata
     },
 }

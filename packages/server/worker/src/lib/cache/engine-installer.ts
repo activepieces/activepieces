@@ -17,7 +17,7 @@ export const engineInstaller = (_log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
         const cache = cacheState(path)
-        const { cacheHit } = await cache.getOrSetCache(ENGINE_INSTALLED, ENGINE_CACHE_ID, (key: string) => {
+        const { cacheHit } = await cache.getOrSetCache(ENGINE_INSTALLED, () => Promise.resolve(ENGINE_CACHE_ID), (key: string) => {
             const isEngineInstalled = key == ENGINE_CACHE_ID
             return !isEngineInstalled || isDev
         }, async () => {
