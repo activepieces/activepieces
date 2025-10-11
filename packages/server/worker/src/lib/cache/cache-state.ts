@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 
@@ -22,21 +22,56 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
     return cache
 }
 
-export const cacheState = (folderPath: string) => {
+type CacheResult = {
+    cacheHit: boolean
+    state: string | null
+}
+
+type CacheStateParams = {
+    cacheAlias: string
+    state: (() => Promise<string>) | string
+    cacheMiss: (key: string) => boolean
+    installFn: () => Promise<void>
+    saveGuard: (key: string) => boolean
+}
+
+export const ALWAYS_CACHE_MISS = (_: string): boolean => true
+export const NO_SAVE_GUARD = (_: string): boolean => false
+export const NO_INSTALL_FN = (): Promise<void> => Promise.resolve()
+
+export const cacheState = (folderPath: string): {
+    getOrSetCache: (cacheStateParams: CacheStateParams) => Promise<CacheResult>
+} => {
     return {
-        async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
-                const cache = await getCache(folderPath)
-                return cache[cacheAlias]
-            })
-        },
-        async setCache(cacheAlias: string, state: string): Promise<void> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
-                const cache = await getCache(folderPath)
-                cache[cacheAlias] = state
+        async getOrSetCache({ cacheAlias, state, cacheMiss, installFn, saveGuard }: CacheStateParams): Promise<CacheResult> {
+            const cache = await getCache(folderPath)
+            const key = cache[cacheAlias]
+            if (!isNil(key) && !cacheMiss(key)) {
+                return {
+                    cacheHit: true,
+                    state: key,
+                }
+            }
+            const lockKey = `${folderPath}-${cacheAlias}`
+            return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
+                const freshKey = cache[cacheAlias]
+                if (!isNil(key) && !cacheMiss(key)) {
+                    return { cacheHit: true, state: freshKey }
+                }            
+                const stateValue = typeof state === 'string' ? state : await state()
+                if (saveGuard(stateValue)) {
+                    return {
+                        cacheHit: false,
+                        state: null,
+                    }
+                }  
+                await installFn()
+                cache[cacheAlias] = stateValue
                 await saveToCache(cache, folderPath)
+                return {
+                    cacheHit: false,
+                    state: stateValue,
+                }
             })
         },
     }
