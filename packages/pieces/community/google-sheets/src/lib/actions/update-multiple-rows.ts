@@ -46,7 +46,7 @@ export const updateMultipleRowsAction = createAction({
 					sheetId: sheet_Id,
 					rowIndex_s: 1,
 					rowIndex_e: 1,
-					headerRow: headerRow as number || 1,
+					headerRow: (headerRow as unknown as number) || 1,
 				});
 				const firstRow = headers[0].values ?? {};
 
