@@ -1,5 +1,5 @@
 import path from 'path'
-import { FlowVersionId, FlowVersionState, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
+import { FlowVersionId, FlowVersionState, isNil, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
 import { ApAxiosClient } from '../api/ap-axios'
 import { engineApiService } from '../api/server-api.service'
 import { cacheState, NO_INSTALL_FN } from './cache-state'
@@ -24,11 +24,17 @@ export const flowWorkerCache = {
                 },
                 installFn: NO_INSTALL_FN,
                 saveGuard: (flow: string) => {
+                    if (isNil(flow)) {
+                        return true
+                    }
                     const parsedFlow = JSON.parse(flow) as PopulatedFlow
                     return parsedFlow.version.state !== FlowVersionState.LOCKED
                 },
             })
 
+            if (isNil(state)) {
+                return null
+            }
             const flow = JSON.parse(state as string) as PopulatedFlow
             return flow
         }
