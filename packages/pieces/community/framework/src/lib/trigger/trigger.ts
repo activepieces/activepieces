@@ -57,9 +57,9 @@ type BaseTriggerParams<
 }
 
 type WebhookTriggerParams<
-PieceAuth extends PieceAuthProperty,
-TriggerProps extends InputPropertyMap,
-TS extends TriggerStrategy,
+  PieceAuth extends PieceAuthProperty,
+  TriggerProps extends InputPropertyMap,
+  TS extends TriggerStrategy,
 > = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
   handshakeConfiguration?: WebhookHandshakeConfiguration
   onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
@@ -72,8 +72,8 @@ type CreateTriggerParams<
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = TS extends TriggerStrategy.WEBHOOK
-    ? WebhookTriggerParams<PieceAuth, TriggerProps, TS>
-    : BaseTriggerParams<PieceAuth, TriggerProps, TS>
+  ? WebhookTriggerParams<PieceAuth, TriggerProps, TS>
+  : BaseTriggerParams<PieceAuth, TriggerProps, TS>
 
 export class ITrigger<
   TS extends TriggerStrategy,
@@ -107,19 +107,22 @@ export type Trigger<
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>
 
-// TODO refactor and extract common logic
 export const createTrigger = <
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
+  const onStart = params.onStart ?? (async () => Promise.resolve());
+  const test = params.test ?? (() => Promise.resolve([params.sampleData]));
+  const requireAuth = params.requireAuth ?? true;
+
   switch (params.type) {
     case TriggerStrategy.WEBHOOK:
       return new ITrigger(
         params.name,
         params.displayName,
         params.description,
-        params.requireAuth ?? true,
+        requireAuth,
         params.props,
         params.type,
         params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
@@ -128,9 +131,9 @@ export const createTrigger = <
         params.onRenew ?? (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
-        params.onStart ?? (async () => Promise.resolve()),
+        onStart,
         params.run,
-        params.test ?? (() => Promise.resolve([params.sampleData])),
+        test,
         params.sampleData,
         params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
       )
@@ -139,7 +142,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
-        params.requireAuth ?? true,
+        requireAuth,
         params.props,
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },
@@ -148,9 +151,9 @@ export const createTrigger = <
         (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
-        params.onStart ?? (async () => Promise.resolve()),
+        onStart,
         params.run,
-        params.test ?? (() => Promise.resolve([params.sampleData])),
+        test,
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
       )
@@ -159,7 +162,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
-        params.requireAuth ?? true,
+        requireAuth,
         params.props,
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },
@@ -168,9 +171,9 @@ export const createTrigger = <
         (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
-        params.onStart ?? (async () => Promise.resolve()),
+        onStart,
         params.run,
-        params.test ?? (() => Promise.resolve([params.sampleData])),
+        test,
         params.sampleData,
         (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
       )
