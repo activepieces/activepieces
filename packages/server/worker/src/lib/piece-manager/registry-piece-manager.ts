@@ -29,7 +29,7 @@ export class RegistryPieceManager extends PieceManager {
                 
                 await cache.getOrSetCache(
                     pkg.alias,
-                    () => Promise.resolve(CacheState.READY),
+                    CacheState.READY,
                     ALWAYS_CACHE_MISS,
                     async () => {
                         const exactVersionPath = join(projectPath, 'pieces', pkg.alias)
