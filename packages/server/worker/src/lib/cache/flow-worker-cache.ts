@@ -19,6 +19,9 @@ export const flowWorkerCache = {
                     return JSON.stringify(flow)
                 },
                 cacheMiss: (flow: string) => {
+                    if (isNil(flow)) {
+                        return true
+                    }
                     const parsedFlow = JSON.parse(flow) as PopulatedFlow
                     return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
                 },
