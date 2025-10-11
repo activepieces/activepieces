@@ -9,31 +9,20 @@ type CacheMap = Record<string, string>
 const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
 
 const cached: Record<string, CacheMap | null> = {}
-const getCache = async (folderPath: string): Promise<CacheMap> => {
-    if (isNil(cached[folderPath])) {
-        return memoryLock.runExclusive(`cache-${folderPath}`, async () => {
-            const filePath = cachePath(folderPath)
-            const cacheExists = await fileSystemUtils.fileExists(filePath)
-            if (!cacheExists) {
-                cached[folderPath] = {}
-                return cached[folderPath]
-            }
-            cached[folderPath] = await readCache(folderPath)
+const getCache = async (folderPath: string, forceReload: boolean): Promise<CacheMap> => {
+    return memoryLock.runExclusive(`cache-read-${folderPath}`, async () => {
+        if (!isNil(cached[folderPath]) && !forceReload) {
             return cached[folderPath]
-        })
-    }
-    return cached[folderPath] as CacheMap
-}
-
-const reloadCache = async (folderPath: string): Promise<CacheMap> => {
-    const filePath = cachePath(folderPath)
-    const cacheExists = await fileSystemUtils.fileExists(filePath)
-    if (!cacheExists) {
-        cached[folderPath] = {}
-        return cached[folderPath]
-    }
-    cached[folderPath] = await readCache(folderPath)
-    return cached[folderPath] as CacheMap
+        }
+        const filePath = cachePath(folderPath)
+        const cacheExists = await fileSystemUtils.fileExists(filePath)
+        if (!cacheExists) {
+            cached[folderPath] = {}
+            return cached[folderPath]
+        }
+        cached[folderPath] = await readCache(folderPath)
+        return cached[folderPath] as CacheMap
+    })
 }
 
 type CacheResult = {
@@ -58,7 +47,7 @@ export const cacheState = (folderPath: string): {
 } => {
     return {
         async getOrSetCache({ cacheAlias, state, cacheMiss, installFn, saveGuard }: CacheStateParams): Promise<CacheResult> {
-            let cache = await getCache(folderPath)
+            let cache = await getCache(folderPath, false)
             const key = cache[cacheAlias]
             if (!isNil(key) && !cacheMiss(key)) {
                 return {
@@ -68,7 +57,7 @@ export const cacheState = (folderPath: string): {
             }
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
-                cache = await reloadCache(folderPath)
+                cache = await getCache(folderPath, true)
                 const freshKey = cache[cacheAlias]
                 if (!isNil(freshKey) && !cacheMiss(freshKey)) {
                     return { cacheHit: true, state: freshKey }
