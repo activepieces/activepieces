@@ -3,7 +3,7 @@ import { isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import { FastifyBaseLogger } from 'fastify'
 import RedLock from 'redlock'
-import { redisConnections } from '../database/redis'
+import { redisConnections } from '../database/redis-connections'
 
 const lockMutex = new Mutex()
 

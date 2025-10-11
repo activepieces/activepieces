@@ -82,6 +82,10 @@ export const workerMachine = {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
     },
+    getSettingOrThrow: (prop: keyof WorkerMachineHealthcheckResponse) => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings[prop]
+    },
     getInternalApiUrl: (): string => {
         if (environmentVariables.hasAppModules()) {
             return 'http://127.0.0.1:3000/'

@@ -1,10 +1,10 @@
 import { DelayedJobData, ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
+import { redisConnections } from '../../../database/redis-connections'
 
 
 type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>

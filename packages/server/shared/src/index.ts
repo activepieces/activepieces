@@ -13,3 +13,6 @@ export * from './lib/webhook-secrets-util'
 export * from './lib/exec'
 export * from './lib/system-props'
 export * from './lib/ap-axios'
+
+export * from './lib/redis/types'
+export * from './lib/redis/index'

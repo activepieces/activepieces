@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, RedisType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -13,9 +13,9 @@ import jwtLibrary, {
     SignOptions,
     VerifyOptions,
 } from 'jsonwebtoken'
-import { redisConnections } from '../database/redis'
 import { localFileStore } from './local-store'
-import { RedisType, system } from './system/system'
+import { system } from './system/system'
+import { redisConnections } from '../database/redis-connections'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',
