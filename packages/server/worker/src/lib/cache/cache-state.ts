@@ -7,9 +7,12 @@ import writeFileAtomic from 'write-file-atomic'
 type CacheMap = Record<string, string>
 
 const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
-
+type GetCacheParams = {
+    folderPath: string
+    forceReload: boolean
+}
 const cached: Record<string, CacheMap | null> = {}
-const getCache = async (folderPath: string, forceReload: boolean): Promise<CacheMap> => {
+const getCache = async ({ folderPath, forceReload }: GetCacheParams): Promise<CacheMap> => {
     return memoryLock.runExclusive(`cache-read-${folderPath}`, async () => {
         if (!isNil(cached[folderPath]) && !forceReload) {
             return cached[folderPath]
@@ -47,7 +50,7 @@ export const cacheState = (folderPath: string): {
 } => {
     return {
         async getOrSetCache({ cacheAlias, state, cacheMiss, installFn, saveGuard }: CacheStateParams): Promise<CacheResult> {
-            let cache = await getCache(folderPath, false)
+            let cache = await getCache({ folderPath, forceReload: false })
             const key = cache[cacheAlias]
             if (!isNil(key) && !cacheMiss(key)) {
                 return {
@@ -57,7 +60,7 @@ export const cacheState = (folderPath: string): {
             }
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
-                cache = await getCache(folderPath, true)
+                cache = await getCache({ folderPath, forceReload: true })
                 const freshKey = cache[cacheAlias]
                 if (!isNil(freshKey) && !cacheMiss(freshKey)) {
                     return { cacheHit: true, state: freshKey }
