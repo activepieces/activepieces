@@ -57,7 +57,6 @@ export const cacheState = (folderPath: string): {
                 if (key === undefined && !cacheMiss(cacheAlias)) {
                     return { cacheHit: true, state: freshKey }
                 }            
-                await installFn()
                 const stateValue = typeof state === 'string' ? state : await state()
                 if (saveGuard(stateValue)) {
                     return {
@@ -65,6 +64,7 @@ export const cacheState = (folderPath: string): {
                         state: null,
                     }
                 }  
+                await installFn()
                 cache[cacheAlias] = stateValue
                 await saveToCache(cache, folderPath)
                 return {
