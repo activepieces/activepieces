@@ -51,12 +51,6 @@ export const cacheState = (folderPath: string): {
                     state: key,
                 }
             }
-            if (saveGuard(key)) {
-                return {
-                    cacheHit: false,
-                    state: null,
-                }
-            }
             const lockKey = `${folderPath}-${cacheAlias}`
             return fileSystemUtils.runExclusive(folderPath, lockKey, async () => {
                 const freshKey = cache[cacheAlias]
@@ -64,16 +58,18 @@ export const cacheState = (folderPath: string): {
                     return { cacheHit: true, state: freshKey }
                 }            
                 await installFn()
-                if (typeof state === 'string') {
-                    cache[cacheAlias] = state
-                }
-                else {
-                    cache[cacheAlias] = await state()
-                }
+                const stateValue = typeof state === 'string' ? state : await state()
+                if (saveGuard(stateValue)) {
+                    return {
+                        cacheHit: false,
+                        state: null,
+                    }
+                }  
+                cache[cacheAlias] = stateValue
                 await saveToCache(cache, folderPath)
                 return {
                     cacheHit: false,
-                    state: cache[cacheAlias],
+                    state: stateValue,
                 }
             })
         },
