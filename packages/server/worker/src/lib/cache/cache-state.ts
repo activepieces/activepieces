@@ -31,8 +31,10 @@ export const cacheState = (folderPath: string) => {
                 folderPath,
                 'cache-save',
                 async () => {
-                    const valueFromDisk = await readKeyFromDisk(key, folderPath)
+                    const cacheFromDisk = await readCacheFromFile(folderPath)
+                    const valueFromDisk = cacheFromDisk[key]
                     if (!isNil(valueFromDisk) && !cacheMiss(valueFromDisk)) {
+                        cached[folderPath] = cacheFromDisk
                         return { cacheHit: true, state: valueFromDisk }
                     }
                     const value = await installFn()
@@ -62,13 +64,6 @@ export const cacheState = (folderPath: string) => {
     }
 }
 
-async function readKeyFromDisk(
-    key: string,
-    folderPath: string,
-): Promise<string | null> {
-    const cache = await readCacheFromFile(folderPath)
-    return cache[key]
-}
 
 async function readCacheFromFile(folderPath: string): Promise<CacheMap> {
     const filePath = cachePath(folderPath)
