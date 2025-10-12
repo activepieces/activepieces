@@ -28,17 +28,22 @@ const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
-function getSidebarStateFromLocalStorage(prefix?: string) {
-  if (typeof window === 'undefined') return true;
-  const localStorageKey = `${prefix ?? 'default'}_sidebarIsOpen`;
-  const stored = localStorage.getItem(localStorageKey);
+function getSidebarStateFromLocalStorage(keyForStateInLocalStorage?: string) {
+  if (!keyForStateInLocalStorage) {
+    return true;
+  }
+  const stored = localStorage.getItem(keyForStateInLocalStorage);
   return stored ? stored === 'true' : true;
 }
 
-function setSidebarStateToLocalStorage(isOpen: boolean, prefix?: string) {
-  if (typeof window === 'undefined') return;
-  const localStorageKey = `${prefix ?? 'default'}_sidebarIsOpen`;
-  localStorage.setItem(localStorageKey, isOpen.toString());
+function setSidebarStateToLocalStorage(
+  isOpen: boolean,
+  keyForStateInLocalStorage?: string,
+) {
+  if (!keyForStateInLocalStorage) {
+    return;
+  }
+  localStorage.setItem(keyForStateInLocalStorage, isOpen.toString());
 }
 
 type SidebarContextProps = {
@@ -68,7 +73,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-    storagePrefix?: string;
+    keyForStateInLocalStorage?: string;
   }
 >(
   (
@@ -76,7 +81,7 @@ const SidebarProvider = React.forwardRef<
       defaultOpen,
       open: openProp,
       onOpenChange: setOpenProp,
-      storagePrefix,
+      keyForStateInLocalStorage,
       className,
       style,
       children,
@@ -87,9 +92,9 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen ?? getSidebarStateFromLocalStorage(storagePrefix));
+    const [_open, _setOpen] = React.useState(
+      defaultOpen ?? getSidebarStateFromLocalStorage(keyForStateInLocalStorage),
+    );
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -100,9 +105,9 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        setSidebarStateToLocalStorage(openState, storagePrefix);
+        setSidebarStateToLocalStorage(openState, keyForStateInLocalStorage);
       },
-      [setOpenProp, open, storagePrefix],
+      [setOpenProp, open, keyForStateInLocalStorage],
     );
 
     // Helper to toggle the sidebar.
