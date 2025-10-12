@@ -69,17 +69,20 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         type,
         status,
         output,
+        errorMessage,
     }: {
         input: unknown
         type: T
         status: StepOutputStatus
         output?: OUTPUT
+        errorMessage?: unknown
     }): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             input,
             type,
             status,
             output,
+            errorMessage,
         })
     }
 }

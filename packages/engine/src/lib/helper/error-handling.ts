@@ -1,4 +1,4 @@
-import { ActivepiecesError, CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { ActivepiecesError, CodeAction, FlowRunStatus, GenericStepOutput, PieceAction, StepOutputStatus } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
 import { ExecutionError, ExecutionErrorType } from './execution-errors'
@@ -26,21 +26,43 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
     return resultExecutionState
 }
 
-export async function continueIfFailureHandler(
+const getJsonifiedErrorMessage = (errorMessage: string | undefined): unknown => {
+    if (!errorMessage) {
+        return undefined
+    }
+    try {
+        return JSON.parse(errorMessage)
+    }
+    catch (_) {
+        return errorMessage
+    }
+}
+export async function handleStepFailure(
     executionState: FlowExecutorContext,
     action: CodeAction | PieceAction,
-    constants: EngineConstants,
 ): Promise<FlowExecutorContext> {
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
 
     if (
-        executionState.verdict === ExecutionVerdict.FAILED &&
-        continueOnFailure &&
-        !constants.testSingleStepMode
-    ) {
-        return executionState
+        executionState.verdict === ExecutionVerdict.FAILED
+    ) {    const errorMessage = executionState.error?.message
+        const jsonifiedErrorMessage = getJsonifiedErrorMessage(errorMessage)
+        const stepOutput = executionState.steps[action.name]
+        const stepOutputWithErrorAsOutput = GenericStepOutput.create({
+            input: action.settings.input,
+            type: action.type,
+            status: stepOutput.status,
+            errorMessage,
+            output: executionState.verdict === ExecutionVerdict.FAILED ? jsonifiedErrorMessage : stepOutput.output,
+        })
+       const newExecutionState = executionState.upsertStep(action.name, stepOutputWithErrorAsOutput)
+
+       if(continueOnFailure) {
+        return newExecutionState
             .setVerdict(ExecutionVerdict.RUNNING, undefined)
             .increaseTask()
+       }
+       return newExecutionState
     }
 
     return executionState

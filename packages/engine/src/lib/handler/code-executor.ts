@@ -3,7 +3,7 @@ import importFresh from '@activepieces/import-fresh-webpack'
 import { assertNotNullOrUndefined, CodeAction, FlowActionType, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
-import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { handleStepFailure, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { progressService } from '../services/progress.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
@@ -18,7 +18,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
             return executionState
         }
         const resultExecution = await runWithExponentialBackoff(executionState, action, constants, executeAction)
-        return continueIfFailureHandler(resultExecution, action, constants)
+        return handleStepFailure(resultExecution, action)
     },
 }
 
