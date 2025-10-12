@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import Redis from 'ioredis'
-import { redisConnections } from '../database/redis'
+import { redisConnections } from '../database/redis-connections'
 
 let redisClientSubscriber: Redis | null = null
 let redisClientPublisher: Redis | null = null

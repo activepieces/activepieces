@@ -1,7 +1,7 @@
 import { QueueMetricsResponse, WorkerJobStats, WorkerJobStatus, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../database/redis'
 import { jobStatsRedisKeyPrefix, metricsRedisKey } from '../workers/queue/queue-events'
+import { redisConnections } from '../database/redis-connections'
 
 export const queueMetricService = (_log: FastifyBaseLogger) => ({
 

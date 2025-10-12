@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { redisConnections } from '../../database/redis'
+import { redisConnections } from '../../database/redis-connections'
 
 const MACHINE_SANDBOXES_KEY = 'machine:sandboxes'
 

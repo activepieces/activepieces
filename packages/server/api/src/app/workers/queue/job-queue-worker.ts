@@ -4,10 +4,10 @@ import { DelayedError, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis'
 import { system } from '../../helper/system/system'
 import { jobConsumer } from '../consumer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
+import { redisConnections } from '../../database/redis-connections'
 
 const consumer: Record<string, Worker> = {}
 
