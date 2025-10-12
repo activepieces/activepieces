@@ -1,12 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { ApLock, filePiecesUtils, fileSystemUtils } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheState, NO_SAVE_GUARD } from '../cache/cache-state'
+import { cacheState } from '../cache/cache-state'
 import { packageManager } from '../cache/package-manager'
 import { CacheState } from '../cache/worker-cache'
 import { workerMachine } from '../utils/machine'
+import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
 
 export class LocalPieceManager extends PieceManager {
@@ -27,6 +28,7 @@ export class LocalPieceManager extends PieceManager {
 
         let lock: ApLock | undefined
         try {
+            lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
             const { projectPath, pieces } = params
             const basePath = resolve(__dirname.split(`${sep}dist`)[0])
             const communityPiecesDistPath = join(
@@ -74,22 +76,16 @@ const linkPackages = async (
         return
     }
     const cache = cacheState(projectPath)
-    await cache.getOrSetCache({
-        key: packageName,
-        cacheMiss: (key: string) => {
-            return key !== CacheState.READY
-        },
-        installFn: async () => {
-            await updatePackageJson(linkPath, packages)
-            await packageManager(log).link({
-                packageName,
-                path: projectPath,
-                linkPath,
-            })
-            return CacheState.READY
-        },
-        skipSave: NO_SAVE_GUARD,
+    if (await cache.cacheCheckState(packageName) === CacheState.READY) {
+        return
+    }
+    await updatePackageJson(linkPath, packages)
+    await packageManager(log).link({
+        packageName,
+        path: projectPath,
+        linkPath,
     })
+    await cache.setCache(packageName, CacheState.READY)
 }
 
 const updatePackageJson = async (
