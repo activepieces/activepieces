@@ -2,7 +2,7 @@ import path from 'path'
 import { FlowVersionId, FlowVersionState, isNil, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
 import { ApAxiosClient } from '../api/ap-axios'
 import { engineApiService } from '../api/server-api.service'
-import { cacheState, NO_INSTALL_FN } from './cache-state'
+import { cacheState } from './cache-state'
 import { GLOBAL_CACHE_FLOWS_PATH } from './worker-cache'
 
 export const flowWorkerCache = {
@@ -11,13 +11,7 @@ export const flowWorkerCache = {
             const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
             
             const { state } = await cache.getOrSetCache({
-                cacheAlias: flowVersionId,
-                state: async () => {
-                    const flow = await engineApiService(engineToken).getFlow({
-                        versionId: flowVersionId,
-                    })
-                    return JSON.stringify(flow)
-                },
+                key: flowVersionId,
                 cacheMiss: (flow: string) => {
                     if (isNil(flow)) {
                         return true
@@ -25,8 +19,13 @@ export const flowWorkerCache = {
                     const parsedFlow = JSON.parse(flow) as PopulatedFlow
                     return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
                 },
-                installFn: NO_INSTALL_FN,
-                saveGuard: (flow: string) => {
+                installFn: async () => {
+                    const flow = await engineApiService(engineToken).getFlow({
+                        versionId: flowVersionId,
+                    })
+                    return JSON.stringify(flow)
+                },
+                skipSave: (flow: string) => {
                     if (isNil(flow)) {
                         return true
                     }

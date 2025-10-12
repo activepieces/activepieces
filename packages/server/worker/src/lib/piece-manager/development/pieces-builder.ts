@@ -7,7 +7,7 @@ import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
-import { ALWAYS_CACHE_MISS, cacheState, NO_INSTALL_FN, NO_SAVE_GUARD } from '../../cache/cache-state'
+import { cacheState } from '../../cache/cache-state'
 import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../cache/worker-cache'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
@@ -55,11 +55,11 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH)
-        await cache.getOrSetCache({ cacheAlias: '@activepieces/pieces-framework', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
-        await cache.getOrSetCache({ cacheAlias: '@@activepieces/pieces-common', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
-        await cache.getOrSetCache({ cacheAlias: '@activepieces/shared', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
-        await cache.getOrSetCache({ cacheAlias: '@activepieces/common-ai', state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
-        await cache.getOrSetCache({ cacheAlias: piecePackageName, state: CacheState.PENDING, cacheMiss: ALWAYS_CACHE_MISS, installFn: NO_INSTALL_FN, saveGuard: NO_SAVE_GUARD })
+        await cache.saveCache('@activepieces/pieces-framework', CacheState.PENDING)
+        await cache.saveCache('@@activepieces/pieces-common', CacheState.PENDING)
+        await cache.saveCache('@activepieces/shared', CacheState.PENDING)
+        await cache.saveCache('@activepieces/common-ai', CacheState.PENDING)
+        await cache.saveCache(piecePackageName, CacheState.PENDING)
 
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }

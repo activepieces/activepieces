@@ -8,7 +8,7 @@ import {
     PrivatePiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ALWAYS_CACHE_MISS, cacheState, NO_SAVE_GUARD } from '../cache/cache-state'
+import { cacheState, NO_SAVE_GUARD } from '../cache/cache-state'
 import { packageManager } from '../cache/package-manager'
 import { CacheState } from '../cache/worker-cache'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
@@ -28,9 +28,10 @@ export class RegistryPieceManager extends PieceManager {
                 const pkg = this.pieceToDependency(piece)
                 
                 await cache.getOrSetCache({
-                    cacheAlias: pkg.alias,
-                    state: CacheState.READY,
-                    cacheMiss: ALWAYS_CACHE_MISS,
+                    key: pkg.alias,
+                    cacheMiss: (value: string) => {
+                        return value !== CacheState.READY
+                    },
                     installFn: async () => {
                         const exactVersionPath = join(projectPath, 'pieces', pkg.alias)
                         await mkdir(exactVersionPath, { recursive: true })
@@ -44,8 +45,9 @@ export class RegistryPieceManager extends PieceManager {
                             dependencies: [pkg], 
                             installDir: exactVersionPath,
                         })
+                        return CacheState.READY
                     },
-                    saveGuard: NO_SAVE_GUARD,
+                    skipSave: NO_SAVE_GUARD,
                 })
             }),
         )

@@ -63,8 +63,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             const currentHash = await cryptoUtils.hashObject(sourceCode)
             const cache = cacheState(codePath)
             await cache.getOrSetCache({
-                cacheAlias: codePath,
-                state: currentHash,
+                key: codePath,
                 cacheMiss: (key: string) => {
                     return key === currentHash
                 },
@@ -91,8 +90,9 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                         code,
                         log,
                     })
+                    return currentHash
                 },
-                saveGuard: NO_SAVE_GUARD,
+                skipSave: NO_SAVE_GUARD,
             })
         }
         catch (error: unknown) {

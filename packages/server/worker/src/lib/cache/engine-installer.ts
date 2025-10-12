@@ -18,8 +18,7 @@ export const engineInstaller = (_log: FastifyBaseLogger) => ({
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
         const cache = cacheState(path)
         const { cacheHit } = await cache.getOrSetCache({
-            cacheAlias: ENGINE_INSTALLED,
-            state: ENGINE_CACHE_ID,
+            key: ENGINE_INSTALLED,
             cacheMiss: (key: string) => {
                 const isEngineInstalled = key == ENGINE_CACHE_ID
                 return !isEngineInstalled || isDev
@@ -27,8 +26,9 @@ export const engineInstaller = (_log: FastifyBaseLogger) => ({
             installFn: async () => {
                 await atomicCopy(engineExecutablePath, `${path}/main.js`)
                 await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
+                return ENGINE_CACHE_ID
             },
-            saveGuard: NO_SAVE_GUARD,
+            skipSave: NO_SAVE_GUARD,
         })     
         return { cacheHit }
     },

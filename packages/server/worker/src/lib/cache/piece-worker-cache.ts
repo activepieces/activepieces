@@ -4,7 +4,7 @@ import { AppSystemProp, environmentVariables, PiecesSource } from '@activepieces
 import { ApEnvironment, ProjectId } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
-import { cacheState, NO_INSTALL_FN, NO_SAVE_GUARD } from './cache-state'
+import { cacheState, NO_SAVE_GUARD } from './cache-state'
 import { GLOBAL_CACHE_PIECES_PATH } from './worker-cache'
 
 
@@ -14,13 +14,7 @@ export const pieceWorkerCache = {
         const cache = cacheState(path.join(GLOBAL_CACHE_PIECES_PATH, cacheKey))
 
         const { state } = await cache.getOrSetCache({
-            cacheAlias: cacheKey,
-            state: async () => {
-                const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
-                    version: pieceVersion,
-                })
-                return JSON.stringify(pieceMetadata)
-            },
+            key: cacheKey,
             cacheMiss: (_: string) => {
                 const environment = environmentVariables.getEnvironment(AppSystemProp.ENVIRONMENT)
                 if (environment === ApEnvironment.TESTING) {
@@ -32,8 +26,13 @@ export const pieceWorkerCache = {
                 }
                 return false        
             },
-            installFn: NO_INSTALL_FN,
-            saveGuard: NO_SAVE_GUARD,
+            installFn: async () => {
+                const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
+                    version: pieceVersion,
+                })
+                return JSON.stringify(pieceMetadata)
+            },
+            skipSave: NO_SAVE_GUARD,
         })
         const pieceMetadata = JSON.parse(state as string) as PieceMetadataModel
         return pieceMetadata

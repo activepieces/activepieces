@@ -75,8 +75,7 @@ const linkPackages = async (
     }
     const cache = cacheState(projectPath)
     await cache.getOrSetCache({
-        cacheAlias: packageName,
-        state: CacheState.READY,
+        key: packageName,
         cacheMiss: (key: string) => {
             return key !== CacheState.READY
         },
@@ -87,8 +86,9 @@ const linkPackages = async (
                 path: projectPath,
                 linkPath,
             })
+            return CacheState.READY
         },
-        saveGuard: NO_SAVE_GUARD,
+        skipSave: NO_SAVE_GUARD,
     })
 }
 
