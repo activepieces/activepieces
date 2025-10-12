@@ -65,7 +65,15 @@ export class AxiosHttpClient extends BaseHttpClient {
       };
     } catch (e) {
       if (axios.isAxiosError(e)) {
-        throw new HttpError(request.body,e);
+        // Log only essential debugging information - NO sensitive data
+        const sanitizedError = this.sanitizeAxiosError(e);
+        console.error(
+          '[HttpClient#sendRequest] Request failed:',
+          sanitizedError
+        );
+
+        // Sanitize the error before throwing to prevent secrets in error messages
+        throw new HttpError(request.body, sanitizedError);
       }
 
       throw e;
@@ -73,9 +81,103 @@ export class AxiosHttpClient extends BaseHttpClient {
   }
 
 
+  private sanitizeAxiosError(error: AxiosError): AxiosError {
+    const sanitizedError: any = {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    };
 
+    // Sanitize config
+    if (error.config) {
+      sanitizedError.config = {
+        ...error.config,
+        headers: this.sanitizeHeaders(error.config.headers),
+      };
+    }
 
- 
+    // Sanitize request - this is the critical part that was missing
+    if (error.request) {
+      sanitizedError.request = {
+        // Only include safe properties
+        method: error.request.method,
+        path: error.request.path,
+        host: error.request.host,
+        protocol: error.request.protocol,
+        // Redact all headers
+        _header: '[REDACTED]',
+        headers: '[REDACTED]',
+      };
+    }
+
+    // Sanitize response
+    if (error.response) {
+      sanitizedError.response = {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        headers: error.response.headers, // Response headers from server are usually safe
+        data: error.response.data,
+        config: {
+          ...error.response.config,
+          headers: this.sanitizeHeaders(error.response.config?.headers),
+        },
+        // Explicitly redact the request inside response
+        request: {
+          method: error.response.request?.method,
+          path: error.response.request?.path,
+          host: error.response.request?.host,
+          protocol: error.response.request?.protocol,
+          _header: '[REDACTED]',
+          headers: '[REDACTED]',
+        },
+      };
+    }
+
+    sanitizedError.status = error.response?.status;
+
+    return sanitizedError as AxiosError;
+  }
+
+  
+   // Redacts sensitive header values while preserving header names for debugging.
+
+  private sanitizeHeaders(headers: any): any {
+    if (!headers) return headers;
+
+    const sensitiveHeaderPatterns = [
+      'authorization',
+      'x-api-key',
+      'api-key',
+      'apikey',
+      'token',
+      'x-auth-token',
+      'x-access-token',
+      'cookie',
+      'set-cookie',
+      'x-csrf-token',
+      'x-xsrf-token',
+      'proxy-authorization',
+      'api_key',
+      'access_token',
+      'client_secret',
+      'api-secret',
+    ];
+
+    const sanitized: any = {};
+
+    Object.keys(headers).forEach((key) => {
+      const lowerKey = key.toLowerCase();
+      
+      if (sensitiveHeaderPatterns.some((pattern) => lowerKey.includes(pattern.toLowerCase()))) {
+        sanitized[key] = '[REDACTED]';
+      } else {
+        sanitized[key] = headers[key];
+      }
+    });
+
+    return sanitized;
+  }
 
   private getAxiosRequestMethod(httpMethod: HttpMethod): string {
     return httpMethod.toString();
