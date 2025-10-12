@@ -69,7 +69,10 @@ export function ProjectSwitcher() {
             <ScrollArea viewPortClassName="max-h-[400px]">
               {allProjects &&
                 allProjects.map((platform) => (
-                  <CommandGroup heading={platform.platformName} key={platform.platformName}>
+                  <CommandGroup
+                    heading={platform.platformName}
+                    key={platform.platformName}
+                  >
                     {platform.projects &&
                       platform.projects.map((project) => (
                         <CommandItem
