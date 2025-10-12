@@ -1,6 +1,8 @@
+import { StepOutputStatus } from '@activepieces/shared'
+import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { runWithExponentialBackoff } from '../../src/lib/helper/error-handling'
-import { buildCodeAction, generateMockEngineConstants } from '../handler/test-helper'
+import { buildCodeAction, deleteCustomCodeFile, generateMockEngineConstants } from '../handler/test-helper'
 
 describe('runWithExponentialBackoff', () => {
     const executionState = FlowExecutorContext.empty()
@@ -25,6 +27,7 @@ describe('runWithExponentialBackoff', () => {
 
     afterAll(() => {
         jest.clearAllMocks()
+        deleteCustomCodeFile()
     })
 
     it('should return resultExecutionState when verdict is not FAILED', async () => {
@@ -79,4 +82,32 @@ describe('runWithExponentialBackoff', () => {
 
     })
 
+    it('should return resultExecutionState when verdict is FAILED and continueOnFailure is true with parsed json in error message', async () => {
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({
+                name: 'custom_code',
+                input: {},
+                code: `
+                export const code = async (inputs) => {
+                const x = {"msg":"Custom  Error","params":{"key":"value"} }
+                throw new Error(JSON.stringify(x))
+}`, errorHandlingOptions: {
+                    continueOnFailure: {
+                        value: true,
+                    },
+                    retryOnFailure: {
+                        value: false,
+                    },
+                },
+            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants({
+                testSingleStepMode: false,
+            }),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.custom_code.status).toEqual(StepOutputStatus.FAILED)
+        expect(result.steps.custom_code.output).toEqual({ 'msg': 'Custom  Error', 'params': { 'key': 'value' } })
+     
+    })
+
 })
+
