@@ -1,5 +1,5 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateLogsRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -72,12 +72,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
         await handleUpdateLogsBehavior({
             log: request.log,
-            updateLogsBehavior: request.body.updateLogsBehavior,
-            executionStateContentLength: request.body.executionStateContentLength,
-            logsFileId: request.body.logsFileId,
-            executionStateBuffer: request.body.executionStateBuffer,
-            projectId: request.principal.projectId,
-            runId,
+            ...request.body,
         })
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
@@ -172,47 +167,35 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             .send(data)
     })
 
-
-
+    app.post('/update-logs', UpdateLogsParams, async (request) => {
+        return flowRunService(request.log).updateLogs({
+            projectId: request.principal.projectId,
+            ...request.body,
+        })
+    })
 }
 
 async function handleUpdateLogsBehavior(request: HandleUpdateLogsBehaviorParams): Promise<void> {
-    const { updateLogsBehavior, executionStateContentLength, logsFileId, executionStateBuffer, projectId } = request
-    switch (updateLogsBehavior) {
-        case UpdateLogsBehavior.UPDATE_LOGS: {
-            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-            await flowRunService(request.log).updateLogs({
-                flowRunId: request.runId,
-                logsFileId,
-                projectId,
-                executionStateString: executionStateBuffer,
-                executionStateContentLength,
-            })
-            break
-        }
-        case UpdateLogsBehavior.UPDATE_LOGS_SIZE: {
-            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-            assertNotNullOrUndefined(logsFileId, 'logsFileId is required')
-            await flowRunService(request.log).updateLogsSizeAndAttachLogsFile({
-                flowRunId: request.runId,
-                logsFileId,
-                executionStateContentLength,
-            })
-            break
-        }
-        case UpdateLogsBehavior.NONE: {
-            break
-        }
-    }   
+    const { updateLogsBehavior, executionStateContentLength, logsFileId } = request
+    if (updateLogsBehavior === UpdateLogsBehavior.UPDATE_LOGS_METADATA) {
+        assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required for UPDATE_LOGS_METADATA')
+        assertNotNullOrUndefined(logsFileId, 'logsFileId is required for UPDATE_LOGS_METADATA')
+        await flowRunService(request.log).updateLogsSizeAndAttachLogsFile({
+            flowRunId: request.runId,
+            logsFileId,
+            executionStateContentLength,
+        })
+    }
+    else if (updateLogsBehavior === UpdateLogsBehavior.NONE) {
+        return
+    }
 }
 
 type HandleUpdateLogsBehaviorParams = {
     log: FastifyBaseLogger
     updateLogsBehavior: UpdateLogsBehavior
-    executionStateContentLength: number | null
-    logsFileId: string | undefined
-    executionStateBuffer: string | undefined
-    projectId: string
+    executionStateContentLength?: number
+    logsFileId?: string
     runId: string
 }
 
@@ -360,5 +343,17 @@ const UpdateFlowResponseParams = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const UpdateLogsParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: UpdateLogsRequest,
+        response: {
+            [StatusCodes.OK]: {},
+        },
     },
 }

@@ -255,9 +255,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return flowRun
     },
 
-    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
-        const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
-        if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
+    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<{ logsFileId: string }> {
+        const executionState = Buffer.from(executionStateString)
+
+        if (executionStateContentLength > maxFileSizeInBytes || executionState.byteLength > maxFileSizeInBytes) {
             const errors = new Error(
                 'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
             )
@@ -280,6 +281,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await flowRunRepo().update(flowRunId, {
             logsFileId: newLogsFileId,
         })
+        return { logsFileId: newLogsFileId }
     },
     async updateLogsSizeAndAttachLogsFile({ flowRunId, logsFileId, executionStateContentLength }: UpdateLogsSizeAndAttachLogsFileParams): Promise<void> {
         await flowRunRepo().update(flowRunId, {
@@ -290,6 +292,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             size: executionStateContentLength,
         })
     },
+
     async start({
         flowId,
         payload,
@@ -596,8 +599,7 @@ function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: st
 }
 
 
-
-const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string }> => {
+const createLogsUploadUrl = async (params: CreateLogsUploadFileParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string }> => {
     const file = await getOrCreateLogsFile(params, log)
     assertNotNullOrUndefined(file.s3Key, 's3Key')
     const uploadUrl = await s3Helper(log).putS3SignedUrl(file.s3Key)
@@ -642,6 +644,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         logsUploadUrl = logsUploadResult.uploadUrl
         logsFileId = logsUploadResult.fileId
     }
+
     const platformId = await projectService.getPlatformId(params.flowRun.projectId)
 
     const traceContext: Record<string, string> = {}
@@ -694,16 +697,16 @@ async function create(params: CreateParams): Promise<FlowRun> {
     })
 }
 
-type CreateLogsUploadUrlParams = {
+type CreateLogsUploadFileParams = {
     flowRun: FlowRun
     projectId: string
 }
 
 type UpdateLogs = {
     flowRunId: FlowRunId
-    logsFileId: string | undefined
+    logsFileId?: string | undefined
     projectId: ProjectId
-    executionStateString: string | undefined
+    executionStateString: string
     executionStateContentLength: number
 }
 

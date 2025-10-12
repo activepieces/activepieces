@@ -74,12 +74,11 @@ async function handleMemoryIssueError(jobData: ExecuteFlowJobData, engineToken: 
             tasks: 0,
             tags: [],
         },
-        updateLogsBehavior: UpdateLogsBehavior.NONE,
-        executionStateContentLength: null,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
+        updateLogsBehavior: UpdateLogsBehavior.NONE,
     })
 }
 
@@ -92,12 +91,11 @@ async function handleTimeoutError(jobData: ExecuteFlowJobData, engineToken: stri
             duration: timeoutFlowInSeconds,
             status: FlowRunStatus.TIMEOUT,
         },
-        executionStateContentLength: null,
-        updateLogsBehavior: UpdateLogsBehavior.NONE,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
+        updateLogsBehavior: UpdateLogsBehavior.NONE,
     })
 }
 
@@ -109,12 +107,11 @@ async function handleInternalError(jobData: ExecuteFlowJobData, engineToken: str
             tasks: 0,
             tags: [],
         },
-        executionStateContentLength: null,
-        updateLogsBehavior: UpdateLogsBehavior.NONE,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
+        updateLogsBehavior: UpdateLogsBehavior.NONE,
     })
     exceptionHandler.handle(e, log)
     throw e

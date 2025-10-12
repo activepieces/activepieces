@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateLogsBehavior, UpdateRunProgressRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateLogsBehavior, UpdateLogsRequest, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -101,26 +101,19 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             },
         })
 
-        const uploadLogsDirectly = !isNil(engineConstants.logsUploadUrl)
-        if (uploadLogsDirectly) {
-            const response = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
-            if (!response.ok) {
-                throw new ProgressUpdateError('Failed to upload execution state', response)
-            }
-        }
+        const { logsFileId } = await saveLogs(engineConstants, executionState)
 
         const request = {
             runId: engineConstants.flowRunId,
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
-            executionStateBuffer: uploadLogsDirectly ? undefined : executionState.toString(),
-            executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
-            updateLogsBehavior: uploadLogsDirectly ? UpdateLogsBehavior.UPDATE_LOGS_SIZE : UpdateLogsBehavior.UPDATE_LOGS,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
-            logsFileId: engineConstants.logsFileId,
             testSingleStepMode: engineConstants.testSingleStepMode,
+            updateLogsBehavior: UpdateLogsBehavior.UPDATE_LOGS_METADATA as const,
+            executionStateContentLength: executionState.byteLength,
+            logsFileId,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -131,7 +124,6 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         if (!response.ok) {
             throw new ProgressUpdateError('Failed to send progress update', response)
         }
-
     })
 }
 
@@ -148,7 +140,7 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<Response> => {
+const uploadExecutionStateToS3 = async (uploadUrl: string, executionState: Buffer): Promise<Response> => {
     return fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,
@@ -160,11 +152,58 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): 
     })
 }
 
+const uploadExecutionStateToApi = async (params: UploadExecutionStateToApiParams): Promise<Response> => {
+    const { engineConstants, executionState } = params
+    return fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-logs`).toString(), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${engineConstants.engineToken}`,
+        },
+        retryDelay: 4000,
+        retries: 3,
+        body: JSON.stringify({
+            flowRunId: engineConstants.flowRunId,
+            logsFileId: engineConstants.logsFileId,
+            executionStateContentLength: executionState.byteLength,
+            executionStateString: executionState.toString(),
+        } as UpdateLogsRequest),
+    })
+}
+
+const saveLogs = async (engineConstants: EngineConstants, executionState: Buffer): Promise<{ logsFileId: string }> => {
+    const uploadToS3 = !isNil(engineConstants.logsUploadUrl)
+    let response: Response
+    if (uploadToS3) {
+        response = await uploadExecutionStateToS3(engineConstants.logsUploadUrl, executionState)
+        if (!response.ok) {
+            throw new ProgressUpdateError('Failed to upload execution state', response)
+        }
+        return { logsFileId: engineConstants.logsFileId! }
+    } 
+    else {
+        response = await uploadExecutionStateToApi({
+            engineConstants,
+            executionState,
+        })
+        if (!response.ok) {
+            throw new ProgressUpdateError('Failed to upload execution state', response)
+        }
+        return response.json()
+    }
+}
+
 
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     updateImmediate?: boolean
+}
+
+
+type UploadExecutionStateToApiParams = {
+    engineConstants: EngineConstants
+    executionState: Buffer
 }
 
 export const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
