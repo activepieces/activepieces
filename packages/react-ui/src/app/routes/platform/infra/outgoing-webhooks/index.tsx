@@ -14,7 +14,6 @@ const OutgoingWebhooksPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: webhooks, isLoading } =
     outgoingWebhooksHooks.useOutgoingWebhooks();
-  const { data: projects } = projectHooks.useProjects();
 
   const isEnabled = platform.plan.auditLogEnabled;
   return (
@@ -39,7 +38,7 @@ const OutgoingWebhooksPage = () => {
               {t('Manage webhooks that receive platform events')}
             </p>
           </div>
-          <OutgoingWebhookDialog webhook={null} projects={projects ?? []}>
+          <OutgoingWebhookDialog webhook={null}>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               {t('Create Webhook')}
@@ -50,7 +49,6 @@ const OutgoingWebhooksPage = () => {
         <OutgoingWebhooksTable
           webhooks={webhooks}
           isLoading={isLoading}
-          projects={projects ?? []}
         />
       </div>
     </LockedFeatureGuard>

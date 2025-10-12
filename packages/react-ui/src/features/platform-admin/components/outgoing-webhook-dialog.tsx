@@ -54,7 +54,6 @@ type FormData = z.infer<typeof formSchema>;
 interface OutgoingWebhookDialogProps {
   children: React.ReactNode;
   webhook: OutgoingWebhook | null;
-  projects: Project[];
 }
 
 export const OutgoingWebhookDialog = ({
