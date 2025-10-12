@@ -84,7 +84,7 @@ async function extractActionParametersFromUserInstructions({
                 })
                 return { propertyName, ...result }
             }))).filter((schema): schema is NonNullable<typeof schema> & { schema: NonNullable<typeof schema.schema> } => 
-                schema !== null && schema.schema !== null
+                schema !== null && schema.schema !== null,
             )
 
             const schemaObject: ZodRawShape = Object.fromEntries(
