@@ -5,6 +5,7 @@ import { engineApiService } from '../api/server-api.service'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
 import { engineRunner } from '../runner'
 import { workerMachine } from '../utils/machine'
+import { inspect } from 'util'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
@@ -147,7 +148,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {
-                        message: result.error?.message ?? 'internal error',
+                        message: JSON.stringify(result),
                     },
                 })
             }
