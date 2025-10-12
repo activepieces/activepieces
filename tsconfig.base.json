@@ -958,6 +958,9 @@
       "@activepieces/piece-serpstat": [
         "packages/pieces/community/serpstat/src/index.ts"
       ],
+      "@activepieces/piece-servicenow": [
+        "packages/pieces/community/servicenow/src/index.ts"
+      ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
       ],
