@@ -1,13 +1,8 @@
 import { Static, Type } from "@sinclair/typebox";
-import { McpTool } from "../../mcp";
 
-
-export const InvokeMcpByFlowServerParams = Type.Object({
+export const CreateMCPServerFromStepParams = Type.Object({
     flowId: Type.String(),
+    flowVersionId: Type.String(),
+    stepName: Type.String(),
 })
-export type InvokeMcpByFlowServerParams = Static<typeof InvokeMcpByFlowServerParams>
-
-export const InvokeMcpByFlowServerBody = Type.Object({
-    tools: Type.Array(McpTool),
-})
-export type InvokeMcpByFlowServerBody = Static<typeof InvokeMcpByFlowServerBody>
+export type CreateMCPServerFromStepParams = Static<typeof CreateMCPServerFromStepParams>
