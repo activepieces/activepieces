@@ -1,16 +1,28 @@
 import { AIUsageFeature, createAIModel } from "@activepieces/common-ai";
-import { httpClient, AuthenticationType, HttpMethod } from "@activepieces/pieces-common";
-import { Agent, SeekPage, ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
+import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { type Schema as AiSchema, experimental_createMCPClient, tool } from "ai";
-import { StatusCodes } from "http-status-codes";
 import z, { ZodRawShape, ZodSchema } from "zod";
+
+export const AI_MODELS = [
+  { id: 'openai-gpt-4.1', provider: 'openai', displayName: 'GPT-4.1', modelName: 'gpt-4.1' },
+  { id: 'openai-gpt-4-turbo', provider: 'openai', displayName: 'GPT-4 Turbo', modelName: 'gpt-4-turbo' },
+  { id: 'openai-gpt-3.5-turbo', provider: 'openai', displayName: 'GPT-3.5 Turbo', modelName: 'gpt-3.5-turbo' },
+  
+  { id: 'anthropic-claude-3-opus', provider: 'anthropic', displayName: 'Claude 3 Opus', modelName: 'claude-3-opus' },
+  { id: 'anthropic-claude-3-sonnet', provider: 'anthropic', displayName: 'Claude 3 Sonnet', modelName: 'claude-3-sonnet' },
+  { id: 'anthropic-claude-3-haiku', provider: 'anthropic', displayName: 'Claude 3 Haiku', modelName: 'claude-3-haiku' },
+  
+  { id: 'google-gemini-1.5-pro', provider: 'google', displayName: 'Gemini 1.5 Pro', modelName: 'gemini-1.5-pro' },
+  { id: 'google-gemini-1.5-flash', provider: 'google', displayName: 'Gemini 1.5 Flash', modelName: 'gemini-1.5-flash' },
+] as const;
+
+type AIModel = typeof AI_MODELS[number];
 
 async function getStructuredOutput(outputFields: AgentOutputField[]): Promise<ZodSchema> {
     const shape: ZodRawShape = {}
-
     for (const field of outputFields) {
         switch (field.type) {
             case AgentOutputFieldType.TEXT:
@@ -26,7 +38,6 @@ async function getStructuredOutput(outputFields: AgentOutputField[]): Promise<Zo
                 shape[field.displayName] = z.any()
         }
     }
-
     return z.object(shape)
 }  
 
@@ -48,11 +59,7 @@ async function buildInternalTools(params: AgentToolsParams) {
 }
 
 async function getMcpClient(params: AgentToolsParams) {
-    const mcpServer = params.mcp
-    if (mcpServer.tools.length === 0) {
-        return null
-    }
-    const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
+    const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/mcp-server`
     return experimental_createMCPClient({
         transport: {
             type: 'sse',
@@ -62,16 +69,6 @@ async function getMcpClient(params: AgentToolsParams) {
 }
 
 export const agentCommon = {
-  listAgents(params: ListAgents) {
-    return httpClient.sendRequest<SeekPage<Agent>>({
-      method: HttpMethod.GET,
-      url: `${params.publicUrl}v1/agents`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: params.token,
-      },
-    })
-  },
   async agentTools(params: AgentToolsParams) {
     const mcpClient = await getMcpClient(params)
     const builtInTools = await buildInternalTools(params)
@@ -89,21 +86,34 @@ export const agentCommon = {
         },
     }
   },
-  createModelForProvider<P extends AIProvider>({
-    provider,
+  getModelById(modelId: string): AIModel {
+    const model = AI_MODELS.find(m => m.id === modelId);
+    if (!model) {
+      throw new Error(`Model ${modelId} not found`);
+    }
+    return model;
+  },
+  createModel({
     model,
     token,
     baseURL,
     agentId,
-  }: CreateModelParams<P>) {
-    const providerInstance = {
-      [AIProvider.OPENAI]: openai(model as OpenAIModel),
-      [AIProvider.ANTHROPIC]: anthropic(model as AnthropicModel),
-      [AIProvider.GOOGLE]: google(model as GoogleModel),
-    }[provider];
+  }: {
+    model: AIModel;
+    token: string;
+    baseURL: string;
+    agentId: string;
+  }) {
+    const providerInstances = {
+      openai: () => openai(model.modelName),
+      anthropic: () => anthropic(model.modelName),
+      google: () => google(model.modelName),
+    };
+
+    const providerInstance = providerInstances[model.provider as keyof typeof providerInstances]();
 
     return createAIModel({
-      providerName: provider,
+      providerName: model.provider,
       modelInstance: providerInstance,
       engineToken: token,
       baseURL,
@@ -113,23 +123,7 @@ export const agentCommon = {
       },
     });
   },
-  async getAgent(params: GetAgent) {
-    const { agentId, apiUrl , token } = params;
-    const response = await httpClient.sendRequest<Agent>({
-      method: HttpMethod.GET,
-      url: `${apiUrl}v1/agents/${agentId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token,
-      }
-    })
-    if (response.status !== StatusCodes.OK) {
-      throw new Error("There was an error fetching agent")
-    }
-
-    return response.body
-  },
-  getMetadata(toolName: string, mcp: McpWithTools, baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock {
+  getMetadata(toolName: string, tools: McpTool[], baseTool: Pick<ToolCallContentBlock, 'startTime' | 'endTime' | 'input' | 'output' | 'status' | 'toolName' | 'toolCallId' | 'type'>): ToolCallContentBlock {
     if (toolName === agentbuiltInToolsNames.markAsComplete || toolName === agentbuiltInToolsNames.updateTableRecord) {
         return {
             ...baseTool,
@@ -137,7 +131,7 @@ export const agentCommon = {
             displayName: toolName === agentbuiltInToolsNames.markAsComplete ? 'Mark as Complete' : 'Update Table Record',
         }
     }
-    const tool = mcp.tools.find((tool) => tool.toolName === toolName)
+    const tool = tools.find((tool) => tool.toolName === toolName)
     if (!tool) {
         throw new Error(`Tool ${toolName} not found`)
     }
@@ -164,24 +158,6 @@ export const agentCommon = {
         }
     }
   },
-  async getMcp(params: GetMcp) {
-    const { mcpId, apiUrl , token } = params;
-
-    const response = await httpClient.sendRequest<McpWithTools>({
-      method: HttpMethod.GET,
-      url: `${apiUrl}v1/mcp-servers/${mcpId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token,
-      }
-    })
-    
-    if (response.status !== StatusCodes.OK) {
-      throw new Error("There was an error fetching agent")
-    }
-
-    return response.body
-  },
   isMarkAsComplete(block: any): boolean {
     return block.type === ContentBlockType.TOOL_CALL && block.toolName === agentbuiltInToolsNames.markAsComplete
   },
@@ -205,81 +181,10 @@ ${systemPrompt}
   },
 }
 
-type ListAgents = {
-  publicUrl: string
-  token: string
-}
-
-type GetAgent = {
-  agentId: string;
-  apiUrl: string;
-  token: string
-}
-
-type GetMcp = {
-  mcpId: string;
-  apiUrl: string;
-  token: string
-}
-
 type AgentToolsParams = {
     outputFields: AgentOutputField[]
     publicUrl: string
-    mcp: McpWithTools
     token: string
     tools: McpTool[]
+    flowId: string
 }
-
-type CreateModelParams<P extends AIProvider> = {
-  provider: P;
-  model: ProviderModelMap[P];
-  token: string;
-  baseURL: string;
-  agentId: string;
-}
-
-export enum AIProvider {
-  OPENAI = 'openai',
-  ANTHROPIC = 'anthropic',
-  GOOGLE = 'google',
-}
-
-export enum OpenAIModel {
-  GPT_4_1 = 'gpt-4.1',
-  GPT_4_TURBO = 'gpt-4-turbo',
-  GPT_3_5_TURBO = 'gpt-3.5-turbo',
-}
-
-export enum AnthropicModel {
-  CLAUDE_3_OPUS = 'claude-3-opus',
-  CLAUDE_3_SONNET = 'claude-3-sonnet',
-  CLAUDE_3_HAIKU = 'claude-3-haiku',
-}
-
-export enum GoogleModel {
-  GEMINI_1_5_PRO = 'gemini-1.5-pro',
-  GEMINI_1_5_FLASH = 'gemini-1.5-flash',
-}
-
-export type ProviderModelMap = {
-  [AIProvider.OPENAI]: OpenAIModel;
-  [AIProvider.ANTHROPIC]: AnthropicModel;
-  [AIProvider.GOOGLE]: GoogleModel;
-};
-
-export const AI_MODELS_BY_PROVIDER: Record<AIProvider, { label: string; value: string }[]> = {
-  [AIProvider.OPENAI]: [
-    { label: 'GPT-4.1', value: OpenAIModel.GPT_4_1 },
-    { label: 'GPT-4 Turbo', value: OpenAIModel.GPT_4_TURBO },
-    { label: 'GPT-3.5 Turbo', value: OpenAIModel.GPT_3_5_TURBO },
-  ],
-  [AIProvider.ANTHROPIC]: [
-    { label: 'Claude 3 Opus', value: AnthropicModel.CLAUDE_3_OPUS },
-    { label: 'Claude 3 Sonnet', value: AnthropicModel.CLAUDE_3_SONNET },
-    { label: 'Claude 3 Haiku', value: AnthropicModel.CLAUDE_3_HAIKU },
-  ],
-  [AIProvider.GOOGLE]: [
-    { label: 'Gemini 1.5 Pro', value: GoogleModel.GEMINI_1_5_PRO },
-    { label: 'Gemini 1.5 Flash', value: GoogleModel.GEMINI_1_5_FLASH },
-  ],
-};

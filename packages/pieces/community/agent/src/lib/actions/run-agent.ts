@@ -1,6 +1,6 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { AIErrorResponse } from '@activepieces/common-ai'
-import { agentCommon, ProviderModelMap, AIProvider, AI_MODELS_BY_PROVIDER } from '../common';
+import { agentCommon, AI_MODELS } from '../common';
 import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { APICallError, stepCountIs, streamText } from 'ai';
 
@@ -10,44 +10,20 @@ export const runAgent = createAction({
   description: 'Run the AI assistant to complete your task.',
   auth: PieceAuth.None(),
   props: {
-    [AgentPieceProps.MCP_ID]: Property.ShortText({
-      displayName: 'MCP',
-      description: 'Mcp id',
-      required: true,
-    }),
     [AgentPieceProps.PROMPT]: Property.LongText({
       displayName: 'Prompt',
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
-    [AgentPieceProps.AI_PROVIDER]: Property.StaticDropdown({
-      displayName: 'AI Provider',
-      required: true,
-      description: 'Choose your AI provider',
-      options: {
-        options: Object.values(AIProvider).map((provider) => ({
-          label: provider.charAt(0).toUpperCase() + provider.slice(1),
-          value: provider,
-        })),
-      },
-    }),
-    [AgentPieceProps.AI_MODEL]: Property.Dropdown({
+    [AgentPieceProps.AI_MODEL]: Property.StaticDropdown({
       displayName: 'AI Model',
       required: true,
-      description: 'Select the model based on the chosen provider',
-      refreshers: ['aiProvider'],
-      async options({ aiProvider }) {
-        if (!aiProvider) {
-          return {
-            options: [],
-            disabled: true,
-            placeholder: 'Select a provider first',
-          };
-        }
-
-        return {
-          options: AI_MODELS_BY_PROVIDER[aiProvider as AIProvider],
-        };
+      description: 'Choose your AI model and provider',
+      options: {
+        options: AI_MODELS.map(model => ({
+          label: `(${model.provider}) ${model.displayName}`,
+          value: model.id,
+        })),
       },
     }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
@@ -67,7 +43,7 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { mcpId, prompt, maxSteps, agentTools, structuredOutput, aiModel, aiProvider } = context.propsValue
+    const { prompt, maxSteps, agentTools, structuredOutput, aiModel } = context.propsValue
     const { server } = context
 
     const result: AgentResult = {
@@ -77,28 +53,26 @@ export const runAgent = createAction({
       message: null,
     }
 
-    const mcp = await agentCommon.getMcp({ mcpId: mcpId, token: server.token, apiUrl: server.publicUrl })
     const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
         outputFields: structuredOutput as AgentOutputField[],
         publicUrl: server.publicUrl,
         token: server.token,
         tools: agentTools as McpTool[],
-        mcp
+        flowId: context.flows.current.id,
     })
 
-    const baseURL = `${server.apiUrl}v1/ai-providers/proxy/${aiProvider}`
-    const model = agentCommon.createModelForProvider({
-      provider: aiProvider as AIProvider,
-      model: aiModel as ProviderModelMap[AIProvider],
+    const selectedModel = agentCommon.getModelById(aiModel as string)
+    const baseURL = `${server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`
+    const modelInstance = agentCommon.createModel({
+      model: selectedModel,
       token: server.token,
       baseURL,
-      agentId: mcpId,
+      agentId: '',
     });
-
 
     const systemPrompt = agentCommon.constructSystemPrompt(prompt)
     const { fullStream } = streamText({
-      model,
+      model: modelInstance,
       system: systemPrompt,
       prompt: prompt,
       stopWhen: stepCountIs(maxSteps),
@@ -118,7 +92,7 @@ export const runAgent = createAction({
                 })
                 currentText = ''
             }
-            const metadata = agentCommon.getMetadata(chunk.toolName, mcp, {
+            const metadata = agentCommon.getMetadata(chunk.toolName, agentTools as McpTool[], {
                 toolName: chunk.toolName,
                 toolCallId: chunk.toolCallId,
                 type: ContentBlockType.TOOL_CALL,
