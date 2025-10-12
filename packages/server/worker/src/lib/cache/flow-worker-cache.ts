@@ -6,38 +6,24 @@ import { cacheState } from './cache-state'
 import { GLOBAL_CACHE_FLOWS_PATH } from './worker-cache'
 
 export const flowWorkerCache = {
+    async writeFileToCacheIfCachable(flowVersionId: FlowVersionId, flow: PopulatedFlow | null): Promise<void> {
+        if (isNil(flow) || flow.version.state !== FlowVersionState.LOCKED) {
+            return
+        }
+        const flowCache = cacheFolderForFlow(flowVersionId)
+        await flowCache.setCache(flowVersionId, JSON.stringify(flow))
+    },
     async getFlow({ engineToken, flowVersionId }: GetFlowRequest): Promise<PopulatedFlow | null> {
-        try {
-            const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
-            
-            const { state } = await cache.getOrSetCache({
-                key: flowVersionId,
-                cacheMiss: (flow: string) => {
-                    if (isNil(flow)) {
-                        return true
-                    }
-                    const parsedFlow = JSON.parse(flow) as PopulatedFlow
-                    return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
-                },
-                installFn: async () => {
-                    const flow = await engineApiService(engineToken).getFlow({
-                        versionId: flowVersionId,
-                    })
-                    return JSON.stringify(flow)
-                },
-                skipSave: (flow: string) => {
-                    if (isNil(flow)) {
-                        return true
-                    }
-                    const parsedFlow = JSON.parse(flow) as PopulatedFlow
-                    return parsedFlow.version.state !== FlowVersionState.LOCKED
-                },
-            })
+        const cachedFlow = await getFlowFromCache(flowVersionId)
+        if (!isNil(cachedFlow)) {
+            return cachedFlow
+        }
 
-            if (isNil(state)) {
-                return null
-            }
-            const flow = JSON.parse(state as string) as PopulatedFlow
+        try {
+            const flow = await engineApiService(engineToken).getFlow({
+                versionId: flowVersionId,
+            })
+            await this.writeFileToCacheIfCachable(flowVersionId, flow)
             return flow
         }
         catch (e) {
@@ -53,3 +39,23 @@ type GetFlowRequest = {
     engineToken: string
     flowVersionId: FlowVersionId
 }
+
+async function getFlowFromCache(flowVersionId: FlowVersionId): Promise<PopulatedFlow | null> {
+    try {
+        const flowCache = cacheFolderForFlow(flowVersionId)
+        const cachedFlow = await flowCache.cacheCheckState(flowVersionId)
+        if (isNil(cachedFlow)) {
+            return null
+        }
+        const parsedFlow = JSON.parse(cachedFlow) as PopulatedFlow
+        if (parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION) {
+            return null
+        }
+        return parsedFlow
+    }
+    catch (error) {
+        return null
+    }
+}
+
+const cacheFolderForFlow = (flowVersionId: string) => cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
