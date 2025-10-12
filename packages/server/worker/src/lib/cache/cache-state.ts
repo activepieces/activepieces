@@ -72,6 +72,10 @@ async function readKeyFromDisk(
 
 async function readCacheFromFile(folderPath: string): Promise<CacheMap> {
     const filePath = cachePath(folderPath)
+    const fileExists = await fileSystemUtils.fileExists(filePath)
+    if (!fileExists) {
+        return {}
+    }
     const fileContent = await readFile(filePath, 'utf8')
     return JSON.parse(fileContent)
 }
