@@ -1,11 +1,11 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
+import { cryptoUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../runner/engine-runner-types'
 import { workerMachine } from '../utils/machine'
-import { cacheState, NO_SAVE_GUARD } from './cache-state'
+import { cacheState } from './cache-state'
 import { packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
@@ -59,64 +59,63 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             name,
             codePath,
         })
-        try {
-            const currentHash = await cryptoUtils.hashObject(sourceCode)
-            const cache = cacheState(codePath)
-            await cache.getOrSetCache({
-                key: codePath,
-                cacheMiss: (key: string) => {
-                    return key === currentHash
-                },
-                installFn: async () => {
-                    const { code, packageJson } = sourceCode
-    
-                    const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
-                    if (codeNeedCleanUp) {
-                        await rm(codePath, { recursive: true })
-                    }
-    
-                    await fileSystemUtils.threadSafeMkdir(codePath)
-    
-    
-    
-                    await installDependencies({
-                        path: codePath,
-                        packageJson: getPackageJson(packageJson),
-                        log,
-                    })
-    
-                    await compileCode({
-                        path: codePath,
-                        code,
-                        log,
-                    })
-                    return currentHash
-                },
-                skipSave: NO_SAVE_GUARD,
-            })
-        }
-        catch (error: unknown) {
-            log.error(error, `[CodeBuilder#processCodeStep], codePath: ${codePath}`)
 
-            await handleCompilationError({
-                codePath,
-                error,
-            })
-        }
-        
+        return memoryLock.runExclusive(`code-builder-${flowVersionId}-${name}`, async () => {
+            try {
+                const cache = cacheState(codePath)
+                const cachedHash = await cache.cacheCheckState(codePath)
+                const currentHash = await cryptoUtils.hashObject(sourceCode)
+
+                if (cachedHash === currentHash) {
+                    return
+                }
+                const { code, packageJson } = sourceCode
+
+                const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
+                if (codeNeedCleanUp) {
+                    await rm(codePath, { recursive: true })
+                }
+
+                await fileSystemUtils.threadSafeMkdir(codePath)
+
+
+
+                await installDependencies({
+                    path: codePath,
+                    packageJson: getPackageJson(packageJson),
+                    log,
+                })
+
+                await compileCode({
+                    path: codePath,
+                    code,
+                    log,
+                })
+
+                await cache.setCache(codePath, currentHash)
+            }
+            catch (error: unknown) {
+                log.error(error,`[CodeBuilder#processCodeStep], codePath: ${codePath}`)
+
+                await handleCompilationError({
+                    codePath,
+                    error,
+                })
+            }
+        })
     },
 })
 
 function getPackageJson(packageJson: string): string {
     const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
-    if (isPackagesAllowed) {
+    if(isPackagesAllowed) {
         const packageJsonObject = JSON.parse(packageJson)
         return JSON.stringify({
             ...packageJsonObject,
             dependencies: {
-                '@types/node': '18.17.1',
+                "@types/node": "18.17.1",
                 ...(packageJsonObject?.dependencies ?? {}),
-            },
+            }
         })
     }
 
