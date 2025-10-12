@@ -103,7 +103,10 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
 
         const uploadLogsDirectly = !isNil(engineConstants.logsUploadUrl)
         if (uploadLogsDirectly) {
-            await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+            const response = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+            if (!response.ok) {
+                throw new ProgressUpdateError('Failed to upload execution state', response)
+            }
         }
 
         const request = {
@@ -145,9 +148,8 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<void> => {
-
-    await fetchWithRetry(uploadUrl, {
+const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<Response> => {
+    return fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,
         headers: {
