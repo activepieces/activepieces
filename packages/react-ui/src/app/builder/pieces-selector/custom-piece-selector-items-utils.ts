@@ -186,7 +186,6 @@ export const createWaitForApprovalStep = ({
 
 export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
   agentPieceSelectorItem: PieceSelectorPieceItem,
-  mcpId: string,
   operation: PieceSelectorOperation,
   handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep'],
 ) => {
@@ -199,7 +198,6 @@ export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
     stepName,
     pieceSelectorItem: agentPieceSelectorItem,
   });
-  defaultValues.settings.input.mcpId = mcpId;
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation: {

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { ToastAction } from '@/components/ui/toast';
 import { toast } from '@/components/ui/use-toast';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
 import { ApFlagId } from '@activepieces/shared';
@@ -33,7 +32,6 @@ const CreateAgentActionItem = ({
   const createAgentPieceSelectorItem: PieceSelectorPieceItem = JSON.parse(
     JSON.stringify(pieceSelectorItem),
   );
-  const { mutate: createMcp } = mcpHooks.useCreateMcp();
 
   createAgentPieceSelectorItem.actionOrTrigger.displayName = t('Create Agent');
   createAgentPieceSelectorItem.actionOrTrigger.description = t(
@@ -66,22 +64,11 @@ const CreateAgentActionItem = ({
           });
           return;
         }
-        createMcp('Hello', {
-          onSuccess: (mcp) => {
-            handleAddingOrUpdatingCustomAgentPieceSelectorItem(
-              pieceSelectorItem,
-              mcp.id,
-              operation,
-              handleAddingOrUpdatingStep,
-            );
-          },
-          onError: () => {
-            toast({
-              variant: 'destructive',
-              description: 'Error creating agent',
-            });
-          },
-        });
+        handleAddingOrUpdatingCustomAgentPieceSelectorItem(
+          pieceSelectorItem,
+          operation,
+          handleAddingOrUpdatingStep,
+        );
       }}
     />
   );
