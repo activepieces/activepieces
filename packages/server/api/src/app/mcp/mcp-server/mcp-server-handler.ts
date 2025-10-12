@@ -1,9 +1,9 @@
+import { McpTool } from '@activepieces/shared'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { createMcpServer } from './mcp-server'
 import { mcpSessionManager } from './mcp-session-manager'
-import { McpTool } from '@activepieces/shared'
 
 const HEARTBEAT_INTERVAL = 30 * 1000
 
@@ -64,7 +64,7 @@ export const mcpServerHandler = {
             logger.info(`Connection closed for session ${transport.sessionId}`)
             await mcpSessionManager(logger).publish(transport.sessionId, {}, 'remove')
         })
-    }
+    },
 }
 
 type HandleStreamableHttpRequestParams = {

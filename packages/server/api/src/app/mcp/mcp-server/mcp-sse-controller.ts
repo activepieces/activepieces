@@ -1,8 +1,8 @@
 import { ALL_PRINCIPAL_TYPES, ApId } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { mcpService } from '../mcp-service'
-import { mcpSessionManager } from './mcp-session-manager'
 import { mcpServerHandler } from './mcp-server-handler'
+import { mcpSessionManager } from './mcp-session-manager'
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:token/sse', SSERequest, async (req, reply) => {
