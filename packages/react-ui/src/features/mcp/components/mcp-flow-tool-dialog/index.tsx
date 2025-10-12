@@ -18,10 +18,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  McpToolType,
-  FlowTriggerType,
-} from '@activepieces/shared';
+import { McpToolType, FlowTriggerType } from '@activepieces/shared';
 import type {
   McpTool,
   McpToolRequest,

@@ -11,7 +11,6 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AgentPieceSettings } from '@/features/agents/agent-piece-settings';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import {
@@ -27,7 +26,6 @@ import {
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
-import { isAgentStep } from '../run-details/flow-step-io/flow-step-input-output';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
@@ -153,6 +151,7 @@ const StepSettingsContainer = () => {
     [FlowActionType.CODE, FlowActionType.PIECE].includes(
       modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
+
   return (
     <Form {...form}>
       <form
@@ -210,17 +209,7 @@ const StepSettingsContainer = () => {
                     <CodeSettings readonly={readonly}></CodeSettings>
                   )}
                   {modifiedStep.type === FlowActionType.PIECE &&
-                    modifiedStep &&
-                    isAgentStep(modifiedStep) && (
-                      <AgentPieceSettings
-                        step={modifiedStep}
-                        flowId={flowVersion.flowId}
-                        readonly={readonly}
-                      ></AgentPieceSettings>
-                    )}
-                  {modifiedStep.type === FlowActionType.PIECE &&
-                    modifiedStep &&
-                    !isAgentStep(modifiedStep) && (
+                    modifiedStep && (
                       <PieceSettings
                         step={modifiedStep}
                         flowId={flowVersion.flowId}

@@ -9,6 +9,8 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl, FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { AgentTools } from '@/features/agents/agent-tools';
+import { AgentStructuredOutput } from '@/features/agents/structured-output';
 import {
   OAuth2Props,
   PieceProperty,
@@ -16,7 +18,7 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { AgentPieceProps, isNil } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
@@ -102,7 +104,7 @@ type selectFormComponentForPropertyParams = {
   disabled: boolean;
 };
 
-const selectFormComponentForProperty = ({
+export const selectFormComponentForProperty = ({
   field,
   propertyName,
   inputName,
@@ -112,6 +114,12 @@ const selectFormComponentForProperty = ({
   useMentionTextInput,
   disabled,
 }: selectFormComponentForPropertyParams) => {
+  if (propertyName === AgentPieceProps.AGENT_TOOLS) {
+    return <AgentTools disabled={disabled} agentToolsField={field} />;
+  } else if (propertyName === AgentPieceProps.STRUCTURED_OUTPUT) {
+    return <AgentStructuredOutput structuredOutputField={field} />;
+  }
+
   switch (property.type) {
     case PropertyType.ARRAY:
       return (

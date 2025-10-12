@@ -15,19 +15,20 @@ import {
   McpTool,
   McpToolType,
   Permission,
-  McpWithTools,
   McpToolRequest,
 } from '@activepieces/shared';
 
-import { McpFlowDialog } from './mcp-flow-tool-dialog';
-import { McpPieceDialog } from './mcp-piece-tool-dialog';
+import { McpFlowDialog } from '../mcp-flow-tool-dialog';
+import { McpPieceDialog } from '../mcp-piece-tool-dialog';
 
 type McpAddToolDropdownProps = {
+  disabled?: boolean;
   tools: McpTool[];
   onToolsUpdate: (tools: McpToolRequest[]) => void;
 };
 
 export const McpAddToolDropdown = ({
+  disabled,
   tools,
   onToolsUpdate,
 }: McpAddToolDropdownProps) => {
@@ -45,7 +46,7 @@ export const McpAddToolDropdown = ({
         onOpenChange={setOpenDropdown}
       >
         <DropdownMenuTrigger
-          disabled={!doesUserHavePermissionToWriteMcp}
+          disabled={!doesUserHavePermissionToWriteMcp || disabled}
           asChild
         >
           <Button disabled={!doesUserHavePermissionToWriteMcp} variant="basic">

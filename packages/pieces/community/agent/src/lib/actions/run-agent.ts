@@ -9,38 +9,16 @@ export const runAgent = createAction({
   displayName: 'Run Agent',
   description: 'Run the AI assistant to complete your task.',
   auth: PieceAuth.None(),
-  errorHandlingOptions: {
-    retryOnFailure: {
-      hide: true,
-    },
-    continueOnFailure: {
-      hide: true,
-    },
-  },
   props: {
     [AgentPieceProps.MCP_ID]: Property.ShortText({
       displayName: 'MCP',
       description: 'Mcp id',
       required: true,
     }),
-    [AgentPieceProps.AGENT_TOOLS]: Property.Array({
-      displayName: 'MCP Tools',
-      required: true
-    }),
-    [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
-      displayName: 'Structured Output',
-      required: true
-    }),
     [AgentPieceProps.PROMPT]: Property.LongText({
       displayName: 'Prompt',
       description: 'Describe what you want the assistant to do.',
       required: true,
-    }),
-    [AgentPieceProps.MAX_STEPS]: Property.Number({
-      displayName: 'Max steps',
-      description: 'The numbder of interations the agent can do',
-      required: true,
-      defaultValue: 20,
     }),
     [AgentPieceProps.AI_PROVIDER]: Property.StaticDropdown({
       displayName: 'AI Provider',
@@ -71,11 +49,25 @@ export const runAgent = createAction({
           options: AI_MODELS_BY_PROVIDER[aiProvider as AIProvider],
         };
       },
-    })
+    }),
+    [AgentPieceProps.AGENT_TOOLS]: Property.Array({
+      displayName: 'MCP Tools',
+      required: false
+    }),
+    [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
+      displayName: 'Structured Output',
+      defaultValue: undefined,
+      required: false,
+    }),
+    [AgentPieceProps.MAX_STEPS]: Property.Number({
+      displayName: 'Max steps',
+      description: 'The numbder of interations the agent can do',
+      required: true,
+      defaultValue: 20,
+    }),
   },
   async run(context) {
     const { mcpId, prompt, maxSteps, agentTools, structuredOutput, aiModel, aiProvider } = context.propsValue
-
     const { server } = context
 
     const result: AgentResult = {
@@ -162,7 +154,6 @@ export const runAgent = createAction({
     }
 
     const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
-    
     result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
     result.message = agentCommon.concatMarkdown(result.steps)
 

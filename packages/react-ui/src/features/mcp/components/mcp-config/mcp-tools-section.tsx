@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { Hammer } from 'lucide-react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,20 +6,21 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import type { McpTool, McpToolRequest } from '@activepieces/shared';
 import { isNil, McpToolType } from '@activepieces/shared';
 
-import { McpAddToolDropdown } from '../mcp-add-tool-actions';
-
+import { McpAddToolDropdown } from './mcp-add-tool-actions';
 import { McpFlowTool } from './mcp-flow-tool';
 import { McpPieceTool } from './mcp-piece-tool';
 
 interface McpToolsSectionProps {
   tools?: McpTool[];
   isLoading: boolean;
-  description: string;
+  description?: string;
   emptyState?: React.ReactNode;
   onToolsUpdate: (tools: McpToolRequest[]) => void;
+  disabled?: boolean;
 }
 
 export const McpToolsSection = ({
+  disabled,
   tools,
   isLoading,
   description,
@@ -80,14 +80,16 @@ export const McpToolsSection = ({
     <div>
       <div className="flex items-center justify-between">
         <div className="space-y-0">
-          <h1 className="text-lg flex items-center gap-2">
-            <Hammer className="w-4 h-4" />
-            <span>{t('Tools')}</span>
-          </h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <h2 className="text-sm flex font-medium items-center gap-2">
+            {t('Tools')}
+          </h2>
+          {description && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
         </div>
         <div className="flex gap-2">
           <McpAddToolDropdown
+            disabled={disabled}
             onToolsUpdate={(tools) => {
               onToolsUpdate?.(tools);
             }}
@@ -96,7 +98,7 @@ export const McpToolsSection = ({
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-2">
         {hasTools ? (
           <ScrollArea>
             <div className="space-y-2">
@@ -105,6 +107,7 @@ export const McpToolsSection = ({
                   if (tools[0].type === McpToolType.PIECE) {
                     return (
                       <McpPieceTool
+                        disabled={disabled}
                         key={toolKey}
                         tools={tools}
                         pieces={pieces || []}
@@ -114,6 +117,7 @@ export const McpToolsSection = ({
                   } else if (tools[0].type === McpToolType.FLOW) {
                     return (
                       <McpFlowTool
+                        disabled={disabled}
                         key={toolKey}
                         tool={tools[0]}
                         removeTool={removeTool}

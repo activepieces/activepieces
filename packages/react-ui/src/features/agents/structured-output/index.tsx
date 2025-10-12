@@ -1,31 +1,45 @@
 import { t } from 'i18next';
-import { Database, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import {
-  AgentOutputFieldType,
-  isNil,
-  AgentOutputField,
-} from '@activepieces/shared';
+import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
 
 import { AddFieldPopover } from './add-field-popover';
 import { FieldTypeIcon } from './field-type-icon';
 
+const PLACEHOLDER_FIELD: AgentOutputField = {
+  displayName: '__placeholder__',
+  description: '',
+  type: AgentOutputFieldType.TEXT,
+};
+
 export const AgentStructuredOutput = ({
-  field,
+  structuredOutputField,
 }: {
-  field: ControllerRenderProps;
+  structuredOutputField: ControllerRenderProps;
 }) => {
-  const isStructuredOutputEnabled = !isNil(field.value);
-  const outputFeilds = Array.isArray(field.value)
-    ? (field.value as AgentOutputField[])
+  const value = structuredOutputField.value;
+  const outputFields = Array.isArray(value)
+    ? (value as AgentOutputField[])
     : [];
 
+  const visibleFields = outputFields.filter(
+    (f) => f.displayName !== PLACEHOLDER_FIELD.displayName,
+  );
+
+  const isStructuredOutputEnabled = outputFields.some(
+    (f) => f.displayName === PLACEHOLDER_FIELD.displayName,
+  );
+
   const handleToggleStructuredOutput = (enabled: boolean) => {
-    field.onChange(enabled ? [] : undefined);
+    if (enabled) {
+      structuredOutputField.onChange([PLACEHOLDER_FIELD]);
+    } else {
+      structuredOutputField.onChange([]);
+    }
   };
 
   const handleAddField = (
@@ -33,44 +47,35 @@ export const AgentStructuredOutput = ({
     name: string,
     description: string,
   ) => {
-    const newField = {
-      displayName: name,
-      description,
-      type,
-    };
-    field.onChange([...outputFeilds, newField]);
+    const newField = { displayName: name, description, type };
+    structuredOutputField.onChange([...(outputFields ?? []), newField]);
   };
 
   const handleRemoveField = (displayName: string) => {
-    field.onChange(outputFeilds.filter((f) => f.displayName !== displayName));
+    const newFields = outputFields.filter((f) => f.displayName !== displayName);
+    structuredOutputField.onChange(newFields);
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-base font-medium flex items-center gap-2">
-          <Database className="w-4 h-4" />
-          {t('Structured Output')}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={isStructuredOutputEnabled}
-            onCheckedChange={handleToggleStructuredOutput}
-            size="sm"
-          />
-        </div>
+        <h2 className="text-sm font-medium">{t('Structured Output')}</h2>
+        <Switch
+          checked={isStructuredOutputEnabled}
+          onCheckedChange={handleToggleStructuredOutput}
+          size="sm"
+        />
       </div>
+
       {isStructuredOutputEnabled && (
         <div className="flex flex-col gap-2 mt-4">
-          {outputFeilds.length > 0 ? (
+          {visibleFields.length > 0 ? (
             <Card>
               <CardContent className="px-2 py-2">
                 <div className="flex flex-col gap-3">
-                  {outputFeilds.map((field, idx) => (
+                  {visibleFields.map((field, idx) => (
                     <div
-                      key={
-                        field.displayName + field.type + field.description + idx
-                      }
+                      key={field.displayName + field.type + idx}
                       className="flex items-center justify-between"
                     >
                       <div className="grid grid-cols-12 gap-2 w-full items-center">

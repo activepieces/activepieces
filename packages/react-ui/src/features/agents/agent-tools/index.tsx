@@ -1,21 +1,27 @@
 import { ControllerRenderProps } from 'react-hook-form';
 
-import { McpToolsSection } from '@/app/routes/mcp-servers/id/mcp-config/mcp-tools-section';
+import { McpToolsSection } from '@/features/mcp/components/mcp-config/mcp-tools-section';
 import { McpTool } from '@activepieces/shared';
 
 type AgentToolsSettingsProps = {
-  field: ControllerRenderProps;
+  agentToolsField: ControllerRenderProps;
+  disabled: boolean;
 };
 
-export const AgentToolsSettings = ({ field }: AgentToolsSettingsProps) => {
-  const tools = Array.isArray(field.value) ? (field.value as McpTool[]) : [];
+export const AgentTools = ({
+  agentToolsField,
+  disabled,
+}: AgentToolsSettingsProps) => {
+  const tools = Array.isArray(agentToolsField.value)
+    ? (agentToolsField.value as McpTool[])
+    : [];
 
   return (
     <McpToolsSection
+      disabled={disabled}
       tools={tools}
-      description="Louai is doing"
       isLoading={false}
-      onToolsUpdate={field.onChange}
+      onToolsUpdate={agentToolsField.onChange}
     />
   );
 };

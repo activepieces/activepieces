@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Workflow, Trash2, EllipsisVertical } from 'lucide-react';
+import { EllipsisVertical, Puzzle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -12,47 +12,96 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import {
-  McpFlowTool as McpFlowToolType,
-  Permission,
-} from '@activepieces/shared';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { McpTool, McpToolType, Permission } from '@activepieces/shared';
 
-type McpFlowToolProps = {
-  tool: McpFlowToolType;
+import { mcpConfigUtils } from './mcp-config-utils';
+
+type McpPieceToolProps = {
+  disabled?: boolean;
+  tools: McpTool[];
+  pieces: PieceMetadataModelSummary[];
   removeTool: (toolIds: string[]) => Promise<void>;
 };
 
-export const McpFlowTool = ({ tool, removeTool }: McpFlowToolProps) => {
+type PieceInfo = {
+  displayName: string;
+  logoUrl?: string;
+};
+
+export const McpPieceTool = ({
+  disabled,
+  tools,
+  pieces,
+  removeTool,
+}: McpPieceToolProps) => {
   const [open, setOpen] = useState(false);
   const { checkAccess } = useAuthorization();
   const hasPermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
 
-  const openFlow = () => {
-    window.open(`/flows/${tool.flow?.id}`, '_blank');
+  const getPieceInfo = (mcpTool: McpTool) => {
+    if (mcpTool.type !== McpToolType.PIECE || !mcpTool.pieceMetadata) {
+      return { displayName: 'Unknown', logoUrl: undefined };
+    }
+
+    const pieceMetadata = pieces?.find(
+      (p) => p.name === mcpTool.pieceMetadata?.pieceName,
+    );
+    return {
+      displayName:
+        pieceMetadata?.displayName || mcpTool.pieceMetadata.pieceName,
+      logoUrl: pieceMetadata?.logoUrl,
+    };
   };
 
+  const pieceInfoMap: Record<string, PieceInfo> = {};
+  tools.forEach((mcpTool: McpTool) => {
+    pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
+  });
+
+  const actionDisplayNames = tools
+    .map((tool) => {
+      if (tool.type === McpToolType.PIECE) {
+        return tool.pieceMetadata?.actionDisplayName;
+      }
+      return undefined;
+    })
+    .filter((name) => name !== undefined);
+
+  const toolName =
+    tools[0].type === McpToolType.PIECE
+      ? pieceInfoMap[tools[0].id]?.displayName
+      : undefined;
+
   return (
-    <Card key={`flow-${tool.id}`}>
+    <Card key={`piece-${toolName}`}>
       <CardContent className="flex items-center justify-between p-3 h-[60px]">
-        <div
-          className="flex items-center gap-3 min-w-0 group cursor-pointer"
-          onClick={openFlow}
-        >
+        <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-            <Workflow className="h-5 w-5 text-muted-foreground" />
+            {pieceInfoMap[tools[0].id]?.logoUrl ? (
+              <img
+                src={pieceInfoMap[tools[0].id].logoUrl}
+                alt={pieceInfoMap[tools[0].id].displayName}
+                className="h-5 w-5 object-contain"
+              />
+            ) : (
+              <Puzzle className="h-5 w-5 text-muted-foreground" />
+            )}
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">
-              <span className="group-hover:underline">
-                {tool.flow?.version?.displayName || t('Flow')}
-              </span>
+              {`${pieceInfoMap[tools[0].id]?.displayName}`}
             </h3>
+            <span className="text-xs text-muted-foreground">
+              {mcpConfigUtils.formatNames(actionDisplayNames)}
+            </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger
+              disabled={disabled}
               className="rounded-full p-2 hover:bg-muted cursor-pointer"
               asChild
             >
@@ -64,9 +113,11 @@ export const McpFlowTool = ({ tool, removeTool }: McpFlowToolProps) => {
             >
               <PermissionNeededTooltip hasPermission={hasPermissionToWriteMcp}>
                 <ConfirmationDeleteDialog
-                  title={`${t('Delete')} ${tool.flow?.version?.displayName}`}
+                  title={`${t('Delete')} ${toolName}`}
                   message={t('Are you sure you want to delete this tool?')}
-                  mutationFn={async () => await removeTool([tool.id])}
+                  mutationFn={async () =>
+                    await removeTool(tools.map((tool) => tool.id))
+                  }
                   entityName={t('Tool')}
                 >
                   <DropdownMenuItem
