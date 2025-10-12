@@ -50,7 +50,6 @@ export const triggerHelper = {
             run: {
                 id: constants.flowRunId,
             },
-            stepName: triggerName,
             project: {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
@@ -113,7 +112,6 @@ export const triggerHelper = {
                 flowId: params.flowVersion.flowId,
                 flowVersionId: params.flowVersion.id,
             }),
-            stepName: triggerName,
             webhookUrl: params.webhookUrl,
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             propsValue: processedInput,

@@ -227,7 +227,6 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     }),
                     searchValue: input.searchValue,
                     constants: EngineConstants.fromExecutePropertyInput(input),
-                    actionOrTriggerName: input.actionOrTriggerName,
                 })
                 return {
                     status: EngineResponseStatus.OK,

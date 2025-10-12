@@ -20,9 +20,9 @@ export type McpPieceToolData = Static<typeof McpPieceToolData>
 
 const McpToolBase = {
     ...BaseModelSchema,
-    externalId: ApId,
+    externalId: Type.String(),
     toolName: Type.Optional(Type.String()),
-    mcpId: ApId,
+    mcpId: Type.String(),
 }
 export const McpPieceTool = Type.Object({
     type: Type.Literal(McpToolType.PIECE),
