@@ -57,7 +57,7 @@ export const TriggerEventSelect = React.memo(
             );
             if (triggerEvent) {
               updateSampleData({
-                response: {
+                testingResponse: {
                   output: triggerEvent.payload,
                   success: true,
                 },

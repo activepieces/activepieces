@@ -138,7 +138,7 @@ const TestWaitForNextWebhookDialog = ({
       currentStep,
       setErrorMessage: undefined,
       setConsoleLogs: undefined,
-      onSuccess: () => {
+      onTestingFinish: () => {
         onOpenChange(false);
       },
     });

@@ -1,4 +1,4 @@
-import { ActivepiecesError, CodeAction, FlowRunStatus, GenericStepOutput, PieceAction, StepOutputStatus } from '@activepieces/shared'
+import { ActivepiecesError, CodeAction, FlowRunStatus, GenericStepOutput, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
 import { ExecutionError, ExecutionErrorType } from './execution-errors'
@@ -41,11 +41,10 @@ export async function handleStepFailure(
     executionState: FlowExecutorContext,
     action: CodeAction | PieceAction,
 ): Promise<FlowExecutorContext> {
-    const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
-
     if (
         executionState.verdict === ExecutionVerdict.FAILED
-    ) {    const errorMessage = executionState.error?.message
+    ) {
+        const errorMessage = executionState.error?.message
         const jsonifiedErrorMessage = getJsonifiedErrorMessage(errorMessage)
         const stepOutput = executionState.steps[action.name]
         const stepOutputWithErrorAsOutput = GenericStepOutput.create({
@@ -55,14 +54,15 @@ export async function handleStepFailure(
             errorMessage,
             output: executionState.verdict === ExecutionVerdict.FAILED ? jsonifiedErrorMessage : stepOutput.output,
         })
-       const newExecutionState = executionState.upsertStep(action.name, stepOutputWithErrorAsOutput)
+        const newExecutionState = executionState.upsertStep(action.name, stepOutputWithErrorAsOutput)
+        const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
 
-       if(continueOnFailure) {
+        if (continueOnFailure) {
+            return newExecutionState
+                .setVerdict(ExecutionVerdict.RUNNING, undefined)
+                .increaseTask()
+        }
         return newExecutionState
-            .setVerdict(ExecutionVerdict.RUNNING, undefined)
-            .increaseTask()
-       }
-       return newExecutionState
     }
 
     return executionState
