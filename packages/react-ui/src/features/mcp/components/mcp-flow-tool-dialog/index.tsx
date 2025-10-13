@@ -77,6 +77,7 @@ export function McpFlowDialog({
     const newTools: McpToolRequest[] = selectedFlows.map((flowId) => ({
       type: McpToolType.FLOW,
       flowId: flowId,
+      toolName: flowId,
       mcpId,
     }));
     const nonFlowTools: McpToolRequest[] = tools.filter(

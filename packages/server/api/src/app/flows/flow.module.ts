@@ -2,7 +2,7 @@ import { Principal, PrincipalType, TestFlowRunRequestBody, WebsocketClientEvent,
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../core/websockets.service'
 import { flowWorkerController } from '../workers/worker-controller'
-import { flowMcpController } from './flow/flow-mcp.controller'
+import { flowMcpController } from './flow/mcp/flow-mcp.controller'
 import { flowVersionController } from './flow/flow-version.controller'
 import { flowController } from './flow/flow.controller'
 import { flowRunService } from './flow-run/flow-run-service'

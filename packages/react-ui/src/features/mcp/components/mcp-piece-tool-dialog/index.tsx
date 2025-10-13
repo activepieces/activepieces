@@ -145,6 +145,7 @@ export function McpPieceDialog({
         logoUrl: selectedPiece.logoUrl,
         connectionExternalId: selectedConnectionExternalId ?? undefined,
       },
+      toolName: action.actionName,
     }));
     const oldTools = tools;
     onToolsUpdate([...oldTools, ...newTools]);

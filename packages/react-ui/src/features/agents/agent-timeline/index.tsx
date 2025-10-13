@@ -24,7 +24,7 @@ const AgentTimeline = ({ agentResult, className = '' }: AgentTimelineProps) => {
       )}
       <ScrollArea className="flex-1 min-h-0 mt-3">
         <div className="flex flex-col gap-3">
-          {agentResult.steps.map((step, index) => {
+          {agentResult?.steps?.map((step, index) => {
             return (
               <div key={index} className="animate-fade">
                 {step.type === ContentBlockType.MARKDOWN && (

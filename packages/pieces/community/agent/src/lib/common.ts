@@ -1,10 +1,10 @@
-import { AIUsageFeature, createAIModel } from "@activepieces/common-ai";
+import { AI_USAGE_MCP_ID_HEADER, AIUsageFeature, createAIModel } from "@activepieces/common-ai";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import { type Schema as AiSchema, experimental_createMCPClient, experimental_MCPClient, tool } from "ai";
+import { type Schema as AiSchema, tool, jsonSchema } from "ai";
 import z, { ZodRawShape, ZodSchema } from "zod";
 
 export const AI_MODELS = [
@@ -58,51 +58,114 @@ async function buildInternalTools(params: AgentToolsParams) {
 }
 
 async function getMcpClient(params: AgentToolsParams) {
-    // const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
-    const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
-    return experimental_createMCPClient({
-        transport: {
-            type: 'sse',
+    const mcpServerUrl = `${params.apiUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
+    let sessionId: string | undefined
+
+    const parseSSEResponse = (sseString: string) => {
+        const dataLine = sseString.split('\n').find(line => line.startsWith('data: '))
+        return dataLine ? JSON.parse(dataLine.substring(6)) : null
+    }
+
+    const sendMcpRequest = async (method: string, requestParams?: unknown) => {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream',
+            [AI_USAGE_MCP_ID_HEADER]: `flow:${params.flowId}`,
+        }
+        
+        if (sessionId) {
+            headers['mcp-session-id'] = sessionId
+        }
+
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
             url: mcpServerUrl,
-            headers: {
-                'Authorization': `Bearer ${params.token}`
-            }
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: params.token,
+            },
+            body: {
+                jsonrpc: '2.0',
+                id: Date.now(),
+                method,
+                params: requestParams ?? {},
+            },
+            headers,
+        })
+        
+        return parseSSEResponse(response.body as string)
+    }
+
+    const initResponse = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: mcpServerUrl,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: params.token,
+        },
+        body: {
+            jsonrpc: '2.0',
+            id: Date.now(),
+            method: 'initialize',
+            params: {
+                protocolVersion: '2024-11-05',
+                capabilities: {},
+                clientInfo: {
+                    name: 'activepieces-agent',
+                    version: '1.0.0',
+                },
+            },
+        },
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream',
+            [AI_USAGE_MCP_ID_HEADER]: `flow:${params.flowId}`,
         },
     })
-}
 
-async function createMcpclinet(params: AgentToolsParams) {
-    const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
+    sessionId = initResponse.headers?.['mcp-session-id'] as string
 
-    return httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: mcpServerUrl,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: params.token,
-      },
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    return {
+        tools: async () => {
+            const data = await sendMcpRequest('tools/list', {})
+            const tools: Record<string, ReturnType<typeof tool>> = {}
+            
+            for (const toolDef of data?.result?.tools ?? []) {
+                tools[toolDef.name] = tool({
+                    description: toolDef.description ?? '',
+                    inputSchema: jsonSchema(toolDef.inputSchema),
+                    execute: async (args: Record<string, unknown>) => {
+                        const result = await sendMcpRequest('tools/call', {
+                            name: toolDef.name,
+                            arguments: args,
+                        })
+                        return result?.result?.content?.[0]?.text ?? result?.result
+                    },
+                } as unknown as Parameters<typeof tool>[0])
+            }
+            
+            return tools
+        },
+        close: async () => {},
+    }
 }
 
 export const agentCommon = {
   async agentTools(params: AgentToolsParams) {
-    const mcpClient = await createMcpclinet(params)
+    const mcpClient = await getMcpClient(params)
     const builtInTools = await buildInternalTools(params)
 
-    // const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
+    const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
     const tools = {
         ...builtInTools,
-        // ...mcpTools
+        ...mcpTools
     }
     return {
         tools: async () => {
             return tools
         },
         close: async () => {
-            // await mcpClient?.close()
+            await mcpClient?.close()
         },
     }
   },
@@ -117,12 +180,12 @@ export const agentCommon = {
     model,
     token,
     baseURL,
-    agentId,
+    flowId,
   }: {
     model: AIModel;
     token: string;
     baseURL: string;
-    agentId: string;
+    flowId: string;
   }) {
     const providerInstances = {
       openai: () => openai(model.modelName),
@@ -138,8 +201,8 @@ export const agentCommon = {
       engineToken: token,
       baseURL,
       metadata: {
-        feature: AIUsageFeature.AGENTS,
-        agentid: agentId
+        feature: AIUsageFeature.MCP,
+        mcpid: `flow:${flowId}`,
       },
     });
   },
@@ -203,7 +266,7 @@ ${systemPrompt}
 
 type AgentToolsParams = {
     outputFields: AgentOutputField[]
-    publicUrl: string
+    apiUrl: string
     token: string
     tools: McpTool[]
     flowId: string

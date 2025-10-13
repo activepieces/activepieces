@@ -39,6 +39,10 @@ export const runAgent = createAction({
           displayName: 'Piece Metadata',
           required: false,
         }),
+        toolName: Property.ShortText({
+          displayName: 'Tool Name',
+          required: true
+        }),
         mcpId: Property.ShortText({
           displayName: 'Mcp Id',
           required: false
@@ -84,7 +88,7 @@ export const runAgent = createAction({
 
     const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
         outputFields: structuredOutput as AgentOutputField[],
-        publicUrl: context.server.apiUrl,
+        apiUrl: context.server.apiUrl,
         token: server.token,
         tools: agentTools as McpTool[],
         flowId: context.flows.current.id,
@@ -98,20 +102,21 @@ export const runAgent = createAction({
       model: selectedModel,
       token: server.token,
       baseURL,
-      agentId: `agent-${context.flows.current.id}-${context.flows.current.version.id}-${context.step.name}`,
-    });
-
+      flowId: context.flows.current.id,
+    })
+    
     const systemPrompt = agentCommon.constructSystemPrompt(prompt)
     const { fullStream } = streamText({
       model: modelInstance,
       system: systemPrompt,
       prompt: prompt,
       stopWhen: stepCountIs(maxSteps),
-      // tools: await agentToolInstance.tools()
+      tools: await agentToolInstance.tools()
     })
-
+    
     let currentText = ''
-    for await (const chunk of fullStream) {
+    try {
+      for await (const chunk of fullStream) {
         if (chunk.type === 'text-delta') {
             currentText += chunk.text
         }
@@ -157,11 +162,12 @@ export const runAgent = createAction({
             return result
         }
     }
-
+    } catch (error) {
+      throw error
+    }
     const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
     result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
     result.message = agentCommon.concatMarkdown(result.steps)
-
     return result
   }
 });
