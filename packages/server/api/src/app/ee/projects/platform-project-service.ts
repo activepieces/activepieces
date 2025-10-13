@@ -31,7 +31,6 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { platformUsageService } from '../platform/platform-usage-service'
-import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
@@ -84,25 +83,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             }),
             log,
         )
-    },
-
-    async softDelete({ id, platformId }: SoftDeleteParams): Promise<void> {
-        await transaction(async (entityManager) => {
-            await assertAllProjectFlowsAreDisabled({
-                projectId: id,
-                entityManager,
-            }, log)
-
-            await softDeleteOrThrow({
-                id,
-                platformId,
-                entityManager,
-            })
-
-            await platformProjectSideEffects(log).onSoftDelete({
-                id,
-            })
-        })
     },
 
     async hardDelete({ id }: HardDeleteParams): Promise<void> {
@@ -240,40 +220,10 @@ const assertAllProjectFlowsAreDisabled = async (
     }
 }
 
-const softDeleteOrThrow = async ({
-    id,
-    platformId,
-    entityManager,
-}: SoftDeleteOrThrowParams): Promise<void> => {
-    const deleteResult = await projectRepo(entityManager).softDelete({
-        id,
-        platformId,
-    })
-
-    if (deleteResult.affected !== 1) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                entityId: id,
-                entityType: 'project',
-            },
-        })
-    }
-}
-
 type UpdateParams = {
     projectId: ProjectId
     request: UpdateProjectPlatformRequest
     platformId?: PlatformId
-}
-
-type SoftDeleteParams = {
-    id: ProjectId
-    platformId: PlatformId
-}
-
-type SoftDeleteOrThrowParams = SoftDeleteParams & {
-    entityManager: EntityManager
 }
 
 type AssertAllProjectFlowsAreDisabledParams = {
