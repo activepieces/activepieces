@@ -244,28 +244,54 @@ const AutoFormFielWrapperErrorBoundary = ({
     <ErrorBoundary
       key={`${key}`}
       fallbackRender={() => (
-        <div className="text-sm  flex items-center justify-between">
-          <span className="text-red-500">
-            {t('Invalid value, please click the button to reset it')}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              field.onChange(
-                getDefaultPropertyValue({ property, dynamicInputModeToggled }),
-              );
-              setKey(key + 1);
-            }}
-          >
-            {t('Reset')}
-          </Button>
-        </div>
+        <>
+          {!field.disabled && (
+            <div className="text-sm  flex items-center justify-between">
+              <span className="text-red-500">
+                {t('Invalid value, please click the button to reset it')}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  field.onChange(
+                    getDefaultPropertyValue({
+                      property,
+                      dynamicInputModeToggled,
+                    }),
+                  );
+                  setKey(key + 1);
+                }}
+              >
+                {t('Reset')}
+              </Button>
+            </div>
+          )}
+          {field.disabled && (
+            <div className="text-sm  flex items-center justify-between">
+              <span className="text-red-500">
+                {t('input value is malformed')}
+              </span>
+              <div>{`${stringifyValue(field.value)}`}</div>
+            </div>
+          )}
+        </>
       )}
     >
       {children}
     </ErrorBoundary>
   );
+};
+
+const stringifyValue = (value: unknown) => {
+  try {
+    if (value === undefined) {
+      return undefined;
+    }
+    return JSON.stringify(value);
+  } catch (e) {
+    return value;
+  }
 };
 
 AutoFormFieldWrapper.displayName = 'AutoFormFieldWrapper';
