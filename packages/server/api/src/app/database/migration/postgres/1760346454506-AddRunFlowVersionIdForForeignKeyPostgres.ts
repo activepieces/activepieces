@@ -12,7 +12,7 @@ export class AddRunFlowVersionIdForForeignKeyPostgres1760346454506 implements Mi
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_run_flow_version_id"
+            DROP INDEX "idx_run_flow_version_id"
         `)
     }
 
