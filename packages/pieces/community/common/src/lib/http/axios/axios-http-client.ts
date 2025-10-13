@@ -67,7 +67,7 @@ export class AxiosHttpClient extends BaseHttpClient {
       if (axios.isAxiosError(e)) {
         const httpError =  new HttpError(request.body, e);
         console.error(
-          '[HttpClient#sendRequest(sanitized)] Request failed:',
+          '[HttpClient#(sanitized error message)] Request failed:',
           httpError
         );
         throw httpError;
