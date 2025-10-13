@@ -59,7 +59,6 @@ async function buildInternalTools(params: AgentToolsParams) {
 
 async function getMcpClient(params: AgentToolsParams) {
     const mcpServerUrl = `${params.apiUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
-    let sessionId: string | undefined
 
     const parseSSEResponse = (sseString: string) => {
         const dataLine = sseString.split('\n').find(line => line.startsWith('data: '))
@@ -67,16 +66,6 @@ async function getMcpClient(params: AgentToolsParams) {
     }
 
     const sendMcpRequest = async (method: string, requestParams?: unknown) => {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/event-stream',
-            [AI_USAGE_MCP_ID_HEADER]: `flow:${params.flowId}`,
-        }
-        
-        if (sessionId) {
-            headers['mcp-session-id'] = sessionId
-        }
-
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: mcpServerUrl,
@@ -90,40 +79,24 @@ async function getMcpClient(params: AgentToolsParams) {
                 method,
                 params: requestParams ?? {},
             },
-            headers,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json, text/event-stream',
+                [AI_USAGE_MCP_ID_HEADER]: `flow:${params.flowId}`,
+            },
         })
         
         return parseSSEResponse(response.body as string)
     }
 
-    const initResponse = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: mcpServerUrl,
-        authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: params.token,
-        },
-        body: {
-            jsonrpc: '2.0',
-            id: Date.now(),
-            method: 'initialize',
-            params: {
-                protocolVersion: '2024-11-05',
-                capabilities: {},
-                clientInfo: {
-                    name: 'activepieces-agent',
-                    version: '1.0.0',
-                },
-            },
-        },
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/event-stream',
-            [AI_USAGE_MCP_ID_HEADER]: `flow:${params.flowId}`,
+    await sendMcpRequest('initialize', {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+            name: 'activepieces-agent',
+            version: '1.0.0',
         },
     })
-
-    sessionId = initResponse.headers?.['mcp-session-id'] as string
 
     return {
         tools: async () => {

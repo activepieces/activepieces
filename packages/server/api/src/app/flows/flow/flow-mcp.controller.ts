@@ -2,29 +2,11 @@ import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CreateMCPServerFromStepP
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js'
-import { mcpServerHandler } from '../../../mcp/mcp-server/mcp-server-handler'
-import { flowService } from '../flow.service'
-import { flowMcpSessionManager } from './flow-mcp-session-manager'
+import { mcpServerHandler } from '../../mcp/mcp-server/mcp-server-handler'
+import { flowService } from './flow.service'
 
 export const flowMcpController: FastifyPluginAsyncTypebox = async (fastify) => {
-    const sessionManager = flowMcpSessionManager(fastify.log)
-    
     fastify.post('/:flowId/versions/:flowVersionId/steps/:stepName/mcp-server', CreateMCPServerFromStepRequest, async (request, reply) => {
-        const sessionId = request.headers['mcp-session-id'] as string | undefined
-        
-        if (!sessionId && !isInitializeRequest(request.body)) {
-            await reply.status(400).send({
-                jsonrpc: '2.0',
-                error: {
-                    code: -32000,
-                    message: 'Bad Request: No valid session ID provided',
-                },
-                id: null,
-            })
-            return reply
-        }
-
         const flowVersion = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.flowId,
             projectId: request.principal.projectId,
@@ -44,7 +26,6 @@ export const flowMcpController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: flowVersion.projectId,
             logger: request.log,
             tools: toolsWithMcpId,
-            sessionManager,
         })
 
         return reply
