@@ -139,7 +139,22 @@ async function getMcpClient(params: AgentToolsParams) {
                             name: toolDef.name,
                             arguments: args,
                         })
-                        return result?.result?.content?.[0]?.text ?? result?.result
+                        
+                        if (!result?.result) {
+                            throw new Error(`Tool ${toolDef.name} returned no result`)
+                        }
+                        
+                        if (result.result.success === false) {
+                            const errorText = result.result.content?.[0]?.text ?? 'Tool execution failed'
+                            throw new Error(errorText)
+                        }
+                        
+                        const content = result.result.content?.[0]
+                        if (content?.text) {
+                            return content.text
+                        }
+                        
+                        return JSON.stringify(result.result)
                     },
                 } as unknown as Parameters<typeof tool>[0])
             }

@@ -357,7 +357,7 @@ function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallPara
 }
 
 async function saveMcpRunOrSkip({ mcpId, toolId, projectId, metadata, input, output, status, logger }: SaveMcpRunParams) {
-    if (!mcpId.startsWith('flow:')) {
+    if (mcpId.startsWith('flow:')) {
         return
     }
     await mcpRunService(logger).create({ mcpId, toolId, projectId, metadata, input, output, status })
