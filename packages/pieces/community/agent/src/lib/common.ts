@@ -89,15 +89,6 @@ async function getMcpClient(params: AgentToolsParams) {
         return parseSSEResponse(response.body as string)
     }
 
-    await sendMcpRequest('initialize', {
-        protocolVersion: '2024-11-05',
-        capabilities: {},
-        clientInfo: {
-            name: 'activepieces-agent',
-            version: '1.0.0',
-        },
-    })
-
     return {
         tools: async () => {
             const data = await sendMcpRequest('tools/list', {})
