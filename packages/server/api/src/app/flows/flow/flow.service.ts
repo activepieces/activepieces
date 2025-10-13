@@ -440,7 +440,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
         })
     },
-
+    async deleteAllByProjectId(projectId: ProjectId): Promise<void> {
+       await flowRepo().delete({ projectId })
+    },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
         const lock = await distributedLock.acquireLock({
             key: id,
