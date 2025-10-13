@@ -18,6 +18,7 @@ export const SaveSampleDataRequest = Type.Object({
     payload: Type.Unknown(),
     type: Type.Enum(SampleDataFileType),
     dataType: Type.Enum(SampleDataDataType),
+    didTestingSucceed: Type.Optional(Type.Boolean()),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
@@ -57,6 +58,7 @@ export const SampleDataSetting = Type.Object(
         sampleDataFileId: Type.Optional(Type.String()),
         sampleDataInputFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
+        didTestingSucceed: Type.Optional(Type.Boolean()),
     },
     {
         additionalProperties: true,

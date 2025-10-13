@@ -1,7 +1,5 @@
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useContext, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -36,7 +34,6 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-type ActionWithoutNext = Omit<FlowAction, 'nextAction'>;
 enum DialogType {
   NONE = 'NONE',
   TODO_CREATE_TASK = 'TODO_CREATE_TASK',
@@ -93,21 +90,15 @@ const TestStepSectionImplementation = React.memo(
         sampleDataInput: state.sampleDataInput[currentStep.name],
       };
     });
-    const form = useFormContext<ActionWithoutNext>();
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
+
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         mutationKey,
         currentStep,
         setErrorMessage,
         setConsoleLogs,
-        onSuccess: () => {
-          form.setValue(
-            `settings.sampleData.lastTestDate`,
-            dayjs().toISOString(),
-          );
-        },
         onProgress: (progress: any) => {
           if (isRunAgent(currentStep)) {
             setAgentProgress(progress);
@@ -118,7 +109,8 @@ const TestStepSectionImplementation = React.memo(
     const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-
+    const didTestingSucceed =
+      currentStep.settings.sampleData?.didTestingSucceed;
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const handleTodoCreateTask = async () => {
@@ -198,8 +190,8 @@ const TestStepSectionImplementation = React.memo(
             isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
-            errorMessage={errorMessage}
             lastTestDate={lastTestDate}
+            didTestingSucceed={didTestingSucceed}
             consoleLogs={
               currentStep.type === FlowActionType.CODE ? consoleLogs : null
             }

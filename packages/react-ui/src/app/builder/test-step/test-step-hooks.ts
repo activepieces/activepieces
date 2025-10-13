@@ -58,9 +58,9 @@ export const testStepHooks = {
 
     return useMutation({
       mutationFn: async ({
-        response,
+        testingResponse,
       }: {
-        response: { output?: unknown; success: boolean };
+        testingResponse: Pick<StepRunResponse, 'output' | 'success'>;
       }) => {
         if (isNil(step)) {
           console.error(`Step ${stepName} not found`);
@@ -68,43 +68,42 @@ export const testStepHooks = {
           return;
         }
 
-        if (response.success) {
-          //if the output is undefined it will fail to save sample data unless we stringify it
-          const output = isNil(response.output)
-            ? stringifyNullOrUndefined(response.output)
-            : response.output;
-          setSampleData(step.name, output);
-          const updatedFlowVersion = await flowsApi.update(flowId, {
-            type: FlowOperationType.SAVE_SAMPLE_DATA,
-            request: {
-              stepName,
-              payload: output,
-              type: SampleDataFileType.OUTPUT,
-              dataType:
-                typeof response.output === 'string'
-                  ? SampleDataDataType.STRING
-                  : SampleDataDataType.JSON,
-            },
-          });
-          const modifiedStep = flowStructureUtil.getStep(
+        //if the output is undefined it will fail to save sample data unless we stringify it
+        const output = isNil(testingResponse.output)
+          ? stringifyNullOrUndefined(testingResponse.output)
+          : testingResponse.output;
+        setSampleData(step.name, output);
+        const updatedFlowVersion = await flowsApi.update(flowId, {
+          type: FlowOperationType.SAVE_SAMPLE_DATA,
+          request: {
             stepName,
-            updatedFlowVersion.version.trigger,
-          );
-          if (!isNil(modifiedStep)) {
-            if (flowStructureUtil.isTrigger(modifiedStep?.type)) {
-              applyOperation({
-                type: FlowOperationType.UPDATE_TRIGGER,
-                request: modifiedStep as FlowTrigger,
-              });
-            } else {
-              applyOperation({
-                type: FlowOperationType.UPDATE_ACTION,
-                request: modifiedStep as FlowAction,
-              });
-            }
+            payload: output,
+            type: SampleDataFileType.OUTPUT,
+            dataType:
+              typeof testingResponse.output === 'string'
+                ? SampleDataDataType.STRING
+                : SampleDataDataType.JSON,
+            didTestingSucceed: testingResponse.success,
+          },
+        });
+        const modifiedStep = flowStructureUtil.getStep(
+          stepName,
+          updatedFlowVersion.version.trigger,
+        );
+        if (!isNil(modifiedStep)) {
+          if (flowStructureUtil.isTrigger(modifiedStep?.type)) {
+            applyOperation({
+              type: FlowOperationType.UPDATE_TRIGGER,
+              request: modifiedStep as FlowTrigger,
+            });
+          } else {
+            applyOperation({
+              type: FlowOperationType.UPDATE_ACTION,
+              request: modifiedStep as FlowAction,
+            });
           }
-          return modifiedStep;
         }
+        return modifiedStep;
       },
       onSuccess: (step) => {
         sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
@@ -153,7 +152,10 @@ export const testStepHooks = {
           if (!deepEqual(ids, newIds)) {
             if (newData.data.length > 0) {
               await updateSampleData({
-                response: { success: true, output: newData.data[0].payload },
+                testingResponse: {
+                  success: true,
+                  output: newData.data[0].payload,
+                },
               });
             }
             return newData.data;
@@ -192,7 +194,7 @@ export const testStepHooks = {
           mockData,
         });
         await updateSampleData({
-          response: { success: true, output: data.payload },
+          testingResponse: { success: true, output: data.payload },
         });
         return data;
       },
@@ -223,7 +225,7 @@ export const testStepHooks = {
         });
         if (data.length > 0) {
           await updateSampleData({
-            response: { success: true, output: data[0].payload },
+            testingResponse: { success: true, output: data[0].payload },
           });
         }
         return data;
@@ -265,14 +267,14 @@ export const testStepHooks = {
     currentStep,
     setErrorMessage,
     setConsoleLogs,
-    onSuccess,
+    onTestingFinish,
     onProgress,
     mutationKey,
   }: {
     currentStep: FlowAction;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
-    onSuccess: (() => void) | undefined;
+    onTestingFinish?: () => void;
     onProgress?: (progress: StepRunResponse) => void;
     mutationKey?: string[];
   }) => {
@@ -311,12 +313,10 @@ export const testStepHooks = {
         const errorMessage = success ? standardOutput : standardError;
         setErrorMessage?.(undefined);
         setConsoleLogs?.(errorMessage ?? null);
-        if (success) {
-          updateSampleData({
-            response: testStepResponse,
-          });
-          onSuccess?.();
-        } else {
+        updateSampleData({
+          testingResponse: testStepResponse,
+        });
+        if (!success) {
           setErrorMessage?.(
             testStepUtils.formatErrorMessage(
               errorMessage ??
@@ -326,6 +326,7 @@ export const testStepHooks = {
             ),
           );
         }
+        onTestingFinish?.();
       },
       onError: (error) => {
         if (error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {

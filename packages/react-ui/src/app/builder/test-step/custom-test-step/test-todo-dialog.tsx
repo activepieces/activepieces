@@ -64,7 +64,7 @@ function TodoTestingDialog({
       setErrorMessage(undefined);
       const output = formatTodoResult(response);
       updateSampleData({
-        response: { output, success: true },
+        testingResponse: { output, success: true },
       });
       onOpenChange(false);
     },

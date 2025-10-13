@@ -17,10 +17,10 @@ type TestSampleDataViewerProps = {
   isTesting: boolean;
   sampleData: unknown;
   sampleDataInput: unknown | null;
-  errorMessage: string | undefined;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs?: string | null;
+  didTestingSucceed: boolean | undefined;
 } & RetestButtonProps;
 
 type RetestButtonProps = {
@@ -66,8 +66,9 @@ const TestSampleDataViewer = React.memo(
     isTesting,
     sampleData,
     sampleDataInput,
-    errorMessage,
     lastTestDate,
+    //previously we only saved sample data on success, now we store for both success and failure
+    didTestingSucceed = true,
     children,
     consoleLogs,
     isSaving,
@@ -80,7 +81,7 @@ const TestSampleDataViewer = React.memo(
           <div className="flex justify-center items-center">
             <div className="flex flex-col flex-grow gap-1">
               <div className="text-md flex gap-1 items-center">
-                {errorMessage ? (
+                {!didTestingSucceed ? (
                   <>
                     <StepStatusIcon
                       status={StepOutputStatus.FAILED}
@@ -99,9 +100,7 @@ const TestSampleDataViewer = React.memo(
                 )}
               </div>
               <div className="text-muted-foreground text-xs">
-                {lastTestDate &&
-                  !errorMessage &&
-                  formatUtils.formatDate(new Date(lastTestDate))}
+                {lastTestDate && formatUtils.formatDate(new Date(lastTestDate))}
               </div>
             </div>
             <TestButtonTooltip invalid={!isValid}>
@@ -115,10 +114,7 @@ const TestSampleDataViewer = React.memo(
           </div>
 
           {isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs) ? (
-            <JsonViewer
-              json={errorMessage ?? sampleData}
-              title={t('Output')}
-            ></JsonViewer>
+            <JsonViewer json={sampleData} title={t('Output')}></JsonViewer>
           ) : (
             <Tabs defaultValue="Output">
               <TabsList
@@ -145,10 +141,7 @@ const TestSampleDataViewer = React.memo(
                 </TabsContent>
               )}
               <TabsContent value="Output">
-                <JsonViewer
-                  json={errorMessage ?? sampleData}
-                  title={t('Output')}
-                ></JsonViewer>
+                <JsonViewer json={sampleData} title={t('Output')}></JsonViewer>
               </TabsContent>
               {isConsoleLogsValid(consoleLogs) && (
                 <TabsContent value="Logs">

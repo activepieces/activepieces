@@ -113,6 +113,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                     payload: userOperation.request.payload,
                     type: userOperation.request.type,
                     dataType: userOperation.request.dataType,
+                    didTestingSucceed: userOperation.request.didTestingSucceed,
                 })
                 if (flowStructureUtil.isAction(modifiedStep.type)) {
                     operations = [{

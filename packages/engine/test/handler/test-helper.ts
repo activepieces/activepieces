@@ -1,3 +1,4 @@
+import fs from 'fs'
 import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
@@ -84,7 +85,13 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
+export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions, code }: { name: 'echo_step' | 'runtime' | 'echo_step_1' | 'custom_code', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction, code?: string }): CodeAction {
+    if (code && name === 'custom_code') {
+        const currentDir = process.cwd()
+        const jsFileDirectory = `${currentDir}/packages/engine/test/resources/codes/flowVersionId/custom_code`
+        fs.mkdirSync(jsFileDirectory, { recursive: true })
+        fs.writeFileSync(`${jsFileDirectory}/index.js`, code)
+    }
     return {
         name,
         displayName: 'Your Action Name',
@@ -101,6 +108,11 @@ export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOp
         nextAction,
         valid: true,
     }
+}
+export function deleteCustomCodeFile() {
+    const currentDir = process.cwd()
+    const jsFileDirectory = `${currentDir}/packages/engine/test/resources/codes/flowVersionId/custom_code`
+    fs.rmSync(jsFileDirectory, { recursive: true, force: true })
 }
 
 export function buildPieceAction({ name, input, skip, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, skip?: boolean, pieceName: string, actionName: string, nextAction?: FlowAction }): PieceAction {
