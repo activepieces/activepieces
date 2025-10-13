@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInterface {
     name = 'RestrictOnDeleteProjectForFlow1760376811542'
@@ -6,10 +6,10 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -26,7 +26,7 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                 SET NULL ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow"(
                     "id",
@@ -49,26 +49,26 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                 "externalId",
                 "metadata"
             FROM "flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow"
                 RENAME TO "flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -86,7 +86,7 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow"(
                     "id",
@@ -109,33 +109,33 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                 "externalId",
                 "metadata"
             FROM "flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow"
                 RENAME TO "flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow"
                 RENAME TO "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -152,7 +152,7 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                 SET NULL ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow"(
                     "id",
@@ -175,26 +175,26 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                 "externalId",
                 "metadata"
             FROM "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow"
                 RENAME TO "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -212,7 +212,7 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                 SET NULL ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow"(
                     "id",
@@ -235,16 +235,16 @@ export class RestrictOnDeleteProjectForFlow1760376811542 implements MigrationInt
                 "externalId",
                 "metadata"
             FROM "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
     }
 
 }
