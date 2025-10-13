@@ -33,6 +33,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { platformUsageService } from '../platform/platform-usage-service'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
+import { flowRepo } from '../../flows/flow/flow.repo'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -86,13 +87,21 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 
     async hardDelete({ id }: HardDeleteParams): Promise<void> {
-      await transaction(async (e) => {
-        await flowService(log).deleteAllByProjectId(id);
-        await projectRepo().delete({
-           id,
+        const flows = await flowRepo().findBy({
+            projectId: id,
         })
-      })
-      await appConnectionService(log).deleteAllProjectConnections(id)
+        await Promise.all(
+            flows.map((flow) =>
+                flowService(log).delete({
+                    id: flow.id,
+                    projectId: id,
+                }),
+            ),
+        )
+        await projectRepo().delete({
+            id,
+        })
+        await appConnectionService(log).deleteAllProjectConnections(id)
     },
 })
 
