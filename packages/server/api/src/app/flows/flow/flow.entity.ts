@@ -99,7 +99,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: 'many-to-one',
             target: 'project',
             cascade: true,
-            onDelete: 'CASCADE',
+            onDelete: 'RESTRICT',
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_flow_project_id',
