@@ -1,3 +1,4 @@
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { Agent, agentbuiltInToolsNames, AgentOutputFieldType, AgentOutputType, isNil, McpWithTools } from '@activepieces/shared'
 import { experimental_createMCPClient, tool } from 'ai'
 import { z, ZodRawShape, ZodSchema } from 'zod'
@@ -49,6 +50,17 @@ async function getMcpClient(params: AgentToolsParams) {
     })
 }
 
+async function createMcpClient(params: AgentToolsParams) {
+const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
+return httpClient.sendRequest({
+    method: HttpMethod.POST,
+    url: mcpServerUrl,
+    authentication: {
+    type: AuthenticationType.BEARER_TOKEN,
+    token: params.token,
+    },
+})
+}
 
 async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
     const outputFields = agent.outputFields ?? []

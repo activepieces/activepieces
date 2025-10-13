@@ -1,20 +1,19 @@
 import { AIUsageFeature, createAIModel } from "@activepieces/common-ai";
+import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import { type Schema as AiSchema, experimental_createMCPClient, tool } from "ai";
+import { type Schema as AiSchema, experimental_createMCPClient, experimental_MCPClient, tool } from "ai";
 import z, { ZodRawShape, ZodSchema } from "zod";
 
 export const AI_MODELS = [
   { id: 'openai-gpt-4.1', provider: 'openai', displayName: 'GPT-4.1', modelName: 'gpt-4.1' },
   { id: 'openai-gpt-4-turbo', provider: 'openai', displayName: 'GPT-4 Turbo', modelName: 'gpt-4-turbo' },
   { id: 'openai-gpt-3.5-turbo', provider: 'openai', displayName: 'GPT-3.5 Turbo', modelName: 'gpt-3.5-turbo' },
-  
   { id: 'anthropic-claude-3-opus', provider: 'anthropic', displayName: 'Claude 3 Opus', modelName: 'claude-3-opus' },
   { id: 'anthropic-claude-3-sonnet', provider: 'anthropic', displayName: 'Claude 3 Sonnet', modelName: 'claude-3-sonnet' },
   { id: 'anthropic-claude-3-haiku', provider: 'anthropic', displayName: 'Claude 3 Haiku', modelName: 'claude-3-haiku' },
-  
   { id: 'google-gemini-1.5-pro', provider: 'google', displayName: 'Gemini 1.5 Pro', modelName: 'gemini-1.5-pro' },
   { id: 'google-gemini-1.5-flash', provider: 'google', displayName: 'Gemini 1.5 Flash', modelName: 'gemini-1.5-flash' },
 ] as const;
@@ -59,30 +58,51 @@ async function buildInternalTools(params: AgentToolsParams) {
 }
 
 async function getMcpClient(params: AgentToolsParams) {
-    const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/mcp-server`
+    // const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
+    const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
     return experimental_createMCPClient({
         transport: {
             type: 'sse',
             url: mcpServerUrl,
+            headers: {
+                'Authorization': `Bearer ${params.token}`
+            }
         },
+    })
+}
+
+async function createMcpclinet(params: AgentToolsParams) {
+    const mcpServerUrl = `${params.publicUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
+
+    return httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: mcpServerUrl,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: params.token,
+      },
+      headers: {
+        'Content-Type': 'application/json'
+      }
     })
 }
 
 export const agentCommon = {
   async agentTools(params: AgentToolsParams) {
-    const mcpClient = await getMcpClient(params)
+    const mcpClient = await createMcpclinet(params)
     const builtInTools = await buildInternalTools(params)
-    const mcpTools = isNil(mcpClient) ? {} : params.tools
+
+    // const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
     const tools = {
         ...builtInTools,
-        ...mcpTools,
+        // ...mcpTools
     }
     return {
         tools: async () => {
             return tools
         },
         close: async () => {
-            await mcpClient?.close()
+            // await mcpClient?.close()
         },
     }
   },
@@ -119,7 +139,7 @@ export const agentCommon = {
       baseURL,
       metadata: {
         feature: AIUsageFeature.AGENTS,
-        agentid: agentId,
+        agentid: agentId
       },
     });
   },
@@ -187,4 +207,6 @@ type AgentToolsParams = {
     token: string
     tools: McpTool[]
     flowId: string
+    flowVersionId: string
+    stepName: string
 }

@@ -116,6 +116,7 @@ const StepSettingsContainer = () => {
         context,
         options,
       );
+
       const cleanedNewValues = formUtils.removeUndefinedFromInput(values);
       const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
         currentValuesRef.current,

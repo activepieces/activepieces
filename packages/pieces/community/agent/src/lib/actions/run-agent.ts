@@ -3,6 +3,7 @@ import { AIErrorResponse } from '@activepieces/common-ai'
 import { agentCommon, AI_MODELS } from '../common';
 import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { APICallError, stepCountIs, streamText } from 'ai';
+import { Type } from '@sinclair/typebox';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -28,12 +29,40 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'MCP Tools',
-      required: false
+      required: false,
+      properties: {
+        type: Property.ShortText({
+          displayName: 'Type',
+          required: true
+        }),
+        pieceMetadata: Property.Json({
+          displayName: 'Piece Metadata',
+          required: false,
+        }),
+        mcpId: Property.ShortText({
+          displayName: 'Mcp Id',
+          required: false
+        })
+      }
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
       defaultValue: undefined,
       required: false,
+      properties: {
+        displayName: Property.ShortText({
+          displayName: 'Display Name',
+          required: true
+        }),
+        description: Property.ShortText({
+          displayName: 'Description',
+          required: false
+        }),
+        type: Property.ShortText({
+          displayName: 'Type',
+          required: true
+        })
+      }
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
       displayName: 'Max steps',
@@ -55,10 +84,12 @@ export const runAgent = createAction({
 
     const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
         outputFields: structuredOutput as AgentOutputField[],
-        publicUrl: server.publicUrl,
+        publicUrl: context.server.apiUrl,
         token: server.token,
         tools: agentTools as McpTool[],
         flowId: context.flows.current.id,
+        flowVersionId: context.flows.current.version.id,
+        stepName: context.step.name
     })
 
     const selectedModel = agentCommon.getModelById(aiModel as string)
@@ -67,7 +98,7 @@ export const runAgent = createAction({
       model: selectedModel,
       token: server.token,
       baseURL,
-      agentId: '',
+      agentId: `agent-${context.flows.current.id}-${context.flows.current.version.id}-${context.step.name}`,
     });
 
     const systemPrompt = agentCommon.constructSystemPrompt(prompt)
@@ -76,7 +107,7 @@ export const runAgent = createAction({
       system: systemPrompt,
       prompt: prompt,
       stopWhen: stepCountIs(maxSteps),
-      tools: await agentToolInstance.tools()
+      // tools: await agentToolInstance.tools()
     })
 
     let currentText = ''

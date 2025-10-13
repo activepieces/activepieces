@@ -4,11 +4,12 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { createMcpServer } from './mcp-server'
 import { mcpSessionManager } from './mcp-session-manager'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp'
 
 const HEARTBEAT_INTERVAL = 30 * 1000
 
 export const mcpServerHandler = {
-    async handleStreamableHttpRequest({ req, reply, projectId, tools, logger }: HandleStreamableHttpRequestParams): Promise<void> {
+    async handleStreamableHttpRequest({ req, reply, projectId, tools, logger }: HandleStreamableHttpRequestParams) {
         try {
             const { server } = await createMcpServer({
                 logger,
@@ -27,6 +28,8 @@ export const mcpServerHandler = {
     
             await server.connect(transport)
             await transport.handleRequest(req.raw, reply.raw, req.body)
+
+            return server
         }
         catch (error) {
             logger.error('Error handling MCP request:', error)
@@ -40,6 +43,7 @@ export const mcpServerHandler = {
                     id: null,
                 })
             }
+            return null
         }
     },
     

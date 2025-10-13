@@ -128,9 +128,11 @@ const TestStepSectionImplementation = React.memo(
       abortControllerRef.current.abort();
       setMutationKey([Date.now().toString()]);
     };
+
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+
     return (
       <>
         {!sampleDataExists && (

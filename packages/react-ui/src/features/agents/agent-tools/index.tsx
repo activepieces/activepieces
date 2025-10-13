@@ -2,6 +2,7 @@ import { ControllerRenderProps } from 'react-hook-form';
 
 import { McpToolsSection } from '@/features/mcp/components/mcp-config/mcp-tools-section';
 import { McpTool } from '@activepieces/shared';
+import { DiagConsoleLogger } from '@opentelemetry/api';
 
 type AgentToolsSettingsProps = {
   agentToolsField: ControllerRenderProps;
