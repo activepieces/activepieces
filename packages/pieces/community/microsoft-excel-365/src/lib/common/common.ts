@@ -296,7 +296,7 @@ export const excelCommon = {
 
     const response = await httpClient.sendRequest(request);
     const usedRange = response.body['address'].split('!')[1];
-    const [, lastCell] = usedRange.split(':');
+    const lastCell  = usedRange.indexOf(':') != -1 ? usedRange.split(':')[1] : usedRange;
     const lastRow = parseInt(lastCell.match(/\d+/)[0], 10);
 
     return lastRow;
