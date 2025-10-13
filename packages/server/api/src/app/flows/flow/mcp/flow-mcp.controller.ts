@@ -34,15 +34,16 @@ export const flowMcpController: FastifyPluginAsyncTypebox = async (fastify) => {
         const step = flowStructureUtil.getStepOrThrow(request.params.stepName, flowVersion.version.trigger)
         const tools = step.settings?.input?.agentTools ?? []
         assertNotNullOrUndefined(tools, 'Tools are required')
-        tools.forEach((tool: McpTool) => {
-            tool.mcpId = tool.mcpId ?? `flow:${request.params.flowId}`
-        })
+        const toolsWithMcpId = tools.map((tool: McpTool) => ({
+            ...tool,
+            mcpId: tool.mcpId ?? `flow:${request.params.flowId}`
+        }))
         await mcpServerHandler.handleStreamableHttpRequest({
             req: request,
             reply,
             projectId: flowVersion.projectId,
             logger: request.log,
-            tools,
+            tools: toolsWithMcpId,
             sessionManager,
         })
 
