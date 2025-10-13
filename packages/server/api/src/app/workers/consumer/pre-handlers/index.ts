@@ -1,6 +1,5 @@
 import { JobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { delayedJobPreHandler } from './delayed-job-pre-handler'
 import { flowJobPreHandler } from './flow-job-pre-handler'
 import { scheduledJobPreHandler } from './scheduled-job-pre-handler'
 
@@ -26,7 +25,6 @@ export const preHandlers: Record<WorkerJobType, JobPreHandler> = {
     [WorkerJobType.EXECUTE_WEBHOOK]: defaultPreHandler,
     [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: defaultPreHandler,
     [WorkerJobType.RENEW_WEBHOOK]: defaultPreHandler,
-    [WorkerJobType.DELAYED_FLOW]: delayedJobPreHandler,
     [WorkerJobType.EXECUTE_AGENT]: defaultPreHandler,
     [WorkerJobType.EXECUTE_VALIDATION]: defaultPreHandler,
     [WorkerJobType.EXECUTE_TRIGGER_HOOK]: defaultPreHandler,

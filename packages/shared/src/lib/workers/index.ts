@@ -58,7 +58,9 @@ export type ConsumeJobRequest = Static<typeof ConsumeJobRequest>
 export const ConsumeJobResponse = Type.Object({
     status: Type.Enum(ConsumeJobResponseStatus),
     errorMessage: Type.Optional(Type.String()),
+    delayInSeconds: Type.Optional(Type.Number()),
 })
+
 
 export type ConsumeJobResponse = Static<typeof ConsumeJobResponse>
 

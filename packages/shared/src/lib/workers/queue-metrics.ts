@@ -12,7 +12,6 @@ export enum WorkerJobStatus {
 export const WorkerJobTypeForMetrics: WorkerJobType[] = [
     WorkerJobType.RENEW_WEBHOOK,
     WorkerJobType.EXECUTE_POLLING,
-    WorkerJobType.DELAYED_FLOW,
     WorkerJobType.EXECUTE_WEBHOOK,
     WorkerJobType.EXECUTE_FLOW,
     WorkerJobType.EXECUTE_AGENT,

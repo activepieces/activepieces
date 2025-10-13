@@ -42,7 +42,7 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
                 await job.moveToDelayed(dayjs().add(20, 'seconds').valueOf(), token)
                 throw new DelayedError('Thie job is rate limited and will be retried in 15 seconds')
             }
-            await jobConsumer(log).consume(jobId, queueName, job.data, job.attemptsStarted)
+            await jobConsumer(log).consume(job, queueName)
         }
         finally {
             await workerJobRateLimiter(log).onCompleteOrFailedJob(job.data, job.id)

@@ -25,11 +25,11 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
             if (await needMigration()) {
                 await refillPollingJobs(log).run()
                 await refillRenewWebhookJobs(log).run()
-                await refillPausedRuns(log).run()
                 await updateMigrationVersion()
             }
             await unifyOldQueuesIntoOne(log).run()
             await removeRateLimitJobsQueue(log).run()
+            await refillPausedRuns(log).run()
         }
         finally {
             await migrationLock.release()

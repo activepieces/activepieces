@@ -26,10 +26,6 @@ export const getJobTypeDescription = (
       );
     case WorkerJobType.EXECUTE_POLLING:
       return t('Checks external services for new data at regular intervals.');
-    case WorkerJobType.DELAYED_FLOW:
-      return t(
-        'Runs flows that were scheduled for later, like paused flows or delayed executions.',
-      );
     case WorkerJobType.EXECUTE_WEBHOOK:
       return t('Processes incoming webhook requests that start flow runs.');
     case WorkerJobType.EXECUTE_FLOW:
