@@ -6,7 +6,7 @@ import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'
 import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
 import { removeRateLimitJobsQueue } from './remove-rate-limit-queue'
-import { removeHardDeleteProjectJobs } from './removeHardDeleteProjectJobs'
+import { removeHardDeleteProjectJobs } from './remove-hard-delete-project-jobs'
 import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
 
 const QUEUE_MIGRATION_VERSION = '1'
