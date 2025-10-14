@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
+import { groupDropdown } from '../common/properties';
 
 export const createPlan = createAction({
   auth: microsoft365PlannerAuth,
@@ -7,6 +8,7 @@ export const createPlan = createAction({
   displayName: 'Create Plan',
   description: 'Create a new planner plan',
   props: {
+    groupId: groupDropdown({ required: true }), 
     title: Property.ShortText({
       displayName: 'Title',
       description: 'The title of the plan',
@@ -15,7 +17,9 @@ export const createPlan = createAction({
   },
   async run({ auth, propsValue }) {
     const planParams = {
-      container: {},
+      container: {
+        url : `https://graph.microsoft.com/v1.0/groups/${propsValue.groupId}`,
+      },
       title: propsValue.title,
     };
     return await microsoft365PlannerCommon.createPlan({ auth, ...planParams });

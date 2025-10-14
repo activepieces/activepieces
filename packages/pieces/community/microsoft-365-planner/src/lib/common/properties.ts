@@ -1,6 +1,32 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { microsoft365PlannerCommon } from '.';
 
+export const groupDropdown = ({ required = true }) =>
+  Property.Dropdown({
+    displayName: 'Group',
+    description: 'Select the Grroup',
+    required: required,
+    refreshers: ['auth'],
+    options: async ({ auth }: { auth?: OAuth2PropertyValue | null }) => {
+      if (!auth) {
+        return {
+          options: [],
+          disabled: true,
+          placeholder: 'Please select an authentication first',
+        };
+      }
+      const groups = await microsoft365PlannerCommon.listGroups({ auth });
+      return {
+        options: groups.map((group) => ({
+          label: group.displayName ?? '',
+          value: group.id ?? '',
+        })),
+        disabled: false,
+        placeholder: 'Select a group',
+      };
+    },
+  });
+
 export const PlanDropdown = ({ required = true }) =>
   Property.Dropdown({
     displayName: 'Plan',
@@ -58,6 +84,7 @@ export const BucketDropdown = ({ required = true }) =>
         auth,
         planId,
       });
+      console.log("Buckets:", JSON.stringify(buckets));
       return {
         options: buckets.map((bucket) => ({
           label: bucket.name ?? '',

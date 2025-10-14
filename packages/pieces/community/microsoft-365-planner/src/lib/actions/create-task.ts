@@ -78,6 +78,12 @@ export const createTask = createAction({
             ])
           )
         : undefined,
+      dueDateTime: propsValue.dueDateTime 
+        ? new Date(propsValue.dueDateTime).toISOString()
+        : undefined,
+      startDateTime: propsValue.startDateTime 
+        ? new Date(propsValue.startDateTime).toISOString()
+        : undefined,
     };
     return await microsoft365PlannerCommon.createTask({
       auth,

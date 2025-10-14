@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { BucketDropdown } from '../common/properties';
+import { BucketDropdown, PlanDropdown } from '../common/properties';
 
 export const getABucket = createAction({
   auth: microsoft365PlannerAuth,
@@ -8,6 +8,7 @@ export const getABucket = createAction({
   displayName: 'Get a Bucket',
   description: 'Retrieve details about a specific bucket.',
   props: {
+    planId: PlanDropdown({ required: true }),
     bucketId: BucketDropdown({ required: true }),
   },
   async run({ auth, propsValue: { bucketId } }) {

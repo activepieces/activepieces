@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { createBucket } from './lib/actions/create-bucket';
 import { createPlan } from './lib/actions/create-plan';
 import { createTask } from './lib/actions/create-task';
@@ -14,6 +14,7 @@ import { microsoft365PlannerAuth } from './lib/common';
 import { newPlanCreated } from './lib/triggers/new-plan-created';
 import { newTaskAssignedToUser } from './lib/triggers/new-task-assigned-to-user';
 import { newTaskCreated } from './lib/triggers/new-task-created';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const microsoft365Planner = createPiece({
   displayName: 'Microsoft 365 Planner',
@@ -22,7 +23,7 @@ export const microsoft365Planner = createPiece({
   auth: microsoft365PlannerAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-365-planner.png',
-  authors: ['LuizDMM'],
+  authors: ['LuizDMM','sanket-a11y'],
   actions: [
     // Write Actions
     createPlan,
@@ -37,6 +38,13 @@ export const microsoft365Planner = createPiece({
     findAPlan,
     getABucket,
     findTask,
+    createCustomApiCallAction({
+			auth: microsoft365PlannerAuth,
+			baseUrl: () => 'https://graph.microsoft.com/v1.0/',
+			authMapping: async (auth) => ({
+				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+			}),
+		}),
   ],
   triggers: [
     newPlanCreated,

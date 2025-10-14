@@ -15,6 +15,7 @@ import {
   GetUserResponse,
   ListBucketsParams,
   ListBucketsResponse,
+  ListGroupsResponse,
   ListPlansResponse,
   ListTasksParams,
   ListTasksResponse,
@@ -28,7 +29,7 @@ export const microsoft365PlannerAuth = PieceAuth.OAuth2({
   authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
-  scope: ['Tasks.ReadWrite', 'User.Read'],
+  scope: ['Tasks.ReadWrite', 'User.Read', 'Group.Read.All'],
   prompt: 'omit',
 });
 
@@ -36,6 +37,7 @@ export const microsoft365PlannerCommon = {
   endpoints: {
     createPlan: '/planner/plans',
     listPlans: '/me/planner/plans',
+    listGroups: '/groups',
     planDetail: (id: string) => `/planner/plans/${id}`,
     listBuckets: (planId: string) => `/planner/plans/${planId}/buckets`,
     listPlanTasks: (planId: string) => `/planner/plans/${planId}/tasks`,
@@ -58,9 +60,38 @@ export const microsoft365PlannerCommon = {
     const user: GetUserResponse = await client.api('/me').get();
     return user;
   },
+  getEtag: async ({
+    auth,
+    id,
+    endpointType,
+  }: AuthenticationParams & {
+    id: string;
+    endpointType:
+      | 'planDetail'
+      | 'listBuckets'
+      | 'listPlanTasks'
+      | 'bucketDetail'
+      | 'deleteTask'
+      | 'deleteTask';
+  }) => {
+    const client = microsoft365PlannerCommon.getClient({ auth });
+    const endpointFn = microsoft365PlannerCommon.endpoints[endpointType] as (
+      arg: string
+    ) => string;
+    const endpoint = endpointFn(id);
+    const response = await client.api(endpoint).get();
+    return (response as any)['@odata.etag'] as string;
+  },
   listUsers: async ({ auth }: AuthenticationParams) => {
     const client = microsoft365PlannerCommon.getClient({ auth });
     const response: ListUserResponse = await client.api('/users').get();
+    return response.value;
+  },
+  listGroups: async ({ auth }: AuthenticationParams) => {
+    const client = microsoft365PlannerCommon.getClient({ auth });
+    const response: ListGroupsResponse = await client
+      .api(microsoft365PlannerCommon.endpoints.listGroups)
+      .get();
     return response.value;
   },
   listPlans: async ({ auth }: AuthenticationParams) => {
@@ -101,15 +132,27 @@ export const microsoft365PlannerCommon = {
   },
   updateBucket: async ({ auth, id, name, orderHint }: UpdateBucketParams) => {
     const client = microsoft365PlannerCommon.getClient({ auth });
+    const etag = await microsoft365PlannerCommon.getEtag({
+      auth,
+      id,
+      endpointType: 'bucketDetail',
+    });
     await client
       .api(microsoft365PlannerCommon.endpoints.bucketDetail(id))
+      .header('If-Match', etag)
       .update({ name, orderHint });
     return { success: true };
   },
   deleteTask: async ({ auth, id }: DeleteTaskParams) => {
     const client = microsoft365PlannerCommon.getClient({ auth });
+    const etag = await microsoft365PlannerCommon.getEtag({
+      auth,
+      id,
+      endpointType: 'deleteTask',
+    });
     await client
       .api(microsoft365PlannerCommon.endpoints.deleteTask(id))
+      .header('If-Match', etag)
       .delete();
     return { success: true };
   },
@@ -122,22 +165,41 @@ export const microsoft365PlannerCommon = {
   },
   updateTask: async ({ auth, id, ...taskParams }: UpdateTaskParams) => {
     const client = microsoft365PlannerCommon.getClient({ auth });
+    const etag = await microsoft365PlannerCommon.getEtag({
+      auth,
+      id,
+      endpointType: 'deleteTask',
+    });
     await client
       .api(microsoft365PlannerCommon.endpoints.deleteTask(id))
+      .header('If-Match', etag)
       .update(taskParams);
     return { success: true };
   },
   deleteBucket: async ({ auth, id }: DeleteBucketParams) => {
     const client = microsoft365PlannerCommon.getClient({ auth });
+    const etag = await microsoft365PlannerCommon.getEtag({
+      auth,
+      id,
+      endpointType: 'bucketDetail',
+    });
     await client
       .api(microsoft365PlannerCommon.endpoints.bucketDetail(id))
+      .header('If-Match', etag)
       .delete();
     return { success: true };
   },
+
   updatePlan: async ({ auth, id, title }: UpdatePlanParams) => {
     const client = microsoft365PlannerCommon.getClient({ auth });
+    const etag = await microsoft365PlannerCommon.getEtag({
+      auth,
+      id,
+      endpointType: 'planDetail',
+    });
     await client
       .api(microsoft365PlannerCommon.endpoints.planDetail(id))
+      .header('If-Match', etag)
       .update({ title });
     return { success: true };
   },

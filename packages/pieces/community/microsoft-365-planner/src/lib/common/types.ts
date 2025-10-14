@@ -1,5 +1,6 @@
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import {
+  Group,
   PlannerBucket,
   PlannerPlan,
   PlannerPlanContainer,
@@ -18,6 +19,10 @@ export interface GenericDetailParams extends AuthenticationParams {
 // API Types
 export interface ListPlansResponse {
   value: PlannerPlan[];
+}
+
+export interface ListGroupsResponse {
+  value: Group[];
 }
 
 export interface ListBucketsParams extends AuthenticationParams {
