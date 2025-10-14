@@ -15,9 +15,7 @@ export const flowCache = (log: FastifyBaseLogger) => ({
     },
     updateManyStatusesCache: async (flows: UpdateParams[]): Promise<void> => {
         const redisConnection = await redisConnections.useExisting();
-        const updateObject = flows.map((flow) => ({
-            [getRedisKey(flow.id)]: flow.status,
-        }));
+        const updateObject = flows.reduce((acc,flow) => ({ ...acc, [getRedisKey(flow.id)]: flow.status }), {})
         await redisConnection.mset(updateObject);
     },
     getStatusCache: async (flowId: string): Promise<FlowCacheStatus | null> => {
