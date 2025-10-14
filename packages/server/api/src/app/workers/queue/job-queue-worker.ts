@@ -4,7 +4,7 @@ import { DelayedError, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis'
+import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { jobConsumer } from '../consumer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
@@ -48,7 +48,7 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
             await workerJobRateLimiter(log).onCompleteOrFailedJob(job.data, job.id)
         }
     }, {
-        connection: await redisConnections.createNew(),
+        connection: await redisConnections.create(),
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
         concurrency: 60,
         autorun: false,

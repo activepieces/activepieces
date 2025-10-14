@@ -5,7 +5,7 @@ import { promisify } from 'util'
 import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineProcessManager } from '../runner/process/engine-process-manager'
+import { engineProcessManager } from '../compute/process/engine-process-manager'
 
 const execAsync = promisify(exec)
 
@@ -81,6 +81,10 @@ export const workerMachine = {
     getSettings: () => {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
+    },
+    getSettingOrThrow: (prop: keyof WorkerMachineHealthcheckResponse) => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings[prop]
     },
     getInternalApiUrl: (): string => {
         if (environmentVariables.hasAppModules()) {

@@ -32,7 +32,6 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             id: originalFlow.id,
             projectId,
             platformId: project.platformId,
-            lock: true,
             userId: project.ownerId,
             operation: {
                 type: FlowOperationType.IMPORT_FLOW,
@@ -68,7 +67,6 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 id: flow.id,
                 projectId,
                 platformId: project.platformId,
-                lock: true,
                 userId: project.ownerId,
                 operation: {
                     type: FlowOperationType.LOCK_AND_PUBLISH,

@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, QueueMode, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -19,17 +19,7 @@ export enum CopilotInstanceTypes {
     OPENAI = 'OPENAI',
 }
 
-export enum RedisType {
-    SENTINEL = 'SENTINEL',
-    MEMORY = 'MEMORY',
-    STANDALONE = 'STANDALONE',
-}
 
-
-export enum QueueMode {
-    REDIS = 'REDIS',
-    MEMORY = 'MEMORY',
-}
 
 export enum DatabaseType {
     POSTGRES = 'POSTGRES',
@@ -158,7 +148,6 @@ export const system = {
         }
         return values.split(',').map((value) => value.trim())
     },
-
     getOrThrow<T extends string>(prop: SystemProp): T {
         const value = getEnvVarOrReturnDefaultValue(prop) as T | undefined
 

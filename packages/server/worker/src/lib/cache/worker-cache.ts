@@ -1,7 +1,9 @@
-import { readdir, rm } from 'fs/promises'
+import { readdir, readFile, rm, writeFile } from 'fs/promises'
 import path from 'path'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler, fileSystemUtils } from '@activepieces/server-shared'
 import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
+import { workerDistributedLock } from '../utils/worker-redis'
 
 export const LATEST_CACHE_VERSION = 'v4'
 export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
@@ -33,5 +35,27 @@ export const workerCache = (log: FastifyBaseLogger) => ({
             exceptionHandler.handle(error, log)
         }
     },
+    async getCacheId(): Promise<string> {
+        return workerDistributedLock(log).runExclusive({ key: 'cache-id', timeoutInSeconds: 60, fn: async () => {
+            const cacheFile = path.join(GLOBAL_CACHE_ALL_VERSIONS_PATH, 'info.json')
+            const cacheExists = await fileSystemUtils.fileExists(cacheFile)
+            if (!cacheExists) {
+                const cacheInfo: CacheInfo = {
+                    id: nanoid(),
+                    createdAt: new Date().toISOString(),
+                }
+                await writeFile(cacheFile, JSON.stringify(cacheInfo))
+                return cacheInfo.id
+            }
+            const cache = await readFile(cacheFile, 'utf8')
+            const cacheData: CacheInfo = JSON.parse(cache)
+            return cacheData.id
+        } })
+    },
 })
+
+type CacheInfo = {
+    id: string
+    createdAt: string
+}
 

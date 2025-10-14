@@ -3,7 +3,7 @@ import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, Err
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { engineRunner } from '../runner'
+import { engineRunner } from '../compute'
 import { workerMachine } from '../utils/machine'
 import { inspect } from 'util'
 

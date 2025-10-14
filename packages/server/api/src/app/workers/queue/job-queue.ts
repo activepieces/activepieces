@@ -3,7 +3,7 @@ import { ApEdition, ApId, isNil } from '@activepieces/shared'
 import { Queue, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis'
+import { redisConnections } from '../../database/redis-connections'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { machineService } from '../machine/machine-service'
@@ -75,7 +75,7 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
 
     const options = {
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
-        connection: await redisConnections.createNew(),
+        connection: await redisConnections.create(),
         defaultJobOptions: {
             attempts: 5,
             backoff: {

@@ -1,4 +1,4 @@
-import { redisConnections } from '../database/redis'
+import { redisConnections } from '../database/redis-connections'
 
 export const distributedStore = {
     async put(key: string, value: unknown, ttlInSeconds?: number): Promise<void> {

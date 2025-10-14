@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
+import { redisConnections } from '../../../database/redis-connections'
 import { jobQueue } from '../job-queue'
 import { RATE_LIMIT_PRIORITY } from '../queue-manager'
 
@@ -16,7 +16,7 @@ export const removeRateLimitJobsQueue = (log: FastifyBaseLogger) => ({
             return
         }
         const queue = new Queue('rateLimitJobs', {
-            connection: await redisConnections.createNew(),
+            connection: await redisConnections.create(),
         })
         const jobs = await queue.getJobs(['waiting', 'delayed', 'active', 'prioritized'])
         for (const job of jobs) {
