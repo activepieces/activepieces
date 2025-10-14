@@ -1,7 +1,7 @@
 import { ExecuteFlowJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
+import { redisConnections } from '../../../database/redis-connections'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
@@ -106,7 +106,7 @@ async function migrateWebhookJobs(log: FastifyBaseLogger): Promise<boolean> {
 
 async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promise<void>): Promise<boolean> {
     const legacyQueue = new Queue<T>(name, {
-        connection: await redisConnections.createNew(),
+        connection: await redisConnections.create(),
     })
 
     const waitingJobs = await legacyQueue.getJobs(['waiting', 'delayed', 'active', 'prioritized'])
@@ -121,7 +121,7 @@ async function migrateQueue<T>(name: string, migrationFn: (job: Job<T>) => Promi
 
 async function cleanQueue(name: string) {
     const queue = new Queue(name, {
-        connection: await redisConnections.createNew(),
+        connection: await redisConnections.create(),
     })
     await queue.obliterate({
         force: true,

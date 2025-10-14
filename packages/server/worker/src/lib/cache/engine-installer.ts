@@ -1,34 +1,36 @@
 import { PathLike } from 'fs'
 import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { memoryLock, systemConstants } from '@activepieces/server-shared'
+import { systemConstants } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { workerMachine } from '../utils/machine'
-import { cacheState } from './cache-state'
+import { cacheState, NO_SAVE_GUARD } from './cache-state'
 
 const engineExecutablePath = systemConstants.ENGINE_EXECUTABLE_PATH
 const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
 
-export const engineInstaller = (_log: FastifyBaseLogger) => ({
+export const engineInstaller = (log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-
-        return memoryLock.runExclusive(`engineInstaller-${path}`, async () => {
-            const cache = cacheState(path)
-            const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
-            const cacheMiss = !isEngineInstalled || isDev
-
-            if (cacheMiss) {
+        const cache = cacheState(path, log)
+        const { cacheHit } = await cache.getOrSetCache({
+            key: ENGINE_INSTALLED,
+            cacheMiss: (key: string) => {
+                const isEngineInstalled = key == ENGINE_CACHE_ID
+                return !isEngineInstalled || isDev
+            },
+            installFn: async () => {
                 await atomicCopy(engineExecutablePath, `${path}/main.js`)
                 await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
-                await cache.setCache(ENGINE_INSTALLED, ENGINE_CACHE_ID)
-            }
-            return { cacheHit: !cacheMiss }
-        })
+                return ENGINE_CACHE_ID
+            },
+            skipSave: NO_SAVE_GUARD,
+        })     
+        return { cacheHit }
     },
 })
 

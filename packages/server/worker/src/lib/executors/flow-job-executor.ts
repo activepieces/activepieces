@@ -20,7 +20,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { engineRunner } from '../runner'
+import { engineRunner } from '../compute'
 import { workerMachine } from '../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
@@ -160,7 +160,8 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
         timeoutInSeconds,
     }: ExecuteFlowOptions): Promise<ConsumeJobResponse> {
         try {
-            const flow = await flowWorkerCache.getFlow({
+
+            const flow = await flowWorkerCache(log).getFlow({
                 engineToken,
                 flowVersionId: jobData.flowVersionId,
             })

@@ -10,6 +10,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
 import { app } from '../../server'
@@ -116,6 +117,18 @@ export const machineService = (log: FastifyBaseLogger) => {
                 }),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+                REDIS_TYPE: redisConnections.getRedisType(),
+                REDIS_SSL_CA_FILE: system.get(AppSystemProp.REDIS_SSL_CA_FILE),
+                REDIS_DB: system.getNumber(AppSystemProp.REDIS_DB) ?? undefined,
+                REDIS_HOST: system.get(AppSystemProp.REDIS_HOST),
+                REDIS_PASSWORD: system.get(AppSystemProp.REDIS_PASSWORD),
+                REDIS_PORT: system.get(AppSystemProp.REDIS_PORT),
+                REDIS_URL: system.get(AppSystemProp.REDIS_URL),
+                REDIS_USER: system.get(AppSystemProp.REDIS_USER),
+                REDIS_USE_SSL: system.get(AppSystemProp.REDIS_USE_SSL) === 'true',
+                REDIS_SENTINEL_ROLE: system.get(AppSystemProp.REDIS_SENTINEL_ROLE),
+                REDIS_SENTINEL_HOSTS: system.get(AppSystemProp.REDIS_SENTINEL_HOSTS),
+                REDIS_SENTINEL_NAME: system.get(AppSystemProp.REDIS_SENTINEL_NAME),
             }
 
             await machineService(log).updateConcurrency()

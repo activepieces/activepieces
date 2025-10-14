@@ -1,7 +1,7 @@
 import { ExecutionType, FlowRunStatus, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, ProgressUpdateType, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
+import { redisConnections } from '../../../database/redis-connections'
 import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
