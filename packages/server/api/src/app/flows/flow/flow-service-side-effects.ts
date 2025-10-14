@@ -8,6 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
+import { flowCache, FlowCacheStatus } from './flow.cache'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
@@ -15,6 +16,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         flowToUpdate,
         publishedFlowVersion,
     }: PreUpdateStatusParams): Promise<void> {
+        await flowCache(log).updateStatusCache({ id: flowToUpdate.id, status: newStatus })
         switch (newStatus) {
             case FlowStatus.ENABLED: {
                 await triggerSourceService(log).enable({
@@ -37,6 +39,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
+        await flowCache(log).updateStatusCache({ id: flowToDelete.id, status: FlowCacheStatus.DELETED })
         if (
             flowToDelete.status === FlowStatus.DISABLED ||
             isNil(flowToDelete.publishedVersionId)

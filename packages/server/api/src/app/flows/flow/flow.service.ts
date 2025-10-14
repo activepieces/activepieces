@@ -381,8 +381,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
             })
 
-            await flowRepo(entityManager).save(flowToUpdate)
-
             await flowSideEffects(log).preUpdateStatus({
                 flowToUpdate,
                 publishedFlowVersion,
