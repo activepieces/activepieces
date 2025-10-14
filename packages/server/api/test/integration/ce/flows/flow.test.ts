@@ -163,8 +163,8 @@ describe('Flow API', () => {
                         },
                     },
                     valid: true,
-                    name: 'webhook',
-                    displayName: 'Webhook',
+                    name: 'trigger',
+                    displayName: 'Schedule',
                 },
             })
             await databaseConnection()
@@ -184,12 +184,34 @@ describe('Flow API', () => {
                 id: mockOwner.id,
             })
 
-            const mockUpdateFlowStatusRequest = {
-                type: FlowOperationType.CHANGE_STATUS,
-                request: {
-                    status: 'ENABLED',
+            //Publish flow first
+            await app?.inject({
+                method: 'POST',
+                url: `/v1/flows/${mockFlow.id}`,
+                body: {
+                    type: FlowOperationType.LOCK_AND_PUBLISH,
+                    request: {},
                 },
-            }
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // disabled flow
+            await app?.inject({
+                method: 'POST',
+                url: `/v1/flows/${mockFlow.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                body: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'DISABLED',
+                    },
+                },
+            })
+
 
             // act
             const response = await app?.inject({
@@ -198,7 +220,12 @@ describe('Flow API', () => {
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
-                body: mockUpdateFlowStatusRequest,
+                body: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'ENABLED',
+                    },
+                },
             })
             
 
