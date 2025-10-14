@@ -56,7 +56,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH, log)
         await cache.saveCache('@activepieces/pieces-framework', CacheState.PENDING)
-        await cache.saveCache('@@activepieces/pieces-common', CacheState.PENDING)
+        await cache.saveCache('@activepieces/pieces-common', CacheState.PENDING)
         await cache.saveCache('@activepieces/shared', CacheState.PENDING)
         await cache.saveCache('@activepieces/common-ai', CacheState.PENDING)
         await cache.saveCache(piecePackageName, CacheState.PENDING)
