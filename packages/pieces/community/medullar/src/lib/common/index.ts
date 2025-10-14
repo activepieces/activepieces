@@ -5,6 +5,7 @@ export const medullarCommon = {
   baseUrl: 'https://api.medullar.com',
   authUrl: 'https://api.medullar.com/auth/v1',
   exploratorUrl: 'https://api.medullar.com/explorator/v1',
+  aiUrl: 'https://api.medullar.com/ai/v1',
 };
 
 export async function getUser(authentication: string) {
@@ -34,7 +35,7 @@ export async function getUserSpaces(authentication: string) {
 
   const spaceListResponse = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: `${medullarCommon.exploratorUrl}/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
+    url: `${medullarCommon.aiUrl}/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
     headers: {
       Authorization: `Bearer ${authentication}`,
     },
@@ -102,7 +103,7 @@ export const medullarPropsCommon = {
 
       const chatListResponse = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${medullarCommon.exploratorUrl}/chats/?space=${spaceId}&limit=1000&offset=0`,
+        url: `${medullarCommon.aiUrl}/chats/?space=${spaceId}&limit=1000&offset=0`,
         headers: {
           Authorization: `Bearer ${authentication}`,
         },

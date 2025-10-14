@@ -19,7 +19,7 @@ export const createSpace = createAction({
 
     const spaceResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${medullarCommon.exploratorUrl}/spaces/`,
+      url: `${medullarCommon.aiUrl}/spaces/`,
       body: {
         name: context.propsValue['space_name'],
         company: {
