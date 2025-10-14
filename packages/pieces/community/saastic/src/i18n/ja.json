@@ -1,5 +1,4 @@
 {
-  "Saastic": "Saastic",
   "Revenue and churn analytics for Stripe": "Stripeの収益と分析を解析する",
   " You can find your project’s API key here: https://saastic.com/settings/developers": " プロジェクトのAPIキーはこちらから確認できます: https://saastic.com/settings/developers",
   "Create or Update a Customer": "顧客を作成または更新",
@@ -9,7 +8,7 @@
   "Creates a customer charge.": "顧客課金を作成します。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "First Name": "名",
-  "Last Name": "姓",
+  "Last Name": "Last Name",
   "Email": "Eメールアドレス",
   "Phone": "電話番号",
   "Signup Date": "登録日",

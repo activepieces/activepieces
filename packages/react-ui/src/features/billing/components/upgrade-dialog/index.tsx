@@ -140,8 +140,8 @@ export const UpgradeDialog: FC = () => {
   );
 
   const [dialogState, setDialogState] = useState<DialogState>({
-    selectedPlan: PlanName.FREE,
-    selectedCycle: BillingCycle.MONTHLY,
+    selectedPlan: currentPlanInfo.plan,
+    selectedCycle: currentPlanInfo.cycle,
     selectedSeats: [0],
     selectedActiveFlows: [0],
     selectedProjects: [0],
@@ -149,26 +149,21 @@ export const UpgradeDialog: FC = () => {
   });
 
   useEffect(() => {
-    if (dialog.isOpen) {
-      const initialPlan = currentPlanInfo.isTrial
-        ? PlanName.PLUS
-        : currentPlanInfo.plan;
-      const samePlan = currentPlanInfo.plan === dialogState.selectedPlan;
-      setDialogState({
-        selectedPlan: initialPlan,
-        selectedCycle: currentPlanInfo.cycle,
-        selectedSeats: [samePlan ? currentPlanInfo.seats : DEFAULT_SEATS],
-        selectedActiveFlows: [
-          samePlan
-            ? currentPlanInfo.activeFlows
-            : DEFAULT_ACTIVE_FLOWS[PlanName.PLUS],
-        ],
-        selectedProjects: [
-          samePlan ? currentPlanInfo.projects : DEFAULT_PROJECTS,
-        ],
-        currentStep: !isNil(dialog.step) ? dialog.step : 1,
-      });
-    }
+    const samePlan = currentPlanInfo.plan === dialogState.selectedPlan;
+    setDialogState({
+      selectedPlan: currentPlanInfo.plan,
+      selectedCycle: currentPlanInfo.cycle,
+      selectedSeats: [samePlan ? currentPlanInfo.seats : DEFAULT_SEATS],
+      selectedActiveFlows: [
+        samePlan
+          ? currentPlanInfo.activeFlows
+          : DEFAULT_ACTIVE_FLOWS[PlanName.PLUS],
+      ],
+      selectedProjects: [
+        samePlan ? currentPlanInfo.projects : DEFAULT_PROJECTS,
+      ],
+      currentStep: !isNil(dialog.step) ? dialog.step : 1,
+    });
   }, [dialog.isOpen, dialog.step, currentPlanInfo]);
 
   const pricing = useMemo(
@@ -271,7 +266,7 @@ export const UpgradeDialog: FC = () => {
     }
   };
 
-  if (isEnterprise) return null;
+  if (isEnterprise || edition === ApEdition.COMMUNITY) return null;
 
   const messages: Record<string, string> = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: t(
@@ -290,7 +285,7 @@ export const UpgradeDialog: FC = () => {
   };
 
   const message = dialog.metric ? messages[dialog.metric] : undefined;
-  const title = dialog.title || t('Choose Your Plan');
+  const title = dialog.title || t('Customize Your Plan');
   const steps = [{ title: t('Select Plan') }, { title: t('Add-ons') }];
 
   return (

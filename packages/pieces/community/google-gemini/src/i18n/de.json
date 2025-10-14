@@ -1,5 +1,4 @@
 {
-  "Google Gemini": "Google Gemini",
   "Use the new Gemini models from Google": "Verwende die neuen Gemini-Modelle von Google",
   "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://makersuite.google.com/app/apikey\n2. Once on the website, locate and click on the option to obtain your API Key.\nPlease note this piece uses a API in the beta phase that may change at any time.\n": "\nFolgen Sie diesen Anweisungen, um Ihren API-Schlüssel zu erhalten:\n1. Besuchen Sie die folgende Website: https://makersuite.google.com/app/apikey\n2. Sobald Sie auf der Website sind, suchen und klicken Sie auf die Option, um Ihren API-Schlüssel zu erhalten.\nBitte beachten Sie, dass dieser Teil eine API in der Beta-Phase verwendet, die sich jederzeit ändern kann.\n",
   "Generate Content": "Inhalt generieren",

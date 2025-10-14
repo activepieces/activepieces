@@ -6,7 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-import { baseUrlv0 } from '../common/common';
+import { baseUrlv0, baseUrlv1 } from '../common/common';
 
 export const imageGeneration = createAction({
   auth: straicoAuth,
@@ -30,23 +30,58 @@ export const imageGeneration = createAction({
         ],
       },
     }),
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
       displayName: 'Model',
       required: true,
       description: 'Select the image generation model.',
       defaultValue: 'openai/dall-e-3',
-      options: {
-        disabled: false,
-        options: [
-          { value: 'openai/dall-e-3', label: 'openai/dall-e-3' },
-          { value: 'flux/1.1', label: 'flux/1.1' },
-          { value: 'ideogram/V_2A', label: 'ideogram/V_2A' },
-          { value: 'ideogram/V_2A_TURBO', label: 'ideogram/V_2A_TURBO' },
-          { value: 'ideogram/V_2', label: 'ideogram/V_2' },
-          { value: 'ideogram/V_2_TURBO', label: 'ideogram/V_2_TURBO' },
-          { value: 'ideogram/V_1', label: 'ideogram/V_1' },
-          { value: 'ideogram/V_1_TURBO', label: 'ideogram/V_1_TURBO' }
-        ],
+      refreshers: ['auth'],
+      refreshOnSearch: true,
+      options: async ({ auth }, { searchValue }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+          };
+        }
+        try {
+          const response = await httpClient.sendRequest<{
+            data: { image?: { name?: string; model: string }[] };
+            success: boolean;
+          }>({
+            url: `${baseUrlv1}/models`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: auth as string,
+            },
+          });
+
+          const models = response.body?.data?.image ?? [];
+          const filtered = searchValue
+            ? models.filter((m) => {
+                const term = String(searchValue).toLowerCase();
+                return (
+                  (m.name ?? '').toLowerCase().includes(term) ||
+                  m.model.toLowerCase().includes(term)
+                );
+              })
+            : models;
+
+          return {
+            disabled: false,
+            options: filtered.map((m) => ({
+              label: m.name ?? m.model,
+              value: m.model,
+            })),
+          };
+        } catch (e) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load models. Check API key and try again.',
+          };
+        }
       },
     }),
     size: Property.StaticDropdown({
@@ -54,7 +89,7 @@ export const imageGeneration = createAction({
       required: true,
       description:
         'The desired image dimensions.',
-      defaultValue: 1,
+      defaultValue: 'square',
       options: {
         disabled: false,
         options: [

@@ -22,7 +22,9 @@ export function UserAvatar({
       name={email}
       size={size}
       colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
-      variant="beam"
+      variant="bauhaus"
+      square
+      className="rounded-lg"
     />
   );
 

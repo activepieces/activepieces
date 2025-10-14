@@ -1,5 +1,4 @@
 {
-  "Box": "Box",
   "Secure content management and collaboration": "Secure content management and collaboration",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
@@ -31,5 +30,5 @@
   "The ID of the item to trigger a webhook": "The ID of the item to trigger a webhook",
   "The type of the item to trigger a webhook": "The type of the item to trigger a webhook",
   "File": "文件",
-  "Folder": "Folder"
+  "Folder": "文件夹"
 }

@@ -1,5 +1,4 @@
 {
-  "GCloud Pub/Sub": "GCloud Pub/Sub",
   "Google Cloud's event streaming service": "Google Cloudのイベントストリーミングサービス",
   "Service Key (JSON)": "サービスキー (JSON)",
   "\nYou can get it from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey).\n": "\n[Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey)から入手できます。\n",

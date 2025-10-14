@@ -1,5 +1,4 @@
 {
-  "Bitly": "Bitly",
   "URL shortening and link management platform with analytics.": "URL verkorting en link platform voor beheer met analyses.",
   "Access Token": "Toegangs-token",
   "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ": "\n  Om uw Toegang Token te krijgen:\n  1. Log in op uw Bitly account.\n  2. Klik op het profielpictogram in de rechterbovenhoek.\n  3. Ga naar **Profielinstellingen**.\n  4. Navigeer naar de sectie **Ontwikkelaarsinstellingen**.\n  5. Klik op **API**.\n  6. Klik op de knop **Genereer token** en voer uw wachtwoord in om uw toegangstoken te krijgen.\n  ",

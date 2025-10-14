@@ -1,7 +1,6 @@
 {
-  "Calendly": "Calendly",
   "Simple, modern scheduling": "Planification simple et moderne",
-  "\n## Obtain your Calendly Personal Token\n1. Go to https://calendly.com/integrations/api_webhooks\n2. Click on \"Create New Token\"\n3. Copy the token and paste it in the field below\n": "\n## Obtain your Calendly Personal Token\n1. Go to https://calendly.com/integrations/api_webhooks\n2. Click on \"Create New Token\"\n3. Copy the token and paste it in the field below\n",
+  "\n## Obtain your Calendly Personal Token\n1. Go to https://calendly.com/integrations/api_webhooks\n2. Click on \"Create New Token\"\n3. Copy the token and paste it in the field below\n": "\n## Obtenez votre jeton personnel Calendly\n1. Allez sur https://calendly.com/integrations/api_webhooks\n2. Cliquez sur « Créer un nouveau jeton »\n3. Copiez le jeton et collez-le dans le champ ci-dessous\n",
   "Custom API Call": "Appel d'API personnalisé",
   "Make a custom API call to a specific endpoint": "Passez un appel d'API personnalisé à un endpoint spécifique",
   "Method": "Méthode",
@@ -18,7 +17,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "DELETE",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "Event Scheduled": "Événement programmé",
   "Event Canceled": "Événement annulé",
   "Triggers when a new Calendly event is scheduled": "Déclenche quand un nouvel événement Calendly est planifié",

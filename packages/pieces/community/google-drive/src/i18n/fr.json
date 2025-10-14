@@ -1,5 +1,4 @@
 {
-  "Google Drive": "Google Drive",
   "Cloud storage and file backup": "Stockage et sauvegarde de fichiers dans le cloud",
   "Create new folder": "Créer un nouveau dossier",
   "Create new file": "Créer un nouveau fichier",
@@ -48,7 +47,7 @@
   "Depth Level": "Niveau de profondeur",
   "Download Files": "Télécharger les fichiers",
   "Query Term": "Condition de requête",
-  "Operator": "Operator",
+  "Operator": "Opérateur",
   "Value": "Valeur",
   "File Type": "Type de fichier",
   "Name": "Nom",
@@ -106,7 +105,7 @@
   "Equals": "Egal",
   "All": "Tous",
   "Files": "Fichiers",
-  "Folders": "Folders",
+  "Folders": "Dossiers",
   "Google Sheets": "Feuilles Google",
   "Google Docs": "Google Docs",
   "Organizer": "Organisateur",

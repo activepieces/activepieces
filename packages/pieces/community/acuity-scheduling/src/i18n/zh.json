@@ -1,5 +1,4 @@
 {
-  "Acuity Scheduling": "Acuity Scheduling",
   "Add Blocked Off Time": "Add Blocked Off Time",
   "Create Appointment": "Create Appointment",
   "Create Client": "Create Client",
@@ -22,7 +21,7 @@
   "Notes": "Notes",
   "DateTime": "DateTime",
   "Appointment Type": "Appointment Type",
-  "First Name": "First Name",
+  "First Name": "名字",
   "Last Name": "名字",
   "Email": "电子邮件地址",
   "Phone": "Phone",

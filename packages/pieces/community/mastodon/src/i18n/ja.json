@@ -1,5 +1,4 @@
 {
-  "Mastodon": "Mastodon",
   "Open-source decentralized social network": "オープンソースの分散型ソーシャルネットワーク",
   "Base URL": "ベースURL",
   "Access Token": "アクセストークン",
@@ -10,7 +9,7 @@
   "Custom API Call": "カスタムAPI通話",
   "Post a status to Mastodon": "Mastodonにステータスを投稿",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
-  "Status": "ステータス",
+  "Status": "Status",
   "Media URL or File": "メディア URL またはファイル",
   "Method": "方法",
   "Headers": "ヘッダー",

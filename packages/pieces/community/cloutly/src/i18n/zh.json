@@ -1,12 +1,11 @@
 {
-  "Cloutly": "Cloutly",
   "Review Management Tool": "Review Management Tool",
   "Please enter the API Key obtained from Cloutly.": "Please enter the API Key obtained from Cloutly.",
   "Send Review Invite": "Send Review Invite",
   "Custom API Call": "自定义 API 呼叫",
   "Sends a review invite to your customer.": "Sends a review invite to your customer.",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
-  "First Name": "First Name",
+  "First Name": "名字",
   "Last Name": "名字",
   "Email": "电子邮件地址",
   "Phone Number": "Phone Number",

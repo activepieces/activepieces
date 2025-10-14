@@ -1,9 +1,9 @@
 {
-  "Saleor": "販売",
   "Saleor API URL": "Saleor API URL",
   "Saleor token": "販売トークン",
   "Your Saleor GraphQL API endpoint": "Saleor GraphQL エンドポイント",
   "Your token": "あなたのトークン",
+  "Saleor": "販売",
   "Raw GraphQL query": "生のGraphQLクエリ",
   "Get an order": "注文を取得",
   "Add Order Note": "注文の追加",

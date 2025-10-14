@@ -1,5 +1,4 @@
 {
-  "Invoice Ninja": "請求書忍者format@@0",
   "Free open-source invoicing tool": "無料のオープンソース請求ツール",
   "Base URL": "ベースURL",
   "API Token": "API Token",
@@ -136,7 +135,7 @@
   "Send Now": "今すぐ送信",
   "Restore": "復元",
   "Archive": "アーカイブ",
-  "Delete": "Delete",
+  "Delete": "削除",
   "GET": "取得",
   "POST": "POST",
   "PATCH": "PATCH",

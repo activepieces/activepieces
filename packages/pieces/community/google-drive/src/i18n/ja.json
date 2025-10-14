@@ -1,5 +1,4 @@
 {
-  "Google Drive": "Google ドライブ",
   "Cloud storage and file backup": "クラウドストレージとファイルバックアップ",
   "Create new folder": "新しいフォルダを作成",
   "Create new file": "新しいファイルを作成",
@@ -51,7 +50,7 @@
   "Operator": "演算子",
   "Value": "値",
   "File Type": "ファイルの種類",
-  "Name": "名前",
+  "Name": "Name",
   "Duplicate as": "次として複製：",
   "Document ID": "ドキュメントID",
   "File or Folder ID": "ファイルまたはフォルダID",

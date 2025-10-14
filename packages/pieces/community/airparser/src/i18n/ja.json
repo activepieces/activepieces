@@ -1,5 +1,4 @@
 {
-  "Airparser": "Airparser",
   "Extract structured data from emails, PDFs, or documents with Airparser.": "電子メール、PDF、またはAirparserのドキュメントから構造化されたデータを抽出します。",
   "You can find your API key in the Airparser dashboard under Account Settings.": "API キーは Airparser ダッシュボードの format@@0 で確認できます。",
   "Get Data from Document": "ドキュメントからデータを取得する",

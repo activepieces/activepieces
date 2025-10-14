@@ -1,5 +1,4 @@
 {
-  "Missive": "Missionen",
   "\n    To get your API token:\n    \n    1. Go to your Missive preferences\n    2. Click the API tab  \n    3. Click \"Create a new token\"\n    4. Copy the generated token (starts with 'missive_pat-')\n    \n    Note: You need to be part of an organization subscribed to the Productive plan to generate API tokens.\n    ": "\n    Um Ihr API-Token zu erhalten:\n    \n    1. Gehen Sie zu Ihren Missive-Einstellungen\n    2. Klicken Sie auf die API Registerkarte  \n    3. Klicken Sie auf \"Neues Token erstellen\"\n    4. Kopieren Sie den generierten Token (beginnt mit 'missive_pat-')\n    \n    Hinweis: Sie müssen Teil einer Organisation sein, die den Produktivitätsplan abonniert hat, um API-Token zu generieren.\n    ",
   "Create Contact": "Kontakt erstellen",
   "Update Contact": "Kontakt aktualisieren",

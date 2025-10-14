@@ -1,5 +1,4 @@
 {
-  "Google Gemini": "Google Gemini",
   "Use the new Gemini models from Google": "Googleの新しいGeminiモデルを使用する",
   "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://makersuite.google.com/app/apikey\n2. Once on the website, locate and click on the option to obtain your API Key.\nPlease note this piece uses a API in the beta phase that may change at any time.\n": "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://makersuite.google.com/app/apikey\n2. Once on the website, locate and click on the option to obtain your API Key.\nPlease note this piece uses a API in the beta phase that may change at any time.\n",
   "Generate Content": "コンテンツを生成",

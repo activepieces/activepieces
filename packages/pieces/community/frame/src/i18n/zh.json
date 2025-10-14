@@ -1,5 +1,4 @@
 {
-  "Frame": "Frame",
   "Collaborative workspace platform": "Collaborative workspace platform",
   "\n**Enable Basic Authentication:**\n\n1. Go to https://developer.frame.io/app/tokens\n2. Click on 'Create a Token'\n3. Provide a Description for your use.\n4. Depending on your usage, you may 'Select all scopes'\n5. Submit the form\n6. The token will be created. Copy the token and paste it in the 'Token' input\n": "\n**Enable Basic Authentication:**\n\n1. Go to https://developer.frame.io/app/tokens\n2. Click on 'Create a Token'\n3. Provide a Description for your use.\n4. Depending on your usage, you may 'Select all scopes'\n5. Submit the form\n6. The token will be created. Copy the token and paste it in the 'Token' input\n",
   "Custom API Call": "自定义 API 呼叫",
@@ -26,7 +25,7 @@
   "Triggered when a new asset is created.": "Triggered when a new asset is created.",
   "Triggered when a new comment is created.": "Triggered when a new comment is created.",
   "Account": "Account",
-  "Team": "团队",
+  "Team": "Team",
   "Accounts accessible via a given User": "Accounts accessible via a given User",
   "Teams accessible via a given Account": "Teams accessible via a given Account"
 }

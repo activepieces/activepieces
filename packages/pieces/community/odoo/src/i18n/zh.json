@@ -1,5 +1,4 @@
 {
-  "Odoo": "Odoo",
   "Open source all-in-one management software": "Open source all-in-one management software",
   "Odoo URL": "Odoo URL",
   "Odoo Database": "Odoo Database",
@@ -54,7 +53,7 @@
   "Search read": "Search read",
   "Search count": "Search count",
   "Search": "搜索",
-  "Create": "创建",
+  "Create": "Create",
   "Write": "写入",
   "Unlink": "Unlink",
   "Fields get": "Fields get"

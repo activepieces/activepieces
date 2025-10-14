@@ -146,6 +146,7 @@ const SignInForm: React.FC = () => {
                   placeholder={'email@example.com'}
                   className="rounded-sm"
                   tabIndex={1}
+                  data-testid="sign-in-email"
                   onChange={(e) => {
                     field.onChange(e);
                     setShowCheckYourEmailNote(false);
@@ -179,6 +180,7 @@ const SignInForm: React.FC = () => {
                   placeholder={'********'}
                   className="rounded-sm"
                   tabIndex={2}
+                  data-testid="sign-in-password"
                 />
                 <FormMessage />
               </FormItem>
@@ -193,6 +195,7 @@ const SignInForm: React.FC = () => {
             loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
             tabIndex={3}
+            data-testid="sign-in-button"
           >
             {t('Sign in')}
           </Button>

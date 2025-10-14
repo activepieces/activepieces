@@ -1,5 +1,4 @@
 {
-  "Pastefy": "Pastefy",
   "Sharing code snippets platform": "コードスニペットプラットフォームを共有",
   "Pastefy Instance URL": "Pastefy Instance URL",
   "API-Token": "API-Token",
@@ -29,7 +28,7 @@
   "Visibility": "公開範囲",
   "Expiry Date": "Expiry Date",
   "Paste ID": "IDを貼り付け",
-  "Name": "Name",
+  "Name": "名前",
   "Parent Folder": "親フォルダ",
   "Start Folder": "フォルダの開始",
   "Method": "方法",

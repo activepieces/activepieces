@@ -1,5 +1,4 @@
 {
-  "Shopify": "Shopify",
   "Ecommerce platform for online stores": "オンラインストア用のEコマースプラットフォーム",
   "Shop Name": "ショップ名",
   "Admin Token": "管理トークン",
@@ -71,6 +70,7 @@
   "Last Name": "Last Name",
   "Phone Number": "電話番号",
   "Tags": "タグ",
+  "Accepts Marketing ?": "マーケティングを承認しますか？",
   "Product Variant": "製品のバリエーション",
   "Title": "タイトル",
   "Quantity": "数量",

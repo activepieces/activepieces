@@ -1,5 +1,4 @@
 {
-  "Confluence": "Confluence",
   "Account Email": "アカウントのメールアドレス",
   "API token": "API token",
   "Confluence Domain": "Confluence Domain",
@@ -20,7 +19,7 @@
   "Template": "テンプレート",
   "Parent Folder": "親フォルダ",
   "Title": "タイトル",
-  "Status": "ステータス",
+  "Status": "Status",
   "Template Variables": "テンプレート変数",
   "Method": "方法",
   "Headers": "ヘッダー",

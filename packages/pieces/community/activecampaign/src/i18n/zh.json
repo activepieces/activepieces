@@ -1,5 +1,4 @@
 {
-  "ActiveCampaign": "ActiveCampaign",
   "Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.": "Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.",
   "API URL": "API URL",
   "API Key": "API 密钥",
@@ -26,7 +25,7 @@
   "Account URL": "Account URL",
   "Account Custom Fields": "Account Custom Fields",
   "Email": "电子邮件地址",
-  "First Name": "名字",
+  "First Name": "First Name",
   "Last Name": "名字",
   "Phone": "Phone",
   "Contact Custom Fields": "Contact Custom Fields",

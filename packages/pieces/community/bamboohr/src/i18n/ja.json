@@ -1,5 +1,4 @@
 {
-  "BambooHR": "BambooHR",
   "Company domain": "会社のドメイン",
   "API key": "API キー",
   "The subdomain used to access BambooHR. If you access BambooHR at https://mycompany.bamboohr.com, then the companyDomain is \"mycompany\"": "BambooHRにアクセスするために使用されるサブドメイン。https://mycompany.bamboohr.comでBambooHRにアクセスする場合、companyDomain は \"mycompany\" です。",

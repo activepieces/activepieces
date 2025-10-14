@@ -1,5 +1,4 @@
 {
-  "Smoove": "Smoove",
   "Smoove is a platform for creating and managing your email list and sending emails to your subscribers.": "Smoove is a platform for creating and managing your email list and sending emails to your subscribers.",
   "Add or Update Subscriber": "Add or Update Subscriber",
   "Create a List": "Create a List",
@@ -10,7 +9,7 @@
   "Search for subscribers by unique identifiers (ID, email, phone, external ID) or name": "Search for subscribers by unique identifiers (ID, email, phone, external ID) or name",
   "Unsubscribe a contact from all lists and move them to the \"Unsubscribed\" list": "Unsubscribe a contact from all lists and move them to the \"Unsubscribed\" list",
   "Email Address": "Email Address",
-  "First Name": "First Name",
+  "First Name": "名字",
   "Last Name": "名字",
   "Date of Birth": "Date of Birth",
   "Phone Number": "Phone Number",
@@ -142,7 +141,7 @@
   "All Sources": "All Sources",
   "Unknown": "未知的",
   "Manual Entry": "Manual Entry",
-  "Import": "Import",
+  "Import": "导入",
   "Facebook": "Facebook",
   "API": "API",
   "Landing Page": "Landing Page",

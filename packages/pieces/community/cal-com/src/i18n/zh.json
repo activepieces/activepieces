@@ -1,11 +1,10 @@
 {
-  "Cal.com": "Cal.com",
-  "Open-source alternative to Calendly": "開源的可替代 Calendly 的選擇",
-  "API Key provided by cal.com": "由 cal.com 提供的API Key",
-  "Booking Cancelled": "預訂已取消",
-  "Booking Created": "預訂已創建",
-  "Booking Rescheduled": "預訂已重新安排",
-  "Create a webhook to monitor when Booking Cancelled": "創建一個 webhook 來監控預訂取消時",
-  "Create a webhook to monitor when Booking Created": "創建一個 webhook 來監控預訂創建時",
-  "Create a webhook to monitor when Booking Rescheduled": "創建一個 webhook 來監控預訂重新安排時"
+  "Open-source alternative to Calendly": "Open-source alternative to Calendly",
+  "API Key provided by cal.com": "API Key provided by cal.com",
+  "Booking Cancelled": "Booking Cancelled",
+  "Booking Created": "Booking Created",
+  "Booking Rescheduled": "Booking Rescheduled",
+  "Create a webhook to monitor when Booking Cancelled": "Create a webhook to monitor when Booking Cancelled",
+  "Create a webhook to monitor when Booking Created": "Create a webhook to monitor when Booking Created",
+  "Create a webhook to monitor when Booking Rescheduled": "Create a webhook to monitor when Booking Rescheduled"
 }

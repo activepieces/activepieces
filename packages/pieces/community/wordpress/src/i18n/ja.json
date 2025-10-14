@@ -1,5 +1,4 @@
 {
-  "WordPress": "WordPress",
   "Open-source website creation software": "オープンソースのウェブサイト作成ソフトウェア",
   "Username": "ユーザー名",
   "Password": "Password",
@@ -25,7 +24,7 @@
   "Custom ACF fields": "ACFフィールドのカスタマイズ",
   "Categories": "カテゴリ",
   "Featured Media (image)": "注目のメディア (画像)",
-  "Status": "ステータス",
+  "Status": "Status",
   "Excerpt": "概要",
   "Enable Comments": "コメントを有効化",
   "Open to Pinging": "Pinging で開く",

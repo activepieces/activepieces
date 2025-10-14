@@ -1,5 +1,4 @@
 {
-  "Calendly": "Calendly",
   "Simple, modern scheduling": "Simple, modern scheduling",
   "\n## Obtain your Calendly Personal Token\n1. Go to https://calendly.com/integrations/api_webhooks\n2. Click on \"Create New Token\"\n3. Copy the token and paste it in the field below\n": "\n## Obtain your Calendly Personal Token\n1. Go to https://calendly.com/integrations/api_webhooks\n2. Click on \"Create New Token\"\n3. Copy the token and paste it in the field below\n",
   "Custom API Call": "Custom API Call",

@@ -1,5 +1,4 @@
 {
-  "Exa": "Exa",
   "AI-powered search and content extraction from the web.": "AI-aangedreven zoek- en inhoudsextractie van het web.",
   "Obtain your API key from [Dashboard Setting](https://dashboard.exa.ai/api-keys).": "Verkrijg je API-sleutel van [Dashboard Instellingen](https://dashboard.exa.ai/api-keys).",
   "Get Contents": "Inhoud ophalen",
@@ -80,6 +79,7 @@
   "Fallback": "Fallback",
   "Always": "altijd",
   "Auto": "Automatisch",
+  "Exa": "Exa",
   "Exa Pro": "Exa Pro",
   "Keyword": "Keyword",
   "Neural": "Neuraal",

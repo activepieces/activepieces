@@ -1,5 +1,4 @@
 {
-  "ActiveCampaign": "アクティブキャンペーン",
   "Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.": "メールマーケティング、マーケティングオートメーション、CRMツールを活用することで、驚くほどのカスタマーエクスペリエンスを実現できます。",
   "API URL": "API URL",
   "API Key": "API キー",
@@ -27,7 +26,7 @@
   "Account Custom Fields": "アカウントのカスタムフィールド",
   "Email": "Eメールアドレス",
   "First Name": "名",
-  "Last Name": "Last Name",
+  "Last Name": "姓",
   "Phone": "電話番号",
   "Contact Custom Fields": "連絡のカスタムフィールド",
   "List": "リスト",

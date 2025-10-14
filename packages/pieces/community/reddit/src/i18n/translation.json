@@ -1,5 +1,4 @@
 {
-  "Reddit": "Reddit",
   "Interact with Reddit - fetch and submit posts.": "Interact with Reddit - fetch and submit posts.",
   "\nTo obtain your Reddit API credentials:\n\n1. Go to https://www.reddit.com/prefs/apps.\n2. Click \"create another app...\" at the bottom.\n3. Select \"script\" as the app type.\n4. Fill in the required information:\n   - name: Your app name\n   - description: Brief description\n   - about url: Can be left blank\n   - redirect uri: as shown in Redirect URL field\n5. Click \"create app\".\n6. Note down the client ID (under the app name) and client secret.\n": "\nTo obtain your Reddit API credentials:\n\n1. Go to https://www.reddit.com/prefs/apps.\n2. Click \"create another app...\" at the bottom.\n3. Select \"script\" as the app type.\n4. Fill in the required information:\n   - name: Your app name\n   - description: Brief description\n   - about url: Can be left blank\n   - redirect uri: as shown in Redirect URL field\n5. Click \"create app\".\n6. Note down the client ID (under the app name) and client secret.\n",
   "Retrieve Post": "Retrieve Post",

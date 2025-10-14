@@ -1,5 +1,4 @@
 {
-  "Short.io": "Short.io",
   "API Key": "API キー",
   "Enter your Short.io API Key": "Short.io API キーを入力してください",
   "Create Country Targeting Rule": "国のターゲットルールを作成",
@@ -28,7 +27,7 @@
   "Country-Specific Redirect URL": "国別リダイレクトURL",
   "Original URL": "元の URL",
   "Title": "タイトル",
-  "Folder": "フォルダ",
+  "Folder": "Folder",
   "Enable Cloaking": "クローニングを有効にする",
   "Password": "パスワード",
   "Redirect Type": "リダイレクトタイプ",

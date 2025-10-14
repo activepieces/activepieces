@@ -1,5 +1,4 @@
 {
-  "Tarvent": "Tarvent",
   "Tarvent is an email marketing, automation, and email API platform that allows to you to send campaigns, manage contacts, automate your marketing, and more.": "Tarventはメールマーケティング、自動化、メールAPIプラットフォームで、キャンペーンの送信、連絡先の管理、マーケティングの自動化などを行うことができます。",
   "Account ID": "アカウントID",
   "API Key": "API キー",
@@ -164,7 +163,7 @@
   "Paused": "一時停止中",
   "Stopped": "停止しました",
   "Pending multivariate winner": "保留中の多変量の勝者数",
-  "Running": "Running",
+  "Running": "実行中",
   "Not running": "実行していません",
   "Contact Added": "連絡先を追加しました",
   "Contact Added Or Removed From A Group": "グループから追加または削除された連絡先",

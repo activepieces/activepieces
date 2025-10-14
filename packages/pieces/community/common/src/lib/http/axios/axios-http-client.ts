@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import axiosRetry from 'axios-retry';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
@@ -64,23 +64,18 @@ export class AxiosHttpClient extends BaseHttpClient {
         body: response.data,
       };
     } catch (e) {
-      console.error('[HttpClient#sendRequest] error:', e);
       if (axios.isAxiosError(e)) {
+        const httpError =  new HttpError(request.body, e);
         console.error(
-          '[HttpClient#sendRequest] error, responseStatus:',
-          e.response?.status
+          '[HttpClient#(sanitized error message)] Request failed:',
+          httpError
         );
-        console.error(
-          '[HttpClient#sendRequest] error, responseBody:',
-          JSON.stringify(e.response?.data)
-        );
-
-        throw new HttpError(request.body, e);
+        throw httpError;
       }
-
       throw e;
     }
   }
+
 
   private getAxiosRequestMethod(httpMethod: HttpMethod): string {
     return httpMethod.toString();

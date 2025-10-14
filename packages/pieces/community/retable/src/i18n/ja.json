@@ -1,5 +1,4 @@
 {
-  "Retable": "リテイブル",
   "Turn your spreadsheets into smart database apps": "スプレッドシートをスマートなデータベースアプリに変えましょう",
   "\nTo obtain your API key, follow these steps:\n\n1. Go to Account Overview by clicking your profile-pic (top-right).\n2. Go to API section and enable API key.\n3. Copy API key.": "\nTo obtain your API key, follow these steps:\n\n1. Go to Account Overview by clicking your profile-pic (top-right).\n2. Go to API section and enable API key.\n3. Copy API key.",
   "Create Retable Record": "リテイブル・レコードを作成",
@@ -18,6 +17,7 @@
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Workspace": "ワークスペース",
   "Project": "プロジェクト",
+  "Retable": "リテイブル",
   "Fields": "フィールド",
   "Workspace Name": "ワークスペース名",
   "Workspace Description": "ワークスペースの説明",

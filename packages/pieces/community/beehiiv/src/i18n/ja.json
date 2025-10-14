@@ -1,5 +1,4 @@
 {
-  "Beehiiv": "Beehiiv",
   "Your can obtain API key by naviating to **Settings->Workspace Settings-> API**.": "API キーは **Settings->ワークスペース設定> API** に指定することで取得できます。",
   "Create Subscription": "サブスクリプションを作成",
   "Update Subscription": "サブスクリプションを更新",
@@ -37,7 +36,7 @@
   "Expand Results": "結果を展開",
   "Audience": "オーディエンス:",
   "Platform": "プラットフォーム",
-  "Status": "Status",
+  "Status": "ステータス",
   "Content Tags": "コンテンツタグ",
   "Method": "方法",
   "Headers": "ヘッダー",

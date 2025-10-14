@@ -5,6 +5,26 @@ icon: "hammer"
 ---
 
 
+## 0.70.0
+
+### What has changed?
+- `AP_QUEUE_MODE` is now deprecated and replaced with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
+### When is action necessary?
+
+- If you are using `AP_QUEUE_MODE`, you should replace it with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
+## 0.69.0
+
+### What has changed?
+- `AP_FLOW_WORKER_CONCURRENCY` and `AP_SCHEDULED_WORKER_CONCURRENCY` are now deprecated all jobs have single queue and replaced with `AP_WORKER_CONCURRENCY`
+
+### When is action necessary?
+
+- If you are using `AP_FLOW_WORKER_CONCURRENCY` or `AP_SCHEDULED_WORKER_CONCURRENCY`, you should replace them with `AP_WORKER_CONCURRENCY`
+
 ## 0.66.0
 
 ### What has changed?

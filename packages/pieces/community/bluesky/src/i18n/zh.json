@@ -1,8 +1,7 @@
 {
-  "Bluesky": "Bluesky",
   "PDS Host": "PDS Host",
   "Identifier": "Identifier",
-  "Password": "Password",
+  "Password": "密码",
   "The Personal Data Server host. Leave empty for default Bluesky network (https://bsky.social)": "The Personal Data Server host. Leave empty for default Bluesky network (https://bsky.social)",
   "Your Bluesky handle or email address": "Your Bluesky handle or email address",
   "Your Bluesky account password or app password": "Your Bluesky account password or app password",

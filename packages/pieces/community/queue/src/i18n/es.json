@@ -1,5 +1,4 @@
 {
-  "Queue": "Cola",
   "A piece that allows you to push items into a queue, providing a way to throttle requests or process data in a First-In-First-Out (FIFO) manner.": "Una pieza que le permite enviar elementos a una cola, proporcionando una manera de limitar las peticiones o procesar los datos de una manera Primera-In-First-Out (FIFO).",
   "Push to Queue": "Enviar a la cola",
   "Pull items from queue": "Tirar elementos de la cola",

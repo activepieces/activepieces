@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
@@ -51,7 +51,6 @@ export function buildSimpleLoopAction({
         skip: skip ?? false,
         settings: {
             items: loopItems,
-            inputUiInfo: {},
         },
         firstLoopAction,
         valid: true,
@@ -79,7 +78,6 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
                 }
             }),
             executionType,
-            inputUiInfo: {},
         },
         children,
         valid: true,
@@ -116,7 +114,10 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
             pieceName,
             pieceVersion: '1.0.0', // Not required since it's running in development mode
             actionName,
-            inputUiInfo: {},
+            propertySettings: Object.fromEntries(Object.entries(input).map(([key]) => [key, {
+                type: PropertyExecutionType.MANUAL,
+                schema: undefined,
+            }])),
             errorHandlingOptions,
         },
         nextAction,

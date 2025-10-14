@@ -1,5 +1,4 @@
 {
-  "Missive": "Missive",
   "\n    To get your API token:\n    \n    1. Go to your Missive preferences\n    2. Click the API tab  \n    3. Click \"Create a new token\"\n    4. Copy the generated token (starts with 'missive_pat-')\n    \n    Note: You need to be part of an organization subscribed to the Productive plan to generate API tokens.\n    ": "\n    To get your API token:\n    \n    1. Go to your Missive preferences\n    2. Click the API tab  \n    3. Click \"Create a new token\"\n    4. Copy the generated token (starts with 'missive_pat-')\n    \n    Note: You need to be part of an organization subscribed to the Productive plan to generate API tokens.\n    ",
   "Create Contact": "連絡先を作成",
   "Update Contact": "連絡先を更新",
@@ -43,7 +42,7 @@
   "Attachments": "添付ファイル",
   "Task Type": "タスクの種類",
   "Task Title": "タスクタイトル",
-  "Description": "説明",
+  "Description": "Description",
   "Task State": "タスクの状態",
   "Due Date": "締切日",
   "Task Configuration": "タスクの設定",

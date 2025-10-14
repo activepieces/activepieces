@@ -1,5 +1,4 @@
 {
-  "Invoice Ninja": "Invoice Ninja",
   "Free open-source invoicing tool": "Free open-source invoicing tool",
   "Base URL": "基本网址",
   "API Token": "API Token",
@@ -136,7 +135,7 @@
   "Send Now": "Send Now",
   "Restore": "Restore",
   "Archive": "Archive",
-  "Delete": "Delete",
+  "Delete": "删除",
   "GET": "获取",
   "POST": "帖子",
   "PATCH": "PATCH",

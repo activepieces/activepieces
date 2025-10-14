@@ -1,5 +1,4 @@
 {
-  "AssemblyAI": "AssemblyAI",
   "Transcribe and extract data from audio using AssemblyAI's Speech AI.": "Transcrire et extraire des données audio à l'aide de l'IO vocal d'AssemblyAI.",
   "You can retrieve your AssemblyAI API key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces).": "Vous pouvez récupérer votre clé API AssemblyAI dans votre AssemblyAI [Paramètres du compte](https://www.assemblyai.com/app/account?utm_source=activepieces).",
   "Upload File": "Charger un fichier",

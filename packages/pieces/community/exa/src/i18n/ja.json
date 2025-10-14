@@ -1,5 +1,4 @@
 {
-  "Exa": "Exa",
   "AI-powered search and content extraction from the web.": "AIを駆使した検索とWebからのコンテンツ抽出。",
   "Obtain your API key from [Dashboard Setting](https://dashboard.exa.ai/api-keys).": "[ダッシュボード設定](https://dashboard.exa.ai/api-keys)からAPIキーを取得します。",
   "Get Contents": "内容を取得",
@@ -80,6 +79,7 @@
   "Fallback": "Fallback",
   "Always": "常に表示",
   "Auto": "自動",
+  "Exa": "Exa",
   "Exa Pro": "Exa Pro",
   "Keyword": "Keyword",
   "Neural": "ニューラル",

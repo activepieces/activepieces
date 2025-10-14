@@ -1,5 +1,4 @@
 {
-  "Acuity Scheduling": "酸性度スケジュール",
   "Add Blocked Off Time": "ブロックオフ時間を追加",
   "Create Appointment": "予約を作成",
   "Create Client": "クライアントを作成",
@@ -23,7 +22,7 @@
   "DateTime": "日時",
   "Appointment Type": "予約タイプ",
   "First Name": "名",
-  "Last Name": "Last Name",
+  "Last Name": "姓",
   "Email": "Eメールアドレス",
   "Phone": "電話番号",
   "Timezone": "Timezone",

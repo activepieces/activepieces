@@ -1,5 +1,4 @@
 {
-  "AssemblyAI": "AssemblyAI",
   "Transcribe and extract data from audio using AssemblyAI's Speech AI.": "Transcribe and extract data from audio using AssemblyAI's Speech AI.",
   "You can retrieve your AssemblyAI API key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces).": "You can retrieve your AssemblyAI API key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces).",
   "Upload File": "Upload File",
@@ -297,7 +296,7 @@
   "Occupation": "Occupation",
   "Organization": "Organization",
   "Passport Number": "Passport Number",
-  "Password": "密码",
+  "Password": "Password",
   "Person Age": "Person Age",
   "Person Name": "Person Name",
   "Phone Number": "Phone Number",
@@ -326,7 +325,7 @@
   "Queued": "Queued",
   "Processing": "Processing",
   "Completed": "Completed",
-  "Error": "错误",
+  "Error": "Error",
   "Claude 3.5 Sonnet (on Anthropic)": "Claude 3.5 Sonnet (on Anthropic)",
   "Claude 3 Opus (on Anthropic)": "Claude 3 Opus (on Anthropic)",
   "Claude 3 Haiku (on Anthropic)": "Claude 3 Haiku (on Anthropic)",

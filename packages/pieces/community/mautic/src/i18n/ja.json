@@ -1,9 +1,8 @@
 {
-  "Mautic": "Mautic",
   "Open-source marketing automation software": "オープンソースのマーケティング自動化ソフトウェア",
   "Base URL": "ベースURL",
   "Username": "ユーザー名",
-  "Password": "パスワード",
+  "Password": "Password",
   "\nFollow these steps:\n\n1. **Enter the Base URL:** Open your Mautic instance and copy the URL from the address bar. If your dashboard link is \"https://mautic.ddev.site/s/dashboard\", set your base URL as \"https://mautic.ddev.site/\".\n\n2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.\n\n": "\nFollow these steps:\n\n1. **Enter the Base URL:** Open your Mautic instance and copy the URL from the address bar. If your dashboard link is \"https://mautic.ddev.site/s/dashboard\", set your base URL as \"https://mautic.ddev.site/\".\n\n2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.\n\n",
   "Create Contact": "連絡先を作成",
   "Search Contact": "連絡先を検索",
@@ -46,7 +45,7 @@
   "Triggers when a contact's channel subscription status changes.": "連絡先のチャンネル登録ステータスが変更されたときにトリガーされます。",
   "Triggers when a new contact is created.": "新しい連絡先が作成されたときにトリガーします.",
   "Webhook Name": "Webhook名",
-  "Description": "Description",
+  "Description": "説明",
   "The name the webhook will be searchable by in mautic the webhooks page.": "webhookの名前はmauticページで検索可能になります。",
   "A short description of the webhook": "Webhookの簡単な説明"
 }

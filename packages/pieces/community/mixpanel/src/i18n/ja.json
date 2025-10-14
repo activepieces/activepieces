@@ -1,5 +1,4 @@
 {
-  "Mixpanel": "Mixpanel",
   "Simple and powerful product analytics that helps everyone make better decisions": "誰もがより良い意思決定を行うのに役立つシンプルで強力な製品分析",
   "\n      The Mixpanel token associated with your project. You can find your Mixpanel token in the project settings dialog in the Mixpanel app.\n    ": "\n      プロジェクトに関連付けられた Mixpanel トークン。Mixpanel トークンは、プロジェクト設定ダイアログの Mixpanel アプリで確認できます。\n    ",
   "Track Event": "イベントを追跡",

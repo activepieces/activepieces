@@ -1,5 +1,4 @@
 {
-  "Freshsales": "Freshsales",
   "Sales CRM software": "Logiciel CRM de vente",
   "Bundle alias": "Alias du lot",
   "Your Freshsales bundle alias (e.g. https://<alias>.myfreshworks.com)": "Votre alias Freshsales (par exemple https://<alias>.myfreshworks.com)",
@@ -27,7 +26,7 @@
   "Medium": "Moyenne",
   "Campaign id": "Id de la campagne",
   "Keyword": "Keyword",
-  "Timezone": "Timezone",
+  "Timezone": "Fuseau horaire",
   "Facebook": "Facebook",
   "Twitter": "Twitter",
   "Linkedin": "Linkedin",

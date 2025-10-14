@@ -20,7 +20,7 @@ export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP = {
     [BillingCycle.MONTHLY]: 15,
 }
 
-export const AI_CREDITS_USAGE_THRESHOLD = 150000
+export const AI_CREDITS_USAGE_THRESHOLD = 15000
 
 export type ProjectPlanLimits = {
     nickname?: string

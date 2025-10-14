@@ -2,6 +2,7 @@ import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   StepMetadataWithSuggestions,
@@ -20,6 +21,8 @@ import {
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,
+  ApFlagId,
+  ApEnvironment,
 } from '@activepieces/shared';
 
 import { pieceSearchUtils } from './piece-search-utils';
@@ -164,6 +167,9 @@ export const piecesHooks = {
     data: CategorizedStepMetadataWithSuggestions[];
   } => {
     const { selectedTab } = usePieceSelectorTabs();
+    const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
+      ApFlagId.ENVIRONMENT,
+    );
     const { metadata, isLoading: isLoadingPieces } =
       stepsHooks.useAllStepsMetadata(props);
     const { platform } = platformHooks.useCurrentPlatform();
@@ -229,6 +235,7 @@ export const piecesHooks = {
             piecesMetadataWithoutEmptySuggestions,
             platform,
             props.type,
+            environment,
           ),
         };
       case PieceSelectorTabType.UTILITY:
@@ -324,12 +331,15 @@ const getExploreTabContent = (
   queryResult: StepMetadataWithSuggestions[],
   platform: PlatformWithoutSensitiveData,
   type: 'action' | 'trigger',
+  environment: ApEnvironment | null,
 ) => {
   const popularCategory: CategorizedStepMetadataWithSuggestions = {
     title: t('Popular'),
-    metadata: [],
+    metadata: environment === ApEnvironment.DEVELOPMENT ? queryResult : [],
   };
-
+  if (environment === ApEnvironment.DEVELOPMENT) {
+    return [popularCategory];
+  }
   const pinnedPieces = getPinnedPieces(
     queryResult,
     platform.pinnedPieces ?? [],

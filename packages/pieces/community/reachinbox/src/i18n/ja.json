@@ -1,5 +1,4 @@
 {
-  "Reachinbox": "Reachinbox",
   "Enter your ReachInbox API key": "ReachInbox API キーを入力してください",
   "Add Leads": "リードを追加",
   "Add Blocklist": "ブロックリストを追加",
@@ -30,7 +29,7 @@
   "Select Campaign": "キャンペーンの選択",
   "Email Address": "メールアドレス",
   "First Name": "名",
-  "Last Name": "Last Name",
+  "Last Name": "姓",
   "Custom Variables": "カスタム変数",
   "Email Addresses": "メールアドレス",
   "Domains": "ドメイン",

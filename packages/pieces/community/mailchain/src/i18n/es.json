@@ -1,5 +1,4 @@
 {
-  "Mailchain": "Mailchain",
   "Mailchain is a simple, secure, and decentralized communications protocol that enables blockchain-based email.": "Mailchain es un protocolo de comunicación simple, seguro y descentralizado que permite el correo electrónico basado en blockchain.",
   "The secret recovery phrase (25-word mnemonic phrase) to authenticate with the Mailchain Protocol. You can obtain this phrase when setting up your Mailchain account.": "La frase secreta de recuperación (frase mnemónica de 25 palabras) para autenticarse con el Protocolo de Mailchain. Puede obtener esta frase al configurar su cuenta de Mailchain.",
   "Get Authenticated User": "Obtener usuario autenticado",

@@ -1,5 +1,4 @@
 {
-  "Discord": "Onenigheid",
   "Instant messaging and VoIP social platform": "Directe berichten en een VoIP social platform",
   "\nTo obtain a token, follow these steps:\n1. Go to https://discord.com/developers/applications\n2. Click on Application (or create one if you don't have one)\n3. Click on Bot\n4. Copy the token\n": "\nOm een token te verkrijgen, volg deze stappen:\n1. Ga naar https://discord.com/developers/applications\n2. Klik op Toepassing (of maak er een aan als je er geen hebt)\n3. Klik op Bot\n4. Kopieer de token\n",
   "Send Message with Bot": "Stuur een bericht met bot",

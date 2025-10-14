@@ -1,5 +1,4 @@
 {
-  "Smoove": "スムーブ",
   "Smoove is a platform for creating and managing your email list and sending emails to your subscribers.": "Smooveはメールリストを作成し、管理し、購読者にメールを送信するためのプラットフォームです。",
   "Add or Update Subscriber": "購読者を追加または更新",
   "Create a List": "リストを作成",
@@ -142,7 +141,7 @@
   "All Sources": "すべてのソース",
   "Unknown": "不明",
   "Manual Entry": "手動入力",
-  "Import": "Import",
+  "Import": "インポート",
   "Facebook": "Facebook",
   "API": "API",
   "Landing Page": "ランディングページ",

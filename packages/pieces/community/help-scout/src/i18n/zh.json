@@ -1,5 +1,4 @@
 {
-  "Help Scout": "Help Scout",
   "\n  1. Click on your profile icon at the top right and select **Your Profile**.\n  2. Go to **My Apps** and click on **Create App**.\n  3. Provide **App Name** and use below redirect URL.\n  4. Copy the **App ID** and **App Secret**, and provide them as the **Client ID** and **Client Secret**, respectively.": "\n  1. Click on your profile icon at the top right and select **Your Profile**.\n  2. Go to **My Apps** and click on **Create App**.\n  3. Provide **App Name** and use below redirect URL.\n  4. Copy the **App ID** and **App Secret**, and provide them as the **Client ID** and **Client Secret**, respectively.",
   "Create Conversation": "Create Conversation",
   "Send Reply": "Send Reply",
@@ -40,7 +39,7 @@
   "Note Text": "Note Text",
   "User": "用户",
   "Email": "电子邮件地址",
-  "First Name": "First Name",
+  "First Name": "名字",
   "Last Name": "名字",
   "Phone": "Phone",
   "Photo URL": "Photo URL",

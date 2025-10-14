@@ -1,5 +1,4 @@
 {
-  "Retable": "Retabel",
   "Turn your spreadsheets into smart database apps": "Verwandeln Sie Ihre Tabellenkalkulationen in intelligente Datenbank-Apps",
   "\nTo obtain your API key, follow these steps:\n\n1. Go to Account Overview by clicking your profile-pic (top-right).\n2. Go to API section and enable API key.\n3. Copy API key.": "\nUm Ihren API-Schlüssel zu erhalten, folgen Sie diesen Schritten:\n\n1. Gehen Sie zur Kontoübersicht, indem Sie auf Ihr Profilbild (oben rechts).\n2. Gehen Sie zum API-Abschnitt und aktivieren Sie den API-Schlüssel.\n3. Kopieren Sie API-Schlüssel.",
   "Create Retable Record": "Retable Datensatz erstellen",
@@ -18,6 +17,7 @@
   "Make a custom API call to a specific endpoint": "Einen benutzerdefinierten API-Aufruf an einen bestimmten Endpunkt machen",
   "Workspace": "Arbeitsbereich",
   "Project": "Projekt",
+  "Retable": "Retabel",
   "Fields": "Felder",
   "Workspace Name": "Name des Arbeitsbereichs",
   "Workspace Description": "Beschreibung des Arbeitsbereiches",

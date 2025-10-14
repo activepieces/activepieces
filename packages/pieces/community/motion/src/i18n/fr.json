@@ -1,5 +1,4 @@
 {
-  "Motion": "Mouvement",
   "You can obtain API key from [API Settings](https://app.usemotion.com/web/settings/api).": "Vous pouvez obtenir la clé API depuis [API Settings](https://app.usemotion.com/web/settings/api).",
   "Create Task": "Créer une tâche",
   "Update Task": "Tâche de mise à jour",
@@ -52,7 +51,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "Task Created": "Tâche créée",
   "Triggers when a new task is created.": "Déclenche quand une nouvelle tâche est créée."
 }

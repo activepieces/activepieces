@@ -1,5 +1,4 @@
 {
-  "SendFox": "SendFox",
   "Email marketing made simple": "Marketing por email simplificado",
   "To obtain your personal token, follow these steps:\n1. Log in to your SendFox account.\n2. Visit https://sendfox.com/account/oauth to create one\n3. From OAuth Apps click on Create New Token.\n4. Enter any name you want then click create.\n5. Copy and paste your token here.": "Para obtener tu token personal, sigue estos pasos:\n1. Inicia sesión en tu cuenta de SendFox.\n2. Visita https://sendfox.com/account/oauth para crear una\n3. Desde OAuth Apps haga clic en Crear Nuevo Token.\n4. Introduce cualquier nombre que quieras y haz clic en crear.\n5. Copia y pega tu token aquí.",
   "Create List": "Crear Lista",

@@ -1,5 +1,4 @@
 {
-  "Google Docs": "Google Docs",
   "Create and edit documents online": "Crear y editar documentos en línea",
   "Create Document": "Crear Documento",
   "Edit template file": "Editar archivo de plantilla",
@@ -43,6 +42,8 @@
   "The ID of the document to append text to": "El ID del documento al que añadir texto",
   "Curly Braces {{}}": "Brazados rizados {{}}",
   "Square Brackets [[]]": "Corchetes cuadrados [[]]",
+  "Single Curly Braces {}": "Brazales individuales {}",
+  "Single Square Brackets []": "Corchetes cuadrados únicos []",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

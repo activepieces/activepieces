@@ -1,5 +1,4 @@
 {
-  "Copy.ai": "Kopieër",
   "AI-powered content generation and copywriting platform": "AI-aangedreven content genereren en kopieerplatform",
   "\nTo use Copy AI, you need to get an API key:\n1. Login to your account at https://copy.ai.\n2. Click on Workflows in the left sidebar.\n3. Click on any Workflow you have. You need to create a new Workflow, if you don't have one.\n4. Click on the API tab.\n5. Click the Copy button below WORKSPACE API KEY.\n": "\nOm de API key te gebruiken, moet je een API key krijgen:\n1. Log in op je account op https://copy. i.\n2. Klik op de Workflows in de linker zijbalk.\n3. Klik op een werkstroom die u hebt. U moet een nieuwe Workflow aanmaken als u er geen hebt.\n4. Klik op het tabblad API-\n5. Klik op de knop Kopiëren onder WORKSPACE API KEY.\n",
   "Run Workflow": "Workflow uitvoeren",

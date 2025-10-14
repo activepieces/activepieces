@@ -1,5 +1,4 @@
 {
-  "Intercom": "Intercom",
   "Customer messaging platform for sales, marketing, and support": "Customer messaging platform for sales, marketing, and support",
   "Region": "Region",
   "US": "US",
@@ -110,7 +109,7 @@
   "Name": "名称",
   "Subject": "Subject",
   "Author Email": "Author Email",
-  "Team": "团队",
+  "Team": "Team",
   "Tag IDs": "Tag IDs",
   "Contains": "Contains",
   "Equals": "Equals",

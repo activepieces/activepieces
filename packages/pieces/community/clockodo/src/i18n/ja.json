@@ -1,5 +1,4 @@
 {
-  "Clockodo": "Clockodo",
   "Time tracking made easy": "タイムトラッキングが簡単になりました",
   "E-Mail": "メール",
   "API-Token": "API-Token",
@@ -80,7 +79,7 @@
   "Service": "サービス",
   "Start Time": "開始時刻",
   "End Time": "終了時刻",
-  "Description": "Description",
+  "Description": "説明",
   "Hourly Rate": "1時間あたりのレート",
   "User": "ユーザー",
   "Entry ID": "エントリ ID",
@@ -105,7 +104,7 @@
   "Completed": "完了",
   "Billed Amount": "請求額",
   "Billing Complete": "請求が完了しました",
-  "Team": "チーム",
+  "Team": "Team",
   "Role": "ロール",
   "Language": "言語",
   "Wage Type": "賃金タイプ",

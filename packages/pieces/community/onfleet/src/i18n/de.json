@@ -1,5 +1,4 @@
 {
-  "Onfleet": "Onfleet",
   "Last mile delivery software": "Letzte Meile Liefersoftware",
   "\nTo get an API key, follow the steps below:\n1. Go to settings -> API & Webhooks.\n2. Click the plus sign under API Keys.\n3. Enter API key name and click create key.\n4. Copy the generated key to the input below.\n": "\nUm einen API-Schlüssel zu erhalten, folgen Sie den folgenden Schritten:\n1. Gehen Sie zu Einstellungen -> API & Webhooks.\n2. Klicken Sie auf das Plus-Zeichen unter API-Schlüsseln.\n3. Geben Sie den API-Schlüsselnamen ein und klicken Sie auf Erstellen-Schlüssel.\n4. Kopieren Sie den generierten Schlüssel in den unten angegebenen Eingabe.\n",
   "Create Recipient": "Empfänger erstellen",

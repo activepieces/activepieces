@@ -1,5 +1,4 @@
 {
-  "AI Answer": "Respuesta IA",
   "\n      To obtain your AiAnswer API access token, follow these steps below:\n      1. Log in to your AiAnswer account at https://app.aianswer.us .\n      2. Navigate to Settings < API Key.\n      3. Click on Copy icon to copy your existing Key or click on New API Key to create a new one.\n      4. Copy the API Key and paste it below in \"AiAnswer API Key\".\n    ": "\n      To obtain your AiAnswer API access token, follow these steps below:\n      1. Log in to your AiAnswer account at https://app.aianswer.us .\n      2. Navigate to Settings < API Key.\n      3. Click on Copy icon to copy your existing Key or click on New API Key to create a new one.\n      4. Copy the API Key and paste it below in \"AiAnswer API Key\".\n    ",
   "Gmail get list of Agents": "Gmail obtener lista de agentes",
   "Create Phone Call": "Crear llamada telefónica",

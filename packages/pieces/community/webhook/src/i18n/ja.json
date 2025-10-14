@@ -1,5 +1,4 @@
 {
-  "Webhook": "Webhook",
   "Receive HTTP requests and trigger flows using unique URLs.": "一意のURLを使用してHTTPリクエストとトリガーフローを受信します。",
   "Return Response": "返品対応",
   "Respond and Wait for Next Webhook": "応答して次のWebhookを待つ",

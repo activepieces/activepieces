@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { ActionContext, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
@@ -44,7 +44,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,
-            piecesSource: constants.piecesSource,
+            pieceSource: constants.piecesSource,
         })
 
         const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
@@ -54,7 +54,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.inputUiInfo?.schema as Record<string, InputPropertyMap> | undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
         }
@@ -77,12 +77,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
-            progressService.sendUpdate({
+            await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
-                updateImmediate: true,
-            }).catch((e) => {
-                console.error('error sending update', e)
             })
         }
         const context: ActionContext = {

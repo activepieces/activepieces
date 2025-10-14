@@ -1,5 +1,4 @@
 {
-  "Airparser": "Aéroparseur",
   "Extract structured data from emails, PDFs, or documents with Airparser.": "Extraire des données structurées des courriels, des PDF ou des documents avec Airparser.",
   "You can find your API key in the Airparser dashboard under Account Settings.": "Vous pouvez trouver votre clé API dans le tableau de bord Airparser sous Paramètres du compte.",
   "Get Data from Document": "Récupérer les données du document",

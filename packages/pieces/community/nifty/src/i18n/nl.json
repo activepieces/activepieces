@@ -1,5 +1,4 @@
 {
-  "Nifty": "Nifty",
   "Project management made simple": "Projectbeheer is eenvoudig gemaakt",
   "\n# How to add a new connection\n1. Login to your nifty account at https://niftypm.com/\n2. From your account settings, click on App Center\n3. After that click on Integrate with API\n4. Then Create a new app\n5. Select the Name and Description you want\n6. copy the redirect url from the piece and fill the url field ( without https:// )\n7. check out Milestones , Subtasks , Projects , Statuses , Tasks and Portfolios\n8. copy the client id and client secret and paste them in the piece\n": "\n# Hoe een nieuwe connectie\n1. Inloggen op uw account https://niftypm.com/\n2. Klik vanuit uw account instellingen op App Center\n3. Na die klik op Integreer met API\n4. Maak dan een nieuwe app\n5. Selecteer de naam en beschrijving die je wilt\n6. kopieer de omleidings-url van het stuk en vul het url veld (zonder https:// )\n7. bekijk mijlpalen, Subtaken , Projecten, Statussen , Taken en Portfolios\nkopieer het client-id en clientgeheim en plak ze in het stukje\n",
   "Create Task": "Taak maken",

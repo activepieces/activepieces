@@ -1,5 +1,4 @@
 {
-  "Chatbase": "Base de discussion",
   "Build and manage AI chatbots with custom sources.": "Construisez et gérez des chatbots AI avec des sources personnalisées.",
   "You can get your API key from your [Chatbase Account](https://www.chatbase.co/dashboard).": "Vous pouvez obtenir votre clé API depuis votre [Compte de Chatbase](https://www.chatbase.co/dashboard).",
   "Create Chatbot": "Créer un Chatbot",
@@ -56,7 +55,7 @@
   "claude-3-opus": "claude-3-opus",
   "claude-opus-4": "claude-opus-4",
   "claude-3-haiku": "claude-3-haïku",
-  "gemini-2.0-flash": "gemini-2.0-flash",
+  "gemini-2.0-flash": "format@@0 gemini-2.0-flash",
   "gemini-1.5-flash": "format@@0 gemini-1.5-flash",
   "gemini-1.5-pro": "gemini-1.5-pro",
   "gemini-2.0-pro": "gemini-2.0-pro",

@@ -1,5 +1,4 @@
 {
-  "Pastefy": "Pastefy",
   "Sharing code snippets platform": "Partage de la plateforme de code snippets",
   "Pastefy Instance URL": "Pastefy Instance URL",
   "API-Token": "API-Token",
@@ -25,7 +24,7 @@
   "Content": "Contenus",
   "Title": "Titre de la page",
   "Encryption Password": "Mot de passe de chiffrement",
-  "Folder": "Folder",
+  "Folder": "Dossier",
   "Visibility": "Visibilité",
   "Expiry Date": "Expiry Date",
   "Paste ID": "Coller l'ID",

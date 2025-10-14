@@ -1,10 +1,9 @@
 {
-  "MongoDB": "MongoDB",
   "Host": "主机",
   "Use MongoDB Atlas URL Format": "Use MongoDB Atlas URL Format",
   "Database": "Database",
   "Username": "用户名",
-  "Password": "密码",
+  "Password": "Password",
   "Auth Source": "Auth Source",
   "The hostname or address of the MongoDB server (e.g., localhost:27017 or cluster.example.mongodb.net)": "The hostname or address of the MongoDB server (e.g., localhost:27017 or cluster.example.mongodb.net)",
   "Enable this if connecting to MongoDB Atlas (uses mongodb+srv:// protocol)": "Enable this if connecting to MongoDB Atlas (uses mongodb+srv:// protocol)",

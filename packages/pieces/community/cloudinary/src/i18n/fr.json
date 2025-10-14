@@ -1,5 +1,4 @@
 {
-  "Cloudinary": "Nuageux",
   "Cloudinary is a cloud-based image and video management platform that allows you to upload, store, manage, and deliver your media assets. It provides a range of features for image and video optimization, transformation, and delivery.": "Cloudinary est une plateforme de gestion d'images et de vidéos basée sur le nuage qui vous permet de télécharger, de stocker, de gérer et de livrer vos ressources multimédias. Il fournit une gamme de fonctionnalités pour l'optimisation des images et des vidéos, la transformation et la livraison.",
   "API Key": "Clé API",
   "API Secret": "Secret de l'API",
@@ -20,7 +19,7 @@
   "Apply transformations (resize, crop, watermark, etc.) to an asset and generate a new URL.": "Appliquer les transformations (redimensionnement, recadrage, filigrane, etc.) à une ressource et générer une nouvelle URL.",
   "File": "Ficher",
   "Public ID": "Identifiant public",
-  "Folder": "Folder",
+  "Folder": "Dossier",
   "Tags": "Tags",
   "Overwrite": "Écraser",
   "Use Original Filename": "Utiliser le nom de fichier original",

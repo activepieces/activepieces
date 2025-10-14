@@ -1,5 +1,4 @@
 {
-  "Google My Business": "Google My Business",
   "Manage your business on Google": "Gérez votre entreprise sur Google",
   "Create or Update Reply": "Créer ou mettre à jour la réponse",
   "Custom API Call": "Appel API personnalisé",
@@ -23,7 +22,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "New Review": "Nouveau commentaire",
   "Triggers when there is new review": "Déclenche quand il y a une nouvelle revue",
   "Account": "Compte client",

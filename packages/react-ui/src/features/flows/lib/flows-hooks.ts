@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,10 +27,16 @@ import {
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
 
+const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
 export const flowsHooks = {
+  invalidateFlowsQuery: (queryClient: QueryClient) => {
+    queryClient.invalidateQueries({
+      queryKey: createFlowsQueryKey(authenticationSession.getProjectId()!),
+    });
+  },
   useFlows: (request: Omit<ListFlowsRequest, 'projectId'>) => {
     return useQuery({
-      queryKey: ['flows', authenticationSession.getProjectId()],
+      queryKey: createFlowsQueryKey(authenticationSession.getProjectId()!),
       queryFn: async () => {
         return await flowsApi.list({
           ...request,

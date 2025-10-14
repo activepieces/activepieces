@@ -24,7 +24,7 @@ import {
 } from './step-utils';
 
 export const stepsHooks = {
-  useStepMetadata: ({ step, enabled = true }: UseStepMetadata) => {
+  useStepMetadata: ({ step }: UseStepMetadata) => {
     const { i18n } = useTranslation();
     const query = useQuery<
       StepMetadataWithActionOrTriggerOrAgentDisplayName,
@@ -32,7 +32,6 @@ export const stepsHooks = {
     >({
       queryKey: getQueryKeyForStepMetadata(step, i18n.language as LocalesEnum),
       queryFn: () => stepUtils.getMetadata(step, i18n.language as LocalesEnum),
-      enabled,
     });
     return {
       stepMetadata: query.data,
@@ -120,7 +119,6 @@ function passSearch(
 
 type UseStepMetadata = {
   step: FlowAction | FlowTrigger;
-  enabled?: boolean;
 };
 
 type UseMetadataProps = {
@@ -140,5 +138,18 @@ const getQueryKeyForStepMetadata = (
   const customLogoUrl =
     'customLogoUrl' in step ? step.customLogoUrl : undefined;
   const agentId = flowStructureUtil.getExternalAgentId(step);
-  return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
+  const actionName =
+    step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
+  const triggerName =
+    step.type === FlowTriggerType.PIECE ? step.settings.triggerName : undefined;
+  return [
+    actionName,
+    triggerName,
+    pieceName,
+    pieceVersion,
+    customLogoUrl,
+    agentId,
+    locale,
+    step.type,
+  ];
 };

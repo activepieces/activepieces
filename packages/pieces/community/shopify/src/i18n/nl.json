@@ -1,5 +1,4 @@
 {
-  "Shopify": "Shopify",
   "Ecommerce platform for online stores": "Webwinkelplatform voor online winkels",
   "Shop Name": "Winkel naam",
   "Admin Token": "Admin Token",
@@ -71,6 +70,7 @@
   "Last Name": "Achternaam",
   "Phone Number": "Telefoon nummer",
   "Tags": "Labels",
+  "Accepts Marketing ?": "De marketing accepteren?",
   "Product Variant": "Product variant",
   "Title": "Aanspreektitel",
   "Quantity": "Aantal",

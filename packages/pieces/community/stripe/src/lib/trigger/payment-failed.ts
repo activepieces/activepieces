@@ -2,6 +2,8 @@ import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 export const stripePaymentFailed = createTrigger({
   auth: stripeAuth,
@@ -170,6 +172,24 @@ export const stripePaymentFailed = createTrigger({
     if (response !== null && response !== undefined) {
       await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
     }
+  },
+  async test(context) {
+    const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
+      method: HttpMethod.GET,
+      url: 'https://api.stripe.com/v1/charges',
+      headers: {
+        Authorization: 'Bearer ' + context.auth,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      queryParams: {
+        status: 'failed',
+        limit: '5',
+      },
+    });
+
+    if (isEmpty(response.body) || isEmpty(response.body.data)) return [];
+
+    return response.body.data;
   },
   async run(context) {
     const payloadBody = context.payload.body as PayloadBody;

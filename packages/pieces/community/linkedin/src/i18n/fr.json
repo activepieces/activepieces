@@ -1,5 +1,4 @@
 {
-  "LinkedIn": "LinkedIn",
   "Connect and network with professionals": "Se connecter et se connecter avec des professionnels",
   "Create Share Update": "Créer une mise à jour de partage",
   "Create Company Update": "Créer une mise à jour de la société",
@@ -28,5 +27,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "HEAD"
 }

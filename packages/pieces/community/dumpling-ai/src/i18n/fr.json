@@ -1,5 +1,4 @@
 {
-  "Dumpling AI": "Dumpling AI",
   "Transform unstructured website content into clean, AI-ready data": "Transformez le contenu du site web non structuré en données propres et prêtes à l'IA",
   "\n  You can obtain API key from [API Section](https://app.dumplingai.com/api-keys).": "\n  You can obtain API key from [API Section](https://app.dumplingai.com/api-keys).",
   "Web Search": "Recherche Web",
@@ -93,8 +92,8 @@
   "Square (1:1)": "Carré (1:1)",
   "Landscape 16:9": "Paysage 16:9",
   "Landscape 21:9": "Paysage 21:9",
-  "Landscape 3:2": "Landscape 3:2",
-  "Landscape 4:3": "Landscape 4:3",
+  "Landscape 3:2": "Paysage 3:2",
+  "Landscape 4:3": "Paysage 4:3",
   "Portrait 2:3": "Portrait 2:3",
   "Portrait 3:4": "Portrait 3:4",
   "Portrait 4:5": "Portrait 4:5",

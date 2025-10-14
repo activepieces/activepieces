@@ -40,6 +40,146 @@ export const githubCommon = {
       };
     },
   }),
+  milestoneDropdown: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Milestone',
+      description: 'The milestone to associate this issue with.',
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a repository first',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        const milestones = await githubPaginatedApiCall<{
+          number: number;
+          title: string;
+        }>({
+          accessToken: (auth as OAuth2PropertyValue).access_token,
+          method: HttpMethod.GET,
+          resourceUri: `/repos/${owner}/${repo}/milestones`,
+        });
+        return {
+          disabled: false,
+          options: milestones.map((milestone) => {
+            return {
+              label: milestone.title,
+              value: milestone.number,
+            };
+          }),
+        };
+      },
+    }),
+  branchDropdown: (displayName: string, desc: string, required = true) =>
+    Property.Dropdown({
+      displayName,
+      description: desc,
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a repository first',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        const branches = await githubPaginatedApiCall<{ name: string }>({
+          accessToken: (auth as OAuth2PropertyValue).access_token,
+          method: HttpMethod.GET,
+          resourceUri: `/repos/${owner}/${repo}/branches`,
+        });
+        return {
+          disabled: false,
+          options: branches.map((branch) => {
+            return {
+              label: branch.name,
+              value: branch.name,
+            };
+          }),
+        };
+      },
+    }),
+
+  issueDropdown: (required = true) =>
+    Property.Dropdown({
+      displayName: 'Issue',
+      description: 'The issue to select.',
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a repository first',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        // Fetch open issues from the repository
+        const issues = await githubPaginatedApiCall<{
+          number: number;
+          title: string;
+          pull_request?: Record<string, any>;
+        }>({
+          accessToken: (auth as OAuth2PropertyValue).access_token,
+          method: HttpMethod.GET,
+          resourceUri: `/repos/${owner}/${repo}/issues`,
+          query: {
+            state: 'open', // We will list open issues
+          },
+        });
+        return {
+          disabled: false,
+          options: issues
+            .filter((issue) => !issue.pull_request)
+            .map((issue) => {
+              return {
+                label: `#${issue.number} - ${issue.title}`,
+                value: issue.number,
+              };
+            }),
+        };
+      },
+    }),
+
+  assigneeSingleDropdown: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Assignee',
+      description: 'Filter issues by a specific assignee.',
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'please authenticate first and select repo',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        const assignees = await getAssignee(
+          auth as OAuth2PropertyValue,
+          owner,
+          repo
+        );
+        return {
+          disabled: false,
+          options: assignees.map((assignee) => {
+            return {
+              label: assignee.login,
+              value: assignee.login,
+            };
+          }),
+        };
+      },
+    }),
+
   assigneeDropDown: (required = false) =>
     Property.MultiSelectDropdown({
       displayName: 'Assignees',

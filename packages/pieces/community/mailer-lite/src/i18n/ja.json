@@ -1,5 +1,4 @@
 {
-  "MailerLite": "MailerLite",
   "Email marketing software": "Eメールマーケティングソフトウェア",
   "\nTo obtain your API key, follow these steps:\n\n1. Log in to your MailerLite account.\n2. Visit the [API page](https://dashboard.mailerlite.com/integrations/api).\n3. Click the **Generate new token** button.\n4. Copy the generated API key.\n": "\nAPIキーを取得するには、以下の手順に従ってください:\n\n1. MailerLiteアカウントにログインします。\n2. [API page](https://dashboard.mailerlite.com/integrations/api)を参照してください。\n3. **新しいトークンを生成**ボタンをクリックします。\n4. 生成された API キーをコピーします。\n",
   "Add Subscriber to a Group": "購読者をグループに追加",

@@ -1,6 +1,6 @@
 import { fork } from 'child_process'
-import { ENGINE_PATH, GLOBAL_CODE_CACHE_PATH } from '@activepieces/server-shared'
 import { FastifyBaseLogger } from 'fastify'
+import { ENGINE_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { EngineProcess } from './engine-factory-types'
 
 export const noSandboxProcess = (_log: FastifyBaseLogger): EngineProcess => ({
