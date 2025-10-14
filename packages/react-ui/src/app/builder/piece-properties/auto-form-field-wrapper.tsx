@@ -76,7 +76,7 @@ const DynamicValueToggle = ({
   const step = form.getValues();
   const dynamicInputModeToggled =
     step.type === FlowActionType.PIECE
-      ? step.settings.propertySettings[propertyName].type ===
+      ? step.settings.propertySettings[propertyName]?.type ===
         PropertyExecutionType.DYNAMIC
       : false;
   const handleDynamicValueToggleChange = (mode: PropertyExecutionType) => {

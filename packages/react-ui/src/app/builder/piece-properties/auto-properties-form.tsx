@@ -63,7 +63,7 @@ const AutoPropertiesFormComponent = React.memo(
           {Object.entries(props).map(([propertyName]) => {
             const dynamicInputModeToggled =
               (step as Step).type === FlowActionType.PIECE
-                ? step.settings.propertySettings[propertyName].type ===
+                ? step.settings.propertySettings[propertyName]?.type ===
                   PropertyExecutionType.DYNAMIC
                 : false;
             return (
