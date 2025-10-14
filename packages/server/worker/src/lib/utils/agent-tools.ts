@@ -1,6 +1,5 @@
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { Agent, agentbuiltInToolsNames, AgentOutputFieldType, AgentOutputType, isNil, McpWithTools } from '@activepieces/shared'
-import { experimental_createMCPClient, tool } from 'ai'
+import { experimental_createMCPClient, tool, type Schema as AiSchema } from 'ai'
 import { z, ZodRawShape, ZodSchema } from 'zod'
 
 export const agentTools = async (params: AgentToolsParams) => {
@@ -23,12 +22,15 @@ export const agentTools = async (params: AgentToolsParams) => {
 }
 
 async function buildInternalTools(params: AgentToolsParams) {
+    const structuredOutput = await getStructuredOutput(params.agent)
+    const inputSchema: ZodSchema = params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT
+        ? z.object({ output: structuredOutput }) as ZodSchema
+        : z.object({})
+
     return {
         [agentbuiltInToolsNames.markAsComplete]: tool({
             description: 'Mark the todo as complete',
-            inputSchema: params.agent.outputType === AgentOutputType.STRUCTURED_OUTPUT ? z.object({
-                output: await getStructuredOutput(params.agent),
-            }) : z.object({}),
+            inputSchema: inputSchema as unknown as AiSchema,
             execute: async () => {
                 return 'Marked as Complete'
             },
@@ -48,18 +50,6 @@ async function getMcpClient(params: AgentToolsParams) {
             url: mcpServerUrl,
         },
     })
-}
-
-async function createMcpClient(params: AgentToolsParams) {
-const mcpServerUrl = `${params.publicUrl}v1/mcp/${params.mcp.token}/sse`
-return httpClient.sendRequest({
-    method: HttpMethod.POST,
-    url: mcpServerUrl,
-    authentication: {
-    type: AuthenticationType.BEARER_TOKEN,
-    token: params.token,
-    },
-})
 }
 
 async function getStructuredOutput(agent: Agent): Promise<ZodSchema> {
