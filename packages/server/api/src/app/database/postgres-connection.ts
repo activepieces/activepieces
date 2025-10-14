@@ -606,6 +606,7 @@ export const createPostgresDataSource = (): DataSource => {
     const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
     const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
+    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
     const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
@@ -620,7 +621,7 @@ export const createPostgresDataSource = (): DataSource => {
         ...commonProperties,
         ...migrationConfig,
         extra: {
-            idleTimeoutMillis: 5 * 60 * 1000,
+            idleTimeoutMillis,
         },
     })
 }
