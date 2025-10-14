@@ -220,6 +220,9 @@ export async function mapRowsToHeaderNames(
 			if (headerName) {
 				newValues[headerName] = row.values[columnLetter];
 			}
+			else{
+				newValues[columnLetter] = row.values[columnLetter];
+			}
 		});
 		return { ...row, values: newValues };
 	});
