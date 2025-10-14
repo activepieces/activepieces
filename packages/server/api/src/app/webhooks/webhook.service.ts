@@ -45,12 +45,14 @@ export const webhookService = {
                 })
 
                 if (isNil(triggerSourceResult)) {
-                    pinoLogger.info('Flow not found, returning GONE')
+                    pinoLogger.info('Flow not found, returning NOT FOUND')
                     span.setAttribute('webhook.flowFound', false)
                     return {
-                        status: StatusCodes.GONE,
+                        status: StatusCodes.NOT_FOUND,
                         body: {},
-                        headers: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
                     }
                 }
 
@@ -94,17 +96,6 @@ export const webhookService = {
                     }
                 }
 
-                const flowDisabledAndNoSaveSampleData = flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
-                if (flowDisabledAndNoSaveSampleData) {
-                    span.setAttribute('webhook.flowDisabled', true)
-                    return {
-                        status: StatusCodes.NOT_FOUND,
-                        body: {},
-                        headers: {
-                            [webhookHeader]: webhookRequestId,
-                        },
-                    }
-                }
                 pinoLogger.info('Adding webhook job to queue')
 
 
