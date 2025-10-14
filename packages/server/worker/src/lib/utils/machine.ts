@@ -5,7 +5,7 @@ import { promisify } from 'util'
 import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineProcessManager } from '../runner/process/engine-process-manager'
+import { engineProcessManager } from '../compute/process/engine-process-manager'
 
 const execAsync = promisify(exec)
 

@@ -7,6 +7,7 @@ import { In, IsNull } from 'typeorm'
 import { agentRepo } from '../../agents/agents-service'
 import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { apDayjs } from '../../helper/dayjs-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -20,7 +21,6 @@ import { projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
 import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
-import { redisConnections } from '../../database/redis-connections'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 

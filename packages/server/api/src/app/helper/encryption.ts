@@ -9,9 +9,9 @@ import {
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { Mutex } from 'async-mutex'
+import { redisConnections } from '../database/redis-connections'
 import { localFileStore } from './local-store'
 import { system } from './system/system'
-import { redisConnections } from '../database/redis-connections'
 
 const algorithm = 'aes-256-cbc'
 const ivLength = 16

@@ -13,9 +13,9 @@ import jwtLibrary, {
     SignOptions,
     VerifyOptions,
 } from 'jsonwebtoken'
+import { redisConnections } from '../database/redis-connections'
 import { localFileStore } from './local-store'
 import { system } from './system/system'
-import { redisConnections } from '../database/redis-connections'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',

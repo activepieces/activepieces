@@ -32,7 +32,7 @@ async function getRedisClientSubscriber(): Promise<Redis> {
     }
     return mutexLock.runExclusive(async () => {
         if (!redisClientSubscriber) {
-            redisClientSubscriber = await redisConnections.createNew()
+            redisClientSubscriber = await redisConnections.create()
         }
         return redisClientSubscriber
     })
@@ -44,7 +44,7 @@ async function getRedisClientPublisher(): Promise<Redis> {
     }
     return  mutexLock.runExclusive(async () => {
         if (!redisClientPublisher) {
-            redisClientPublisher = await redisConnections.createNew()
+            redisClientPublisher = await redisConnections.create()
         }
         return redisClientPublisher
     })

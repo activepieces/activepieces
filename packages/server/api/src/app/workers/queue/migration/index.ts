@@ -1,12 +1,11 @@
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedLock } from '../../../helper/lock'
+import { distributedLock, redisConnections } from '../../../database/redis-connections'
 import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'
 import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
 import { removeRateLimitJobsQueue } from './remove-rate-limit-queue'
 import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
-import { redisConnections } from '../../../database/redis-connections'
 
 const QUEUE_MIGRATION_VERSION = '1'
 const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
@@ -16,24 +15,21 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
         if (!await needMigration()) {
             return
         }
-        const migrationLock = await distributedLock.acquireLock({
+        await distributedLock(log).runExclusive({
             key: 'job_migration_lock',
-            timeout: dayjs.duration(20, 'minute').asMilliseconds(),
-            log,
+            timeoutInSeconds: dayjs.duration(20, 'minute').asSeconds(),
+            fn: async () => {
+                if (await needMigration()) {
+                    await refillPollingJobs(log).run()
+                    await refillRenewWebhookJobs(log).run()
+                    await refillPausedRuns(log).run()
+                    await updateMigrationVersion()
+                }
+                await unifyOldQueuesIntoOne(log).run()
+                await removeRateLimitJobsQueue(log).run()
+            },
         })
-        try {
-            if (await needMigration()) {
-                await refillPollingJobs(log).run()
-                await refillRenewWebhookJobs(log).run()
-                await refillPausedRuns(log).run()
-                await updateMigrationVersion()
-            }
-            await unifyOldQueuesIntoOne(log).run()
-            await removeRateLimitJobsQueue(log).run()
-        }
-        finally {
-            await migrationLock.release()
-        }
+      
     },
 })
 
