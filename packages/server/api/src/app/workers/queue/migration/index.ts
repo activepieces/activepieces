@@ -7,7 +7,6 @@ import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
 import { removeRateLimitJobsQueue } from './remove-rate-limit-queue'
 import { removeHardDeleteProjectJobs } from './remove-hard-delete-project-jobs'
 import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
-import { redisConnections } from '../../../database/redis-connections'
 import { refillFlowsStatuses } from './refill-flows-statuses'
 
 const QUEUE_MIGRATION_VERSION = '1'
@@ -27,26 +26,13 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
                     await refillRenewWebhookJobs(log).run()
                     await refillPausedRuns(log).run()
                     await updateMigrationVersion()
+                    await removeHardDeleteProjectJobs(log).run()
+                    await refillFlowsStatuses(log).run()
                 }
                 await unifyOldQueuesIntoOne(log).run()
                 await removeRateLimitJobsQueue(log).run()
             },
         })
-        try {
-            if (await needMigration()) {
-                await refillPollingJobs(log).run()
-                await refillRenewWebhookJobs(log).run()
-                await refillPausedRuns(log).run()
-                await updateMigrationVersion()
-                await removeHardDeleteProjectJobs(log).run()
-                await refillFlowsStatuses(log).run()
-            }
-            await unifyOldQueuesIntoOne(log).run()
-            await removeRateLimitJobsQueue(log).run()
-        }
-        finally {
-            await migrationLock.release()
-        }
     },
 })
 
