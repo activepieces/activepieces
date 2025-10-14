@@ -148,7 +148,6 @@ export const system = {
         }
         return values.split(',').map((value) => value.trim())
     },
-
     getOrThrow<T extends string>(prop: SystemProp): T {
         const value = getEnvVarOrReturnDefaultValue(prop) as T | undefined
 

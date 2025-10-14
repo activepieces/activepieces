@@ -1,6 +1,5 @@
-import { Type } from "@sinclair/typebox"
+import { Static, Type } from '@sinclair/typebox'
 
-import { Static } from "@sinclair/typebox"
 
 export enum RedisType {
     SENTINEL = 'SENTINEL',
@@ -17,7 +16,7 @@ export enum QueueMode {
 
 export const RedisConnectionSettings = Type.Object({
     REDIS_TYPE: Type.String(),
-    REDIS_SSL_CA_FILE: Type.Union([Type.String(), Type.Undefined    ()]),
+    REDIS_SSL_CA_FILE: Type.Union([Type.String(), Type.Undefined()]),
     REDIS_DB: Type.Union([Type.Number(), Type.Undefined()]),
     REDIS_HOST: Type.Union([Type.String(), Type.Undefined()]),
     REDIS_PASSWORD: Type.Union([Type.String(), Type.Undefined()]),

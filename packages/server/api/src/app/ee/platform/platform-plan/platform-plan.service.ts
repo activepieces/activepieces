@@ -4,8 +4,8 @@ import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits
 import { FastifyBaseLogger } from 'fastify'
 
 import { repoFactory } from '../../../core/db/repo-factory'
+import { distributedLock } from '../../../database/redis-connections'
 import { apDayjs } from '../../../helper/dayjs-helper'
-import { distributedLock } from '../../../helper/lock'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
@@ -25,22 +25,16 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(platformPlan)) return platformPlan
 
-        const lock = await distributedLock.acquireLock({
+        return distributedLock(log).runExclusive({
             key: `platform_plan_${platformId}`,
-            timeout: 60000,
-            log,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const platformPlan = await platformPlanRepo().findOneBy({ platformId })
+                if (!isNil(platformPlan)) return platformPlan
+
+                return createInitialBilling(platformId, log)
+            },
         })
-
-        try {
-
-            const platformPlan = await platformPlanRepo().findOneBy({ platformId })
-            if (!isNil(platformPlan)) return platformPlan
-
-            return await createInitialBilling(platformId, log)
-        }
-        finally {
-            await lock.release()
-        }
     },
 
     async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {

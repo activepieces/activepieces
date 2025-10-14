@@ -1,10 +1,10 @@
 import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisConnections } from '../../database/redis-connections'
 import { apDayjs, apDayjsDuration } from '../dayjs-helper'
 import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
-import { redisConnections } from '../../database/redis-connections'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
@@ -18,7 +18,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         systemJobsQueue = new Queue(
             SYSTEM_JOB_QUEUE,
             {
-                connection: await redisConnections.createNew(),
+                connection: await redisConnections.create(),
                 defaultJobOptions: {
                     attempts: 10,
                     backoff: {
@@ -42,7 +42,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                 await jobHandler(job.data)
             },
             {
-                connection: await redisConnections.createNew(),
+                connection: await redisConnections.create(),
                 concurrency: 1,
             },
         )
