@@ -1,7 +1,4 @@
 import { access, mkdir } from 'node:fs/promises'
-import { join } from 'path'
-import lockfile from 'proper-lockfile'
-
 
 
 export const INFINITE_LOCK_TIMEOUT = 60 * 60 * 1000
@@ -32,32 +29,6 @@ export const fileSystemUtils = {
                 return
             }
             throw e
-        }
-    },
-
-    runExclusive: async <T>(directory: string, key: string, fn: () => Promise<T>, timeout = INFINITE_LOCK_TIMEOUT): Promise<T> => {
-        const lockFolderPath = join(directory, 'activepieces-locks')
-        const encodedKey = Buffer.from(key).toString('base64').replace(/[/+=]/g, '_')
-        const lockPathFile = join(lockFolderPath, `${encodedKey}.lock`)
-        let release
-        try {
-            await fileSystemUtils.threadSafeMkdir(lockFolderPath)
-            release = await lockfile.lock(lockPathFile, {
-                retries: {
-                    retries: Math.ceil(timeout / 10),
-                    factor: 1,
-                    minTimeout: 10,
-                    maxTimeout: 10,
-                },
-                stale: 30000,
-                realpath: false,
-            })
-            return await fn()
-        }
-        finally {
-            if (release) {
-                await release()
-            }
         }
     },
 }

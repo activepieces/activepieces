@@ -1,7 +1,7 @@
 import { ConsumeJobResponse, ConsumeJobResponseStatus, isNil, RenewWebhookJobData, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { engineRunner } from '../runner'
+import { engineRunner } from '../compute'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 
@@ -9,7 +9,7 @@ export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
     async renewWebhook({ data, engineToken, timeoutInSeconds }: RenewWebhookParams): Promise<ConsumeJobResponse> {
         const { flowVersionId } = data
 
-        const populatedFlow = await flowWorkerCache.getFlow({
+        const populatedFlow = await flowWorkerCache(log).getFlow({
             engineToken,
             flowVersionId,
         })

@@ -1,9 +1,9 @@
 import { isNil, isNotUndefined, NON_SCHEDULED_JOB_TYPES, WorkerJobStatus, WorkerJobType, WorkerJobTypeForMetrics } from '@activepieces/shared'
 import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { bullMqQueue } from './job-queue'
-import { redisConnections } from '../../database/redis-connections'
 
 export const jobStatsRedisKeyPrefix = 'jobState'
 export const metricsRedisKey = (jobType: WorkerJobType, status: WorkerJobStatus) => `metrics:${jobType}:${status}`

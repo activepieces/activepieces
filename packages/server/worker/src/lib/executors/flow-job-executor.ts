@@ -3,7 +3,7 @@ import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, Err
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { engineRunner } from '../runner'
+import { engineRunner } from '../compute'
 import { workerMachine } from '../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
@@ -124,7 +124,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
     async executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds }: ExecuteFlowOptions): Promise<void> {
         try {
 
-            const flow = await flowWorkerCache.getFlow({
+            const flow = await flowWorkerCache(log).getFlow({
                 engineToken,
                 flowVersionId: jobData.flowVersionId,
             })
@@ -147,7 +147,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {
-                        message: result.error?.message ?? 'internal error',
+                        message: JSON.stringify(result),
                     },
                 })
             }

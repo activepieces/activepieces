@@ -54,12 +54,12 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
 
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
 
-        const cache = cacheState(GLOBAL_CACHE_COMMON_PATH)
-        await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
-        await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
-        await cache.setCache('@activepieces/shared', CacheState.PENDING)
-        await cache.setCache('@activepieces/common-ai', CacheState.PENDING)
-        await cache.setCache(piecePackageName, CacheState.PENDING)
+        const cache = cacheState(GLOBAL_CACHE_COMMON_PATH, log)
+        await cache.saveCache('@activepieces/pieces-framework', CacheState.PENDING)
+        await cache.saveCache('@activepieces/pieces-common', CacheState.PENDING)
+        await cache.saveCache('@activepieces/shared', CacheState.PENDING)
+        await cache.saveCache('@activepieces/common-ai', CacheState.PENDING)
+        await cache.saveCache(piecePackageName, CacheState.PENDING)
 
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }

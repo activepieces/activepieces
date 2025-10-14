@@ -166,14 +166,14 @@ export const environmentVariables = {
         const environment = this.getEnvironment(WorkerSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(environment as ContainerType)
     },
-    getNumberEnvironment: (prop: WorkerSystemProp): number | undefined => {
+    getNumberEnvironment: (prop: WorkerSystemProp | AppSystemProp): number | undefined => {
         const value = environmentVariables.getEnvironment(prop)
         return value ? parseInt(value) : undefined
     },
     getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
         return process.env[`AP_${prop}`]
     },
-    getEnvironmentOrThrow: (prop: WorkerSystemProp): string => {
+    getEnvironmentOrThrow: (prop: WorkerSystemProp | AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)
         assertNotNullOrUndefined(value, `Environment variable ${prop} is not set`)
         return value

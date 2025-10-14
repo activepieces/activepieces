@@ -45,7 +45,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 webhookLogger.info('Webhook job executor started')
                 const { payload, saveSampleData, flowVersionIdToRun, execute } = data
 
-                const populatedFlowToRun = await flowWorkerCache.getFlow({
+                const populatedFlowToRun = await flowWorkerCache(log).getFlow({
                     engineToken,
                     flowVersionId: flowVersionIdToRun,
                 })
