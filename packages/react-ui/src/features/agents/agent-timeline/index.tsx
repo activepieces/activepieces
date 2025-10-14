@@ -16,7 +16,6 @@ type AgentTimelineProps = {
 };
 
 const AgentTimeline = ({ agentResult, className = '' }: AgentTimelineProps) => {
-
   return (
     <div className={`h-full ${className}`}>
       {agentResult.prompt !== '' && (

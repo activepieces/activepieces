@@ -13,19 +13,12 @@ import {
   useTableColumns,
   mapRecordsToRows,
 } from '@/features/tables/components/table-columns';
-import { recordsApi } from '@/features/tables/lib/records-api';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import {
-  AgentRun,
-  AgentTaskStatus,
-  ApFlagId,
-  Permission,
-  WebsocketClientEvent,
-} from '@activepieces/shared';
+import { ApFlagId, Permission } from '@activepieces/shared';
 
 import './react-data-grid.css';
 
@@ -33,8 +26,6 @@ const ApTableEditorPage = () => {
   const navigate = useNavigate();
   const projectId = authenticationSession.getProjectId();
   const [
-    table,
-    setAgentRunId,
     selectedRecords,
     setSelectedRecords,
     selectedCell,
@@ -42,10 +33,7 @@ const ApTableEditorPage = () => {
     createRecord,
     fields,
     records,
-    setRecords,
   ] = useTableState((state) => [
-    state.table,
-    state.setAgentRunId,
     state.selectedRecords,
     state.setSelectedRecords,
     state.selectedCell,
@@ -53,7 +41,6 @@ const ApTableEditorPage = () => {
     state.createRecord,
     state.fields,
     state.records,
-    state.setRecords,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -101,36 +88,6 @@ const ApTableEditorPage = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [selectedCell]);
-
-  useEffect(() => {
-    socket.on(
-      WebsocketClientEvent.AGENT_RUN_PROGRESS,
-      async (agentRun: AgentRun) => {
-        if (agentRun.metadata?.tableId === table.id) {
-          setAgentRunId(
-            agentRun.metadata.recordId!,
-            agentRun.status === AgentTaskStatus.IN_PROGRESS
-              ? agentRun.id
-              : null,
-          );
-          if (
-            agentRun.status === AgentTaskStatus.COMPLETED ||
-            agentRun.status === AgentTaskStatus.FAILED
-          ) {
-            const records = await recordsApi.list({
-              tableId: table.id,
-              limit: 999999,
-              cursor: undefined,
-            });
-            setRecords(records.data);
-          }
-        }
-      },
-    );
-    return () => {
-      socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS);
-    };
-  }, [table.id, setAgentRunId, socket]);
 
   const columns = useTableColumns(createEmptyRecord);
   const rows = mapRecordsToRows(records, fields);

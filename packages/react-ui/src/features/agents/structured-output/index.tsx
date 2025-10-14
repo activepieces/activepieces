@@ -112,7 +112,7 @@ export const AgentStructuredOutput = ({
             </Card>
           ) : (
             <div className="text-muted-foreground text-sm">
-              {t("No structured output fields yet.")}
+              {t('No structured output fields yet.')}
             </div>
           )}
           <AddFieldPopover onAddField={handleAddField} />

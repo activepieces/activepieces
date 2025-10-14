@@ -70,7 +70,7 @@ const CreateReleaseDialogContent = ({
 }: CreateReleaseDialogContentProps) => {
   const isThereAnyChanges =
     (plan?.flows && plan?.flows.length > 0) ||
-    (plan?.tables && plan?.tables.length > 0)
+    (plan?.tables && plan?.tables.length > 0);
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
@@ -341,10 +341,7 @@ const CreateReleaseDialogContent = ({
                 form.setError('name', { message: 'Release name is required' });
                 error = true;
               }
-              if (
-                selectedChanges.size === 0 &&
-                plan.tables.length === 0
-              ) {
+              if (selectedChanges.size === 0 && plan.tables.length === 0) {
                 setErrorMessage(
                   'Please select at least one change to include in the release',
                 );
