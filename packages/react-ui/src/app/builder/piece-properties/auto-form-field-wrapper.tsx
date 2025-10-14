@@ -4,6 +4,7 @@ import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
+import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
@@ -12,6 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { toast } from '@/components/ui/use-toast';
 import { getDefaultPropertyValue } from '@/features/pieces/lib/form-utils';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
@@ -192,7 +194,11 @@ const AutoFormFieldWrapper = ({
           />
         )}
       </FormLabel>
-      <AutoFormFielWrapperErrorBoundary value={field.value}>
+      <AutoFormFielWrapperErrorBoundary
+        field={field}
+        property={property}
+        dynamicInputModeToggled={dynamicInputModeToggled}
+      >
         {dynamicInputModeToggled && !isArrayProperty && (
           <TextInputWithMentions
             disabled={disabled}
@@ -225,19 +231,42 @@ const AutoFormFieldWrapper = ({
 
 const AutoFormFielWrapperErrorBoundary = ({
   children,
-  value,
+  field,
+  property,
+  dynamicInputModeToggled,
 }: {
   children: React.ReactNode;
-  value: unknown;
+  field: ControllerRenderProps;
+  property: PieceProperty;
+  dynamicInputModeToggled?: boolean;
 }) => {
   return (
     <ErrorBoundary
       fallbackRender={() => (
-        <div className="text-sm  flex flex-col gap-2">
+        <div className="text-sm  flex items-center justify-between">
           <div className="text-red-500">
             {t('input value is invalid, please contact support')}
           </div>
-          <div>{`${stringifyValue(value)}`}</div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(
+                JSON.stringify({
+                  stringifiedValue: stringifyValue(field.value),
+                  property,
+                  dynamicInputModeToggled,
+                  disabled: field.disabled,
+                }),
+              );
+              toast({
+                title: t('Info copied to clipboard, please send it to support'),
+                duration: 5000,
+              });
+            }}
+          >
+            {t('Info')}
+          </Button>
         </div>
       )}
     >
@@ -249,7 +278,7 @@ const AutoFormFielWrapperErrorBoundary = ({
 const stringifyValue = (value: unknown) => {
   try {
     if (value === undefined) {
-      return undefined;
+      return 'undefined';
     }
     return JSON.stringify(value);
   } catch (e) {
