@@ -1,11 +1,12 @@
 import { AI_USAGE_MCP_ID_HEADER, AIUsageFeature, createAIModel } from "@activepieces/common-ai";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
+import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool, McpResult, McpToolsListResult, McpToolCallResult } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { type Schema as AiSchema, tool, jsonSchema } from "ai";
 import z, { ZodRawShape, ZodSchema } from "zod";
+import {createParser} from 'eventsource-parser'
 
 export const AI_MODELS = [
   { id: 'openai-gpt-4.1', provider: 'openai', displayName: 'GPT-4.1', modelName: 'gpt-4.1' },
@@ -60,12 +61,7 @@ async function buildInternalTools(params: AgentToolsParams) {
 async function getMcpClient(params: AgentToolsParams) {
     const mcpServerUrl = `${params.apiUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp-server`
 
-    const parseSSEResponse = (sseString: string) => {
-        const dataLine = sseString.split('\n').find(line => line.startsWith('data: '))
-        return dataLine ? JSON.parse(dataLine.substring(6)) : null
-    }
-
-    const sendMcpRequest = async (method: string, requestParams?: unknown) => {
+    const sendMcpRequest = async <T extends McpResult>(method: string, requestParams?: unknown): Promise<T> => {
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: mcpServerUrl,
@@ -86,12 +82,19 @@ async function getMcpClient(params: AgentToolsParams) {
             },
         })
         
-        return parseSSEResponse(response.body as string)
+        let result: T = {} as T
+        const parser = createParser({
+            onEvent(event) {
+                result = JSON.parse(event.data)
+            },
+        })
+        parser.feed(response.body as string)
+        return result
     }
 
     return {
         tools: async () => {
-            const data = await sendMcpRequest('tools/list', {})
+            const data: McpToolsListResult = await sendMcpRequest<McpToolsListResult>('tools/list', {})
             const tools: Record<string, ReturnType<typeof tool>> = {}
             
             for (const toolDef of data?.result?.tools ?? []) {
@@ -99,7 +102,7 @@ async function getMcpClient(params: AgentToolsParams) {
                     description: toolDef.description ?? '',
                     inputSchema: jsonSchema(toolDef.inputSchema),
                     execute: async (args: Record<string, unknown>) => {
-                        const result = await sendMcpRequest('tools/call', {
+                        const result: McpToolCallResult = await sendMcpRequest<McpToolCallResult>('tools/call', {
                             name: toolDef.name,
                             arguments: args,
                         })

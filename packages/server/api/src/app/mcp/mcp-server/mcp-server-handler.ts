@@ -8,7 +8,7 @@ import { mcpSessionManager } from './mcp-session-manager'
 const HEARTBEAT_INTERVAL = 30 * 1000
 
 export const mcpServerHandler = {
-    async handleStreamableHttpRequest({ req, reply, projectId, tools, logger }: HandleStreamableHttpRequestParams) {
+    async handleStreamableHttpRequest({ req, reply, projectId, tools, logger }: HandleStreamableHttpRequestParams): Promise<void> {
         try {
             const { server } = await createMcpServer({
                 logger,
@@ -27,8 +27,6 @@ export const mcpServerHandler = {
     
             await server.connect(transport)
             await transport.handleRequest(req.raw, reply.raw, req.body)
-
-            return server
         }
         catch (error) {
             logger.error('Error handling MCP request:', error)
@@ -42,7 +40,6 @@ export const mcpServerHandler = {
                     id: null,
                 })
             }
-            return null
         }
     },
     
@@ -67,6 +64,7 @@ export const mcpServerHandler = {
             logger.info(`Connection closed for session ${transport.sessionId}`)
             await mcpSessionManager(logger).publish(transport.sessionId, {}, 'remove')
         })
+        reply.raw.end()
     },
 }
 
