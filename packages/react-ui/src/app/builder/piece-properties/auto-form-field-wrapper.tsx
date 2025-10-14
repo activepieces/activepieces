@@ -1,10 +1,9 @@
 import { t } from 'i18next';
 import { Calendar, SquareFunction, File } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
-import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
@@ -193,11 +192,7 @@ const AutoFormFieldWrapper = ({
           />
         )}
       </FormLabel>
-      <AutoFormFielWrapperErrorBoundary
-        field={field}
-        property={property}
-        dynamicInputModeToggled={dynamicInputModeToggled}
-      >
+      <AutoFormFielWrapperErrorBoundary value={field.value}>
         {dynamicInputModeToggled && !isArrayProperty && (
           <TextInputWithMentions
             disabled={disabled}
@@ -230,52 +225,20 @@ const AutoFormFieldWrapper = ({
 
 const AutoFormFielWrapperErrorBoundary = ({
   children,
-  field,
-  property,
-  dynamicInputModeToggled = false,
+  value,
 }: {
   children: React.ReactNode;
-  field: ControllerRenderProps;
-  property: PieceProperty;
-  dynamicInputModeToggled?: boolean;
+  value: unknown;
 }) => {
-  const [key, setKey] = useState<number>(1);
   return (
     <ErrorBoundary
-      key={`${key}`}
       fallbackRender={() => (
-        <>
-          {!field.disabled && (
-            <div className="text-sm  flex items-center justify-between">
-              <span className="text-red-500">
-                {t('Invalid value, please click the button to reset it')}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  field.onChange(
-                    getDefaultPropertyValue({
-                      property,
-                      dynamicInputModeToggled,
-                    }),
-                  );
-                  setKey(key + 1);
-                }}
-              >
-                {t('Reset')}
-              </Button>
-            </div>
-          )}
-          {field.disabled && (
-            <div className="text-sm  flex items-center justify-between">
-              <span className="text-red-500">
-                {t('input value is malformed')}
-              </span>
-              <div>{`${stringifyValue(field.value)}`}</div>
-            </div>
-          )}
-        </>
+        <div className="text-sm  flex flex-col gap-2">
+          <div className="text-red-500">
+            {t('input value is invalid, please contact support')}
+          </div>
+          <div>{`${stringifyValue(value)}`}</div>
+        </div>
       )}
     >
       {children}
