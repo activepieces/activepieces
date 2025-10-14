@@ -1,6 +1,6 @@
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
-import { Mail, Settings, User as UserIcon } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 import {
   Dialog,
@@ -39,10 +39,6 @@ export function AccountSettingsDialog({
         <ScrollArea className="flex-1">
           <div className="space-y-6">
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <UserIcon className="w-4 h-4" />
-                <h3 className="text-base font-semibold">{t('Profile')}</h3>
-              </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <UserAvatar
@@ -69,13 +65,6 @@ export function AccountSettingsDialog({
             <Separator />
 
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                <h3 className="text-base font-semibold">{t('Appearance')}</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {t('Customize how the interface looks and feels.')}
-              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ThemeToggle />
                 <LanguageToggle />

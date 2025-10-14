@@ -25,7 +25,7 @@ export function BuilderNavigationSidebar({
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <SidebarProvider>
+      <SidebarProvider keyForStateInLocalStorage="builder-sidebar">
         {!embedState.isEmbedded && (
           <Sidebar id={BUILDER_NAVIGATION_SIDEBAR_ID} variant="inset">
             <AppSidebarHeader />
