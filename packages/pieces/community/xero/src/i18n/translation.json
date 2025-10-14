@@ -1,5 +1,4 @@
 {
-  "Xero": "Xero",
   "Beautiful accounting software": "Beautiful accounting software",
   "\n  1. Log in to Xero.\n  2. Go to [Developer portal](https://developer.xero.com/app/manage/).\n  3. Click on the App you want to integrate.\n  4. On the left, click on `Configuration`.\n  5. Enter your `redirect url`.\n  6. Copy the `Client Id` and `Client Secret`.\n  ": "\n  1. Log in to Xero.\n  2. Go to [Developer portal](https://developer.xero.com/app/manage/).\n  3. Click on the App you want to integrate.\n  4. On the left, click on `Configuration`.\n  5. Enter your `redirect url`.\n  6. Copy the `Client Id` and `Client Secret`.\n  ",
   "Create or Update Contact": "Create or Update Contact",
@@ -146,6 +145,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "ID of the contact to create invoice for.": "ID of the contact to create invoice for.",
@@ -206,6 +206,7 @@
   "e.g. Name or Name DESC": "e.g. Name or Name DESC",
   "Number, Reference or ID depending on Search By.": "Number, Reference or ID depending on Search By.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "Draft": "Draft",
   "Submitted": "Submitted",
   "Authorised": "Authorised",

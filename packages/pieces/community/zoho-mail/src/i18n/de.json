@@ -1,5 +1,4 @@
 {
-  "Zoho Mail": "Zoho Mail",
   "Zoho Mail is a powerful email service that allows you to manage your email, contacts, and calendars efficiently.": "Zoho Mail ist ein leistungsstarker E-Mail-Service, mit dem Sie Ihre E-Mails, Kontakte und Kalender effizient verwalten können.",
   "Location": "Standort",
   "The location of your Zoho Mail account.": "Der Standort Ihres Zoho Mail-Kontos.",
@@ -41,6 +40,7 @@
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
   "Body": "Körper",
+  "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
   "The ID of the email message to retrieve.": "Die ID der abzurufenden E-Mail-Nachricht.",
@@ -54,6 +54,7 @@
   "BCC recipient's email address.": "E-Mail-Adresse des BCC-Empfängers.",
   "In case you want to change the name of the attachment.": "Falls Sie den Namen des Anhangs ändern möchten.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
+  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
   "HTML": "HTML",
   "Plain Text": "Einfacher Text",
   "Yes": "Ja",

@@ -1,10 +1,15 @@
+import { readFile } from 'node:fs/promises'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { assertEqual, CodeAction, EXACT_VERSION_REGEX, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
+import { fileSystemUtils } from '@activepieces/server-shared'
+import {
+    assertEqual, CodeAction, EXACT_VERSION_REGEX, FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion,
+    getPackageArchivePathForPiece, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step,
+} from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
+import { PACKAGE_ARCHIVE_PATH } from '../piece-manager/piece-manager'
 import { CodeArtifact } from '../runner/engine-runner-types'
 
-export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
+export const pieceEngineUtil = {
     getCodeSteps(flowVersion: FlowVersion): CodeArtifact[] {
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         return steps.filter((step) => step.type === FlowActionType.CODE).map((step) => {
@@ -23,7 +28,7 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
         return this.getExactPieceForStep(engineToken, trigger)
     },
     async resolveExactVersion(engineToken: string, piece: BasicPieceInformation): Promise<PiecePackage> {
-        const pieceMetadata = await engineApiService(engineToken, log).getPiece(piece.pieceName, {
+        const pieceMetadata = await engineApiService(engineToken).getPiece(piece.pieceName, {
             version: piece.pieceVersion,
         })
         return this.enrichPieceWithArchive(engineToken, pieceMetadata)
@@ -35,9 +40,9 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
                 const { archiveId, pieceVersion } = await getPieceVersionAndArchiveId(engineToken, pieceMetadata.archiveId, {
                     pieceName: name,
                     pieceVersion: version,
-                }, log)
+                })
+                const archive = await getArchive(engineToken, archiveId!)
 
-                const archive = await engineApiService(engineToken, log).getFile(archiveId!)
 
                 return {
                     packageType: pieceMetadata.packageType,
@@ -83,9 +88,9 @@ export const pieceEngineUtil = (log: FastifyBaseLogger) => ({
             return step
         })
     },
-})
+}
 
-async function getPieceVersionAndArchiveId(engineToken: string, archiveId: string | undefined, piece: BasicPieceInformation, log: FastifyBaseLogger): Promise<{ pieceVersion: string, archiveId?: string }> {
+async function getPieceVersionAndArchiveId(engineToken: string, archiveId: string | undefined, piece: BasicPieceInformation): Promise<{ pieceVersion: string, archiveId?: string }> {
     const isExactVersion = EXACT_VERSION_REGEX.test(piece.pieceVersion)
 
     if (!isNil(archiveId) && isExactVersion) {
@@ -94,12 +99,26 @@ async function getPieceVersionAndArchiveId(engineToken: string, archiveId: strin
             archiveId,
         }
     }
-    const pieceMetadata = await engineApiService(engineToken, log).getPiece(piece.pieceName, {
+    const pieceMetadata = await engineApiService(engineToken).getPiece(piece.pieceName, {
         version: piece.pieceVersion,
     })
     return {
         pieceVersion: pieceMetadata.version,
         archiveId: pieceMetadata.archiveId!,
+    }
+}
+
+async function getArchive(engineToken: string, archiveId: string): Promise<Buffer> {
+    const archivePath = getPackageArchivePathForPiece({
+        archiveId,
+        archivePath: PACKAGE_ARCHIVE_PATH,
+    })
+    const archiveExists = await fileSystemUtils.fileExists(archivePath)
+    if (archiveExists) {
+        return readFile(archivePath)
+    }
+    else {
+        return engineApiService(engineToken).getFile(archiveId)
     }
 }
 

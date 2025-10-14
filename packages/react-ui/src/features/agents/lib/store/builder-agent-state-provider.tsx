@@ -8,23 +8,23 @@ import {
   BuilderAgentState,
 } from './builder-agent-state';
 
-interface BuilderAgentContextValue {
+interface AgentBuilderContextValue {
   store: ReturnType<typeof createBuilderAgentStore>;
 }
 
-const BuilderAgentContext = createContext<BuilderAgentContextValue | null>(
+const BuilderAgentContext = createContext<AgentBuilderContextValue | null>(
   null,
 );
 
-interface BuilderAgentProviderProps {
+interface AgentBuilderProviderProps {
   children: React.ReactNode;
   agent: Agent;
 }
 
-export function BuilderAgentProvider({
+export function AgentBuilderProvider({
   children,
   agent,
-}: BuilderAgentProviderProps) {
+}: AgentBuilderProviderProps) {
   const store = React.useMemo(() => createBuilderAgentStore(agent), [agent]);
 
   return (

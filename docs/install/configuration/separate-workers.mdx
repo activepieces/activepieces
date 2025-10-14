@@ -33,6 +33,7 @@ Benefits of separating workers from the main application (APP):
     volumes:
       - <your path>:/usr/src/app/cache
     ```
+    Note: This setup works whether you attach one volume per worker, It cannot be shared across multiple workers.
   </Step>
   <Step title="Launch Worker Machine">
     Launch the worker machine and supply it with the generated token.

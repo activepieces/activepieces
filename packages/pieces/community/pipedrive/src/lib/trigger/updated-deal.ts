@@ -141,7 +141,9 @@ export const updatedDeal = createTrigger({
 					});
 				}
 				if (filterBy === 'stage_id') {
-					const response = await httpClient.sendRequest<{ data: PipedriveStageV2[] }>({
+					const response = await httpClient.sendRequest<{
+						data: PipedriveStageV2[];
+					}>({
 						method: HttpMethod.GET,
 						url: `${authValue.data['api_domain']}/api/v2/stages`,
 						authentication: {
@@ -272,7 +274,10 @@ export const updatedDeal = createTrigger({
 	async run(context) {
 		const filterBy = context.propsValue.filter_by;
 		const filterByValue = context.propsValue.filter_by_field_value!['field_value'];
-		const fieldToWatch = context.propsValue.field_to_watch;
+		const fieldToWatch =
+			context.propsValue.field_to_watch === 'label'
+				? 'label_ids'
+				: context.propsValue.field_to_watch;
 
 		const payloadBody = context.payload.body as {
 			data: Record<string, any>;
@@ -282,12 +287,14 @@ export const updatedDeal = createTrigger({
 				entity: string;
 			};
 		};
-		const currentDealData = payloadBody.data;
-		const previousDealData = payloadBody.previous;
+		const currentDealData = flattenCustomFields(payloadBody.data);
+		const previousDealData = flattenCustomFields(payloadBody.previous);
 
 		const noFilterAndNoField = !filterBy && !fieldToWatch;
 		const isFieldChanged =
-			fieldToWatch && currentDealData[fieldToWatch] !== previousDealData[fieldToWatch];
+			fieldToWatch &&
+			fieldToWatch in previousDealData && // The previous object now only contains fields whose values have changed
+			currentDealData[fieldToWatch] !== previousDealData[fieldToWatch]; 
 		const isFilterMatched = filterBy && currentDealData[filterBy] === filterByValue;
 
 		if (
@@ -364,3 +371,76 @@ export const updatedDeal = createTrigger({
 	},
 });
 
+function flattenCustomFields(deal: Record<string, any>): Record<string, any> {
+	const { custom_fields, ...rest } = deal;
+
+	if (!custom_fields) return rest;
+
+	const flatCustomFields: Record<string, any> = {};
+
+	for (const [key, value] of Object.entries(custom_fields as Record<string, any>)) {
+		if (isNil(value)) {
+			flatCustomFields[key] = value;
+			continue;
+		}
+
+		const type = value['type'] as string;
+
+		switch (type) {
+			case 'varchar':
+			case 'text':
+			case 'varchar_auto':
+			case 'double':
+			case 'phone':
+			case 'date':
+				flatCustomFields[key] = value?.value;
+				break;
+			case 'set':
+				flatCustomFields[key] = value?.values?.length
+					? value.values.map((v: any) => v.id).join(',')
+					: '';
+				break;
+			case 'enum':
+			case 'user':
+			case 'org':
+			case 'people':
+				flatCustomFields[key] = value?.id;
+				break;
+			case 'monetary':
+				flatCustomFields[key] = value?.value;
+				flatCustomFields[`${key}_currency`] = value?.currency;
+				break;
+			case 'time':
+				flatCustomFields[key] = value?.value;
+				flatCustomFields[`${key}_timezone_id`] = value?.timezone_id;
+				break;
+			case 'timerange':
+				flatCustomFields[key] = value?.from;
+				flatCustomFields[`${key}_timezone_id`] = value?.timezone_id;
+				flatCustomFields[`${key}_until`] = value?.until;
+				break;
+			case 'daterange':
+				flatCustomFields[key] = value?.from;
+				flatCustomFields[`${key}_until`] = value?.until;
+				break;
+			case 'address':
+				flatCustomFields[key] = value?.value;
+				flatCustomFields[`${key}_subpremise`] = value?.subpremise;
+				flatCustomFields[`${key}_street_number`] = value?.street_number;
+				flatCustomFields[`${key}_route`] = value?.route;
+				flatCustomFields[`${key}_sublocality`] = value?.sublocality;
+				flatCustomFields[`${key}_locality`] = value?.locality;
+				flatCustomFields[`${key}_admin_area_level_1`] = value?.admin_area_level_1;
+				flatCustomFields[`${key}_admin_area_level_2`] = value?.admin_area_level_2;
+				flatCustomFields[`${key}_country`] = value?.country;
+				flatCustomFields[`${key}_postal_code`] = value?.postal_code;
+				flatCustomFields[`${key}_formatted_address`] = value?.formatted_address;
+				break;
+		}
+	}
+
+	return {
+		...rest,
+		...flatCustomFields,
+	};
+}

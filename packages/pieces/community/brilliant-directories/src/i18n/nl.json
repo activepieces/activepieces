@@ -1,5 +1,4 @@
 {
-  "Brilliant Directories": "Briljante mappen",
   "All-in-one membership software": "Alles-in-één lidmaatschap software",
   "API Key": "API Sleutel",
   "Instance Url": "Instantie URL",
@@ -18,6 +17,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Email address for the users account": "E-mailadres voor het gebruikersaccount",
@@ -25,6 +25,7 @@
   "The subscription ID from your website": "Het abonnement-ID van uw website",
   "Additional fields for the new user account": "Extra velden voor het nieuwe gebruikersaccount",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

@@ -1,5 +1,4 @@
 {
-  "Clockodo": "Code de l'horloge",
   "Time tracking made easy": "Le suivi du temps simplifié",
   "E-Mail": "Courriel",
   "API-Token": "API-Token",
@@ -123,6 +122,7 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "The ID of the customer": "L'ID du client",
@@ -141,6 +141,7 @@
   "Filter projects by their customer": "Filtrer les projets par leur client",
   "The ID of the team": "L'ID de l'équipe",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Orange": "Orange",
   "Yellow": "Jaune",
   "Green": "Vert",

@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { arch } from 'node:process'
-import { execPromise, fileExists, GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH, PiecesSource } from '@activepieces/server-shared'
+import { execPromise, fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { workerMachine } from '../../../utils/machine'
 import { EngineProcess } from './engine-factory-types'
 
@@ -75,12 +76,12 @@ async function getDirsToBindArgs(flowVersionId: string | undefined, customPieces
         `--dir=/etc/=${etcDir}`,
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
     ]
-    const fExists = !isNil(flowVersionId) && await fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
+    const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
     if (fExists) {
         dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
     }
     if (customPiecesPath) {
-        dirsToBind.push(`--dir=/node_modules=${path.resolve(customPiecesPath, 'node_modules')}:maybe`)
+        dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
     }
 
     const piecesSource = workerMachine.getSettings().PIECES_SOURCE

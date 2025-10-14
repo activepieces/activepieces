@@ -1,5 +1,4 @@
 {
-  "Podio": "Podio",
   "Connect your Podio account to automate workspace management and item operations.": "Conecte su cuenta de Podio para automatizar la gestión del espacio de trabajo y las operaciones de artículos.",
   "Create Item": "Crear artículo",
   "Update Item": "Actualizar elemento",
@@ -79,6 +78,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select an organization to filter apps by workspace. Leave empty to see all apps.": "Seleccione una organización para filtrar aplicaciones por espacio de trabajo. Dejar vacío para ver todas las aplicaciones.",
@@ -154,6 +154,7 @@
   "Field to sort results by (e.g., \"created_on\", \"last_edit_on\")": "Campo para ordenar resultados por (por ejemplo, \"created_on\", \"last_edit_on\")",
   "Sort results in descending order": "Ordenar resultados en orden descendente",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

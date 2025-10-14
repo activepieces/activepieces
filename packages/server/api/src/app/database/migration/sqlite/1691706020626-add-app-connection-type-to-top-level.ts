@@ -33,7 +33,7 @@ implements MigrationInterface {
 
         for (const currentConnection of connections) {
             try {
-                const connectionValue = encryptUtils.decryptObject<AppConnectionValue>(
+                const connectionValue = await encryptUtils.decryptObject<AppConnectionValue>(
                     JSON.parse(currentConnection.value),
                 )
                 await queryRunner.query(

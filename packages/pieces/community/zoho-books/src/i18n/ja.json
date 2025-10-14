@@ -1,5 +1,4 @@
 {
-  "Zoho Books": "蔵法本",
   "Comprehensive online accounting software for small businesses.": "中小企業向けの包括的なオンライン会計ソフトウェア。",
   "Location": "場所",
   "The location of your Zoho Books account": "Zoho Booksアカウントの場所",
@@ -16,9 +15,11 @@
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
   "Body": "本文",
+  "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "GET": "取得",
   "POST": "POST",
   "PATCH": "PATCH",

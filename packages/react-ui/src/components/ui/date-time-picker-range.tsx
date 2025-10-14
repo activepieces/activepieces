@@ -169,7 +169,7 @@ export function DateTimePickerWithRange({
             id="date"
             variant={'outline'}
             className={cn(
-              'min-w-[90px] h-8 border-dashed justify-start text-left font-normal',
+              'min-w-[90px] border-dashed justify-start text-left font-normal',
               !date && 'text-muted-foreground',
             )}
           >
@@ -185,7 +185,7 @@ export function DateTimePickerWithRange({
                 format(date.from, 'LLL dd, y, hh:mm a')
               )
             ) : (
-              <span>Pick a date range</span>
+              <span>{t('Pick a date range')}</span>
             )}
           </Button>
         </PopoverTrigger>

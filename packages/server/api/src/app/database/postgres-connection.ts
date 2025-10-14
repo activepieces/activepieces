@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -44,6 +44,9 @@ import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/17
 import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
 import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
 import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
+import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
+import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
+import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -263,6 +266,13 @@ import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/17545106
 import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173-addBillingCycle'
 import { EligibileForTrial1754852385518 } from './migration/postgres/1754852385518-EligibileForTrial'
 import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
+import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1755954192258-RemoveAgentRelationToTables'
+import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
+import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
+import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
+import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759772332795-RemoveFlowRunDisplayName'
+import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
+import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -447,6 +457,16 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddStepNameToTestInFlowRunEntity1754330492027,
         AddJobIdToTriggerRun1754510611628,
         RemoveAgentTestPrompt1754863565929,
+        RemoveAgentRelationToTables1755954192258,
+        AddIndexToIssues1756775080449,
+        AddTriggerNameToTriggerSource1757018269905,
+        AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRun1757557714045,
+        DeleteHandshakeFromTriggerSource1758108135968,
+        AddIndexForAppEvents1759392852559,
+        RemoveFlowRunDisplayName1759772332795,
+        AddFlowVersionBackupFile1759964470862,
+        AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
     ]
 
     const edition = system.getEdition()
@@ -559,22 +579,15 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
     return commonMigration
 }
 
-const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.TESTING) {
-        return {}
-    }
-
-    return {
+export const createPostgresDataSource = (): DataSource => {
+    const migrationConfig: MigrationConfig =  {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
+        synchronize: false,
     }
-}
 
-export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig = getMigrationConfig()
     const url = system.get(AppSystemProp.POSTGRES_URL)
 
     if (!isNil(url)) {
@@ -582,6 +595,7 @@ export const createPostgresDataSource = (): DataSource => {
             type: 'postgres',
             url,
             ssl: getSslConfig(),
+            ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
         })
@@ -603,8 +617,11 @@ export const createPostgresDataSource = (): DataSource => {
         database,
         ssl: getSslConfig(),
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
-        ...migrationConfig,
         ...commonProperties,
+        ...migrationConfig,
+        extra: {
+            idleTimeoutMillis: 5 * 60 * 1000,
+        },
     })
 }
 
@@ -612,4 +629,5 @@ type MigrationConfig = {
     migrationsRun?: boolean
     migrationsTransactionMode?: 'all' | 'none' | 'each'
     migrations?: (new () => MigrationInterface)[]
+    synchronize: false
 }

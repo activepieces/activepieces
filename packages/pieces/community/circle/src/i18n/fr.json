@@ -1,5 +1,4 @@
 {
-  "Circle": "Cercle",
   "Circle.so is a platform for creating and managing communities.": "Circle.so est une plateforme de création et de gestion de communautés.",
   "You can obtain your API token by navigating to **Settings->Developers->Tokens**.": "Vous pouvez obtenir votre jeton API en naviguant dans **Paramètres->Développeurs->Tokens**.",
   "Create Post": "Créer un message",
@@ -35,6 +34,7 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "The title of the post.": "Le titre du post.",
@@ -51,6 +51,7 @@
   "The email address of the member to add to the space.": "L'adresse email du membre à ajouter à l'espace.",
   "The email address of the member to find.": "L'adresse email du membre à trouver.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Draft": "Brouillon",
   "Published": "Publié",
   "Scheduled": "Planifié",

@@ -1,5 +1,4 @@
 {
-  "Constant Contact": "Contact constant",
   "Email marketing for small businesses": "Marketing par e-mail pour les petites entreprises",
   "Create or Update Contact": "Créer ou mettre à jour le contact",
   "Custom API Call": "Appel API personnalisé",
@@ -16,6 +15,7 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "The list of the contact": "La liste des contacts",
@@ -26,6 +26,7 @@
   "The company name of the contact": "Le nom de la société du contact",
   "The phone number of the contact": "Le numéro de téléphone du contact",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "GET": "OBTENIR",
   "POST": "POSTER",
   "PATCH": "PATCH",

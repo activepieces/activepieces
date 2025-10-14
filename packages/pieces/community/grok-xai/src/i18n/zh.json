@@ -1,5 +1,4 @@
 {
-  "Grok by xAI": "Grok by xAI",
   "AI chatbot by xAI that answers questions, generates text, extracts data, and provides real-time insights.": "AI chatbot by xAI that answers questions, generates text, extracts data, and provides real-time insights.",
   "\n**Get your xAI API Key**\n\n1. Sign up at [xAI](https://x.ai)\n2. Go to your [API dashboard](https://console.x.ai)\n3. Generate a new API key\n4. Copy and paste the key here\n\nYour API key should start with `xai-`\n  ": "\n**Get your xAI API Key**\n\n1. Sign up at [xAI](https://x.ai)\n2. Go to your [API dashboard](https://console.x.ai)\n3. Generate a new API key\n4. Copy and paste the key here\n\nYour API key should start with `xai-`\n  ",
   "Ask Grok": "Ask Grok",
@@ -47,6 +46,7 @@
   "Headers": "信头",
   "Query Parameters": "查询参数",
   "Body": "正文内容",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
   "Grok model to use for generating the response.": "Grok model to use for generating the response.",
@@ -87,6 +87,7 @@
   "Number of images to generate (1-10).": "Number of images to generate (1-10).",
   "Format of the generated images.": "Format of the generated images.",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "Text": "文本",
   "JSON Object": "JSON Object",
   "Auto (Model decides)": "Auto (Model decides)",

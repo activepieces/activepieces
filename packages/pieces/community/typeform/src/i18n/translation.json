@@ -1,5 +1,4 @@
 {
-  "Typeform": "Typeform",
   "Create beautiful online forms and surveys": "Create beautiful online forms and surveys",
   "Custom API Call": "Custom API Call",
   "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
@@ -7,9 +6,11 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

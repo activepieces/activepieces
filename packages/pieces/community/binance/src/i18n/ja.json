@@ -1,5 +1,4 @@
 {
-  "Binance": "Binance",
   "Fetch the price of a crypto pair from Binance": "Binanceから暗号ペアの価格を取得",
   "Fetch Pair Price": "ペア価格を取得",
   "Fetch the current price of a pair (e.g. BTC/USDT)": "ペアの現在の価格を取得します (例: BTC / USDT)",

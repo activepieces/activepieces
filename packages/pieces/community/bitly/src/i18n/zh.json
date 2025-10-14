@@ -1,5 +1,4 @@
 {
-  "Bitly": "Bitly",
   "URL shortening and link management platform with analytics.": "URL shortening and link management platform with analytics.",
   "Access Token": "Access Token",
   "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ": "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ",
@@ -60,6 +59,7 @@
   "Headers": "信头",
   "Query Parameters": "查询参数",
   "Body": "正文内容",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
   "The group where the item will be managed.": "The group where the item will be managed.",
@@ -87,6 +87,7 @@
   "Tags to apply (overwrites existing tags).": "Tags to apply (overwrites existing tags).",
   "Target mobile operating system.": "Target mobile operating system.",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "No Install": "No Install",
   "Auto Install": "Auto Install",
   "Promote Install": "Promote Install",

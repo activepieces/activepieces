@@ -1,5 +1,4 @@
 {
-  "Discord": "Discordia",
   "Instant messaging and VoIP social platform": "Plataforma social de mensajería instantánea y VoIP",
   "\nTo obtain a token, follow these steps:\n1. Go to https://discord.com/developers/applications\n2. Click on Application (or create one if you don't have one)\n3. Click on Bot\n4. Copy the token\n": "\nPara obtener un token, sigue estos pasos:\n1. Ve a https://discord.com/developeropers/applications\n2. Haga clic en Aplicación (o cree una si no tiene una)\n3. Haga clic en Bot\n4. Copie el token\n",
   "Send Message with Bot": "Enviar mensaje con boot",
@@ -58,6 +57,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "List of channels": "Lista de canales",
@@ -83,6 +83,7 @@
   "The reason for deleting the role": "La razón para eliminar el rol",
   "The reason for banning the member": "La razón para prohibir al miembro",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

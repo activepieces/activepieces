@@ -1,5 +1,4 @@
 {
-  "DIMO": "DIMO",
   "DIMO is an open protocol using blockchain to establish universal digital vehicle identity, permissions, data transmission, vehicle control, and payments. Developers use DIMO to build apps based on connected vehicles around the world while the vehicle owners benefit from monetizing their vehicle data.": "DIMOは、普遍的なデジタル車両のアイデンティティ、許可、データ伝送、車両制御、および支払いを確立するためにブロックチェーンを使用するオープンプロトコルです。 開発者は、DIMOを使用して世界中のコネクテッドカーをベースにアプリを構築し、車両所有者は車両データを収益化するメリットがあります。",
   "Client ID": "クライアント ID",
   "Redirect URI": "リダイレクトURI",

@@ -1,5 +1,4 @@
 {
-  "Google Slides": "Google Slides",
   "Get Presentation": "Obter apresentação",
   "Refresh Sheets Charts": "Atualizar gráficos das Chapas",
   "Generate from template": "Gerar a partir do modelo",
@@ -16,6 +15,7 @@
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
   "Body": "Conteúdo",
+  "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "The ID of the presentation": "O ID da apresentação",
@@ -23,6 +23,7 @@
   "The ID of the templated presentation": "A ID da apresentação modelo",
   "Choose the format of placeholders in your template": "Escolha o formato dos espaços reservados no seu modelo",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "Curly Braces {{}}": "Chaves Curly {{}}",
   "Square Brackets [[]]": "Braçadeiras quadradas [[]]",
   "GET": "OBTER",

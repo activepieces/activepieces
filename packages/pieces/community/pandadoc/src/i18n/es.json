@@ -1,5 +1,4 @@
 {
-  "PandaDoc": "PandaDoc",
   "Your PandaDoc API key. Get it from the Developer Dashboard in your PandaDoc account.": "Tu clave API de PandaDoc. Descárgala del Tablero de Desarrolladores en tu cuenta de PandaDoc.",
   "Create Document from Template": "Crear documento desde plantilla",
   "Create Attachment": "Crear archivo adjunto",
@@ -77,6 +76,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select a template from your PandaDoc workspace": "Seleccione una plantilla de su área de trabajo PandaDoc",
@@ -136,6 +136,7 @@
   "Font size of the watermark text": "Tamaño de fuente del texto de la marca de agua",
   "Opacity of the watermark (0.0 to 1.0)": "Opacidad de la marca de agua (0.0 a 1.0)",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "CEO / Chief Executive Officer": "CEO / Director Ejecutivo",
   "CTO / Chief Technology Officer": "CTO / Director de Tecnología",
   "CFO / Chief Financial Officer": "CFO / Director Financiero",

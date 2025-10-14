@@ -1,5 +1,4 @@
 {
-  "WordPress": "WordPress",
   "Open-source website creation software": "Open-source website creatie software",
   "Username": "Gebruikersnaam",
   "Password": "Wachtwoord",
@@ -35,6 +34,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Title of the post about to be added": "Titel van het bericht dat toegevoegd zal worden",
@@ -51,6 +51,7 @@
   "Choose status": "Status kiezen",
   "The ID of the post to get": "Het ID van het bericht om te krijgen",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "Published": "Gepubliceerd",
   "Scheduled": "Gepland",
   "Draft": "Concept",

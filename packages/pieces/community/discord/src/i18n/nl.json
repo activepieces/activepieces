@@ -1,5 +1,4 @@
 {
-  "Discord": "Onenigheid",
   "Instant messaging and VoIP social platform": "Directe berichten en een VoIP social platform",
   "\nTo obtain a token, follow these steps:\n1. Go to https://discord.com/developers/applications\n2. Click on Application (or create one if you don't have one)\n3. Click on Bot\n4. Copy the token\n": "\nOm een token te verkrijgen, volg deze stappen:\n1. Ga naar https://discord.com/developers/applications\n2. Klik op Toepassing (of maak er een aan als je er geen hebt)\n3. Klik op Bot\n4. Kopieer de token\n",
   "Send Message with Bot": "Stuur een bericht met bot",
@@ -58,6 +57,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "List of channels": "Lijst van kanalen",
@@ -83,6 +83,7 @@
   "The reason for deleting the role": "De reden voor het verwijderen van de rol",
   "The reason for banning the member": "De reden om het lid te verbieden",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

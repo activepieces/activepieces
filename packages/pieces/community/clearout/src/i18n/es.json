@@ -1,5 +1,4 @@
 {
-  "Clearout": "Limpiar",
   "Bulk email validation and verification": "Validación y verificación masiva de correo electrónico",
   "API Token": "API Token",
   "The API token for your Clearout account": "El token de API para tu cuenta de Clear out",
@@ -13,10 +12,12 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Email address to verify": "Dirección de email para verificar",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

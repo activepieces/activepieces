@@ -1,5 +1,4 @@
 {
-  "Ninox": "Ninox",
   "**Enter your Ninox Personal Access Token (API key).**\n\n---\n\n### How to obtain your API key\n\n1. Visit [ninox.com](https://ninox.com) and log in.\n2. Click the **Start Ninox** button to open the web app.\n3. In the top-right corner, click the **Actions** gear icon.\n4. Select **Integrations** from the drop-down menu.\n5. In the pop-up window, click the **Generate** button.\n6. Copy the API key to your clipboard and paste it here.\n": "**Introduce tu token de acceso personal (Ninox).**\n\n---\n\n### Cómo obtener tu clave API\n\n1. Visita [ninox.com](https://ninox.com) e inicia sesión.\n2. Haz clic en el botón **Iniciar Ninox** para abrir la aplicación web.\n3. En la esquina superior derecha, haz clic en el icono de engranaje **Acciones**.\n4. Selecciona **Integraciones** en el menú desplegable.\n5. En la ventana emergente, haz clic en el botón **Generar**.\n6. Copia la clave API en tu portapapeles y pégala aquí.\n",
   "Create Record": "Crear registro",
   "Update Record": "Actualizar registro",
@@ -30,6 +29,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select the team containing the database.": "Seleccione el equipo que contiene la base de datos.",
@@ -38,6 +38,7 @@
   "The file to upload to the record.": "El archivo a subir al registro.",
   "The value to search for in the specified field.": "El valor por el que buscar en el campo especificado.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

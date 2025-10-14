@@ -1,5 +1,4 @@
 {
-  "Mistral AI": "Mistral AI",
   "Mistral AI provides state-of-the-art open-weight and hosted language models for text generation, embeddings, and reasoning tasks.": "Mistral AI provides state-of-the-art open-weight and hosted language models for text generation, embeddings, and reasoning tasks.",
   "You can obtain your API key from the Mistral AI dashboard. Go to https://console.mistral.ai, generate an API key, and paste it here.": "You can obtain your API key from the Mistral AI dashboard. Go to https://console.mistral.ai, generate an API key, and paste it here.",
   "Ask Mistral": "Ask Mistral",
@@ -26,6 +25,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "Select a Mistral model. List is fetched live from your account.": "Select a Mistral model. List is fetched live from your account.",
@@ -35,6 +35,7 @@
   "The file to upload (max 512MB).For fine tuning purspose provide .jsonl file.": "The file to upload (max 512MB).For fine tuning purspose provide .jsonl file.",
   "Purpose of the file.": "Purpose of the file.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "fine-tune": "fine-tune",
   "batch": "batch",
   "ocr": "ocr",

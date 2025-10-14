@@ -185,7 +185,7 @@ const CodeEditor = ({
         }}
         theme={codeEditorTheme}
         readOnly={readonly}
-        extensions={extensions}
+        extensions={[...extensions, EditorView.lineWrapping]}
       />
     </div>
   );

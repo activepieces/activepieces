@@ -1,5 +1,4 @@
 {
-  "Zoom": "Aceros",
   "Video conferencing, web conferencing, webinars, screen sharing": "Videoconferencias, conferencias, seminarios web, compartir pantalla",
   "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting** and **meeting:write:registrant** as scopes.": "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting** and **meeting:write:registrant** as scopes.",
   "Create Zoom Meeting": "Crear Reunión Zoom",
@@ -40,6 +39,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "The meeting's topic": "El tema de la reunión",
@@ -68,6 +68,7 @@
   "The registrant's purchasing time frame.": "El plazo de compra del inscrito.",
   "The registrant's role in the purchase process.": "El rol del inscrito en el proceso de compra.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "Local": "Local",
   "Cloud": "Nube",
   "None": "Ninguna",

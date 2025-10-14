@@ -1,5 +1,4 @@
 {
-  "Bitly": "Bitly",
   "URL shortening and link management platform with analytics.": "URL verkorting en link platform voor beheer met analyses.",
   "Access Token": "Toegangs-token",
   "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ": "\n  Om uw Toegang Token te krijgen:\n  1. Log in op uw Bitly account.\n  2. Klik op het profielpictogram in de rechterbovenhoek.\n  3. Ga naar **Profielinstellingen**.\n  4. Navigeer naar de sectie **Ontwikkelaarsinstellingen**.\n  5. Klik op **API**.\n  6. Klik op de knop **Genereer token** en voer uw wachtwoord in om uw toegangstoken te krijgen.\n  ",
@@ -60,6 +59,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "The group where the item will be managed.": "De groep waar het item wordt beheerd.",
@@ -87,6 +87,7 @@
   "Tags to apply (overwrites existing tags).": "Tags om toe te passen (overschrijft bestaande tags).",
   "Target mobile operating system.": "Doel mobiel besturingssysteem.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "No Install": "Geen installatie",
   "Auto Install": "Automatische installatie",
   "Promote Install": "Installeren van promoveren",

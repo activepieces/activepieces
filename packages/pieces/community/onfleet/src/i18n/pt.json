@@ -1,5 +1,4 @@
 {
-  "Onfleet": "Onfleet",
   "Last mile delivery software": "Último software de entrega de milhas",
   "\nTo get an API key, follow the steps below:\n1. Go to settings -> API & Webhooks.\n2. Click the plus sign under API Keys.\n3. Enter API key name and click create key.\n4. Copy the generated key to the input below.\n": "\nPara obter uma chave de API, siga os passos abaixo:\n1. Vá para Configurações-> API e Webhooks.\n2. Clique no sinal de mais sobre as chaves de API.\n3. Insira o nome da chave API e clique em criar chave.\n4. Copie a chave gerada para a entrada abaixo.\n",
   "Create Recipient": "Criar Destinatário",
@@ -114,6 +113,7 @@
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
   "Body": "Conteúdo",
+  "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "The recipient's full name": "Nome completo do destinatário",
@@ -149,6 +149,7 @@
   "Name of the team": "Nome da equipe",
   "Allows Drivers to Self Assign Tasks that are in the Team unassigned container.": "Permite que motoristas atribuam tarefas que estão na equipe não atribuída",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "GET": "OBTER",
   "POST": "POSTAR",
   "PATCH": "COMPRAR",

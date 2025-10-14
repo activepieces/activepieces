@@ -1,5 +1,4 @@
 {
-  "Kizeo Forms": "Kizeo Forms",
   "Create custom mobile forms": "Create custom mobile forms",
   "\nTo connect to Kizeo Forms, you need an API Token provided by their support team.\n": "\nTo connect to Kizeo Forms, you need an API Token provided by their support team.\n",
   "Get Data Definition": "Get Data Definition",
@@ -41,6 +40,7 @@
   "Headers": "信头",
   "Query Parameters": "查询参数",
   "Body": "正文内容",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
   "The ID of the item you want to retrieve from the list": "The ID of the item you want to retrieve from the list",
@@ -52,6 +52,7 @@
   "The ID of the item to edit": "The ID of the item to edit",
   "The ID of the item to delete": "The ID of the item to delete",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "获取",
   "POST": "帖子",
   "PATCH": "PATCH",

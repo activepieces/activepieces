@@ -1,5 +1,4 @@
 {
-  "VTEX": "VTEX",
   "Unified commerce platform": "Gecombineerd handelsplatform",
   "Host Url": "Host Url",
   "App Key": "App sleutel",
@@ -89,6 +88,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "The product ID": "Het product ID",
@@ -105,6 +105,7 @@
   "The Client ID": "De klant-ID",
   "The Order ID": "De order-ID",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

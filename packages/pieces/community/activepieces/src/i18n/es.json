@@ -1,5 +1,4 @@
 {
-  "Activepieces Platform": "Plataforma Activepieces",
   "Open source no-code business automation": "Open source no-code automatización de negocios",
   "Base URL": "URL base",
   "API Key": "Clave API",
@@ -21,10 +20,12 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Id of the project": "Id del proyecto",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "Always notify": "Notificar siempre",
   "Never notify": "Nunca notificar",
   "GET": "RECOGER",

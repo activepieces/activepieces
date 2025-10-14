@@ -1,5 +1,4 @@
 {
-  "Manychat": "Manychat",
   "Automations for Instagram, WhatsApp, TikTok, and Messenger marketing.": "Instagram、WhatsApp、TikTok、およびMessengerマーケティングのための自動化。",
   "You can create an API key by navigating to **Setting -> Extensions -> API**.": "API キーは、**設定 -> 拡張 -> API** に移動して作成できます。",
   "Add Tag to User": "ユーザーにタグを追加",
@@ -19,7 +18,7 @@
   "User ID": "ユーザー ID",
   "Tag": "タグ",
   "First Name": "名",
-  "Last Name": "姓",
+  "Last Name": "Last Name",
   "Phone Number": "電話番号",
   "WhatsApp Phone": "WhatsApp電話",
   "Email": "Eメールアドレス",

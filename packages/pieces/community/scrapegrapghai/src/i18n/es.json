@@ -1,5 +1,4 @@
 {
-  "ScrapeGraphAI": "CrapeGraphAI",
   "AI-powered web scraping and content extraction.": "Extracción de contenido y raspado web propulsado por AI.",
   "\nFollow these steps to obtain your ScrapeGraphAI API Key:\n\n1. Visit [ScrapeGraphAI](https://scrapegraphai.com) and create an account.\n2. Log in and navigate to your dashboard.\n3. Locate and copy your API key from the dashboard.\n": "\nSigue estos pasos para obtener tu clave API de ScrapeGraphAI:\n\n1. Visita [ScrapeGraphAI](https://scrapegraphai.com) y crea una cuenta.\n2. Inicie sesión y vaya a su panel de control.\n3. Localice y copie su clave API del panel de control.\n",
   "Smart Scraper": "Raspador Inteligente",
@@ -18,6 +17,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "The webpage URL to scrape.": "La URL de la página web a scrape.",
@@ -26,6 +26,7 @@
   "The HTML content to process (max 2MB).": "El contenido HTML a procesar (máx. 2MB).",
   "The webpage URL to convert to Markdown": "La URL de la página web para convertir a Markdown",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

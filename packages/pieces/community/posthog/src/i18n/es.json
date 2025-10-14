@@ -1,5 +1,4 @@
 {
-  "PostHog": "PostHog",
   "Open-source product analytics": "Análisis de productos de código abierto",
   "\n[Click here](https://posthog.com/docs/api/overview#personal-api-keys-recommended) to learn how to obtain your Personal API key.\n": "\n[Haz clic aquí](https://posthog.com/docs/api/overview#personal-api-keys-recommended) para aprender cómo obtener tu clave API personal.\n",
   "Create Event": "Crear Evento",
@@ -23,6 +22,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "The event name": "El nombre del evento",
@@ -36,6 +36,7 @@
   "Whether to anonymize incoming IP addresses.": "Si desea anonimizar las direcciones IP entrantes.",
   "If this is a demo project": "Si este es un proyecto de demostración",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "Alias": "Alias",
   "Capture": "Captura",
   "Identify": "Identificar",

@@ -1,5 +1,4 @@
 {
-  "Instantly.ai": "Instantly.ai",
   "Powerful cold email outreach and lead engagement platform.": "Puissante plateforme d'engagement pour les courriels froids.",
   "\nYou can obtain an API key from **Settings->Integrations->API Keys**.\n": "\nYou can obtain an API key from **Settings->Integrations->API Keys**.\n",
   "Create Campaign": "Créer une campagne",
@@ -50,6 +49,7 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "Name of the campaign": "Nom de la campagne",
@@ -81,6 +81,7 @@
   "Skip lead if it exists in the campaign.": "Ignorer le plomb s'il existe dans la campagne.",
   "Search string to find leads - can be First Name, Last Name, or Email (e.g. \"John Doe\").": "Chaîne de recherche pour trouver des prospects - peut être Prénom, Nom, ou Email (par exemple \"Jean Doe\").",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "GET": "OBTENIR",
   "POST": "POSTER",
   "PATCH": "PATCH",

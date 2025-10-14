@@ -1,5 +1,4 @@
 {
-  "Zoho Books": "Zoho Books",
   "Comprehensive online accounting software for small businesses.": "Comprehensive online accounting software for small businesses.",
   "Location": "Location",
   "The location of your Zoho Books account": "The location of your Zoho Books account",
@@ -16,9 +15,11 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

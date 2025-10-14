@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-amazon-sqs",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.806.0"
   }

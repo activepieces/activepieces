@@ -1,5 +1,4 @@
 {
-  "Onfleet": "Onfleet",
   "Last mile delivery software": "Last mile delivery software",
   "\nTo get an API key, follow the steps below:\n1. Go to settings -> API & Webhooks.\n2. Click the plus sign under API Keys.\n3. Enter API key name and click create key.\n4. Copy the generated key to the input below.\n": "\nTo get an API key, follow the steps below:\n1. Go to settings -> API & Webhooks.\n2. Click the plus sign under API Keys.\n3. Enter API key name and click create key.\n4. Copy the generated key to the input below.\n",
   "Create Recipient": "Create Recipient",
@@ -114,6 +113,7 @@
   "Headers": "信头",
   "Query Parameters": "查询参数",
   "Body": "正文内容",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
   "The recipient's full name": "The recipient's full name",
@@ -149,6 +149,7 @@
   "Name of the team": "Name of the team",
   "Allows Drivers to Self Assign Tasks that are in the Team unassigned container.": "Allows Drivers to Self Assign Tasks that are in the Team unassigned container.",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "获取",
   "POST": "帖子",
   "PATCH": "PATCH",

@@ -22,7 +22,7 @@ const EditAgentInFlowBuilderButton = ({
   externalAgentId,
 }: EditAgentInFlowBuilderButtonProps) => {
   const [isAgentBuilderOpen, setIsAgentBuilderOpen] = useState(false);
-  const { data: agent } = agentHooks.useGet(externalAgentId);
+  const { data: agent } = agentHooks.useGetByExternalId(externalAgentId);
   const [setLastRerenderPieceSettingsTimeStamp] = useBuilderStateContext(
     (state) => [state.setLastRerenderPieceSettingsTimeStamp],
   );

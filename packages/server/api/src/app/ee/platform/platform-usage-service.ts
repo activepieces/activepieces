@@ -1,20 +1,21 @@
+import { AIUsage, AIUsageMetadata } from '@activepieces/common-ai'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { AiOverageState, AIUsage, AIUsageMetadata, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
+import { AiOverageState, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
 import { agentRepo } from '../../agents/agents-service'
 import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
 import { repoFactory } from '../../core/db/repo-factory'
-import { getRedisConnection } from '../../database/redis-connection'
+import { redisConnections } from '../../database/redis'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { apDayjs } from '../../helper/dayjs-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
-import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { mcpRepo } from '../../mcp/mcp-service'
 import { projectService } from '../../project/project-service'
 import { tableRepo } from '../../tables/table/table.service'
@@ -69,7 +70,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             return { projectTasksUsage: 0, platformTasksUsage: 0 }
         }
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const today = dayjs()
         const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
@@ -87,22 +88,26 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
     },
 
     async resetPlatformUsage(platformId: string): Promise<void> {
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const today = dayjs()
-
-        const platformTasksRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, today)
-        await redisConnection.del(platformTasksRedisKey)
-
-        const platformAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, today)
-        await redisConnection.del(platformAiCreditRedisKey)
+        const startOfMonth = today.startOf('month')
 
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-        for (const projectId of projectIds) {
-            const projectTasksRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, today)
-            await redisConnection.del(projectTasksRedisKey)
 
-            const projectAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, today)
-            await redisConnection.del(projectAiCreditRedisKey)
+        for (let d = startOfMonth; d.isSame(today) || d.isBefore(today); d = d.add(1, 'day')) {
+            const platformTasksRedisKey = getDailyUsageRedisKey('tasks', 'platform', platformId, d)
+            await redisConnection.del(platformTasksRedisKey)
+
+            const platformAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'platform', platformId, d)
+            await redisConnection.del(platformAiCreditRedisKey)
+
+            for (const projectId of projectIds) {
+                const projectTasksRedisKey = getDailyUsageRedisKey('tasks', 'project', projectId, d)
+                await redisConnection.del(projectTasksRedisKey)
+
+                const projectAiCreditRedisKey = getDailyUsageRedisKey('ai_credits', 'project', projectId, d)
+                await redisConnection.del(projectAiCreditRedisKey)
+            }
         }
     },
 
@@ -115,7 +120,7 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
 
         const incrementBy = roundToDecimals(calculateCredits(cost), 3)
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const today = dayjs()
         const fourteenMonth = 60 * 60 * 24 * 30 * 14
 
@@ -233,7 +238,7 @@ async function getUsage(
         return 0
     }
 
-    const redisConnection = getRedisConnection()
+    const redisConnection = await redisConnections.useExisting()
     let totalUsage = 0
 
     let currentDay = dayjs.unix(startDate).startOf('day')

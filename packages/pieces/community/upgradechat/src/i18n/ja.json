@@ -1,5 +1,4 @@
 {
-  "Upgrade.chat": "Upgrade.chat",
   "Supercharge your Discord or Telegram communities with subscription payments and membership tools.": "DiscordまたはTelegramのコミュニティにサブスクリプションの支払いとメンバーシップツールを追加してください。",
   "Base URL": "ベースURL",
   "Secret API Key": "シークレットAPIキー",
@@ -26,7 +25,7 @@
   "Prefix": "プレフィックス",
   "First Name": "名",
   "Middle Name": "ミドルネーム",
-  "Last Name": "Last Name",
+  "Last Name": "姓",
   "Nick Name": "ニック名",
   "Suffix": "Suffix",
   "Gender": "性別",
@@ -156,7 +155,7 @@
   "Product Payment Period Type": "商品支払期間タイプ",
   "System Type": "システムタイプ",
   "Code": "コード",
-  "Name": "Name",
+  "Name": "名前",
   "Level": "レベル",
   "Start Date": "開始日",
   "End Date": "終了日",

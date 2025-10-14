@@ -1,8 +1,7 @@
 {
-  "Gravity Forms": "重力表單",
-  "Build and publish your WordPress forms": "建立和發布您的 WordPress 表單",
-  "New Submission": "新提交",
-  "Triggers when form receives a new submission": "表單收到新提交時觸發",
-  "Markdown": "下降标记",
-  "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n": "\n- 轉到 \"插件\" 部分。\n- 找到並點擊「Webhook」插件來啟用它。\n- 現在，找到您希望發生觸發的表單。\n- 將 webhook 添加到該表單。\n- 在 webhook 設定中，粘貼此 URL： \n ```text\n {{webhookUrl}}\n ```\n\n- 保持其他設置不變（默認設置）。\n"
+  "Build and publish your WordPress forms": "Build and publish your WordPress forms",
+  "New Submission": "New Submission",
+  "Triggers when form receives a new submission": "Triggers when form receives a new submission",
+  "Markdown": "Markdown",
+  "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n": "\n- Go to the \"Plugins\" section.\n- Find and click on the \"Webhook\" plugin to activate it.\n- Now, locate the form where you want the trigger to occur.\n- Add a webhook to that form.\n- In the webhook settings, paste this URL: \n  ```text\n  {{webhookUrl}}\n  ```\n\n- Keep the other settings unchanged (default).\n"
 }

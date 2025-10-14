@@ -6,6 +6,7 @@ import {
     PackageType,
     PieceType,
     PrincipalType,
+    PropertyExecutionType,
     TriggerStrategy,
     TriggerTestStrategy,
     WebhookHandshakeStrategy,
@@ -80,7 +81,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBeNull()
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
+            expect(Object.keys(responseBody?.version)).toHaveLength(13)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
@@ -153,7 +154,11 @@ describe('Flow API', () => {
                             run_on_weekends: false,
                         },
                         triggerName: 'every_hour',
-                        inputUiInfo: {},
+                        propertySettings: {
+                            'run_on_weekends': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
+                        },
                     },
                     valid: true,
                     name: 'webhook',
@@ -208,7 +213,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
+            expect(Object.keys(responseBody?.version)).toHaveLength(13)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
 
@@ -274,7 +279,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
+            expect(Object.keys(responseBody?.version)).toHaveLength(13)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -334,7 +339,11 @@ describe('Flow API', () => {
                             run_on_weekends: false,
                         },
                         triggerName: 'every_hour',
-                        inputUiInfo: {},
+                        propertySettings: {
+                            'run_on_weekends': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
+                        },
                     },
                     valid: true,
                     name: 'webhook',
@@ -381,7 +390,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
+            expect(Object.keys(responseBody?.version)).toHaveLength(13)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
             expect(responseBody?.version?.state).toBe('LOCKED')
         })

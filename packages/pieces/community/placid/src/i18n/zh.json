@@ -1,5 +1,4 @@
 {
-  "Placid": "Placid",
   "Creative automation engine that generates dynamic images, PDFs, and videos from templates and data.": "Creative automation engine that generates dynamic images, PDFs, and videos from templates and data.",
   "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.": "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.",
   "Create Image": "Create Image",
@@ -35,6 +34,7 @@
   "Headers": "信头",
   "Query Parameters": "查询参数",
   "Body": "正文内容",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
   "Select a Placid template for image generation": "Select a Placid template for image generation",
@@ -48,6 +48,7 @@
   "The ID of the PDF to retrieve": "The ID of the PDF to retrieve",
   "The ID of the video to retrieve.": "The ID of the video to retrieve.",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "72 DPI": "72 DPI",
   "150 DPI": "150 DPI",
   "300 DPI": "300 DPI",

@@ -1,5 +1,4 @@
 {
-  "Podio": "Podio",
   "Connect your Podio account to automate workspace management and item operations.": "Verbind uw Podio account om workspace-management en artikelbewerkingen te automatiseren.",
   "Create Item": "Item aanmaken",
   "Update Item": "Artikel bijwerken",
@@ -79,6 +78,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Select an organization to filter apps by workspace. Leave empty to see all apps.": "Selecteer een organisatie om apps te filteren op werkruimte. Laat leeg om alle apps te zien.",
@@ -154,6 +154,7 @@
   "Field to sort results by (e.g., \"created_on\", \"last_edit_on\")": "Veld om resultaten te sorteren op (bijv. \"created_on\", \"last_edit_on\")",
   "Sort results in descending order": "Sorteer resultaten in aflopende volgorde",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

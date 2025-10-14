@@ -1,5 +1,4 @@
 {
-  "Mempool": "Mempool",
   "The mempool.space website invented the concept of visualizing a Bitcoin node's mempool as projected blocks.": "El sitio web mempool.space inventó el concepto de visualizar la memoria de un nodo Bitcoin como bloques proyectados.",
   "Get Difficulty Adjustment": "Obtener ajuste de Dificultad",
   "Get Price": "Obtener precio",
@@ -89,6 +88,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select the currency for historical price": "Seleccione la moneda para el precio histórico",
@@ -122,6 +122,7 @@
   "The transaction ID to get timing information for": "El ID de transacción para obtener información de tiempo para",
   "The raw transaction in hex format to broadcast": "La transacción en bruto en formato hexadecimal para emitir",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "US Dollar": "Dólar US",
   "Euro": "Euro",
   "British Pound": "Libra británica",

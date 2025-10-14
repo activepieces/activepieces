@@ -1,5 +1,4 @@
 {
-  "BambooHR": "BambooHR",
   "Company domain": "Domein bedrijf",
   "API key": "API sleutel",
   "The subdomain used to access BambooHR. If you access BambooHR at https://mycompany.bamboohr.com, then the companyDomain is \"mycompany\"": "De subdomein die wordt gebruikt om BambooHR te benaderen. Als u BambooHR opent op https://mijnbedrijf.bamboohr.com dan is het bedrijfdomein \"mijnbedrijf\"",
@@ -10,9 +9,11 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

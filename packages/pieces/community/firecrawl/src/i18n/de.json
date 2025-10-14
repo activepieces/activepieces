@@ -1,5 +1,4 @@
 {
-  "Firecrawl": "Feuerwerk",
   "Extract structured data from websites using AI with natural language prompts": "Extrahieren Sie strukturierte Daten von Webseiten mit Hilfe von KI mit natürlichen Sprachabfragen",
   "\nFollow these steps to obtain your Firecrawl API Key:\n\n1. Visit [Firecrawl](https://firecrawl.dev) and create an account.\n2. Log in and navigate to your dashboard.\n3. Locate and copy your API key from the API settings section.\n": "\nFolge diesen Schritten, um deinen Firecrawl API-Schlüssel zu erhalten:\n\n1. Besuche [Firecrawl](https://firecrawl.dev) und erstelle ein Konto.\n2. Melden Sie sich an und navigieren Sie zu Ihrem Dashboard.\n3. Suchen und kopieren Sie Ihren API-Schlüssel aus dem Abschnitt API-Einstellungen.\n",
   "Scrape Website": "Scrape Webseite",
@@ -33,6 +32,7 @@
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
   "Body": "Körper",
+  "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
   "The webpage URL to scrape.": "Die URL der Webseite.",
@@ -55,6 +55,7 @@
   "Properties for webhook configuration.": "Eigenschaften für Webhook Konfiguration.",
   "The ID of the crawl job to check.": "Die ID des zu überprüfenden Crawl-Jobs.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
+  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
   "GET": "ERHALTEN",
   "POST": "POST",
   "PATCH": "PATCH",

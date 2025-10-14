@@ -1,5 +1,4 @@
 {
-  "Bitly": "Bitly",
   "URL shortening and link management platform with analytics.": "Acortamiento de URL y plataforma de gestión de enlaces con analítica.",
   "Access Token": "Token de acceso",
   "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ": "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ",
@@ -60,6 +59,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "The group where the item will be managed.": "El grupo donde se gestionará el artículo.",
@@ -87,6 +87,7 @@
   "Tags to apply (overwrites existing tags).": "Etiquetas a aplicar (sobrescribe las etiquetas existentes).",
   "Target mobile operating system.": "Sistema operativo móvil destino.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "No Install": "No instalar",
   "Auto Install": "Instalación automática",
   "Promote Install": "Promover Instalación",

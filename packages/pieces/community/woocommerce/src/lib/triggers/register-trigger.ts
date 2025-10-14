@@ -5,19 +5,27 @@ import {
 } from '@activepieces/pieces-framework';
 import { wooAuth } from '../../';
 import { WebhookInformation, wooCommon } from '../common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { isEmpty, WebhookHandshakeStrategy } from '@activepieces/shared';
+import {
+  AuthenticationType,
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
 export const woocommerceRegisterTrigger = ({
   name,
   topic,
   displayName,
   description,
   sampleData,
+  testDataEndpoint,
 }: {
   name: string;
   topic: string;
   displayName: string;
   description: string;
   sampleData: unknown;
+  testDataEndpoint: string;
 }) =>
   createTrigger({
     auth: wooAuth,
@@ -61,7 +69,52 @@ export const woocommerceRegisterTrigger = ({
         body: { webhook_id: (context.payload.body as any)['webhook_id'] },
       };
     },
+    async test(context) {
+      const trimmedBaseUrl = context.auth.baseUrl.replace(/\/$/, '');
+
+      const request: HttpRequest = {
+        url: `${trimmedBaseUrl}${testDataEndpoint}`,
+        method: HttpMethod.GET,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: context.auth.consumerKey,
+          password: context.auth.consumerSecret,
+        },
+        queryParams: {
+          per_page: '10',
+        },
+      };
+
+      const response = await httpClient.sendRequest<Array<{ id: number }>>(
+        request
+      );
+
+      if (isEmpty(response.body)) return [];
+
+      return response.body;
+    },
     async run(context) {
-      return [context.payload.body];
+      const payload = context.payload.body as Record<string, any>;
+      const trimmedBaseUrl = context.auth.baseUrl.replace(/\/$/, '');
+
+      if (payload['webhook_id']) return [];
+
+      if (topic.includes('deleted')) {
+        const response = await httpClient.sendRequest({
+          url: `${trimmedBaseUrl}${testDataEndpoint}/${payload['id']}`,
+          method: HttpMethod.GET,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: context.auth.consumerKey,
+            password: context.auth.consumerSecret,
+          },
+          queryParams: {
+            per_page: '10',
+          },
+        });
+        return [response.body];
+      }
+
+      return [payload];
     },
   });

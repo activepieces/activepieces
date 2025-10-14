@@ -1,5 +1,4 @@
 {
-  "Fillout Forms": "Preencher formulários",
   "Create interactive forms and automate workflows with Fillout": "Criar formas interativas e automatizar fluxos de trabalho com o Preenchimento",
   "To get your API key:\n1. Go to your Fillout account settings.\n2. Click on \"Developer settings\".\n3. Generate and copy your API key.\n4. Paste it here.": "Para obter sua chave de API:\n1. Vá para suas configurações de conta Fillout.\n2. Clique em \"Configurações do Desenvolvedor\".\n3. Gerar e copiar a sua chave de API.\n4. Cole-o aqui.",
   "Get Form Responses": "Obter respostas de formulário",
@@ -26,6 +25,7 @@
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
   "Body": "Conteúdo",
+  "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "Max number of submissions to retrieve (1-150).": "Número máximo de submissões para recuperar (1-150).",
@@ -40,6 +40,7 @@
   "Select from the 50 most recent submissions for the chosen form.": "Selecione uma das 50 submissões mais recentes para o formulário escolhido.",
   "The (partial or full) title of the form to search for.": "O título (parcial ou total) do formulário a ser pesquisado.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "In Progress (unfinished)": "Em Progresso (não finalizado)",
   "Ascending": "Crescente",
   "Descending": "Decrescente",

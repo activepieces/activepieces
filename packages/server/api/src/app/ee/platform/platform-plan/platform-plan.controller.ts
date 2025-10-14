@@ -1,5 +1,6 @@
+import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/common-ai'
 import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, ListAICreditsUsageRequest, ListAICreditsUsageResponse, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -139,16 +140,32 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/create-subscription', CreateSubscriptionRequest, async (request) => {
-        const platformPlan = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const customerId = platformPlan.stripeCustomerId
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const { plan, cycle } = request.body
+        const { plan, cycle, addons } = request.body
+
+        const baseLimits = getPlanLimits(plan as PlanName)
+        const baseUserSeatsLimit = baseLimits.userSeatsLimit ?? 0
+        const baseProjectsLimit = baseLimits.projectsLimit ?? 0
+        const baseActiveFlowsLimit = baseLimits.activeFlowsLimit ?? 0
+
+        const newProjectsLimit = addons.projects ?? 0
+        const newActiveFlowsLimit = addons.activeFlows ?? 0
+        const newUserSeatsLimit = addons.userSeats ?? 0
+
+        const extraUserSeats = Math.max(0, newUserSeatsLimit - baseUserSeatsLimit)
+        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
+        const extraProjects = Math.max(0, newProjectsLimit - baseProjectsLimit)
 
         return stripeHelper(request.log).createSubscriptionCheckoutUrl(
             platformPlan.platformId,
             customerId,
-            { plan, cycle },
+            { plan, cycle, addons: {
+                userSeats: extraUserSeats,
+                projects: extraProjects,
+                activeFlows: extraActiveFlows,
+            } },
         )
 
     })
@@ -189,7 +206,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             currentCycle: stripeBillingCycle as BillingCycle,
         })
 
-        await PlatformPlanHelper.checkLegitSubscriptionUpdateOrThrow({ projectsAddon: addons.projects, userSeatsAddon: addons.userSeats, newPlan })
+        await PlatformPlanHelper.checkLegitSubscriptionUpdateOrThrow({ projectsAddon: extraProjects, userSeatsAddon: extraUserSeats, newPlan })
 
         return stripeHelper(request.log).handleSubscriptionUpdate({
             extraActiveFlows,
@@ -219,13 +236,8 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const customerId = platformBilling.stripeCustomerId
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
-        const trialSubscriptionId = await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
+        await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
 
-        await platformPlanService(request.log).update({
-            platformId: platformBilling.platformId,
-            stripeSubscriptionId: trialSubscriptionId,
-            eligibleForTrial: plan === PlanName.PLUS ? PlanName.BUSINESS : undefined,
-        })
         return { success: true }
     })
 

@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { getRedisConnection } from '../../../database/redis-connection'
+import { redisConnections } from '../../../database/redis'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { userService } from '../../../user/user-service'
@@ -45,7 +45,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const key = `trial-gift-${platformId}-${customerId}`
         const redisValue = await redisConnection.get(key)
         const parsedGiftTrial = redisValue 
@@ -67,15 +67,13 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             await stripe.subscriptions.cancel(existingSubscriptionId)
         }
 
-        const subscription = await stripe.subscriptions.create({
+        await stripe.subscriptions.create({
             customer: customerId,
             trial_end: trialPeriod,
             items: [{ price: priceId, quantity: 1 }],
             trial_settings: { end_behavior: { missing_payment_method: 'cancel' } },
             metadata: { platformId, trialSubscription: 'true' },
         })
-
-        return subscription.id
     },
     async giftTrialForCustomer(params: GiftTrialForCustomerParams) {
         const { email, trialPeriod, plan } = params
@@ -103,7 +101,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 isNil(platformPlan.stripeSubscriptionId) || 
                 platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.CANCELED
             ) {
-                const redisConnection = getRedisConnection()
+                const redisConnection = await redisConnections.useExisting()
                 const key = `trial-gift-${platformPlan.platformId}-${platformPlan.stripeCustomerId}`
                 await platformPlanService(log).update({
                     platformId: platformPlan.platformId,
@@ -139,7 +137,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { plan, cycle } = params
+        const { plan, cycle, addons } = params
 
         const basePriceId = plan === PlanName.PLUS ? PLUS_PLAN_PRICE_ID[cycle] : BUSINESS_PLAN_PRICE_ID[cycle]
         const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -152,6 +150,27 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             },
         ]
 
+        if (!isNil(addons.activeFlows) && addons.activeFlows > 0) {
+            lineItems.push({
+                price: ACTIVE_FLOW_PRICE_ID[cycle],
+                quantity: addons.activeFlows,
+            })
+        }
+
+        if (!isNil(addons.projects) && addons.projects > 0) {
+            lineItems.push({
+                price: PROJECT_PRICE_ID[cycle],
+                quantity: addons.projects,
+            })
+        }
+
+        if (!isNil(addons.userSeats) && addons.userSeats > 0) {
+            lineItems.push({
+                price: USER_SEAT_PRICE_ID[cycle],
+                quantity: addons.userSeats,
+            })
+        }
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: lineItems,
@@ -161,6 +180,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                     platformId,
                 },
             },
+            allow_promotion_codes: true,
             success_url: `${frontendUrl}/platform/setup/billing/success?action=create`,
             cancel_url: `${frontendUrl}/platform/setup/billing/error`,
             customer: customerId,

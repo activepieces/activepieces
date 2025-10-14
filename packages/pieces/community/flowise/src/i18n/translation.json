@@ -1,5 +1,4 @@
 {
-  "Flowise": "Flowise",
   "No-Code AI workflow builder": "No-Code AI workflow builder",
   "Base URL": "Base URL",
   "API Key": "API Key",
@@ -18,6 +17,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "Enter the Chatflow ID": "Enter the Chatflow ID",
@@ -25,6 +25,7 @@
   "Enter the History": "Enter the History",
   "Enter the Override Config": "Enter the Override Config",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

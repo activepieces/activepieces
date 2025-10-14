@@ -1,5 +1,4 @@
 {
-  "Dumpling AI": "Dumpling AI",
   "Transform unstructured website content into clean, AI-ready data": "Transforme conteúdo do site não estruturado em dados limpos e com IA.",
   "\n  You can obtain API key from [API Section](https://app.dumplingai.com/api-keys).": "\n  Você pode obter chave de API de [Seção API](https://app.dumplingai.com/api-keys).",
   "Web Search": "Pesquisar na Web",
@@ -44,6 +43,7 @@
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
   "Body": "Conteúdo",
+  "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "Two-letter country code for location bias (e.g., \"US\" for United States).": "Código de país de duas letras para o viés de localização (por exemplo, \"EUA\" para Estados Unidos).",
@@ -74,6 +74,7 @@
   "The prompt describing what data to extract from the document.": "O prompt descrevendo quais dados extrair do documento.",
   "Whether to return the result in JSON format.": "Se deseja retornar o resultado no formato JSON.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "Any Time": "Qualquer hora",
   "Past Hour": "Última Hora",
   "Past Day": "Dia passado",

@@ -1,8 +1,7 @@
 {
-  "Delay": "Délai",
   "Use it to delay the execution of the next action": "Utilisez-le pour retarder l'exécution de la prochaine action",
-  "Delay For": "Délai pour",
-  "Delay Until": "Délai avant",
+  "Delay For": "Délai de",
+  "Delay Until": "Délai jusqu'à",
   "Delays the execution of the next action for a given duration": "Retarde l'exécution de l'action suivante pour une durée donnée",
   "Delays the execution of the next action until a given timestamp": "Délai l'exécution de l'action suivante jusqu'à ce qu'un timestamp donné",
   "Markdown": "Markdown",

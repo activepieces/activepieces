@@ -1,5 +1,4 @@
 {
-  "Linear": "Linear",
   "Issue tracking for modern software teams": "最新のソフトウェアチームの問題追跡中",
   "\nTo obtain your API key, follow these steps:\n\n1. Go to settings by clicking your profile-pic (top-left)\n2. Go to API section inside My Account.\n3. On Personal API keys, give label and press create key.": "\nTo obtain your API key, follow these steps:\n\n1. Go to settings by clicking your profile-pic (top-left)\n2. Go to API section inside My Account.\n3. On Personal API keys, give label and press create key.",
   "Create Issue": "課題を作成",
@@ -14,7 +13,7 @@
   "Update a existing project in Linear workspace": "Linear ワークスペースの既存のプロジェクトを更新する",
   "Create a new comment on an issue in Linear workspace": "Linear ワークスペースの課題に新しいコメントを作成する",
   "Perform a raw GraphQL query": "生のGraphQLクエリを実行します",
-  "Team": "チーム",
+  "Team": "Team",
   "Title": "タイトル",
   "Description": "説明",
   "Status": "ステータス",

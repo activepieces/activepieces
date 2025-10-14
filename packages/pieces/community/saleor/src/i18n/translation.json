@@ -1,9 +1,9 @@
 {
-  "Saleor": "Saleor",
   "Saleor API URL": "Saleor API URL",
   "Saleor token": "Saleor token",
   "Your Saleor GraphQL API endpoint": "Your Saleor GraphQL API endpoint",
   "Your token": "Your token",
+  "Saleor": "Saleor",
   "Raw GraphQL query": "Raw GraphQL query",
   "Get an order": "Get an order",
   "Add Order Note": "Add Order Note",

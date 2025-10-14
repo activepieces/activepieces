@@ -4,7 +4,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 
 export const grokAuth = PieceAuth.SecretText({
   description: 

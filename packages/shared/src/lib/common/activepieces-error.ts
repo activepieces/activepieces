@@ -13,6 +13,14 @@ export class ActivepiecesError extends Error {
     constructor(public error: ApErrorParams, message?: string) {
         super(error.code + (message ? `: ${message}` : ''))
     }
+
+    override toString(): string {
+        return JSON.stringify({
+            code: this.error.code,
+            message: this.message,
+            params: this.error.params,
+        })
+    }
 }
 
 export type ApErrorParams =
@@ -54,8 +62,7 @@ export type ApErrorParams =
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
-    | TriggerDisableErrorParams
-    | TriggerEnableErrorParams
+    | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | InvitationOnlySignUpParams
@@ -83,7 +90,8 @@ export type ApErrorParams =
     | ErrorUpdatingSubscriptionParams
     | TriggerExecutionFailedParams
     | SubflowFailedParams
-    
+    | MachineNotAvailableParams
+    | MachineNotConnectedParams
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -322,7 +330,10 @@ ErrorCode.INVALID_CUSTOM_DOMAIN,
 
 export type ExecutionTimeoutErrorParams = BaseErrorParams<
 ErrorCode.EXECUTION_TIMEOUT,
-Record<string, never>
+{
+    standardOutput: string
+    standardError: string
+}
 >
 
 export type ValidationErrorParams = BaseErrorParams<
@@ -332,20 +343,13 @@ ErrorCode.VALIDATION,
 }
 >
 
-export type TriggerEnableErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_ENABLE,
+export type TriggerUpdateStatusErrorParams = BaseErrorParams<
+ErrorCode.TRIGGER_UPDATE_STATUS,
 {
     flowVersionId?: FlowVersionId
     message?: string
     standardOutput?: string
     standardError?: string
-}
->
-
-export type TriggerDisableErrorParams = BaseErrorParams<
-ErrorCode.TRIGGER_DISABLE,
-{
-    flowVersionId?: FlowVersionId
 }
 >
 
@@ -481,7 +485,17 @@ export type SubflowFailedParams = BaseErrorParams<ErrorCode.SUBFLOW_FAILED, {
     message: string
 }>
 
+export type MachineNotAvailableParams = BaseErrorParams<ErrorCode.MACHINE_NOT_AVAILABLE, {
+    resourceType: string
+}>
+
+export type MachineNotConnectedParams = BaseErrorParams<ErrorCode.MACHINE_NOT_CONNECTED, {
+    message: string
+}>
+
 export enum ErrorCode {
+    MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
+    MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     ERROR_UPDATING_SUBSCRIPTION = 'ERROR_UPDATING_SUBSCRIPTION',
@@ -535,8 +549,7 @@ export enum ErrorCode {
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',
-    TRIGGER_DISABLE = 'TRIGGER_DISABLE',
-    TRIGGER_ENABLE = 'TRIGGER_ENABLE',
+    TRIGGER_UPDATE_STATUS = 'TRIGGER_UPDATE_STATUS',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',

@@ -1,5 +1,4 @@
 {
-  "Heartbeat": "Heartbeat",
   "Monitoring and alerting made easy": "Überwachung und Alarmierung leicht gemacht",
   "\n  1. Login to your Heartbeat account\n  2. On the bottom-left, click on 'Admin Settings'\n  3. On the left panel, click on 'API Keys'\n  5. Click on 'Create API Key'\n  6. On the popup form, Enter the 'Label' to name the Key\n  7. Copy the API key and paste it below.\n": "\n  1. Melden Sie sich bei Ihrem Heartbeat Konto\n  2. Klicken Sie unten links auf 'Admin-Einstellungen'\n  3. Im linken Fenster klicken Sie auf 'API-Keys'\n  5. Klicken Sie auf 'API-Schlüssel erstellen'\n  6. Geben Sie im Popup-Formular das 'Label' ein, um den Schlüssel\n  zu benennen. Kopiere den API-Schlüssel und füge ihn unten ein.\n",
   "Create User": "Benutzer erstellen",
@@ -21,6 +20,7 @@
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
   "Body": "Körper",
+  "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
   "The user's full name": "Der vollständige Name des Benutzers",
@@ -35,6 +35,7 @@
   "A link to the user's Instagram profile": "Ein Link zum Instagram-Profil des Benutzers",
   "If true and a value for bio is provided, an introduction thread for the user will be created in the channel designated for introductions in your community settings.": "Wenn true und ein Wert für Bio angegeben wird, ein Einführungsthread für den Benutzer wird in dem Kanal für Einführungen in den Community-Einstellungen erstellt.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
+  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
   "GET": "ERHALTEN",
   "POST": "POST",
   "PATCH": "PATCH",

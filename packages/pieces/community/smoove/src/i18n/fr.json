@@ -1,5 +1,4 @@
 {
-  "Smoove": "Lisser",
   "Smoove is a platform for creating and managing your email list and sending emails to your subscribers.": "Smoove est une plateforme pour créer et gérer votre liste de courriels et envoyer des courriels à vos abonnés.",
   "Add or Update Subscriber": "Ajouter ou mettre à jour l'abonné",
   "Create a List": "Créer une liste",
@@ -151,7 +150,7 @@
   "QR Code": "QR Code",
   "SMS": "SMS",
   "WhatsApp": "WhatsApp",
-  "Form": "Forme",
+  "Form": "Formulaire",
   "Automation": "Automatisation",
   "Newest Signups First": "Les plus récentes inscriptions en premier",
   "Oldest Signups First": "Les plus anciennes inscriptions en premier",

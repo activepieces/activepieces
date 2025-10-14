@@ -1,5 +1,4 @@
 {
-  "BambooHR": "BambooHR",
   "Company domain": "Domaine de la société",
   "API key": "Clé API",
   "The subdomain used to access BambooHR. If you access BambooHR at https://mycompany.bamboohr.com, then the companyDomain is \"mycompany\"": "Le sous-domaine utilisé pour accéder à BambooHR. Si vous accédez à BambooHR à https://mycompany.bamboohr.com, alors le companyDomain est \"mycompany\"",
@@ -10,9 +9,11 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "GET": "OBTENIR",
   "POST": "POSTER",
   "PATCH": "PATCH",

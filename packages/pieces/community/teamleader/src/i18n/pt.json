@@ -1,5 +1,4 @@
 {
-  "Teamleader": "Líder de equipe",
   "\n    To obtain your OAuth2 credentials:\n    \n    1. Go to the Teamleader Marketplace (https://marketplace.teamleader.eu)\n    2. Log in or create an account\n    3. Go to \"Build\" and click \"Create a new Integration\"\n    4. Fill in the required information\n    5. On your integration's settings page, configure:\n       - Add `https://cloud.activepieces.com/redirect` to the allowed redirect URIs\n       - Select all required scopes for your integration\n    6. Copy the Client ID and Client Secret\n    ": "\n    To obtain your OAuth2 credentials:\n    \n    1. Go to the Teamleader Marketplace (https://marketplace.teamleader.eu)\n    2. Log in or create an account\n    3. Go to \"Build\" and click \"Create a new Integration\"\n    4. Fill in the required information\n    5. On your integration's settings page, configure:\n       - Add `https://cloud.activepieces.com/redirect` to the allowed redirect URIs\n       - Select all required scopes for your integration\n    6. Copy the Client ID and Client Secret\n    ",
   "Create Contact": "Criar contato",
   "Update Contact": "Atualizar contato",
@@ -94,6 +93,7 @@
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
   "Body": "Conteúdo",
+  "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "First name of the contact": "Primeiro nome do contato",
@@ -193,6 +193,7 @@
   "Only invoices updated after this date": "Somente faturas atualizadas após esta data",
   "Include late fee and interest calculations in response": "Incluir taxas atrasadas e cálculos de juros na resposta",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "Female": "Feminino",
   "Male": "Masculino",
   "Non-binary": "Não-binário",

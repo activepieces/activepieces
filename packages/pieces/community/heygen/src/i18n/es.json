@@ -1,5 +1,4 @@
 {
-  "HeyGen": "HeyGen",
   "Generate and manage AI avatar videos using HeyGen.": "Generar y administrar vídeos de avatar de IA usando HeyGen.",
   "You can obtain your API key by navigating to your Space Settings in HeyGen App.": "Puede obtener su clave de API navegando a la configuración espacial en la aplicación HeyGen.",
   "Create Video from Template": "Crear vídeo desde plantilla",
@@ -39,6 +38,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select the template to generate the video.": "Seleccione la plantilla para generar el vídeo.",
@@ -58,6 +58,7 @@
   "Custom ID returned in webhook callback.": "ID personalizado devuelto en llamada webhook.",
   "URL to notify when translation is complete.": "URL para notificar cuando la traducción esté completa.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

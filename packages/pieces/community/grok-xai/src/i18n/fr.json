@@ -1,5 +1,4 @@
 {
-  "Grok by xAI": "Grok par xAI",
   "AI chatbot by xAI that answers questions, generates text, extracts data, and provides real-time insights.": "AI chatbot par xAI qui répond aux questions, génère du texte, extrait des données et fournit des aperçus en temps réel.",
   "\n**Get your xAI API Key**\n\n1. Sign up at [xAI](https://x.ai)\n2. Go to your [API dashboard](https://console.x.ai)\n3. Generate a new API key\n4. Copy and paste the key here\n\nYour API key should start with `xai-`\n  ": "\n**Get your xAI API Key**\n\n1. Sign up at [xAI](https://x.ai)\n2. Go to your [API dashboard](https://console.x.ai)\n3. Generate a new API key\n4. Copy and paste the key here\n\nYour API key should start with `xai-`\n  ",
   "Ask Grok": "Demander à Grok",
@@ -47,6 +46,7 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "Grok model to use for generating the response.": "Modèle Grok à utiliser pour générer la réponse.",
@@ -87,6 +87,7 @@
   "Number of images to generate (1-10).": "Nombre d'images à générer (1-10).",
   "Format of the generated images.": "Format des images générées.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Text": "Texte du texte",
   "JSON Object": "Objet JSON",
   "Auto (Model decides)": "Auto (le modèle décide)",

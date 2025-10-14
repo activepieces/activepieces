@@ -24,6 +24,8 @@ import {
   StepSettings,
   RouterActionSettingsWithValidation,
   FlowTriggerType,
+  PropertyExecutionType,
+  DEFAULT_SAMPLE_DATA_SETTINGS,
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';
@@ -121,23 +123,25 @@ const getInitalStepInput = (pieceSelectorItem: PieceSelectorItem) => {
   if (!isPieceActionOrTrigger(pieceSelectorItem)) {
     return {};
   }
-  return formUtils.getDefaultValueForStep(
-    {
+  return formUtils.getDefaultValueForStep({
+    props: {
       ...spreadIfDefined('auth', pieceSelectorItem.pieceMetadata.auth),
       ...pieceSelectorItem.actionOrTrigger.props,
     },
-    {},
-  );
+    existingInput: {},
+  });
 };
 
 const getDefaultStepValues = ({
   stepName,
   pieceSelectorItem,
   overrideDefaultSettings,
+  customLogoUrl,
 }: {
   stepName: string;
   pieceSelectorItem: PieceSelectorItem;
   overrideDefaultSettings?: StepSettings;
+  customLogoUrl?: string;
 }): FlowAction | FlowTrigger => {
   const errorHandlingOptions: CodeAction['settings']['errorHandlingOptions'] = {
     continueOnFailure: {
@@ -161,9 +165,8 @@ const getDefaultStepValues = ({
       : pieceSelectorItem.displayName,
     skip: false,
     settings: {
-      inputUiInfo: {
-        customizedInputs: {},
-      },
+      customLogoUrl,
+      sampleData: DEFAULT_SAMPLE_DATA_SETTINGS,
     },
   };
 
@@ -178,9 +181,6 @@ const getDefaultStepValues = ({
               packageJson: '{}',
             },
             input,
-            inputUiInfo: {
-              customizedInputs: {},
-            },
             errorHandlingOptions,
           },
         },
@@ -192,9 +192,6 @@ const getDefaultStepValues = ({
           type: FlowActionType.LOOP_ON_ITEMS,
           settings: overrideDefaultSettings ?? {
             items: '',
-            inputUiInfo: {
-              customizedInputs: {},
-            },
           },
         },
         common,
@@ -225,9 +222,6 @@ const getDefaultStepValues = ({
                 branchName: 'Otherwise',
               },
             ],
-            inputUiInfo: {
-              customizedInputs: {},
-            },
           },
           children: [null, null],
         },
@@ -248,6 +242,15 @@ const getDefaultStepValues = ({
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
             errorHandlingOptions,
+            propertySettings: Object.fromEntries(
+              Object.entries(input).map(([key]) => [
+                key,
+                {
+                  type: PropertyExecutionType.MANUAL,
+                  schema: undefined,
+                },
+              ]),
+            ),
           },
         },
         common,
@@ -267,6 +270,14 @@ const getDefaultStepValues = ({
             triggerName: pieceSelectorItem.actionOrTrigger.name,
             pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
             input,
+            propertySettings: Object.fromEntries(
+              Object.entries(input).map(([key]) => [
+                key,
+                {
+                  type: PropertyExecutionType.MANUAL,
+                },
+              ]),
+            ),
           },
         },
         common,

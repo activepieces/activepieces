@@ -1,5 +1,4 @@
 {
-  "Mistral AI": "Mistral AI",
   "Mistral AI provides state-of-the-art open-weight and hosted language models for text generation, embeddings, and reasoning tasks.": "Mistral AI biedt de meest geavanceerde vormen van open gewicht en gehoste talenmodellen voor het genereren van teksten, embedden en met redenen omkleden.",
   "You can obtain your API key from the Mistral AI dashboard. Go to https://console.mistral.ai, generate an API key, and paste it here.": "Je kunt je API-sleutel verkrijgen op het dashboard van Mistral AI. Ga naar https://console.mistral.ai, genereer een API-sleutel en plak deze hier.",
   "Ask Mistral": "Vraag Mistral",
@@ -26,6 +25,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Select a Mistral model. List is fetched live from your account.": "Selecteer een Mistral-model. Lijst wordt op uw rekening live opgehaald.",
@@ -35,6 +35,7 @@
   "The file to upload (max 512MB).For fine tuning purspose provide .jsonl file.": "Het te uploaden bestand (max 512MB). Voor het afstemmen van purspose geeft u .jsonl bestand op.",
   "Purpose of the file.": "Doel van het bestand.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "fine-tune": "fine-tune",
   "batch": "batch",
   "ocr": "ocr",

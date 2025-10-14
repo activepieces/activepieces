@@ -1,5 +1,4 @@
 {
-  "LocalAI": "LocalAI",
   "The free, Self-hosted, community-driven and local-first. Drop-in replacement for OpenAI running on consumer-grade hardware. No GPU required.": "The free, Self-hosted, community-driven and local-first. Drop-in replacement for OpenAI running on consumer-grade hardware. No GPU required.",
   "Server URL": "Server URL",
   "Access Token": "Access Token",
@@ -21,6 +20,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.",
@@ -31,6 +31,7 @@
   "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode's likelihood to talk about new topics.",
   "Array of roles to specify more accurate response": "Array of roles to specify more accurate response",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

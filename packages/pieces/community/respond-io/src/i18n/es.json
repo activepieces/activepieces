@@ -1,5 +1,4 @@
 {
-  "Respond.io": "Respond.io",
   "API Token": "API Token",
   "Your Respond.io API v2 Token.": "Su token de Respond.io API v2.",
   "\n  Please follow these steps to get your Respond.io API token:\n  \n  1. Log in to your Respond.io account.\n  2. In the left sidebar, navigate to Settings.\n  3. Under Workspace Settings, click on Integrations.\n  4. Locate and click on the Developer API option.\n  5. Within the Developer API section, find your API key or generate a new one if needed.": "\n  Por favor siga estos pasos para obtener su token de la API de Respond.io:\n  \n  1. Inicie sesión en su cuenta Respond.io.\n  2. En la barra lateral izquierda, vaya a Configuración.\n  3. Bajo Configuración de Espacio de Trabajo, haga clic en Integraciones.\n  4. Localice y haga clic en la opción API del desarrollador.\n  5. Dentro de la sección API de Desarrollador, encuentre su clave API o genere una nueva si es necesario.",
@@ -42,6 +41,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select the contact.": "Seleccione el contacto.",
@@ -61,6 +61,7 @@
   "Number of contacts to return (1-99). Default is 10.": "Número de contactos a devolver (1-99). Por defecto es 10.",
   "Contact ID to start from for pagination. Optional.": "ID de contacto para comenzar desde la paginación. Opcional.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",

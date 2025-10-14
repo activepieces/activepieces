@@ -164,7 +164,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
         const response = (
             await apAxios.post(appConnection.token_url, new URLSearchParams(body), {
                 headers,
-                timeout: 10000,
+                timeout: 20000,
             })
         ).data
         const mergedObject = mergeNonNull(

@@ -1,5 +1,4 @@
 {
-  "ScrapeGraphAI": "ScrapeGraphAI",
   "AI-powered web scraping and content extraction.": "AI-powered web scraping and content extraction.",
   "\nFollow these steps to obtain your ScrapeGraphAI API Key:\n\n1. Visit [ScrapeGraphAI](https://scrapegraphai.com) and create an account.\n2. Log in and navigate to your dashboard.\n3. Locate and copy your API key from the dashboard.\n": "\nFollow these steps to obtain your ScrapeGraphAI API Key:\n\n1. Visit [ScrapeGraphAI](https://scrapegraphai.com) and create an account.\n2. Log in and navigate to your dashboard.\n3. Locate and copy your API key from the dashboard.\n",
   "Smart Scraper": "Smart Scraper",
@@ -18,6 +17,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The webpage URL to scrape.": "The webpage URL to scrape.",
@@ -26,6 +26,7 @@
   "The HTML content to process (max 2MB).": "The HTML content to process (max 2MB).",
   "The webpage URL to convert to Markdown": "The webpage URL to convert to Markdown",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

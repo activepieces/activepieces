@@ -1,5 +1,4 @@
 {
-  "Onfleet": "Onfleet",
   "Last mile delivery software": "Laatste mijl leveringssoftware",
   "\nTo get an API key, follow the steps below:\n1. Go to settings -> API & Webhooks.\n2. Click the plus sign under API Keys.\n3. Enter API key name and click create key.\n4. Copy the generated key to the input below.\n": "\nOm een API-sleutel te krijgen, volg de onderstaande stappen:\n1. Ga naar instellingen -> API & Webhooks.\n2. Klik op het plusbord onder API Keys.\n3. Voer de naam van de API-sleutel in en klik op de sleutel aanmaken.\n4. Kopieer de gegenereerde sleutel naar de invoer hieronder.\n",
   "Create Recipient": "Ontvanger aanmaken",
@@ -114,6 +113,7 @@
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
   "Body": "Lichaam",
+  "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
   "The recipient's full name": "Volledige naam van de ontvanger",
@@ -149,6 +149,7 @@
   "Name of the team": "Naam van het team",
   "Allows Drivers to Self Assign Tasks that are in the Team unassigned container.": "Hiermee kunnen chauffeurs zelf taken toewijzen die in het Team niet toegewezen container zijn.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

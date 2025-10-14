@@ -1,4 +1,5 @@
-import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, FlowState, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
+import deepEqual from 'deep-equal'
 import semver from 'semver'
 
 export const flowDiffService = {
@@ -35,7 +36,7 @@ async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promis
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.externalId)
         return !isNil(flow)
     })
-    
+
     const operations = await Promise.all(newStateFiles.map(async (flowFromNewState) => {
         const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.externalId)
         assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.externalId}`)
@@ -53,7 +54,7 @@ async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promis
     return operations.filter((op): op is ProjectOperation => op !== null)
 }
 
-function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId: string): PopulatedFlow | undefined {
+function searchInFlowForFlowByIdOrExternalId(flows: FlowState[], externalId: string): FlowState | undefined {
     return flows.find((flow) => flow.externalId === externalId)
 }
 
@@ -77,20 +78,17 @@ function isSameVersion(versionOne: string, versionTwo: string): boolean {
     }
 }
 
-async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): Promise<boolean> {
-    const normalizedFromFlow = await normalize(fromFlow.version)
-    const normalizedTargetFlow = await normalize(targetFlow.version)
-
+async function isFlowChanged(fromFlow: FlowState, targetFlow: FlowState): Promise<boolean> {
     const versionSetOne = new Map<string, string>()
     const versionSetTwo = new Map<string, string>()
 
-    flowStructureUtil.getAllSteps(normalizedFromFlow.trigger).forEach((step) => {
+    flowStructureUtil.getAllSteps(fromFlow.version.trigger).forEach((step) => {
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             versionSetOne.set(step.name, step.settings.pieceVersion)
         }
     })
 
-    flowStructureUtil.getAllSteps(normalizedTargetFlow.trigger).forEach((step) => {
+    flowStructureUtil.getAllSteps(targetFlow.version.trigger).forEach((step) => {
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             versionSetTwo.set(step.name, step.settings.pieceVersion)
         }
@@ -104,15 +102,17 @@ async function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow)
         return isSameVersion(versionTwo, value)
     })
 
+    const normalizedFromFlow = await normalize(fromFlow.version)
+    const normalizedTargetFlow = await normalize(targetFlow.version)
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
-        || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger) || !isMatched
+        || !deepEqual(normalizedFromFlow.trigger, normalizedTargetFlow.trigger) || !isMatched
 }
 
 async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
     return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
-        clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+        clonedStep.settings.sampleData = DEFAULT_SAMPLE_DATA_SETTINGS
         const authExists = clonedStep?.settings?.input?.auth
         
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {

@@ -23,7 +23,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
             return cache
         }
         log.info({ time: dayjs().toISOString(), file: 'localPieceCache' }, 'Syncing pieces')
-        cache = await executeWithLock(async () => {
+        cache = await lock.runExclusive(async () => {
             const updatedRequiredSecondCheck = await requireUpdate()
             if (!updatedRequiredSecondCheck) {
                 return cache
@@ -50,15 +50,4 @@ async function requireUpdate(): Promise<boolean> {
         return Math.max(dayjs(piece.updated).unix(), acc)
     }, 0)
     return dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
-}
-
-const executeWithLock = async <T>(methodToExecute: () => Promise<T>): Promise<T> => {
-    const releaseLock = await lock.acquire()
-
-    try {
-        return await methodToExecute()
-    }
-    finally {
-        releaseLock()
-    }
 }

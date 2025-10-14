@@ -1,7 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
 
-
 export enum TriggerStrategy {
     POLLING = 'POLLING',
     WEBHOOK = 'WEBHOOK',
@@ -37,7 +36,7 @@ export const TriggerSource = Type.Object({
     type: Type.Enum(TriggerStrategy),
     projectId: Type.String(),
     flowId: Type.String(),
-    handshakeConfiguration: Nullable(WebhookHandshakeConfiguration),
+    triggerName: Type.String(),
     schedule: Nullable(ScheduleOptions),
     flowVersionId: Type.String(),
     pieceName: Type.String(),

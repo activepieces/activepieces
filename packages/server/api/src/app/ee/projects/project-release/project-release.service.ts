@@ -18,7 +18,8 @@ export const projectReleaseService = {
         const lock = await memoryLock.acquire(lockKey)
         try {
             const diffs = await findDiffStates(projectId, ownerId, params, log)
-            const filteredDiffs = await projectDiffService.filterFlows(params.selectedFlowsIds ?? [], diffs)
+            const flowIdsToApply = params.selectedFlowsIds ?? diffs.flows.map((flow) => flow.flowState.id)
+            const filteredDiffs = await projectDiffService.filterFlows(flowIdsToApply, diffs)
             await projectStateService(log).apply({
                 projectId,
                 diffs: filteredDiffs,
@@ -98,7 +99,7 @@ export const projectReleaseService = {
 }
 async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<DiffState> {
     const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
-    const currentState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
+    const currentState = await projectStateService(log).getProjectState(projectId, log) as ProjectState
     const diffs = await projectDiffService.diff({
         newState,
         currentState,
@@ -131,11 +132,11 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.newFlowState.id,
+                        id: operation.flowState.id,
                         displayName: operation.newFlowState.version.displayName,
                     },
                     targetFlow: {
-                        id: operation.flowState.id,
+                        id: operation.newFlowState.id,
                         displayName: operation.flowState.version.displayName,
                     },
                 }
@@ -156,7 +157,7 @@ async function getStateFromCreateRequest(projectId: string, ownerId: ApId, reque
             return gitRepoService(log).getState({ gitRepo, userId: ownerId, log })
         }
         case ProjectReleaseType.PROJECT: {
-            return projectStateService(log).getCurrentState(request.targetProjectId, log)
+            return projectStateService(log).getProjectState(request.targetProjectId, log)
         }
         case ProjectReleaseType.ROLLBACK: {
             const projectRelease = await projectReleaseService.getOneOrThrow({

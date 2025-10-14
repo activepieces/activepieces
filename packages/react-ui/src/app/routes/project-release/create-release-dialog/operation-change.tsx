@@ -1,4 +1,4 @@
-import { Minus, PencilIcon, Plus } from 'lucide-react';
+import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -49,7 +49,7 @@ export const OperationChange = React.memo(
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(
               change.flow.displayName,
-              <Minus className="w-4 h-4 shrink-0" />,
+              <TrashIcon className="w-4 h-4 shrink-0" />,
             )}
           </div>
         )}

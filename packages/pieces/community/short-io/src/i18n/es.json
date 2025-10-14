@@ -1,5 +1,4 @@
 {
-  "Short.io": "Short.io",
   "API Key": "Clave API",
   "Enter your Short.io API Key": "Introduzca su clave de API Short.io",
   "Create Country Targeting Rule": "Crear regla de destino del país",
@@ -76,6 +75,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select the domain to use for the link": "Seleccione el dominio a utilizar para el enlace",
@@ -113,6 +113,7 @@
   "Order links by creation date.": "Enlaces de pedido por fecha de creación.",
   "Token for paginated results (get this from previous response).": "Token para los resultados paginados (obtener esto de la respuesta anterior).",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "301 (Moved Permanently)": "301 (Mover permanentemente)",
   "302 (Found)": "302 (Fuente)",
   "303 (See Other)": "303 (Ver Otro)",

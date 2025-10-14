@@ -1,5 +1,4 @@
 {
-  "Missive": "Misivo",
   "\n    To get your API token:\n    \n    1. Go to your Missive preferences\n    2. Click the API tab  \n    3. Click \"Create a new token\"\n    4. Copy the generated token (starts with 'missive_pat-')\n    \n    Note: You need to be part of an organization subscribed to the Productive plan to generate API tokens.\n    ": "\n    To get your API token:\n    \n    1. Go to your Missive preferences\n    2. Click the API tab  \n    3. Click \"Create a new token\"\n    4. Copy the generated token (starts with 'missive_pat-')\n    \n    Note: You need to be part of an organization subscribed to the Productive plan to generate API tokens.\n    ",
   "Create Contact": "Crear contacto",
   "Update Contact": "Actualizar contacto",
@@ -54,6 +53,7 @@
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
   "Body": "Cuerpo",
+  "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
   "Select the contact book where the contact will be created": "Seleccione el libro de contactos donde se creará el contacto",
@@ -96,6 +96,7 @@
   "Configure how to search and filter contacts": "Configurar cómo buscar y filtrar contactos",
   "How to format the returned contact data": "Cómo formatear los datos de contacto devueltos",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "Male": "Hombre",
   "Female": "Mujer",
   "Other": "Otro",

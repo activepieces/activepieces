@@ -82,7 +82,6 @@ export const createRouterStep = ({
       },
     ],
     executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-    inputUiInfo: {},
   };
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: {
@@ -219,7 +218,7 @@ export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
     stepName,
     pieceSelectorItem: agentPieceSelectorItem,
   });
-  defaultValues.settings.input.agentId = agent.id;
+  defaultValues.settings.input.agentId = agent.externalId;
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation: {

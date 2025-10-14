@@ -1,5 +1,4 @@
 {
-  "SendGrid": "Grade",
   "Email delivery service for sending transactional and marketing emails": "Serviço de entrega de e-mail para envio de e-mails de transacção e marketing",
   "API key acquired from your SendGrid settings": "Chave API adquirida das suas configurações do SendGrid",
   "Send Email": "Enviar e-mail",
@@ -21,6 +20,7 @@
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
   "Body": "Conteúdo",
+  "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "Emails of the recipients": "E-mails dos destinatários",
@@ -31,6 +31,7 @@
   "Dynamic template id": "Id do modelo dinâmico",
   "Dynamic template data": "Dados dinâmicos do modelo",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "GET": "OBTER",
   "POST": "POSTAR",
   "PATCH": "COMPRAR",

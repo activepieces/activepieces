@@ -1,5 +1,4 @@
 {
-  "Placid": "Placide",
   "Creative automation engine that generates dynamic images, PDFs, and videos from templates and data.": "Moteur d'automatisation créatif qui génère des images dynamiques, des PDF et des vidéos à partir de modèles et de données.",
   "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.": "\nTo obtain your Placid API token:\n\n1. Log in to [placid.app](https://placid.app/login).\n2. Go to Projects overview.\n3. Select your desired project.\n4. Click \"API Tokens\" in the left menu.\n5. Copy your API token.\n\nThe token is project-specific and will only work with templates from that project.",
   "Create Image": "Créer une image",
@@ -35,6 +34,7 @@
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
   "Body": "Corps",
+  "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
   "Select a Placid template for image generation": "Sélectionnez un modèle de Placide pour la génération d'images",
@@ -48,6 +48,7 @@
   "The ID of the PDF to retrieve": "L'ID du PDF à récupérer",
   "The ID of the video to retrieve.": "L'ID de la vidéo à récupérer.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "72 DPI": "72 DPI",
   "150 DPI": "150 DPI",
   "300 DPI": "300 DPI",

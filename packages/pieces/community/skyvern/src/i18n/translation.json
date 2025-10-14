@@ -1,5 +1,4 @@
 {
-  "Skyvern": "Skyvern",
   "You can obtain your API key by navigating to [Settings](https://app.skyvern.com/settings).": "You can obtain your API key by navigating to [Settings](https://app.skyvern.com/settings).",
   "Run Agent Task": "Run Agent Task",
   "Run Workflow": "Run Workflow",
@@ -29,6 +28,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The goal or task description for Skyvern to accomplish.": "The goal or task description for Skyvern to accomplish.",
@@ -38,6 +38,7 @@
   "The schema for data to be extracted from the webpage.": "The schema for data to be extracted from the webpage.",
   "The title for this workflow run.": "The title for this workflow run.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "Skyvern 1.0": "Skyvern 1.0",
   "Skyvern 2.0": "Skyvern 2.0",
   "OpenAI CUA": "OpenAI CUA",
