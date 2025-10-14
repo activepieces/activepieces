@@ -1,5 +1,5 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -50,8 +50,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
         const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, testSingleStepMode } = request.body
-        const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
-
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
             await engineResponseWatcher(request.log).publish(
@@ -79,17 +77,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             runId,
         })
-
-        if (runDetails.status === FlowRunStatus.PAUSED) {
-            await flowRunService(request.log).pause({
-                flowRunId: runId,
-                pauseMetadata: {
-                    progressUpdateType,
-                    handlerId: workerHandlerId ?? undefined,
-                    ...(runDetails.pauseMetadata!),
-                },
-            })
-        }
         const shouldMarkParentAsFailed = runWithoutSteps.failParentOnFailure && !isNil(runWithoutSteps.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(runWithoutSteps.status)
         if (shouldMarkParentAsFailed) {
             await markParentRunAsFailed({

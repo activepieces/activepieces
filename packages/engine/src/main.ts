@@ -8,6 +8,7 @@ import {
     EngineSocketEvent,
     EngineStderr,
     EngineStdout,
+    ERROR_MESSAGES_TO_REDACT,
     isNil,
 } from '@activepieces/shared'
 import WebSocket from 'ws'
@@ -52,16 +53,21 @@ function setupSocket() {
         originalLog.apply(console, args)
     }
 
-    const originalError = console.error
+    const originalError = console.error 
     console.error = function (...args) {
+        let sanitizedArgs = [...args]
+        if (typeof args[0] === 'string' && ERROR_MESSAGES_TO_REDACT.some(errorMessage => args[0].includes(errorMessage))) {
+            sanitizedArgs = [sanitizedArgs[0], 'REDACTED']
+        }
         const engineStderr: EngineStderr = {
-            message: args.join(' ') + '\n',
+            message: sanitizedArgs.join(' ') + '\n',
         }
         socket?.send(JSON.stringify({
             type: EngineSocketEvent.ENGINE_STDERR,
             data: engineStderr,
         }))
-        originalError.apply(console, args)
+       
+        originalError.apply(console, sanitizedArgs)
     }
 
     socket.on('message', (data: string) => {

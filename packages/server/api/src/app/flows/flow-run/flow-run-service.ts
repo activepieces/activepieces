@@ -30,7 +30,6 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { In, Not, Repository } from 'typeorm'
@@ -219,6 +218,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         tags,
         duration,
         failedStepName,
+        pauseMetadata,
     }: FinishParams): Promise<FlowRun> {
         log.info({
             runId: flowRunId,
@@ -235,6 +235,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             status,
             ...spreadIfDefined('tasks', tasks),
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
+            ...spreadIfDefined('pauseMetadata', pauseMetadata),
             tags,
             finishTime: new Date().toISOString(),
             failedStepName: failedStepName ?? undefined,
@@ -379,66 +380,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
         }, log)
-    },
-
-    async pause(params: PauseParams): Promise<void> {
-        log.info({
-            runId: params.flowRunId,
-            pauseType: params.pauseMetadata.type,
-        }, '[FlowRunService] pausing flow run')
-
-        const { flowRunId, pauseMetadata } = params
-
-        log.info(
-            `[FlowRunSideEffects#pause] flowRunId=${flowRunId} pauseType=${pauseMetadata?.type}`,
-        )
-
-        if (isNil(pauseMetadata)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: `pauseMetadata is undefined flowRunId=${flowRunId}`,
-                },
-            })
-        }
-
-        await flowRunRepo().update(flowRunId, {
-            status: FlowRunStatus.PAUSED,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pauseMetadata: pauseMetadata as any,
-        })
-        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
-
-
-
-        switch (pauseMetadata.type) {
-            case PauseType.DELAY: {
-                const platformId = await projectService.getPlatformId(flowRun.projectId)
-                // Todo(@amrdb): please make this not hacky
-                const MINIMUM_DELAY_IN_MILLISECONDS_UNTIL_FIRST_JOB_IS_MARKED_AS_COMPLETED = dayjs.duration(60, 'seconds').asMilliseconds()
-                await jobQueue(log).add({
-                    id: 'delayed_' + flowRun.id,
-                    type: JobType.ONE_TIME,
-                    data: {
-                        jobType: WorkerJobType.DELAYED_FLOW,
-                        platformId,
-                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                        runId: flowRun.id,
-                        flowId: flowRun.flowId,
-                        synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
-                        progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
-                        projectId: flowRun.projectId,
-                        environment: flowRun.environment,
-                        flowVersionId: flowRun.flowVersionId,
-                    },
-                    delay: Math.max(MINIMUM_DELAY_IN_MILLISECONDS_UNTIL_FIRST_JOB_IS_MARKED_AS_COMPLETED, dayjs(pauseMetadata.resumeDateTime).diff(dayjs(), 'ms')),
-                })
-                break
-            }
-            case PauseType.WEBHOOK:
-                break
-        }
-
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
         const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({
@@ -651,6 +592,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
         data: {
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             synchronousHandlerId: params.synchronousHandlerId ?? null,
             projectId: params.flowRun.projectId,
             platformId,
@@ -718,6 +660,7 @@ type FinishParams = {
     status: FlowRunStatus
     tasks: number | undefined
     duration: number | undefined
+    pauseMetadata?: PauseMetadata 
     tags: string[]
     failedStepName?: string | undefined
 }
@@ -793,11 +736,6 @@ type TestParams = {
     flowVersionId: FlowVersionId
     parentRunId?: FlowRunId
     stepNameToTest?: string
-}
-
-type PauseParams = {
-    flowRunId: FlowRunId
-    pauseMetadata: PauseMetadata
 }
 
 type RetryParams = {

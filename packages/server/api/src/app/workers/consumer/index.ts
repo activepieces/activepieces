@@ -1,6 +1,7 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, JobData, WebsocketClientEvent, WorkerJobType } from '@activepieces/shared'
+import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, ExecutionType, isNil, JobData, WebsocketClientEvent, WorkerJobType } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
+import { DelayedError, Job } from 'bullmq'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -13,7 +14,10 @@ const tracer = trace.getTracer('job-consumer')
 
 export const jobConsumer = (log: FastifyBaseLogger) => {
     return {
-        consume: async (jobId: string, queueName: QueueName, jobData: JobData, attempsStarted: number) => {
+        consume: async (job: Job<JobData>, queueName: QueueName) => {
+            const jobData = job.data
+            const jobId = job.id!
+            const attempsStarted = job.attemptsStarted
             const traceContext = ('traceContext' in jobData && jobData.traceContext) ? jobData.traceContext : {}
             const extractedContext = propagation.extract(context.active(), traceContext)
             
@@ -78,6 +82,16 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                                 span.setAttribute('job.errorMessage', response?.[0]?.errorMessage ?? 'Unknown error')
                                 throw new Error(response?.[0]?.errorMessage ?? 'Unknown error')
                             }
+                            const delayInSeconds = response?.[0]?.delayInSeconds
+                            if (!isNil(delayInSeconds) && jobData.jobType === WorkerJobType.EXECUTE_FLOW) {
+                                await job.updateData({
+                                    ...jobData,
+                                    executionType: ExecutionType.RESUME,
+                                })
+                                
+                                await job.moveToDelayed(dayjs().add(delayInSeconds, 'seconds').valueOf(), job.token)
+                                throw new DelayedError('Job requested to be delayed')
+                            }
                             span.setAttribute('job.completed', true)
                         }
                         finally {
@@ -102,7 +116,6 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                 case WorkerJobType.RENEW_WEBHOOK:
                     return dayjs.duration(triggerHooksTimeoutSandbox, 'seconds').asMilliseconds()
                 case WorkerJobType.EXECUTE_WEBHOOK:
-                case WorkerJobType.DELAYED_FLOW:
                 case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                 case WorkerJobType.EXECUTE_TOOL:
                 case WorkerJobType.EXECUTE_PROPERTY:
