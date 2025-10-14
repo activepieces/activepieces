@@ -1,5 +1,4 @@
 import {
-    Trigger,
     TriggerStrategy,
     createTrigger,
 } from '@activepieces/pieces-framework';
@@ -40,10 +39,11 @@ export const newOutboundMessage = createTrigger({
         }
     },
     type: TriggerStrategy.WEBHOOK,
-    async onEnable(context) {
+    async onEnable() {
+        // Webhook triggers don't require setup
     },
-    async onDisable(context) {
-
+    async onDisable() {
+        // Webhook triggers don't require cleanup
     },
     async run(context) {
         const requestBody = context.payload.body as string;
