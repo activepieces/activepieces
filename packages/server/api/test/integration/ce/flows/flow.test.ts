@@ -8,6 +8,7 @@ import {
     PopulatedFlow,
     PrincipalType,
     PropertyExecutionType,
+    TriggerSourceScheduleType,
     TriggerStrategy,
     TriggerTestStrategy,
     WebhookHandshakeStrategy,
@@ -199,23 +200,26 @@ describe('Flow API', () => {
                 },
                 body: mockUpdateFlowStatusRequest,
             })
-            const responseBody = response?.json()
+            
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-
-            expect(Object.keys(responseBody)).toHaveLength(10)
-            expect(responseBody?.id).toBe(mockFlow.id)
-            expect(responseBody?.created).toBeDefined()
-            expect(responseBody?.updated).toBeDefined()
-            expect(responseBody?.projectId).toBe(mockProject.id)
-            expect(responseBody?.folderId).toBeNull()
-            expect(responseBody?.status).toBe('ENABLED')
-            expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
-            expect(responseBody?.metadata).toBeNull()
-
-            expect(Object.keys(responseBody?.version)).toHaveLength(13)
-            expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
+            const responseBody: PopulatedFlow | undefined = response?.json()
+            expect(responseBody).toBeDefined()
+            if(responseBody){
+            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(responseBody.id).toBe(mockFlow.id)
+            expect(responseBody.created).toBeDefined()
+            expect(responseBody.updated).toBeDefined()
+            expect(responseBody.projectId).toBe(mockProject.id)
+            expect(responseBody.folderId).toBeNull()
+            expect(responseBody.status).toBe('ENABLED')
+            expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
+            expect(responseBody.metadata).toBeNull()
+            expect(Object.keys(responseBody.version)).toHaveLength(13)
+            expect(responseBody.version.id).toBe(mockFlowVersion.id)
+            expect(responseBody.triggerSource?.schedule?.type).toEqual(TriggerSourceScheduleType.CRON_EXPRESSION)
+            }
         })
 
         it('Disables an enabled Flow', async () => {
