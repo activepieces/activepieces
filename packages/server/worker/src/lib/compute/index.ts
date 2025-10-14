@@ -150,7 +150,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
     const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
     const pieces = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE).map(async (step) => {
         const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
-        const pieceMetadata = await pieceWorkerCache.getPiece({
+        const pieceMetadata = await pieceWorkerCache(log).getPiece({
             engineToken,
             pieceName,
             pieceVersion,

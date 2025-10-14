@@ -8,7 +8,7 @@ export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
     async executeTrigger({ jobId, data, engineToken, workerToken, timeoutInSeconds }: ExecuteTriggerParams): Promise<ConsumeJobResponse> {
         const { flowVersionId } = data
 
-        const populatedFlow = await flowWorkerCache.getFlow({
+        const populatedFlow = await flowWorkerCache(log).getFlow({
             engineToken,
             flowVersionId,
         })

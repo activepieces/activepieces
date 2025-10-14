@@ -1,6 +1,7 @@
 import { readdir, readFile, rm, writeFile } from 'fs/promises'
 import path from 'path'
 import { exceptionHandler, fileSystemUtils } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { workerDistributedLock } from '../utils/worker-redis'
@@ -18,6 +19,7 @@ export enum CacheState {
     PENDING = 'PENDING',
 }
 
+let cacheId: string | undefined
 
 export const workerCache = (log: FastifyBaseLogger) => ({
     async deleteStaleCache(): Promise<void> {
@@ -36,6 +38,9 @@ export const workerCache = (log: FastifyBaseLogger) => ({
         }
     },
     async getCacheId(): Promise<string> {
+        if (!isNil(cacheId)) {
+            return cacheId
+        }
         return workerDistributedLock(log).runExclusive({ key: 'cache-id', timeoutInSeconds: 60, fn: async () => {
             const cacheFile = path.join(GLOBAL_CACHE_ALL_VERSIONS_PATH, 'info.json')
             const cacheExists = await fileSystemUtils.fileExists(cacheFile)
@@ -45,11 +50,11 @@ export const workerCache = (log: FastifyBaseLogger) => ({
                     createdAt: new Date().toISOString(),
                 }
                 await writeFile(cacheFile, JSON.stringify(cacheInfo))
-                return cacheInfo.id
             }
             const cache = await readFile(cacheFile, 'utf8')
             const cacheData: CacheInfo = JSON.parse(cache)
-            return cacheData.id
+            cacheId = cacheData.id
+            return cacheId
         } })
     },
 })
