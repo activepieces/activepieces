@@ -655,6 +655,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             projectId: params.flowRun.projectId,
             platformId,
             environment: params.flowRun.environment,
+            flowId: params.flowRun.flowId,
             runId: params.flowRun.id,
             jobType: WorkerJobType.EXECUTE_FLOW,
             flowVersionId: params.flowRun.flowVersionId,
