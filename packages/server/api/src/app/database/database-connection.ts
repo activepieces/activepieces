@@ -9,8 +9,6 @@ import {
     Raw,
     SelectQueryBuilder,
 } from 'typeorm'
-import { AgentEntity } from '../agents/agent-entity'
-import { AgentRunEntity } from '../agents/agent-runs/agent-run.entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -103,12 +101,10 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         TodoEntity,
         McpEntity,
-        AgentEntity,
         TodoActivityEntity,
         McpToolEntity,
         McpRunEntity,
         AIUsageEntity,
-        AgentRunEntity,
         TriggerSourceEntity,
         TriggerRunEntity,
     ]

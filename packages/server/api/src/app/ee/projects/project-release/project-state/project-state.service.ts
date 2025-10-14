@@ -1,7 +1,6 @@
-import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
-import { agentsService } from '../../../../agents/agents-service'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
@@ -13,7 +12,7 @@ import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
     async apply({ projectId, diffs, platformId }: ApplyProjectStateRequest): Promise<void> {
-        const { flows, connections, tables, agents } = diffs
+        const { flows, connections, tables } = diffs
         const publishJobs: Promise<FlowSyncError | null>[] = []
         for (const state of connections) {
             switch (state.type) {
@@ -145,68 +144,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
-
-        for (const operation of agents) {
-            switch (operation.type) {
-                case AgentOperationType.CREATE_AGENT: {
-                    const createdAgent = await agentsService(log).create({
-                        displayName: operation.agentState.displayName,
-                        description: operation.agentState.description,
-                        profilePictureUrl: operation.agentState.profilePictureUrl,
-                        systemPrompt: operation.agentState.systemPrompt,
-                        outputType: operation.agentState.outputType,
-                        outputFields: operation.agentState.outputFields,
-                        platformId,
-                        projectId,
-                        externalId: operation.agentState.externalId,
-                        mcpExternalId: operation.agentState.mcp.externalId,
-                    })
-
-                    const mcpState = operation.agentState.mcp
-                    await mcpService(log).update({
-                        mcpId: createdAgent.mcpId,
-                        name: mcpState.name,
-                        tools: mcpState.tools,
-                    })
-                    break
-                }
-                case AgentOperationType.UPDATE_AGENT: {
-                    const existingAgent = await agentsService(log).getOneByExternalIdOrThrow({
-                        externalId: operation.newAgentState.externalId,
-                        projectId,
-                    })
-
-                    await agentsService(log).update({
-                        id: existingAgent.id,
-                        displayName: operation.newAgentState.displayName,
-                        systemPrompt: operation.newAgentState.systemPrompt,
-                        description: operation.newAgentState.description,
-                        outputType: operation.newAgentState.outputType,
-                        outputFields: operation.newAgentState.outputFields,
-                        projectId,
-                    })
-
-                    const mcpState = operation.newAgentState.mcp
-                    await mcpService(log).update({
-                        mcpId: existingAgent.mcpId,
-                        name: mcpState.name,
-                        tools: mcpState.tools,
-                    })
-                    break
-                }
-                case AgentOperationType.DELETE_AGENT: {
-                    const agent = await agentsService(log).getOneByExternalIdOrThrow({
-                        externalId: operation.agentState.externalId,
-                        projectId,
-                    })
-                    await agentsService(log).delete({
-                        id: agent.id,
-                        projectId,
-                    })
-                    break
-                }
-            }
-        }
     },
     async save(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
         const fileToSave: ProjectState = await this.getProjectState(projectId, log)
@@ -263,17 +200,10 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             return { ...table, fields }
         }))
 
-        const agents = await agentsService(log).list({
-            projectId,
-            limit: 1000,
-            cursorRequest: null,
-        })
-
         return toProjectState({
             flows: allPopulatedFlows,
             connections,
             tables: populatedTables,
-            agents: agents.data,
             log,
         })
     },
@@ -359,18 +289,14 @@ async function handleCreateField(projectId: ProjectId, field: FieldState, tableI
     }
 }
 
-async function toProjectState({ flows, connections, tables, agents, log }: ToProjectStateParams): Promise<ProjectState> {
+async function toProjectState({ flows, connections, tables, log }: ToProjectStateParams): Promise<ProjectState> {
     const flowsInProjectState: FlowState[] = flows.map((flow) => projectStateService(log).getFlowState(flow))
-
     const tablesInProjectState: TableState[] = tables.map((table) => projectStateService(log).getTableState(table))
-
-    const agentsProjectState = agents.map((agent) => projectStateService(log).getAgentState(agent))
 
     return {
         flows: flowsInProjectState,
         connections,
         tables: tablesInProjectState,
-        agents: agentsProjectState,
     }
 }
 
@@ -385,6 +311,5 @@ type ToProjectStateParams = {
     flows: PopulatedFlow[]
     connections: ConnectionState[]
     tables: PopulatedTable[]
-    agents: PopulatedAgent[]
     log: FastifyBaseLogger
 }

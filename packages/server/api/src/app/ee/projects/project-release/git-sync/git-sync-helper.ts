@@ -10,17 +10,15 @@ import { projectStateService } from '../project-state/project-state.service'
 import { gitHelper } from './git-helper'
 
 export const gitSyncHelper = (log: FastifyBaseLogger) => ({
-    async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath, agentsFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
+    async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
             const flows = await readFlowsFromGit(flowPath, log)
             const connections = await readConnectionsFromGit(connectionsFolderPath)
             const tables = await readTablesFromGit(tablesFolderPath, log)
-            const agents = await readAgentsFromGit(agentsFolderPath, log)
             return {
                 flows,
                 connections,
                 tables,
-                agents,
             }
         }
         catch (error) {
@@ -155,7 +153,6 @@ type GetStateFromGitParams = {
     flowPath: string
     connectionsFolderPath: string
     tablesFolderPath: string
-    agentsFolderPath: string
 }
 
 type UpsertFlowIntoProjectParams = {

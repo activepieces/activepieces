@@ -81,8 +81,6 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
                     return dayjs.duration(triggerTimeoutSandbox, 'seconds').asMilliseconds()
                 case WorkerJobType.EXECUTE_FLOW:
                     return dayjs.duration(flowTimeoutSandbox, 'seconds').asMilliseconds()
-                case WorkerJobType.EXECUTE_AGENT:
-                    return dayjs.duration(agentTimeoutSandbox, 'seconds').asMilliseconds()
             }
         },
     }

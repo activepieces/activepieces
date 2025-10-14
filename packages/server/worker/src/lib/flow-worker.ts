@@ -4,7 +4,6 @@ import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, Websoc
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerCache } from './cache/worker-cache'
-import { agentJobExecutor } from './executors/agent-job-executor'
 import { executeTriggerExecutor } from './executors/execute-trigger-executor'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { renewWebhookExecutor } from './executors/renew-webhook-executor'
@@ -162,16 +161,6 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
         }
         case WorkerJobType.EXECUTE_WEBHOOK: {
             return webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
-        }
-        case WorkerJobType.EXECUTE_AGENT: {
-            await agentJobExecutor(log).executeAgent({
-                jobData,
-                engineToken,
-                workerToken,
-            })
-            return {
-                status: ConsumeJobResponseStatus.OK,
-            }
         }
     }
 }

@@ -44,8 +44,7 @@ export const ApplyButton = ({
     onSuccess: (plan) => {
       if (
         (!plan.flows || plan.flows.length === 0) &&
-        (!plan.tables || plan.tables.length === 0) &&
-        (!plan.agents || plan.agents.length === 0)
+        (!plan.tables || plan.tables.length === 0)
       ) {
         setSyncPlan(null); // Reset syncPlan when plan is empty
         setLoadingRequestId(null);

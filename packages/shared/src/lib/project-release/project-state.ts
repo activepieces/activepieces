@@ -21,13 +21,6 @@ export enum TableOperationType {
     DELETE_TABLE = 'DELETE_TABLE',
 }
 
-
-export enum AgentOperationType {
-    UPDATE_AGENT = 'UPDATE_AGENT',
-    CREATE_AGENT = 'CREATE_AGENT',
-    DELETE_AGENT = 'DELETE_AGENT',
-}
-
 export const FlowState = PopulatedFlow
 export type FlowState = Static<typeof FlowState>
 
@@ -88,7 +81,6 @@ export const ProjectState = Type.Object({
     // NOTE: This is optional because in old releases, the connections, tables, agents and mcp state is not present
     connections: Type.Optional(Type.Array(ConnectionState)),
     tables: Type.Optional(Type.Array(TableState)),
-    agents: Type.Optional(Type.Array(AgentState)),
 })
 export type ProjectState = Static<typeof ProjectState>
 
@@ -139,28 +131,10 @@ export const TableOperation = Type.Union([
 ])
 export type TableOperation = Static<typeof TableOperation>
 
-export const AgentOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(AgentOperationType.UPDATE_AGENT),
-        newAgentState: AgentState,
-        agentState: AgentState,
-    }),
-    Type.Object({
-        type: Type.Literal(AgentOperationType.CREATE_AGENT),
-        agentState: AgentState,
-    }),
-    Type.Object({
-        type: Type.Literal(AgentOperationType.DELETE_AGENT),
-        agentState: AgentState,
-    }),
-])
-export type AgentOperation = Static<typeof AgentOperation>
-
 export const DiffState = Type.Object({
     flows: Type.Array(ProjectOperation),
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
-    agents: Type.Array(AgentOperation),
 })
 export type DiffState = Static<typeof DiffState>
 
@@ -204,7 +178,6 @@ export const ProjectSyncPlan = Type.Object({
     flows: Type.Array(FlowProjectOperation),
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
-    agents: Type.Array(AgentOperation),
     errors: Type.Array(FlowSyncError),
 })
 export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>

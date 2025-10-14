@@ -1,7 +1,7 @@
 import {
     QueueName,
 } from '@activepieces/server-shared'
-import { AgentJobData, ApId, DelayedJobData, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { ApId, DelayedJobData, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 
 export const JOB_PRIORITY = {
     high: 2,
@@ -20,7 +20,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
             return 'low'
         case WorkerJobType.EXECUTE_FLOW:
         case WorkerJobType.EXECUTE_WEBHOOK:
-        case WorkerJobType.EXECUTE_AGENT:
         case WorkerJobType.DELAYED_FLOW:
             return 'medium'
         case WorkerJobType.EXECUTE_TOOL:
@@ -51,7 +50,7 @@ type BaseAddParams<JD extends JobData, JT extends JobType> = {
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | DelayedJobData | UserInteractionJobData | AgentJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | DelayedJobData | UserInteractionJobData, JobType.ONE_TIME>
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams
 

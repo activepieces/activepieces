@@ -3,6 +3,7 @@ import { ControllerRenderProps } from 'react-hook-form';
 import { McpToolsSection } from '@/features/mcp/components/mcp-config/mcp-tools-section';
 import { McpTool } from '@activepieces/shared';
 import { DiagConsoleLogger } from '@opentelemetry/api';
+import { t } from 'i18next';
 
 type AgentToolsSettingsProps = {
   agentToolsField: ControllerRenderProps;
@@ -23,6 +24,7 @@ export const AgentTools = ({
       tools={tools}
       isLoading={false}
       onToolsUpdate={agentToolsField.onChange}
+      emptyState={<p className='text-sm text-muted-foreground'>{t("No tools set")}</p>}
     />
   );
 };

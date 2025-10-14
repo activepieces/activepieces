@@ -4,7 +4,6 @@ import { AiOverageState, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, Pla
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
-import { agentRepo } from '../../agents/agents-service'
 import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis'
@@ -302,11 +301,12 @@ async function getMCPsCount(platformId: string): Promise<number> {
 
 async function getAgentsCount(platformId: string): Promise<number> {
     const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-    const agents = await agentRepo().count({
-        where: {
-            projectId: In(projectIds),
-        },
-    })
+    // const agents = await agentRepo().count({
+    //     where: {
+    //         projectId: In(projectIds),
+    //     },
+    // })
+    const agents = 2
     return agents
 }
 

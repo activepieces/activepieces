@@ -16,7 +16,6 @@ export enum WorkerJobType {
     DELAYED_FLOW = 'DELAYED_FLOW',
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
-    EXECUTE_AGENT = 'EXECUTE_AGENT',
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
@@ -82,16 +81,6 @@ export const ExecuteFlowJobData = Type.Object({
     logsFileId: Type.Optional(Type.String()),
 })
 export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
-
-export const AgentJobData = Type.Object({
-    jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
-    agentId: Type.String(),
-    projectId: Type.String(),
-    platformId: Type.String(),
-    agentRunId: Type.String(),
-    prompt: Type.String(),
-})
-export type AgentJobData = Static<typeof AgentJobData>
 
 export const WebhookJobData = Type.Object({
     projectId: Type.String(),
@@ -201,6 +190,5 @@ export const JobData = Type.Union([
     ExecuteFlowJobData,
     WebhookJobData,
     UserInteractionJobData,
-    AgentJobData,
 ])
 export type JobData = Static<typeof JobData>

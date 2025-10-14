@@ -27,7 +27,6 @@ export const preHandlers: Record<WorkerJobType, JobPreHandler> = {
     [WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION]: defaultPreHandler,
     [WorkerJobType.RENEW_WEBHOOK]: defaultPreHandler,
     [WorkerJobType.DELAYED_FLOW]: delayedJobPreHandler,
-    [WorkerJobType.EXECUTE_AGENT]: defaultPreHandler,
     [WorkerJobType.EXECUTE_VALIDATION]: defaultPreHandler,
     [WorkerJobType.EXECUTE_TRIGGER_HOOK]: defaultPreHandler,
     [WorkerJobType.EXECUTE_PROPERTY]: defaultPreHandler,

@@ -3,7 +3,6 @@ import { AIErrorResponse } from '@activepieces/common-ai'
 import { agentCommon, AI_MODELS } from '../common';
 import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { APICallError, stepCountIs, streamText } from 'ai';
-import { Type } from '@sinclair/typebox';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -168,6 +167,14 @@ export const runAgent = createAction({
     const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
     result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
     result.message = agentCommon.concatMarkdown(result.steps)
+
+
+
+    console.log("@@@@@@@@@@@@@@@@@@@@@@")
+    console.log(result)
+    console.log("@@@@@@@@@@@@@@@@@@@@@@")
+
+
     return result
   }
 });
