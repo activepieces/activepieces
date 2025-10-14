@@ -60,7 +60,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             },
         })
 
-        const queryWhere: Record<string, unknown> = { projectId, agentId: IsNull() }
+        const queryWhere: Record<string, unknown> = { projectId }
         if (!isNil(name)) {
             queryWhere.name = ILike(`%${name}%`)
         }
@@ -114,7 +114,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id, projectId })
     },
 
-    async update({ mcpId, token, name, tools, agentId }: UpdateParams): Promise<McpWithTools> {
+    async update({ mcpId, token, name, tools }: UpdateParams): Promise<McpWithTools> {
         const enrichedTools = !isNil(tools) ? await Promise.all(tools.map(async (tool) => {
             const existingTool = await findToolId(mcpId, tool)
             return {
@@ -134,7 +134,6 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('token', token),
             ...spreadIfDefined('name', name),
             ...spreadIfDefined('tools', enrichedTools),
-            ...spreadIfDefined('agentId', agentId),
             updated: dayjs().toISOString(),
         })
         return this.getOrThrow({ mcpId, projectId: mcp.projectId })
@@ -231,7 +230,6 @@ type ListParams = {
 
 type UpdateParams = {
     mcpId: ApId
-    agentId?: ApId
     token?: string
     name?: string
     tools?: McpToolRequest[]

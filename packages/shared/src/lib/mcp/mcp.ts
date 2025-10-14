@@ -10,7 +10,6 @@ export const Mcp = Type.Object({
     name: Type.String(),
     projectId: ApId,
     token: ApId,
-    agentId: Type.Optional(ApId),
     externalId: ApId,
 })
 

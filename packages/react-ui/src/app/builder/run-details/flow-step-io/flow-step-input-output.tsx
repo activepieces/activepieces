@@ -38,12 +38,6 @@ const getStepOutput = (stepDetails: StepOutput): unknown => {
     : stepDetails.output;
 };
 
-export const isAgentStep = (step: FlowAction): boolean => {
-  return (
-    step.type === FlowActionType.PIECE && flowStructureUtil.isAgentPiece(step)
-  );
-};
-
 const hasOutput = (stepDetails: StepOutput): boolean => {
   return 'output' in stepDetails || 'errorMessage' in stepDetails;
 };
@@ -71,7 +65,7 @@ const FlowStepInputOutput = React.memo(
   ({ stepDetails, selectedStep }: FlowStepInputOutputProps) => {
     const stepOutput = getStepOutput(stepDetails);
     const outputExists = hasOutput(stepDetails);
-    const isAgent = isAgentStep(selectedStep);
+    const isAgent = flowStructureUtil.isAgentPiece(selectedStep)
     const isRunning = isStepRunning(stepDetails.status);
 
     return (
