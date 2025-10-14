@@ -8,7 +8,8 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockFlow, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-
+const NOT_FOUND_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa1'
+const NOT_FOUND_TRIGGER_SOURCE_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa2'
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
@@ -30,7 +31,7 @@ describe('Webhook Service', () => {
 
         const response = await app?.inject({
             method: 'GET',
-            url: '/v1/webhooks/8hfKOpm3kY1yAi1ApYOa1',
+            url: `/v1/webhooks/${NOT_FOUND_FLOW_ID}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
@@ -41,7 +42,7 @@ describe('Webhook Service', () => {
         const { mockProject } = await mockAndSaveBasicSetup()
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
-            id: '1234',
+            id: NOT_FOUND_TRIGGER_SOURCE_FLOW_ID,
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
         const mockToken = await generateMockToken({
@@ -50,7 +51,7 @@ describe('Webhook Service', () => {
         })
         const response = await app?.inject({
             method: 'GET',
-            url: '/v1/webhooks/1234',
+            url: `/v1/webhooks/${mockFlow.id}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
