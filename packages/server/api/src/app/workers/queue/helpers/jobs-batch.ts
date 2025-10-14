@@ -2,9 +2,9 @@ import { isNil } from "@activepieces/shared";
 import { Queue } from "bullmq";
 
 export class JobsBatch<T> {
-    private batchSize: number = 100;
+    private batchSize: number;
 
-    constructor(batchSize: number) {
+    constructor(batchSize: number = 100) {
         this.batchSize = batchSize;
     }
 
