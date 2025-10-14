@@ -1,14 +1,15 @@
 import path from 'path'
 import { FlowVersionId, FlowVersionState, isNil, LATEST_SCHEMA_VERSION, PopulatedFlow } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { ApAxiosClient } from '../api/ap-axios'
 import { engineApiService } from '../api/server-api.service'
 import { cacheState } from './cache-state'
 import { GLOBAL_CACHE_FLOWS_PATH } from './worker-cache'
 
-export const flowWorkerCache = {
+export const flowWorkerCache = (log: FastifyBaseLogger) => ({
     async getFlow({ engineToken, flowVersionId }: GetFlowRequest): Promise<PopulatedFlow | null> {
         try {
-            const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
+            const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId), log)
             
             const { state } = await cache.getOrSetCache({
                 key: flowVersionId,
@@ -47,7 +48,7 @@ export const flowWorkerCache = {
             throw e
         }
     },
-}
+})
 
 type GetFlowRequest = {
     engineToken: string

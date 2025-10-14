@@ -73,7 +73,7 @@ const linkPackages = async (
     if (!pathExists) {
         return
     }
-    const cache = cacheState(projectPath)
+    const cache = cacheState(projectPath, log)
     await cache.getOrSetCache({
         key: packageName,
         cacheMiss: (key: string) => {

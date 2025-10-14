@@ -21,7 +21,7 @@ export class RegistryPieceManager extends PieceManager {
     }: InstallParams): Promise<void> {
         await this.savePackageArchivesToDiskIfNotCached(pieces)
 
-        const cache = cacheState(projectPath)
+        const cache = cacheState(projectPath, log)
         
         await Promise.all(
             pieces.map(async (piece) => {

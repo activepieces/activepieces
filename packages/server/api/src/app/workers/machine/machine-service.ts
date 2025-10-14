@@ -10,6 +10,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
 import { app } from '../../server'
@@ -116,7 +117,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 }),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
-                REDIS_TYPE: system.getOrThrow(AppSystemProp.REDIS_TYPE),
+                REDIS_TYPE: redisConnections.getRedisType(),
                 REDIS_SSL_CA_FILE: system.get(AppSystemProp.REDIS_SSL_CA_FILE),
                 REDIS_DB: system.getNumber(AppSystemProp.REDIS_DB) ?? undefined,
                 REDIS_HOST: system.get(AppSystemProp.REDIS_HOST),
