@@ -9,6 +9,7 @@ import { removeHardDeleteProjectJobs } from './remove-hard-delete-project-jobs'
 import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
 import { redisConnections } from '../../../database/redis-connections'
 import { refillFlowsStatuses } from './refill-flows-statuses'
+import { refillExecuteFlowJobs } from './refill-execute-flow-jobs'
 
 const QUEUE_MIGRATION_VERSION = '1'
 const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
@@ -31,6 +32,7 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
                 await updateMigrationVersion()
                 await removeHardDeleteProjectJobs(log).run()
                 await refillFlowsStatuses(log).run()
+                await refillExecuteFlowJobs(log).run()
             }
             await unifyOldQueuesIntoOne(log).run()
             await removeRateLimitJobsQueue(log).run()
