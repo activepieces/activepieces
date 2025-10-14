@@ -22,6 +22,7 @@ export enum WorkerJobType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EXECUTE_TOOL = 'EXECUTE_TOOL',
+    OUTGOING_WEBHOOK = 'OUTGOING_WEBHOOK',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -207,6 +208,17 @@ export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export const OutgoingWebhookJobData = Type.Object({
+    platformId: Type.String(),
+    projectId: Type.Optional(Type.String()),
+    webhookId: Type.String(),
+    webhookUrl: Type.String(),
+    payload: Type.Any(),
+    jobType: Type.Literal(WorkerJobType.OUTGOING_WEBHOOK),
+})
+
+export type OutgoingWebhookJobData = Static<typeof OutgoingWebhookJobData>
+
 export const JobData = Type.Union([
     PollingJobData,
     DelayedJobData,
@@ -215,5 +227,6 @@ export const JobData = Type.Union([
     WebhookJobData,
     UserInteractionJobData,
     AgentJobData,
+    OutgoingWebhookJobData,
 ])
 export type JobData = Static<typeof JobData>

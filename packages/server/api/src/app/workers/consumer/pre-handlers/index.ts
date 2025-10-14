@@ -32,4 +32,5 @@ export const preHandlers: Record<WorkerJobType, JobPreHandler> = {
     [WorkerJobType.EXECUTE_TRIGGER_HOOK]: defaultPreHandler,
     [WorkerJobType.EXECUTE_PROPERTY]: defaultPreHandler,
     [WorkerJobType.EXECUTE_TOOL]: defaultPreHandler,
+    [WorkerJobType.OUTGOING_WEBHOOK]: defaultPreHandler,
 }
