@@ -150,7 +150,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             return {
                 ...flow,
                 version,
-                triggerSource: triggerSource ?? undefined,
+                triggerSource: triggerSource ? {
+                    schedule: triggerSource.schedule,
+                } : undefined,
             }
         })
 
@@ -226,12 +228,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowId: id,
             projectId,
             simulate: undefined,
-        }) ?? undefined
+        })
 
         return {
             ...flow,
             version: flowVersion,
-            triggerSource,
+            triggerSource: triggerSource ? {
+                schedule: triggerSource.schedule,
+            } : undefined,
         }
     },
 
