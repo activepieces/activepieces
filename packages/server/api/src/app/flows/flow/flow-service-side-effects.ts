@@ -39,7 +39,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
-        await flowCache(log).updateStatusCache({ id: flowToDelete.id, status: FlowCacheStatus.DELETED })
+        await flowCache(log).deleteStatusCache(flowToDelete.id)
         if (
             flowToDelete.status === FlowStatus.DISABLED ||
             isNil(flowToDelete.publishedVersionId)

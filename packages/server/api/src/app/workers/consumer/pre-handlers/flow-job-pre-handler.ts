@@ -1,15 +1,16 @@
-import { ExecuteFlowJobData, FlowRunStatus, JobData } from '@activepieces/shared'
+import { ExecuteFlowJobData, FlowRunStatus, FlowStatus, isNil, JobData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectLimitsService } from '../../../ee/projects/project-plan/project-plan.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../../flows/flow-version/flow-version.service'
+import { flowCache } from '../../../flows/flow/flow.cache'
 import { JobPreHandler, PreHandlerResult } from './index'
 
 export const flowJobPreHandler: JobPreHandler = {
     handle: async (job: JobData, attemptsStarted: number, log: FastifyBaseLogger): Promise<PreHandlerResult> => {
         const oneTimeJob = job as ExecuteFlowJobData
-        const { runId, projectId } = oneTimeJob
-        
+        const { runId, projectId, flowId } = oneTimeJob
+
         flowRunService(log).updateRunStatusAsync({
             flowRunId: runId,
             status: FlowRunStatus.RUNNING,
@@ -29,18 +30,25 @@ export const flowJobPreHandler: JobPreHandler = {
             return { shouldSkip: false }
         }
 
-        const runExists = await flowRunService(log).existsBy(runId)
+        const flowStatus = await flowCache(log).getStatusCache(flowId)
 
-        if (!runExists) {
+        if (isNil(flowStatus)) {
             return {
                 shouldSkip: true,
-                reason: 'Run was deleted',
+                reason: `Flow is deleted`,
+            }
+        }
+
+        if (flowStatus === FlowStatus.DISABLED) {
+            return {
+                shouldSkip: true,
+                reason: `Flow is disabled`,
             }
         }
 
         return { shouldSkip: false }
     },
-} 
+}
 
 async function saveTriggerPayloadAndMarkQuotaExceeded(oneTimeJob: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<void> {
     const { runId, projectId, flowVersionId } = oneTimeJob
