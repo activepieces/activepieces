@@ -460,7 +460,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowIndexToTriggerSource1757555419075,
         AddIndexOnTriggerRun1757557714045,
         DeleteHandshakeFromTriggerSource1758108135968,
-        RemoveAgentidFromMcpEntity1760452015041
+        RemoveAgentidFromMcpEntity1760452015041,
     ]
 
     const edition = system.getEdition()
