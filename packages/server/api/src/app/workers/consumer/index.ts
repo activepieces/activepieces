@@ -65,7 +65,6 @@ export const jobConsumer = (log: FastifyBaseLogger) => {
         getTimeoutForWorkerJob(jobType: WorkerJobType): number {
             const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
             const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
-            const agentTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS)
             const triggerHooksTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)
             switch (jobType) {
                 case WorkerJobType.EXECUTE_TRIGGER_HOOK:

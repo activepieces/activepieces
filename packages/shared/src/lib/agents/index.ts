@@ -1,13 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common'
-import { McpWithTools } from '../mcp'
-import { AgentStepBlock } from './content'
-
-export enum AgentOutputType {
-    NO_OUTPUT = 'no_output',
-    STRUCTURED_OUTPUT = 'structured_output',
-}
-
+import { DiscriminatedUnion, Nullable } from '../common'
 
 export const agentbuiltInToolsNames = {
     markAsComplete: 'markAsComplete',
@@ -25,9 +17,7 @@ export const AgentOutputField = Type.Object({
     description: Type.Optional(Type.String()),
     type: Type.Enum(AgentOutputFieldType),
 })
-
 export type AgentOutputField = Static<typeof AgentOutputField>
-
 
 export enum AgentTaskStatus {
     COMPLETED = 'COMPLETED',
@@ -42,114 +32,73 @@ export type AgentResult = {
   message: string | null
 }
 
-export const AgentRun = Type.Object({
-    ...BaseModelSchema,
-    agentId: Type.String(),
-    projectId: Type.String(),
-    status: Type.Enum(AgentTaskStatus),
-    output: Type.Unknown(),
-    steps: Type.Array(AgentStepBlock),
-    message: Type.String(),
-    prompt: Type.String(),
+export enum AgentPieceProps {
+    MCP_ID = 'mcpId',
+    AGENT_TOOLS = 'agentTools',
+    STRUCTURED_OUTPUT = 'structuredOutput',
+    PROMPT = 'prompt',
+    MAX_STEPS = 'maxSteps',
+    AI_PROVIDER = 'aiProvider',
+    AI_MODEL = 'aiModel'
+}
+
+export enum ContentBlockType {
+    MARKDOWN = 'MARKDOWN',
+    TOOL_CALL = 'TOOL_CALL',
+}
+
+export const MarkdownContentBlock = Type.Object({
+    type: Type.Literal(ContentBlockType.MARKDOWN),
+    markdown: Type.String(),
+})
+
+export type MarkdownContentBlock = Static<typeof MarkdownContentBlock>
+
+export enum ToolCallStatus {
+    IN_PROGRESS = 'in-progress',
+    COMPLETED = 'completed',
+}
+
+export enum ToolCallType {
+    PIECE = 'PIECE',
+    FLOW = 'FLOW',
+    INTERNAL = 'INTERNAL',
+}
+
+const ToolCallBase = {
+    type: Type.Literal(ContentBlockType.TOOL_CALL),
+    input: Nullable(Type.Record(Type.String(), Type.Unknown())),
+    output: Type.Optional(Type.Unknown()),
+    toolName: Type.String(),
+    status: Type.Enum(ToolCallStatus),
+    toolCallId: Type.String(),
     startTime: Type.String(),
-    finishTime: Type.Optional(Type.String()),
-    metadata: Type.Optional(Type.Object({
-        recordId: Type.Optional(Type.String()),
-        tableId: Type.Optional(Type.String()),
-    })),
-})
+    endTime: Type.Optional(Type.String()),
+}
 
-export type AgentRun = Static<typeof AgentRun>
-
-export const Agent = Type.Object({
-    ...BaseModelSchema,
-    displayName: Type.String(),
-    description: Type.String(),
-    systemPrompt: Type.String(),
-    profilePictureUrl: Type.String(),
-    projectId: Type.String(),
-    maxSteps: Type.Number(),
-    mcpId: Type.String(),
-    tableAutomationId: Type.Optional(Type.String()),
-    platformId: Type.String(),
-    outputType: Type.Optional(Type.Enum(AgentOutputType)),
-    outputFields: Type.Optional(Type.Array(AgentOutputField)),
-    runCompleted: Type.Number(),
-    externalId: Type.String(),
-})
-export type Agent = Static<typeof Agent>
-
-export const PopulatedAgent = Type.Composite([
-    Agent,
+export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
     Type.Object({
-        mcp: McpWithTools,
+        ...ToolCallBase,
+        toolCallType: Type.Literal(ToolCallType.INTERNAL),
+        displayName: Type.String(),
+    }),
+    Type.Object({
+        ...ToolCallBase,
+        toolCallType: Type.Literal(ToolCallType.PIECE),
+        pieceName: Type.String(),
+        pieceVersion: Type.String(),
+        actionName: Type.String(),
+    }),
+    Type.Object({
+        ...ToolCallBase,
+        toolCallType: Type.Literal(ToolCallType.FLOW),
+        displayName: Type.String(),
+        flowId: Type.String(),
     }),
 ])
 
-export type PopulatedAgent = Static<typeof PopulatedAgent>
+export type ToolCallContentBlock = Static<typeof ToolCallContentBlock>
 
-export const EnhancedAgentPrompt = Type.Object({
-    displayName: Type.String(),
-    description: Type.String(),
-    systemPrompt: Type.String(),
-})
-export type EnhancedAgentPrompt = Static<typeof EnhancedAgentPrompt>
+export const AgentStepBlock = Type.Union([MarkdownContentBlock, ToolCallContentBlock])
 
-export const EnhanceAgentPrompt = Type.Object({
-    agentId: Type.String(),
-    systemPrompt: Type.String(),
-})
-export type EnhaceAgentPrompt = Static<typeof EnhanceAgentPrompt>
-
-export const CreateAgentRequest = Type.Object({
-    displayName: Type.String(),
-    description: Type.String(),
-    systemPrompt: Type.String(),
-})
-
-export type CreateAgentRequest = Static<typeof CreateAgentRequest>
-
-export const UpdateAgentRequestBody = Type.Object({
-    systemPrompt: Type.Optional(Type.String()),
-    displayName: Type.Optional(Type.String()),  
-    description: Type.Optional(Type.String()),
-    outputType: Type.Optional(Type.Enum(AgentOutputType)),
-    outputFields: Type.Optional(Type.Array(AgentOutputField)),
-})
-
-export type UpdateAgentRequestBody = Static<typeof UpdateAgentRequestBody>
-
-export const ListAgentsQueryParams = Type.Object({
-    externalIds: Type.Optional(Type.Array(Type.String())),
-    limit: Type.Optional(Type.Number()),
-    cursor: Type.Optional(Type.String()),
-})
-
-export type ListAgentsQueryParams = Static<typeof ListAgentsQueryParams>
-
-export const ListAgentRunsQueryParams = Type.Object({
-    limit: Type.Optional(Type.Number()),
-    cursor: Type.Optional(Type.String()),
-    agentId: Type.String(),
-})
-
-export type ListAgentRunsQueryParams = Static<typeof ListAgentRunsQueryParams>
-
-export const RunAgentRequestBody = Type.Object({
-    externalId: Type.String(),
-    prompt: Type.String(),
-})
-
-export type RunAgentRequestBody = Static<typeof RunAgentRequestBody>
-
-export const UpdateAgentRunRequestBody = Type.Object({
-    projectId: Type.String(),
-    status: Type.Optional(Type.Enum(AgentTaskStatus)),
-    startTime: Type.Optional(Type.String()),
-    steps: Type.Optional(Type.Array(AgentStepBlock)),
-    message: Type.Optional(Type.String()),
-    output: Type.Optional(Type.Unknown()),
-    finishTime: Type.Optional(Type.String()),
-})
-
-export type UpdateAgentRunRequestBody = Static<typeof UpdateAgentRunRequestBody>
+export type AgentStepBlock = Static<typeof AgentStepBlock>

@@ -1,11 +1,10 @@
-import { AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
 import { flowService } from '../../../../flows/flow/flow.service'
-import { mcpService } from '../../../../mcp/mcp-service'
 import { fieldService } from '../../../../tables/field/field.service'
 import { tableService } from '../../../../tables/table/table.service'
 import { projectStateHelper } from './project-state-helper'
@@ -206,28 +205,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             tables: populatedTables,
             log,
         })
-    },
-
-    getAgentState(agent: PopulatedAgent): AgentState {
-        const mcpState: McpState = {
-            token: agent.mcp.token,
-            externalId: agent.mcp.externalId,
-            name: agent.mcp.name,
-            tools: agent.mcp.tools,
-        }
-        const agentState: AgentState = {
-            displayName: agent.displayName,
-            externalId: agent.externalId,
-            outputType: agent.outputType,
-            outputFields: agent.outputFields,
-            mcp: mcpState,
-            description: agent.description,
-            systemPrompt: agent.systemPrompt,
-            profilePictureUrl: agent.profilePictureUrl,
-            maxSteps: agent.maxSteps,
-            runCompleted: agent.runCompleted,
-        }
-        return Value.Clean(AgentState, agentState) as AgentState
     },
     getFlowState(flow: PopulatedFlow): FlowState {
         const flowState: FlowState = {

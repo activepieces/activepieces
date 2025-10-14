@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { AgentOutputField, AgentOutputType } from '../agents'
 import { Nullable, NullableEnum } from '../common'
 import { PopulatedFlow } from '../flows/flow'
 import { McpTool } from '../mcp'
@@ -60,21 +59,6 @@ export const McpState = Type.Object({
     tools: Type.Array(McpTool),
 })
 export type McpState = Static<typeof McpState>
-
-export const AgentState = Type.Object({
-    externalId: Type.String(),
-    displayName: Type.String(),
-    description: Type.String(),
-    systemPrompt: Type.String(),
-    profilePictureUrl: Type.String(),
-    maxSteps: Type.Number(),
-    outputType: Type.Optional(Type.Enum(AgentOutputType)),
-    outputFields: Type.Optional(Type.Array(AgentOutputField)),
-    runCompleted: Type.Number(),
-    mcp: McpState,
-})
-
-export type AgentState = Static<typeof AgentState>
 
 export const ProjectState = Type.Object({
     flows: Type.Array(PopulatedFlow),

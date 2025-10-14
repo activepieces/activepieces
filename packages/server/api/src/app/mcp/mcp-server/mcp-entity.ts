@@ -28,7 +28,7 @@ export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
             name: 'mcp_project_id_external_id',
             columns: ['projectId', 'externalId'],
             unique: true,
-        }
+        },
     ],
     relations: {
         tools: {

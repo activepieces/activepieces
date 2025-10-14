@@ -18,7 +18,7 @@ export const flowMcpController: FastifyPluginAsyncTypebox = async (fastify) => {
         assertNotNullOrUndefined(tools, 'Tools are required')
         const toolsWithMcpId = tools.map((tool: McpTool) => ({
             ...tool,
-            mcpId: tool.mcpId ?? `flow:${request.params.flowId}`
+            mcpId: tool.mcpId ?? `flow:${request.params.flowId}`,
         }))
         await mcpServerHandler.handleStreamableHttpRequest({
             req: request,
@@ -34,7 +34,7 @@ export const flowMcpController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateMCPServerFromStepRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         params: CreateMCPServerFromStepParams,

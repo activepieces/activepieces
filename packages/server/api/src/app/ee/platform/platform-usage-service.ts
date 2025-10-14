@@ -300,7 +300,7 @@ async function getMCPsCount(platformId: string): Promise<number> {
 }
 
 async function getAgentsCount(platformId: string): Promise<number> {
-    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
+    // const projectIds = await projectService.getProjectIdsByPlatform(platformId)
     // const agents = await agentRepo().count({
     //     where: {
     //         projectId: In(projectIds),

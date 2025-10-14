@@ -65,7 +65,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
-    [AppSystemProp.AGENT_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '180',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',

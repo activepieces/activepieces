@@ -2,7 +2,6 @@ import { PushFlowsGitRepoRequest, PushTablesGitRepoRequest } from '@activepieces
 import {
     FlowState,
     FlowVersionState,
-    PopulatedAgent,
     PopulatedTable,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'

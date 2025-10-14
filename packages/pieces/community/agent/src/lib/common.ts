@@ -1,6 +1,6 @@
 import { AI_USAGE_MCP_ID_HEADER, AIUsageFeature, createAIModel } from "@activepieces/common-ai";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, McpWithTools, AgentOutputType, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
+import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";

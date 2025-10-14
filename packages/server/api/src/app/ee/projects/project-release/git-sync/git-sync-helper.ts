@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/ee-shared'
 import { fileSystemUtils } from '@activepieces/server-shared'
-import { AgentState, AppConnectionScope, ConnectionState, FlowState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
+import { AppConnectionScope, ConnectionState, FlowState, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -51,13 +51,6 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
         const connectionJsonPath = path.join(folderPath, `${fileName}.json`)
         await fs.mkdir(path.dirname(connectionJsonPath), { recursive: true })
         await fs.writeFile(connectionJsonPath, JSON.stringify(connection, null, 2))
-    },
-
-    async upsertAgentToGit({ fileName, agent, agentsFolderPath }: UpsertAgentIntoProjectParams): Promise<void> {
-        const agentJsonPath = path.join(agentsFolderPath, `${fileName}.json`)
-        await fs.mkdir(path.dirname(agentJsonPath), { recursive: true })
-        const agentState = projectStateService(log).getAgentState(agent)
-        await fs.writeFile(agentJsonPath, JSON.stringify(agentState, null, 2))
     },
 
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
@@ -139,16 +132,6 @@ async function readTablesFromGit(tablesFolderPath: string, log: FastifyBaseLogge
     return tables
 }
 
-async function readAgentsFromGit(agentsFolderPath: string, log: FastifyBaseLogger): Promise<AgentState[]> {
-    const agentFiles = await fs.readdir(agentsFolderPath)
-    const agents: AgentState[] = []
-    for (const file of agentFiles) {
-        const agent: PopulatedAgent = JSON.parse(await fs.readFile(path.join(agentsFolderPath, file), 'utf-8'))
-        agents.push(projectStateService(log).getAgentState(agent))
-    }
-    return agents
-}
-
 type GetStateFromGitParams = {
     flowPath: string
     connectionsFolderPath: string
@@ -171,12 +154,6 @@ type UpsertTableIntoProjectParams = {
     fileName: string
     table: PopulatedTable
     tablesFolderPath: string
-}
-
-type UpsertAgentIntoProjectParams = {
-    fileName: string
-    agent: PopulatedAgent
-    agentsFolderPath: string
 }
 
 type DeleteFromProjectParams = {
