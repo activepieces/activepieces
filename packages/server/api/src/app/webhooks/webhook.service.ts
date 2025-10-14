@@ -4,6 +4,7 @@ import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
+import { flowService } from '../flows/flow/flow.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
@@ -38,15 +39,25 @@ export const webhookService = {
                 const webhookRequestId = apId()
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-
                 const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
                     flowId,
                     simulate: saveSampleData,
                 })
-
-                if (isNil(triggerSourceResult)) {
-                    pinoLogger.info('Flow not found, returning NOT FOUND')
+                const flowExists = !isNil(await flowService(pinoLogger).getOneById(flowId))
+                if (!flowExists) {
+                    pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
+                    return {
+                        status: StatusCodes.GONE,
+                        body: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
+                    }
+                }
+                if (isNil(triggerSourceResult)) {
+                    pinoLogger.info('trigger source not found, returning NOT FOUND')
+                    span.setAttribute('webhook.triggerSourceFound', false)
                     return {
                         status: StatusCodes.NOT_FOUND,
                         body: {},
