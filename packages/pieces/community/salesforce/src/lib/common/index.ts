@@ -203,7 +203,7 @@ export const salesforcesCommon = {
             const response = await querySalesforceApi<{ records: { Id: string, Name: string }[] }>(
                 HttpMethod.GET,
                 auth as OAuth2PropertyValue,
-                "SELECT Id, Name FROM Campaign ORDER BY Name"
+                "SELECT Id, Name FROM Campaign ORDER BY Name LIMIT 200"
             );
             return {
                 disabled: false,
@@ -226,15 +226,15 @@ export const salesforcesCommon = {
                     options: [],
                 };
             }
-            const response = await querySalesforceApi<{ records: { Id: string, Name: string }[] }>(
+            const response = await querySalesforceApi<{ records: { Id: string, Name: string, Email?: string }[] }>(
                 HttpMethod.GET,
                 auth as OAuth2PropertyValue,
-                "SELECT Id, Name FROM Contact ORDER BY Name"
+                "SELECT Id, Name, Email FROM Contact ORDER BY Name LIMIT 200"
             );
             return {
                 disabled: false,
                 options: response.body.records.map((record) => ({
-                    label: record.Name,
+                    label: record.Email ? `${record.Name} — ${record.Email}` : record.Name,
                     value: record.Id,
                 })),
             };
@@ -255,7 +255,7 @@ export const salesforcesCommon = {
             const response = await querySalesforceApi<{ records: { Id: string, Name: string }[] }>(
                 HttpMethod.GET,
                 auth as OAuth2PropertyValue,
-                "SELECT Id, Name FROM Lead ORDER BY Name"
+                "SELECT Id, Name FROM Lead ORDER BY Name LIMIT 200"
             );
             return {
                 disabled: false,
@@ -268,7 +268,7 @@ export const salesforcesCommon = {
     }),
     status: Property.Dropdown({
         displayName: 'Status',
-        description: "The status of the campaign member (e.g., 'Sent', 'Responded').",
+        description: "The campaign member status (e.g., 'Sent', 'Responded').",
         required: true,
         refreshers: ['campaign_id'],
         options: async ({ auth, campaign_id }) => {
@@ -279,10 +279,19 @@ export const salesforcesCommon = {
                     options: [],
                 };
             }
+            // Validate campaign_id to prevent SQL injection (Salesforce IDs are 15-18 alphanumeric characters)
+            const campaignIdStr = String(campaign_id);
+            if (!/^[a-zA-Z0-9]{15,18}$/.test(campaignIdStr)) {
+                return {
+                    disabled: true,
+                    placeholder: 'Invalid campaign ID',
+                    options: [],
+                };
+            }
             const response = await querySalesforceApi<{ records: { Label: string }[] }>(
                 HttpMethod.GET,
                 auth as OAuth2PropertyValue,
-                `SELECT Label FROM CampaignMemberStatus WHERE CampaignId = '${campaign_id}'`
+                `SELECT Label FROM CampaignMemberStatus WHERE CampaignId = '${campaignIdStr}'`
             );
             return {
                 disabled: false,
@@ -459,15 +468,15 @@ export const salesforcesCommon = {
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
-            const response = await querySalesforceApi<{ records: { Id: string, Name: string }[] }>(
+            const response = await querySalesforceApi<{ records: { Id: string, Name: string, Email?: string }[] }>(
                 HttpMethod.GET,
                 auth as OAuth2PropertyValue,
-                "SELECT Id, Name FROM Contact ORDER BY Name"
+                "SELECT Id, Name, Email FROM Contact ORDER BY Name LIMIT 200"
             );
             return {
                 disabled: false,
                 options: response.body.records.map((record) => ({
-                    label: record.Name,
+                    label: record.Email ? `${record.Name} — ${record.Email}` : record.Name,
                     value: record.Id,
                 })),
             };

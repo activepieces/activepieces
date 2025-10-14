@@ -7,7 +7,7 @@ export const addContactToCampaign = createAction({
     auth: salesforceAuth,
     name: 'add_contact_to_campaign',
     displayName: 'Add Contact to Campaign',
-    description: 'Adds an existing contact to an existing campaign.',
+    description: 'Add a contact to a campaign.',
     props: {
         campaign_id: salesforcesCommon.campaign,
         contact_id: salesforcesCommon.contact,
