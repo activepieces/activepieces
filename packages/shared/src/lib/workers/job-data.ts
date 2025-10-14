@@ -79,7 +79,7 @@ export const ExecuteFlowJobData = Type.Object({
     platformId: Type.String(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
     environment: Type.Enum(RunEnvironment),
-    flowId: Type.String(),
+    flowId: Type.Optional(Type.String()),
     flowVersionId: Type.String(),
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),

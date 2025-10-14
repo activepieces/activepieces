@@ -1,10 +1,11 @@
 import { ExecuteFlowJobData, FlowRunStatus, FlowStatus, isNil, JobData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectLimitsService } from '../../../ee/projects/project-plan/project-plan.service'
-import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { flowCache } from '../../../flows/flow/flow.cache'
 import { JobPreHandler, PreHandlerResult } from './index'
+import { flowRepo } from '../../../flows/flow/flow.repo'
 
 export const flowJobPreHandler: JobPreHandler = {
     handle: async (job: JobData, attemptsStarted: number, log: FastifyBaseLogger): Promise<PreHandlerResult> => {
@@ -30,7 +31,20 @@ export const flowJobPreHandler: JobPreHandler = {
             return { shouldSkip: false }
         }
 
-        const flowStatus = await flowCache(log).getStatusCache(flowId)
+        let flowId_ = flowId
+
+        if (isNil(flowId_)) {
+            const flowRun = await flowRunRepo().findOneBy({ id: runId })
+            if (isNil(flowRun)) {
+                return {
+                    shouldSkip: true,
+                    reason: 'Flow run not found',
+                }
+            }
+            flowId_ = flowRun?.flowId
+        }
+
+        const flowStatus = await flowCache(log).getStatusCache(flowId_)
 
         if (isNil(flowStatus)) {
             return {

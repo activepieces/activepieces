@@ -8,7 +8,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
-import { flowCache, FlowCacheStatus } from './flow.cache'
+import { flowCache } from './flow.cache'
 
 export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
