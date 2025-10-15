@@ -1,7 +1,8 @@
-import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { PrincipalType, QueueMetricsResponse, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { queueMetricService } from './queue-metrics.service'
+import { StatusCodes } from "http-status-codes";
 
 export const queueMetricsController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
@@ -14,6 +15,9 @@ const GetMetrics = {
         tags: ['queue-metrics'],
         description: 'Get metrics',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: QueueMetricsResponse,
+        }
     },
     config: {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
