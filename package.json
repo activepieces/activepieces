@@ -27,6 +27,9 @@
     "i18n:extract": "i18next --config packages/react-ui/i18next-parser.config.js",
     "bump-translated-pieces": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-translated-pieces.ts"
   },
+  "workspaces": [
+    "pieces/oracle-fusion-cloud-erp"
+  ],
   "private": true,
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
