@@ -35,6 +35,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     platformId: await projectService.getPlatformId(pausedRun.projectId),
                     environment: pausedRun.environment,
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                    flowId: pausedRun.flowId,
                     flowVersionId: pausedRun.flowVersionId,
                     runId: pausedRun.id,
                     httpRequestId: pausedRun.pauseMetadata?.requestIdToReply ?? undefined,
