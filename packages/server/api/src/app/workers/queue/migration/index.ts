@@ -7,7 +7,7 @@ import { refillPollingJobs } from './refill-polling-jobs'
 import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
 import { removeRateLimitJobsQueue } from './remove-rate-limit-queue'
 import { unifyOldQueuesIntoOne } from './unify-old-queues-to-one'
-import refillJobsWithEngineToken from './refill-jobs-with-engine-token'
+import { refillJobsWithEngineToken } from './refill-jobs-with-engine-token'
 
 const QUEUE_MIGRATION_VERSION = '1'
 const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
@@ -28,10 +28,10 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
                 await refillRenewWebhookJobs(log).run()
                 await refillPausedRuns(log).run()
                 await updateMigrationVersion()
-                await refillJobsWithEngineToken(log).run()
             }
             await unifyOldQueuesIntoOne(log).run()
             await removeRateLimitJobsQueue(log).run()
+            await refillJobsWithEngineToken(log).run()
         }
         finally {
             await migrationLock.release()
