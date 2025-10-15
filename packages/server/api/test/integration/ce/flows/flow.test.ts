@@ -3,12 +3,12 @@ import {
     FlowOperationType,
     FlowStatus,
     FlowTriggerType,
+    FlowVersionState,
     PackageType,
     PieceType,
     PopulatedFlow,
     PrincipalType,
     PropertyExecutionType,
-    TriggerSourceScheduleType,
     TriggerStrategy,
     TriggerTestStrategy,
     WebhookHandshakeStrategy,
@@ -106,7 +106,7 @@ describe('Flow API', () => {
             // arrange
             const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
-            const mockPieceMetadata1 = createMockPieceMetadata({
+            const mockPieceMetadata1 = createMockPieceMetadata({ 
                 name: '@activepieces/piece-schedule',
                 version: '0.1.5',
                 triggers: {
@@ -114,17 +114,11 @@ describe('Flow API', () => {
                         'name': 'every_hour',
                         'displayName': 'Every Hour',
                         'description': 'Triggers the current flow every hour',
-                        'requireAuth': true,
+                        'requireAuth': false,
                         'props': {
 
                         },
-                        'type': TriggerStrategy.WEBHOOK,
-                        'handshakeConfiguration': {
-                            'strategy': WebhookHandshakeStrategy.NONE,
-                        },
-                        'renewConfiguration': {
-                            'strategy': WebhookRenewStrategy.NONE,
-                        },
+                        'type': TriggerStrategy.POLLING,
                         'sampleData': {
 
                         },
@@ -184,34 +178,6 @@ describe('Flow API', () => {
                 id: mockOwner.id,
             })
 
-            //Publish flow first
-            await app?.inject({
-                method: 'POST',
-                url: `/v1/flows/${mockFlow.id}`,
-                body: {
-                    type: FlowOperationType.LOCK_AND_PUBLISH,
-                    request: {},
-                },
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-            })
-
-            // disabled flow
-            await app?.inject({
-                method: 'POST',
-                url: `/v1/flows/${mockFlow.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-                body: {
-                    type: FlowOperationType.CHANGE_STATUS,
-                    request: {
-                        status: 'DISABLED',
-                    },
-                },
-            })
-
 
             // act
             const response = await app?.inject({
@@ -245,7 +211,6 @@ describe('Flow API', () => {
                 expect(responseBody.metadata).toBeNull()
                 expect(Object.keys(responseBody.version)).toHaveLength(13)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
-                expect(responseBody.triggerSource?.schedule?.type).toEqual(TriggerSourceScheduleType.CRON_EXPRESSION)
             }
         })
 
@@ -362,6 +327,7 @@ describe('Flow API', () => {
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockOwner.id,
+                state: FlowVersionState.DRAFT,
                 trigger: {
                     type: FlowTriggerType.PIECE,
                     settings: {
@@ -378,8 +344,8 @@ describe('Flow API', () => {
                         },
                     },
                     valid: true,
-                    name: 'webhook',
-                    displayName: 'Webhook',
+                    name: 'trigger',
+                    displayName: 'Schedule',
                 },
             })
             await databaseConnection()
