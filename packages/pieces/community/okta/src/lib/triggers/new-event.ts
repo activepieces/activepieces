@@ -27,7 +27,10 @@ export const newEventTrigger = createTrigger({
           { label: 'User Unsuspended', value: 'user.lifecycle.unsuspend' },
           { label: 'User Deleted', value: 'user.lifecycle.delete.completed' },
           { label: 'User Added to Group', value: 'group.user_membership.add' },
-          { label: 'User Removed from Group', value: 'group.user_membership.remove' },
+          {
+            label: 'User Removed from Group',
+            value: 'group.user_membership.remove',
+          },
           { label: 'Group Created', value: 'group.lifecycle.create' },
           { label: 'Group Deleted', value: 'group.lifecycle.delete' },
           { label: 'User Login', value: 'user.session.start' },
@@ -142,7 +145,17 @@ export const newEventTrigger = createTrigger({
         console.log(`Created new event hook: ${hookId}`);
       }
 
-      await context.store.put('hookId', hookId);
+      const response = await makeOktaRequest(
+        context.auth,
+        `/eventHooks/${hookId}/lifecycle/verify`,
+        HttpMethod.POST
+      );
+
+      if (response.status !== 200) {
+        throw new Error(
+          'Failed to verify event hook: ' + JSON.stringify(response.body)
+        );
+      }
     } catch (error) {
       console.error('Error creating Okta event hook:', error);
       throw new Error(`Failed to setup Okta event hook: ${error}`);
@@ -184,25 +197,32 @@ export const newEventTrigger = createTrigger({
 
   async run(context) {
     const payload: any = context.payload.body;
+    console.log("firstfdsdfsdf",JSON.stringify(payload))
+    const configuredEventTypes = context.propsValue.eventTypes || [];
 
-    if (payload.verification) {
-      console.log('Received Okta verification challenge');
+    if (!payload.data?.events || !Array.isArray(payload.data.events)) {
+      console.log('No events found in payload, skipping');
       return [];
     }
 
-    const EventTypes = context.propsValue.eventTypes || '[]';
+    const filteredEvents = [];
 
-    if (EventTypes && EventTypes.length > 0) {
-      const eventType = payload.eventType || payload.data?.eventType;
-      if (!EventTypes.includes(eventType)) {
-        console.log(
-          `Event type ${eventType} not in configured types, skipping`
-        );
-        return [];
+    for (const event of payload.data.events) {
+      
+      if (configuredEventTypes.length > 0) {
+        if (!configuredEventTypes.includes(event.eventType)) {
+          console.log(
+            `Event type ${event.eventType} not in configured types, skipping`
+          );
+          continue;
+        }
       }
+
+     
+      filteredEvents.push(event);
     }
 
-    return [payload];
+    return filteredEvents;
   },
 
   async test(context) {
