@@ -162,13 +162,14 @@ describe('flow execution', () => {
         })
 
         await waitForSocketConnection()
-        
+
 
         await flowJobExecutor(mockLog).executeFlow({
             jobData: {
                 flowVersionId: mockFlowVersion.id,
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
+                flowId: mockFlowRun.flowId,
                 jobType: WorkerJobType.EXECUTE_FLOW,
                 environment: RunEnvironment.PRODUCTION,
                 runId: mockFlowRun.id,
@@ -254,7 +255,7 @@ async function waitForSocketConnection(maxAttempts = 60, intervalMs = 1000): Pro
         await new Promise(resolve => setTimeout(resolve, intervalMs))
         attempts++
     }
-    
+
     if (attempts >= maxAttempts) {
         throw new Error(`Worker settings not initialized after ${maxAttempts} seconds`)
     }
