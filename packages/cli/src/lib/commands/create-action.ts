@@ -6,6 +6,12 @@ import { assertPieceExists, displayNameToCamelCase, displayNameToKebabCase, find
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 
+interface CreateActionAnswers {
+  pieceName: string;
+  actionName: string;
+  actionDescription: string;
+}
+
 function createActionTemplate(displayName: string, description: string) {
   const camelCase = displayNameToCamelCase(displayName)
   const actionTemplate = `import { createAction, Property } from '@activepieces/pieces-framework';
@@ -55,7 +61,7 @@ export const createActionCommand = new Command('create')
         type: 'input',
         name: 'pieceName',
         message: 'Enter the piece folder name:',
-        placeholder: 'google-drive',
+        default: 'google-drive',
       },
       {
         type: 'input',
@@ -69,6 +75,6 @@ export const createActionCommand = new Command('create')
       }
     ];
 
-    const answers = await inquirer.prompt(questions);
+    const answers: any = await (inquirer as any).prompt(questions);
     createAction(answers.pieceName, answers.actionName, answers.actionDescription);
   });

@@ -3,6 +3,10 @@ import { buildPiece, findPiece } from '../utils/piece-utils';
 import chalk from "chalk";
 import inquirer from "inquirer";
 
+interface BuildPieceAnswers {
+  name: string;
+}
+
 async function buildPieces(pieceName: string) {
     const pieceFolder = await findPiece(pieceName);
     const { outputFolder } = await buildPiece(pieceFolder);
@@ -17,9 +21,9 @@ export const buildPieceCommand = new Command('build')
                 type: 'input',
                 name: 'name',
                 message: 'Enter the piece folder name',
-                placeholder: 'google-drive',
+                default: 'google-drive',
             },
         ];
-        const answers = await inquirer.prompt(questions);
+        const answers: any = await (inquirer as any).prompt(questions);
         await buildPieces(answers.name);
     });
