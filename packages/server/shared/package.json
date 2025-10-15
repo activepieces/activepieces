@@ -6,7 +6,7 @@
   "typings": "./src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-framework": "0.20.1",
-    "@activepieces/shared": "0.23.0",
+    "@activepieces/shared": "0.24.0",
     "axios": "1.8.3",
     "tslib": "2.6.2",
     "@sentry/node": "7.120.0",
@@ -19,7 +19,6 @@
     "clear-module": "4.1.2",
     "axios-retry": "4.4.1",
     "@hyperdx/node-opentelemetry": "0.8.2",
-    "proper-lockfile": "4.1.2",
     "ioredis": "5.4.1",
     "redlock": "5.0.0-beta.2",
     "redis-memory-server": "0.13.0"

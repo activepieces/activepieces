@@ -1,5 +1,4 @@
-import { RedisType } from '@activepieces/server-shared'
-import { FlowRunStatus, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, ProgressUpdateType, WorkerJobType } from '@activepieces/shared'
+import { ExecutionType, FlowRunStatus, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, ProgressUpdateType, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis-connections'
@@ -9,15 +8,16 @@ import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
 
+const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs'
 
 export const refillPausedRuns = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
-        const redisType = redisConnections.getRedisType()
-        if (redisType !== RedisType.MEMORY) {
-            log.info('[pausedRunsMigration] Skipping migration because they are migrated from persistent queue')
+        const redisConnection = await redisConnections.useExisting()
+        const isMigrated = await redisConnection.get(REFILL_PAUSED_RUNS_KEY)
+        if (!isNil(isMigrated)) {
+            log.info('[refillPausedRuns] Already migrated, skipping')
             return
         }
-        
         const pausedRuns = await flowRunRepo().find({
             where: {
                 status: FlowRunStatus.PAUSED,
@@ -28,7 +28,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 continue
             }
             await jobQueue(log).add({
-                id: 'delayed_' + pausedRun.id,
+                id: pausedRun.id,
                 type: JobType.ONE_TIME,
                 data: {
                     projectId: pausedRun.projectId,
@@ -36,12 +36,13 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     environment: pausedRun.environment,
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     flowVersionId: pausedRun.flowVersionId,
-                    flowId: pausedRun.flowId,
                     runId: pausedRun.id,
                     httpRequestId: pausedRun.pauseMetadata?.requestIdToReply ?? undefined,
                     synchronousHandlerId: pausedRun.pauseMetadata.handlerId ?? null,
                     progressUpdateType: pausedRun.pauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
-                    jobType: WorkerJobType.DELAYED_FLOW,
+                    jobType: WorkerJobType.EXECUTE_FLOW,
+                    executionType: ExecutionType.RESUME,
+                    payload: {},
                 },
                 delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
             })
@@ -49,6 +50,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
         log.info({
             count: pausedRuns.length,
         }, '[pausedRunsMigration] Migrated paused runs')
+        await redisConnection.set(REFILL_PAUSED_RUNS_KEY, 'true')
     },
 })
 

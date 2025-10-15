@@ -155,12 +155,11 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                         return {
                             status: ConsumeJobResponseStatus.OK,
                         }
-                    case WorkerJobType.EXECUTE_FLOW:
-                        await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
+                    case WorkerJobType.EXECUTE_FLOW:{
+                        const response = await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
                         span.setAttribute('worker.completed', true)
-                        return {
-                            status: ConsumeJobResponseStatus.OK,
-                        }
+                        return response
+                    }
                     case WorkerJobType.EXECUTE_POLLING: {
                         const response = await executeTriggerExecutor(log).executeTrigger({
                             jobId,
@@ -181,10 +180,6 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                         })
                         span.setAttribute('worker.completed', true)
                         return response
-                    }
-                    case WorkerJobType.DELAYED_FLOW: {
-                        span.setAttribute('worker.error', true)
-                        throw new Error('Delayed flow is handled by the app')
                     }
                     case WorkerJobType.EXECUTE_WEBHOOK: {
                         span.setAttribute('worker.webhookExecution', true)

@@ -17,7 +17,7 @@ export type CodeArtifact = {
 }
 
 
-export type EngineHelperFlowResult = Pick<FlowRunResponse, 'status' | 'error'>
+export type EngineHelperFlowResult = FlowRunResponse
 
 export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,

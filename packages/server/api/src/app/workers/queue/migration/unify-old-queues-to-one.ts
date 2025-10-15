@@ -1,4 +1,4 @@
-import { DelayedJobData, ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis-connections'
@@ -7,9 +7,9 @@ import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
 
+
 type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
 type LegacyWebhookJobData = Pick<WebhookJobData, 'projectId' | 'schemaVersion' | 'requestId' | 'payload' | 'runEnvironment' | 'flowId' | 'saveSampleData' | 'flowVersionIdToRun' | 'execute' | 'parentRunId' | 'failParentOnFailure'>
-type LegacyDelayedJobData = Pick<DelayedJobData, 'projectId' | 'environment' | 'schemaVersion' | 'flowVersionId' | 'flowId' | 'runId' | 'httpRequestId' | 'synchronousHandlerId' | 'progressUpdateType' | 'jobType'>
 const migratedKey = 'unified_queue_migrated'
 
 export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
@@ -21,13 +21,13 @@ export const unifyOldQueuesIntoOne = (log: FastifyBaseLogger) => ({
 
         const oneTimeJobsHadZero = await migrateOneTimeJobs(log)
         const webhookJobsHadZero = await migrateWebhookJobs(log)
-        const delayedJobsHadZero = await migrateDelayedJobs(log)
-
+     
         await cleanQueue('usersInteractionJobs')
         await cleanQueue('agentsJobs')
         await cleanQueue('cleanupJobs')
+        await cleanQueue('repeatableJobs')
 
-        if (oneTimeJobsHadZero && webhookJobsHadZero && delayedJobsHadZero) {
+        if (oneTimeJobsHadZero && webhookJobsHadZero) {
             await markAsMigrated()
             log.info('[unifyOldQueuesIntoOne] Migration completed and marked as done')
         }
@@ -61,6 +61,7 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
             data: {
                 ...casedData,
                 platformId: await projectService.getPlatformId(casedData.projectId),
+                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 jobType: WorkerJobType.EXECUTE_FLOW,
             },
         })
@@ -99,39 +100,6 @@ async function migrateWebhookJobs(log: FastifyBaseLogger): Promise<boolean> {
         log.info({
             migratedWebhookJobs,
         }, '[unifyOldQueuesIntoOne] Migrated webhook jobs')
-    }
-    return hadZero
-}
-
-async function migrateDelayedJobs(log: FastifyBaseLogger): Promise<boolean> {
-    let migratedDelayedJobs = 0
-    const hadZero = await migrateQueue<LegacyDelayedJobData>('repeatableJobs', async (job) => {
-        const castedData = job.data
-        if (job.data.jobType !== 'DELAYED_FLOW') {
-            return
-        }
-        migratedDelayedJobs++
-        if (migratedDelayedJobs % 500 === 0) {
-            log.info({
-                migratedDelayedJobs,
-            }, '[unifyOldQueuesIntoOne] Migrated delayed jobs')
-        }
-        await jobQueue(log).add({
-            id: job.id!,
-            type: JobType.ONE_TIME,
-            delay: job.delay,
-            data: {
-                ...castedData,
-                platformId: await projectService.getPlatformId(castedData.projectId),
-                jobType: WorkerJobType.DELAYED_FLOW,
-            },
-        })
-        await job.remove()
-    })
-    if (migratedDelayedJobs > 0) {
-        log.info({
-            migratedDelayedJobs,
-        }, '[unifyOldQueuesIntoOne] Migrated delayed jobs')
     }
     return hadZero
 }
