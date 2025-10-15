@@ -87,7 +87,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 
 
-    async hardDelete({ id }: HardDeleteParams): Promise<void> {
+    async hardDelete({ id, platformId }: HardDeleteParams): Promise<void> {
         await transaction(async (entityManager) => {
             await assertAllProjectFlowsAreDisabled({
                 projectId: id,
@@ -106,6 +106,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             await appConnectionService(log).deleteAllProjectConnections(id)
             await projectRepo().delete({
                 id,
+                platformId,
             })
         })
 
@@ -249,4 +250,5 @@ type AssertAllProjectFlowsAreDisabledParams = {
 
 type HardDeleteParams = {
     id: ProjectId
+    platformId: PlatformId
 }

@@ -5,7 +5,7 @@ export class RestrictOnDeleteProjectForFlowSqlite1760376811542 implements Migrat
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DELETE from "project" whhere deleted is not null"
+            DELETE FROM "project" WHERE deleted IS NOT NULL
         `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"

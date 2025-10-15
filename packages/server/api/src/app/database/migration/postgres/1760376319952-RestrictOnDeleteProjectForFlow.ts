@@ -4,9 +4,8 @@ export class RestrictOnDeleteProjectForFlow1760376319952 implements MigrationInt
     name = 'RestrictOnDeleteProjectForFlow1760376319952'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-
         await queryRunner.query(`
-            DELETE from "project" whhere deleted is not null"
+            DELETE FROM "project" WHERE deleted IS NOT NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
