@@ -107,6 +107,7 @@ export const ExecuteFlowJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
     environment: Type.Enum(RunEnvironment),
     schemaVersion: Type.Number(),
+    flowId: Type.String(),
     flowVersionId: Type.String(),
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
@@ -176,6 +177,7 @@ export const ExecuteToolJobData = Type.Object({
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
     input: Type.Record(Type.String(), Type.Unknown()),
+
 })
 export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 

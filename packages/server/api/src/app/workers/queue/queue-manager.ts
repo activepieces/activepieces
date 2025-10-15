@@ -1,7 +1,4 @@
-import {
-    QueueName,
-} from '@activepieces/server-shared'
-import { AgentJobData, ApId, ExecuteFlowJobData, isNil, JobData, PollingJobData, RenewWebhookJobData, RunEnvironment, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { AgentJobData, ApId, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData } from '@activepieces/shared'
 
 export enum JobType {
     REPEATING = 'repeating',
@@ -12,7 +9,7 @@ type RemoveParams = {
     flowVersionId: ApId
 }
 
-type BaseAddParams<JD extends JobData, JT extends JobType> = {
+type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {
     id: ApId
     data: JD
     type: JT
