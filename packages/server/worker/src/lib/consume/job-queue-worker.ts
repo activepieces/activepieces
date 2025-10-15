@@ -45,23 +45,24 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
           );
         }
         const response = await jobConsmer(log).consumeJob(job, workerToken)
-        
+        log.info({
+          message: '[jobQueueWorker] Consumed job',
+          response,
+        })
         const isInternalError = response.status === ConsumeJobResponseStatus.INTERNAL_ERROR
         if (isInternalError) {
-            throw new Error(response.errorMessage ?? 'Unknown error')
+          throw new Error(response.errorMessage ?? 'Unknown error')
         }
         const delayInSeconds = response.delayInSeconds
         if (!isNil(delayInSeconds) && job.data.jobType === WorkerJobType.EXECUTE_FLOW) {
-            await job.updateData({
-                ...job.data,
-                executionType: ExecutionType.RESUME,
-            })
-            
-            await job.moveToDelayed(dayjs().add(delayInSeconds, 'seconds').valueOf(), job.token)
-            throw new DelayedError('Job requested to be delayed')
-        }
+          await job.updateData({
+            ...job.data,
+            executionType: ExecutionType.RESUME,
+          })
 
-        return response
+          await job.moveToDelayed(dayjs().add(delayInSeconds, 'seconds').valueOf(), job.token)
+          throw new DelayedError('Job requested to be delayed')
+        }
       } finally {
         await workerJobRateLimiter(log).onCompleteOrFailedJob(
           job.data,
@@ -81,6 +82,9 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
       }
     );
     await worker.waitUntilReady();
+    log.info({
+      message: 'Job queue worker started',
+    })
   },
   async pause(): Promise<void> {
     return worker.pause();

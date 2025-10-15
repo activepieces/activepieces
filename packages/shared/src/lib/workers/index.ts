@@ -109,6 +109,7 @@ export const WorkerSettingsResponse = Type.Object({
     REDIS_SENTINEL_NAME: Type.Optional(Type.String()),
     PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
     MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
+    JWT_SECRET: Type.String(),
 })
 
 export type WorkerSettingsResponse = Static<typeof WorkerSettingsResponse>

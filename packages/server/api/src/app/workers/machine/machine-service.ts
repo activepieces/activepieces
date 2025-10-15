@@ -12,6 +12,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { WorkerMachineEntity } from './machine-entity'
 
@@ -28,9 +29,12 @@ export const machineService = (_log: FastifyBaseLogger) => {
         },
         async onConnection(): Promise<WorkerSettingsResponse> {
             return  {
+                JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
+                TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
+                AGENT_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
                 LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),

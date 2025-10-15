@@ -11,6 +11,7 @@ import { webhookExecutor } from "./executors/webhook-job-executor"
 import { agentJobExecutor } from "./executors/agent-job-executor"
 import dayjs from "dayjs"
 import { workerMachine } from "../utils/machine"
+import { tokenUtls } from "../utils/token-utils"
 
 const tracer = trace.getTracer('job-consumer')
 
@@ -20,11 +21,10 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
         const { id: jobId, data: jobData, attemptsMade: attempsStarted } = job
         assertNotNullOrUndefined(jobId, 'jobId')
         const timeoutInSeconds = getTimeoutForWorkerJob(jobData.jobType)
-        // TODO @abuabdullah: Add engine token
-        const engineToken = ''
+        const engineToken = await tokenUtls.generateEngineToken({ jobId, projectId: jobData.projectId!, platformId: jobData.platformId })
         const traceContext = ('traceContext' in jobData && jobData.traceContext) ? jobData.traceContext : {}
         const extractedContext = propagation.extract(context.active(), traceContext)
-    
+
         return context.with(extractedContext, () => {
             return tracer.startActiveSpan('worker.consumeJob', {
                 attributes: {
@@ -46,7 +46,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                             return {
                                 status: ConsumeJobResponseStatus.OK,
                             }
-                        case WorkerJobType.EXECUTE_FLOW:{
+                        case WorkerJobType.EXECUTE_FLOW: {
                             const response = await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
                             span.setAttribute('worker.completed', true)
                             return response
@@ -61,7 +61,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                             })
                             span.setAttribute('worker.completed', true)
                             return response
-    
+
                         }
                         case WorkerJobType.RENEW_WEBHOOK: {
                             const response = await renewWebhookExecutor(log).renewWebhook({

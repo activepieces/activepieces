@@ -190,7 +190,7 @@ async function handleUpdateLogsBehavior(request: HandleUpdateLogsBehaviorParams)
         case UpdateLogsBehavior.NONE: {
             break
         }
-    }   
+    }
 }
 
 type HandleUpdateLogsBehaviorParams = {

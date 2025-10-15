@@ -189,7 +189,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 engineToken,
                 input,
             )
-
             if (
                 result.status === FlowRunStatus.INTERNAL_ERROR ||
         status === EngineResponseStatus.INTERNAL_ERROR
