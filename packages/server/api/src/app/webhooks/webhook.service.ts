@@ -4,6 +4,7 @@ import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 // import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
+import { flowService } from '../flows/flow/flow.service'
 import { platformPlanService } from '../platform-plan/platform-plan.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
@@ -39,19 +40,31 @@ export const webhookService = {
                 const webhookRequestId = apId()
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-
                 const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
                     flowId,
                     simulate: saveSampleData,
                 })
-
-                if (isNil(triggerSourceResult)) {
+                const flowExists = !isNil(await flowService(pinoLogger).getOneById(flowId))
+                if (!flowExists) {
                     pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
                     return {
                         status: StatusCodes.GONE,
                         body: {},
-                        headers: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
+                    }
+                }
+                if (isNil(triggerSourceResult)) {
+                    pinoLogger.info('trigger source not found, returning NOT FOUND')
+                    span.setAttribute('webhook.triggerSourceFound', false)
+                    return {
+                        status: StatusCodes.NOT_FOUND,
+                        body: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
                     }
                 }
 
@@ -96,17 +109,6 @@ export const webhookService = {
                     }
                 }
 
-                const flowDisabledAndNoSaveSampleData = flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
-                if (flowDisabledAndNoSaveSampleData) {
-                    span.setAttribute('webhook.flowDisabled', true)
-                    return {
-                        status: StatusCodes.NOT_FOUND,
-                        body: {},
-                        headers: {
-                            [webhookHeader]: webhookRequestId,
-                        },
-                    }
-                }
                 pinoLogger.info('Adding webhook job to queue')
 
 

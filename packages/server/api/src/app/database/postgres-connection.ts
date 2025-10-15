@@ -87,6 +87,7 @@ import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/17575577
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
 import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759772332795-RemoveFlowRunDisplayName'
 import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
+import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -100,6 +101,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
         AddFlowVersionBackupFile1759964470862,
         RemoveFlowRunDisplayName1759772332795,
         AddIndexForAppEvents1759392852559,
@@ -224,6 +226,7 @@ export const createPostgresDataSource = (): DataSource => {
     const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
     const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
+    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
     const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
@@ -238,7 +241,7 @@ export const createPostgresDataSource = (): DataSource => {
         ...commonProperties,
         ...migrationConfig,
         extra: {
-            idleTimeoutMillis: 5 * 60 * 1000,
+            idleTimeoutMillis,
         },
     })
 }
