@@ -20,6 +20,7 @@ import {
   ImapError,
   ImapMailboxNotFoundError,
   ImapConnectionLostError,
+  ImapEmailNotFoundError,
 } from './errors';
 
 type Message = {
@@ -39,7 +40,7 @@ function buildImapClient(auth: ImapAuth): ImapFlow {
   return new ImapFlow({ ...imapConfig, logger: false });
 }
 
-async function confirmEmailExists(imapClient: ImapFlow, uid: string) {
+async function confirmEmailExists(imapClient: ImapFlow, uid: number) {
   const searchResult = await imapClient.search({ uid }, { uid: true });
 
   if (!searchResult || searchResult.length === 0) {
