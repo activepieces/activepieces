@@ -334,7 +334,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     stepNameToTest,
                     environment,
                 })
-                log.info(`[SpeedFlowExecutionCache] Created Run ${performance.now() - time}ms`)
                 span.setAttribute('flowRun.id', newFlowRun.id)
 
                 await addToQueue({

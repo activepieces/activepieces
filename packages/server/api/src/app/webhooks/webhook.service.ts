@@ -44,7 +44,6 @@ export const webhookService = {
                     flowId,
                     simulate: saveSampleData,
                 })
-                logger.info(`[SpeedFlowExecutionCache] ${performance.now() - time}ms`)
                 
                 if (!flowExecutionResult.exists) {
                     pinoLogger.info('Flow not found, returning GONE')
