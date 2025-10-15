@@ -49,6 +49,13 @@ export class ImapCertificateError extends ImapError {
   }
 }
 
+export class ImapEmailNotFoundError extends ImapError {
+  constructor() {
+    super('Email not found in the specified mailbox.');
+    this.name = 'ImapEmailNotFoundError';
+  }
+}
+
 export class ImapHostNotFoundError extends ImapError {
   constructor() {
     super('Host not found. Please verify the IMAP server address.');
