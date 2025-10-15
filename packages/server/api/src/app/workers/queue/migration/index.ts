@@ -2,7 +2,6 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis'
 import { distributedLock } from '../../../helper/lock'
-import { refillJobsWithEngineToken } from './refill-jobs-with-engine-token'
 import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'
 import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
@@ -14,9 +13,6 @@ const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
 
 export const queueMigration = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
-        if (!await needMigration()) {
-            return
-        }
         const migrationLock = await distributedLock.acquireLock({
             key: 'job_migration_lock',
             timeout: dayjs.duration(20, 'minute').asMilliseconds(),
@@ -31,7 +27,6 @@ export const queueMigration = (log: FastifyBaseLogger) => ({
             }
             await unifyOldQueuesIntoOne(log).run()
             await removeRateLimitJobsQueue(log).run()
-            await refillJobsWithEngineToken(log).run()
         }
         finally {
             await migrationLock.release()
