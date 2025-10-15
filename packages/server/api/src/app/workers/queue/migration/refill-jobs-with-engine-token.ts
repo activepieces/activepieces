@@ -67,6 +67,10 @@ export const refillJobsWithEngineToken = (log: FastifyBaseLogger) => ({
             )
 
             migratedJobs += jobsToMigrate.length
+            log.info({
+              migratedJobs,
+              start,
+            }, '[refillJobsWithEngineToken] migrated jobs')
         }
 
         log.info({
