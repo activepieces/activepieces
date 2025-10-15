@@ -76,7 +76,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         const userIdentity = await userIdentityRepository().findOneByOrFail({ id: params.id })
         return userIdentity
     },
-    async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'id' | 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter'>> {
+    async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'id' | 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'profileImageUrl'>> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         return {
             id: user.id,
@@ -85,6 +85,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             lastName: user.lastName,
             trackEvents: user.trackEvents,
             newsLetter: user.newsLetter,
+            profileImageUrl: user.profileImageUrl,
         }
     },
     async updatePassword(params: UpdatePasswordParams): Promise<void> {
@@ -109,6 +110,12 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             verified: true,
         })
     },
+    // Custom
+    async updateProfileImage(params: UpdateProfileImageParams): Promise<void> {
+        await userIdentityRepository().update(params.id, {
+            profileImageUrl: params.profileImageUrl ?? '',
+        })
+    },
 })
 
 
@@ -129,4 +136,9 @@ type UpdatePasswordParams = {
 type VerifyIdentityPasswordParams = {
     email: string
     password: string
+}
+
+type UpdateProfileImageParams = {
+    id: string
+    profileImageUrl: string | null
 }

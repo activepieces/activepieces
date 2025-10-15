@@ -150,6 +150,7 @@ export const userService = {
             email: identity.email,
             firstName: identity.firstName,
             lastName: identity.lastName,
+            profileImageUrl: identity.profileImageUrl,
             platformId: user.platformId,
             platformRole: user.platformRole,
             status: user.status,

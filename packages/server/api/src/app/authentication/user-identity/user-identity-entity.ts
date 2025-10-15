@@ -43,6 +43,10 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             type: String,
             nullable: false,
         },
+        profileImageUrl: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

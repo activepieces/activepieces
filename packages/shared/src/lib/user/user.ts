@@ -63,6 +63,7 @@ export const UserWithMetaInformation = Type.Object({
     lastName: Type.String(),
     created: Type.String(),
     updated: Type.String(),
+    profileImageUrl: Type.Optional(Type.String()),
 })
 
 export type UserWithMetaInformation = Static<typeof UserWithMetaInformation>
@@ -84,6 +85,7 @@ export const UserWithMetaInformationAndProject = Type.Object({
     trackEvents: Type.Boolean(),
     newsLetter: Type.Boolean(),
     verified: Type.Boolean(),
+    profileImageUrl: Type.Optional(Type.String()),
 })
 
 export type UserWithMetaInformationAndProject = Static<typeof UserWithMetaInformationAndProject>

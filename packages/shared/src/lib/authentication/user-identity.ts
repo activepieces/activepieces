@@ -19,6 +19,7 @@ export const UserIdentity = Type.Object({
     verified: Type.Boolean(),
     tokenVersion: Type.Optional(Type.String()),
     provider: Type.Enum(UserIdentityProvider),
+    profileImageUrl: Type.Optional(Type.String()),
 })
 
 export type UserIdentity = Static<typeof UserIdentity>
