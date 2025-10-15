@@ -1,72 +1,79 @@
-import { FastifyBaseLogger } from "fastify"
-import { bullMqQueue } from '../job-queue'
-import { ExecuteFlowJobData, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from "@activepieces/shared"
-import { Job } from "bullmq"
-import { flowVersionRepo } from "../../../flows/flow-version/flow-version.service"
-import { In } from "typeorm"
-import { accessTokenManager } from "../../../authentication/lib/access-token-manager"
-import { redisConnections } from "../../../database/redis"
+import { QueueName } from '@activepieces/server-shared'
+import { ExecuteFlowJobData, isNil, WorkerJobType } from '@activepieces/shared'
+import { Job, Queue } from 'bullmq'
+import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
+import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
+import { redisConnections } from '../../../database/redis'
+import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 
-const REFILL_JOBS_WITH_ENGINE_TOKEN_KEY = 'migration:refill_jobs_with_engine_token'
+const MIGRATION_KEY = 'migration:refill_jobs_with_engine_token'
+const BATCH_SIZE = 1000
 
 export const refillJobsWithEngineToken = (log: FastifyBaseLogger) => ({
-  async run(): Promise<void> {
-    const redisConnection = await redisConnections.useExisting()
-    const isMigrated = await redisConnection.get(REFILL_JOBS_WITH_ENGINE_TOKEN_KEY)
-    if (!isNil(isMigrated)) {
-      log.info('[refillJobsWithEngineToken] Already migrated, skipping')
-      return
-    }
-    if (isNil(bullMqQueue)) {
-      throw new Error('BullMQ queue is not initialized')
-    }
+    async run(): Promise<void> {
+        const redis = await redisConnections.useExisting()
+        const alreadyMigrated = await redis.get(MIGRATION_KEY)
+        if (!isNil(alreadyMigrated)) {
+            log.info('[refillJobsWithEngineToken] Already migrated, skipping')
+            return
+        }
 
-    const batchSize = 1000
-
-    let start = 0;
-    let migratedJobs = 0
-    while (true) {
-      const jobs = await bullMqQueue.getJobs(undefined, start, start + batchSize);
-      if (isNil(jobs) || jobs.length === 0) {
-        break;
-      }
-      const filteredJobs = jobs.filter(job => job.data.schemaVersion === LATEST_JOB_DATA_SCHEMA_VERSION)
-      const flowJobs: Job<ExecuteFlowJobData>[] = filteredJobs.filter(job => job.data.jobType === WorkerJobType.EXECUTE_FLOW) as Job<ExecuteFlowJobData>[]
-      let flowVersionIdToFlowId: Record<string, string> = {}
-      if (flowJobs.length > 0) {
-        const flowVersionIds = await flowVersionRepo().find({
-          where: { id: In(flowJobs.map(job => job.data.flowVersionId)) },
-          select: { id: true, flowId: true }
+        const workerQueue = new Queue(QueueName.WORKER_JOBS, {
+            connection: await redisConnections.createNew(),
         })
 
-        flowVersionIdToFlowId = flowVersionIds.reduce((acc, flowVersion) => ({ ...acc, [flowVersion.id]: flowVersion.flowId }), {})
-      }
-      const promises = filteredJobs.map(async job => {
-        const engineToken = await accessTokenManager.generateEngineToken({
-          jobId: job.id,
-          projectId: job.data.projectId!,
-          platformId: job.data.platformId,
-        })
-        return job.updateData({
-          ...job.data,
-          engineToken,
-          ...(job.data.jobType === WorkerJobType.EXECUTE_FLOW && { flowId: flowVersionIdToFlowId[job.data.flowVersionId] }),
-        })
-      })
-      await Promise.all(promises)
-      if (filteredJobs.length > 0) {
-        migratedJobs += filteredJobs.length
-      }
-      start += batchSize;
-    }
+        let migratedJobs = 0
+        for (let start = 0; ; start += BATCH_SIZE) {
+            const jobs = await workerQueue.getJobs(undefined, start, start + BATCH_SIZE)
+            if (!jobs?.length) break
 
-    log.info(
-      '[refillJobsWithEngineToken] Refilled jobs with engine token and execute flow jobs with flowId',
-    )
-    if (migratedJobs === 0) {
-      await redisConnection.set(REFILL_JOBS_WITH_ENGINE_TOKEN_KEY, 'true')
-    }
-  }
+            // Only jobs lacking 'engineToken'
+            const jobsToMigrate = jobs.filter(job => !('engineToken' in job.data))
+            if (!jobsToMigrate.length) continue
+
+            // Map flowVersionId to flowId for EXECUTE_FLOW jobs
+            const flowVersionIdToFlowId: Record<string, string> = {}
+            const flowJobs = jobsToMigrate.filter(
+                job => job.data.jobType === WorkerJobType.EXECUTE_FLOW,
+            ) as Job<ExecuteFlowJobData>[]
+
+            if (flowJobs.length) {
+                const flowVersions = await flowVersionRepo().find({
+                    where: { id: In(flowJobs.map(job => job.data.flowVersionId)) },
+                    select: { id: true, flowId: true },
+                })
+                for (const { id, flowId } of flowVersions) {
+                    flowVersionIdToFlowId[id] = flowId
+                }
+            }
+
+            await Promise.all(
+                jobsToMigrate.map(async job => {
+                    const engineToken = await accessTokenManager.generateEngineToken({
+                        jobId: job.id,
+                        projectId: job.data.projectId!,
+                        platformId: job.data.platformId,
+                    })
+                    const updatedData = {
+                        ...job.data,
+                        engineToken,
+                    }
+                    if (job.data.jobType === WorkerJobType.EXECUTE_FLOW) {
+                        updatedData.flowId = flowVersionIdToFlowId[job.data.flowVersionId]
+                    }
+                    return job.updateData(updatedData)
+                }),
+            )
+
+            migratedJobs += jobsToMigrate.length
+        }
+
+        log.info('[refillJobsWithEngineToken] Refilled jobs with engine token and flowId')
+
+        // Mark as migrated if all jobs are up-to-date
+        if (migratedJobs === 0) {
+            await redis.set(MIGRATION_KEY, 'true')
+        }
+    },
 })
-
-
