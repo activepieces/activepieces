@@ -65,56 +65,52 @@ jobs:
           echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
 
       - name: Lint affected projects excluding pieces
-        run: |
-          if [ "${{ steps.check-fork.outputs.is_fork }}" = "false" ]; then
-            npx nx affected --target=lint --exclude="pieces-*" --agents --parallel
-          else
-            npx nx affected --target=lint --exclude="pieces-*"
-          fi
+        if: steps.check-fork.outputs.is_fork == 'false'
+        run: npx nx affected --target=lint --exclude="pieces-*" --agents --parallel
+      
+      - name: Lint affected projects excluding pieces (fork)
+        if: steps.check-fork.outputs.is_fork == 'true'
+        run: npx nx affected --target=lint --exclude="pieces-*"
       
       - name: Lint changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: |
-          if [ "${{ steps.check-fork.outputs.is_fork }}" = "false" ]; then
-            npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
-          else
-            npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-          fi
+        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false' && steps.check-fork.outputs.is_fork == 'false'
+        run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
+      
+      - name: Lint changed pieces projects (fork)
+        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false' && steps.check-fork.outputs.is_fork == 'true'
+        run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
       
       - name: Lint all pieces projects
-        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: |
-          if [ "${{ steps.check-fork.outputs.is_fork }}" = "false" ]; then
-            npx nx run-many --target=lint --projects="pieces-*" --agents --parallel
-          else
-            npx nx run-many --target=lint --projects="pieces-*"
-          fi
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true' && steps.check-fork.outputs.is_fork == 'false'
+        run: npx nx run-many --target=lint --projects="pieces-*" --agents --parallel
+      
+      - name: Lint all pieces projects (fork)
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true' && steps.check-fork.outputs.is_fork == 'true'
+        run: npx nx run-many --target=lint --projects="pieces-*"
         
       - name: Build affected projects excluding pieces
-        run: |
-          if [ "${{ steps.check-fork.outputs.is_fork }}" = "false" ]; then
-            npx nx affected --target=build -c production --exclude="pieces-*" --agents --parallel
-          else
-            npx nx affected --target=build -c production --exclude="pieces-*"
-          fi
+        if: steps.check-fork.outputs.is_fork == 'false'
+        run: npx nx affected --target=build -c production --exclude="pieces-*" --agents --parallel
+      
+      - name: Build affected projects excluding pieces (fork)
+        if: steps.check-fork.outputs.is_fork == 'true'
+        run: npx nx affected --target=build -c production --exclude="pieces-*"
     
       - name: Build changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: |
-          if [ "${{ steps.check-fork.outputs.is_fork }}" = "false" ]; then
-            npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
-          else
-            npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-          fi
+        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false' && steps.check-fork.outputs.is_fork == 'false'
+        run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
+      
+      - name: Build changed pieces projects (fork)
+        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false' && steps.check-fork.outputs.is_fork == 'true'
+        run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
       
       - name: Build all pieces projects
-        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: |
-          if [ "${{ steps.check-fork.outputs.is_fork }}" = "false" ]; then
-            npx nx run-many --target=build -c production --projects="pieces-*" --agents --parallel
-          else
-            npx nx run-many --target=build -c production --projects="pieces-*"
-          fi
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true' && steps.check-fork.outputs.is_fork == 'false'
+        run: npx nx run-many --target=build -c production --projects="pieces-*" --agents --parallel
+      
+      - name: Build all pieces projects (fork)
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true' && steps.check-fork.outputs.is_fork == 'true'
+        run: npx nx run-many --target=build -c production --projects="pieces-*"
       
       - name: Run all tests in parallel
         run: |
