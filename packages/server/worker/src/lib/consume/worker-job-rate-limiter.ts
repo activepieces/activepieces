@@ -1,23 +1,18 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ExecuteFlowJobData, isNil, JobData, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis-connections'
-import { apDayjsDuration } from '../../helper/dayjs-helper'
-import { system } from '../../helper/system/system'
+import { workerRedisConnections } from '../utils/worker-redis'
+import { workerMachine } from '../utils/machine'
+import { apDayjsDuration } from '@activepieces/server-shared'
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
-
-const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
-const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
-const FLOW_TIMEOUT_IN_MILLISECONDS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
-
-
 const projectSetKey = (projectId: string): string => `active_jobs_set:${projectId}`
 
 export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
     async onCompleteOrFailedJob(data: JobData, jobId: string | undefined): Promise<void> {
-        if (!RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId)) {
+        const projectRateLimiterEnabled = workerMachine.getSettings().PROJECT_RATE_LIMITER_ENABLED
+        if (!RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || !projectRateLimiterEnabled || isNil(jobId)) {
             return
         }
         const castedJob = data as ExecuteFlowJobData
@@ -26,7 +21,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         }
 
         const setKey = projectSetKey(castedJob.projectId)
-        const redisConnection = await redisConnections.useExisting()
+        const redisConnection = await workerRedisConnections.useExisting()
         await redisConnection.eval(`
         local setKey = KEYS[1]
         local jobId = ARGV[1]
@@ -52,7 +47,10 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
     }> {
-        if (isNil(data.projectId) || !PROJECT_RATE_LIMITER_ENABLED || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
+        const projectRateLimiterEnabled = workerMachine.getSettings().PROJECT_RATE_LIMITER_ENABLED
+        const maxConcurrentJobsPerProject = workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
+        const flowTimeoutInMilliseconds = apDayjsDuration(workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, 'seconds').add(1, 'minute').asMilliseconds()
+        if (isNil(data.projectId) || !projectRateLimiterEnabled || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
             return {
                 shouldRateLimit: false,
             }
@@ -67,7 +65,8 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         const setKey = projectSetKey(data.projectId)
         const currentTime = Date.now()
         const jobWithTimestamp = `${jobId}:${currentTime}`
-        const redisConnection = await redisConnections.useExisting()
+        const redisConnection = await workerRedisConnections.useExisting()
+     
         const result = await redisConnection.eval(
             `
     local setKey = KEYS[1]
@@ -111,8 +110,8 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             1,
             setKey,
             currentTime.toString(),
-            FLOW_TIMEOUT_IN_MILLISECONDS.toString(),
-            MAX_CONCURRENT_JOBS_PER_PROJECT.toString(),
+            flowTimeoutInMilliseconds.toString(),
+            maxConcurrentJobsPerProject.toString(),
             jobWithTimestamp,
         ) as number
 

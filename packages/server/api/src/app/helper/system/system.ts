@@ -141,6 +141,21 @@ export const system = {
         return value === 'true'
     },
 
+    getBooleanOrThrow(prop: SystemProp): boolean {
+        const value = this.getBoolean(prop)
+        if (isNil(value)) {
+            throw new ActivepiecesError(
+                {
+                    code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+                    params: {
+                        prop,
+                    },
+                },
+                `System property AP_${prop} is not defined, please check the documentation`,
+            )
+        }
+        return value
+    },
     getList(prop: SystemProp): string[] {
         const values = getEnvVarOrReturnDefaultValue(prop)
 

@@ -24,6 +24,12 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
                     const flow = await engineApiService(engineToken).getFlow({
                         versionId: flowVersionId,
                     })
+                    log.info({
+                        message: '[flowWorkerCache] Installing flow',
+                        flowVersionId,
+                        state: flow?.version.state,
+                        found: !isNil(flow)
+                    })
                     return JSON.stringify(flow)
                 },
                 skipSave: (flow: string) => {

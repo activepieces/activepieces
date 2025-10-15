@@ -67,9 +67,12 @@ export type ConsumeJobResponse = Static<typeof ConsumeJobResponse>
 export const WorkerMachineHealthcheckRequest = MachineInformation
 
 export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>
-export const WorkerMachineHealthcheckResponse = Type.Object({
+
+export const WorkerSettingsResponse = Type.Object({
     PUBLIC_URL: Type.String(),
     TRIGGER_TIMEOUT_SECONDS: Type.Number(),
+    TRIGGER_HOOKS_TIMEOUT_SECONDS: Type.Number(),
+    AGENT_TIMEOUT_SECONDS: Type.Number(),
     PAUSED_FLOW_TIMEOUT_DAYS: Type.Number(),
     EXECUTION_MODE: Type.String(),
     FLOW_TIMEOUT_SECONDS: Type.Number(),
@@ -104,6 +107,9 @@ export const WorkerMachineHealthcheckResponse = Type.Object({
     REDIS_SENTINEL_ROLE: Type.Optional(Type.String()),
     REDIS_SENTINEL_HOSTS: Type.Optional(Type.String()),
     REDIS_SENTINEL_NAME: Type.Optional(Type.String()),
+    PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
+    MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
+    JWT_SECRET: Type.String(),
 })
 
-export type WorkerMachineHealthcheckResponse = Static<typeof WorkerMachineHealthcheckResponse>
+export type WorkerSettingsResponse = Static<typeof WorkerSettingsResponse>

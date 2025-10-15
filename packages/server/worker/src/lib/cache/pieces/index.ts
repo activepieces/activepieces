@@ -1,7 +1,7 @@
 import { PiecesSource } from '@activepieces/server-shared'
-import { LocalPieceManager } from './local-piece-manager'
+import { LocalPieceManager } from './development/local-piece-manager'
 import { PieceManager } from './piece-manager'
-import { RegistryPieceManager } from './registry-piece-manager'
+import { RegistryPieceManager } from './production/registry-piece-manager'
 
 const pieceManagerVariant: Record<PiecesSource, new () => PieceManager> = {
     [PiecesSource.FILE]: LocalPieceManager,

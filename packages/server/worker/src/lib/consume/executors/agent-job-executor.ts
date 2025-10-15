@@ -3,9 +3,9 @@ import { Agent, agentbuiltInToolsNames, AgentJobData, AgentStepBlock, AgentTaskS
 import { openai } from '@ai-sdk/openai'
 import { APICallError, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { agentsApiService } from '../api/server-api.service'
-import { agentTools } from '../utils/agent-tools'
-import { workerMachine } from '../utils/machine'
+import { agentsApiService } from '../../api/server-api.service'
+import { agentTools } from '../../utils/agent-tools'
+import { workerMachine } from '../../utils/machine'
 
 export const agentJobExecutor = (log: FastifyBaseLogger) => ({
     async executeAgent({ jobData, engineToken, workerToken }: ExecuteAgentParams): Promise<void> {

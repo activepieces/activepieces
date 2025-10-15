@@ -45,7 +45,7 @@ export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
                     if (skipSave(value)) {
                         return {
                             cacheHit: false,
-                            state: null,
+                            state: value,
                         }
                     }
                     const freshCache = await cacheState(folderPath, log).saveCache(

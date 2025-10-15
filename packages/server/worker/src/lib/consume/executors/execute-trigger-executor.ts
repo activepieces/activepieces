@@ -1,8 +1,8 @@
 import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, PollingJobData, ProgressUpdateType, RunEnvironment, TriggerPayload, TriggerRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { workerApiService } from '../api/server-api.service'
-import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { triggerHooks } from '../utils/trigger-utils'
+import { workerApiService } from '../../api/server-api.service'
+import { flowWorkerCache } from '../../cache/flow-worker-cache'
+import { triggerHooks } from '../../utils/trigger-utils'
 
 export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
     async executeTrigger({ jobId, data, engineToken, workerToken, timeoutInSeconds }: ExecuteTriggerParams): Promise<ConsumeJobResponse> {

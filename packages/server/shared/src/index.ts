@@ -18,3 +18,4 @@ export * from './lib/redis/distributed-lock-factory'
 
 export * from './lib/redis/types'
 export * from './lib/redis/index'
+export * from './lib/dayjs-helper'

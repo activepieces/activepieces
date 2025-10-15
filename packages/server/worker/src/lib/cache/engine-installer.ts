@@ -1,7 +1,7 @@
 import { PathLike } from 'fs'
 import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { systemConstants } from '@activepieces/server-shared'
+import { fileSystemUtils, systemConstants } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -37,6 +37,7 @@ export const engineInstaller = (log: FastifyBaseLogger) => ({
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
     const destDir = dirname(dest.toString())
     const tempPath = join(destDir, 'engine.temp.js')
+    await fileSystemUtils.threadSafeMkdir(destDir)
     await copyFile(src, tempPath)
     await rename(tempPath, dest)
 }
