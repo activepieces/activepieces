@@ -95,7 +95,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 await cache.setCache(codePath, currentHash)
             }
             catch (error: unknown) {
-                log.error(error,`[CodeBuilder#processCodeStep], codePath: ${codePath}`)
+                log.error(error, `[CodeBuilder#processCodeStep], codePath: ${codePath}`)
 
                 await handleCompilationError({
                     codePath,
@@ -108,14 +108,14 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
 function getPackageJson(packageJson: string): string {
     const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
-    if(isPackagesAllowed) {
+    if (isPackagesAllowed) {
         const packageJsonObject = JSON.parse(packageJson)
         return JSON.stringify({
             ...packageJsonObject,
             dependencies: {
-                "@types/node": "18.17.1",
+                '@types/node': '18.17.1',
                 ...(packageJsonObject?.dependencies ?? {}),
-            }
+            },
         })
     }
 

@@ -31,11 +31,14 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import {
+  useAuthorization,
+  useShowPlatformAdminDashboard,
+} from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission, PlatformRole } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
 import { ProjectSettingsDialog } from '../project-settings';
@@ -55,6 +58,10 @@ export function SidebarUser() {
   const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
   const isExternalLogin = !isNil(loginUrl);
 
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToInviteUser = checkAccess(
+    Permission.WRITE_INVITATION,
+  );
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
 
   if (isExternalLogin) {
@@ -139,10 +146,12 @@ export function SidebarUser() {
                   {t('Project Settings')}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => setInviteOpen(true)}>
-                <UserPlus className="size-4 mr-2" />
-                <span>{t('Invite User')}</span>
-              </DropdownMenuItem>
+              {userHasPermissionToInviteUser && (
+                <DropdownMenuItem onClick={() => setInviteOpen(true)}>
+                  <UserPlus className="size-4 mr-2" />
+                  <span>{t('Invite User')}</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
