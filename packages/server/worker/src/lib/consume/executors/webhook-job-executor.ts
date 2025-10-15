@@ -11,10 +11,10 @@ import {
 } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
-import { workerApiService } from '../api/server-api.service'
-import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { triggerHooks } from '../utils/trigger-utils'
-import { webhookUtils } from '../utils/webhook-utils'
+import { workerApiService } from '../../api/server-api.service'
+import { flowWorkerCache } from '../../cache/flow-worker-cache'
+import { triggerHooks } from '../../utils/trigger-utils'
+import { webhookUtils } from '../../utils/webhook-utils'
 
 const tracer = trace.getTracer('webhook-executor')
 

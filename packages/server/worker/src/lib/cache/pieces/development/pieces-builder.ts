@@ -7,8 +7,8 @@ import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
-import { cacheState } from '../../cache/cache-state'
-import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../cache/worker-cache'
+import { cacheState } from '../../cache-state'
+import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 

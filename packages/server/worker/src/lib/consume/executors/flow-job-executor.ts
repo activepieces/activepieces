@@ -18,10 +18,10 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService } from '../api/server-api.service'
-import { flowWorkerCache } from '../cache/flow-worker-cache'
-import { engineRunner } from '../compute'
-import { workerMachine } from '../utils/machine'
+import { engineApiService } from '../../api/server-api.service'
+import { flowWorkerCache } from '../../cache/flow-worker-cache'
+import { engineRunner } from '../../compute'
+import { workerMachine } from '../../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 

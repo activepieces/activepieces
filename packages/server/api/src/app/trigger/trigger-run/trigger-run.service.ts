@@ -2,7 +2,7 @@ import { apId, FileCompression, FileType, ProjectId, TriggerRun, TriggerRunStatu
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
-import { apDayjs } from '../../helper/dayjs-helper'
+import { apDayjs } from '@activepieces/server-shared'
 import { projectService } from '../../project/project-service'
 import { TriggerRunEntity } from './trigger-run.entity'
 

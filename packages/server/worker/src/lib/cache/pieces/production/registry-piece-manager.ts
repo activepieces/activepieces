@@ -8,10 +8,10 @@ import {
     PrivatePiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheState, NO_SAVE_GUARD } from '../cache/cache-state'
-import { packageManager } from '../cache/package-manager'
-import { CacheState } from '../cache/worker-cache'
-import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
+import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
+import { packageManager } from '../../package-manager'
+import { CacheState } from '../../worker-cache'
+import { PACKAGE_ARCHIVE_PATH, PieceManager } from '../piece-manager'
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({

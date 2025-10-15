@@ -148,7 +148,7 @@
     "bcrypt": "6.0.0",
     "boring-avatars": "1.11.2",
     "buffer": "6.0.3",
-    "bullmq": "5.28.1",
+    "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",
     "checkly": "6.1.1",
     "cheerio": "1.0.0-rc.12",

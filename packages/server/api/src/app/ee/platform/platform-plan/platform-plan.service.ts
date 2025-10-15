@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 
 import { repoFactory } from '../../../core/db/repo-factory'
 import { distributedLock } from '../../../database/redis-connections'
-import { apDayjs } from '../../../helper/dayjs-helper'
+import { apDayjs } from '@activepieces/server-shared'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'

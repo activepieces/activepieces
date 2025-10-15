@@ -1,37 +1,28 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApEdition, ApId, isNil } from '@activepieces/shared'
+import { ApEdition, ApId, getDefaultJobPriority, isNil, JOB_PRIORITY } from '@activepieces/shared'
 import { Queue, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
-import { apDayjsDuration } from '../../helper/dayjs-helper'
+import { apDayjsDuration } from '@activepieces/server-shared'
 import { system } from '../../helper/system/system'
-import { machineService } from '../machine/machine-service'
 import { queueMetrics } from './queue-events'
-import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
-import { workerJobRateLimiter } from './worker-job-rate-limiter'
+import { AddJobParams, JobType, QueueManager } from './queue-manager'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
-
 export let bullMqQueue: Queue | undefined = undefined
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
-    async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
-        const queue = await ensureQueueExists(queueName, log)
-        await queue.setGlobalConcurrency(concurrency)
-    },
     async init(): Promise<void> {
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName, log))
         await Promise.all(queues)
-        await machineService(log).updateConcurrency()
         log.info('[redisQueueManager#init] Redis queues initialized')
     },
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { data, type } = params
 
-        const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
         const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
 
         switch (type) {
@@ -50,7 +41,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
             case JobType.ONE_TIME: {
                 await queue.add(params.id, data, {
-                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[getDefaultJobPriority(data)],
+                    priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: params.delay,
                     jobId: params.id,
                 })
@@ -92,6 +83,7 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
     }
 
     bullMqQueue = new Queue(queueName, options)
+    await bullMqQueue.removeGlobalConcurrency();
     await bullMqQueue.waitUntilReady()
 
     const edition = system.getEdition()
