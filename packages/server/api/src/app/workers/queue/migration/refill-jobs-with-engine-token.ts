@@ -69,7 +69,9 @@ export const refillJobsWithEngineToken = (log: FastifyBaseLogger) => ({
             migratedJobs += jobsToMigrate.length
         }
 
-        log.info('[refillJobsWithEngineToken] Refilled jobs with engine token and flowId')
+        log.info({
+          migratedJobs,
+        }, '[refillJobsWithEngineToken] Refilled jobs with engine token and flowId')
 
         // Mark as migrated if all jobs are up-to-date
         if (migratedJobs === 0) {
