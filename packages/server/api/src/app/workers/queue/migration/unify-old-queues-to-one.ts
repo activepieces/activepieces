@@ -1,7 +1,8 @@
-import { DelayedJobData, ExecuteFlowJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { DelayedJobData, ExecuteFlowJobData, isNil, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis'
+import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
@@ -55,15 +56,26 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
                 migratedOneTimeJobs,
             }, '[unifyOldQueuesIntoOne] Migrated one time jobs')
         }
-        await jobQueue(log).add({
-            id: job.id!,
-            type: JobType.ONE_TIME,
-            data: {
-                ...casedData,
-                platformId: await projectService.getPlatformId(casedData.projectId),
-                jobType: WorkerJobType.EXECUTE_FLOW,
+        const flowVersion = await flowVersionRepo().findOne({
+            where: {
+                id: casedData.flowVersionId,
+            },
+            select: {
+                flowId: true,
             },
         })
+        if (!isNil(flowVersion?.flowId)) {
+            await jobQueue(log).add({
+                id: job.id!,
+                type: JobType.ONE_TIME,
+                data: {
+                    ...casedData,
+                    flowId: flowVersion.flowId,
+                    platformId: await projectService.getPlatformId(casedData.projectId),
+                    jobType: WorkerJobType.EXECUTE_FLOW,
+                },
+            })
+        }
         await job.remove()
     })
     if (migratedOneTimeJobs > 0) {
