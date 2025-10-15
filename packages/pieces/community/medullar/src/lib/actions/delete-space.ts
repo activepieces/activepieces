@@ -16,7 +16,7 @@ export const deleteSpace = createAction({
 
     await httpClient.sendRequest({
       method: HttpMethod.DELETE,
-      url: `${medullarCommon.exploratorUrl}/spaces/${context.propsValue.spaceId}/`,
+      url: `${medullarCommon.aiUrl}/spaces/${context.propsValue.spaceId}/`,
       headers: {
         Authorization: `Bearer ${context.auth}`,
       },

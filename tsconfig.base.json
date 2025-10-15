@@ -695,6 +695,9 @@
       "@activepieces/piece-microsoft-365-people": [
         "packages/pieces/community/microsoft-365-people/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-365-planner": [
+        "packages/pieces/community/microsoft-365-planner/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
@@ -778,6 +781,9 @@
       ],
       "@activepieces/piece-odoo": [
         "packages/pieces/community/odoo/src/index.ts"
+      ],
+      "@activepieces/piece-okta": [
+        "packages/pieces/community/okta/src/index.ts"
       ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
