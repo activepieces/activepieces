@@ -6,6 +6,7 @@ import {
   areSheetIdsValid,
   googleSheetsCommon,
   labelToColumn,
+  mapRowsToHeaderNames
 } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { z } from 'zod';
@@ -46,6 +47,18 @@ export const findRowsAction = createAction({
       required: false,
       defaultValue: 1,
     }),
+    headerRow: Property.Number({
+      displayName: 'Header Row',
+      description: 'Which row contains the headers?',
+      required: true,
+      defaultValue: 1,
+    }),
+    useHeaderNames: Property.Checkbox({
+      displayName: 'Use header names for keys',
+      description: 'Map A/B/C… to the actual column headers (row specified above).',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run({ propsValue, auth }) {
     await propsValidation.validateZod(propsValue, {
@@ -57,6 +70,8 @@ export const findRowsAction = createAction({
     const sheetId = propsValue.sheetId;
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
+    const headerRow = propsValue.headerRow;
+    const useHeaderNames = propsValue.useHeaderNames as boolean;
 
     if (!areSheetIdsValid(spreadsheetId,sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -68,6 +83,7 @@ export const findRowsAction = createAction({
       sheetId: sheetId as number,
       rowIndex_s: startingRow,
       rowIndex_e: undefined,
+      headerRow: headerRow,
     });
 
     const values = rows.map((row) => {
@@ -112,6 +128,15 @@ export const findRowsAction = createAction({
       }
     }
 
-    return matchingRows;
+    const finalRows = await mapRowsToHeaderNames(
+      matchingRows,
+      useHeaderNames,
+      spreadsheetId as string,
+      sheetId as number,
+      headerRow,
+      auth.access_token
+    );
+    
+    return finalRows;
   },
 });

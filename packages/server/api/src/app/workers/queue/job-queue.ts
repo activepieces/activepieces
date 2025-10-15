@@ -1,8 +1,9 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApEdition, ApId, isNil } from '@activepieces/shared'
+import { ApEdition, ApId, isNil, JobData } from '@activepieces/shared'
 import { Queue, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
@@ -15,7 +16,7 @@ const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMillisecond
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
-export let bullMqQueue: Queue | undefined = undefined
+export let workerJobsQueue: Queue | undefined = undefined
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
@@ -29,9 +30,19 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         log.info('[redisQueueManager#init] Redis queues initialized')
     },
     async add(params: AddJobParams<JobType>): Promise<void> {
-        const { data, type } = params
+        const { type, data } = params
+        const engineToken = await accessTokenManager.generateEngineToken({
+            jobId: params.id,
+            projectId: params.data.projectId!,
+            platformId: params.data.platformId,
+        })
+        const jobDataWithEngineToken = {
+            ...data,
+            engineToken,
+        } as JobData
 
-        const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
+
+        const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, jobDataWithEngineToken)
         const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
 
         switch (type) {
@@ -41,16 +52,16 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
                     tz: params.scheduleOptions.timezone,
                 }, {
                     name: data.flowVersionId,
-                    data,
+                    data: jobDataWithEngineToken,
                     opts: {
-                        priority: JOB_PRIORITY[getDefaultJobPriority(data)],
+                        priority: JOB_PRIORITY[getDefaultJobPriority(jobDataWithEngineToken)],
                     },
                 })
                 break
             }
             case JobType.ONE_TIME: {
-                await queue.add(params.id, data, {
-                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[getDefaultJobPriority(data)],
+                await queue.add(params.id, jobDataWithEngineToken, {
+                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[getDefaultJobPriority(jobDataWithEngineToken)],
                     delay: params.delay,
                     jobId: params.id,
                 })
@@ -68,8 +79,8 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
 })
 
 async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): Promise<Queue> {
-    if (!isNil(bullMqQueue)) {
-        return bullMqQueue
+    if (!isNil(workerJobsQueue)) {
+        return workerJobsQueue
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
 
@@ -91,8 +102,8 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
 
     }
 
-    bullMqQueue = new Queue(queueName, options)
-    await bullMqQueue.waitUntilReady()
+    workerJobsQueue = new Queue(queueName, options)
+    await workerJobsQueue.waitUntilReady()
 
     const edition = system.getEdition()
     if (edition !== ApEdition.CLOUD) {
@@ -102,6 +113,6 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
         await queueMetrics(log, queueEvents).attach()
     }
 
-    return bullMqQueue
+    return workerJobsQueue
 }
 

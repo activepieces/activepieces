@@ -217,6 +217,9 @@
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
+      "@activepieces/piece-chat-data": [
+        "packages/pieces/community/chat-data/src/index.ts"
+      ],
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
@@ -364,6 +367,9 @@
       ],
       "@activepieces/piece-dropbox": [
         "packages/pieces/community/dropbox/src/index.ts"
+      ],
+      "@activepieces/piece-drupal": [
+        "packages/pieces/community/drupal/src/index.ts"
       ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
@@ -686,6 +692,9 @@
       "@activepieces/piece-microsoft-365-people": [
         "packages/pieces/community/microsoft-365-people/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-365-planner": [
+        "packages/pieces/community/microsoft-365-planner/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
@@ -764,11 +773,14 @@
       "@activepieces/piece-ntfy": [
         "packages/pieces/community/ntfy/src/index.ts"
       ],
-      "@activepieces/piece-nuelink":[
+      "@activepieces/piece-nuelink": [
         "packages/pieces/community/nuelink/src/index.ts"
       ],
       "@activepieces/piece-odoo": [
         "packages/pieces/community/odoo/src/index.ts"
+      ],
+      "@activepieces/piece-okta": [
+        "packages/pieces/community/okta/src/index.ts"
       ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
@@ -985,6 +997,9 @@
       "@activepieces/piece-simpliroute": [
         "packages/pieces/community/simpliroute/src/index.ts"
       ],
+      "@activepieces/piece-simplybookme": [
+        "packages/pieces/community/simplybookme/src/index.ts"
+      ],
       "@activepieces/piece-sitespeakai": [
         "packages/pieces/community/sitespeakai/src/index.ts"
       ],
@@ -1162,6 +1177,9 @@
       "@activepieces/piece-village": [
         "packages/pieces/community/village/src/index.ts"
       ],
+      "@activepieces/piece-vimeo": [
+        "packages/pieces/community/vimeo/src/index.ts"
+      ],
       "@activepieces/piece-vlm-run": [
         "packages/pieces/community/vlm-run/src/index.ts"
       ],
@@ -1209,6 +1227,9 @@
       ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
+      ],
+      "@activepieces/piece-workable": [
+        "packages/pieces/community/workable/src/index.ts"
       ],
       "@activepieces/piece-wrike": [
         "packages/pieces/community/wrike/src/index.ts"

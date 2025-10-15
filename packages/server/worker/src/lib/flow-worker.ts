@@ -132,7 +132,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): Promise<ConsumeJobResponse> {
     const traceContext = ('traceContext' in request.jobData && request.jobData.traceContext) ? request.jobData.traceContext : {}
     const extractedContext = propagation.extract(context.active(), traceContext)
-    
+
     return context.with(extractedContext, () => {
         return tracer.startActiveSpan('worker.consumeJob', {
             attributes: {
@@ -161,7 +161,7 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                         return {
                             status: ConsumeJobResponseStatus.OK,
                         }
-                    case WorkerJobType.EXECUTE_POLLING:{
+                    case WorkerJobType.EXECUTE_POLLING: {
                         const response = await executeTriggerExecutor(log).executeTrigger({
                             jobId,
                             data: jobData,
@@ -171,9 +171,9 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                         })
                         span.setAttribute('worker.completed', true)
                         return response
-                        
+
                     }
-                    case WorkerJobType.RENEW_WEBHOOK:
+                    case WorkerJobType.RENEW_WEBHOOK: {
                         const response = await renewWebhookExecutor(log).renewWebhook({
                             data: jobData,
                             engineToken,
@@ -181,6 +181,7 @@ async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): P
                         })
                         span.setAttribute('worker.completed', true)
                         return response
+                    }
                     case WorkerJobType.DELAYED_FLOW: {
                         span.setAttribute('worker.error', true)
                         throw new Error('Delayed flow is handled by the app')

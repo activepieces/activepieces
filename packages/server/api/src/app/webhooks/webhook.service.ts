@@ -39,17 +39,35 @@ export const webhookService = {
                 const webhookRequestId = apId()
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-                const flow = await flowService(pinoLogger).getOneById(flowId)
-
-                if (isNil(flow)) {
+                const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
+                    flowId,
+                    simulate: saveSampleData,
+                })
+                const flowExists = !isNil(await flowService(pinoLogger).getOneById(flowId))
+                if (!flowExists) {
                     pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
                     return {
                         status: StatusCodes.GONE,
                         body: {},
-                        headers: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
                     }
                 }
+                if (isNil(triggerSourceResult)) {
+                    pinoLogger.info('trigger source not found, returning NOT FOUND')
+                    span.setAttribute('webhook.triggerSourceFound', false)
+                    return {
+                        status: StatusCodes.NOT_FOUND,
+                        body: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
+                    }
+                }
+
+                const { flow, ...triggerSource } = triggerSourceResult
 
                 span.setAttribute('webhook.flowFound', true)
                 span.setAttribute('webhook.projectId', flow.projectId)
@@ -66,12 +84,6 @@ export const webhookService = {
                         },
                     })
                 }
-
-                const triggerSource = await triggerSourceService(pinoLogger).getByFlowId({
-                    flowId: flow.id,
-                    projectId: flow.projectId,
-                    simulate: saveSampleData,
-                })
 
                 const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
                     payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
@@ -95,17 +107,6 @@ export const webhookService = {
                     }
                 }
 
-                const flowDisabledAndNoSaveSampleData = flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
-                if (flowDisabledAndNoSaveSampleData) {
-                    span.setAttribute('webhook.flowDisabled', true)
-                    return {
-                        status: StatusCodes.NOT_FOUND,
-                        body: {},
-                        headers: {
-                            [webhookHeader]: webhookRequestId,
-                        },
-                    }
-                }
                 pinoLogger.info('Adding webhook job to queue')
 
 

@@ -49,6 +49,9 @@ RUN npm ci
 
 COPY . .
 
+# Set NX_NO_CLOUD environment variable
+ENV NX_NO_CLOUD=true
+
 RUN npx nx run-many --target=build --projects=server-api --configuration production
 RUN npx nx run-many --target=build --projects=react-ui
 

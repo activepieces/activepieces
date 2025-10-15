@@ -21,6 +21,7 @@ import { eventStartTimeBefore } from './lib/triggers/event-start-time-before';
 import { newEventMatchingSearch } from './lib/triggers/new-event-matching-search';
 import { eventCancelled } from './lib/triggers/event-cancelled';
 import { newCalendar } from './lib/triggers/new-calendar';
+import { addCalendarToCalendarlist } from './lib/actions/add-calendar-to-calendarlist';
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
   description: '',
@@ -31,6 +32,7 @@ export const googleCalendarAuth = PieceAuth.OAuth2({
   scope: [
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/calendar.calendarlist'
   ],
 });
 
@@ -51,6 +53,8 @@ export const googleCalendar = createPiece({
     'khaledmashaly',
     'abuaboud',
     'ikus060',
+    'Cloudieunnie',
+    'sanket-a11y'
   ],
   auth: googleCalendarAuth,
   actions: [
@@ -62,6 +66,7 @@ export const googleCalendar = createPiece({
     deleteEventAction,
     findFreeBusy,
     getEventById,
+    addCalendarToCalendarlist,
     createCustomApiCallAction({
       auth: googleCalendarAuth,
       baseUrl() {

@@ -27,8 +27,17 @@ export const PopulatedFlow = Type.Composite([
     Flow,
     Type.Object({
         version: FlowVersion,
-        triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule', 'handshakeConfiguration'])),
+        triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule'])),
     }),
 ])
 
 export type PopulatedFlow = Static<typeof PopulatedFlow>
+
+
+export const PopulatedTriggerSource = Type.Composite([
+    TriggerSource,
+    Type.Object({
+        flow: Flow,
+    }),
+])
+export type PopulatedTriggerSource = Static<typeof PopulatedTriggerSource>
