@@ -150,13 +150,15 @@ async function performImapOperation(
 async function performMailboxOperation<T>(
   auth: ImapAuth,
   mailbox: string,
-  callback: (imapClient: ImapFlow) => Promise<T>
+  callback: (imapClient: ImapFlow) => Promise<T>,
+  options: { readOnly?: boolean } = {},
 ) {
+  const { readOnly = true } = options;
   return await performImapOperation(auth, async (imapClient) => {
     let lock: MailboxLockObject | null = null;
 
     try {
-      lock = await imapClient.getMailboxLock(mailbox, { readOnly: true });
+      lock = await imapClient.getMailboxLock(mailbox, { readOnly });
       return await callback(imapClient);
     } catch(error) {
       detectMissingMailbox(error);
@@ -192,7 +194,7 @@ async function setEmailReadStatus<T extends { success: true }>({
     }
 
     return { success: true };
-  })) as T;
+  }, { readOnly: false })) as T;
 }
 
 export {
