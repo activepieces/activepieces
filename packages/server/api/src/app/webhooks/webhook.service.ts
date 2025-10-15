@@ -4,8 +4,7 @@ import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
-import { flowService } from '../flows/flow/flow.service'
-import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
+import { flowExecutionCache } from '../flows/flow/flow-execution-cache'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
 import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
@@ -39,12 +38,15 @@ export const webhookService = {
                 const webhookRequestId = apId()
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-                const triggerSourceResult = await triggerSourceService(pinoLogger).getByFlowIdPopulated({
+
+                const time = performance.now()
+                const flowExecutionResult = await flowExecutionCache(pinoLogger).get({
                     flowId,
                     simulate: saveSampleData,
                 })
-                const flowExists = !isNil(await flowService(pinoLogger).getOneById(flowId))
-                if (!flowExists) {
+                logger.info(`[SpeedFlowExecutionCache] ${performance.now() - time}ms`)
+                
+                if (!flowExecutionResult.exists) {
                     pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
                     return {
@@ -55,7 +57,8 @@ export const webhookService = {
                         },
                     }
                 }
-                if (isNil(triggerSourceResult)) {
+                const { flow } = flowExecutionResult
+                if (flow.status === FlowStatus.DISABLED) {
                     pinoLogger.info('trigger source not found, returning NOT FOUND')
                     span.setAttribute('webhook.triggerSourceFound', false)
                     return {
@@ -66,8 +69,6 @@ export const webhookService = {
                         },
                     }
                 }
-
-                const { flow, ...triggerSource } = triggerSourceResult
 
                 span.setAttribute('webhook.flowFound', true)
                 span.setAttribute('webhook.projectId', flow.projectId)
@@ -87,7 +88,7 @@ export const webhookService = {
 
                 const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
                     payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-                    handshakeConfiguration: await handshakeHandler(pinoLogger).getWebhookHandshakeConfiguration(triggerSource),
+                    handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null, 
                     flowId: flow.id,
                     flowVersionId: flowVersionIdToRun,
                     projectId: flow.projectId,
@@ -115,6 +116,7 @@ export const webhookService = {
                     return await webhookHandler.handleAsync({
                         flow,
                         saveSampleData,
+                        platformId: flowExecutionResult.platformId,
                         flowVersionIdToRun,
                         payload: payload ?? await data(flow.projectId),
                         logger: pinoLogger,
@@ -133,6 +135,7 @@ export const webhookService = {
                     payload: payload ?? await data(flow.projectId),
                     projectId: flow.projectId,
                     flow,
+                    platformId: flowExecutionResult.platformId,
                     runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                     logger: pinoLogger,
                     webhookRequestId,
