@@ -1,6 +1,6 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApEdition, ApId, isNil, JobData } from '@activepieces/shared'
-import { Queue, QueueEvents } from 'bullmq'
+import { ApId, isNil, JobData } from '@activepieces/shared'
+import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -19,11 +19,11 @@ export let bullMqQueue: Queue | undefined = undefined
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
-        const queue = await ensureQueueExists(queueName, log)
+        const queue = await ensureQueueExists(queueName)
         await queue.setGlobalConcurrency(concurrency)
     },
     async init(): Promise<void> {
-        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName, log))
+        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
         await machineService(log).updateConcurrency()
         log.info('[redisQueueManager#init] Redis queues initialized')
@@ -42,7 +42,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
 
 
         const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, jobDataWithEngineToken)
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
+        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
 
         switch (type) {
             case JobType.REPEATING: {
@@ -69,7 +69,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         }
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
+        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
@@ -77,7 +77,7 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
 })
 
-async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): Promise<Queue> {
+async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     if (!isNil(bullMqQueue)) {
         return bullMqQueue
     }
