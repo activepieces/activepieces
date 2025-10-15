@@ -3,7 +3,7 @@ import { QueueEvents } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis'
 import { system } from '../../helper/system/system'
-import { bullMqQueue } from './job-queue'
+import { workerJobsQueue } from './job-queue'
 
 export const jobStatsRedisKeyPrefix = 'jobState'
 export const metricsRedisKey = (jobType: WorkerJobType, status: WorkerJobStatus) => `metrics:${jobType}:${status}`
@@ -86,7 +86,7 @@ const onCompleted = (args: { jobId: string }) => updateJobState(args.jobId, 'com
 
 const updateJobState = async (jobId: string, bullState: WorkerJobStatus | 'completed', deleteState = false) => {
 
-    const job = await bullMqQueue?.getJob(jobId)
+    const job = await workerJobsQueue?.getJob(jobId)
 
     const logger =  system.globalLogger()
 

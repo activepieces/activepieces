@@ -16,7 +16,7 @@ const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMillisecond
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
-export let bullMqQueue: Queue | undefined = undefined
+export let workerJobsQueue: Queue | undefined = undefined
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
@@ -79,8 +79,8 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
 })
 
 async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): Promise<Queue> {
-    if (!isNil(bullMqQueue)) {
-        return bullMqQueue
+    if (!isNil(workerJobsQueue)) {
+        return workerJobsQueue
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
 
@@ -102,8 +102,8 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
 
     }
 
-    bullMqQueue = new Queue(queueName, options)
-    await bullMqQueue.waitUntilReady()
+    workerJobsQueue = new Queue(queueName, options)
+    await workerJobsQueue.waitUntilReady()
 
     const edition = system.getEdition()
     if (edition !== ApEdition.CLOUD) {
@@ -113,6 +113,6 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
         await queueMetrics(log, queueEvents).attach()
     }
 
-    return bullMqQueue
+    return workerJobsQueue
 }
 
