@@ -1,5 +1,5 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PrincipalType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -137,14 +137,15 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 
     app.get('/flows', GetLockedVersionRequest, async (request) => {
-        const populatedFlow = await getFlow(request.principal.projectId, request.query, request.log)
-        return {
-            ...populatedFlow,
-            version: await flowVersionService(request.log).lockPieceVersions({
-                flowVersion: populatedFlow.version,
-                projectId: request.principal.projectId,
-            }),
-        }
+        const flowVersion = await flowVersionService(request.log).getOneOrThrow(request.query.versionId)
+        await flowService(request.log).getOneOrThrow({
+            id: flowVersion.flowId,
+            projectId: request.principal.projectId,
+        })
+        return flowVersionService(request.log).lockPieceVersions({
+            flowVersion,
+            projectId: request.principal.projectId,
+        })
     })
 
     app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
@@ -244,15 +245,7 @@ async function getFlowResponse(
     }
 }
 
-async function getFlow(projectId: string, request: GetFlowVersionForWorkerRequest, log: FastifyBaseLogger): Promise<PopulatedFlow> {
-    // TODO this can be optimized by getting the flow version directly
-    const flowVersion = await flowVersionService(log).getOneOrThrow(request.versionId)
-    return flowService(log).getOnePopulatedOrThrow({
-        id: flowVersion.flowId,
-        projectId,
-        versionId: request.versionId,
-    })
-}
+
 
 
 async function markParentRunAsFailed({
@@ -326,7 +319,7 @@ const GetLockedVersionRequest = {
     schema: {
         querystring: GetFlowVersionForWorkerRequest,
         response: {
-            [StatusCodes.OK]: PopulatedFlow,
+            [StatusCodes.OK]: FlowVersion,
         },
     },
 }

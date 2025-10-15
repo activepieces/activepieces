@@ -9,11 +9,10 @@ export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
     async renewWebhook({ data, engineToken, timeoutInSeconds }: RenewWebhookParams): Promise<ConsumeJobResponse> {
         const { flowVersionId } = data
 
-        const populatedFlow = await flowWorkerCache(log).getFlow({
+        const flowVersion = await flowWorkerCache(log).getVersion({
             engineToken,
             flowVersionId,
         })
-        const flowVersion = populatedFlow?.version
         if (isNil(flowVersion)) {
             return {
                 status: ConsumeJobResponseStatus.OK,

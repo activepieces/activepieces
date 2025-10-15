@@ -34,15 +34,15 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-    > {
+> {
     switch (jobData.executionType) {
         case ExecutionType.BEGIN: {
             const flowRun =
-        jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1
-            ? await engineApiService(engineToken).getRun({
-                runId: jobData.runId,
-            })
-            : undefined
+                jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1
+                    ? await engineApiService(engineToken).getRun({
+                        runId: jobData.runId,
+                    })
+                    : undefined
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
@@ -117,7 +117,7 @@ async function handleTimeoutError(
     engineToken: string,
 ): Promise<void> {
     const timeoutFlowInSeconds =
-    workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
+        workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
     await engineApiService(engineToken).updateRunStatus({
         runDetails: {
             duration: timeoutFlowInSeconds,
@@ -161,11 +161,11 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
     }: ExecuteFlowOptions): Promise<ConsumeJobResponse> {
         try {
 
-            const flow = await flowWorkerCache(log).getFlow({
+            const flowVersion = await flowWorkerCache(log).getVersion({
                 engineToken,
                 flowVersionId: jobData.flowVersionId,
             })
-            if (isNil(flow)) {
+            if (isNil(flowVersion)) {
                 return {
                     status: ConsumeJobResponseStatus.OK,
                 }
@@ -174,12 +174,12 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 log,
                 runId: jobData.runId,
                 webhookId: jobData.httpRequestId,
-                flowId: flow.id,
-                flowVersionId: flow.version.id,
+                flowId: flowVersion.flowId,
+                flowVersionId: flowVersion.id,
             })
 
             const input = await prepareInput(
-                flow.version,
+                flowVersion,
                 jobData,
                 attempsStarted,
                 engineToken,
@@ -191,7 +191,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             )
             if (
                 result.status === FlowRunStatus.INTERNAL_ERROR ||
-        status === EngineResponseStatus.INTERNAL_ERROR
+                status === EngineResponseStatus.INTERNAL_ERROR
             ) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
@@ -200,8 +200,8 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            if ( result.status === FlowRunStatus.PAUSED &&
-        result.pauseMetadata?.type === PauseType.DELAY
+            if (result.status === FlowRunStatus.PAUSED &&
+                result.pauseMetadata?.type === PauseType.DELAY
             ) {
                 const diffInSeconds = dayjs(result.pauseMetadata.resumeDateTime).diff(
                     dayjs(),
@@ -218,11 +218,11 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
         }
         catch (e) {
             const isTimeoutError =
-        e instanceof ActivepiecesError &&
-        e.error.code === ErrorCode.EXECUTION_TIMEOUT
+                e instanceof ActivepiecesError &&
+                e.error.code === ErrorCode.EXECUTION_TIMEOUT
             const isMemoryIssueError =
-        e instanceof ActivepiecesError &&
-        e.error.code === ErrorCode.MEMORY_ISSUE
+                e instanceof ActivepiecesError &&
+                e.error.code === ErrorCode.MEMORY_ISSUE
 
             if (isTimeoutError) {
                 await handleTimeoutError(jobData, engineToken)

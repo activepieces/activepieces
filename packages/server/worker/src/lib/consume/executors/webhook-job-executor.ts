@@ -3,6 +3,7 @@ import {
     ConsumeJobResponse,
     ConsumeJobResponseStatus,
     EventPayload,
+    FlowVersion,
     isNil,
     PopulatedFlow,
     ProgressUpdateType,
@@ -45,22 +46,22 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 webhookLogger.info('Webhook job executor started')
                 const { payload, saveSampleData, flowVersionIdToRun, execute } = data
 
-                const populatedFlowToRun = await flowWorkerCache(log).getFlow({
+                const flowVersion = await flowWorkerCache(log).getVersion({
                     engineToken,
                     flowVersionId: flowVersionIdToRun,
                 })
 
-                if (isNil(populatedFlowToRun)) {
+                if (isNil(flowVersion)) {
                     span.setAttribute('webhook.flowNotFound', true)
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
                 }
 
-                span.setAttribute('webhook.projectId', populatedFlowToRun.projectId)
+                span.setAttribute('webhook.projectId', data.projectId)
 
                 if (saveSampleData) {
-                    await handleSampleData(jobId, populatedFlowToRun, engineToken, workerToken, webhookLogger, payload, timeoutInSeconds)
+                    await handleSampleData(jobId, flowVersion, engineToken, workerToken, data.projectId, webhookLogger, payload, timeoutInSeconds)
                 }
 
                 const onlySaveSampleData = !execute
@@ -72,9 +73,9 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 }
                 const { payloads, status, errorMessage } = await triggerHooks(log).extractPayloads(engineToken, {
                     jobId,
-                    flowVersion: populatedFlowToRun.version,
+                    flowVersion: flowVersion,
                     payload,
-                    projectId: populatedFlowToRun.projectId,
+                    projectId: data.projectId,
                     simulate: saveSampleData,
                     timeoutInSeconds,
                 })
@@ -91,8 +92,8 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 }
 
                 await workerApiService(workerToken).startRuns({
-                    flowVersionId: populatedFlowToRun.version.id,
-                    projectId: populatedFlowToRun.projectId,
+                    flowVersionId: flowVersion.id,
+                    projectId: data.projectId,
                     environment: data.runEnvironment,
                     progressUpdateType: ProgressUpdateType.NONE,
                     httpRequestId: data.requestId,
@@ -115,24 +116,25 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
 
 async function handleSampleData(
     jobId: string,
-    latestFlowVersion: PopulatedFlow,
+    latestFlowVersion: FlowVersion,
     engineToken: string,
     workerToken: string,
+    projectId: string,
     log: FastifyBaseLogger,
     payload: EventPayload,
     timeoutInSeconds: number,
 ): Promise<void> {
     const { payloads } = await triggerHooks(log).extractPayloads(engineToken, {
         jobId,
-        flowVersion: latestFlowVersion.version,
+        flowVersion: latestFlowVersion,
         payload,
-        projectId: latestFlowVersion.projectId,
+        projectId,
         simulate: true,
         timeoutInSeconds,
     })
     webhookUtils(log).savePayloadsAsSampleData({
-        flowVersion: latestFlowVersion.version,
-        projectId: latestFlowVersion.projectId,
+        flowVersion: latestFlowVersion,
+        projectId,
         workerToken,
         payloads,
     })

@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { GetRunForWorkerRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, PopulatedFlow, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
@@ -120,8 +120,8 @@ export const engineApiService = (engineToken: string) => {
                 params: options,
             })
         },
-        async getFlow(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
-            return client.get<PopulatedFlow | null>('/v1/engine/flows', {
+        async getFlowVersion(request: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null> {
+            return client.get<FlowVersion | null>('/v1/engine/flows', {
                 params: request,
             })
         },
