@@ -73,6 +73,7 @@ export const refillJobsWithEngineToken = (log: FastifyBaseLogger) => ({
           migratedJobs,
         }, '[refillJobsWithEngineToken] Refilled jobs with engine token and flowId')
 
+        await workerQueue.close()
         // Mark as migrated if all jobs are up-to-date
         if (migratedJobs === 0) {
             await redis.set(MIGRATION_KEY, 'true')
