@@ -7,7 +7,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PackageType, PiecePackage, PieceType } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 5
 
 
 export enum WorkerJobType {
@@ -42,6 +42,7 @@ export const RenewWebhookJobData = Type.Object({
     platformId: Type.String(),
     flowVersionId: Type.String(),
     flowId: Type.String(),
+    engineToken: Type.Optional(Type.String()),
     jobType: Type.Literal(WorkerJobType.RENEW_WEBHOOK),
 })
 export type RenewWebhookJobData = Static<typeof RenewWebhookJobData>
@@ -54,6 +55,7 @@ export const PollingJobData = Type.Object({
     flowVersionId: Type.String(),
     flowId: Type.String(),
     triggerType: Type.Enum(FlowTriggerType),
+    engineToken: Type.Optional(Type.String()),
     jobType: Type.Literal(WorkerJobType.EXECUTE_POLLING),
 })
 export type PollingJobData = Static<typeof PollingJobData>
@@ -70,6 +72,7 @@ export const DelayedJobData = Type.Object({
     httpRequestId: Type.Optional(Type.String()),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
+    engineToken: Type.Optional(Type.String()),
     jobType: Type.Literal(WorkerJobType.DELAYED_FLOW),
 })
 export type DelayedJobData = Static<typeof DelayedJobData>
@@ -79,7 +82,7 @@ export const ExecuteFlowJobData = Type.Object({
     platformId: Type.String(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
     environment: Type.Enum(RunEnvironment),
-    flowId: Type.String(),
+    flowId: Type.Optional(Type.String()),
     flowVersionId: Type.String(),
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
@@ -93,6 +96,7 @@ export const ExecuteFlowJobData = Type.Object({
     logsUploadUrl: Type.Optional(Type.String()),
     logsFileId: Type.Optional(Type.String()),
     traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
+    engineToken: Type.Optional(Type.String()),
 })
 export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
 
@@ -103,6 +107,7 @@ export const AgentJobData = Type.Object({
     platformId: Type.String(),
     agentRunId: Type.String(),
     prompt: Type.String(),
+    engineToken: Type.Optional(Type.String()),
 })
 export type AgentJobData = Static<typeof AgentJobData>
 
@@ -121,6 +126,7 @@ export const WebhookJobData = Type.Object({
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
     traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
+    engineToken: Type.Optional(Type.String()),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
@@ -133,6 +139,7 @@ export const ExecuteValidateAuthJobData = Type.Object({
     platformId: Type.String(),
     piece: PiecePackage,
     connectionValue: Type.Unknown(),
+    engineToken: Type.Optional(Type.String()),
 })
 export type ExecuteValidateAuthJobData = Static<typeof ExecuteValidateAuthJobData>
 
@@ -148,6 +155,7 @@ export const ExecuteToolJobData = Type.Object({
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
     input: Type.Record(Type.String(), Type.Unknown()),
+    engineToken: Type.Optional(Type.String()),
 })
 export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 
@@ -161,6 +169,7 @@ export const ExecuteTriggerHookJobData = Type.Object({
     webserverId: Type.String(),
     hookType: Type.Enum(TriggerHookType),
     triggerPayload: Type.Optional(TriggerPayload),
+    engineToken: Type.Optional(Type.String()),
 })
 export type ExecuteTriggerHookJobData = Static<typeof ExecuteTriggerHookJobData>
 
@@ -177,6 +186,7 @@ export const ExecutePropertyJobData = Type.Object({
     webserverId: Type.String(),
     sampleData: Type.Record(Type.String(), Type.Unknown()),
     searchValue: Type.Optional(Type.String()),
+    engineToken: Type.Optional(Type.String()),
 })
 export type ExecutePropertyJobData = Static<typeof ExecutePropertyJobData>
 
@@ -187,6 +197,7 @@ export const ExecuteExtractPieceMetadataJobData = Type.Object({
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
     piece: PiecePackage,
+    engineToken: Type.Optional(Type.String()),
 })
 export type ExecuteExtractPieceMetadataJobData = Static<typeof ExecuteExtractPieceMetadataJobData>
 

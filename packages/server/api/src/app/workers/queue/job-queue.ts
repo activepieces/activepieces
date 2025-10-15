@@ -10,6 +10,7 @@ import { machineService } from '../machine/machine-service'
 import { queueMetrics } from './queue-events'
 import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -30,6 +31,12 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { data, type } = params
+        const engineToken = await accessTokenManager.generateEngineToken({
+              jobId: params.id,
+              projectId: data.projectId ?? "",
+              platformId: data.platformId,
+        })
+        data.engineToken = engineToken
 
         const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
         const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
