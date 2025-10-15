@@ -5,7 +5,6 @@ import {
     EventPayload,
     FlowVersion,
     isNil,
-    PopulatedFlow,
     ProgressUpdateType,
     TriggerRunStatus,
     WebhookJobData,
@@ -73,7 +72,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 }
                 const { payloads, status, errorMessage } = await triggerHooks(log).extractPayloads(engineToken, {
                     jobId,
-                    flowVersion: flowVersion,
+                    flowVersion,
                     payload,
                     projectId: data.projectId,
                     simulate: saveSampleData,

@@ -28,7 +28,7 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
                         message: '[flowWorkerCache] Installing flow',
                         flowVersionId,
                         state: flowVersion?.state,
-                        found: !isNil(flowVersion)
+                        found: !isNil(flowVersion),
                     })
                     return JSON.stringify(flowVersion)
                 },

@@ -3,10 +3,10 @@ import { join, resolve, sep } from 'node:path'
 import { ApLock, filePiecesUtils, fileSystemUtils } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { workerMachine } from '../../../utils/machine'
 import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
 import { packageManager } from '../../package-manager'
 import { CacheState } from '../../worker-cache'
-import { workerMachine } from '../../../utils/machine'
 import { PieceManager } from '../piece-manager'
 
 export class LocalPieceManager extends PieceManager {

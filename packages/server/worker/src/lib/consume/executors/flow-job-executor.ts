@@ -34,7 +34,7 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-> {
+    > {
     switch (jobData.executionType) {
         case ExecutionType.BEGIN: {
             const flowRun =

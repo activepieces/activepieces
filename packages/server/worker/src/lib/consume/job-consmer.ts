@@ -1,17 +1,16 @@
-import { assertNotNullOrUndefined, ConsumeJobResponse, JobData, WorkerJobType } from "@activepieces/shared"
-import { context, propagation, trace } from "@opentelemetry/api"
-import { FastifyBaseLogger } from "fastify"
-import { Job } from "bullmq"
-import { ConsumeJobResponseStatus } from "@activepieces/shared"
-import { userInteractionJobExecutor } from "./executors/user-interaction-job-executor"
-import { flowJobExecutor } from "./executors/flow-job-executor"
-import { executeTriggerExecutor } from "./executors/execute-trigger-executor"
-import { renewWebhookExecutor } from "./executors/renew-webhook-executor"
-import { webhookExecutor } from "./executors/webhook-job-executor"
-import { agentJobExecutor } from "./executors/agent-job-executor"
-import dayjs from "dayjs"
-import { workerMachine } from "../utils/machine"
-import { tokenUtls } from "../utils/token-utils"
+import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, JobData, WorkerJobType } from '@activepieces/shared'
+import { context, propagation, trace } from '@opentelemetry/api'
+import { Job } from 'bullmq'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import { workerMachine } from '../utils/machine'
+import { tokenUtls } from '../utils/token-utils'
+import { agentJobExecutor } from './executors/agent-job-executor'
+import { executeTriggerExecutor } from './executors/execute-trigger-executor'
+import { flowJobExecutor } from './executors/flow-job-executor'
+import { renewWebhookExecutor } from './executors/renew-webhook-executor'
+import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
+import { webhookExecutor } from './executors/webhook-job-executor'
 
 const tracer = trace.getTracer('job-consumer')
 
@@ -94,7 +93,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                 }
             })
         })
-    }
+    },
 })
 
 const getTimeoutForWorkerJob = (jobType: WorkerJobType): number => {

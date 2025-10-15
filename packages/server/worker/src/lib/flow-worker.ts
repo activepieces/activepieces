@@ -1,16 +1,12 @@
-import { inspect } from 'util'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
-import { context, propagation, trace } from '@opentelemetry/api'
+import {  WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
-import { workerMachine } from './utils/machine'
 import { jobQueueWorker } from './consume/job-queue-worker'
-
-const tracer = trace.getTracer('flow-worker')
+import { workerMachine } from './utils/machine'
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -77,8 +73,9 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             }
             try {
                 const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-                await socket.emit(WebsocketServerEvent.WORKER_HEALTHCHECK, request)
-            } catch (error) {
+                socket.emit(WebsocketServerEvent.WORKER_HEALTHCHECK, request)
+            }
+            catch (error) {
                 log.error({
                     message: 'Failed to send heartbeat, retrying...',
                     error,

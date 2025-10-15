@@ -1,6 +1,6 @@
-import { EnginePrincipal, PrincipalType } from "@activepieces/shared"
-import { workerMachine } from "server-worker"
-import jwt from "jsonwebtoken"
+import { EnginePrincipal, PrincipalType } from '@activepieces/shared'
+import jwt from 'jsonwebtoken'
+import { workerMachine } from './machine'
 
 const ONE_WEEK = 7 * 24 * 3600
 const ISSUER = 'activepieces'
@@ -8,7 +8,7 @@ const ALGORITHM = 'HS256'
 
 export const tokenUtls = {
     async generateEngineToken({ jobId, projectId, platformId }: GenerateEngineTokenParams): Promise<string> {
-        const settings = await workerMachine.getSettings()
+        const settings = workerMachine.getSettings()
         const secret = settings.JWT_SECRET
         const enginePrincipal: EnginePrincipal = {
             id: jobId,
@@ -24,14 +24,14 @@ export const tokenUtls = {
             issuer: ISSUER,
         }
         return new Promise<string>((resolve, reject) => {
-            jwt.sign(enginePrincipal as any, secret, signOptions, (err, token) => {
+            jwt.sign(enginePrincipal, secret, signOptions, (err, token) => {
                 if (err || !token) {
-                    return reject(err || new Error("Failed to generate token"))
+                    return reject(err || new Error('Failed to generate token'))
                 }
                 return resolve(token)
             })
         })
-    }
+    },
 }
 
 type GenerateEngineTokenParams = {
