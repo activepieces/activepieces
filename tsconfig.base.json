@@ -779,6 +779,9 @@
       "@activepieces/piece-odoo": [
         "packages/pieces/community/odoo/src/index.ts"
       ],
+      "@activepieces/piece-okta": [
+        "packages/pieces/community/okta/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
