@@ -7,7 +7,6 @@ import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { machineService } from '../machine/machine-service'
-import { queueMetrics } from './queue-events'
 import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
 
@@ -93,14 +92,6 @@ async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): 
 
     bullMqQueue = new Queue(queueName, options)
     await bullMqQueue.waitUntilReady()
-
-    const edition = system.getEdition()
-    if (edition !== ApEdition.CLOUD) {
-        const queueEvents = new QueueEvents(queueName, options)
-        await queueEvents.waitUntilReady()
-        await queueMetrics(log, queueEvents).detach()
-        await queueMetrics(log, queueEvents).attach()
-    }
 
     return bullMqQueue
 }

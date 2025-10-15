@@ -346,7 +346,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 async function getAdapter() {
-    const redisConnectionInstance = await redisConnections.useExisting()  
+    const redisConnectionInstance = await redisConnections.useExisting()
     const sub = redisConnectionInstance.duplicate()
     const pub = redisConnectionInstance.duplicate()
     return createAdapter(pub, sub, {
