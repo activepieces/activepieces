@@ -1,12 +1,11 @@
-import { ExecuteFlowJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis-connections'
+import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
-
-
 
 type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
 type LegacyWebhookJobData = Pick<WebhookJobData, 'projectId' | 'schemaVersion' | 'requestId' | 'payload' | 'runEnvironment' | 'flowId' | 'saveSampleData' | 'flowVersionIdToRun' | 'execute' | 'parentRunId' | 'failParentOnFailure'>
@@ -55,16 +54,27 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
                 migratedOneTimeJobs,
             }, '[unifyOldQueuesIntoOne] Migrated one time jobs')
         }
-        await jobQueue(log).add({
-            id: job.id!,
-            type: JobType.ONE_TIME,
-            data: {
-                ...casedData,
-                platformId: await projectService.getPlatformId(casedData.projectId),
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                jobType: WorkerJobType.EXECUTE_FLOW,
+        const flowVersion = await flowVersionRepo().findOne({
+            where: {
+                id: casedData.flowVersionId,
+            },
+            select: {
+                flowId: true,
             },
         })
+        if (!isNil(flowVersion?.flowId)) {
+            await jobQueue(log).add({
+                id: job.id!,
+                type: JobType.ONE_TIME,
+                data: {
+                    ...casedData,
+                    flowId: flowVersion.flowId,
+                    platformId: await projectService.getPlatformId(casedData.projectId),
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                    jobType: WorkerJobType.EXECUTE_FLOW,
+                },
+            })
+        }
         await job.remove()
     })
     if (migratedOneTimeJobs > 0) {

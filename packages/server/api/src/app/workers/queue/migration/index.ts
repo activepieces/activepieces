@@ -12,9 +12,6 @@ const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
 
 export const queueMigration = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
-        if (!await needMigration()) {
-            return
-        }
         await distributedLock(log).runExclusive({
             key: 'job_migration_lock',
             timeoutInSeconds: dayjs.duration(20, 'minute').asSeconds(),
