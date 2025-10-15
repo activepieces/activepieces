@@ -50,12 +50,15 @@ export const createObjectAcl = createAction({
     );
 
     let entity = propsValue.entity_type;
-    if (propsValue.entity_value) {
-        entity = `${propsValue.entity_type}-${propsValue.entity_value}`;
-    }
+    const entityTypeRequiresValue = ['user', 'group', 'domain'].includes(propsValue.entity_type);
 
-    if (!propsValue.entity_value && !['allUsers', 'allAuthenticatedUsers'].includes(propsValue.entity_type)) {
-        throw new Error("Entity Identifier is required for User, Group, or Domain types.");
+    if (entityTypeRequiresValue) {
+        if (!propsValue.entity_value) {
+            throw new Error(`The "Entity Identifier" is required when the type is User, Group, or Domain.`);
+        }
+        entity = `${propsValue.entity_type}-${propsValue.entity_value}`;
+    } else if (propsValue.entity_value) {
+        throw new Error(`The "Entity Identifier" should be left empty when the type is 'All Users' or 'All Authenticated Users'.`);
     }
     
     return await client.createObjectAcl(propsValue.bucket, propsValue.object, {

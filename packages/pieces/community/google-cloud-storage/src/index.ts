@@ -24,7 +24,7 @@ export const googleCloudStorage = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-cloud-storage.png',
   description: 'A powerful and scalable object storage service to store, retrieve, and manage data objects in Google Cloud.',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: [],
+  authors: ['srimalleswari205'],
   actions: [
     createBucket,
     deleteEmptyBucket,
