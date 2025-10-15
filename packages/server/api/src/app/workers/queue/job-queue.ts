@@ -1,9 +1,8 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApEdition, ApId, isNil, JobData } from '@activepieces/shared'
+import { ApEdition, ApId, isNil } from '@activepieces/shared'
 import { Queue, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
@@ -31,18 +30,8 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { type, data } = params
-        const engineToken = await accessTokenManager.generateEngineToken({
-            jobId: params.id,
-            projectId: params.data.projectId!,
-            platformId: params.data.platformId,
-        })
-        const jobDataWithEngineToken = {
-            ...data,
-            engineToken,
-        } as JobData
 
-
-        const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, jobDataWithEngineToken)
+        const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
         const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
 
         switch (type) {
@@ -52,16 +41,16 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
                     tz: params.scheduleOptions.timezone,
                 }, {
                     name: data.flowVersionId,
-                    data: jobDataWithEngineToken,
+                    data,
                     opts: {
-                        priority: JOB_PRIORITY[getDefaultJobPriority(jobDataWithEngineToken)],
+                        priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     },
                 })
                 break
             }
             case JobType.ONE_TIME: {
-                await queue.add(params.id, jobDataWithEngineToken, {
-                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[getDefaultJobPriority(jobDataWithEngineToken)],
+                await queue.add(params.id, data, {
+                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: params.delay,
                     jobId: params.id,
                 })

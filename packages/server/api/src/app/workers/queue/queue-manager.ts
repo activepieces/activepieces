@@ -63,10 +63,10 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
     type: JT
     delay?: number
 }
-type RepeatingJobAddParams = BaseAddParams<Omit<PollingJobData, 'engineToken'> | Omit<RenewWebhookJobData, 'engineToken'>, JobType.REPEATING> & {
+type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<Omit<ExecuteFlowJobData, 'engineToken'> | Omit<WebhookJobData, 'engineToken'> | Omit<DelayedJobData, 'engineToken'> | Omit<UserInteractionJobData, 'engineToken'> | Omit<AgentJobData, 'engineToken'>, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | DelayedJobData | UserInteractionJobData | AgentJobData, JobType.ONE_TIME>
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams
 
