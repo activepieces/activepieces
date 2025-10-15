@@ -91,15 +91,17 @@ async function removeDeprecatedJobs(): Promise<void> {
         'usage-report',
         'archive-old-issues',
         'platform-usage-report',
-        'hard-delete-project',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
     const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.key) || deprecatedJobs.some(d => f.key.startsWith(d))))
     for (const job of deprecatedJobsFromQueue) {
         await systemJobsQueue.removeJobScheduler(job.id ?? job.key)
     }
+    const onetimeDeprecatedJobs = [
+        'hard-delete-project',
+    ]
     const oneTimeJobs = await systemJobsQueue.getJobs()
-    const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
+    const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && (onetimeDeprecatedJobs.includes(f.name) || onetimeDeprecatedJobs.some(d => f.name.startsWith(d))))
     for (const job of oneTimeJobsFromQueue) {
         assertNotNullOrUndefined(job.id, 'Job id is required')
         await systemJobsQueue.remove(job.id)
