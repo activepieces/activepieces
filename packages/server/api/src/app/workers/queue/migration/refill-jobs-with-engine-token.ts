@@ -7,7 +7,7 @@ import { accessTokenManager } from '../../../authentication/lib/access-token-man
 import { redisConnections } from '../../../database/redis'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 
-const MIGRATION_KEY = 'migration:refill_jobs_with_engine_token'
+const MIGRATION_KEY = 'migration:refill_jobs_with_engine_token_and_flow_id'
 const BATCH_SIZE = 1000
 
 export const refillJobsWithEngineToken = (log: FastifyBaseLogger) => ({
