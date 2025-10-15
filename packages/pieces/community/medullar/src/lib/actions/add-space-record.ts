@@ -57,7 +57,7 @@ export const addSpaceRecord = createAction({
 
     const spaceResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${medullarCommon.exploratorUrl}/records/`,
+      url: `${medullarCommon.aiUrl}/records/`,
       body: {
         spaces: [
           {
