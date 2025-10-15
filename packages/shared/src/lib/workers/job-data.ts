@@ -7,7 +7,7 @@ import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PackageType, PiecePackage, PieceType } from '../pieces/piece'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 5
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 
 
 export enum WorkerJobType {
