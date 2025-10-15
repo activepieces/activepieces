@@ -13,7 +13,7 @@ const refillJobsWithEngineToken = (log: FastifyBaseLogger) => ({
           throw new Error('BullMQ queue is not initialized')
       }
 
-      const batchSize = 100
+      const batchSize = 1000
       let start = 0;
       let end = batchSize - 1;
 
@@ -26,7 +26,7 @@ const refillJobsWithEngineToken = (log: FastifyBaseLogger) => ({
       }
 
       log.info(
-          '[refillExecuteFlowJobs] Refilled execute flow jobs',
+          '[refillJobsWithEngineToken] Refilled jobs with engine token and execute flow jobs with flowId',
       )
       return
     }
@@ -40,7 +40,7 @@ const handleBatch = async (jobs: Job<JobData>[]) => {
     let flowVersionIdToFlowId: Record<string, string> = {}
 
     if (flowJobs.length > 0) {
-        const flowVersionIds = await flowVersionRepo().find({ 
+        const flowVersionIds = await flowVersionRepo().find({
           where: { id: In(flowJobs.map(job => job.data.flowVersionId)) },
           select: { id: true, flowId: true }
         })
