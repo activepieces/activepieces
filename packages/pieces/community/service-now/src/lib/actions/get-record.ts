@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { ServiceNowRecordSchema } from '../common/types';
-import { serviceNowAuth, tableDropdown, recordDropdown, createServiceNowClient } from '../common/props';
+import { tableDropdown, recordDropdown, createServiceNowClient } from '../common/props';
 
 const GetRecordInputSchema = z.object({
   table: z.string().min(1),
@@ -16,9 +16,8 @@ const GetRecordInputSchema = z.object({
 export const getRecordAction = createAction({
   name: 'get_record',
   displayName: 'Get Record',
-  description: 'Retrieve a specific record from a ServiceNow table using GET method',
+  description: 'Retrieve a specific record by its ID',
   props: {
-    ...serviceNowAuth,
     table: tableDropdown,
     record: recordDropdown,
     manual_sys_id: Property.ShortText({
@@ -27,39 +26,39 @@ export const getRecordAction = createAction({
       required: false,
     }),
     sysparm_display_value: Property.StaticDropdown({
-      displayName: 'Display Value Type',
-      description: 'Determines the type of data returned in the response',
+      displayName: 'Return Display Values',
+      description: 'How to format the response data',
       required: false,
       defaultValue: 'false',
       options: {
         disabled: false,
         options: [
-          { label: 'Actual values from database', value: 'false' },
-          { label: 'Display values (user-friendly)', value: 'true' },
-          { label: 'Both actual and display values', value: 'all' },
+          { label: 'Actual values', value: 'false' },
+          { label: 'Display values', value: 'true' },
+          { label: 'Both', value: 'all' },
         ],
       },
     }),
     sysparm_exclude_reference_link: Property.Checkbox({
       displayName: 'Exclude Reference Links',
-      description: 'Set to true to exclude Table API links for reference fields (improves performance)',
+      description: 'Exclude API links for reference fields',
       required: false,
       defaultValue: false,
     }),
     sysparm_fields: Property.Array({
       displayName: 'Fields to Return',
-      description: 'Comma-separated list of fields to return in the response (leave empty for all fields)',
+      description: 'Specific fields to include in response (optional)',
       required: false,
     }),
     sysparm_query_no_domain: Property.Checkbox({
       displayName: 'Query No Domain',
-      description: 'Include records from domains the user is not configured to access (requires admin or query_no_domain_table_api role)',
+      description: 'Include records from all domains',
       required: false,
       defaultValue: false,
     }),
     sysparm_view: Property.StaticDropdown({
       displayName: 'UI View',
-      description: 'UI view for which to render the data. If sysparm_fields is also specified, it takes precedence.',
+      description: 'View context for returned fields',
       required: false,
       options: {
         disabled: false,
@@ -98,7 +97,7 @@ export const getRecordAction = createAction({
       sysparm_view
     });
     
-    const client = createServiceNowClient(context.propsValue);
+    const client = createServiceNowClient(context.auth);
 
     const options = {
       sysparm_display_value: input.sysparm_display_value,

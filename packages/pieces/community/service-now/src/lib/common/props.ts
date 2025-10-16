@@ -1,60 +1,49 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue, PieceAuth } from '@activepieces/pieces-framework';
 import { ServiceNowClient } from './client';
 
-export const serviceNowAuth = {
-  instanceUrl: Property.ShortText({
-    displayName: 'ServiceNow Instance URL',
-    description: 'Full base URL of your ServiceNow instance (e.g., https://instance.service-now.com)',
-    required: true,
-  }),
-  authType: Property.StaticDropdown({
-    displayName: 'Authentication Type',
-    required: true,
-    defaultValue: 'basic',
-    options: {
-      disabled: false,
-      options: [
-        { label: 'Basic Auth', value: 'basic' },
-        { label: 'Bearer Token', value: 'bearer' },
-      ],
-    },
-  }),
-  username: Property.ShortText({
-    displayName: 'Username',
-    required: false,
-  }),
-  password: Property.ShortText({
-    displayName: 'Password',
-    required: false,
-  }),
-  token: Property.ShortText({
-    displayName: 'Bearer Token',
-    required: false,
-  }),
-};
+export const servicenowAuth = PieceAuth.CustomAuth({
+  required: true,
+  props: {
+    instanceUrl: Property.ShortText({
+      displayName: 'Instance URL',
+      description: 'Your ServiceNow instance URL without trailing slash (e.g., https://dev12345.service-now.com)',
+      required: true,
+    }),
+    username: Property.ShortText({
+      displayName: 'Username',
+      description: 'Your ServiceNow username (not email)',
+      required: true,
+    }),
+    password: Property.ShortText({
+      displayName: 'Password',
+      description: 'Your ServiceNow password (not API token)',
+      required: true,
+    }),
+  },
+});
 
 export const tableDropdown = Property.Dropdown({
   displayName: 'Table',
   description: 'ServiceNow table to work with',
   required: true,
-  refreshers: ['instanceUrl', 'authType', 'username', 'password', 'token'],
-  options: async ({ instanceUrl, authType, username, password, token }) => {
-    if (!instanceUrl || !authType) {
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) {
       return {
         disabled: true,
-        placeholder: 'Please configure authentication first',
+        placeholder: 'Please connect your ServiceNow account first',
         options: [],
       };
     }
 
     try {
-      const auth = authType === 'basic' 
-        ? { type: 'basic' as const, username: username as string, password: password as string }
-        : { type: 'bearer' as const, token: token as string };
-
       const client = new ServiceNowClient({
-        instanceUrl: instanceUrl as string,
-        auth,
+        instanceUrl: (auth as any).instanceUrl,
+        auth: {
+          type: 'basic',
+          username: (auth as any).username,
+          password: (auth as any).password,
+        },
       });
 
       const tables = await client.getTables();
@@ -76,9 +65,9 @@ export const recordDropdown = Property.Dropdown({
   displayName: 'Record',
   description: 'Select a record from the table',
   required: true,
-  refreshers: ['instanceUrl', 'authType', 'username', 'password', 'token', 'table'],
-  options: async ({ instanceUrl, authType, username, password, token, table }) => {
-    if (!instanceUrl || !authType || !table) {
+  refreshers: ['table'],
+  options: async ({ auth, table }) => {
+    if (!auth || !table) {
       return {
         disabled: true,
         placeholder: 'Please select a table first',
@@ -87,13 +76,13 @@ export const recordDropdown = Property.Dropdown({
     }
 
     try {
-      const auth = authType === 'basic' 
-        ? { type: 'basic' as const, username: username as string, password: password as string }
-        : { type: 'bearer' as const, token: token as string };
-
       const client = new ServiceNowClient({
-        instanceUrl: instanceUrl as string,
-        auth,
+        instanceUrl: (auth as any).instanceUrl,
+        auth: {
+          type: 'basic',
+          username: (auth as any).username,
+          password: (auth as any).password,
+        },
       });
 
       const records = await client.getRecordsForDropdown(table as string);
@@ -111,15 +100,13 @@ export const recordDropdown = Property.Dropdown({
   },
 });
 
-export function createServiceNowClient(props: DynamicPropsValue): ServiceNowClient {
-  const { instanceUrl, authType, username, password, token } = props;
-  
-  const auth = authType === 'basic' 
-    ? { type: 'basic' as const, username: username as string, password: password as string }
-    : { type: 'bearer' as const, token: token as string };
-
+export function createServiceNowClient(auth: any): ServiceNowClient {
   return new ServiceNowClient({
-    instanceUrl: instanceUrl as string,
-    auth,
+    instanceUrl: auth.instanceUrl,
+    auth: {
+      type: 'basic',
+      username: auth.username,
+      password: auth.password,
+    },
   });
 }

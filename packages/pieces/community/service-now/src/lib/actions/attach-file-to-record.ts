@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { AttachmentMetaSchema } from '../common/types';
 import {
-  serviceNowAuth,
   tableDropdown,
   recordDropdown,
   createServiceNowClient,
@@ -25,10 +24,8 @@ const AttachFileInputSchema = z
 export const attachFileToRecordAction = createAction({
   name: 'attach_file_to_record',
   displayName: 'Attach File to Record',
-  description:
-    'Upload a binary file as an attachment to a ServiceNow record using POST /now/attachment/file',
+  description: 'Upload and attach a file to a record',
   props: {
-    ...serviceNowAuth,
     table: tableDropdown,
     record: recordDropdown,
     manual_sys_id: Property.ShortText({
@@ -38,12 +35,12 @@ export const attachFileToRecordAction = createAction({
     }),
     file_name: Property.ShortText({
       displayName: 'File Name',
-      description: 'Name to give the attachment (required parameter)',
+      description: 'Name for the attachment',
       required: true,
     }),
     content_type: Property.StaticDropdown({
       displayName: 'Content Type',
-      description: 'Content type of the file to attach (mandatory header)',
+      description: 'File content type',
       required: true,
       options: {
         disabled: false,
@@ -91,20 +88,17 @@ export const attachFileToRecordAction = createAction({
     }),
     fileBase64: Property.LongText({
       displayName: 'File Base64',
-      description:
-        'Base64 encoded file content (use this OR file path). The binary file data to attach.',
+      description: 'Base64 encoded file content (use this OR file path)',
       required: false,
     }),
     filePath: Property.ShortText({
       displayName: 'File Path',
-      description:
-        'Path to the binary file on the local system (use this OR base64)',
+      description: 'Path to file on local system (use this OR base64)',
       required: false,
     }),
     encryption_context: Property.ShortText({
       displayName: 'Encryption Context',
-      description:
-        'Sys_id of an encryption context record. Restricts access to users with this encryption context.',
+      description: 'Encryption context sys_id to restrict file access',
       required: false,
     }),
   },
@@ -137,7 +131,7 @@ export const attachFileToRecordAction = createAction({
       encryption_context,
     });
 
-    const client = createServiceNowClient(context.propsValue);
+    const client = createServiceNowClient(context.auth);
 
     const result = await client.attachFile(
       input.table_name,

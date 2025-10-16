@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { ServiceNowRecordSchema } from '../common/types';
 import {
-  serviceNowAuth,
   tableDropdown,
   recordDropdown,
   createServiceNowClient,
@@ -21,10 +20,8 @@ const UpdateRecordInputSchema = z.object({
 export const updateRecordAction = createAction({
   name: 'update_record',
   displayName: 'Update Record',
-  description:
-    'Update an existing record in a ServiceNow table using PATCH method',
+  description: 'Update an existing record in a specified table',
   props: {
-    ...serviceNowAuth,
     table: tableDropdown,
     record: recordDropdown,
     manual_sys_id: Property.ShortText({
@@ -33,41 +30,38 @@ export const updateRecordAction = createAction({
       required: false,
     }),
     fields: Property.Object({
-      displayName: 'Record Fields',
-      description:
-        'Key-value pairs for the fields to update. Note: System fields (prefixed with "sys_") are typically read-only.',
+      displayName: 'Fields to Update',
+      description: 'Field names and new values to update',
       required: true,
     }),
     sysparm_display_value: Property.StaticDropdown({
-      displayName: 'Display Value Type',
-      description: 'Determines the type of data returned in the response',
+      displayName: 'Return Display Values',
+      description: 'How to format the response data',
       required: false,
       defaultValue: 'false',
       options: {
         disabled: false,
         options: [
-          { label: 'Actual values from database', value: 'false' },
-          { label: 'Display values (user-friendly)', value: 'true' },
-          { label: 'Both actual and display values', value: 'all' },
+          { label: 'Actual values', value: 'false' },
+          { label: 'Display values', value: 'true' },
+          { label: 'Both', value: 'all' },
         ],
       },
     }),
     sysparm_fields: Property.Array({
       displayName: 'Fields to Return',
-      description:
-        'Comma-separated list of fields to return in the response (leave empty for all fields)',
+      description: 'Specific fields to include in response (optional)',
       required: false,
     }),
     sysparm_input_display_value: Property.Checkbox({
       displayName: 'Use Display Values for Input',
-      description:
-        'Set to true to treat input values as display values (e.g., reference field names instead of sys_ids). Required for encrypted fields.',
+      description: 'Treat input values as display names instead of IDs',
       required: false,
       defaultValue: false,
     }),
     sysparm_view: Property.StaticDropdown({
       displayName: 'UI View',
-      description: 'UI view for which to render the data',
+      description: 'View context for returned fields',
       required: false,
       options: {
         disabled: false,
@@ -108,7 +102,7 @@ export const updateRecordAction = createAction({
       sysparm_view,
     });
 
-    const client = createServiceNowClient(context.propsValue);
+    const client = createServiceNowClient(context.auth);
 
     const options = {
       sysparm_display_value: input.sysparm_display_value,

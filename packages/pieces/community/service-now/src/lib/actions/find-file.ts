@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { AttachmentMetaSchema } from '../common/types';
 import {
-  serviceNowAuth,
   tableDropdown,
   recordDropdown,
   createServiceNowClient,
@@ -35,15 +34,12 @@ const FindFileInputSchema = z
 
 export const findFileAction = createAction({
   name: 'find_file',
-  displayName: 'Find & Download File Attachments',
-  description:
-    'List file attachments for a ServiceNow record or download a specific attachment file',
+  displayName: 'Find File',
+  description: 'List or download file attachments from a record',
   props: {
-    ...serviceNowAuth,
     action_type: Property.StaticDropdown({
       displayName: 'Action Type',
-      description:
-        'Choose whether to list attachments or download a specific file',
+      description: 'List attachments or download a file',
       required: true,
       options: {
         disabled: false,
@@ -57,26 +53,22 @@ export const findFileAction = createAction({
     record: recordDropdown,
     manual_sys_id: Property.ShortText({
       displayName: 'Or Enter Record Sys ID Manually',
-      description:
-        'Enter the record sys_id directly if not found in dropdown (for listing attachments)',
+      description: 'Record sys_id (for listing attachments)',
       required: false,
     }),
     filename: Property.ShortText({
       displayName: 'Filename Filter',
-      description:
-        'Optional filename to filter by when listing attachments (leave empty to get all)',
+      description: 'Filter attachments by filename (optional)',
       required: false,
     }),
     attachment_sys_id: Property.ShortText({
       displayName: 'Attachment Sys ID',
-      description:
-        'Sys_id of the attachment record to download (for download action)',
+      description: 'Attachment sys_id to download',
       required: false,
     }),
     accept_type: Property.StaticDropdown({
       displayName: 'Accept Type',
-      description:
-        'Data format to accept when downloading (for download action)',
+      description: 'File type to accept when downloading',
       required: false,
       defaultValue: '*/*',
       options: {
@@ -107,8 +99,7 @@ export const findFileAction = createAction({
     }),
     return_format: Property.StaticDropdown({
       displayName: 'Return Format',
-      description:
-        'How to return the downloaded file data (for download action)',
+      description: 'Format for returned file data',
       required: false,
       defaultValue: 'base64',
       options: {
@@ -133,7 +124,7 @@ export const findFileAction = createAction({
       return_format,
     } = context.propsValue;
 
-    const client = createServiceNowClient(context.propsValue);
+    const client = createServiceNowClient(context.auth);
 
     if (action_type === 'list') {
       const recordId = record || manual_sys_id;
