@@ -1,15 +1,15 @@
 import { DropdownOption } from '@activepieces/pieces-framework';
 
 export const BUSINESS_OBJECT_TYPES: DropdownOption<string>[] = [
-    { label: 'Invoices', value: 'invoices' },
+    { label: 'Invoices (AP)', value: 'invoices' },
     { label: 'Suppliers', value: 'suppliers' },
-    { label: 'Customers', value: 'customers' },
+    { label: 'Supplier Sites', value: 'supplierSites' },
     { label: 'Payments', value: 'payments' },
+    { label: 'Customers', value: 'customers' },
     { label: 'Journals', value: 'journals' },
     { label: 'Assets', value: 'assets' },
     { label: 'Purchase Orders', value: 'purchaseOrders' },
     { label: 'Purchase Requisitions', value: 'purchaseRequisitions' },
-    { label: 'Supplier Sites', value: 'supplierSites' },
     { label: 'Items', value: 'items' },
     { label: 'Item Categories', value: 'itemCategories' },
     { label: 'Projects', value: 'projects' },
@@ -41,3 +41,23 @@ export type BusinessObjectType =
     | 'employees'
     | 'positions'
     | 'departments';
+
+export const ENDPOINT_MAP: Record<BusinessObjectType, string> = {
+    invoices: '/apInvoices',
+    purchaseOrders: '/purchaseOrders',
+    suppliers: '/suppliers',
+    customers: '/receivablesCustomerAccounts',
+    payments: '/payments',
+    journals: '/journalEntries',
+    assets: '/assets',
+    purchaseRequisitions: '/purchaseRequisitions',
+    supplierSites: '/supplierSites',
+    items: '/items',
+    itemCategories: '/itemCategories',
+    projects: '/projects',
+    projectTasks: '/projectTasks',
+    projectExpenditures: '/projectCosts',
+    employees: '/workers',
+    positions: '/positions',
+    departments: '/departments',
+};

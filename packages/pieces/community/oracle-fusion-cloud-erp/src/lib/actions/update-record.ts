@@ -1,7 +1,8 @@
 import { oracleFusionCloudErpAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient } from '../common/client';
-import { BUSINESS_OBJECT_TYPES } from '../common/constants';
+import { BUSINESS_OBJECT_TYPES, BusinessObjectType } from '../common/constants';
+import { getFieldsForObjectType } from '../common/dynamic-fields';
 
 export const updateRecord = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -33,36 +34,9 @@ export const updateRecord = createAction({
 
                 const client = makeClient(auth as any);
 
-                const endpointMap: Record<string, string> = {
-                    invoices: '/invoices',
-                    purchaseOrders: '/purchaseOrders',
-                    suppliers: '/suppliers',
-                    customers: '/customers',
-                    payments: '/payments',
-                    journals: '/journals',
-                    assets: '/assets',
-                    purchaseRequisitions: '/purchaseRequisitions',
-                    supplierSites: '/supplierSites',
-                    items: '/items',
-                    itemCategories: '/itemCategories',
-                    projects: '/projects',
-                    projectTasks: '/projectTasks',
-                    projectExpenditures: '/projectExpenditures',
-                    employees: '/employees',
-                    positions: '/positions',
-                    departments: '/departments',
-                };
-
-                const endpoint = endpointMap[business_object as string];
-                if (!endpoint) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Unsupported business object',
-                    };
-                }
-
                 try {
+                    const { getEndpoint } = await import('../common/client');
+                    const endpoint = getEndpoint(business_object as BusinessObjectType);
                     const result = await client.searchRecords(endpoint, {
                         limit: 50,
                         orderBy: 'lastUpdateDate desc',
@@ -87,10 +61,17 @@ export const updateRecord = createAction({
                 }
             },
         }),
-        record_fields: Property.Object({
+        record_fields: Property.DynamicProperties({
             displayName: 'Record Fields',
-            description: 'The fields and values to update in JSON format.',
+            description: 'The fields to update',
             required: true,
+            refreshers: ['business_object'],
+            props: async ({ business_object }) => {
+                if (!business_object) {
+                    return {};
+                }
+                return getFieldsForObjectType(business_object as unknown as BusinessObjectType);
+            },
         }),
     },
     async run(context) {
@@ -104,39 +85,31 @@ export const updateRecord = createAction({
             throw new Error('Record ID is required. Please select a record to update.');
         }
 
-        if (!record_fields || typeof record_fields !== 'object' || Object.keys(record_fields).length === 0) {
+        if (!record_fields || typeof record_fields !== 'object') {
             throw new Error('Record Fields are required. Please provide the fields to update.');
+        }
+
+        const filteredFields: Record<string, any> = {};
+        Object.entries(record_fields).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                if (key === 'custom_field' && typeof value === 'object') {
+                    Object.assign(filteredFields, value);
+                } else {
+                    filteredFields[key] = value;
+                }
+            }
+        });
+
+        if (Object.keys(filteredFields).length === 0) {
+            throw new Error('At least one field must be provided to update a record.');
         }
 
         const client = makeClient(context.auth);
 
-        const endpointMap: Record<string, string> = {
-            invoices: `/invoices/${record_id}`,
-            purchaseOrders: `/purchaseOrders/${record_id}`,
-            suppliers: `/suppliers/${record_id}`,
-            customers: `/customers/${record_id}`,
-            payments: `/payments/${record_id}`,
-            journals: `/journals/${record_id}`,
-            assets: `/assets/${record_id}`,
-            purchaseRequisitions: `/purchaseRequisitions/${record_id}`,
-            supplierSites: `/supplierSites/${record_id}`,
-            items: `/items/${record_id}`,
-            itemCategories: `/itemCategories/${record_id}`,
-            projects: `/projects/${record_id}`,
-            projectTasks: `/projectTasks/${record_id}`,
-            projectExpenditures: `/projectExpenditures/${record_id}`,
-            employees: `/employees/${record_id}`,
-            positions: `/positions/${record_id}`,
-            departments: `/departments/${record_id}`,
-        };
-
-        const endpoint = endpointMap[business_object];
-        if (!endpoint) {
-            throw new Error(`Unsupported business object: ${business_object}. Please select a supported business object.`);
-        }
-
         try {
-            return await client.updateRecord(endpoint, record_fields);
+            const { getEndpoint } = await import('../common/client');
+            const endpoint = getEndpoint(business_object as unknown as BusinessObjectType, record_id as string);
+            return await client.updateRecord(endpoint, filteredFields);
         } catch (error) {
             throw new Error(`Failed to update record: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }

@@ -1,7 +1,7 @@
 import { oracleFusionCloudErpAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient } from '../common/client';
-import { BUSINESS_OBJECT_TYPES } from '../common/constants';
+import { BUSINESS_OBJECT_TYPES, BusinessObjectType } from '../common/constants';
 
 export const deleteRecord = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -33,36 +33,9 @@ export const deleteRecord = createAction({
 
                 const client = makeClient(auth as any);
 
-                const endpointMap: Record<string, string> = {
-                    invoices: '/invoices',
-                    purchaseOrders: '/purchaseOrders',
-                    suppliers: '/suppliers',
-                    customers: '/customers',
-                    payments: '/payments',
-                    journals: '/journals',
-                    assets: '/assets',
-                    purchaseRequisitions: '/purchaseRequisitions',
-                    supplierSites: '/supplierSites',
-                    items: '/items',
-                    itemCategories: '/itemCategories',
-                    projects: '/projects',
-                    projectTasks: '/projectTasks',
-                    projectExpenditures: '/projectExpenditures',
-                    employees: '/employees',
-                    positions: '/positions',
-                    departments: '/departments',
-                };
-
-                const endpoint = endpointMap[business_object as string];
-                if (!endpoint) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Unsupported business object',
-                    };
-                }
-
                 try {
+                    const { getEndpoint } = await import('../common/client');
+                    const endpoint = getEndpoint(business_object as BusinessObjectType);
                     const result = await client.searchRecords(endpoint, {
                         limit: 50,
                         orderBy: 'lastUpdateDate desc',
@@ -101,32 +74,9 @@ export const deleteRecord = createAction({
 
         const client = makeClient(context.auth);
 
-        const endpointMap: Record<string, string> = {
-            invoices: `/invoices/${record_id}`,
-            purchaseOrders: `/purchaseOrders/${record_id}`,
-            suppliers: `/suppliers/${record_id}`,
-            customers: `/customers/${record_id}`,
-            payments: `/payments/${record_id}`,
-            journals: `/journals/${record_id}`,
-            assets: `/assets/${record_id}`,
-            purchaseRequisitions: `/purchaseRequisitions/${record_id}`,
-            supplierSites: `/supplierSites/${record_id}`,
-            items: `/items/${record_id}`,
-            itemCategories: `/itemCategories/${record_id}`,
-            projects: `/projects/${record_id}`,
-            projectTasks: `/projectTasks/${record_id}`,
-            projectExpenditures: `/projectExpenditures/${record_id}`,
-            employees: `/employees/${record_id}`,
-            positions: `/positions/${record_id}`,
-            departments: `/departments/${record_id}`,
-        };
-
-        const endpoint = endpointMap[business_object];
-        if (!endpoint) {
-            throw new Error(`Unsupported business object: ${business_object}. Please select a supported business object.`);
-        }
-
         try {
+            const { getEndpoint } = await import('../common/client');
+            const endpoint = getEndpoint(business_object as BusinessObjectType, record_id as string);
             await client.deleteRecord(endpoint);
             return { success: true, message: `Record ${record_id} deleted successfully` };
         } catch (error) {

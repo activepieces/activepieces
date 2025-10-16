@@ -1,7 +1,7 @@
 import { oracleFusionCloudErpAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient } from '../common/client';
-import { BUSINESS_OBJECT_TYPES } from '../common/constants';
+import { BUSINESS_OBJECT_TYPES, BusinessObjectType } from '../common/constants';
 
 export const searchRecords = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -47,36 +47,14 @@ export const searchRecords = createAction({
             throw new Error('Business Object is required. Please select a business object.');
         }
 
-        const finalLimit = Math.min(limit || 25, 100); // Oracle API limits to 100
+        const finalLimit = Math.min(limit || 25, 100);
         const finalOffset = offset || 0;
         const finalOrderBy = order_by;
 
         const client = makeClient(context.auth);
 
-        const endpointMap: Record<string, string> = {
-            invoices: '/invoices',
-            purchaseOrders: '/purchaseOrders',
-            suppliers: '/suppliers',
-            customers: '/customers',
-            payments: '/payments',
-            journals: '/journals',
-            assets: '/assets',
-            purchaseRequisitions: '/purchaseRequisitions',
-            supplierSites: '/supplierSites',
-            items: '/items',
-            itemCategories: '/itemCategories',
-            projects: '/projects',
-            projectTasks: '/projectTasks',
-            projectExpenditures: '/projectExpenditures',
-            employees: '/employees',
-            positions: '/positions',
-            departments: '/departments',
-        };
-
-        const endpoint = endpointMap[business_object];
-        if (!endpoint) {
-            throw new Error(`Unsupported business object: ${business_object}. Please select a supported business object.`);
-        }
+        const { getEndpoint } = await import('../common/client');
+        const endpoint = getEndpoint(business_object as BusinessObjectType);
 
         const queryParams: Record<string, any> = {
             limit: finalLimit,

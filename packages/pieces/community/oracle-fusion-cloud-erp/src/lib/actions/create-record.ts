@@ -1,7 +1,8 @@
 import { oracleFusionCloudErpAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient } from '../common/client';
-import { BUSINESS_OBJECT_TYPES } from '../common/constants';
+import { BUSINESS_OBJECT_TYPES, BusinessObjectType } from '../common/constants';
+import { getFieldsForObjectType } from '../common/dynamic-fields';
 
 export const createRecord = createAction({
     auth: oracleFusionCloudErpAuth,
@@ -17,10 +18,17 @@ export const createRecord = createAction({
                 options: BUSINESS_OBJECT_TYPES,
             },
         }),
-        record_fields: Property.Object({
+        record_fields: Property.DynamicProperties({
             displayName: 'Record Fields',
-            description: 'The fields and values for the new record in JSON format.',
+            description: 'The fields for the new record',
             required: true,
+            refreshers: ['business_object'],
+            props: async ({ business_object }) => {
+                if (!business_object) {
+                    return {};
+                }
+                return getFieldsForObjectType(business_object as unknown as BusinessObjectType);
+            },
         }),
     },
     async run(context) {
@@ -30,39 +38,31 @@ export const createRecord = createAction({
             throw new Error('Business Object is required. Please select a business object.');
         }
 
-        if (!record_fields || typeof record_fields !== 'object' || Object.keys(record_fields).length === 0) {
+        if (!record_fields || typeof record_fields !== 'object') {
             throw new Error('Record Fields are required. Please provide the fields for the new record.');
+        }
+
+        const filteredFields: Record<string, any> = {};
+        Object.entries(record_fields).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                if (key === 'custom_field' && typeof value === 'object') {
+                    Object.assign(filteredFields, value);
+                } else {
+                    filteredFields[key] = value;
+                }
+            }
+        });
+
+        if (Object.keys(filteredFields).length === 0) {
+            throw new Error('At least one field must be provided to create a record.');
         }
 
         const client = makeClient(context.auth);
 
-        const endpointMap: Record<string, string> = {
-            invoices: '/invoices',
-            purchaseOrders: '/purchaseOrders',
-            suppliers: '/suppliers',
-            customers: '/customers',
-            payments: '/payments',
-            journals: '/journals',
-            assets: '/assets',
-            purchaseRequisitions: '/purchaseRequisitions',
-            supplierSites: '/supplierSites',
-            items: '/items',
-            itemCategories: '/itemCategories',
-            projects: '/projects',
-            projectTasks: '/projectTasks',
-            projectExpenditures: '/projectExpenditures',
-            employees: '/employees',
-            positions: '/positions',
-            departments: '/departments',
-        };
-
-        const endpoint = endpointMap[business_object];
-        if (!endpoint) {
-            throw new Error(`Unsupported business object: ${business_object}. Please select a supported business object.`);
-        }
-
         try {
-            return await client.createRecord(endpoint, record_fields);
+            const { getEndpoint } = await import('../common/client');
+            const endpoint = getEndpoint(business_object as unknown as BusinessObjectType);
+            return await client.createRecord(endpoint, filteredFields);
         } catch (error) {
             throw new Error(`Failed to create record: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }

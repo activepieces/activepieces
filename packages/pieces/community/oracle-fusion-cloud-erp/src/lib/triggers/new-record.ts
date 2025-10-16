@@ -5,12 +5,12 @@ import {
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { makeClient } from '../common/client';
-import { BUSINESS_OBJECT_TYPES } from '../common/constants';
+import { BUSINESS_OBJECT_TYPES, BusinessObjectType } from '../common/constants';
 
 export const newRecord = createTrigger({
-  auth: oracleFusionCloudErpAuth,
-  name: 'new_record',
-  displayName: 'New Record',
+    auth: oracleFusionCloudErpAuth,
+    name: 'new_record',
+    displayName: 'New Record',
     description: 'Triggers when a new record is created in the specified business object.',
     props: {
         business_object: Property.StaticDropdown({
@@ -37,13 +37,11 @@ export const newRecord = createTrigger({
     },
 
     async onEnable(context) {
-        // Store the last check timestamp
         const lastCheckTime = new Date().toISOString();
         context.store?.put('lastCheckTime', lastCheckTime);
     },
 
     async onDisable(context) {
-        // Clean up if needed
         await context.store?.delete('lastCheckTime');
     },
 
@@ -54,11 +52,10 @@ export const newRecord = createTrigger({
             throw new Error('Business Object is required. Please select a business object.');
         }
 
-        const finalPollingInterval = Math.max(polling_interval || 15, 5); // Minimum 5 minutes
+        const finalPollingInterval = Math.max(polling_interval || 15, 5);
 
         const client = makeClient(context.auth);
 
-        // Get the last check time from storage
         const lastCheckTime = await context.store?.get('lastCheckTime') as string;
         const now = new Date();
 
@@ -66,32 +63,9 @@ export const newRecord = createTrigger({
             ? new Date(new Date(lastCheckTime).getTime() - (finalPollingInterval * 60 * 1000))
             : new Date(now.getTime() - (finalPollingInterval * 60 * 1000));
 
-        const endpointMap: Record<string, string> = {
-            invoices: '/invoices',
-            purchaseOrders: '/purchaseOrders',
-            suppliers: '/suppliers',
-            customers: '/customers',
-            payments: '/payments',
-            journals: '/journals',
-            assets: '/assets',
-            purchaseRequisitions: '/purchaseRequisitions',
-            supplierSites: '/supplierSites',
-            items: '/items',
-            itemCategories: '/itemCategories',
-            projects: '/projects',
-            projectTasks: '/projectTasks',
-            projectExpenditures: '/projectExpenditures',
-            employees: '/employees',
-            positions: '/positions',
-            departments: '/departments',
-        };
-
-        const endpoint = endpointMap[business_object];
-        if (!endpoint) {
-            throw new Error(`Unsupported business object: ${business_object}. Please select a supported business object.`);
-        }
-
         try {
+            const { getEndpoint } = await import('../common/client');
+            const endpoint = getEndpoint(business_object as BusinessObjectType);
             const searchParams: Record<string, any> = {
                 limit: 100,
                 orderBy: 'CreationDate desc',

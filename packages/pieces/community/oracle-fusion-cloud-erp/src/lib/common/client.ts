@@ -9,6 +9,7 @@ import {
     HttpHeaders,
 } from '@activepieces/pieces-common';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { BusinessObjectType, ENDPOINT_MAP } from './constants';
 
 interface OracleAPIResponse<T> {
     items: T[];
@@ -21,6 +22,14 @@ interface OracleAPIResponse<T> {
 
 interface OracleRecord {
     [key: string]: any;
+}
+
+export function getEndpoint(businessObject: BusinessObjectType, recordId?: string): string {
+    const baseEndpoint = ENDPOINT_MAP[businessObject];
+    if (!baseEndpoint) {
+        throw new Error(`Unsupported business object: ${businessObject}`);
+    }
+    return recordId ? `${baseEndpoint}/${recordId}` : baseEndpoint;
 }
 
 export type filterParams = Record<
