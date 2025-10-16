@@ -135,6 +135,7 @@ export enum AppSystemProp {
     MAX_FIELDS_PER_TABLE = 'MAX_FIELDS_PER_TABLE',
 
     PM2_ENABLED = 'PM2_ENABLED',
+    SKIP_PROJECT_LIMITS_CHECK = 'SKIP_PROJECT_LIMITS_CHECK',
 
 }
 export enum PiecesSource {
