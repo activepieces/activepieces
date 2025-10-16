@@ -36,7 +36,10 @@ export type McpToolMetadata = Static<typeof McpToolMetadata>
 
 export const mcpToolNaming = {
     fixTool: (name: string, id: string, type: McpToolType) => {
-        const prefixId = id.slice(0, 4)
+        // Use 8 characters instead of 4 to ensure better uniqueness
+        // This prevents collisions when multiple custom API calls have similar names
+        // 8 chars provides 16^8 (4.3B) combinations vs 16^4 (65K) with 4 chars
+        const prefixId = id.slice(0, 8)
         const spaceToReserve = prefixId.length + 1
         const baseName = name.replace(/[\s/@-]+/g, '_')
         switch (type) {
