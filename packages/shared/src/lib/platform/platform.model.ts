@@ -60,7 +60,6 @@ export enum PlatformUsageMetric {
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
-    AGENTS = 'agents',
     TABLES = 'tables',
     MCPS = 'mcps',
 }
@@ -73,7 +72,6 @@ export const PlatformUsage = Type.Object({
     mcps: Type.Number(),
     seats: Type.Number(),
     projects: Type.Number(),
-    agents: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
@@ -128,8 +126,7 @@ export const PlatformPlan = Type.Object({
     projectsLimit: Nullable(Type.Number()),
     tablesLimit: Nullable(Type.Number()),
     mcpLimit: Nullable(Type.Number()),
-    activeFlowsLimit: Nullable(Type.Number()),
-    agentsLimit: Nullable(Type.Number()),
+    activeFlowsLimit: Nullable(Type.Number())
 })
 export type PlatformPlan = Static<typeof PlatformPlan>
 

@@ -65,7 +65,7 @@ const FlowStepInputOutput = React.memo(
   ({ stepDetails, selectedStep }: FlowStepInputOutputProps) => {
     const stepOutput = getStepOutput(stepDetails);
     const outputExists = hasOutput(stepDetails);
-    const isAgent = flowStructureUtil.isAgentPiece(selectedStep)
+    const isAgent = flowStructureUtil.isAgentPiece(selectedStep);
     const isRunning = isStepRunning(stepDetails.status);
 
     return (

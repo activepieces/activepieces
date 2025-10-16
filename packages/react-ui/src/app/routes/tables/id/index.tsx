@@ -48,7 +48,6 @@ const ApTableEditorPage = () => {
   const { data: maxRecords } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_RECORDS_PER_TABLE,
   );
-  const socket = useSocket();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );

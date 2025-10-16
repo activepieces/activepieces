@@ -5,7 +5,6 @@ import {
   FlowAction,
   FlowActionType,
   FlowTriggerType,
-  flowStructureUtil,
   LocalesEnum,
   SuggestionType,
   FlowTrigger,
@@ -136,7 +135,7 @@ const getQueryKeyForStepMetadata = (
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   const customLogoUrl =
-    'customLogoUrl' in step ? step.customLogoUrl as string : undefined;
+    'customLogoUrl' in step ? (step.customLogoUrl as string) : undefined;
   const actionName =
     step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
   const triggerName =

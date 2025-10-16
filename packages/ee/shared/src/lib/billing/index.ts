@@ -52,7 +52,6 @@ export const METRIC_TO_LIMIT_MAPPING = {
     [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
     [PlatformUsageMetric.TABLES]: 'tablesLimit',
     [PlatformUsageMetric.MCPS]: 'mcpLimit',
-    [PlatformUsageMetric.AGENTS]: 'agentsLimit',
 } as const
 
 export const METRIC_TO_USAGE_MAPPING = {
@@ -61,14 +60,12 @@ export const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.PROJECTS]: 'projects',
     [PlatformUsageMetric.TABLES]: 'tables',
     [PlatformUsageMetric.MCPS]: 'mcps',
-    [PlatformUsageMetric.AGENTS]: 'agents',
 } as const
 
 export const RESOURCE_TO_MESSAGE_MAPPING = {
     [PlatformUsageMetric.PROJECTS]: 'Project limit reached. Delete old projects or upgrade to create new ones.',
     [PlatformUsageMetric.TABLES]: 'Table limit reached. Please delete tables or upgrade to restore access.',
     [PlatformUsageMetric.MCPS]: 'MCP server limit reached. Delete unused MCPs or upgrade your plan to continue.',
-    [PlatformUsageMetric.AGENTS]: 'Agent limit reached. Remove agents or upgrade your plan to restore functionality.',
 }
 
 const Addons = Type.Object({
@@ -215,7 +212,6 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 1,
     tablesLimit: 1,
     mcpLimit: 1,
-    agentsLimit: 0,
 
     agentsEnabled: true,
     tablesEnabled: true,
@@ -239,7 +235,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
 }
 
-export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, agentsLimit, tablesLimit, mcpLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number, agentsLimit: number, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
+export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, tablesLimit, mcpLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
     return {
         plan: planname,
         tasksLimit,
@@ -251,7 +247,6 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, a
         projectsLimit: 1,
         mcpLimit,
         tablesLimit,
-        agentsLimit,
         eligibleForTrial: undefined,
 
         agentsEnabled: true,
@@ -290,7 +285,6 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 1,
     mcpLimit: undefined,
     tablesLimit: undefined,
-    agentsLimit: undefined,
 
     agentsEnabled: true,
     tablesEnabled: true,
@@ -326,7 +320,6 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     projectsLimit: 10,
     mcpLimit: undefined,
     tablesLimit: undefined,
-    agentsLimit: undefined,
 
     agentsEnabled: true,
     tablesEnabled: true,
@@ -367,7 +360,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     environmentsEnabled: false,
-    agentsLimit: undefined,
     analyticsEnabled: false,
     showPoweredBy: false,
 

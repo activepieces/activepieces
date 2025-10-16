@@ -21,7 +21,6 @@ import {
 import {
   PieceStepMetadata,
   PrimitiveStepMetadata,
-  StepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
 } from '../../../lib/types';
 
@@ -86,7 +85,7 @@ export const stepUtils = {
     const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
     const customLogoUrl = isPieceStep
       ? 'customLogoUrl' in step
-        ? step.customLogoUrl as string
+        ? (step.customLogoUrl as string)
         : undefined
       : undefined;
 

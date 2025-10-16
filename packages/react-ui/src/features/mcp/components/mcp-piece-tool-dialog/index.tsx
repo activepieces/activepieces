@@ -243,3 +243,8 @@ export function McpPieceDialog({
     </Dialog>
   );
 }
+
+// 1. we will steam
+// 2. tabs [json, thinking]
+// 3. updating the timlinae ui
+// 4. use mark complete (make it done).
