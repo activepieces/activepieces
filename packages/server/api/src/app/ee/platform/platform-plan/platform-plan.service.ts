@@ -27,7 +27,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
         const lock = await distributedLock.acquireLock({
             key: `platform_plan_${platformId}`,
-            timeout: 5000,
+            timeout: 60000,
             log,
         })
 

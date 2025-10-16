@@ -174,7 +174,9 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Flow')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.flowDisplayName}</div>;
+      return (
+        <div className="text-left">{row.original.flowVersion?.displayName}</div>
+      );
     },
   },
   {

@@ -71,7 +71,6 @@ const FlowBuilderPage = () => {
     <ReactFlowProvider>
       <BuilderStateProvider
         flow={flow}
-        canExitRun={true}
         flowVersion={flow!.version}
         readonly={false}
         run={null}

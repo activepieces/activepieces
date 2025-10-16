@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable, DataTableFilters } from '@/components/ui/data-table';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
@@ -85,14 +85,15 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
     });
   }, [refresh, handleRefetch, selectedRows]);
 
-  const filters = [
+  const filters: DataTableFilters<
+    keyof PopulatedFlow | 'connectionExternalId' | 'name'
+  >[] = [
     {
       type: 'input',
       title: t('Flow name'),
       accessorKey: 'name',
-      options: [],
       icon: CheckIcon,
-    } as const,
+    },
     {
       type: 'select',
       title: t('Status'),

@@ -1,5 +1,4 @@
 {
-  "Telegram Bot": "Telegram Bot",
   "Build chatbots for Telegram": "Bouw chatbots voor Telegram",
   "\n**Authentication**:\n\n1. Begin a conversation with the [Botfather](https://telegram.me/BotFather).\n2. Type in \"/newbot\"\n3. Choose a name for your bot\n4. Choose a username for your bot.\n5. Copy the token value from the Botfather and use it activepieces connection.\n6. Congratulations! You can now use your new Telegram connection in your flows.\n": "\n**Authenticatie**:\n\n1. Begin een gesprek met de [Botfather](https://telegram.me/BotFather).\n2. Typ \"/newbot\"\n3. Kies een naam voor je bot\n4. Kies een gebruikersnaam voor je bot.\n5. Kopieer de tokenwaarde van de Botvader en gebruik deze activepieces verbinding.\n6. Gefeliciteerd! Je kunt nu je nieuwe Telegram-verbinding gebruiken in je stromen. \n\n",
   "Send Text Message": "Tekstbericht verzenden",

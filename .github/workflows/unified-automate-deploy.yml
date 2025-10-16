@@ -12,140 +12,34 @@ on:
     merged: true
 
 jobs:
-  Build:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-
-      - name: Set RELEASE env var from package.json
-        run: echo RELEASE=$(node --print "require('./package.json').version") >> $GITHUB_ENV
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ghcr.io/activepieces/activepieces:testing
-
-  Deploy-Pre-Prod:
-    needs: Build
+  Deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/pre-prod.key
-          chmod 600 ~/.ssh/pre-prod.key
+          echo "$SSH_KEY" > ~/.ssh/preview-server.key
+          chmod 600 ~/.ssh/preview-server.key
           cat >>~/.ssh/config <<END
-          Host pre-prod
+          Host preview-server
             HostName $SSH_HOST
             User $SSH_USER
-            IdentityFile ~/.ssh/pre-prod.key
+            IdentityFile ~/.ssh/preview-server.key
             StrictHostKeyChecking no
           END
         env:
           SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
-          SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
-          
-      - name: Deploy with Docker Compose
+          SSH_KEY: ${{ secrets.PREVIEW_SSH_KEY }}
+          SSH_HOST: ${{ secrets.PREVIEW_HOST }}
+
+      - name: Run Pre-Prod Setup
         run: |
-          ssh pre-prod -t -t 'bash -ic "cd activepieces && IMAGE_TAG=testing docker compose pull && IMAGE_TAG=testing docker compose up -d --force-recreate activepieces; exit"' 
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js setup main preprod env.preprod; exit"'
 
-      - name: Clean up unused Docker images
+      - name: Run Community Setup
         run: |
-          ssh pre-prod -t -t 'bash -ic "docker image prune -a -f; exit"'
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js setup main ce env.ce; exit"'
 
-      - name: Docker system prune
-        run: docker system prune -a -f
-
-  Deploy-Community:
-    needs: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure SSH
+      - name: Run Enterprise Setup
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/pre-prod.key
-          chmod 600 ~/.ssh/pre-prod.key
-          cat >>~/.ssh/config <<END
-          Host pre-prod
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/pre-prod.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
-          SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
-          
-      - name: Deploy with Docker Compose
-        run: |
-          ssh pre-prod -t -t 'bash -ic "cd community-activepieces && IMAGE_TAG=testing docker compose pull && IMAGE_TAG=testing docker compose up -d --force-recreate community-activepieces; exit"' 
-
-  Deploy-Enterprise:
-    needs: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/pre-prod.key
-          chmod 600 ~/.ssh/pre-prod.key
-          cat >>~/.ssh/config <<END
-          Host pre-prod
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/pre-prod.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.PRE_PROD_USERNAME }}
-          SSH_KEY: ${{ secrets.PRE_PROD_SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.PRE_PROD_HOST }}
-          
-      - name: Deploy with Docker Compose
-        run: |
-          ssh pre-prod -t -t 'bash -ic "cd enterprise-activepieces && IMAGE_TAG=testing docker compose pull && IMAGE_TAG=testing docker compose up -d --force-recreate enterprise-activepieces; exit"' 
-
-  Pre-Prod-E2E-Tests:
-    needs: Deploy-Pre-Prod
-    uses: ./.github/workflows/e2e-tests-checkly.yml
-    with:
-      environment: Pre-Prod
-    secrets:
-      CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
-      CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
-
-  Community-E2E-Tests:
-    needs: Deploy-Community
-    uses: ./.github/workflows/e2e-tests-checkly.yml
-    with:
-      environment: Community
-    secrets:
-      CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
-      CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
-
-  Enterprise-E2E-Tests:
-    needs: Deploy-Enterprise
-    uses: ./.github/workflows/e2e-tests-checkly.yml
-    with:
-      environment: Enterprise
-    secrets:
-      CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
-      CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }} 
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js setup main ee env.ee; exit"'

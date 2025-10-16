@@ -30,7 +30,7 @@ We have one main queue called `workerJobs` that handles all job types. Each job 
 ### Low Priority Jobs
 
 #### RENEW_WEBHOOK
-Renews webhooks for pieces that need to stay connected to external services like Google Sheets.
+Renews webhooks for pieces that have webhooks channel with expiration like Google Sheets.
 
 #### EXECUTE_POLLING
 Checks external services for new data at regular intervals.

@@ -1,5 +1,4 @@
 {
-  "Spotify": "Spotify",
   "Music for everyone": "Muziek voor iedereen",
   "\nTo obtain a client ID and client secret for Spotify, follow these simple steps:\n\n1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/).\n2. **Log in** to your Spotify account.\n3. Click on the **\"Create an App\"** button.\n4. Fill in the required information, such as the **App Name** and **App Description**.\n5. Once your app is created, you will see the **client ID** and **client secret** on the app's dashboard.\n6. **Copy** the client ID and client secret and **paste** them below.\n": "\nOm een client-ID en clientgeheim voor Spotify te verkrijgen, volg je deze eenvoudige stappen:\n\n1. Ga naar het [Spotify Developer Dashboard](https://developer.spotify.com/).\n2. **Log in** op uw Spotify-account.\n3. Klik op de **\"Maak een App\"** knop.\n4. Vul de vereiste informatie in, zoals de **App Naam** en **App Beschrijving**.\n5. Zodra uw app is gemaakt, ziet u de **client ID** en **client secret** op het dashboard van de app.\n6. **Kopieer** de client-ID en clientgeheim en **plakken** ze hieronder.\n",
   "Search": "Zoeken",
