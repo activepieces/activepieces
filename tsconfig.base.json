@@ -308,6 +308,9 @@
         "packages/pieces/community/crypto/src/index.ts"
       ],
       "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
+      "@activepieces/piece-cyberark": [
+        "packages/pieces/community/cyberark/src/index.ts"
+      ],
       "@activepieces/piece-dappier": [
         "packages/pieces/community/dappier/src/index.ts"
       ],
