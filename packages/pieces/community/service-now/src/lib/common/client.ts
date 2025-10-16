@@ -111,13 +111,15 @@ export class ServiceNowClient {
       case 404:
         return new Error('Not found');
       case 422:
-      case 400:
+      case 400: {
         const details = data?.error?.message || data?.message || 'Invalid request data';
         return new Error(`Validation error: ${details}`);
-      case 429:
+      }
+      case 429: {
         const retryAfter = error.response.headers?.['retry-after'];
         const retryMsg = retryAfter ? ` retry after ${retryAfter} seconds` : '';
         return new Error(`Rate-limited,${retryMsg}`);
+      }
       default:
         return new Error(data?.error?.message || data?.message || `ServiceNow server error (${status})`);
     }
@@ -372,7 +374,7 @@ export class ServiceNowClient {
 
   async getAttachment(
     attachment_sys_id: string,
-    accept_type: string = '*/*'
+    accept_type = '*/*'
   ): Promise<{ data: Buffer; metadata?: string }> {
     const endpoint = `/api/now/attachment/${attachment_sys_id}/file`;
     
