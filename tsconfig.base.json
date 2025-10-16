@@ -794,6 +794,9 @@
       "@activepieces/piece-openai": [
         "packages/pieces/community/openai/src/index.ts"
       ],
+      "@activepieces/piece-oracle-fusion-cloud-erp": [
+        "packages/pieces/community/oracle-fusion-cloud-erp/src/index.ts"
+      ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],
