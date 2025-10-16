@@ -270,6 +270,7 @@ import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres
 import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
 import { RemoveAgentidFromMcpEntity1760452015041 } from './migration/postgres/1760452015041-remove-agentid-from-mcp-entity'
+import { RemoveAgentLimitFromPlatfromPlanEntity1760607967671 } from './migration/postgres/1760607967671-remove-agent-limit-from-platfrom-plan-entity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -560,6 +561,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformAnalyticsReportEntity1753091760355,
                 AddBillingCycle1754559781173,
                 EligibileForTrial1754852385518,
+                RemoveAgentLimitFromPlatfromPlanEntity1760607967671
             )
             break
         case ApEdition.COMMUNITY:
