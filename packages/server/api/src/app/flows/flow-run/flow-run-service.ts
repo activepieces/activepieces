@@ -324,7 +324,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             try {
                 span.setAttribute('flowRun.flowId', flowId)
 
-                const time = performance.now()
                 const newFlowRun = await create({
                     projectId,
                     flowVersionId,

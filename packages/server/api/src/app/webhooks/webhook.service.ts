@@ -39,7 +39,6 @@ export const webhookService = {
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
 
-                const time = performance.now()
                 const flowExecutionResult = await flowExecutionCache(pinoLogger).get({
                     flowId,
                     simulate: saveSampleData,
