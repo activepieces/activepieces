@@ -3,6 +3,8 @@ import deepEqual from 'deep-equal';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { safeDeepClone } from '@/lib/utils';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
 import {
@@ -107,7 +109,7 @@ const StepSettingsContainer = () => {
       }
       const valid = Object.keys(result.errors).length === 0;
       //We need to copy the object because the form is using the same object reference
-      currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
+      currentValuesRef.current = safeDeepClone(cleanedNewValues);
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,

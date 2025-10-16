@@ -321,3 +321,35 @@ export const scrollToElementAndClickIt = (elementId: string) => {
   });
   element?.click();
 };
+
+/**
+ * Safely deep clones an object using JSON serialization with fallback to shallow clone.
+ * Handles circular references, non-serializable values, and other edge cases gracefully.
+ * 
+ * @param obj - The object to deep clone
+ * @returns A deep clone of the object, or shallow clone if JSON serialization fails
+ * 
+ * @example
+ * // Safe for circular references
+ * const obj = { a: 1 };
+ * obj.self = obj;
+ * const cloned = safeDeepClone(obj); // Falls back to shallow clone
+ * 
+ * @see Issue #9661 - Prevents crashes when step input contains malformed data
+ */
+export function safeDeepClone<T>(obj: T): T {
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (error) {
+    console.error('Failed to deep clone object, falling back to shallow clone:', error);
+    // Fallback to shallow clone to prevent complete failure
+    if (Array.isArray(obj)) {
+      return [...obj] as T;
+    }
+    if (obj !== null && typeof obj === 'object') {
+      return { ...obj };
+    }
+    // For primitives, return as-is
+    return obj;
+  }
+}
