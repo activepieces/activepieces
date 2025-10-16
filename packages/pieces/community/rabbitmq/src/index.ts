@@ -32,6 +32,11 @@ export const rabbitmqAuth = PieceAuth.CustomAuth({
       description: "Virtual Host",
       required: false,
     }),
+    ssl: Property.Checkbox({
+      displayName: "SSL",
+      description: "Use SSL",
+      required: false,
+    }),
   },
 });
 
