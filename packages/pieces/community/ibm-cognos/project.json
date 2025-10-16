@@ -1,0 +1,32 @@
+{
+  "name": "@activepieces/piece-ibm-cognos",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/ibm-cognos/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/ibm-cognos",
+        "main": "packages/pieces/community/ibm-cognos/src/index.ts",
+        "tsConfig": "packages/pieces/community/ibm-cognos/tsconfig.lib.json",
+        "assets": ["packages/pieces/community/ibm-cognos/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["type:piece", "scope:community"]
+}
+
