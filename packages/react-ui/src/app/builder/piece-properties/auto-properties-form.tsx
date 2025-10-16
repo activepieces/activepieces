@@ -18,6 +18,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   FlowActionType,
+  FlowTriggerType,
   isNil,
   PropertyExecutionType,
   Step,
@@ -54,18 +55,20 @@ const AutoPropertiesFormComponent = React.memo(
     useMentionTextInput,
     onValueChange,
   }: AutoFormProps) => {
-    const form = useFormContext();
+    const form = useFormContext<Omit<Step, 'nextAction'>>();
     const step = form.getValues();
 
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
           {Object.entries(props).map(([propertyName]) => {
-            const dynamicInputModeToggled =
-              (step as Step).type === FlowActionType.PIECE
-                ? step.settings.propertySettings[propertyName]?.type ===
-                  PropertyExecutionType.DYNAMIC
-                : false;
+            const isPieceStep =
+              step.type === FlowActionType.PIECE ||
+              step.type === FlowTriggerType.PIECE;
+            const dynamicInputModeToggled = isPieceStep
+              ? step.settings.propertySettings[propertyName]?.type ===
+                PropertyExecutionType.DYNAMIC
+              : false;
             return (
               <FormField
                 key={propertyName}
