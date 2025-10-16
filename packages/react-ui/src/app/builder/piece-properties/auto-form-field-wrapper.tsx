@@ -19,9 +19,7 @@ import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import {
   FlowAction,
-  FlowActionType,
   FlowTrigger,
-  FlowTriggerType,
   PropertyExecutionType,
 } from '@activepieces/shared';
 
@@ -67,20 +65,15 @@ const DynamicValueToggle = ({
   inputName,
   property,
   disabled,
+  isToggled,
 }: {
   propertyName: string;
   inputName: string;
   property: PieceProperty;
   disabled: boolean;
+  isToggled: boolean;
 }) => {
   const form = useFormContext<FlowAction | FlowTrigger>();
-  const step = form.getValues();
-  const isPieceStep =
-    step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
-  const dynamicInputModeToggled = isPieceStep
-    ? step.settings.propertySettings[propertyName]?.type ===
-      PropertyExecutionType.DYNAMIC
-    : false;
   const handleDynamicValueToggleChange = (mode: PropertyExecutionType) => {
     const propertySettingsForSingleProperty = {
       ...form.getValues().settings?.propertySettings?.[propertyName],
@@ -116,10 +109,10 @@ const DynamicValueToggle = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <Toggle
-            pressed={dynamicInputModeToggled}
-            onPressedChange={(value) =>
+            pressed={isToggled}
+            onPressedChange={(newIsToggled) =>
               handleDynamicValueToggleChange(
-                value
+                newIsToggled
                   ? PropertyExecutionType.DYNAMIC
                   : PropertyExecutionType.MANUAL,
               )
@@ -128,8 +121,8 @@ const DynamicValueToggle = ({
           >
             <SquareFunction
               className={cn('size-5', {
-                'text-foreground': dynamicInputModeToggled,
-                'text-muted-foreground': !dynamicInputModeToggled,
+                'text-foreground': isToggled,
+                'text-muted-foreground': !isToggled,
               })}
             />
           </Toggle>
@@ -193,6 +186,7 @@ const AutoFormFieldWrapper = ({
             inputName={inputName}
             property={property}
             disabled={disabled}
+            isToggled={dynamicInputModeToggled ?? false}
           />
         )}
       </FormLabel>
