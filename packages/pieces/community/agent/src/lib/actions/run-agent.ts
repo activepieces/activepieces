@@ -112,7 +112,7 @@ export const runAgent = createAction({
       stopWhen: stepCountIs(maxSteps),
       tools: await agentToolInstance.tools()
     })
-    
+
     let currentText = ''
     try {
       for await (const chunk of fullStream) {
@@ -164,16 +164,17 @@ export const runAgent = createAction({
     } catch (error) {
       throw error
     }
+
+    if (currentText.length > 0) {
+      result.steps.push({
+          type: ContentBlockType.MARKDOWN,
+          markdown: currentText,
+      })
+    }
+
     const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
     result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
     result.message = agentCommon.concatMarkdown(result.steps)
-
-
-
-    console.log("@@@@@@@@@@@@@@@@@@@@@@")
-    console.log(result)
-    console.log("@@@@@@@@@@@@@@@@@@@@@@")
-
 
     return result
   }

@@ -1,4 +1,4 @@
-import { AI_USAGE_MCP_ID_HEADER, AIUsageFeature, createAIModel } from "@activepieces/common-ai";
+import { AI_USAGE_MCP_ID_HEADER, AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from "@activepieces/common-ai";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool, McpResult, McpToolsListResult, McpToolCallResult } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
@@ -8,18 +8,21 @@ import { type Schema as AiSchema, tool, jsonSchema } from "ai";
 import z, { ZodRawShape, ZodSchema } from "zod";
 import {createParser} from 'eventsource-parser'
 
-export const AI_MODELS = [
-  { id: 'openai-gpt-4.1', provider: 'openai', displayName: 'GPT-4.1', modelName: 'gpt-4.1' },
-  { id: 'openai-gpt-4-turbo', provider: 'openai', displayName: 'GPT-4 Turbo', modelName: 'gpt-4-turbo' },
-  { id: 'openai-gpt-3.5-turbo', provider: 'openai', displayName: 'GPT-3.5 Turbo', modelName: 'gpt-3.5-turbo' },
-  { id: 'anthropic-claude-3-opus', provider: 'anthropic', displayName: 'Claude 3 Opus', modelName: 'claude-3-opus' },
-  { id: 'anthropic-claude-3-sonnet', provider: 'anthropic', displayName: 'Claude 3 Sonnet', modelName: 'claude-3-sonnet' },
-  { id: 'anthropic-claude-3-haiku', provider: 'anthropic', displayName: 'Claude 3 Haiku', modelName: 'claude-3-haiku' },
-  { id: 'google-gemini-1.5-pro', provider: 'google', displayName: 'Gemini 1.5 Pro', modelName: 'gemini-1.5-pro' },
-  { id: 'google-gemini-1.5-flash', provider: 'google', displayName: 'Gemini 1.5 Flash', modelName: 'gemini-1.5-flash' },
-] as const;
+export const AI_MODELS: AIModel[] = SUPPORTED_AI_PROVIDERS.flatMap(provider =>
+  provider.languageModels.map(model => ({
+    id: `${provider.provider}-${model.instance.modelId}`,
+    provider: provider.provider,
+    displayName: model.displayName,
+    modelName: model.instance.modelId,
+  }))
+)
 
-type AIModel = typeof AI_MODELS[number];
+export type AIModel = {
+  id: string
+  provider: string
+  displayName: string
+  modelName: string
+}
 
 async function getStructuredOutput(outputFields: AgentOutputField[]): Promise<ZodSchema> {
     const shape: ZodRawShape = {}
@@ -96,7 +99,7 @@ async function getMcpClient(params: AgentToolsParams) {
         tools: async () => {
             const data: McpToolsListResult = await sendMcpRequest<McpToolsListResult>('tools/list', {})
             const tools: Record<string, ReturnType<typeof tool>> = {}
-            
+
             for (const toolDef of data?.result?.tools ?? []) {
                 tools[toolDef.name] = tool({
                     description: toolDef.description ?? '',
@@ -106,26 +109,17 @@ async function getMcpClient(params: AgentToolsParams) {
                             name: toolDef.name,
                             arguments: args,
                         })
-                        
                         if (!result?.result) {
                             throw new Error(`Tool ${toolDef.name} returned no result`)
                         }
-                        
                         if (result.result.success === false) {
                             const errorText = result.result.content?.[0]?.text ?? 'Tool execution failed'
                             throw new Error(errorText)
                         }
-                        
-                        const content = result.result.content?.[0]
-                        if (content?.text) {
-                            return content.text
-                        }
-                        
-                        return JSON.stringify(result.result)
+                        return result.result
                     },
                 } as unknown as Parameters<typeof tool>[0])
             }
-            
             return tools
         },
         close: async () => {},
