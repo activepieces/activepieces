@@ -21,6 +21,7 @@ import {
   FlowAction,
   FlowActionType,
   FlowTrigger,
+  FlowTriggerType,
   PropertyExecutionType,
 } from '@activepieces/shared';
 
@@ -74,11 +75,12 @@ const DynamicValueToggle = ({
 }) => {
   const form = useFormContext<FlowAction | FlowTrigger>();
   const step = form.getValues();
-  const dynamicInputModeToggled =
-    step.type === FlowActionType.PIECE
-      ? step.settings.propertySettings[propertyName]?.type ===
-        PropertyExecutionType.DYNAMIC
-      : false;
+  const isPieceStep =
+    step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
+  const dynamicInputModeToggled = isPieceStep
+    ? step.settings.propertySettings[propertyName]?.type ===
+      PropertyExecutionType.DYNAMIC
+    : false;
   const handleDynamicValueToggleChange = (mode: PropertyExecutionType) => {
     const propertySettingsForSingleProperty = {
       ...form.getValues().settings?.propertySettings?.[propertyName],
