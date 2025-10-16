@@ -44,6 +44,7 @@ const systemPropValidators: {
 } = {
     // AppSystemProp
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
+    [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
     [AppSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
@@ -58,12 +59,12 @@ const systemPropValidators: {
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
     [AppSystemProp.SENTRY_DSN]: urlValidator,
-    
+
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
-    
-    [AppSystemProp.OTEL_ENABLED]: booleanValidator,    
+
+    [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
@@ -92,6 +93,7 @@ const systemPropValidators: {
     [AppSystemProp.POSTGRES_USERNAME]: stringValidator,
     [AppSystemProp.POSTGRES_USE_SSL]: booleanValidator,
     [AppSystemProp.POSTGRES_POOL_SIZE]: numberValidator,
+    [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: numberValidator,
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_MODE]: enumValidator(Object.values(QueueMode)),
     [AppSystemProp.QUEUE_UI_ENABLED]: booleanValidator,
@@ -254,7 +256,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const edition = system.getEdition()
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && environment === ApEnvironment.PRODUCTION) {
         const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode) ) {
+        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
             throw new Error(JSON.stringify({
                 message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
