@@ -55,8 +55,8 @@ const AutoPropertiesFormComponent = React.memo(
     useMentionTextInput,
     onValueChange,
   }: AutoFormProps) => {
-    const form = useFormContext<Omit<Step, 'nextAction'>>();
-    const step = form.getValues();
+    const form = useFormContext();
+    const step = form.getValues() as Step;
 
     return (
       Object.keys(props).length > 0 && (
