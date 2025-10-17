@@ -1,5 +1,5 @@
 import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, isNil, JobData } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, JobData, LATEST_JOB_DATA_SCHEMA_VERSION } from '@activepieces/shared'
 import { DelayedError, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
@@ -7,6 +7,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis'
 import { system } from '../../helper/system/system'
 import { jobConsumer } from '../consumer'
+import { jobMigrations } from './jobs-migrations'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
 
 const consumer: Record<string, Worker> = {}
@@ -35,6 +36,14 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     consumer[queueName] = new Worker<JobData>(queueName, async (job, token) => {
         try {
+            if (shouldMigrateJob(job.data)) {
+                const jobData = await jobMigrations.apply(job.data)
+                await job.updateData(jobData)
+                log.info({
+                    jobId: job.id,
+                    jobData,
+                }, 'Job data migrated')
+            }
             const jobId = job.id
             assertNotNullOrUndefined(jobId, 'jobId')
             const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
@@ -60,3 +69,9 @@ async function ensureWorkerExists(queueName: QueueName, log: FastifyBaseLogger):
     return consumer[queueName]
 }
 
+function shouldMigrateJob(job: JobData): boolean {
+    if (!('schemaVersion' in job)) {
+        return true
+    }
+    return job.schemaVersion != LATEST_JOB_DATA_SCHEMA_VERSION
+}

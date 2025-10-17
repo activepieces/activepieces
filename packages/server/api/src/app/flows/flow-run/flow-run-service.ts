@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -8,9 +8,6 @@ import {
     ErrorCode,
     ExecutionType,
     ExecutioOutputFile,
-    File,
-    FileCompression,
-    FileType,
     FlowId,
     FlowRetryStrategy,
     FlowRun,
@@ -27,6 +24,7 @@ import {
     SampleDataFileType,
     SeekPage,
     spreadIfDefined,
+    UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
@@ -39,7 +37,6 @@ import {
     APArrayContains,
 } from '../../database/database-connection'
 import { fileService } from '../../file/file.service'
-import { s3Helper } from '../../file/s3-helper'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -52,13 +49,12 @@ import { JobType } from '../../workers/queue/queue-manager'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { flowRunLogsService } from './logs/flow-run-logs-service'
 
 
 const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
-
-const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
@@ -219,6 +215,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         tags,
         duration,
         failedStepName,
+        logsFileId,
     }: FinishParams): Promise<FlowRun> {
         log.info({
             runId: flowRunId,
@@ -235,6 +232,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             status,
             ...spreadIfDefined('tasks', tasks),
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
+            ...spreadIfDefined('logsFileId', logsFileId),
             tags,
             finishTime: new Date().toISOString(),
             failedStepName: failedStepName ?? undefined,
@@ -255,41 +253,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return flowRun
     },
 
-    async updateLogs({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<void> {
-        const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
-        if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
-            const errors = new Error(
-                'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
-            )
-            exceptionHandler.handle(errors, log)
-            throw errors
-        }
-        const newLogsFileId = logsFileId ?? apId()
-        await fileService(log).save({
-            fileId: newLogsFileId,
-            projectId,
-            data: executionState ?? null,
-            size: executionStateContentLength,
-            type: FileType.FLOW_RUN_LOG,
-            compression: FileCompression.NONE,
-            metadata: {
-                flowRunId,
-                projectId,
-            },
-        })
-        await flowRunRepo().update(flowRunId, {
-            logsFileId: newLogsFileId,
-        })
-    },
-    async updateLogsSizeAndAttachLogsFile({ flowRunId, logsFileId, executionStateContentLength }: UpdateLogsSizeAndAttachLogsFileParams): Promise<void> {
-        await flowRunRepo().update(flowRunId, {
-            logsFileId,
-        })
-        await fileService(log).updateSize({
-            fileId: logsFileId,
-            size: executionStateContentLength,
-        })
-    },
     async start({
         flowId,
         payload,
@@ -596,53 +559,15 @@ function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: st
 }
 
 
-
-const createLogsUploadUrl = async (params: CreateLogsUploadUrlParams, log: FastifyBaseLogger): Promise<{ uploadUrl: string, fileId: string }> => {
-    const file = await getOrCreateLogsFile(params, log)
-    assertNotNullOrUndefined(file.s3Key, 's3Key')
-    const uploadUrl = await s3Helper(log).putS3SignedUrl(file.s3Key)
-    return { uploadUrl, fileId: file.id }
-}
-
-async function getOrCreateLogsFile(params: GetOrCreateLogsFileParams, log: FastifyBaseLogger): Promise<File> {
-    if (isNil(params.flowRun.logsFileId)) {
-        return fileService(log).save({
-            projectId: params.projectId,
-            data: null,
-            size: 0,
-            type: FileType.FLOW_RUN_LOG,
-            compression: FileCompression.NONE,
-            metadata: {
-                flowRunId: params.flowRun.id,
-                projectId: params.projectId,
-            },
-        })
-    }
-    return fileService(log).getFileOrThrow({
-        projectId: params.projectId,
-        fileId: params.flowRun.logsFileId,
-        type: FileType.FLOW_RUN_LOG,
-    })
-}
-
-type GetOrCreateLogsFileParams = {
-    flowRun: FlowRun
-    projectId: ProjectId
-}
-
-
 async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
-    let logsUploadUrl: string | undefined
-    let logsFileId: string | undefined = params.flowRun.logsFileId ?? undefined
-    if (USE_SIGNED_URL) {
-        const logsUploadResult = await createLogsUploadUrl({
-            flowRun: params.flowRun,
-            projectId: params.flowRun.projectId,
-        }, log)
-        logsUploadUrl = logsUploadResult.uploadUrl
-        logsFileId = logsUploadResult.fileId
-    }
+    const logsFileId = params.flowRun.logsFileId ?? apId()
     const platformId = await projectService.getPlatformId(params.flowRun.projectId)
+    const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
+        logsFileId,
+        projectId: params.flowRun.projectId,
+        flowRunId: params.flowRun.id,
+        behavior: USE_SIGNED_URL ? UploadLogsBehavior.REDIRECT_TO_S3 : UploadLogsBehavior.UPLOAD_DIRECTLY,
+    })
 
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
@@ -658,6 +583,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             flowId: params.flowRun.flowId,
             runId: params.flowRun.id,
             jobType: WorkerJobType.EXECUTE_FLOW,
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             flowVersionId: params.flowRun.flowVersionId,
             payload: params.payload,
             executeTrigger: params.executeTrigger,
@@ -695,18 +621,6 @@ async function create(params: CreateParams): Promise<FlowRun> {
     })
 }
 
-type CreateLogsUploadUrlParams = {
-    flowRun: FlowRun
-    projectId: string
-}
-
-type UpdateLogs = {
-    flowRunId: FlowRunId
-    logsFileId: string | undefined
-    projectId: ProjectId
-    executionStateString: string | undefined
-    executionStateContentLength: number
-}
 
 type UpdateRunStatusParams = {
     flowRunId: FlowRunId
@@ -721,14 +635,8 @@ type FinishParams = {
     duration: number | undefined
     tags: string[]
     failedStepName?: string | undefined
+    logsFileId: string | undefined
 }
-
-type UpdateLogsSizeAndAttachLogsFileParams = {
-    flowRunId: FlowRunId
-    logsFileId: string
-    executionStateContentLength: number
-}
-
 
 
 type CreateParams = {

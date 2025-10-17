@@ -1,5 +1,5 @@
 import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -49,7 +49,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, testSingleStepMode } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, testSingleStepMode, logsFileId } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
@@ -69,15 +69,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
             failedStepName,
-        })
-        await handleUpdateLogsBehavior({
-            log: request.log,
-            updateLogsBehavior: request.body.updateLogsBehavior,
-            executionStateContentLength: request.body.executionStateContentLength,
-            logsFileId: request.body.logsFileId,
-            executionStateBuffer: request.body.executionStateBuffer,
-            projectId: request.principal.projectId,
-            runId,
+            logsFileId,
         })
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
@@ -171,50 +163,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             .status(StatusCodes.OK)
             .send(data)
     })
-
-
-
 }
 
-async function handleUpdateLogsBehavior(request: HandleUpdateLogsBehaviorParams): Promise<void> {
-    const { updateLogsBehavior, executionStateContentLength, logsFileId, executionStateBuffer, projectId } = request
-    switch (updateLogsBehavior) {
-        case UpdateLogsBehavior.UPDATE_LOGS: {
-            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-            await flowRunService(request.log).updateLogs({
-                flowRunId: request.runId,
-                logsFileId,
-                projectId,
-                executionStateString: executionStateBuffer,
-                executionStateContentLength,
-            })
-            break
-        }
-        case UpdateLogsBehavior.UPDATE_LOGS_SIZE: {
-            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-            assertNotNullOrUndefined(logsFileId, 'logsFileId is required')
-            await flowRunService(request.log).updateLogsSizeAndAttachLogsFile({
-                flowRunId: request.runId,
-                logsFileId,
-                executionStateContentLength,
-            })
-            break
-        }
-        case UpdateLogsBehavior.NONE: {
-            break
-        }
-    }   
-}
-
-type HandleUpdateLogsBehaviorParams = {
-    log: FastifyBaseLogger
-    updateLogsBehavior: UpdateLogsBehavior
-    executionStateContentLength: number | null
-    logsFileId: string | undefined
-    executionStateBuffer: string | undefined
-    projectId: string
-    runId: string
-}
 
 async function getFlowResponse(
     result: FlowRunResponse,
