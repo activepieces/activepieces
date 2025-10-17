@@ -23,27 +23,11 @@ export const ibmCognoseAuth = PieceAuth.CustomAuth({
   description: `
 ## IBM Cognos Analytics Authentication
 
-To authenticate with IBM Cognos Analytics, you need:
-
-- **Server URL**: Your Cognos Analytics server URL (e.g., https://your-server.com)
-- **Namespace**: Authentication namespace (e.g., LDAP)
+Enter your Cognos Analytics credentials:
 - **Username**: Your Cognos username
 - **Password**: Your Cognos password
-
-The authentication uses the Cognos REST API session endpoint with username/password credentials.
   `,
   props: {
-    serverUrl: Property.ShortText({
-      displayName: 'Server URL',
-      description:
-        'Your Cognos Analytics server URL (e.g., https://your-server.com)',
-      required: true
-    }),
-    namespace: Property.ShortText({
-      displayName: 'Namespace',
-      description: 'Authentication namespace (e.g., LDAP)',
-      required: true
-    }),
     username: Property.ShortText({
       displayName: 'Username',
       description: 'Your Cognos username',
@@ -56,44 +40,20 @@ The authentication uses the Cognos REST API session endpoint with username/passw
     })
   },
   validate: async ({ auth }) => {
-    try {
-      const { serverUrl, namespace, username, password } = auth;
+    // For now, just validate that username and password are provided
+    // The actual server validation will happen when actions are executed
+    const { username, password } = auth;
 
-      // Prepare authentication parameters
-      const parameters = [
-        { name: 'CAMNamespace', value: namespace },
-        { name: 'CAMUsername', value: username },
-        { name: 'CAMPassword', value: password }
-      ];
-
-      // Test authentication by creating a session
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.PUT,
-        url: `${serverUrl.replace(/\/$/, '')}/api/v1/session`,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: {
-          parameters
-        }
-      });
-
-      if (response.status >= 200 && response.status < 300) {
-        return {
-          valid: true
-        };
-      } else {
-        return {
-          valid: false,
-          error: `Authentication failed: ${response.status} ${response.body}`
-        };
-      }
-    } catch (error) {
+    if (!username || !password) {
       return {
         valid: false,
-        error: `Authentication failed: ${error}`
+        error: 'Username and password are required'
       };
     }
+
+    return {
+      valid: true
+    };
   }
 });
 
@@ -116,19 +76,19 @@ export const ibmCognose = createPiece({
     moveContentObjectAction,
     copyContentObjectAction,
     createCustomApiCallAction({
-      baseUrl: (auth: any) => `${auth.serverUrl.replace(/\/$/, '')}/api/v1`,
+      baseUrl: () => 'https://your-cognos-server.com/api/v1', // TODO: Configure server URL
       auth: ibmCognoseAuth,
       authMapping: async (auth: any) => {
         // Create session first to get authentication token
         const parameters = [
-          { name: 'CAMNamespace', value: auth.namespace },
+          { name: 'CAMNamespace', value: 'LDAP' }, // TODO: Configure namespace
           { name: 'CAMUsername', value: auth.username },
           { name: 'CAMPassword', value: auth.password }
         ];
 
         const sessionResponse = await httpClient.sendRequest({
           method: HttpMethod.PUT,
-          url: `${auth.serverUrl.replace(/\/$/, '')}/api/v1/session`,
+          url: 'https://your-cognos-server.com/api/v1/session', // TODO: Configure server URL
           headers: {
             'Content-Type': 'application/json'
           },

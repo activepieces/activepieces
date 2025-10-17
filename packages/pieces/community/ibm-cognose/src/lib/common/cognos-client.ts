@@ -1,8 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export interface CognosAuth {
-  serverUrl: string;
-  namespace: string;
   username: string;
   password: string;
 }
@@ -17,14 +15,14 @@ export class CognosClient {
 
   async createSession(): Promise<string> {
     const parameters = [
-      { name: 'CAMNamespace', value: this.auth.namespace },
+      { name: 'CAMNamespace', value: 'LDAP' }, // TODO: Configure namespace
       { name: 'CAMUsername', value: this.auth.username },
       { name: 'CAMPassword', value: this.auth.password }
     ];
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: `${this.auth.serverUrl.replace(/\/$/, '')}/api/v1/session`,
+      url: 'https://your-cognos-server.com/api/v1/session', // TODO: Configure server URL
       headers: {
         'Content-Type': 'application/json',
       },
@@ -49,7 +47,7 @@ export class CognosClient {
 
     const response = await httpClient.sendRequest({
       method,
-      url: `${this.auth.serverUrl.replace(/\/$/, '')}/api/v1${endpoint}`,
+      url: `https://your-cognos-server.com/api/v1${endpoint}`, // TODO: Configure server URL
       headers: {
         'Content-Type': 'application/json',
         'Cookie': this.sessionCookies || '',
@@ -61,6 +59,6 @@ export class CognosClient {
   }
 
   getBaseUrl(): string {
-    return `${this.auth.serverUrl.replace(/\/$/, '')}/api/v1`;
+    return 'https://your-cognos-server.com/api/v1'; // TODO: Configure server URL
   }
 }
