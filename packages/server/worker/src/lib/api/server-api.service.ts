@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { GetRunForWorkerRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { GetRunForWorkerRequest, MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
@@ -21,6 +21,9 @@ export const workerApiService = (workerToken: string) => {
     return {
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
+        },
+        async migrateJob(request: MigrateJobsRequest): Promise<JobData> {
+            return client.post<JobData>('/v1/workers/migrate-job', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
             return tracer.startActiveSpan('worker.api.startRuns', {

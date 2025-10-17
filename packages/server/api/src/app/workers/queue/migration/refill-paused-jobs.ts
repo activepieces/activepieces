@@ -1,4 +1,4 @@
-import { ExecutionType, FlowRunStatus, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, ProgressUpdateType, WorkerJobType } from '@activepieces/shared'
+import { apId, ExecutionType, FlowRunStatus, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, ProgressUpdateType, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis-connections'
@@ -6,9 +6,10 @@ import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
+import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
 
 
-const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs'
+const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v2'
 
 export const refillPausedRuns = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
@@ -27,6 +28,13 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
             if (pausedRun.pauseMetadata?.type != PauseType.DELAY) {
                 continue
             }
+            const logsFileId = pausedRun.logsFileId ?? apId()
+            const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
+                flowRunId: pausedRun.id,
+                logsFileId,
+                behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+                projectId: pausedRun.projectId,
+            })
             await jobQueue(log).add({
                 id: pausedRun.id,
                 type: JobType.ONE_TIME,
@@ -44,6 +52,8 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     jobType: WorkerJobType.EXECUTE_FLOW,
                     executionType: ExecutionType.RESUME,
                     payload: {},
+                    logsUploadUrl,
+                    logsFileId,
                 },
                 delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
             })

@@ -6,10 +6,11 @@ import {
     isNil,
     JOB_PRIORITY,
     JobData,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
     RATE_LIMIT_PRIORITY,
     WorkerJobType,
 } from '@activepieces/shared'
-import { DelayedError, Worker } from 'bullmq'
+import { DelayedError, Job, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -17,6 +18,7 @@ import { workerMachine } from '../utils/machine'
 import { workerRedisConnections } from '../utils/worker-redis'
 import { jobConsmer } from './job-consmer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
+import { workerApiService } from '../api/server-api.service'
 
 let worker: Worker<JobData>
 
@@ -29,6 +31,10 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
         worker = new Worker<JobData>(QueueName.WORKER_JOBS, async (job, token) => {
             try {
+                const { shouldSkip } = await migrateJob(workerToken, job)
+                if (shouldSkip) {
+                    return
+                }
                 const jobId = job.id
                 assertNotNullOrUndefined(jobId, 'jobId')
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
@@ -71,16 +77,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-        {
-            connection: await workerRedisConnections.create(),
-            telemetry: isOtpEnabled
-                ? new BullMQOtel(QueueName.WORKER_JOBS)
-                : undefined,
-            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-            autorun: true,
-            stalledInterval: 30000,
-            maxStalledCount: 5,
-        },
+            {
+                connection: await workerRedisConnections.create(),
+                telemetry: isOtpEnabled
+                    ? new BullMQOtel(QueueName.WORKER_JOBS)
+                    : undefined,
+                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+                autorun: true,
+                stalledInterval: 30000,
+                maxStalledCount: 5,
+            },
         )
         await worker.waitUntilReady()
         log.info({
@@ -97,3 +103,28 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         await worker.close()
     },
 })
+
+
+async function migrateJob(workerToken: string, job: Job<JobData>): Promise<{
+    shouldSkip: boolean
+}> {
+    const deprecatedJobs = ['DELAYED_FLOW'];
+    if (deprecatedJobs.includes(job.data.jobType)) {
+        return {
+            shouldSkip: true,
+        }
+    }
+    const schemaVersion = 'schemaVersion' in job.data ? job.data.schemaVersion : 0
+    if (schemaVersion === LATEST_JOB_DATA_SCHEMA_VERSION) {
+        return {
+            shouldSkip: false,
+        }
+    }
+    const newJobData = await workerApiService(workerToken).migrateJob({
+        jobData: job.data,
+    })
+    await job.updateData(newJobData)
+    return {
+        shouldSkip: false,
+    }
+}
