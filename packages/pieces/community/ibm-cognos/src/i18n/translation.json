@@ -1,0 +1,21 @@
+{
+  "IBM Cognos Analytics": "IBM Cognos Analytics",
+  "Enterprise analytics and reporting platform": "Enterprise analytics and reporting platform",
+  "Create Data Source": "Create Data Source",
+  "Creates a new data source in IBM Cognos Analytics": "Creates a new data source in IBM Cognos Analytics",
+  "Update Data Source": "Update Data Source",
+  "Updates an existing data source in IBM Cognos Analytics": "Updates an existing data source in IBM Cognos Analytics",
+  "Delete Data Source": "Delete Data Source",
+  "Deletes a data source from IBM Cognos Analytics": "Deletes a data source from IBM Cognos Analytics",
+  "Get Data Source": "Get Data Source",
+  "Retrieves the details of a specific data source from IBM Cognos Analytics": "Retrieves the details of a specific data source from IBM Cognos Analytics",
+  "Update Content Object": "Update Content Object",
+  "Updates an existing content object in IBM Cognos Analytics": "Updates an existing content object in IBM Cognos Analytics",
+  "Move Content Object": "Move Content Object",
+  "Moves a content object to a different location in IBM Cognos Analytics": "Moves a content object to a different location in IBM Cognos Analytics",
+  "Copy Content Object": "Copy Content Object",
+  "Copies a content object to a different location in IBM Cognos Analytics": "Copies a content object to a different location in IBM Cognos Analytics",
+  "Get Content Object": "Get Content Object",
+  "Retrieves the details of a specific content object from IBM Cognos Analytics": "Retrieves the details of a specific content object from IBM Cognos Analytics"
+}
+
