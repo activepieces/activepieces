@@ -5,6 +5,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
+import { runsMetadataQueueInstance } from '../../flows/flow-run/flow-runs-queue'
 import { system } from '../../helper/system/system'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
 import { workerJobsQueue } from './job-queue'
@@ -37,10 +38,12 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     })
 
     assertNotNullOrUndefined(workerJobsQueue, 'workerJobsQueue')
+    assertNotNullOrUndefined(runsMetadataQueueInstance, 'runsMetadataQueueInstance')
     
     const allQueues = [
         new BullMQAdapter(workerJobsQueue),
         new BullMQAdapter(systemJobsQueue),
+        new BullMQAdapter(runsMetadataQueueInstance),
     ]
 
     const serverAdapter = new FastifyAdapter()
