@@ -3,6 +3,9 @@ import {
     assertNotNullOrUndefined,
     ConsumeJobResponseStatus,
     ExecutionType,
+    FlowExecutionState,
+    flowExecutionStateKey,
+    FlowStatus,
     isNil,
     JOB_PRIORITY,
     JobData,
@@ -14,11 +17,11 @@ import { DelayedError, Job, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { workerApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
 import { workerRedisConnections } from '../utils/worker-redis'
 import { jobConsmer } from './job-consmer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
-import { workerApiService } from '../api/server-api.service'
 
 let worker: Worker<JobData>
 
@@ -31,8 +34,12 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
         worker = new Worker<JobData>(QueueName.WORKER_JOBS, async (job, token) => {
             try {
-                const { shouldSkip } = await migrateJob(workerToken, job)
+                const { shouldSkip } = await preHandler(workerToken, job)
                 if (shouldSkip) {
+                    log.info({
+                        jobId: job.id,
+                        jobData: job.data,
+                    }, '[jobQueueWorker] Skipping job')
                     return
                 }
                 const jobId = job.id
@@ -77,16 +84,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-            {
-                connection: await workerRedisConnections.create(),
-                telemetry: isOtpEnabled
-                    ? new BullMQOtel(QueueName.WORKER_JOBS)
-                    : undefined,
-                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-                autorun: true,
-                stalledInterval: 30000,
-                maxStalledCount: 5,
-            },
+        {
+            connection: await workerRedisConnections.create(),
+            telemetry: isOtpEnabled
+                ? new BullMQOtel(QueueName.WORKER_JOBS)
+                : undefined,
+            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+            autorun: true,
+            stalledInterval: 30000,
+            maxStalledCount: 5,
+        },
         )
         await worker.waitUntilReady()
         log.info({
@@ -105,10 +112,17 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
 })
 
 
-async function migrateJob(workerToken: string, job: Job<JobData>): Promise<{
+async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
     shouldSkip: boolean
 }> {
-    const deprecatedJobs = ['DELAYED_FLOW'];
+
+    const skipFlow = await shouldSkipDisabledFlow(job.data)
+    if (skipFlow) {
+        return {
+            shouldSkip: true,
+        }
+    }
+    const deprecatedJobs = ['DELAYED_FLOW']
     if (deprecatedJobs.includes(job.data.jobType)) {
         return {
             shouldSkip: true,
@@ -127,4 +141,20 @@ async function migrateJob(workerToken: string, job: Job<JobData>): Promise<{
     return {
         shouldSkip: false,
     }
+}
+
+async function shouldSkipDisabledFlow(data: JobData): Promise<boolean> {
+    if ('flowId' in data) {
+        const flowId = data.flowId
+        const redisConnection = await workerRedisConnections.useExisting()
+        const flowExecutionStateString = await redisConnection.get(flowExecutionStateKey(flowId))
+        if (isNil(flowExecutionStateString)) {
+            return false
+        }
+        const flowExecutionState = JSON.parse(flowExecutionStateString) as FlowExecutionState
+        if (!flowExecutionState.exists || flowExecutionState.flow.status === FlowStatus.DISABLED) {
+            return true
+        }
+    }
+    return false
 }
