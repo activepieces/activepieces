@@ -1,7 +1,7 @@
 {
-  "Generate Image": "Generate Image",
-  "Provider": "Provider",
-  "Model": "Model",
+  "Generate Image": "生成图像",
+  "Provider": "提供商",
+  "Model": "模型",
   "Prompt": "Prompt",
-  "Advanced Options": "Advanced Options"
+  "Advanced Options": "高级选项"
 }
