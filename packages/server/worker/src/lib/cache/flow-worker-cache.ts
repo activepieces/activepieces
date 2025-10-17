@@ -17,8 +17,8 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
                     if (isNil(flow)) {
                         return true
                     }
-                    const parsedFlow = JSON.parse(flow) as PopulatedFlow
-                    return parsedFlow.version.schemaVersion !== LATEST_SCHEMA_VERSION
+                    const parsedFlow = JSON.parse(flow) as FlowVersion
+                    return parsedFlow.schemaVersion !== LATEST_SCHEMA_VERSION
                 },
                 installFn: async () => {
                     const flowVersion = await engineApiService(engineToken).getFlowVersion({
