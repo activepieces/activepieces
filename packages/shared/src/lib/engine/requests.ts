@@ -3,17 +3,10 @@ import { Nullable } from '../common'
 import { FlowRunResponse } from '../flow-run/execution/flow-execution'
 import { ProgressUpdateType } from './engine-operation'
 
-export enum UpdateLogsBehavior {
-    UPDATE_LOGS = 'UPDATE_LOGS',
-    UPDATE_LOGS_SIZE = 'UPDATE_LOGS_SIZE',
-    NONE = 'NONE',
-}
+
 
 export const UpdateRunProgressRequest = Type.Object({
     runDetails: Type.Omit(FlowRunResponse, ['steps']),
-    executionStateBuffer: Type.Optional(Type.String()),
-    executionStateContentLength: Type.Union([Type.Number(), Type.Null()]),
-    updateLogsBehavior: Type.Enum(UpdateLogsBehavior),
     runId: Type.String(),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
     workerHandlerId: Nullable(Type.String()),
@@ -25,6 +18,25 @@ export const UpdateRunProgressRequest = Type.Object({
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 
+
+export const UploadLogsQueryParams = Type.Object({
+    token: Type.String(),
+})
+export type UploadLogsQueryParams = Static<typeof UploadLogsQueryParams>
+
+export enum UploadLogsBehavior {
+    UPLOAD_DIRECTLY = 'UPLOAD_DIRECTLY',
+    REDIRECT_TO_S3 = 'REDIRECT_TO_S3',
+}
+
+export const UploadLogsToken = Type.Object({
+    logsFileId: Type.String(),
+    projectId: Type.String(),
+    flowRunId: Type.String(),
+    behavior: Type.Enum(UploadLogsBehavior),
+})
+
+export type UploadLogsToken = Static<typeof UploadLogsToken>
 
 export const SendFlowResponseRequest = Type.Object({
     workerHandlerId: Type.String(),

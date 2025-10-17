@@ -94,6 +94,10 @@ import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-mod
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
+    app.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, async (_request: FastifyRequest, payload: unknown) => {
+        return payload as Buffer
+    })
+
     await app.register(swagger, {
         hideUntagged: true,
         openapi: {

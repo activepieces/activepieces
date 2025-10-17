@@ -1,27 +1,11 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    BeginExecuteFlowOperation,
-    ConsumeJobResponse,
-    ConsumeJobResponseStatus,
-    EngineResponseStatus,
-    ErrorCode,
-    ExecuteFlowJobData,
-    ExecutionType,
-    FlowRunStatus,
-    FlowVersion,
-    isNil,
-    PauseType,
-    ResumeExecuteFlowOperation,
-    ResumePayload,
-    UpdateLogsBehavior,
-} from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, PauseType, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
 import { workerMachine } from '../../utils/machine'
+import dayjs from 'dayjs'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
@@ -103,8 +87,6 @@ async function handleMemoryIssueError(
             tasks: 0,
             tags: [],
         },
-        updateLogsBehavior: UpdateLogsBehavior.NONE,
-        executionStateContentLength: null,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -123,8 +105,6 @@ async function handleTimeoutError(
             duration: timeoutFlowInSeconds,
             status: FlowRunStatus.TIMEOUT,
         },
-        executionStateContentLength: null,
-        updateLogsBehavior: UpdateLogsBehavior.NONE,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -143,8 +123,6 @@ async function handleInternalError(
             tasks: 0,
             tags: [],
         },
-        executionStateContentLength: null,
-        updateLogsBehavior: UpdateLogsBehavior.NONE,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
