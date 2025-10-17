@@ -1,12 +1,9 @@
-import { isNil, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-
-import { NewProjectDialog } from './new-project-dialog';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
@@ -32,6 +29,9 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
+import { isNil, ProjectWithLimits } from '@activepieces/shared';
+
+import { NewProjectDialog } from './new-project-dialog';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
