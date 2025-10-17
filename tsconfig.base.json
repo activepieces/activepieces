@@ -779,6 +779,9 @@
       "@activepieces/piece-odoo": [
         "packages/pieces/community/odoo/src/index.ts"
       ],
+      "@activepieces/piece-okta": [
+        "packages/pieces/community/okta/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
@@ -972,6 +975,9 @@
       ],
       "@activepieces/piece-serpstat": [
         "packages/pieces/community/serpstat/src/index.ts"
+      ],
+      "@activepieces/piece-service-now": [
+        "packages/pieces/community/service-now/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"

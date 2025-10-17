@@ -20,6 +20,7 @@ import {
   ImapError,
   ImapMailboxNotFoundError,
   ImapConnectionLostError,
+  ImapEmailNotFoundError,
 } from './errors';
 
 type Message = {
@@ -37,6 +38,14 @@ function buildImapClient(auth: ImapAuth): ImapFlow {
   };
 
   return new ImapFlow({ ...imapConfig, logger: false });
+}
+
+async function confirmEmailExists(imapClient: ImapFlow, uid: number) {
+  const searchResult = await imapClient.search({ uid: uid.toString() }, { uid: true });
+
+  if (!searchResult || searchResult.length === 0) {
+    throw new ImapEmailNotFoundError();
+  }
 }
 
 function detectMissingMailbox(error: unknown): void {
@@ -141,13 +150,15 @@ async function performImapOperation(
 async function performMailboxOperation<T>(
   auth: ImapAuth,
   mailbox: string,
-  callback: (imapClient: ImapFlow) => Promise<T>
+  callback: (imapClient: ImapFlow) => Promise<T>,
+  options: { readOnly?: boolean } = {},
 ) {
+  const { readOnly = true } = options;
   return await performImapOperation(auth, async (imapClient) => {
     let lock: MailboxLockObject | null = null;
 
     try {
-      lock = await imapClient.getMailboxLock(mailbox, { readOnly: true });
+      lock = await imapClient.getMailboxLock(mailbox, { readOnly });
       return await callback(imapClient);
     } catch(error) {
       detectMissingMailbox(error);
@@ -162,6 +173,30 @@ async function performMailboxOperation<T>(
   }) as T;
 }
 
+async function setEmailReadStatus<T extends { success: true }>({
+  auth,
+  mailbox,
+  uid,
+  markAsRead,
+}: {
+  auth: ImapAuth;
+  mailbox: string;
+  uid: number;
+  markAsRead: boolean;
+}): Promise<T> {
+  return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
+    await confirmEmailExists(imapClient, uid);
+
+    if (markAsRead) {
+      await imapClient.messageFlagsAdd({ uid }, ['\\Seen'], { uid: true });
+    } else {
+      await imapClient.messageFlagsRemove({ uid }, ['\\Seen'], { uid: true });
+    }
+
+    return { success: true };
+  }, { readOnly: false })) as T;
+}
+
 export {
   // Types
   type Attachment,
@@ -173,6 +208,7 @@ export {
 
   // Email actions
   fetchEmails,
+  setEmailReadStatus,
 
   // Mailbox actions
   fetchMailboxes,

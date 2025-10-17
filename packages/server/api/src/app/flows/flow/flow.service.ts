@@ -137,14 +137,22 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         const paginationResult = await paginator.paginate(queryBuilder)
 
-        const populatedFlowPromises = paginationResult.data.map(async (flow) => {
+        const populatedFlowPromises: Promise<PopulatedFlow | null>[] = paginationResult.data.map(async (flow) => {
             const version = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flow.id,
                 versionId: (versionState === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
             })
+            const triggerSource = await triggerSourceService(log).getByFlowId({
+                flowId: flow.id,
+                projectId: flow.projectId,
+                simulate: undefined,
+            })
             return {
                 ...flow,
                 version,
+                triggerSource: triggerSource ? {
+                    schedule: triggerSource.schedule,
+                } : undefined,
             }
         })
 
@@ -219,13 +227,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const triggerSource = await triggerSourceService(log).getByFlowId({
             flowId: id,
             projectId,
-            simulate: true,
+            simulate: undefined,
         })
 
         return {
             ...flow,
             version: flowVersion,
-            triggerSource: triggerSource ?? undefined,
+            triggerSource: triggerSource ? {
+                schedule: triggerSource.schedule,
+            } : undefined,
         }
     },
 

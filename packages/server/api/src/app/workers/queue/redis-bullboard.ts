@@ -7,7 +7,7 @@ import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
 import { system } from '../../helper/system/system'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
-import { bullMqQueue } from './job-queue'
+import { workerJobsQueue } from './job-queue'
 
 const QUEUE_BASE_PATH = '/ui'
 
@@ -36,10 +36,10 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         authenticate: true,
     })
 
-    assertNotNullOrUndefined(bullMqQueue, 'bullMqQueue')
+    assertNotNullOrUndefined(workerJobsQueue, 'workerJobsQueue')
     
     const allQueues = [
-        new BullMQAdapter(bullMqQueue),
+        new BullMQAdapter(workerJobsQueue),
         new BullMQAdapter(systemJobsQueue),
     ]
 

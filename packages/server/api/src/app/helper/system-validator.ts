@@ -44,6 +44,7 @@ const systemPropValidators: {
 } = {
     // AppSystemProp
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
+    [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
     [AppSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
@@ -260,7 +261,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const edition = system.getEdition()
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && environment === ApEnvironment.PRODUCTION) {
         const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode) ) {
+        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
             throw new Error(JSON.stringify({
                 message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
