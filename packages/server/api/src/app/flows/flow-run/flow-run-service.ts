@@ -21,6 +21,7 @@ import {
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
     PauseType,
+    PlatformId,
     ProgressUpdateType,
     ProjectId,
     RunEnvironment,
@@ -146,6 +147,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
+                    platformId: await projectService.getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
                     synchronousHandlerId: undefined,
@@ -193,10 +195,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         const pauseMetadata = flowRun.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
+        const platformId = await projectService.getPlatformId(flowRun.projectId)
         if (matchRequestId || !checkRequestId) {
             return addToQueue({
                 payload,
                 flowRun,
+                platformId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
                 httpRequestId: flowRun.pauseMetadata?.requestIdToReply ?? undefined,
                 progressUpdateType,
@@ -303,6 +307,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         flowVersionId,
         parentRunId,
         failParentOnFailure,
+        platformId,
         stepNameToTest,
         environment,
     }: StartParams): Promise<FlowRun> {
@@ -329,11 +334,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     stepNameToTest,
                     environment,
                 })
-
                 span.setAttribute('flowRun.id', newFlowRun.id)
 
                 await addToQueue({
                     flowRun: newFlowRun,
+                    platformId,
                     payload,
                     executeTrigger,
                     executionType,
@@ -376,6 +381,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: undefined,
             httpRequestId: undefined,
+            platformId: await projectService.getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
@@ -451,6 +457,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await addToQueue({
             payload,
             flowRun,
+            platformId: await projectService.getPlatformId(flowRun.projectId),
             synchronousHandlerId,
             httpRequestId: requestId,
             executeTrigger: false,
@@ -583,7 +590,6 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         logsUploadUrl = logsUploadResult.uploadUrl
         logsFileId = logsUploadResult.fileId
     }
-    const platformId = await projectService.getPlatformId(params.flowRun.projectId)
 
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
@@ -595,7 +601,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             synchronousHandlerId: params.synchronousHandlerId ?? null,
             projectId: params.flowRun.projectId,
-            platformId,
+            platformId: params.platformId,
             environment: params.flowRun.environment,
             flowId: params.flowRun.flowId,
             runId: params.flowRun.id,
@@ -704,6 +710,7 @@ type GetOneParams = {
 
 type AddToQueueParams = {
     flowRun: FlowRun
+    platformId: PlatformId
     payload: unknown
     executeTrigger: boolean
     executionType: ExecutionType
@@ -716,6 +723,7 @@ type AddToQueueParams = {
 type StartParams = {
     flowId: FlowId
     payload: unknown
+    platformId: PlatformId
     environment: RunEnvironment
     flowVersionId: FlowVersionId
     projectId: ProjectId
