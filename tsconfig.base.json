@@ -528,7 +528,7 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
-      "@activepieces/piece-hedy":[
+      "@activepieces/piece-hedy": [
         "packages/pieces/community/hedy/src/index.ts"
       ],
       "@activepieces/piece-help-scout": [
@@ -1216,6 +1216,9 @@
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
+      ],
+      "@activepieces/piece-zendesk-sell": [
+        "packages/pieces/community/zendesk-sell/src/index.ts"
       ],
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
