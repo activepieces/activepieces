@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { cyberarkAuth } from '../../index';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { groupIdDropdown } from '../common/group-dropdown';
+import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 
 export const removeMemberFromGroup = createAction({
   auth: cyberarkAuth,
@@ -17,17 +18,15 @@ export const removeMemberFromGroup = createAction({
     }),
   },
   async run(context) {
-    const serverUrl = context.auth.serverUrl as string;
-    const authToken = context.auth.authToken as string;
-    const baseUrl = serverUrl.replace(/\/$/, '');
+    const authData = await getAuthToken(context.auth as CyberArkAuth);
 
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.DELETE,
-        url: `${baseUrl}/PasswordVault/API/UserGroups/${context.propsValue.groupId}/Members/${encodeURIComponent(context.propsValue.memberName)}/`,
+        url: `${authData.serverUrl}/PasswordVault/API/UserGroups/${context.propsValue.groupId}/Members/${encodeURIComponent(context.propsValue.memberName)}/`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authToken as string,
+          'Authorization': authData.token,
         },
       });
 

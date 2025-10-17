@@ -21,9 +21,14 @@ export const cyberarkAuth = PieceAuth.CustomAuth({
       description: 'The PVWA server URL (e.g., https://pvwa-server)',
       required: true
     }),
-    authToken: Property.ShortText({
-      displayName: 'Authorization Token',
-      description: 'The session token returned from the Logon method',
+    username: Property.ShortText({
+      displayName: 'Username',
+      description: 'CyberArk username',
+      required: true
+    }),
+    password: Property.ShortText({
+      displayName: 'Password',
+      description: 'CyberArk password',
       required: true
     })
   },
@@ -36,6 +41,16 @@ export const cyberark = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/cyberark.png',
   authors: [],
-  actions: [createUser, updateUser, deleteUser, activateUser, enableUser, disableUser, findUser, addMemberToGroup, removeMemberFromGroup],
+  actions: [
+    createUser,
+    updateUser,
+    deleteUser,
+    activateUser,
+    enableUser,
+    disableUser,
+    findUser,
+    addMemberToGroup,
+    removeMemberFromGroup
+  ],
   triggers: []
 });

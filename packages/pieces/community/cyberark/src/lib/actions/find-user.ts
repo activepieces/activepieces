@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { cyberarkAuth } from '../../index';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 
 export const findUser = createAction({
   auth: cyberarkAuth,
@@ -53,9 +54,7 @@ export const findUser = createAction({
     }),
   },
   async run(context) {
-    const serverUrl = context.auth.serverUrl as string;
-    const authToken = context.auth.authToken as string;
-    const baseUrl = serverUrl.replace(/\/$/, '');
+    const authData = await getAuthToken(context.auth as CyberArkAuth);
 
     // Build query parameters
     const queryParams = new URLSearchParams();
@@ -93,7 +92,7 @@ export const findUser = createAction({
     }
 
     const queryString = queryParams.toString();
-    const url = queryString ? `${baseUrl}/PasswordVault/API/Users?${queryString}` : `${baseUrl}/PasswordVault/API/Users`;
+    const url = queryString ? `${authData.serverUrl}/PasswordVault/API/Users?${queryString}` : `${authData.serverUrl}/PasswordVault/API/Users`;
 
     try {
       const response = await httpClient.sendRequest({
@@ -101,7 +100,7 @@ export const findUser = createAction({
         url: url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authToken as string,
+          'Authorization': authData.token,
         },
       });
 

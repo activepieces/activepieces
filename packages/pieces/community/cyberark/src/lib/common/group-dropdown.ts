@@ -1,5 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getAuthToken, CyberArkAuth } from './auth-helper';
 
 export const groupIdDropdown = Property.Dropdown({
   displayName: 'Group',
@@ -16,16 +17,14 @@ export const groupIdDropdown = Property.Dropdown({
     }
 
     try {
-      const serverUrl = (auth as any).serverUrl as string;
-      const authToken = (auth as any).authToken as string;
-      const baseUrl = serverUrl.replace(/\/$/, '');
+      const authData = await getAuthToken(auth as CyberArkAuth);
 
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/PasswordVault/API/UserGroups`,
+        url: `${authData.serverUrl}/PasswordVault/API/UserGroups`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authToken,
+          'Authorization': authData.token,
         },
       });
 

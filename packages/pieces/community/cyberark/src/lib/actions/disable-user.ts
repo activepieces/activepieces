@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { cyberarkAuth } from '../../index';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { userIdDropdown } from '../common/user-dropdown';
+import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 
 export const disableUser = createAction({
   auth: cyberarkAuth,
@@ -9,41 +10,39 @@ export const disableUser = createAction({
   displayName: 'Disable User',
   description: 'Disables a specific user in the Vault',
   props: {
-    userId: userIdDropdown,
+    userId: userIdDropdown
   },
   async run(context) {
-    const serverUrl = context.auth.serverUrl as string;
-    const authToken = context.auth.authToken as string;
-    const baseUrl = serverUrl.replace(/\/$/, '');
+    const authData = await getAuthToken(context.auth as CyberArkAuth);
 
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${baseUrl}/PasswordVault/API/Users/${context.propsValue.userId}/disable/`,
+        url: `${authData.serverUrl}/PasswordVault/API/Users/${context.propsValue.userId}/disable/`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authToken as string,
-        },
+          Authorization: authData.token
+        }
       });
 
       if (response.status === 200 || response.status === 204) {
         return {
           success: true,
-          message: `User ${context.propsValue.userId} disabled successfully`,
+          message: `User ${context.propsValue.userId} disabled successfully`
         };
       } else {
         return {
           success: false,
           error: `Failed to disable user. Status: ${response.status}`,
-          details: response.body,
+          details: response.body
         };
       }
     } catch (error) {
       return {
         success: false,
         error: 'Failed to disable user',
-        details: error instanceof Error ? error.message : String(error),
+        details: error instanceof Error ? error.message : String(error)
       };
     }
-  },
+  }
 });

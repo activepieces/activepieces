@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { cyberarkAuth } from '../../index';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 
 export const createUser = createAction({
   auth: cyberarkAuth,
@@ -135,9 +136,7 @@ export const createUser = createAction({
     }),
   },
   async run(context) {
-    const serverUrl = context.auth.serverUrl as string;
-    const authToken = context.auth.authToken as string;
-    const baseUrl = serverUrl.replace(/\/$/, '');
+    const authData = await getAuthToken(context.auth as CyberArkAuth);
 
     // Build the request body
     const requestBody: any = {
@@ -196,10 +195,10 @@ export const createUser = createAction({
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${baseUrl}/PasswordVault/API/Users`,
+        url: `${authData.serverUrl}/PasswordVault/API/Users`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authToken as string,
+          'Authorization': authData.token,
         },
         body: requestBody,
       });
