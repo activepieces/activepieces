@@ -1,5 +1,4 @@
 import crypto from 'crypto'
-import { Readable } from 'stream'
 import { OutputContext } from '@activepieces/pieces-framework'
 import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
@@ -144,7 +143,7 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects: boolean = true): Promise<Response> => {
+const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
     const response = await fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,
