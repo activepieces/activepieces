@@ -56,5 +56,8 @@
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
   "New Candidate": "Neuer Kandidat",
-  "Triggers when new candidate submits application.": "Wird ausgelöst, wenn ein neuer Kandidat eine Bewerbung einreicht."
+  "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.": "Auslöser wenn ein neuer Kandidat eine Bewerbung einreicht. Kann nach einem bestimmten Job gefiltert werden und/oder Pipelinebühne.",
+  "Stage Slug": "Stage Slug",
+  "Shortcode of specific job. Leave empty to trigger for all jobs.": "Kurzcode für bestimmte Aufgaben. Leer lassen um für alle Jobs auszulösen.",
+  "Stage slug to filter by specific hiring pipeline stage (e.g., 'applied', 'phone_screen', 'interview', 'offer'). Leave empty to trigger for all stages.": "Stage Slug zum Filtern nach spezifischer Einstellung Pipeline-Phase (z.B. 'applied', 'phone_screen', 'interview', 'offer'). Leer lassen um für alle Stufen auszulösen."
 }

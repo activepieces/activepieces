@@ -446,6 +446,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/uvenkatateja"><img src="https://avatars.githubusercontent.com/u/118493739?v=4?s=100" width="100px;" alt="uvenkatateja"/><br /><sub><b>uvenkatateja</b></sub></a><br /><a href="#plugin-uvenkatateja" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://akramcodez.tech"><img src="https://avatars.githubusercontent.com/u/179671552?v=4?s=100" width="100px;" alt="SK Akram"/><br /><sub><b>SK Akram</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=akramcodez" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
