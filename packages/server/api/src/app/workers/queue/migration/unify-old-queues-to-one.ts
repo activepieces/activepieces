@@ -73,7 +73,7 @@ async function migrateOneTimeJobs(log: FastifyBaseLogger): Promise<boolean> {
                     flowId: flowVersion.flowId,
                     platformId: await projectService.getPlatformId(casedData.projectId),
                     jobType: WorkerJobType.EXECUTE_FLOW,
-                },
+                } as ExecuteFlowJobData,
             })
         }
         await job.remove()
