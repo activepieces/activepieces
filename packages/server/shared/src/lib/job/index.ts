@@ -49,6 +49,7 @@ export const SubmitPayloadsRequest = Type.Object({
     environment: Type.Enum(RunEnvironment),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
+    platformId: Type.String(),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>

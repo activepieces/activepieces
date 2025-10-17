@@ -1,6 +1,7 @@
 import { inspect } from 'util'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerCache } from './cache/worker-cache'
@@ -13,6 +14,8 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 import { engineRunner } from './runner'
 import { engineRunnerSocket } from './runner/engine-runner-socket'
 import { workerMachine } from './utils/machine'
+
+const tracer = trace.getTracer('flow-worker')
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -127,51 +130,82 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 
 
 async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): Promise<ConsumeJobResponse> {
-    const { jobId, jobData, attempsStarted, engineToken, timeoutInSeconds } = request
-    switch (jobData.jobType) {
-        case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-        case WorkerJobType.EXECUTE_PROPERTY:
-        case WorkerJobType.EXECUTE_TOOL:
-        case WorkerJobType.EXECUTE_VALIDATION:
-        case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-            await userInteractionJobExecutor(log).execute(jobData, engineToken, workerToken, timeoutInSeconds)
-            return {
-                status: ConsumeJobResponseStatus.OK,
+    const traceContext = ('traceContext' in request.jobData && request.jobData.traceContext) ? request.jobData.traceContext : {}
+    const extractedContext = propagation.extract(context.active(), traceContext)
+
+    return context.with(extractedContext, () => {
+        return tracer.startActiveSpan('worker.consumeJob', {
+            attributes: {
+                'worker.jobId': request.jobId,
+                'worker.jobType': request.jobData.jobType,
+                'worker.attempsStarted': request.attempsStarted,
+                'worker.projectId': request.jobData.projectId ?? 'unknown',
+            },
+        }, async (span) => {
+            try {
+                const { jobId, jobData, attempsStarted, engineToken, timeoutInSeconds } = request
+                switch (jobData.jobType) {
+                    case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
+                    case WorkerJobType.EXECUTE_PROPERTY:
+                    case WorkerJobType.EXECUTE_TOOL:
+                    case WorkerJobType.EXECUTE_VALIDATION:
+                    case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+                        await userInteractionJobExecutor(log).execute(jobData, engineToken, workerToken, timeoutInSeconds)
+                        span.setAttribute('worker.completed', true)
+                        return {
+                            status: ConsumeJobResponseStatus.OK,
+                        }
+                    case WorkerJobType.EXECUTE_FLOW:
+                        await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
+                        span.setAttribute('worker.completed', true)
+                        return {
+                            status: ConsumeJobResponseStatus.OK,
+                        }
+                    case WorkerJobType.EXECUTE_POLLING: {
+                        const response = await executeTriggerExecutor(log).executeTrigger({
+                            jobId,
+                            data: jobData,
+                            engineToken,
+                            workerToken,
+                            timeoutInSeconds,
+                        })
+                        span.setAttribute('worker.completed', true)
+                        return response
+
+                    }
+                    case WorkerJobType.RENEW_WEBHOOK: {
+                        const response = await renewWebhookExecutor(log).renewWebhook({
+                            data: jobData,
+                            engineToken,
+                            timeoutInSeconds,
+                        })
+                        span.setAttribute('worker.completed', true)
+                        return response
+                    }
+                    case WorkerJobType.DELAYED_FLOW: {
+                        span.setAttribute('worker.error', true)
+                        throw new Error('Delayed flow is handled by the app')
+                    }
+                    case WorkerJobType.EXECUTE_WEBHOOK: {
+                        span.setAttribute('worker.webhookExecution', true)
+                        return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
+                    }
+                    case WorkerJobType.EXECUTE_AGENT: {
+                        await agentJobExecutor(log).executeAgent({
+                            jobData,
+                            engineToken,
+                            workerToken,
+                        })
+                        span.setAttribute('worker.completed', true)
+                        return {
+                            status: ConsumeJobResponseStatus.OK,
+                        }
+                    }
+                }
             }
-        case WorkerJobType.EXECUTE_FLOW:
-            await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
-            return {
-                status: ConsumeJobResponseStatus.OK,
+            finally {
+                span.end()
             }
-        case WorkerJobType.EXECUTE_POLLING:
-            return executeTriggerExecutor(log).executeTrigger({
-                jobId,
-                data: jobData,
-                engineToken,
-                workerToken,
-                timeoutInSeconds,
-            })
-        case WorkerJobType.RENEW_WEBHOOK:
-            return renewWebhookExecutor(log).renewWebhook({
-                data: jobData,
-                engineToken,
-                timeoutInSeconds,
-            })
-        case WorkerJobType.DELAYED_FLOW: {
-            throw new Error('Delayed flow is handled by the app')
-        }
-        case WorkerJobType.EXECUTE_WEBHOOK: {
-            return webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
-        }
-        case WorkerJobType.EXECUTE_AGENT: {
-            await agentJobExecutor(log).executeAgent({
-                jobData,
-                engineToken,
-                workerToken,
-            })
-            return {
-                status: ConsumeJobResponseStatus.OK,
-            }
-        }
-    }
+        })
+    })
 }

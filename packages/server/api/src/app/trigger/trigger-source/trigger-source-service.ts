@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, TriggerSource } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, PopulatedTriggerSource, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -13,22 +13,12 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
             const { flowVersion, projectId, simulate } = params
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
-
-            const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
-                flowVersion,
-                projectId,
-                pieceName: flowVersion.trigger.settings.pieceName,
-                pieceTrigger,
-                simulate,
-            })
-
             await triggerSourceRepo().softDelete({
                 flowId: flowVersion.flowId,
                 projectId,
                 simulate,
             })
-
-            const triggerSource: Omit<TriggerSource, 'created' | 'updated'> = {
+            const triggerSourceWithouSchedule: Omit<TriggerSource, 'created' | 'updated' | 'schedule'> = {
                 id: apId(),
                 type: pieceTrigger.type,
                 projectId,
@@ -37,10 +27,20 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 flowVersionId: flowVersion.id,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                schedule: scheduleOptions,
                 simulate,
             }
-            return triggerSourceRepo().save(triggerSource)
+            const triggerSource = await triggerSourceRepo().save(triggerSourceWithouSchedule)
+            const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
+                flowVersion,
+                projectId,
+                pieceName: flowVersion.trigger.settings.pieceName,
+                pieceTrigger,
+                simulate,
+            })
+            return triggerSourceRepo().save({
+                ...triggerSource,
+                schedule: scheduleOptions,
+            })
         },
         async get(params: GetTriggerParams): Promise<TriggerSource | null> {
             const { projectId, id } = params
@@ -51,12 +51,25 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 },
             })
         },
-        async getByFlowId(params: GetByFlowIdParams): Promise<TriggerSource | null> {
+        async getByFlowId(params: GetFlowIdParamsWithProjectId): Promise<TriggerSource | null> {
+            const { flowId, simulate, projectId } = params
+            return triggerSourceRepo().findOne({
+                where: {
+                    flowId,
+                    simulate,
+                    ...(projectId ? { projectId } : {}),
+                },
+            })
+        },
+        async getByFlowIdPopulated(params: GetByFlowIdParams): Promise<PopulatedTriggerSource | null> {
             const { flowId, simulate } = params
             return triggerSourceRepo().findOne({
                 where: {
                     flowId,
                     simulate,
+                },
+                relations: {
+                    flow: true,
                 },
             })
         },
@@ -122,8 +135,14 @@ type ExistsByFlowIdParams = {
 
 type GetByFlowIdParams = {
     flowId: string
-    projectId: string
+    projectId?: string
     simulate: boolean
+}
+
+type GetFlowIdParamsWithProjectId = {
+    flowId: string
+    projectId: string
+    simulate: boolean | undefined
 }
 
 type GetTriggerParams = {

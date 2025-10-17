@@ -57,7 +57,7 @@ type RemoveParams = {
     flowVersionId: ApId
 }
 
-type BaseAddParams<JD extends JobData, JT extends JobType> = {
+type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {
     id: ApId
     data: JD
     type: JT
@@ -76,3 +76,4 @@ export type QueueManager = {
     add<JT extends JobType>(params: AddJobParams<JT>): Promise<void>
     removeRepeatingJob(params: RemoveParams): Promise<void>
 }
+

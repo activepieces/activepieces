@@ -24,6 +24,17 @@ export enum WorkerJobType {
     EXECUTE_TOOL = 'EXECUTE_TOOL',
 }
 
+export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
+    WorkerJobType.EXECUTE_WEBHOOK,
+    WorkerJobType.EXECUTE_FLOW,
+    WorkerJobType.EXECUTE_AGENT,
+    WorkerJobType.EXECUTE_VALIDATION,
+    WorkerJobType.EXECUTE_TRIGGER_HOOK,
+    WorkerJobType.EXECUTE_PROPERTY,
+    WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+    WorkerJobType.EXECUTE_TOOL,
+] as const
+
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
 export const RenewWebhookJobData = Type.Object({
     schemaVersion: Type.Number(),
@@ -68,18 +79,21 @@ export const ExecuteFlowJobData = Type.Object({
     platformId: Type.String(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
     environment: Type.Enum(RunEnvironment),
+    flowId: Type.String(),
     flowVersionId: Type.String(),
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
     payload: Type.Any(),
+    schemaVersion: Type.Number(),
     executeTrigger: Type.Optional(Type.Boolean()),
     executionType: Type.Enum(ExecutionType),
     progressUpdateType: Type.Enum(ProgressUpdateType),
     stepNameToTest: Type.Optional(Type.String()),
     sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-    logsUploadUrl: Type.Optional(Type.String()),
-    logsFileId: Type.Optional(Type.String()),
+    logsUploadUrl: Type.String(),
+    logsFileId: Type.String(),
+    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
 
@@ -87,6 +101,7 @@ export const AgentJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
     agentId: Type.String(),
     projectId: Type.String(),
+    schemaVersion: Type.Number(),
     platformId: Type.String(),
     agentRunId: Type.String(),
     prompt: Type.String(),
@@ -107,6 +122,7 @@ export const WebhookJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
+    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
@@ -118,6 +134,7 @@ export const ExecuteValidateAuthJobData = Type.Object({
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
     piece: PiecePackage,
+    schemaVersion: Type.Number(),
     connectionValue: Type.Unknown(),
 })
 export type ExecuteValidateAuthJobData = Static<typeof ExecuteValidateAuthJobData>
@@ -130,10 +147,12 @@ export const ExecuteToolJobData = Type.Object({
     projectId: Type.String(),
     actionName: Type.String(),
     pieceName: Type.String(),
+    schemaVersion: Type.Number(),
     pieceVersion: Type.String(),
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
     input: Type.Record(Type.String(), Type.Unknown()),
+
 })
 export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 
@@ -142,6 +161,7 @@ export const ExecuteTriggerHookJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
     platformId: Type.String(),
     projectId: Type.String(),
+    schemaVersion: Type.Number(),
     flowVersion: FlowVersion,
     test: Type.Boolean(),
     webserverId: Type.String(),
@@ -155,6 +175,7 @@ export const ExecutePropertyJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_PROPERTY),
     projectId: Type.String(),
     platformId: Type.String(),
+    schemaVersion: Type.Number(),
     flowVersion: Type.Optional(FlowVersion),
     propertyName: Type.String(),
     piece: PiecePackage,
@@ -169,6 +190,7 @@ export type ExecutePropertyJobData = Static<typeof ExecutePropertyJobData>
 export const ExecuteExtractPieceMetadataJobData = Type.Object({
     requestId: Type.String(),
     webserverId: Type.String(),
+    schemaVersion: Type.Number(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
@@ -186,11 +208,11 @@ export const UserInteractionJobData = Type.Union([
 export type UserInteractionJobData = Static<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
-    Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteExtractPieceMetadataJobData, ['webserverId', 'requestId']),
+    Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecuteExtractPieceMetadataJobData, ['webserverId', 'requestId', 'schemaVersion']),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 

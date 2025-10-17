@@ -149,6 +149,10 @@ import { RemoveAgentRelationToTablesSqlite1755954639833 } from './migration/sqli
 import { AddTriggerNameToTriggerSourceSqlite1757018637559 } from './migration/sqlite/1757018637559-AddTriggerNameToTriggerSourceSqlite'
 import { AddIndexOnTriggerRunSqlite1757560231246 } from './migration/sqlite/1757560231246-AddIndexOnTriggerRunSqlite'
 import { DeleteHandshakeFromTriggerSourceSqlite1758108281602 } from './migration/sqlite/1758108281602-DeleteHandshakeFromTriggerSourceSqlite'
+import { RemoveDisplayNameSqlite1759876386359 } from './migration/sqlite/1759876386359-RemoveDisplayNameSqlite'
+import { AddFlowVersionBackupFileSqlite1759964539150 } from './migration/sqlite/1759964539150-AddFlowVersionBackupFileSqlite'
+import { AddRunFlowVersionIdForForeignKeySqlite1760346793809 } from './migration/sqlite/1760346793809-AddRunFlowVersionIdForForeignKeySqlite'
+import { RestrictOnDeleteProjectForFlowSqlite1760376811542 } from './migration/sqlite/1760376811542-RestrictOnDeleteProjectForFlowSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -314,6 +318,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexOnTriggerRunSqlite1757560231246,
         DeleteHandshakeFromTriggerSourceSqlite1758108281602,
         AddIndexForAppEvents1759392852559,
+        RemoveDisplayNameSqlite1759876386359,
+        AddFlowVersionBackupFileSqlite1759964539150,
+        AddRunFlowVersionIdForForeignKeySqlite1760346793809,
+        RestrictOnDeleteProjectForFlowSqlite1760376811542,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -336,6 +344,17 @@ const getMigrationConfig = (): MigrationConfig => {
     }
 }
 
+const getSynchronize = (): boolean => {
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+
+    const value: Partial<Record<ApEnvironment, boolean>> = {
+        [ApEnvironment.TESTING]: true,
+    }
+
+    return value[env] ?? false
+}
+
+
 export const createSqlLiteDataSource = (): DataSource => {
     const migrationConfig = getMigrationConfig()
 
@@ -344,6 +363,7 @@ export const createSqlLiteDataSource = (): DataSource => {
         database: getSqliteDatabase(),
         ...migrationConfig,
         ...commonProperties,
+        synchronize: getSynchronize(),
     })
 }
 

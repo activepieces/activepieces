@@ -16,9 +16,15 @@ export const clearSheetAction = createAction({
       required: true,
       defaultValue: true,
     }),
+    headerRow: Property.Number({
+      displayName: 'Header Row',
+      description: 'Which row contains the headers?',
+      required: true,
+      defaultValue: 1,
+    }),
   },
   async run({ propsValue, auth }) {
-    const { spreadsheetId, sheetId,is_first_row_headers:isFirstRowHeaders } = propsValue;
+    const { spreadsheetId, sheetId, is_first_row_headers:isFirstRowHeaders, headerRow } = propsValue;
 
     if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -36,6 +42,7 @@ export const clearSheetAction = createAction({
       sheetId: sheetId as number,
       rowIndex_s: 1,
       rowIndex_e: undefined,
+      headerRow: headerRow,
     });
     for (const key in values) {
       if (key === '0' && isFirstRowHeaders) {

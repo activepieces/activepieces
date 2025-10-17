@@ -27,6 +27,6 @@ export const constructDatadogBaseHeaders = (auth: DatadogAuthType) => {
   return {
     'Accept': 'application/json',
     'DD-API-KEY': auth.apiKey,
-    ...(auth.appKey ? {'DD-APP-KEY': auth.appKey} : {}),
+    ...(auth.appKey ? {'DD-APPLICATION-KEY': auth.appKey} : {}),
   };
 };
