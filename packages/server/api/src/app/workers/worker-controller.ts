@@ -87,7 +87,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             },
         }, async (span) => {
             try {
-                const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure } = request.body
+                const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure, platformId } = request.body
 
                 const flowVersionExists = await flowVersionService(request.log).getOne(flowVersionId)
                 if (!flowVersionExists) {
@@ -116,6 +116,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                         executeTrigger: false,
                         parentRunId,
                         failParentOnFailure,
+                        platformId,
                     })
                 })
                 const flowRuns = await Promise.all(createFlowRuns)
