@@ -76,7 +76,7 @@ export const createBuilderAgentStore = (initialAgent: Agent) => {
         };
 
         if (debounceUpdate) {
-          debouncedAddToQueue(updateRequest);
+          debouncedAddToQueue(undefined, updateRequest);
         } else {
           agentUpdatesQueue.add(updateRequest);
         }

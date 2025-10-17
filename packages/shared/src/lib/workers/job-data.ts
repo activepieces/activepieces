@@ -24,6 +24,17 @@ export enum WorkerJobType {
     EXECUTE_TOOL = 'EXECUTE_TOOL',
 }
 
+export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
+    WorkerJobType.EXECUTE_WEBHOOK,
+    WorkerJobType.EXECUTE_FLOW,
+    WorkerJobType.EXECUTE_AGENT,
+    WorkerJobType.EXECUTE_VALIDATION,
+    WorkerJobType.EXECUTE_TRIGGER_HOOK,
+    WorkerJobType.EXECUTE_PROPERTY,
+    WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+    WorkerJobType.EXECUTE_TOOL,
+] as const
+
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
 export const RenewWebhookJobData = Type.Object({
     schemaVersion: Type.Number(),
@@ -68,6 +79,7 @@ export const ExecuteFlowJobData = Type.Object({
     platformId: Type.String(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
     environment: Type.Enum(RunEnvironment),
+    flowId: Type.String(),
     flowVersionId: Type.String(),
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
@@ -80,6 +92,7 @@ export const ExecuteFlowJobData = Type.Object({
     sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
     logsUploadUrl: Type.Optional(Type.String()),
     logsFileId: Type.Optional(Type.String()),
+    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
 
@@ -107,6 +120,7 @@ export const WebhookJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
+    traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
@@ -134,6 +148,7 @@ export const ExecuteToolJobData = Type.Object({
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
     input: Type.Record(Type.String(), Type.Unknown()),
+
 })
 export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 

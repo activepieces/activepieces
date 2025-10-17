@@ -42,6 +42,7 @@ const GenericActionOrTriggerItem = ({
     : {
         minHeight: '54px',
       };
+  const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
   return (
     <CardListItem
       className={cn('p-2 w-full ', {
@@ -64,12 +65,12 @@ const GenericActionOrTriggerItem = ({
           />
         </div>
         <div className="flex flex-col gap-0.5">
-          <div className="text-sm">
-            {getPieceSelectorItemInfo(item).displayName}
-          </div>
+          <div className="text-sm">{pieceSelectorItemInfo.displayName}</div>
           {!hidePieceIconAndDescription && (
             <div className="text-xs text-muted-foreground">
-              {getPieceSelectorItemInfo(item).description}
+              {pieceSelectorItemInfo.description.endsWith('.')
+                ? pieceSelectorItemInfo.description.slice(0, -1)
+                : pieceSelectorItemInfo.description}
             </div>
           )}
         </div>

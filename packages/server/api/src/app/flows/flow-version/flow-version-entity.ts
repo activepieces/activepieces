@@ -49,6 +49,10 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         state: {
             type: String,
         },
+        backupFiles: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
     },
     indices: [
         {
