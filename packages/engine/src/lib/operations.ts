@@ -35,7 +35,7 @@ import { pieceHelper } from './helper/piece-helper'
 import { triggerHelper } from './helper/trigger-helper'
 import { progressService } from './services/progress.service'
 
-const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
+const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<FlowRunResponse>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
     const output: FlowExecutorContext = await executieSingleStepOrFlowOperation(input)
     const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
@@ -47,10 +47,8 @@ const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<
     const response = await newContext.toResponse()
     return {
         status: EngineResponseStatus.OK,
-        response: {
-            status: response.status,
-            error: response.error,
-        },
+        response,
+
     }
 }
 

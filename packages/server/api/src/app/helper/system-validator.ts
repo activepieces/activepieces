@@ -1,10 +1,10 @@
-import { AppSystemProp, ContainerType, PiecesSource, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, PiecesSource, QueueMode, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
-import { DatabaseType, QueueMode, RedisType, system } from './system/system'
+import { DatabaseType, system } from './system/system'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -59,7 +59,7 @@ const systemPropValidators: {
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
     [AppSystemProp.SENTRY_DSN]: urlValidator,
-
+    [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: numberValidator,
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,

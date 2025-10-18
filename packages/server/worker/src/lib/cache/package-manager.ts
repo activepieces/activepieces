@@ -1,6 +1,11 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
-import { enrichErrorContext, execPromise, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import {
+    enrichErrorContext,
+    execPromise,
+    fileSystemUtils,
+    memoryLock,
+} from '@activepieces/server-shared'
 import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -59,7 +64,11 @@ const runCommand = async (
 }
 
 export const packageManager = (log: FastifyBaseLogger) => ({
-    async add({ path, dependencies, installDir }: AddParams): Promise<PackageManagerOutput> {
+    async add({
+        path,
+        dependencies,
+        installDir,
+    }: AddParams): Promise<PackageManagerOutput> {
         if (isEmpty(dependencies)) {
             return {
                 stdout: '',
@@ -82,17 +91,28 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        return memoryLock.runExclusive(`pnpm-init-${path}`, async () => {
-            const fExists = await fileSystemUtils.fileExists(fsPath.join(path, 'package.json'))
-            if (fExists) {
-                return {
-                    stdout: 'N/A',
-                    stderr: 'N/A',
-                }
+        const packageJsonPath = fsPath.join(path, 'package.json')
+        const fExists = await fileSystemUtils.fileExists(packageJsonPath)
+        if (fExists) {
+            return {
+                stdout: 'N/A',
+                stderr: 'N/A',
             }
-            // It must be awaited so it only releases the lock after the command is done
-            const result = await runCommand(path, 'init', log)
-            return result
+        }
+        return memoryLock.runExclusive({
+            key: `pnpm-init-${path}`,
+            fn: async () => {
+                const fExists = await fileSystemUtils.fileExists(packageJsonPath)
+                if (fExists) {
+                    return {
+                        stdout: 'N/A',
+                        stderr: 'N/A',
+                    }
+                }
+                // It must be awaited so it only releases the lock after the command is done
+                const result = await runCommand(path, 'init', log)
+                return result
+            },
         })
     },
 
@@ -118,9 +138,12 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     },
 })
 
-const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: FastifyBaseLogger) => {
+const replaceRelativeSystemLinkWithAbsolute = async (
+    filePath: string,
+    log: FastifyBaseLogger,
+) => {
     try {
-        // Inside the isolate sandbox, the relative path is not valid
+    // Inside the isolate sandbox, the relative path is not valid
 
         const stats = await fs.stat(filePath)
 

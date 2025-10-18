@@ -1,11 +1,10 @@
 import './instrumentation'
 
-import { ApLock } from '@activepieces/server-shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
-import { distributedLock } from './app/helper/lock'
+import { distributedLock } from './app/database/redis-connections'
 import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
@@ -59,20 +58,11 @@ function setupTimeZone(): void {
 const main = async (): Promise<void> => {
     setupTimeZone()
     if (system.isApp()) {
-        let lock: ApLock | undefined
-        try {
-            lock = await distributedLock.acquireLock({
-                key: 'database-migration-lock',
-                timeout: dayjs.duration(10, 'minutes').asMilliseconds(),
-                log: system.globalLogger(),
-            })
-            await initializeDatabase({ runMigrations: true })
-        }
-        finally {
-            if (lock) {
-                await lock.release()
-            }
-        }
+        await distributedLock(system.globalLogger()).runExclusive({
+            key: 'database-migration-lock',
+            timeoutInSeconds: dayjs.duration(10, 'minutes').asSeconds(),
+            fn: async () => initializeDatabase({ runMigrations: true }),
+        })
     }
     const app = await setupServer()
 

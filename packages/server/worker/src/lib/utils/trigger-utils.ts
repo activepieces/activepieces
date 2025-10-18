@@ -12,7 +12,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
-import { engineRunner } from '../runner'
+import { engineRunner } from '../compute'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
 
