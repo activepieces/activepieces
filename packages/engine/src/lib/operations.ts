@@ -6,6 +6,8 @@ import {
     EngineResponse,
     EngineResponseStatus,
     ExecuteActionResponse,
+    ExecuteCleanupOperation,
+    ExecuteCleanupResponse,
     ExecuteExtractPieceMetadataOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
@@ -31,6 +33,7 @@ import { EngineConstants } from './handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './handler/context/flow-execution-context'
 import { testExecutionContext } from './handler/context/test-execution-context'
 import { flowExecutor } from './handler/flow-executor'
+import { executeCleanup as pieceExecutorCleanup } from './handler/piece-executor'
 import { pieceHelper } from './helper/piece-helper'
 import { triggerHelper } from './helper/trigger-helper'
 import { progressService } from './services/progress.service'
@@ -193,6 +196,25 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
     return stepOutput
 }
 
+async function executeCleanup(input: ExecuteCleanupOperation): Promise<ExecuteCleanupResponse> {
+    try {
+        await pieceExecutorCleanup({
+            operation: input,
+            pieceSource: EngineConstants.PIECE_SOURCES,
+            constants: EngineConstants.fromExecuteCleanupInput(input),
+        })
+        return {
+            success: true,
+        }
+    }
+    catch (e) {
+        return {
+            success: false,
+            message: inspect(e),
+        }
+    }
+}
+
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
     try {
         switch (operationType) {
@@ -259,6 +281,14 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     pieceSource: EngineConstants.PIECE_SOURCES,
                 })
 
+                return {
+                    status: EngineResponseStatus.OK,
+                    response: output,
+                }
+            }
+            case EngineOperationType.EXECUTE_CLEANUP: {
+                const input = operation as ExecuteCleanupOperation
+                const output = await executeCleanup(input)
                 return {
                     status: EngineResponseStatus.OK,
                     response: output,
