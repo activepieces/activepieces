@@ -21,6 +21,7 @@
     "@hyperdx/node-opentelemetry": "0.8.2",
     "ioredis": "5.4.1",
     "redlock": "5.0.0-beta.2",
-    "redis-memory-server": "0.13.0"
+    "redis-memory-server": "0.13.0",
+    "dayjs": "1.11.9"
   }
 }

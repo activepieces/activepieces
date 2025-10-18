@@ -1,16 +1,37 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { GetRunForWorkerRequest, MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { Agent, AgentRun, CreateTriggerRunRequestBody, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
+import fetchRetry from 'fetch-retry'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
+
+const fetchWithRetry = fetchRetry(global.fetch)
 
 const tracer = trace.getTracer('worker-api-service')
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
+}
+
+export const flowRunLogs = {
+    async get(fullUrl: string): Promise<ExecutioOutputFile | null> {
+        const response = await fetchWithRetry(fullUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            retries: 3,
+            retryDelay: 3000,
+            retryOn: (status: number) => Math.floor(status / 100) === 5,
+        })
+        if (response.status === 404) {
+            return null
+        }
+        return response.json() as unknown as ExecutioOutputFile
+    },
 }
 
 export const workerApiService = (workerToken: string) => {
@@ -38,7 +59,7 @@ export const workerApiService = (workerToken: string) => {
                 try {
                     const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
                     span.setAttribute('worker.batchesCount', arrayOfPayloads.length)
-                    
+
                     const limit = pLimit(1)
                     const promises = arrayOfPayloads.map(payloads =>
                         limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
@@ -63,7 +84,7 @@ export const workerApiService = (workerToken: string) => {
                         .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
                         .map(r => r.value)
                         .flat()
-                    
+
                     span.setAttribute('worker.runsCreated', flowRuns.length)
                     return flowRuns
                 }
@@ -108,9 +129,6 @@ export const engineApiService = (engineToken: string) => {
             return client.get<Buffer>(`/v1/engine/files/${fileId}`, {
                 responseType: 'arraybuffer',
             })
-        },
-        async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
-            return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})
         },
         async createTriggerRun(request: CreateTriggerRunRequestBody): Promise<TriggerRun> {
             return client.post<TriggerRun>('/v1/engine/create-trigger-run', request)

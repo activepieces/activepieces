@@ -2,7 +2,7 @@ import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, PauseType, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService } from '../../api/server-api.service'
+import { engineApiService, flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
 import { workerMachine } from '../../utils/machine'
@@ -13,20 +13,16 @@ async function prepareInput(
     flowVersion: FlowVersion,
     jobData: ExecuteFlowJobData,
     attempsStarted: number,
-    engineToken: string,
     timeoutInSeconds: number,
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
     > {
+    const previousExecutionFile = attempsStarted > 1 ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     switch (jobData.executionType) {
+
         case ExecutionType.BEGIN: {
-            const flowRun =
-                jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1
-                    ? await engineApiService(engineToken).getRun({
-                        runId: jobData.runId,
-                    })
-                    : undefined
+
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
@@ -35,10 +31,10 @@ async function prepareInput(
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
                 executionState: {
-                    steps: !isNil(flowRun) ? flowRun.steps : {},
+                    steps: !isNil(previousExecutionFile) ? previousExecutionFile.executionState.steps : {},
                 },
                 sampleData: jobData.sampleData,
-                tasks: flowRun?.tasks ?? 0,
+                tasks: previousExecutionFile?.tasks ?? 0,
                 executeTrigger: jobData.executeTrigger ?? false,
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
@@ -50,18 +46,16 @@ async function prepareInput(
             }
         }
         case ExecutionType.RESUME: {
-            const flowRun = await engineApiService(engineToken).getRun({
-                runId: jobData.runId,
-            })
+
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
-                tasks: flowRun?.tasks ?? 0,
+                tasks: previousExecutionFile?.tasks ?? 0,
                 executionType: ExecutionType.RESUME,
                 executionState: {
-                    steps: flowRun?.steps ?? {},
+                    steps: previousExecutionFile?.executionState.steps ?? {},
                 },
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
@@ -160,7 +154,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 flowVersion,
                 jobData,
                 attempsStarted,
-                engineToken,
                 timeoutInSeconds,
             )
             const { result, status } = await engineRunner(runLog).executeFlow(

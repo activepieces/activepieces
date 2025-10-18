@@ -1,4 +1,4 @@
-import { File, FileCompression, FileType, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
+import { ExecutioOutputFile, File, FileCompression, FileType, isNil, UploadLogsBehavior, UploadLogsToken } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../ee/custom-domains/domain-helper'
@@ -28,7 +28,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
                 algorithm: JwtSignAlgorithm.HS256,
                 expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
             })
-            return domainHelper.getInternalApiUrl({ path: `/v1/flow-run-logs/upload?token=${token}`, platformId: null })
+            return domainHelper.getInternalApiUrl({ path: `/v1/flow-runs/logs?token=${token}`, platformId: null })
         },
         async upsertMetadata(request: UploadLogsToken): Promise<void> {
             const fileExists = await fileService(log).exists({
@@ -44,7 +44,16 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
         async uploadDirectly(request: UploadLogsToken, content: Buffer): Promise<void> {
             await upsertFile(request, log, content)
         },
-
+        async getLogs(request: GetLogsParams): Promise<ExecutioOutputFile | null> {
+            const file = await fileService(log).getDataOrUndefined({
+                fileId: request.logsFileId,
+                projectId: request.projectId,
+            })
+            if (isNil(file)) {
+                return null
+            }
+            return JSON.parse(file.data.toString('utf-8'))
+        },
     }
 }
 
@@ -61,6 +70,11 @@ function upsertFile(request: UploadLogsToken, log: FastifyBaseLogger, content: B
             projectId: request.projectId,
         },
     })
+}
+
+type GetLogsParams = {
+    logsFileId: string
+    projectId: string
 }
 
 type GenerateTokenParams = {

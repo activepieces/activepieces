@@ -27,6 +27,7 @@
     "dayjs": "1.11.9",
     "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",
-    "jsonwebtoken": "9.0.1"
+    "jsonwebtoken": "9.0.1",
+    "fetch-retry": "6.0.0"
   }
 }

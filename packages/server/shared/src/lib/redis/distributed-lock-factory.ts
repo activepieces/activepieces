@@ -18,7 +18,6 @@ export const distributedLockFactory = (
             const redisClient = await createRedisConnection()
             redLock = new RedLock([redisClient], {
                 driftFactor: 0.01,
-                retryCount: 30,
                 automaticExtensionThreshold: 1000,
             })
             return redLock
@@ -36,6 +35,12 @@ export const distributedLockFactory = (
             return redLockInstance.using(
                 [key],
                 timeout,
+                {
+                    retryCount: Math.ceil(timeout / 200),
+                    retryDelay: 200,
+                    automaticExtensionThreshold: 2000,
+                    driftFactor: 0.01,
+                },
                 async () => fn(),
             )
         },

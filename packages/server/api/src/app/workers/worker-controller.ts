@@ -78,7 +78,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             body: MigrateJobsRequest,
         },
     }, async (request) => {
-        return await jobMigrations.apply(request.body.jobData)
+        return jobMigrations.apply(request.body.jobData)
     })
     
     app.post('/submit-payloads', {
