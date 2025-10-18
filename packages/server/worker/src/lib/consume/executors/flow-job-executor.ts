@@ -2,7 +2,7 @@ import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, PauseType, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService } from '../../api/server-api.service'
+import { engineApiService, flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
 import { workerMachine } from '../../utils/machine'
@@ -13,13 +13,12 @@ async function prepareInput(
     flowVersion: FlowVersion,
     jobData: ExecuteFlowJobData,
     attempsStarted: number,
-    engineToken: string,
     timeoutInSeconds: number,
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
     > {
-    const previousExecutionFile = await engineApiService(engineToken).getLogs(jobData.logsUploadUrl)
+    const previousExecutionFile = attempsStarted > 1 ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     switch (jobData.executionType) {
 
         case ExecutionType.BEGIN: {
@@ -155,7 +154,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 flowVersion,
                 jobData,
                 attempsStarted,
-                engineToken,
                 timeoutInSeconds,
             )
             const { result, status } = await engineRunner(runLog).executeFlow(

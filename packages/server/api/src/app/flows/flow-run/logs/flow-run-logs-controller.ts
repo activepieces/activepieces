@@ -22,7 +22,7 @@ export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
                 const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl(s3Key)
                 request.log.info({
                     s3Key,
-                }, 'Redirecting to S3 signed URL')    
+                }, 'Redirecting to S3 signed URL')
                 await flowRunLogsService(request.log).upsertMetadata(decodedToken)
                 return reply.redirect(s3SignedUrl)
             }
@@ -65,4 +65,3 @@ export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.send(logs)
     })
 }
-

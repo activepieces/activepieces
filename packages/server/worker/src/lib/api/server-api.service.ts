@@ -2,16 +2,36 @@ import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
 import { Agent, AgentRun, CreateTriggerRunRequestBody, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
-import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
+import fetchRetry from 'fetch-retry'
+const fetchWithRetry = fetchRetry(global.fetch)
+
 const tracer = trace.getTracer('worker-api-service')
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
+}
+
+export const flowRunLogs = {
+    async get(fullUrl: string): Promise<ExecutioOutputFile | null> {
+        const response = await fetchWithRetry(fullUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            retries: 3,
+            retryDelay: 3000,
+            retryOn: (status: number) => Math.floor(status / 100) === 5,
+        })
+        if (response.status === 404) {
+            return null
+        }
+        return response.json() as unknown as ExecutioOutputFile
+    }
 }
 
 export const workerApiService = (workerToken: string) => {
@@ -109,17 +129,6 @@ export const engineApiService = (engineToken: string) => {
             return client.get<Buffer>(`/v1/engine/files/${fileId}`, {
                 responseType: 'arraybuffer',
             })
-        },
-        async getLogs(fullUrl: string): Promise<ExecutioOutputFile | null> {
-            try {
-                return await client.get<ExecutioOutputFile>(fullUrl, {})
-            }
-            catch (error) {
-                if (isAxiosError(error) && error.response?.status === 404) {
-                    return null
-                }
-                throw error
-            }
         },
         async createTriggerRun(request: CreateTriggerRunRequestBody): Promise<TriggerRun> {
             return client.post<TriggerRun>('/v1/engine/create-trigger-run', request)
