@@ -7,3 +7,7 @@ export const DEFAULT_MCP_DATA = {
     flowRunId: 'mcp-flow-run-id',
     triggerPieceName: 'mcp-trigger-piece-name',
 }
+
+export const ERROR_MESSAGES_TO_REDACT = [
+    'HttpClient#sendRequest',
+]

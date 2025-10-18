@@ -7,6 +7,7 @@ on:
 
 jobs:
   shard-0:
+    if: github.repository == 'activepieces/activepieces'
     uses: ./.github/workflows/reusable-generate-translations-shard.yml
     with:
       shard_index: 0
@@ -15,6 +16,7 @@ jobs:
     secrets: inherit
 
   shard-1:
+    if: github.repository == 'activepieces/activepieces'
     needs: shard-0
     uses: ./.github/workflows/reusable-generate-translations-shard.yml
     with:
@@ -24,6 +26,7 @@ jobs:
     secrets: inherit
 
   shard-2:
+    if: github.repository == 'activepieces/activepieces'
     needs: shard-1
     uses: ./.github/workflows/reusable-generate-translations-shard.yml
     with:
@@ -33,6 +36,7 @@ jobs:
     secrets: inherit
 
   shard-3:
+    if: github.repository == 'activepieces/activepieces'
     needs: shard-2
     uses: ./.github/workflows/reusable-generate-translations-shard.yml
     with:
@@ -42,6 +46,7 @@ jobs:
     secrets: inherit
 
   shard-4:
+    if: github.repository == 'activepieces/activepieces'
     needs: shard-3
     uses: ./.github/workflows/reusable-generate-translations-shard.yml
     with:
@@ -51,6 +56,7 @@ jobs:
     secrets: inherit
 
   shard-5:
+    if: github.repository == 'activepieces/activepieces'
     needs: shard-4
     uses: ./.github/workflows/reusable-generate-translations-shard.yml
     with:
@@ -60,6 +66,7 @@ jobs:
     secrets: inherit
 
   finalize:
+    if: github.repository == 'activepieces/activepieces'
     needs: shard-5
     uses: ./.github/workflows/reusable-finalize-translations-pr.yml
     with:
@@ -68,7 +75,7 @@ jobs:
 
   notify-failure:
     # Only run when any of the shards failed; still evaluate even if they failed
-    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    if: ${{ github.repository == 'activepieces/activepieces' && always() && contains(needs.*.result, 'failure') }}
     needs: [shard-0, shard-1, shard-2, shard-3, shard-4, shard-5]
     runs-on: ubuntu-latest
     steps:
