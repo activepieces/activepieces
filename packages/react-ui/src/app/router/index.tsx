@@ -74,6 +74,7 @@ import {
   projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import SecretMangersPage from '../routes/platform/security/secret-managers';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -488,6 +489,16 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="API Keys">
           <ApiKeysPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/security/secret-managers',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Secret managers">
+          <SecretMangersPage />
         </PageTitle>
       </PlatformLayout>
     ),

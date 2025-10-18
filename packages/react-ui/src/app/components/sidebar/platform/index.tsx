@@ -164,6 +164,13 @@ export function PlatformSidebar() {
           isSubItem: true,
           show: true,
         },
+        {
+          type: 'link',
+          to: '/platform/security/secret-managers',
+          label: t('Secret Managers'),
+          isSubItem: true,
+          show: true,
+        },
       ],
     },
     {
