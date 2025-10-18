@@ -1,16 +1,16 @@
 import { StripePlanName } from '@activepieces/ee-shared'
+import { apDayjs } from '@activepieces/server-shared'
 import { AdminRetryRunsRequestBody, apId, ApplyLicenseKeyByEmailRequestBody, ExecutionType, FlowRunStatus, GiftTrialByEmailRequestBody, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, PrincipalType, ProgressUpdateType, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
+import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
+import { projectService } from '../../../project/project-service'
+import { jobQueue } from '../../../workers/queue/job-queue'
+import { JobType } from '../../../workers/queue/queue-manager'
 import { stripeHelper } from '../platform-plan/stripe-helper'
 import { adminPlatformService } from './admin-platform.service'
-import { projectService } from '../../../project/project-service'
-import { JobType } from '../../../workers/queue/queue-manager'
-import { jobQueue } from '../../../workers/queue/job-queue'
-import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
-import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
-import { apDayjs } from '@activepieces/server-shared'
-import { Type } from '@sinclair/typebox'
 
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
@@ -67,7 +67,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                     logsUploadUrl,
                     logsFileId,
                 },
-                delay: calculateDelayForPausedRun(pausedRun.pauseMetadata?.resumeDateTime!),
+                delay: calculateDelayForPausedRun(pausedRun.pauseMetadata?.resumeDateTime),
             })
         }
         return res.status(StatusCodes.OK).send()
