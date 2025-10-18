@@ -1,4 +1,4 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -208,9 +208,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await flowRunSideEffects(log).onResume(flowRun)
         return flowRun
     },
-    updateRunStatusAsync({ flowRunId, status }: UpdateRunStatusParams): void {
-        rejectedPromiseHandler(flowRunRepo().update(flowRunId, { status }), log)
-    },
     async updateRun({
         flowRunId,
         status,
@@ -336,25 +333,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, log)
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
-        const [flowRunMetadata, flowRun] = await Promise.all([
-            runsMetadataQueue(log).getRunMetadata(params.id),
-            queryBuilderForFlowRun(flowRunRepo()).where({
-                id: params.id,
-                ...(params.projectId ? { projectId: params.projectId } : {}),
-            }).getOne(),
-        ])
-
-        if (isNil(flowRun)) {
-            return null
-        }
-
-        // Merge: Postgres provides complete base, Redis provides most recent updates
-        if (!isNil(flowRunMetadata)) {
-            return {
-                ...flowRun,
-                ...flowRunMetadata,
-            } as FlowRun
-        }
+        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({
+            id: params.id,
+            ...(params.projectId ? { projectId: params.projectId } : {}),
+        }).getOne()
 
         return flowRun
     },
@@ -572,11 +554,6 @@ async function create(params: CreateParams, log: FastifyBaseLogger): Promise<Flo
     return flowRun
 }
 
-
-type UpdateRunStatusParams = {
-    flowRunId: FlowRunId
-    status: FlowRunStatus
-}
 
 type UpdateRunParams = {
     flowRunId: FlowRunId

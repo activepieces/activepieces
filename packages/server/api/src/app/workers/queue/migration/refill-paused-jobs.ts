@@ -3,10 +3,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis-connections'
 import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
+import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
-import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
 
 
 const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v2'
