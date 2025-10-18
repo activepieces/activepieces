@@ -1,14 +1,14 @@
 {
-  "Image generation API for banners and social media posts": "为横幅和社交媒体帖子生成图像 API",
-  "Public API Key": "公共API密钥",
-  "Secret API Key": "绝密API密钥",
+  "Image generation API for banners and social media posts": "Image generation API for banners and social media posts",
+  "Public API Key": "Public API Key",
+  "Secret API Key": "Secret API Key",
   "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n": "\nTo obtain your GenerateBanners public and secret API Keys, you can follow the steps below:\n\n1. Go to the [GenerateBanners homepage](https://www.generatebanners.com/).\n2. Sign up or log in into your account.\n3. Go to your [account page](https://www.generatebanners.com/app/account).\n4. The public and secret API keys are now displayed, copy them one by one into the right Activepieces fields.\n",
-  "Render Template": "渲染模板",
-  "Render a GenerateBanners template": "渲染生成横幅模板",
+  "Render Template": "Render Template",
+  "Render a GenerateBanners template": "Render a GenerateBanners template",
   "Template": "模板",
-  "File type": "文件类型",
-  "Variables": "变量",
-  "Image (jpg)": "图像(jpg)",
-  "Image (png)": "图像(png)",
-  "Document (pdf)": "文档 (pdf)"
+  "File type": "File type",
+  "Variables": "Variables",
+  "Image (jpg)": "Image (jpg)",
+  "Image (png)": "Image (png)",
+  "Document (pdf)": "Document (pdf)"
 }
