@@ -1,5 +1,6 @@
 import {
   AppConnectionValue,
+  CleanupReason,
   ExecutionType,
   FlowRunId,
   PopulatedFlow,
@@ -229,4 +230,15 @@ export enum StoreScope {
   // Collection were deprecated in favor of project
   PROJECT = 'COLLECTION',
   FLOW = 'FLOW',
+}
+
+export type CleanupContext<
+  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  ActionProps extends InputPropertyMap = InputPropertyMap
+> = Omit<BaseContext<PieceAuth, ActionProps>, 'flows'> & {
+  server: ServerContext;
+  run: {
+    id: FlowRunId;
+    reason: CleanupReason;
+  };
 }
