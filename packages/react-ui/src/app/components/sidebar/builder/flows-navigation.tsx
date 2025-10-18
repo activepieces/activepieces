@@ -352,7 +352,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           onMoveTo={refetch}
           onDelete={() => {
             if (flowId === flow.id) {
-              flowsHooks.invalidateFlowsQuery(queryClient);
+              flowsHooks.invalidateSingleFlowQuery(queryClient, flow.id);
             }
             refetch();
           }}

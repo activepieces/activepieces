@@ -135,7 +135,10 @@ export const BuilderHeader = () => {
                       },
                     },
                     () => {
-                      flowsHooks.invalidateFlowsQuery(queryClient);
+                      flowsHooks.invalidateSingleFlowQuery(
+                        queryClient,
+                        flow.id,
+                      );
                     },
                   );
                 }}
@@ -152,7 +155,7 @@ export const BuilderHeader = () => {
               flowVersion={flowVersion}
               readonly={!isLatestVersion}
               onDelete={() => {
-                flowsHooks.invalidateFlowsQuery(queryClient);
+                flowsHooks.invalidateSingleFlowQuery(queryClient, flow.id);
               }}
               onRename={() => {
                 setIsEditingFlowName(true);
