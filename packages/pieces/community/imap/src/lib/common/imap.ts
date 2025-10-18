@@ -84,7 +84,7 @@ async function copyEmail<T extends { success: boolean; newUid?: number }>({
       await confirmEmailExists(imapClient, uid);
 
       const result: false | CopyResponseObject = await imapClient.messageCopy(
-        { uid },
+        { uid: uid.toString() },
         targetMailbox,
         { uid: true }
       );
@@ -110,7 +110,7 @@ async function deleteEmail<T extends { success: boolean }>({
 }): Promise<T> {
   return (await performMailboxOperation(auth, mailbox, async (imapClient) => {
     await confirmEmailExists(imapClient, uid);
-    await imapClient.messageDelete({ uid }, { uid: true });
+    await imapClient.messageDelete({ uid: uid.toString() }, { uid: true });
 
     return { success: true };
   })) as T;
@@ -172,7 +172,7 @@ async function moveEmail<T extends { success: boolean; newUid?: number }>({
       await confirmEmailExists(imapClient, uid);
 
       const result: false | CopyResponseObject = await imapClient.messageMove(
-        { uid },
+        { uid: uid.toString() },
         targetMailbox,
         { uid: true }
       );
@@ -255,7 +255,7 @@ async function performMailboxOperation<T>(
     let lock: MailboxLockObject | null = null;
 
     try {
-      lock = await imapClient.getMailboxLock(mailbox, { readOnly });
+      lock = await imapClient.getMailboxLock(mailbox, { readonly: readOnly });
       return await callback(imapClient);
     } catch (error) {
       detectMissingMailbox(error);
@@ -288,9 +288,9 @@ async function setEmailReadStatus<T extends { success: true }>({
       await confirmEmailExists(imapClient, uid);
 
       if (markAsRead) {
-        await imapClient.messageFlagsAdd({ uid }, ['\\Seen'], { uid: true });
+        await imapClient.messageFlagsAdd({ uid: uid.toString() }, ['\\Seen'], { uid: true });
       } else {
-        await imapClient.messageFlagsRemove({ uid }, ['\\Seen'], { uid: true });
+        await imapClient.messageFlagsRemove({ uid: uid.toString() }, ['\\Seen'], { uid: true });
       }
 
       return { success: true };
