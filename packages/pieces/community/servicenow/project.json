@@ -1,0 +1,7 @@
+{
+  "name": "servicenow",
+  "version": "0.1.0",
+  "description": "ServiceNow integration for Activepieces",
+  "tags": ["servicenow", "itsm", "automation"],
+  "picture": "https://cdn.activepieces.com/pieces/servicenow.png"
+}
