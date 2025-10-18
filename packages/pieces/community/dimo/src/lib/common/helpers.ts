@@ -251,13 +251,14 @@ export class DimoClient {
 			},
 			body: {
 				service: input.params.service,
-				data: input.params.data,
-				trigger: vehicleEventTriggerToText(input.params.trigger),
-				setup: input.params.setup,
-				description: input.params.description,
-				target_uri: input.params.target_uri,
+				metricName: input.params.metricName,
+				condition: input.params.condition,
+				coolDownPeriod: input.params.coolDownPeriod,
+				...(input.params.displayName ? { displayName: input.params.displayName } : {}),
+				...(input.params.description ? { description: input.params.description } : {}),
+				targetURL: input.params.targetURL,
 				status: input.params.status,
-				verification_token: input.params.verification_token,
+				verificationToken: input.params.verificationToken,
 			},
 		});
 
