@@ -41,19 +41,28 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
         runsMetadataWorker = new Worker<RunsMetadataJobData>(
             queueName,
             async (job) => {
-                assertNotNullOrUndefined(runsMetadataQueueInstance, 'Queue not initialized')
+                log.info({
+                    jobId: job.id,
+                    runId: job.data.runId,
+                }, '[runsMetadataQueue#worker] Saving runs metadata')
                 const key = redisMetadaKey(job.data.runId)
-                await runsMetadataQueueInstance.removeDeduplicationKey(job.data.runId)
                 await distributedLock(log).runExclusive({
                     key,
                     timeoutInSeconds: 30,
                     fn: async () => {
+                        log.info({
+                            jobId: job.id,
+                            runId: job.data.runId,
+                        }, '[runsMet    adataQueue#worker] Acquired lock')
+
+                        assertNotNullOrUndefined(runsMetadataQueueInstance, 'Queue not initialized')
+                        await runsMetadataQueueInstance.removeDeduplicationKey(job.data.runId)
                         const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                         if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
                             log.info({
                                 jobId: job.id,
                                 runId: job.data.runId,
-                            }, 'Runs metadata not found, skipping job')
+                            }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                             return
                         }
                         await flowRunRepo().upsert({
