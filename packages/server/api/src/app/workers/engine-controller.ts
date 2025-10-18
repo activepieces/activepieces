@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest } from '@activepieces/server-shared'
+
 import { CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -15,21 +15,6 @@ import { engineResponseWatcher } from './engine-response-watcher'
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-
-    app.get('/runs/:runId', {
-        config: {
-            allowedPrincipals: [PrincipalType.ENGINE],
-        },
-        schema: {
-            params: GetRunForWorkerRequest,
-        },
-    }, async (request) => {
-        const { runId } = request.params
-        return flowRunService(request.log).getOnePopulatedOrThrow({
-            id: runId,
-            projectId: request.principal.projectId,
-        })
-    })
 
     app.get('/populated-flows', GetAllFlowsByProjectParams, async (request) => {
         return flowService(request.log).list({

@@ -19,14 +19,11 @@ async function prepareInput(
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
     > {
+    const previousExecutionFile = await engineApiService(engineToken).getLogs(jobData.logsUploadUrl)
     switch (jobData.executionType) {
+
         case ExecutionType.BEGIN: {
-            const flowRun =
-                jobData.executionType === ExecutionType.BEGIN && attempsStarted > 1
-                    ? await engineApiService(engineToken).getRun({
-                        runId: jobData.runId,
-                    })
-                    : undefined
+
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
@@ -35,10 +32,10 @@ async function prepareInput(
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
                 executionState: {
-                    steps: !isNil(flowRun) ? flowRun.steps : {},
+                    steps: !isNil(previousExecutionFile) ? previousExecutionFile.executionState.steps : {},
                 },
                 sampleData: jobData.sampleData,
-                tasks: flowRun?.tasks ?? 0,
+                tasks: previousExecutionFile?.tasks ?? 0,
                 executeTrigger: jobData.executeTrigger ?? false,
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
@@ -50,18 +47,16 @@ async function prepareInput(
             }
         }
         case ExecutionType.RESUME: {
-            const flowRun = await engineApiService(engineToken).getRun({
-                runId: jobData.runId,
-            })
+
             return {
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
-                tasks: flowRun?.tasks ?? 0,
+                tasks: previousExecutionFile?.tasks ?? 0,
                 executionType: ExecutionType.RESUME,
                 executionState: {
-                    steps: flowRun?.steps ?? {},
+                    steps: previousExecutionFile?.executionState.steps ?? {},
                 },
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,

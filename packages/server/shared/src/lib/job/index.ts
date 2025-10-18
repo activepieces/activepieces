@@ -33,7 +33,7 @@ export const SendEngineUpdateRequest = Type.Object({
 export type SendEngineUpdateRequest = Static<typeof SendEngineUpdateRequest>
 
 export const MigrateJobsRequest = Type.Object({
-    jobData: Type.Record(Type.String(), Type.Unknown())
+    jobData: Type.Record(Type.String(), Type.Unknown()),
 })
 export type MigrateJobsRequest = Static<typeof MigrateJobsRequest>
 
@@ -59,10 +59,7 @@ export const SubmitPayloadsRequest = Type.Object({
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
 
-export const GetRunForWorkerRequest = Type.Object({
-    runId: Type.String(),
-})
-export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
+
 
 
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {

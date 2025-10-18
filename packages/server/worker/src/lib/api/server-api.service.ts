@@ -1,7 +1,8 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { GetRunForWorkerRequest, MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { Agent, AgentRun, CreateTriggerRunRequestBody, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { Agent, AgentRun, CreateTriggerRunRequestBody, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
+import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
@@ -38,7 +39,7 @@ export const workerApiService = (workerToken: string) => {
                 try {
                     const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
                     span.setAttribute('worker.batchesCount', arrayOfPayloads.length)
-                    
+
                     const limit = pLimit(1)
                     const promises = arrayOfPayloads.map(payloads =>
                         limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
@@ -63,7 +64,7 @@ export const workerApiService = (workerToken: string) => {
                         .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
                         .map(r => r.value)
                         .flat()
-                    
+
                     span.setAttribute('worker.runsCreated', flowRuns.length)
                     return flowRuns
                 }
@@ -109,8 +110,16 @@ export const engineApiService = (engineToken: string) => {
                 responseType: 'arraybuffer',
             })
         },
-        async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
-            return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})
+        async getLogs(fullUrl: string): Promise<ExecutioOutputFile | null> {
+            try {
+                return await client.get<ExecutioOutputFile>(fullUrl, {})
+            }
+            catch (error) {
+                if (isAxiosError(error) && error.response?.status === 404) {
+                    return null
+                }
+                throw error
+            }
         },
         async createTriggerRun(request: CreateTriggerRunRequestBody): Promise<TriggerRun> {
             return client.post<TriggerRun>('/v1/engine/create-trigger-run', request)
