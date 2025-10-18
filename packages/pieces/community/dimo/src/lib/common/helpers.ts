@@ -278,10 +278,24 @@ export class DimoClient {
 		return response.body;
 	}
 
-	async subscribeVehicle(input: { developerJwt: string; webhookId: string; tokenId: string }) {
+	async getVehicleTokenDID(input: { tokenId: number }): Promise<string> {
+		const query = `{
+			vehicle(tokenId: ${input.tokenId}) {
+				tokenDID
+			}
+		}`;
+
+		const response = await sendIdentityGraphQLRequest(query, {});
+		if (response?.data?.vehicle?.tokenDID) {
+			return response.data.vehicle.tokenDID;
+		}
+		throw new Error(`Failed to get tokenDID for vehicle ${input.tokenId}`);
+	}
+
+	async subscribeVehicle(input: { developerJwt: string; webhookId: string; tokenDID: string }) {
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: VEHICLE_EVENTS_API + `/v1/webhooks/${input.webhookId}/subscribe/${input.tokenId}`,
+			url: VEHICLE_EVENTS_API + `/v1/webhooks/${input.webhookId}/subscribe/${input.tokenDID}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: input.developerJwt,
@@ -289,6 +303,30 @@ export class DimoClient {
 		});
 
 		return response.body;
+	}
+
+	async subscribeVehiclesToWebhook(input: { 
+		developerJwt: string; 
+		webhookId: string; 
+		vehicleTokenIds: string[] 
+	}) {
+		if (input.vehicleTokenIds.length === 0) {
+			await this.subscribeAllVehicles({
+				developerJwt: input.developerJwt,
+				webhookId: input.webhookId,
+			});
+		} else {
+			await Promise.all(
+				input.vehicleTokenIds.map(async (tokenId) => {
+					const tokenDID = await this.getVehicleTokenDID({ tokenId: Number(tokenId) });
+					await this.subscribeVehicle({ 
+						developerJwt: input.developerJwt, 
+						tokenDID, 
+						webhookId: input.webhookId 
+					});
+				}),
+			);
+		}
 	}
 
 	async subscribeAllVehicles(input: { developerJwt: string; webhookId: string }) {
