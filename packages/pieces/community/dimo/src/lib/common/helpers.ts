@@ -329,6 +329,19 @@ export class DimoClient {
 		}
 	}
 
+	async unsubscribeVehicle(input: { developerJwt: string; webhookId: string; tokenDID: string }) {
+		const response = await httpClient.sendRequest({
+			method: HttpMethod.DELETE,
+			url: VEHICLE_EVENTS_API + `/v1/webhooks/${input.webhookId}/unsubscribe/${input.tokenDID}`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: input.developerJwt,
+			},
+		});
+
+		return response.body;
+	}
+
 	async subscribeAllVehicles(input: { developerJwt: string; webhookId: string }) {
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,

@@ -415,7 +415,18 @@ const subscribeVehicleAction = createAction({
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "subscribeVehicle" });
+    const { webhookId, tokenId } = ctx.propsValue;
+    const { clientId, apiKey, redirectUri } = ctx.auth;
+    const dimo = new DimoClient({ clientId, apiKey, redirectUri });
+
+    const developerJwt = await dimo.getDeveloperJwt();
+    const tokenDID = await dimo.getVehicleTokenDID({ tokenId });
+
+    return await dimo.subscribeVehicle({ 
+      developerJwt, 
+      webhookId, 
+      tokenDID 
+    });
   },
 });
 
@@ -454,7 +465,18 @@ const unsubscribeVehicleAction = createAction({
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "unsubscribeVehicle" });
+    const { webhookId, tokenId } = ctx.propsValue;
+    const { clientId, apiKey, redirectUri } = ctx.auth;
+    const dimo = new DimoClient({ clientId, apiKey, redirectUri });
+
+    const developerJwt = await dimo.getDeveloperJwt();
+    const tokenDID = await dimo.getVehicleTokenDID({ tokenId });
+
+    return await dimo.unsubscribeVehicle({ 
+      developerJwt, 
+      webhookId, 
+      tokenDID 
+    });
   },
 });
 
