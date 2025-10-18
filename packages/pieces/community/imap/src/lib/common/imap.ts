@@ -255,7 +255,7 @@ async function performMailboxOperation<T>(
     let lock: MailboxLockObject | null = null;
 
     try {
-      lock = await imapClient.getMailboxLock(mailbox, { readonly: readOnly });
+      lock = await imapClient.getMailboxLock(mailbox, { readOnly });
       return await callback(imapClient);
     } catch (error) {
       detectMissingMailbox(error);
