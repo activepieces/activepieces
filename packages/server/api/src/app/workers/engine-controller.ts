@@ -69,9 +69,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             logsFileId,
         })
 
-        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
-            runId,
-        })
 
         if (testSingleStepMode) {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
@@ -86,7 +83,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/update-flow-response', UpdateFlowResponseParams, async (request) => {
         const { workerHandlerId, httpRequestId, runResponse } = request.body
-
         await engineResponseWatcher(request.log).publish(
             httpRequestId,
             workerHandlerId,
