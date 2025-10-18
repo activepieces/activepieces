@@ -3,11 +3,11 @@ import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, Submit
 import { Agent, AgentRun, CreateTriggerRunRequestBody, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
+import fetchRetry from 'fetch-retry'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
-import fetchRetry from 'fetch-retry'
 const fetchWithRetry = fetchRetry(global.fetch)
 
 const tracer = trace.getTracer('worker-api-service')
@@ -31,7 +31,7 @@ export const flowRunLogs = {
             return null
         }
         return response.json() as unknown as ExecutioOutputFile
-    }
+    },
 }
 
 export const workerApiService = (workerToken: string) => {

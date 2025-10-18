@@ -84,16 +84,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-            {
-                connection: await workerRedisConnections.create(),
-                telemetry: isOtpEnabled
-                    ? new BullMQOtel(QueueName.WORKER_JOBS)
-                    : undefined,
-                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-                autorun: true,
-                stalledInterval: 30000,
-                maxStalledCount: 5,
-            },
+        {
+            connection: await workerRedisConnections.create(),
+            telemetry: isOtpEnabled
+                ? new BullMQOtel(QueueName.WORKER_JOBS)
+                : undefined,
+            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+            autorun: true,
+            stalledInterval: 30000,
+            maxStalledCount: 5,
+        },
         )
         await worker.waitUntilReady()
         log.info({
