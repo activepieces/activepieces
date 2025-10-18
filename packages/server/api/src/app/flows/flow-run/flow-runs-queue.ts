@@ -1,6 +1,5 @@
-import { request } from 'node:http'
 import { apAxios, apDayjsDuration, AppSystemProp } from '@activepieces/server-shared'
-import { ApId, assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
+import { ApId, assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, ProjectId, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -11,7 +10,7 @@ import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { distributedStore } from '../../helper/key-value'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { flowRunRepo, flowRunService } from './flow-run-service'
+import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
 let runsMetadataQueueInstance: Queue<RunsMetadataJobData> | undefined = undefined
@@ -68,47 +67,53 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
-                            await flowRunRepo().upsert({
-                                id: job.data.runId,
-                                ...spreadIfDefined('projectId', runMetadata.projectId),
-                                ...spreadIfDefined('flowId', runMetadata.flowId),
-                                ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
-                                ...spreadIfDefined('environment', runMetadata.environment),
-                                ...spreadIfDefined('startTime', runMetadata.startTime),
-                                ...spreadIfDefined('finishTime', runMetadata.finishTime),
-                                ...spreadIfDefined('status', runMetadata.status),
-                                ...spreadIfDefined('tags', runMetadata.tags),
-                                ...spreadIfDefined('duration', runMetadata.duration),
-                                ...spreadIfDefined('tasks', runMetadata.tasks),
-                                ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
-                                ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
-                                ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
-                                ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
-                                ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
-                                ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
-                                ...spreadIfDefined('created', runMetadata.created),
-                                ...spreadIfDefined('updated', runMetadata.updated),
-                            }, ['id'])
-                            //
+                            const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
+                            let savedFlowRun: FlowRun
+                            if (runExists) {
+                                await flowRunRepo().update(job.data.runId, {
+                                    ...spreadIfDefined('projectId', runMetadata.projectId),
+                                    ...spreadIfDefined('flowId', runMetadata.flowId),
+                                    ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
+                                    ...spreadIfDefined('environment', runMetadata.environment),
+                                    ...spreadIfDefined('startTime', runMetadata.startTime),
+                                    ...spreadIfDefined('finishTime', runMetadata.finishTime),
+                                    ...spreadIfDefined('status', runMetadata.status),
+                                    ...spreadIfDefined('tags', runMetadata.tags),
+                                    ...spreadIfDefined('duration', runMetadata.duration),
+                                    ...spreadIfDefined('tasks', runMetadata.tasks),
+                                    ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
+                                    ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
+                                    ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
+                                    ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
+                                    ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
+                                    ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
+                                    ...spreadIfDefined('created', runMetadata.created),
+                                    ...spreadIfDefined('updated', runMetadata.updated),
+                                })
+                                savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
+                            }
+                            else {
+                                savedFlowRun = await flowRunRepo().save(runMetadata)
+                            }
 
-                            const flowRun = await flowRunService(log).getOneOrThrow({ id: job.data.runId, projectId: runMetadata.projectId })
-                            const shouldMarkParentAsFailed = flowRun.failParentOnFailure && !isNil(flowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(flowRun.status)
+
+                            const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
-                                const platformId = await projectService.getPlatformId(flowRun.projectId)
+                                const platformId = await projectService.getPlatformId(savedFlowRun.projectId)
                                 await markParentRunAsFailed({
-                                    parentRunId: flowRun.parentRunId!,
-                                    childRunId: flowRun.id,
-                                    projectId: flowRun.projectId,
+                                    parentRunId: savedFlowRun.parentRunId!,
+                                    childRunId: savedFlowRun.id,
+                                    projectId: savedFlowRun.projectId,
                                     platformId,
                                 })
                             }
 
                             if (!isNil(runMetadata.finishTime)) {
-                                await flowRunSideEffects(log).onFinish(flowRun)
+                                await flowRunSideEffects(log).onFinish(savedFlowRun)
                             }
 
-                            websocketService.to(flowRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
-                                runId: flowRun.id,
+                            websocketService.to(savedFlowRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
+                                runId: savedFlowRun.id,
                             })
                         }
                         catch (error) {
@@ -137,7 +142,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
         await runsMetadataQueueInstance.add(
             'update-run-metadata',
-            { runId: params.id },
+            { runId: params.id, projectId: params.projectId },
             { deduplication: { id: params.id } },
         )
     },
@@ -184,10 +189,12 @@ type MarkParentRunAsFailedParams = {
 
 export const RunsMetadataJobData = Type.Object({
     runId: Type.String(),
+    projectId: Type.String(),
 })
 
 export type RunsMetadataJobData = Static<typeof RunsMetadataJobData>
 
 export type RunsMetadataUpsertData = Partial<FlowRun> & {
     id: ApId
+    projectId: ProjectId
 }

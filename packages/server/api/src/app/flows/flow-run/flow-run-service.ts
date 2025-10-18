@@ -31,7 +31,7 @@ import {
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { In, Not, Repository } from 'typeorm'
+import { In, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -270,7 +270,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             try {
                 span.setAttribute('flowRun.flowId', flowId)
 
-                const newFlowRun = await create({
+                const newFlowRun = await queueOrCreateInstantly({
                     projectId,
                     flowVersionId,
                     parentRunId,
@@ -311,7 +311,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             stepName: flowVersion.trigger.name,
             type: SampleDataFileType.OUTPUT,
         })
-        const flowRun = await create({
+        const flowRun = await queueOrCreateInstantly({
             projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
@@ -525,15 +525,15 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     return params.flowRun
 }
 
-function queryBuilderForFlowRun(repo: Repository<FlowRun>) {
+function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
     return repo.createQueryBuilder('flow_run')
         .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
         .addSelect(['"flowVersion"."displayName"'])
 }
 
-async function create(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
+async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
     const now = new Date().toISOString()
-    const flowRun = {
+    const flowRun: FlowRun = {
         id: apId(),
         projectId: params.projectId,
         flowId: params.flowId,
@@ -548,10 +548,13 @@ async function create(params: CreateParams, log: FastifyBaseLogger): Promise<Flo
         updated: now,
         steps: {},
     }
-
-    await runsMetadataQueue(log).add(flowRun)
-    
-    return flowRun
+    switch (params.environment) {
+        case RunEnvironment.TESTING:
+            return flowRunRepo().save(flowRun)
+        case RunEnvironment.PRODUCTION:
+            await runsMetadataQueue(log).add(flowRun)
+            return flowRun
+    }
 }
 
 
@@ -561,7 +564,7 @@ type UpdateRunParams = {
     status: FlowRunStatus
     tasks: number | undefined
     duration: number | undefined
-    pauseMetadata?: PauseMetadata 
+    pauseMetadata?: PauseMetadata
     tags: string[]
     failedStepName?: string | undefined
     logsFileId: string | undefined

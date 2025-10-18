@@ -14,11 +14,11 @@ import { DelayedError, Job, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { workerApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
 import { workerRedisConnections } from '../utils/worker-redis'
 import { jobConsmer } from './job-consmer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
-import { workerApiService } from '../api/server-api.service'
 
 let worker: Worker<JobData>
 
@@ -77,16 +77,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-            {
-                connection: await workerRedisConnections.create(),
-                telemetry: isOtpEnabled
-                    ? new BullMQOtel(QueueName.WORKER_JOBS)
-                    : undefined,
-                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-                autorun: true,
-                stalledInterval: 30000,
-                maxStalledCount: 5,
-            },
+        {
+            connection: await workerRedisConnections.create(),
+            telemetry: isOtpEnabled
+                ? new BullMQOtel(QueueName.WORKER_JOBS)
+                : undefined,
+            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+            autorun: true,
+            stalledInterval: 30000,
+            maxStalledCount: 5,
+        },
         )
         await worker.waitUntilReady()
         log.info({
@@ -108,7 +108,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
 async function migrateJob(workerToken: string, job: Job<JobData>): Promise<{
     shouldSkip: boolean
 }> {
-    const deprecatedJobs = ['DELAYED_FLOW'];
+    const deprecatedJobs = ['DELAYED_FLOW']
     if (deprecatedJobs.includes(job.data.jobType)) {
         return {
             shouldSkip: true,
