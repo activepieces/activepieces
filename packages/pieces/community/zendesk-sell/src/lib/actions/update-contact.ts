@@ -49,11 +49,6 @@ export const updateContactAction = createAction({
       description: 'Description or notes',
       required: false,
     }),
-    organizationName: Property.ShortText({
-      displayName: 'Organization Name',
-      description: 'Company/organization name',
-      required: false,
-    }),
     ownerId: Property.Number({
       displayName: 'Owner ID',
       description: 'ID of the user who owns this contact',
@@ -82,7 +77,6 @@ export const updateContactAction = createAction({
     if (context.propsValue.mobile) contactData.data.mobile = context.propsValue.mobile;
     if (context.propsValue.title) contactData.data.title = context.propsValue.title;
     if (context.propsValue.description) contactData.data.description = context.propsValue.description;
-    if (context.propsValue.organizationName) contactData.data.organization_name = context.propsValue.organizationName;
     if (context.propsValue.ownerId) contactData.data.owner_id = context.propsValue.ownerId;
     if (context.propsValue.tags) contactData.data.tags = context.propsValue.tags;
     if (context.propsValue.customFields) contactData.data.custom_fields = context.propsValue.customFields;

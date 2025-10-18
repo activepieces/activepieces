@@ -14,6 +14,11 @@ export const createDealAction = createAction({
       description: 'Name of the deal',
       required: true,
     }),
+    contactId: Property.Number({
+      displayName: 'Contact ID',
+      description: 'Associated contact ID',
+      required: true,
+    }),
     value: Property.Number({
       displayName: 'Deal Value',
       description: 'Monetary value of the deal',
@@ -34,16 +39,6 @@ export const createDealAction = createAction({
     stageId: Property.Number({
       displayName: 'Stage ID',
       description: 'Pipeline stage ID',
-      required: true,
-    }),
-    contactId: Property.Number({
-      displayName: 'Contact ID',
-      description: 'Associated contact ID',
-      required: false,
-    }),
-    organizationId: Property.Number({
-      displayName: 'Organization ID',
-      description: 'Associated organization ID',
       required: false,
     }),
     ownerId: Property.Number({
@@ -84,7 +79,6 @@ export const createDealAction = createAction({
     if (context.propsValue.currency) dealData.data.currency = context.propsValue.currency;
     if (context.propsValue.hot !== undefined) dealData.data.hot = context.propsValue.hot;
     if (context.propsValue.contactId) dealData.data.contact_id = context.propsValue.contactId;
-    if (context.propsValue.organizationId) dealData.data.organization_id = context.propsValue.organizationId;
     if (context.propsValue.ownerId) dealData.data.owner_id = context.propsValue.ownerId;
     if (context.propsValue.estimatedCloseDate) dealData.data.estimated_close_date = context.propsValue.estimatedCloseDate;
     if (context.propsValue.customizedWinLikelihood !== undefined) dealData.data.customized_win_likelihood = context.propsValue.customizedWinLikelihood;

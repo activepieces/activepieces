@@ -9,15 +9,20 @@ export const createLeadAction = createAction({
   displayName: 'Create Lead',
   description: 'Create a lead record',
   props: {
-    firstName: Property.ShortText({
-      displayName: 'First Name',
-      description: 'First name of the lead',
-      required: false,
-    }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
       description: 'Last name of the lead',
       required: true,
+    }),
+    organizationName: Property.ShortText({
+      displayName: 'Organization Name',
+      description: 'Company/organization name',
+      required: false,
+    }),
+    firstName: Property.ShortText({
+      displayName: 'First Name',
+      description: 'First name of the lead',
+      required: false,
     }),
     email: Property.ShortText({
       displayName: 'Email',
@@ -42,11 +47,6 @@ export const createLeadAction = createAction({
     description: Property.LongText({
       displayName: 'Description',
       description: 'Description or notes',
-      required: false,
-    }),
-    organizationName: Property.ShortText({
-      displayName: 'Organization Name',
-      description: 'Company/organization name',
       required: false,
     }),
     status: Property.ShortText({

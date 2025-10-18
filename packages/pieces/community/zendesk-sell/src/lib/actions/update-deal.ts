@@ -9,11 +9,6 @@ export const updateDealAction = createAction({
   displayName: 'Update Deal',
   description: 'Update deal fields (amount, stage, close date)',
   props: {
-    dealId: Property.Number({
-      displayName: 'Deal ID',
-      description: 'ID of the deal to update',
-      required: true,
-    }),
     name: Property.ShortText({
       displayName: 'Deal Name',
       description: 'Name of the deal',
@@ -42,11 +37,6 @@ export const updateDealAction = createAction({
     contactId: Property.Number({
       displayName: 'Contact ID',
       description: 'Associated contact ID',
-      required: false,
-    }),
-    organizationId: Property.Number({
-      displayName: 'Organization ID',
-      description: 'Associated organization ID',
       required: false,
     }),
     ownerId: Property.Number({
@@ -86,7 +76,6 @@ export const updateDealAction = createAction({
     if (context.propsValue.hot !== undefined) dealData.data.hot = context.propsValue.hot;
     if (context.propsValue.stageId) dealData.data.stage_id = context.propsValue.stageId;
     if (context.propsValue.contactId) dealData.data.contact_id = context.propsValue.contactId;
-    if (context.propsValue.organizationId) dealData.data.organization_id = context.propsValue.organizationId;
     if (context.propsValue.ownerId) dealData.data.owner_id = context.propsValue.ownerId;
     if (context.propsValue.estimatedCloseDate) dealData.data.estimated_close_date = context.propsValue.estimatedCloseDate;
     if (context.propsValue.customizedWinLikelihood !== undefined) dealData.data.customized_win_likelihood = context.propsValue.customizedWinLikelihood;
@@ -96,7 +85,7 @@ export const updateDealAction = createAction({
     const response = await makeZendeskSellRequest<{ data: Deal }>(
       context.auth,
       HttpMethod.PUT,
-      `/deals/${context.propsValue.dealId}`,
+      `/deals/${context.propsValue.stageId}`,
       dealData
     );
 
