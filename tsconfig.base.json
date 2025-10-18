@@ -1120,7 +1120,7 @@
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
-      "@activepieces/piece-vadoo-ai":[
+      "@activepieces/piece-vadoo-ai": [
         "packages/pieces/community/vadoo-ai/src/index.ts"
       ],
       "@activepieces/piece-vbout": [
@@ -1192,6 +1192,9 @@
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
+      ],
+      "@activepieces/piece-zendesk-sell": [
+        "packages/pieces/community/zendesk-sell/src/index.ts"
       ],
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
