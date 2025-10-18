@@ -13,22 +13,12 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
             const { flowVersion, projectId, simulate } = params
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
-
-            const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
-                flowVersion,
-                projectId,
-                pieceName: flowVersion.trigger.settings.pieceName,
-                pieceTrigger,
-                simulate,
-            })
-
             await triggerSourceRepo().softDelete({
                 flowId: flowVersion.flowId,
                 projectId,
                 simulate,
             })
-
-            const triggerSource: Omit<TriggerSource, 'created' | 'updated'> = {
+            const triggerSourceWithouSchedule: Omit<TriggerSource, 'created' | 'updated' | 'schedule'> = {
                 id: apId(),
                 type: pieceTrigger.type,
                 projectId,
@@ -37,10 +27,20 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 flowVersionId: flowVersion.id,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                schedule: scheduleOptions,
                 simulate,
             }
-            return triggerSourceRepo().save(triggerSource)
+            const triggerSource = await triggerSourceRepo().save(triggerSourceWithouSchedule)
+            const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
+                flowVersion,
+                projectId,
+                pieceName: flowVersion.trigger.settings.pieceName,
+                pieceTrigger,
+                simulate,
+            })
+            return triggerSourceRepo().save({
+                ...triggerSource,
+                schedule: scheduleOptions,
+            })
         },
         async get(params: GetTriggerParams): Promise<TriggerSource | null> {
             const { projectId, id } = params
@@ -142,7 +142,7 @@ type GetByFlowIdParams = {
 type GetFlowIdParamsWithProjectId = {
     flowId: string
     projectId: string
-    simulate: boolean
+    simulate: boolean | undefined
 }
 
 type GetTriggerParams = {
