@@ -17,7 +17,7 @@ const tracer = trace.getTracer('job-consumer')
 
 export const jobConsmer = (log: FastifyBaseLogger) => ({
     async consumeJob(job: Job<JobData>, workerToken: string): Promise<ConsumeJobResponse> {
-        const { id: jobId, data: jobData, attemptsMade: attempsStarted } = job
+        const { id: jobId, data: jobData, attemptsStarted } = job
         assertNotNullOrUndefined(jobId, 'jobId')
         const timeoutInSeconds = getTimeoutForWorkerJob(jobData.jobType)
         const engineToken = await tokenUtls.generateEngineToken({ jobId, projectId: jobData.projectId!, platformId: jobData.platformId })
@@ -29,7 +29,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                 attributes: {
                     'worker.jobId': jobId,
                     'worker.jobType': jobData.jobType,
-                    'worker.attempsStarted': attempsStarted,
+                    'worker.attemptsStarted': attemptsStarted,
                     'worker.projectId': jobData.projectId ?? 'unknown',
                 },
             }, async (span) => {
@@ -46,7 +46,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                                 status: ConsumeJobResponseStatus.OK,
                             }
                         case WorkerJobType.EXECUTE_FLOW: {
-                            const response = await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
+                            const response = await flowJobExecutor(log).executeFlow({ jobData, attemptsStarted, engineToken, timeoutInSeconds })
                             span.setAttribute('worker.completed', true)
                             return response
                         }

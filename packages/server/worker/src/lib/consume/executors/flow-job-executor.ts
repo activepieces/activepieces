@@ -19,6 +19,8 @@ async function prepareInput(
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
     > {
     const previousExecutionFile = attempsStarted > 1 ? await flowRunLogs.get(jobData.logsUploadUrl) : null
+    const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
+
     switch (jobData.executionType) {
 
         case ExecutionType.BEGIN: {
@@ -31,7 +33,7 @@ async function prepareInput(
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
                 executionState: {
-                    steps: !isNil(previousExecutionFile) ? previousExecutionFile.executionState.steps : {},
+                    steps,
                 },
                 sampleData: jobData.sampleData,
                 tasks: previousExecutionFile?.tasks ?? 0,
@@ -55,7 +57,7 @@ async function prepareInput(
                 tasks: previousExecutionFile?.tasks ?? 0,
                 executionType: ExecutionType.RESUME,
                 executionState: {
-                    steps: previousExecutionFile?.executionState.steps ?? {},
+                    steps,
                 },
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
@@ -127,7 +129,7 @@ async function handleInternalError(
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({
     async executeFlow({
         jobData,
-        attempsStarted,
+        attemptsStarted,
         engineToken,
         timeoutInSeconds,
     }: ExecuteFlowOptions): Promise<ConsumeJobResponse> {
@@ -153,7 +155,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             const input = await prepareInput(
                 flowVersion,
                 jobData,
-                attempsStarted,
+                attemptsStarted,
                 timeoutInSeconds,
             )
             const { result, status } = await engineRunner(runLog).executeFlow(
@@ -218,7 +220,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
 
 type ExecuteFlowOptions = {
     jobData: ExecuteFlowJobData
-    attempsStarted: number
+    attemptsStarted: number
     engineToken: string
     timeoutInSeconds: number
 }
