@@ -83,7 +83,7 @@ COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/
 COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
 COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
 
-RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --force
+RUN cd /usr/src/app/dist/packages/server/api/ && npm install 
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
