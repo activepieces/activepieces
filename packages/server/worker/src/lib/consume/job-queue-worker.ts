@@ -47,7 +47,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
                 if (shouldRateLimit) {
                     await job.moveToDelayed(
-                        dayjs().add(20, 'seconds').valueOf(),
+                        dayjs().add(Math.min(240, 20 * (job.attemptsStarted + 1)), 'seconds').valueOf(),
                         token,
                     )
                     await job.changePriority({
@@ -84,16 +84,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-        {
-            connection: await workerRedisConnections.create(),
-            telemetry: isOtpEnabled
-                ? new BullMQOtel(QueueName.WORKER_JOBS)
-                : undefined,
-            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-            autorun: true,
-            stalledInterval: 30000,
-            maxStalledCount: 5,
-        },
+            {
+                connection: await workerRedisConnections.create(),
+                telemetry: isOtpEnabled
+                    ? new BullMQOtel(QueueName.WORKER_JOBS)
+                    : undefined,
+                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+                autorun: true,
+                stalledInterval: 30000,
+                maxStalledCount: 5,
+            },
         )
         await worker.waitUntilReady()
         log.info({
