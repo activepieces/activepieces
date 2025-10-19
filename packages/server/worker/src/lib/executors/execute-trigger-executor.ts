@@ -31,6 +31,7 @@ export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
         }
         await workerApiService(workerToken).startRuns({
             flowVersionId: data.flowVersionId,
+            platformId: data.platformId,
             progressUpdateType: ProgressUpdateType.NONE,
             projectId: data.projectId,
             payloads,
