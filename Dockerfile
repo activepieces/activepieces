@@ -1,4 +1,4 @@
-FROM node:18.20.5-bullseye-slim AS base
+FROM node:20.19-bullseye-slim AS base
 
 # Use a cache mount for apt to speed up the process
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
