@@ -33,44 +33,49 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
             count: pausedRuns.length,
         }, '[refillPausedRuns] Found paused runs to migrate')
         let migratedPausedRuns = 0
-        for (const pausedRun of pausedRuns) {
-            if (pausedRun.pauseMetadata?.type != PauseType.DELAY) {
-                continue
-            }
-            const created = dayjs(pausedRun.created)
-            if (created.isBefore(dayjs().subtract(excutionRententionDays, 'day'))) {
-                continue
-            }
-            const logsFileId = pausedRun.logsFileId ?? apId()
-            const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
-                flowRunId: pausedRun.id,
-                logsFileId,
-                behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-                projectId: pausedRun.projectId,
-            })
-            await jobQueue(log).add({
-                id: pausedRun.id,
-                type: JobType.ONE_TIME,
-                data: {
-                    projectId: pausedRun.projectId,
-                    platformId: await projectService.getPlatformId(pausedRun.projectId),
-                    environment: pausedRun.environment,
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    flowId: pausedRun.flowId,
-                    flowVersionId: pausedRun.flowVersionId,
-                    runId: pausedRun.id,
-                    httpRequestId: pausedRun.pauseMetadata?.requestIdToReply ?? undefined,
-                    synchronousHandlerId: pausedRun.pauseMetadata.handlerId ?? null,
-                    progressUpdateType: pausedRun.pauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
-                    jobType: WorkerJobType.EXECUTE_FLOW,
-                    executionType: ExecutionType.RESUME,
-                    payload: {},
-                    logsUploadUrl,
+
+        const batchSize = 1000
+        for (let i = 0; i < pausedRuns.length; i += batchSize) {
+            const batch = pausedRuns.slice(i, i + batchSize)
+            await Promise.all(batch.map(async (pausedRun) => {
+                if (pausedRun.pauseMetadata?.type != PauseType.DELAY) {
+                    return
+                }
+                const created = dayjs(pausedRun.created)
+                if (created.isBefore(dayjs().subtract(excutionRententionDays, 'day'))) {
+                    return
+                }
+                const logsFileId = pausedRun.logsFileId ?? apId()
+                const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
+                    flowRunId: pausedRun.id,
                     logsFileId,
-                },
-                delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
-            })
-            migratedPausedRuns++
+                    behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+                    projectId: pausedRun.projectId,
+                })
+                await jobQueue(log).add({
+                    id: pausedRun.id,
+                    type: JobType.ONE_TIME,
+                    data: {
+                        projectId: pausedRun.projectId,
+                        platformId: await projectService.getPlatformId(pausedRun.projectId),
+                        environment: pausedRun.environment,
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                        flowId: pausedRun.flowId,
+                        flowVersionId: pausedRun.flowVersionId,
+                        runId: pausedRun.id,
+                        httpRequestId: pausedRun.pauseMetadata?.requestIdToReply ?? undefined,
+                        synchronousHandlerId: pausedRun.pauseMetadata.handlerId ?? null,
+                        progressUpdateType: pausedRun.pauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
+                        jobType: WorkerJobType.EXECUTE_FLOW,
+                        executionType: ExecutionType.RESUME,
+                        payload: {},
+                        logsUploadUrl,
+                        logsFileId,
+                    },
+                    delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
+                })
+                migratedPausedRuns++
+            }))
             if (migratedPausedRuns % 100 === 0) {
                 log.info({
                     migratedPausedRuns,
