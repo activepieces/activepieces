@@ -9,6 +9,7 @@ import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
+import { MoreThan } from 'typeorm'
 
 const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v2'
 const excutionRententionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
@@ -24,6 +25,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
         const pausedRuns = await flowRunRepo().find({
             where: {
                 status: FlowRunStatus.PAUSED,
+                created: MoreThan(dayjs().subtract(excutionRententionDays, 'day').toISOString()),
             },
         })
         let migratedPausedRuns = 0
