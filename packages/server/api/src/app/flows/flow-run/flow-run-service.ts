@@ -13,6 +13,7 @@ import {
     FlowRunId,
     FlowRunStatus,
     FlowVersionId,
+    isFlowRunStateTerminal,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
@@ -235,6 +236,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('tasks', tasks),
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
             ...spreadIfDefined('pauseMetadata', pauseMetadata),
+            finishTime: isFlowRunStateTerminal({
+                status,
+                ignoreInternalError: true,
+            }) ? new Date().toISOString() : undefined,
         })
     },
 
