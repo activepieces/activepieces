@@ -28,6 +28,9 @@ let worker: Worker<JobData>
 export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     async start(workerToken: string): Promise<void> {
         if (!isNil(worker)) {
+            log.info({
+                message: 'Resuming job queue worker',
+            })
             worker.resume()
             return
         }
@@ -101,6 +104,9 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         })
     },
     async pause(): Promise<void> {
+        log.info({
+            message: 'Pausing job queue worker',
+        })
         return worker.pause()
     },
     async close(): Promise<void> {
