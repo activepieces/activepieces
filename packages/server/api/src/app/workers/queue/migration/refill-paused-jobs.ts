@@ -22,12 +22,16 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
             log.info('[refillPausedRuns] Already migrated, skipping')
             return
         }
+        log.info('[refillPausedRuns] Finding paused runs to migrate')
         const pausedRuns = await flowRunRepo().find({
             where: {
                 status: FlowRunStatus.PAUSED,
                 created: MoreThan(dayjs().subtract(excutionRententionDays, 'day').toISOString()),
             },
         })
+        log.info({
+            count: pausedRuns.length,
+        }, '[refillPausedRuns] Found paused runs to migrate')
         let migratedPausedRuns = 0
         for (const pausedRun of pausedRuns) {
             if (pausedRun.pauseMetadata?.type != PauseType.DELAY) {
