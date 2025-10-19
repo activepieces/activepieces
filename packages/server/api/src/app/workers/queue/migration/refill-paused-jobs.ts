@@ -1,15 +1,17 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { apId, ExecutionType, FlowRunStatus, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, ProgressUpdateType, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../../database/redis-connections'
 import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
 import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
+import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
-
 const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v2'
+const excutionRententionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const refillPausedRuns = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
@@ -24,8 +26,13 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 status: FlowRunStatus.PAUSED,
             },
         })
+        let migratedPausedRuns = 0
         for (const pausedRun of pausedRuns) {
             if (pausedRun.pauseMetadata?.type != PauseType.DELAY) {
+                continue
+            }
+            const created = dayjs(pausedRun.created)
+            if (created.isBefore(dayjs().subtract(excutionRententionDays, 'day'))) {
                 continue
             }
             const logsFileId = pausedRun.logsFileId ?? apId()
@@ -57,9 +64,10 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 },
                 delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
             })
+            migratedPausedRuns++
         }
         log.info({
-            count: pausedRuns.length,
+            count: migratedPausedRuns,
         }, '[pausedRunsMigration] Migrated paused runs')
         await redisConnection.set(REFILL_PAUSED_RUNS_KEY, 'true')
     },
