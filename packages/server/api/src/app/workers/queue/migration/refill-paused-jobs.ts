@@ -71,6 +71,11 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 delay: calculateDelayForPausedRun(pausedRun.pauseMetadata.resumeDateTime),
             })
             migratedPausedRuns++
+            if (migratedPausedRuns % 100 === 0) {
+                log.info({
+                    migratedPausedRuns,
+                }, '[refillPausedRuns] Migrated paused runs')
+            }
         }
         log.info({
             count: migratedPausedRuns,
