@@ -17,8 +17,8 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-    > {
-    const previousExecutionFile = attempsStarted > 1 ? await flowRunLogs.get(jobData.logsUploadUrl) : null
+> {
+    const previousExecutionFile = (jobData.executionType === ExecutionType.RESUME || attempsStarted > 1) ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
 
     switch (jobData.executionType) {
