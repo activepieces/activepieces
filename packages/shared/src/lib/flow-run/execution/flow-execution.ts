@@ -97,7 +97,7 @@ export const FlowRunResponse = Type.Union([
 export type FlowRunResponse = Static<typeof FlowRunResponse>
 
 
-export const isFlowRunStateTerminal = ({ status, ignoreInternalError, isPausedTerminal = true }: { status: FlowRunStatus, ignoreInternalError: boolean, isPausedTerminal?: boolean }): boolean => {
+export const isFlowRunStateTerminal = ({ status, ignoreInternalError, isPausedTerminal = false }: { status: FlowRunStatus, ignoreInternalError: boolean, isPausedTerminal?: boolean }): boolean => {
     switch (status) {
         case FlowRunStatus.SUCCEEDED:
         case FlowRunStatus.TIMEOUT:
