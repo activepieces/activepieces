@@ -96,7 +96,7 @@ async function runCommandWithLiveOutput(cmd: string): Promise<void> {
     })
 }
 
-export async function piecesBuilder(app: FastifyInstance, io: Server, packages: string[], piecesSource: PiecesSource): Promise<void> {
+export async function pieceBuilder(app: FastifyInstance, io: Server, packages: string[], piecesSource: PiecesSource): Promise<void> {
 
     const isFilePieces = piecesSource === PiecesSource.FILE
     // Only run this script if the pieces source is file

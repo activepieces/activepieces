@@ -52,11 +52,11 @@ COPY . .
 # Set NX_NO_CLOUD environment variable
 ENV NX_NO_CLOUD=true
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui
+RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
 
 # Install backend production dependencies
-RUN cd dist/packages/server/api && npm install
+RUN cd dist/packages/server/api && npm install --production --force
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -83,7 +83,7 @@ COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/
 COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
 COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
 
-RUN cd /usr/src/app/dist/packages/server/api/ && npm install 
+RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --force
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
