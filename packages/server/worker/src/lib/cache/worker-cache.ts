@@ -49,6 +49,7 @@ export const workerCache = (log: FastifyBaseLogger) => ({
                     id: nanoid(),
                     createdAt: new Date().toISOString(),
                 }
+                await fileSystemUtils.threadSafeMkdir(cacheFile)
                 await writeFile(cacheFile, JSON.stringify(cacheInfo))
             }
             const cache = await readFile(cacheFile, 'utf8')
