@@ -11,7 +11,7 @@ import { projectService } from '../../../project/project-service'
 import { jobQueue, workerJobsQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
-const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v4'
+const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v5'
 const excutionRententionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const refillPausedRuns = (log: FastifyBaseLogger) => ({
@@ -23,7 +23,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
             return
         }
 
-       
+
         log.info('[refillPausedRuns] Finding paused runs to migrate')
         const pausedRuns = await flowRunRepo().find({
             where: {
@@ -54,8 +54,15 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
                     projectId: pausedRun.projectId,
                 })
-                const job = await workerJobsQueue?.getJob(pausedRun.id)
-                await job?.remove()
+                try {
+                    const job = await workerJobsQueue?.getJob(pausedRun.id)
+                    await job?.remove()
+                } catch (e) {
+                    log.error({
+                        error: e,
+                        pausedRunId: pausedRun.id,
+                    }, '[refillPausedRuns] Error removing job')
+                }
                 await jobQueue(log).add({
                     id: pausedRun.id,
                     type: JobType.ONE_TIME,
