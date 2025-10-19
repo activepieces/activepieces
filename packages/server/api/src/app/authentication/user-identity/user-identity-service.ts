@@ -2,10 +2,13 @@ import { ActivepiecesError, apId, ErrorCode, isNil, UserIdentity } from '@active
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { repoFactory } from '../../core/db/repo-factory'
+import { UserEntity } from '../../user/user-entity'
 import { passwordHasher } from '../lib/password-hasher'
 import { UserIdentityEntity } from './user-identity-entity'
 
 export const userIdentityRepository = repoFactory(UserIdentityEntity)
+export const userRepo = repoFactory(UserEntity)
+
 
 export const userIdentityService = (log: FastifyBaseLogger) => ({
     async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'>): Promise<UserIdentity> {
@@ -15,8 +18,19 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
 
         const cleanedEmail = params.email.toLowerCase().trim()
         const hashedPassword = await passwordHasher.hash(params.password)
-        const userByEmail = await userIdentityRepository().findOne({ where: { email: cleanedEmail } })
-        if (userByEmail) {
+        const userIdentityByEmail = await userIdentityRepository().findOne({ where: { email: cleanedEmail } })
+        let userByEmail = null
+        if (userIdentityByEmail) {
+            userByEmail = await userRepo().findOne({ where: { identityId: userIdentityByEmail.id } })
+        }
+
+        // If an identity exists but there's no corresponding user record (user was deleted),
+        // return the existing identity so the caller can create a new user row.
+        if (userIdentityByEmail && userByEmail == null) {
+            return userIdentityByEmail
+        }
+        // If both identity and user exist, treat as an existing user.
+        if (userIdentityByEmail && userByEmail != null) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
@@ -93,6 +107,12 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             tokenVersion: nanoid(),
         })
     },
+    async updateVerifiedStatus(params: UpdateStatusParams): Promise<void> {        
+        await userIdentityRepository().update(params?.platformId, {
+            verified: params.verified,
+            updated: new Date().toISOString(), 
+        })
+    },
     async verify(id: string): Promise<UserIdentity> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         if (user.verified) {
@@ -128,4 +148,10 @@ type UpdatePasswordParams = {
 type VerifyIdentityPasswordParams = {
     email: string
     password: string
+}
+
+type UpdateStatusParams = {
+    verified: boolean
+    platformId: string
+
 }

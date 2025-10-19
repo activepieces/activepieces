@@ -37,19 +37,37 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
             platformId: params.platformId,
         })
-        const userIdentity = await userIdentityService(log).create({
-            ...params,
-            verified: true,
-        })
-        const user = await userService.create({
+        // Check if user identity already exists
+        const existingIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
+        let userIdentity: UserIdentity
+
+        if (existingIdentity) {
+            // Use existing identity
+            userIdentity = existingIdentity
+        }
+        else {
+            // Create new identity
+            userIdentity = await userIdentityService(log).create({
+                ...params,
+                verified: true,
+            })
+        }
+
+        // Create or get user for this platform
+        let user = await userService.getOneByIdentityAndPlatform({
             identityId: userIdentity.id,
-            platformRole: PlatformRole.MEMBER,
             platformId: params.platformId,
         })
+        if (!user) {
+            user = await userService.create({
+                identityId: userIdentity.id,
+                platformRole: PlatformRole.MEMBER,
+                platformId: params.platformId,
+            })
+        }
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
         })
-
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId: params.platformId,

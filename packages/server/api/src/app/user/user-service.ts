@@ -28,6 +28,7 @@ import { UserEntity, UserSchema } from './user-entity'
 
 export const userRepo = repoFactory(UserEntity)
 
+
 export const userService = {
     async create(params: CreateParams): Promise<User> {
         const user: NewUser = {
@@ -122,7 +123,6 @@ export const userService = {
             platformId,
         })
     },
-
     async getByPlatformRole(id: PlatformId, role: PlatformRole): Promise<UserSchema[]> {
         return userRepo().find({ where: { platformId: id, platformRole: role }, relations: { identity: true } })
     },
