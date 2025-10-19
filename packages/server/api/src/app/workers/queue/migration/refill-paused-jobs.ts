@@ -11,7 +11,7 @@ import { projectService } from '../../../project/project-service'
 import { jobQueue, workerJobsQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
-const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v3'
+const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v4'
 const excutionRententionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const refillPausedRuns = (log: FastifyBaseLogger) => ({
