@@ -263,9 +263,10 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
      
         }
         catch (error) {
-            log.error(`Failed to handle subscription scheduling ${error}`, { 
+            log.error({ 
+                error,
                 subscriptionId, 
-            })
+            }, 'Failed to handle subscription scheduling')
             return '/platform/setup/billing/error'
         }
     },
@@ -411,7 +412,7 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
         },
     })
 
-    logger.info('Updated subscription schedule for plan change', {
+    logger.info({
         scheduleId,
         subscriptionId: subscription.id,
         currentPlan: currentCycle === newCycle ? 'unchanged' : 'cycle-changed',
@@ -420,7 +421,7 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
         newCycle,
         effectiveDate: new Date(currentPeriodEnd * 1000).toISOString(),
         willCancel: isFreeDowngrade,
-    })
+    }, 'Updated subscription schedule for plan change')
 }
 
 async function createSubscriptionSchedule(params: CreateSubscriptionScheduleParams): Promise<Stripe.SubscriptionSchedule> {

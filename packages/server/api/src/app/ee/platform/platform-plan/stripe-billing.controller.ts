@@ -70,11 +70,11 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         }
 
                         const { plan: newPlan, cycle } = PlatformPlanHelper.getPlanFromSubscription(subscription)
-                        request.log.info('Processing subscription event', {
+                        request.log.info({
                             webhookType: webhook.type,
                             subscriptionStatus: subscription.status,
                             newPlan,
-                        })
+                        }, 'Processing subscription event')
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
                         const { stripeSubscriptionId } = await platformPlanService(request.log).updateByCustomerId({
@@ -124,10 +124,10 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
 
                         if (isNil(customer.email)) {
-                            request.log.warn('Customer email is missing, cannot send trial ending reminder.', {
+                            request.log.warn({
                                 customerId: customer.id,
                                 subscriptionId: subscription.id,
-                            })
+                            }, 'Customer email is missing, cannot send trial ending reminder.')
                             break
                         }
 

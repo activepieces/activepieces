@@ -124,12 +124,12 @@ export const emailService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        log.info('Sending OTP email', {
+        log.info({
             email: userIdentity.email,
             otp,
             identityId: userIdentity.id,
             type,
-        })
+        }, 'Sending OTP email')
 
         const frontendPath = {
             [OtpType.EMAIL_VERIFICATION]: 'verify-email',
