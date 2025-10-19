@@ -175,6 +175,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             }
             if (result.status === FlowRunStatus.PAUSED &&
                 result.pauseMetadata?.type === PauseType.DELAY
+                && isNil(jobData.stepNameToTest)
             ) {
                 const diffInSeconds = dayjs(result.pauseMetadata.resumeDateTime).diff(
                     dayjs(),

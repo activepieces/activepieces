@@ -68,8 +68,8 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-
-            const shouldBreakExecution = flowExecutionContext.verdict !== ExecutionVerdict.RUNNING || constants.testSingleStepMode
+            const testSingleStepMode = !isNil(constants.stepNameToTest)
+            const shouldBreakExecution = flowExecutionContext.verdict !== ExecutionVerdict.RUNNING || testSingleStepMode
 
             if (shouldBreakExecution) {
                 break

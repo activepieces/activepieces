@@ -54,7 +54,8 @@ const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<
 
 const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): Promise<FlowExecutorContext> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
-    if (constants.testSingleStepMode) {
+    const testSingleStepMode = !isNil(constants.stepNameToTest)
+    if (testSingleStepMode) {
         const testContext = await testExecutionContext.stateFromFlowVersion({
             apiUrl: input.internalApiUrl,
             flowVersion: input.flowVersion,

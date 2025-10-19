@@ -32,7 +32,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, testSingleStepMode, logsFileId } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, stepNameToTest, logsFileId } = request.body
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
@@ -55,9 +55,13 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
 
 
-        if (testSingleStepMode) {
+        if (!isNil(stepNameToTest)) {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
+                logsFileId: logsFileId ?? '',
+                projectId: request.principal.projectId,
+                status: runDetails.status,
                 runId,
+                stepNameToTest,
             })
             if (!isNil(response)) {
                 app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
