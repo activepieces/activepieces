@@ -4,7 +4,7 @@ import { resolve } from 'path'
 import { ApLock, filePiecesUtils, memoryLock, PiecesSource } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
-import chokidar from 'chokidar'
+import chokidar, { FSWatcher } from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
 import { cacheState } from '../../cache-state'
@@ -102,7 +102,7 @@ export async function piecesBuilder(app: FastifyInstance, io: Server, packages: 
     // Only run this script if the pieces source is file
     if (!isFilePieces) return
 
-    const watchers: chokidar.FSWatcher[] = []
+    const watchers: FSWatcher[] = []
 
     for (const packageName of packages) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
