@@ -55,7 +55,7 @@ export const webhookService = {
                     }
                 }
                 const { flow } = flowExecutionResult
-                if (flow.status === FlowStatus.DISABLED) {
+                if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
                     pinoLogger.info('trigger source not found, returning NOT FOUND')
                     span.setAttribute('webhook.triggerSourceFound', false)
                     return {
