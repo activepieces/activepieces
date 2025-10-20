@@ -5,6 +5,7 @@ import {
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
+    PlatformId,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
@@ -21,7 +22,7 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
         engineToken: string,
         params: ExecuteTrigger,
     ): Promise<ExtractPayloadsResult> => {
-        const { payload, flowVersion, simulate, jobId } = params
+        const { flowVersion, simulate } = params
         if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
@@ -34,11 +35,8 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
         const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
         rejectedPromiseHandler(engineApiService(engineToken).createTriggerRun({
             status,
-            payload,
             flowId: flowVersion.flowId,
             simulate,
-            jobId,
-            error: errorMessage,
         }), log)
 
         return {
@@ -49,7 +47,6 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
     },
 })
 
-
 type ExtractPayloadsResult = {
     payloads: unknown[]
     status: TriggerRunStatus
@@ -58,8 +55,8 @@ type ExtractPayloadsResult = {
 
 type ExecuteTrigger = {
     flowVersion: FlowVersion
-    jobId: string
     projectId: ProjectId
+    platformId: PlatformId
     simulate: boolean
     payload: TriggerPayload
     timeoutInSeconds: number
