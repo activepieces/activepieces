@@ -42,6 +42,10 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                     return
                 }
                 const jobId = job.id
+                log.info({
+                    message: '[jobQueueWorker] Consuming job',
+                    jobId,
+                })
                 assertNotNullOrUndefined(jobId, 'jobId')
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
                 if (shouldRateLimit) {
@@ -49,11 +53,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                         dayjs().add(Math.min(240, 20 * (job.attemptsStarted + 1)), 'seconds').valueOf(),
                         token,
                     )
+                    log.info({
+                        message: '[jobQueueWorker] Job is throttled and will be retried in 15 seconds',
+                        jobId,
+                        delayInSeconds: Math.min(240, 20 * (job.attemptsStarted + 1)),
+                    })
                     await job.changePriority({
                         priority: JOB_PRIORITY[RATE_LIMIT_PRIORITY],
                     })
                     throw new DelayedError(
-                        'Thie job is rate limited and will be retried in 15 seconds',
+                        'Thie job is rate limited and will be retried',
                     )
                 }
                 const response = await jobConsmer(log).consumeJob(job, workerToken)
@@ -83,16 +92,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-        {
-            connection: await workerRedisConnections.create(),
-            telemetry: isOtpEnabled
-                ? new BullMQOtel(QueueName.WORKER_JOBS)
-                : undefined,
-            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-            autorun: true,
-            stalledInterval: 30000,
-            maxStalledCount: 5,
-        },
+            {
+                connection: await workerRedisConnections.create(),
+                telemetry: isOtpEnabled
+                    ? new BullMQOtel(QueueName.WORKER_JOBS)
+                    : undefined,
+                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+                autorun: true,
+                stalledInterval: 30000,
+                maxStalledCount: 5,
+            },
         )
         await worker.waitUntilReady()
         log.info({
