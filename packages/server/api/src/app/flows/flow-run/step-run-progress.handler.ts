@@ -25,7 +25,6 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
 
             const isTerminalOutput = isFlowRunStateTerminal({
                 status: params.status,
-                isPausedTerminal: true,
                 ignoreInternalError: false,
             })
             if (isNil(stepOutput) || !isTerminalOutput) {
