@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemoveTriggerRunEntity1760993216501 implements MigrationInterface {
     name = 'RemoveTriggerRunEntity1760993216501'
@@ -6,8 +6,10 @@ export class RemoveTriggerRunEntity1760993216501 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             TRUNCATE TABLE "trigger_run";
-        `);
+        `)
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {}
+    public async down(_queryRunner: QueryRunner): Promise<void> {
+        /* noop */
+    }
 }

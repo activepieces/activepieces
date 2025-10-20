@@ -1,6 +1,6 @@
+import { triggerRunStats } from '@activepieces/server-shared'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { triggerRunStats } from '@activepieces/server-shared'
 import { redisConnections } from '../../database/redis-connections'
 
 export const triggerRunController: FastifyPluginAsyncTypebox = async (app) => {

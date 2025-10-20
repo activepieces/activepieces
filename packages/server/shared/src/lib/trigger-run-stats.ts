@@ -3,7 +3,7 @@ import { PlatformId, ProjectId, TriggerRunStatus, TriggerStatusReport } from '@a
 import { FastifyBaseLogger } from 'fastify'
 import Redis from 'ioredis'
 
-export const triggerRunStats = (log: FastifyBaseLogger, redisConnection: Redis) => ({
+export const triggerRunStats = (_log: FastifyBaseLogger, redisConnection: Redis) => ({
     async save({ platformId, pieceName, status }: SaveParams): Promise<void> {
         const day = apDayjs().format('YYYY-MM-DD')
         const statusToStore = status === TriggerRunStatus.COMPLETED ? status : TriggerRunStatus.FAILED
@@ -47,27 +47,17 @@ const parseRedisRecords = (redisKeys: string[], values: (string | null)[]): Pars
 }
 
 const aggregateRecords = (records: ParsedRedisRecord[]): TriggerStatusReport => {
-    // Group by piece name first
-    const pieceGroups = new Map<
-        string, // piece name
-        Map<
-            string, // day
-            { success: number; failure: number } 
-        >
-    >()
-    
+    const pieceNameToDayToStats = new Map<string, Map<string, { success: number; failure: number }>>()
+
     for (const record of records) {
-        if (!pieceGroups.has(record.pieceName)) {
-            pieceGroups.set(record.pieceName, new Map())
+        if (!pieceNameToDayToStats.has(record.pieceName)) {
+            pieceNameToDayToStats.set(record.pieceName, new Map())
         }
-        
-        const dayMap = pieceGroups.get(record.pieceName)!
+        const dayMap = pieceNameToDayToStats.get(record.pieceName)!
         const dayKey = record.day
-        
         if (!dayMap.has(dayKey)) {
             dayMap.set(dayKey, { success: 0, failure: 0 })
         }
-        
         const dayStats = dayMap.get(dayKey)!
         if (record.status === TriggerRunStatus.COMPLETED) {
             dayStats.success += record.count
@@ -75,24 +65,20 @@ const aggregateRecords = (records: ParsedRedisRecord[]): TriggerStatusReport => 
             dayStats.failure += record.count
         }
     }
-    
     const pieces: TriggerStatusReport['pieces'] = {}
-    
-    for (const [pieceName, dayMap] of pieceGroups) {
+    for (const [pieceName, dayMap] of pieceNameToDayToStats) {
         const dailyStats: Record<string, { success: number; failure: number }> = {}
         let totalRuns = 0
-        
         for (const [day, stats] of dayMap) {
             dailyStats[day] = stats
             totalRuns += stats.success + stats.failure
         }
-        
         pieces[pieceName] = {
             dailyStats,
             totalRuns
         }
     }
-    
+
     return { pieces }
 }
 
