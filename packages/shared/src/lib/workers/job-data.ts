@@ -1,5 +1,6 @@
 
 import { Static, Type } from '@sinclair/typebox'
+import { isNil } from '../common'
 import { ProgressUpdateType, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -10,10 +11,52 @@ import { PackageType, PiecePackage, PieceType } from '../pieces/piece'
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 
 
+export const JOB_PRIORITY = {
+    critical: 1,
+    high: 2,
+    medium: 3,
+    low: 4,
+    veryLow: 5,
+    lowest: 6,
+}
+
+const TESTING_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
+const ASYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
+const SYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
+export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'lowest'
+
+function getExecuteFlowPriority(environment: RunEnvironment, synchronousHandlerId: string | undefined | null): keyof typeof JOB_PRIORITY {
+    switch (environment) {
+        case RunEnvironment.TESTING:
+            return TESTING_EXECUTE_FLOW_PRIORITY
+        case RunEnvironment.PRODUCTION:
+            return isNil(synchronousHandlerId) ? ASYNC_EXECUTE_FLOW_PRIORITY : SYNC_EXECUTE_FLOW_PRIORITY
+    }
+}
+
+export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
+    switch (job.jobType) {
+        case WorkerJobType.EXECUTE_POLLING:
+        case WorkerJobType.RENEW_WEBHOOK:
+            return 'veryLow'
+        case WorkerJobType.EXECUTE_WEBHOOK:
+        case WorkerJobType.EXECUTE_AGENT:
+            return 'medium'
+        case WorkerJobType.EXECUTE_FLOW:
+            return getExecuteFlowPriority(job.environment, job.synchronousHandlerId)
+        case WorkerJobType.EXECUTE_TOOL:
+        case WorkerJobType.EXECUTE_PROPERTY:
+        case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
+        case WorkerJobType.EXECUTE_VALIDATION:
+        case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+            return 'critical'
+    }
+}
+
+
 export enum WorkerJobType {
     RENEW_WEBHOOK = 'RENEW_WEBHOOK',
     EXECUTE_POLLING = 'EXECUTE_POLLING',
-    DELAYED_FLOW = 'DELAYED_FLOW',
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_AGENT = 'EXECUTE_AGENT',
@@ -58,27 +101,13 @@ export const PollingJobData = Type.Object({
 })
 export type PollingJobData = Static<typeof PollingJobData>
 
-// Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
-export const DelayedJobData = Type.Object({
-    projectId: Type.String(),
-    platformId: Type.String(),
-    environment: Type.Enum(RunEnvironment),
-    schemaVersion: Type.Number(),
-    flowVersionId: Type.String(),
-    flowId: Type.String(),
-    runId: Type.String(),
-    httpRequestId: Type.Optional(Type.String()),
-    synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
-    jobType: Type.Literal(WorkerJobType.DELAYED_FLOW),
-})
-export type DelayedJobData = Static<typeof DelayedJobData>
-
 export const ExecuteFlowJobData = Type.Object({
     projectId: Type.String(),
     platformId: Type.String(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_FLOW),
     environment: Type.Enum(RunEnvironment),
+    schemaVersion: Type.Number(),
+    flowId: Type.String(),
     flowVersionId: Type.String(),
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
@@ -89,8 +118,8 @@ export const ExecuteFlowJobData = Type.Object({
     progressUpdateType: Type.Enum(ProgressUpdateType),
     stepNameToTest: Type.Optional(Type.String()),
     sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-    logsUploadUrl: Type.Optional(Type.String()),
-    logsFileId: Type.Optional(Type.String()),
+    logsUploadUrl: Type.String(),
+    logsFileId: Type.String(),
     traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
@@ -99,6 +128,7 @@ export const AgentJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
     agentId: Type.String(),
     projectId: Type.String(),
+    schemaVersion: Type.Number(),
     platformId: Type.String(),
     agentRunId: Type.String(),
     prompt: Type.String(),
@@ -131,6 +161,7 @@ export const ExecuteValidateAuthJobData = Type.Object({
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
     piece: PiecePackage,
+    schemaVersion: Type.Number(),
     connectionValue: Type.Unknown(),
 })
 export type ExecuteValidateAuthJobData = Static<typeof ExecuteValidateAuthJobData>
@@ -143,10 +174,12 @@ export const ExecuteToolJobData = Type.Object({
     projectId: Type.String(),
     actionName: Type.String(),
     pieceName: Type.String(),
+    schemaVersion: Type.Number(),
     pieceVersion: Type.String(),
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
     input: Type.Record(Type.String(), Type.Unknown()),
+
 })
 export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 
@@ -155,6 +188,7 @@ export const ExecuteTriggerHookJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
     platformId: Type.String(),
     projectId: Type.String(),
+    schemaVersion: Type.Number(),
     flowVersion: FlowVersion,
     test: Type.Boolean(),
     webserverId: Type.String(),
@@ -168,6 +202,7 @@ export const ExecutePropertyJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_PROPERTY),
     projectId: Type.String(),
     platformId: Type.String(),
+    schemaVersion: Type.Number(),
     flowVersion: Type.Optional(FlowVersion),
     propertyName: Type.String(),
     piece: PiecePackage,
@@ -182,6 +217,7 @@ export type ExecutePropertyJobData = Static<typeof ExecutePropertyJobData>
 export const ExecuteExtractPieceMetadataJobData = Type.Object({
     requestId: Type.String(),
     webserverId: Type.String(),
+    schemaVersion: Type.Number(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
@@ -199,17 +235,16 @@ export const UserInteractionJobData = Type.Union([
 export type UserInteractionJobData = Static<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
-    Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId']),
-    Type.Omit(ExecuteExtractPieceMetadataJobData, ['webserverId', 'requestId']),
+    Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId', 'schemaVersion']),
+    Type.Omit(ExecuteExtractPieceMetadataJobData, ['webserverId', 'requestId', 'schemaVersion']),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 
 export const JobData = Type.Union([
     PollingJobData,
-    DelayedJobData,
     RenewWebhookJobData,
     ExecuteFlowJobData,
     WebhookJobData,

@@ -45,7 +45,9 @@ async function getChangelog(logger: FastifyBaseLogger): Promise<ListChangelogsRe
         }
     }
     catch (error) {
-        logger.error('Error fetching changelog', error)
+        logger.error({ 
+            error,
+        }, 'Error fetching changelog')
         return {
             data: [],
         }

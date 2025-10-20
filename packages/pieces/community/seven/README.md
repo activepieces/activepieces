@@ -13,6 +13,7 @@ Settings -> My Pieces -> Install Piece -> type in `seven`
 - Send SMS
 - Text-To-Speech Call
 - Lookup
+- Send RCS
 
 ## Triggers
 - Inbound SMS
