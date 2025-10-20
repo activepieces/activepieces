@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
 import { ExecutionType, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
@@ -8,6 +8,7 @@ import { dedupeService } from '../trigger/dedupe-service'
 import { triggerEventService } from '../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from './engine-response-watcher'
+import { jobMigrations } from './queue/jobs-migrations'
 
 const tracer = trace.getTracer('worker-controller')
 
@@ -69,6 +70,17 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
+    app.post('/migrate-job', {
+        config: {
+            allowedPrincipals: [PrincipalType.WORKER],
+        },
+        schema: {
+            body: MigrateJobsRequest,
+        },
+    }, async (request) => {
+        return jobMigrations.apply(request.body.jobData)
+    })
+    
     app.post('/submit-payloads', {
         config: {
             allowedPrincipals: [PrincipalType.WORKER],
@@ -87,20 +99,20 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             },
         }, async (span) => {
             try {
-                const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure } = request.body
+                const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure, platformId } = request.body
 
                 const flowVersionExists = await flowVersionService(request.log).getOne(flowVersionId)
                 if (!flowVersionExists) {
                     span.setAttribute('worker.flowVersionExists', false)
                     return []
                 }
-                
+
                 span.setAttribute('worker.flowVersionExists', true)
                 const filterPayloads = await dedupeService.filterUniquePayloads(
                     flowVersionId,
                     payloads,
                 )
-                
+
                 span.setAttribute('worker.filteredPayloadsCount', filterPayloads.length)
                 const createFlowRuns = filterPayloads.map((payload) => {
                     return flowRunService(request.log).start({
@@ -116,6 +128,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                         executeTrigger: false,
                         parentRunId,
                         failParentOnFailure,
+                        platformId,
                     })
                 })
                 const flowRuns = await Promise.all(createFlowRuns)
