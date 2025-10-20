@@ -54,7 +54,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                         token,
                     )
                     log.info({
-                        message: '[jobQueueWorker] Job is throttled and will be retried in 15 seconds',
+                        message: '[jobQueueWorker] Job is throttled and will be retried',
                         jobId,
                         delayInSeconds: Math.min(240, 20 * (job.attemptsStarted + 1)),
                     })
