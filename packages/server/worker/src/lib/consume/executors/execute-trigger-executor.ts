@@ -16,6 +16,7 @@ export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
 
         const { payloads, status, errorMessage } = await triggerHooks(log).extractPayloads(engineToken, {
             projectId: data.projectId,
+            platformId: data.platformId,
             flowVersion,
             payload: {} as TriggerPayload,
             simulate: false,
