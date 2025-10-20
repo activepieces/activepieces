@@ -99,6 +99,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             executionState: {
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
+            tasks: flowExecutorContext.tasks,
         })
 
         assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
@@ -115,7 +116,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
             logsFileId: engineConstants.logsFileId,
-            testSingleStepMode: engineConstants.testSingleStepMode,
+            stepNameToTest: engineConstants.stepNameToTest,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
