@@ -574,7 +574,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
             break
         case ApEdition.COMMUNITY:
             commonMigration.push(
-                // AddPlatformToPostgres1709052740378,
+                AddPlatformToPostgres1709052740378,
                 SetNotNullOnPlatform1709505632771,
             )
             break
