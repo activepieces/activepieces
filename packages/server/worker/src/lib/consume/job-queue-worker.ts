@@ -33,12 +33,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
         worker = new Worker<JobData>(QueueName.WORKER_JOBS, async (job, token) => {
             try {
-
                 const jobId = job.id
-                log.info({
-                    message: '[jobQueueWorker] Consuming job',
-                    jobId,
-                })
                 const { shouldSkip } = await preHandler(workerToken, job)
                 if (shouldSkip) {
                     log.info({
@@ -106,12 +101,6 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
             },
         )
         await worker.waitUntilReady()
-        setInterval(async () => {
-            log.info({
-                message: 'Job queue worker is still running',
-                status: worker.isPaused() ? 'paused' : 'running',
-            })
-        }, 10000)
         log.info({
             message: 'Job queue worker started',
         })

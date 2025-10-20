@@ -41,8 +41,9 @@ export const workerCache = (log: FastifyBaseLogger) => ({
         if (!isNil(cacheId)) {
             return cacheId
         }
-        return memoryLock.runExclusive({
+        return workerDistributedLock(log).runExclusive({
             key: 'cache-id',
+            timeoutInSeconds: 120,
             fn: async () => {
                 const cacheFile = path.join(GLOBAL_CACHE_ALL_VERSIONS_PATH, 'info.json')
                 const cacheExists = await fileSystemUtils.fileExists(cacheFile)

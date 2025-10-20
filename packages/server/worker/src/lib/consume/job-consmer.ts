@@ -100,17 +100,17 @@ const getTimeoutForWorkerJob = (jobType: WorkerJobType): number => {
     switch (jobType) {
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
         case WorkerJobType.RENEW_WEBHOOK:
-            return dayjs.duration(workerMachine.getSettings().TRIGGER_HOOKS_TIMEOUT_SECONDS, 'seconds').asMilliseconds()
+            return dayjs.duration(workerMachine.getSettings().TRIGGER_HOOKS_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_TOOL:
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_POLLING:
-            return dayjs.duration(workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS, 'seconds').asMilliseconds()
+            return dayjs.duration(workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EXECUTE_FLOW:
-            return dayjs.duration(workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, 'seconds').asMilliseconds()
+            return dayjs.duration(workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EXECUTE_AGENT:
-            return dayjs.duration(workerMachine.getSettings().AGENT_TIMEOUT_SECONDS, 'seconds').asMilliseconds()
+            return dayjs.duration(workerMachine.getSettings().AGENT_TIMEOUT_SECONDS, 'seconds').asSeconds()
     }
 }

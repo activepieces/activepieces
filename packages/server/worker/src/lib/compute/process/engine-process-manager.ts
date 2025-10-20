@@ -52,7 +52,7 @@ export const engineProcessManager = {
         return processes.length
     },
 
-    async executeTask(operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeout: number): Promise<WorkerResult> {
+    async executeTask(operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeoutInSeconds: number): Promise<WorkerResult> {
         log.trace({
             operationType,
             operation,
@@ -97,7 +97,7 @@ export const engineProcessManager = {
                 }, 'Worker connected')
             }
 
-            const result = await processTask(workerIndex, operationType, operation, log, timeout)
+            const result = await processTask(workerIndex, operationType, operation, log, timeoutInSeconds)
             // Keep an await so finally does not run before the task is finished
             return result
         }
@@ -125,33 +125,23 @@ export const engineProcessManager = {
     },
 }
 
-async function processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeout: number): Promise<WorkerResult> {
+async function processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation, log: FastifyBaseLogger, timeoutInSeconds: number): Promise<WorkerResult> {
     const worker = processes[workerIndex]
     assertNotNullOrUndefined(worker, 'Worker should not be undefined')
     let didTimeout = false
     const workerId = processIds[workerIndex]
     let timeoutWorker: NodeJS.Timeout | undefined
-    let startTime = Date.now()
-    let interval: NodeJS.Timeout | undefined
     try {
 
         const result = await new Promise<WorkerResult>((resolve, reject) => {
             let stdError = ''
             let stdOut = ''
-
-            interval = setInterval(() => {
-                log.info({
-                    workerIndex,
-                    timeInSeconds: (Date.now() - startTime) / 1000,
-                    timeout,
-                }, 'Worker is still running')
-            }, 10000)
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             timeoutWorker = setTimeout(async () => {
                 didTimeout = true
                 await forceTerminate(worker, log)
                 processes[workerIndex] = undefined
-            }, timeout * 1000)
+            }, timeoutInSeconds * 1000)
 
 
             const onResult = (result: EngineResponse<unknown>) => {
@@ -222,7 +212,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             })
             log.info({
                 workerIndex,
-                timeout,
+                timeoutInSeconds,
             }, 'Sending operation to worker')
             engineSocketServer.send(workerId, { operation, operationType })
         })
@@ -235,9 +225,6 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
         throw error
     }
     finally {
-        if (!isNil(interval)) {
-            clearInterval(interval)
-        }
         engineSocketServer.unsubscribe(workerId)
         worker.removeAllListeners('exit')
         worker.removeAllListeners('error')
