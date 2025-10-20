@@ -1,5 +1,5 @@
-import { apDayjs } from '@activepieces/server-shared'
-import { PlatformId, ProjectId, spreadIfDefined, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
+import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
+import { PlatformId, ProjectId, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 
@@ -12,7 +12,7 @@ export const triggerRunService = (log: FastifyBaseLogger) => ({
 
         const redisConnection = await redisConnections.useExisting()
         await redisConnection.incr(redisKey)
-        await redisConnection.expire(redisKey, 60 * 60 * 24 * 14) // 14 days
+        await redisConnection.expire(redisKey, apDayjsDuration(14, 'days').asSeconds())
     },
 
     async getStatusReport(params: GetStatusReportParams): Promise<TriggerStatusReport> {
