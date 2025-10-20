@@ -143,6 +143,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 log.info({
                     workerIndex,
                     timeInSeconds: (Date.now() - startTime) / 1000,
+                    timeout,
                 }, 'Worker is still running')
             }, 10000)
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -221,6 +222,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             })
             log.info({
                 workerIndex,
+                timeout,
             }, 'Sending operation to worker')
             engineSocketServer.send(workerId, { operation, operationType })
         })
