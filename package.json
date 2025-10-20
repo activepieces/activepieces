@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.70.8",
-  "rcVersion": "0.70.8-worker",
+  "rcVersion": "0.70.8-worker3",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
