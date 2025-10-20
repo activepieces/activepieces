@@ -45,7 +45,6 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             log.info({
                 message: 'Disconnected from server',
             })
-            await jobQueueWorker(log).pause()
         })
 
         socket.on('connect_error', (error) => {
