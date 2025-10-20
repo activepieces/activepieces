@@ -47,7 +47,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                     }, '[jobQueueWorker] Skipping job')
                     return
                 }
-    
+
                 assertNotNullOrUndefined(jobId, 'jobId')
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
                 if (shouldRateLimit) {
@@ -107,10 +107,10 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         )
         await worker.waitUntilReady()
         setInterval(async () => {
-           log.info({
-            message: 'Job queue worker is still running',
-            status: worker.isPaused() ? 'paused' : 'running',
-           })
+            log.info({
+                message: 'Job queue worker is still running',
+                status: worker.isPaused() ? 'paused' : 'running',
+            })
         }, 10000)
         log.info({
             message: 'Job queue worker started',

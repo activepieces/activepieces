@@ -131,12 +131,20 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
     let didTimeout = false
     const workerId = processIds[workerIndex]
     let timeoutWorker: NodeJS.Timeout | undefined
+    let startTime = Date.now()
+    let interval: NodeJS.Timeout | undefined
     try {
 
         const result = await new Promise<WorkerResult>((resolve, reject) => {
             let stdError = ''
             let stdOut = ''
 
+            interval = setInterval(() => {
+                log.info({
+                    workerIndex,
+                    timeInSeconds: (Date.now() - startTime) / 1000,
+                }, 'Worker is still running')
+            }, 10000)
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             timeoutWorker = setTimeout(async () => {
                 didTimeout = true
@@ -211,7 +219,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                     })
                 }
             })
-            log.debug({
+            log.info({
                 workerIndex,
             }, 'Sending operation to worker')
             engineSocketServer.send(workerId, { operation, operationType })
@@ -225,6 +233,9 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
         throw error
     }
     finally {
+        if (!isNil(interval)) {
+            clearInterval(interval)
+        }
         engineSocketServer.unsubscribe(workerId)
         worker.removeAllListeners('exit')
         worker.removeAllListeners('error')
