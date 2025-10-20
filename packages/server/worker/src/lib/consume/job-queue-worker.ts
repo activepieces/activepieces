@@ -99,12 +99,6 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
             message: 'Job queue worker started',
         })
     },
-    async pause(): Promise<void> {
-        log.info({
-            message: 'Pausing job queue worker',
-        })
-        return worker.pause()
-    },
     async close(): Promise<void> {
         if (isNil(worker)) {
             return
