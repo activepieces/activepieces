@@ -15,10 +15,9 @@ export const deleteDataSourceAction = createAction({
   async run({ auth, propsValue }) {
     const { datasourceId } = propsValue;
 
-    // Create Cognos client
+   
     const client = new CognosClient(auth);
 
-    // Delete the data source
     const response = await client.makeAuthenticatedRequest(
       `/dataSources/${datasourceId}`, 
       HttpMethod.DELETE

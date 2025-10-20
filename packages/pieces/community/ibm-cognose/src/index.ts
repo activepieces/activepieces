@@ -28,6 +28,16 @@ Enter your Cognos Analytics credentials:
 - **Password**: Your Cognos password
   `,
   props: {
+    baseurl: Property.ShortText({
+      displayName: 'Base URL',
+      description: 'The base URL for your Cognos server (e.g., https://your-cognos-server.com)',
+      required: true
+    }),
+    CAMNamespace: Property.ShortText({
+      displayName: 'CAM Namespace',
+      description: 'The CAM namespace for authentication (e.g., LDAP)',
+      required: true
+    }),
     username: Property.ShortText({
       displayName: 'Username',
       description: 'Your Cognos username',
@@ -42,12 +52,12 @@ Enter your Cognos Analytics credentials:
   validate: async ({ auth }) => {
     // For now, just validate that username and password are provided
     // The actual server validation will happen when actions are executed
-    const { username, password } = auth;
+    const { username, password, CAMNamespace } = auth;
 
-    if (!username || !password) {
+    if (!username || !password || !CAMNamespace) {
       return {
         valid: false,
-        error: 'Username and password are required'
+        error: 'Username, password, and CAM Namespace are required'
       };
     }
 
@@ -81,7 +91,7 @@ export const ibmCognose = createPiece({
       authMapping: async (auth: any) => {
         // Create session first to get authentication token
         const parameters = [
-          { name: 'CAMNamespace', value: 'LDAP' }, // TODO: Configure namespace
+          { name: 'CAMNamespace', value: auth.CAMNamespace },
           { name: 'CAMUsername', value: auth.username },
           { name: 'CAMPassword', value: auth.password }
         ];
