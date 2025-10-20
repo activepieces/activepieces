@@ -30,10 +30,8 @@ export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
                     state: value,
                 }
             }
-            const cacheId = await workerCache(log).getCacheId()
-            return workerDistributedLock(log).runExclusive({
-                key: `cache-save-${folderPath}-${cacheId}`,
-                timeoutInSeconds: 20 * 60,
+            return memoryLock.runExclusive({
+                key: `cache-save-${folderPath}`,
                 fn: async () => {
                     const cacheFromDisk = await readCacheFromFile(folderPath)
                     const valueFromDisk = cacheFromDisk[key]
