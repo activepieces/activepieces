@@ -97,4 +97,10 @@ export const delayForAction = createAction({
       };
     }
   },
+  async test() {
+    return {
+      delayForInMs: 1000,
+      success: true,
+    };
+  }
 });
