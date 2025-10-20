@@ -41,22 +41,26 @@ export const workerCache = (log: FastifyBaseLogger) => ({
         if (!isNil(cacheId)) {
             return cacheId
         }
-        return memoryLock.runExclusive({ key: 'cache-id', fn: async () => {
-            const cacheFile = path.join(GLOBAL_CACHE_ALL_VERSIONS_PATH, 'info.json')
-            const cacheExists = await fileSystemUtils.fileExists(cacheFile)
-            if (!cacheExists) {
-                const cacheInfo: CacheInfo = {
-                    id: nanoid(),
-                    createdAt: new Date().toISOString(),
+        return workerDistributedLock(log).runExclusive({
+            key: 'cache-id',
+            timeoutInSeconds: 120,
+            fn: async () => {
+                const cacheFile = path.join(GLOBAL_CACHE_ALL_VERSIONS_PATH, 'info.json')
+                const cacheExists = await fileSystemUtils.fileExists(cacheFile)
+                if (!cacheExists) {
+                    const cacheInfo: CacheInfo = {
+                        id: nanoid(),
+                        createdAt: new Date().toISOString(),
+                    }
+                    await fileSystemUtils.threadSafeMkdir(GLOBAL_CACHE_ALL_VERSIONS_PATH)
+                    await writeFile(cacheFile, JSON.stringify(cacheInfo))
                 }
-                await fileSystemUtils.threadSafeMkdir(GLOBAL_CACHE_ALL_VERSIONS_PATH)
-                await writeFile(cacheFile, JSON.stringify(cacheInfo))
+                const cache = await readFile(cacheFile, 'utf8')
+                const cacheData: CacheInfo = JSON.parse(cache)
+                cacheId = cacheData.id
+                return cacheId
             }
-            const cache = await readFile(cacheFile, 'utf8')
-            const cacheData: CacheInfo = JSON.parse(cache)
-            cacheId = cacheData.id
-            return cacheId
-        } })
+        })
     },
 })
 

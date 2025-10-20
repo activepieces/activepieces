@@ -5,6 +5,7 @@ import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
 import { workerCache } from './worker-cache'
+import { workerDistributedLock } from '../utils/worker-redis'
 
 type CacheMap = Record<string, string>
 
@@ -30,8 +31,9 @@ export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
                 }
             }
             const cacheId = await workerCache(log).getCacheId()
-            return memoryLock.runExclusive({
+            return workerDistributedLock(log).runExclusive({
                 key: `cache-save-${folderPath}-${cacheId}`,
+                timeoutInSeconds: 20 * 60,
                 fn: async () => {
                     const cacheFromDisk = await readCacheFromFile(folderPath)
                     const valueFromDisk = cacheFromDisk[key]
