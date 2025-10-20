@@ -1,7 +1,7 @@
 import { apId, JobData, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { system } from '../../helper/system/system'
-import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 
 const enrichFlowIdAndLogsUrl: JobMigration = {
     targetSchemaVersion: 5,

@@ -1,6 +1,6 @@
 import { readdir, readFile, rm, writeFile } from 'fs/promises'
 import path from 'path'
-import { exceptionHandler, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { exceptionHandler, fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -59,7 +59,7 @@ export const workerCache = (log: FastifyBaseLogger) => ({
                 const cacheData: CacheInfo = JSON.parse(cache)
                 cacheId = cacheData.id
                 return cacheId
-            }
+            },
         })
     },
 })

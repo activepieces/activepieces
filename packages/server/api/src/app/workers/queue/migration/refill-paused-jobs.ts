@@ -57,7 +57,8 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 try {
                     const job = await workerJobsQueue?.getJob(pausedRun.id)
                     await job?.remove()
-                } catch (e) {
+                }
+                catch (e) {
                     log.error({
                         error: e,
                         pausedRunId: pausedRun.id,

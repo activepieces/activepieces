@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
-import { workerCache } from './worker-cache'
 import { workerDistributedLock } from '../utils/worker-redis'
+import { workerCache } from './worker-cache'
 
 type CacheMap = Record<string, string>
 
