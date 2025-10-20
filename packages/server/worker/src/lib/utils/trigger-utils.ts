@@ -1,5 +1,5 @@
 import { inspect } from 'util'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { triggerRunStats } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -12,17 +12,18 @@ import {
     TriggerRunStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../compute'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
+import { pieceEngineUtil } from './flow-engine-util'
+import { workerRedisConnections } from './worker-redis'
 
 export const triggerHooks = (log: FastifyBaseLogger) => ({
     extractPayloads: async (
         engineToken: string,
         params: ExecuteTrigger,
     ): Promise<ExtractPayloadsResult> => {
-        const { flowVersion, simulate } = params
+        const { flowVersion, platformId } = params
         if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
@@ -33,11 +34,13 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
             }
         }
         const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
-        rejectedPromiseHandler(engineApiService(engineToken).createTriggerRun({
+        
+        const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, flowVersion)
+        await triggerRunStats(log, await workerRedisConnections.useExisting()).save({
+            platformId,
+            pieceName: triggerPiece.pieceName,
             status,
-            flowId: flowVersion.flowId,
-            simulate,
-        }), log)
+        })
 
         return {
             status,
@@ -54,6 +57,7 @@ type ExtractPayloadsResult = {
 }
 
 type ExecuteTrigger = {
+    jobId: string
     flowVersion: FlowVersion
     projectId: ProjectId
     platformId: PlatformId

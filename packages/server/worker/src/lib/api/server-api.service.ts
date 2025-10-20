@@ -138,9 +138,6 @@ export const engineApiService = (engineToken: string) => {
                 responseType: 'arraybuffer',
             })
         },
-        async createTriggerRun(request: CreateTriggerRunRequestBody): Promise<TriggerRun> {
-            return client.post<TriggerRun>('/v1/engine/create-trigger-run', request)
-        },
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
         },

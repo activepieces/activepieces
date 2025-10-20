@@ -8,7 +8,6 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from './engine-response-watcher'
 
@@ -79,25 +78,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         )
         return {}
     })
-
-    app.post('/create-trigger-run', CreateTriggerRunParams, async (request) => {
-        const { status, flowId, simulate } = request.body
-        const { projectId, platform } = request.principal
-        const trigger = await triggerSourceService(request.log).getByFlowId({
-            flowId,
-            projectId,
-            simulate,
-        })
-        if (!isNil(trigger)) {
-            await triggerRunService(request.log).create({
-                status,
-                pieceName: trigger.pieceName,
-                projectId,
-                platformId: platform.id,
-            })
-        }
-    })
-
 
     app.get('/flows', GetLockedVersionRequest, async (request) => {
         const flowVersion = await flowVersionService(request.log).getOneOrThrow(request.query.versionId)

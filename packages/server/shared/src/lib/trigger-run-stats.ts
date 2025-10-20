@@ -1,23 +1,20 @@
 import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
 import { PlatformId, ProjectId, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis-connections'
+import Redis from 'ioredis'
 
-export const triggerRunService = (log: FastifyBaseLogger) => ({
-
-    async create({ platformId, pieceName, status }: CreateParams): Promise<void> {
+export const triggerRunStats = (log: FastifyBaseLogger, redisConnection: Redis) => ({
+    async save({ platformId, pieceName, status }: SaveParams): Promise<void> {
         const day = apDayjs().format('YYYY-MM-DD')
         const statusToStore = status === TriggerRunStatus.COMPLETED ? status : TriggerRunStatus.FAILED
         const redisKey = triggerRunRedisKey(platformId, pieceName, day, statusToStore)
 
-        const redisConnection = await redisConnections.useExisting()
         await redisConnection.incr(redisKey)
         await redisConnection.expire(redisKey, apDayjsDuration(14, 'days').asSeconds())
     },
 
     async getStatusReport(params: GetStatusReportParams): Promise<TriggerStatusReport> {
         const { platformId } = params
-        const redisConnection = await redisConnections.useExisting()
         const redisKeys = await redisConnection.keys(triggerRunRedisKey(platformId, '*', '*', '*'))
         if (redisKeys.length === 0) {
             return { pieces: {} }
@@ -103,8 +100,7 @@ type GetStatusReportParams = {
     platformId: ProjectId
 }
 
-type CreateParams = {
-    projectId: ProjectId
+type SaveParams = {
     platformId: PlatformId
     pieceName: string
     status: TriggerRunStatus
