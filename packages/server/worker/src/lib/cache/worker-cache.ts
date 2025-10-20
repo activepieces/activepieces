@@ -1,6 +1,6 @@
 import { readdir, readFile, rm, writeFile } from 'fs/promises'
 import path from 'path'
-import { exceptionHandler, fileSystemUtils } from '@activepieces/server-shared'
+import { exceptionHandler, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -41,7 +41,7 @@ export const workerCache = (log: FastifyBaseLogger) => ({
         if (!isNil(cacheId)) {
             return cacheId
         }
-        return workerDistributedLock(log).runExclusive({ key: 'cache-id', timeoutInSeconds: 60, fn: async () => {
+        return memoryLock.runExclusive({ key: 'cache-id', fn: async () => {
             const cacheFile = path.join(GLOBAL_CACHE_ALL_VERSIONS_PATH, 'info.json')
             const cacheExists = await fileSystemUtils.fileExists(cacheFile)
             if (!cacheExists) {
