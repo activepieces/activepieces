@@ -30,7 +30,15 @@ export const flowRunLogs = {
         if (response.status === 404) {
             return null
         }
-        return response.json() as unknown as ExecutioOutputFile
+        try {
+            return await response.json() as unknown as ExecutioOutputFile
+        }
+        catch (e) {
+            if (e instanceof SyntaxError) {
+                return null
+            }
+            throw e
+        }
     },
 }
 
