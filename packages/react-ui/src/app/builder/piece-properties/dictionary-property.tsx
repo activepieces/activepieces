@@ -8,6 +8,22 @@ import { TextWithIcon } from '@/components/ui/text-with-icon';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
 
+// Reserved property names in React Hook Form / DOM events that cause conflicts
+const RESERVED_FORM_FIELDS = ['target', 'currentTarget', 'value', 'name'];
+
+// Sanitize field name for internal use (prefix reserved names with underscore)
+const sanitizeFieldName = (fieldName: string): string => {
+  return RESERVED_FORM_FIELDS.includes(fieldName) ? `_${fieldName}` : fieldName;
+};
+
+// Desanitize field name for API submission (remove prefix)
+const desanitizeFieldName = (fieldName: string): string => {
+  return fieldName.startsWith('_') && 
+         RESERVED_FORM_FIELDS.includes(fieldName.slice(1))
+    ? fieldName.slice(1)
+    : fieldName;
+};
+
 type DictionaryInputItem = {
   key: string;
   value: string;
@@ -28,7 +44,12 @@ export const DictionaryProperty = ({
   useMentionTextInput,
 }: DictionaryInputProps) => {
   const id = useRef(1);
-  const valuesArray = Object.entries(values ?? {}).map((el) => {
+  // Sanitize incoming values to handle reserved property names
+  const sanitizedValues = Object.entries(values ?? {}).reduce((acc, [key, value]) => {
+    return { ...acc, [sanitizeFieldName(key)]: value };
+  }, {});
+  
+  const valuesArray = Object.entries(sanitizedValues).map((el) => {
     id.current++;
     return {
       key: el[0],
@@ -90,11 +111,12 @@ export const DictionaryProperty = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-    onChange(
-      items.reduce((acc, current) => {
-        return { ...acc, [current.key]: current.value };
-      }, {}),
-    );
+    // Desanitize keys before sending to onChange (restore original names)
+    const desanitizedValues = items.reduce((acc, current) => {
+      const originalKey = desanitizeFieldName(current.key);
+      return { ...acc, [originalKey]: current.value };
+    }, {});
+    onChange(desanitizedValues);
   };
   return (
     <div className="flex w-full flex-col gap-4">
