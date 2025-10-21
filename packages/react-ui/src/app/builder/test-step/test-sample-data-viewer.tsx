@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -17,6 +16,7 @@ import {
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
+import { AgentTestStep } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 const isRunAgent = (step?: FlowAction) => {
@@ -28,7 +28,7 @@ const isRunAgent = (step?: FlowAction) => {
   );
 };
 
-type TestSampleDataViewerProps = {
+type RetestSampleDataViewerProps = {
   isValid: boolean;
   isTesting: boolean;
   sampleData: unknown;
@@ -62,22 +62,20 @@ const RetestButton = React.forwardRef<HTMLButtonElement, RetestButtonProps>(
           onClick={onRetest}
           loading={isTesting}
         >
-          {t('Retest')}
+          {t('Test')}
         </Button>
       </TestButtonTooltip>
     );
   },
 );
-RetestButton.displayName = 'RetestButton';
+RetestButton.displayName = 'TestButton';
 
 const isConsoleLogsValid = (value: unknown) => {
-  if (isNil(value)) {
-    return false;
-  }
+  if (isNil(value)) return false;
   return value !== '';
 };
 
-const TestSampleDataViewer = React.memo(
+export const TestSampleDataViewer = React.memo(
   ({
     isValid,
     isTesting,
@@ -90,11 +88,34 @@ const TestSampleDataViewer = React.memo(
     consoleLogs,
     isSaving,
     onRetest,
-  }: TestSampleDataViewerProps) => {
+  }: RetestSampleDataViewerProps) => {
+    const [agentResult, setAgentResult] = useState<AgentResult | undefined>(
+      isRunAgent(currentStep) ? (sampleData as AgentResult) : undefined,
+    );
+
+    useEffect(() => {
+      if (isRunAgent(currentStep) && sampleData) {
+        setAgentResult(sampleData as AgentResult);
+      }
+    }, [sampleData]);
+
+    const handleRetest = () => {
+      if (isRunAgent(currentStep)) {
+        setAgentResult(undefined);
+      }
+      onRetest();
+    };
+
     const renderViewer = () => {
       if (isRunAgent(currentStep)) {
-        return <AgentTimeline agentResult={sampleData as AgentResult} />;
+        return (
+          <AgentTestStep
+            agentResult={agentResult}
+            errorMessage={errorMessage}
+          />
+        );
       }
+
       if (isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs)) {
         return (
           <JsonViewer json={errorMessage ?? sampleData} title={t('Output')} />
@@ -117,23 +138,23 @@ const TestSampleDataViewer = React.memo(
                 <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
               )}
             </TabsList>
+
             {!isNil(sampleDataInput) && (
               <TabsContent value="Input">
-                <JsonViewer
-                  json={sampleDataInput}
-                  title={t('Input')}
-                ></JsonViewer>
+                <JsonViewer json={sampleDataInput} title={t('Input')} />
               </TabsContent>
             )}
+
             <TabsContent value="Output">
               <JsonViewer
                 json={errorMessage ?? sampleData}
                 title={t('Output')}
-              ></JsonViewer>
+              />
             </TabsContent>
+
             {isConsoleLogsValid(consoleLogs) && (
               <TabsContent value="Logs">
-                <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
+                <JsonViewer json={consoleLogs} title={t('Logs')} />
               </TabsContent>
             )}
           </Tabs>
@@ -150,10 +171,7 @@ const TestSampleDataViewer = React.memo(
               <div className="text-md flex gap-1 items-center">
                 {errorMessage ? (
                   <>
-                    <StepStatusIcon
-                      status={StepOutputStatus.FAILED}
-                      size="5"
-                    ></StepStatusIcon>
+                    <StepStatusIcon status={StepOutputStatus.FAILED} size="5" />
                     <span>{t('Testing Failed')}</span>
                   </>
                 ) : (
@@ -161,7 +179,7 @@ const TestSampleDataViewer = React.memo(
                     <StepStatusIcon
                       status={StepOutputStatus.SUCCEEDED}
                       size="5"
-                    ></StepStatusIcon>
+                    />
                     <span>{t('Tested Successfully')}</span>
                   </>
                 )}
@@ -172,12 +190,13 @@ const TestSampleDataViewer = React.memo(
                   formatUtils.formatDate(new Date(lastTestDate))}
               </div>
             </div>
+
             <TestButtonTooltip invalid={!isValid}>
               <RetestButton
                 isValid={isValid}
                 isSaving={isSaving}
                 isTesting={isTesting}
-                onRetest={onRetest}
+                onRetest={handleRetest}
               />
             </TestButtonTooltip>
           </div>
@@ -189,5 +208,3 @@ const TestSampleDataViewer = React.memo(
 );
 
 TestSampleDataViewer.displayName = 'TestSampleDataViewer';
-
-export { TestSampleDataViewer };
