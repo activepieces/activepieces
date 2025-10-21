@@ -274,6 +274,7 @@ import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759
 import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
 import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
 import { RestrictOnDeleteProjectForFlow1760376319952 } from './migration/postgres/1760376319952-RestrictOnDeleteProjectForFlow'
+import { RemoveTriggerRunEntity1760993216501 } from './migration/postgres/1760993216501-RemoveTriggerRunEntity'
 import { AddDedicatedWorkersToPlatformPlanPostgres1760998784106 } from './migration/postgres/1760998784106-AddDedicatedWorkersToPlatformPlanPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -470,6 +471,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionBackupFile1759964470862,
         AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
         RestrictOnDeleteProjectForFlow1760376319952,
+        RemoveTriggerRunEntity1760993216501,
         AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
     ]
 
@@ -579,6 +581,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
             )
             break
     }
+
 
     return commonMigration
 }

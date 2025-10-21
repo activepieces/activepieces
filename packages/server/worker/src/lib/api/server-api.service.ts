@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { Agent, AgentRun, CreateTriggerRunRequestBody, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, TriggerRun, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { Agent, AgentRun, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import fetchRetry from 'fetch-retry'
@@ -137,9 +137,6 @@ export const engineApiService = (engineToken: string) => {
             return client.get<Buffer>(`/v1/engine/files/${fileId}`, {
                 responseType: 'arraybuffer',
             })
-        },
-        async createTriggerRun(request: CreateTriggerRunRequestBody): Promise<TriggerRun> {
-            return client.post<TriggerRun>('/v1/engine/create-trigger-run', request)
         },
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
