@@ -3,7 +3,6 @@ import {
   Property,
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import oracledb from 'oracledb';
 
 try {
@@ -13,15 +12,12 @@ try {
 }
 
 export const oracleDbAuth = PieceAuth.CustomAuth({
-  description: `
-  Provide your Oracle Database connection details.
-  **Important**: Fill out EITHER the "Service Name" fields (Host, Port, Service Name) OR the "Connection String" field.
-  `,
+  description: `Connect to Oracle Database using either Service Name (host/port/service) or a full connection string.`,
   required: true,
   props: {
     connectionType: Property.StaticDropdown({
       displayName: 'Connection Type',
-      description: 'Choose which details you will provide.',
+      description: 'How you want to connect',
       required: true,
       options: {
         options: [
@@ -33,23 +29,23 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
     }),
     host: Property.ShortText({
       displayName: 'Host',
-      description: 'The IP address or domain name of your Oracle DB server. (Required for Service Name connection)',
+      description: 'Database server hostname or IP',
       required: false,
     }),
     port: Property.Number({
       displayName: 'Port',
-      description: 'The port number for your Oracle DB. (Required for Service Name connection)',
+      description: 'Database port',
       required: false,
       defaultValue: 1521,
     }),
     serviceName: Property.ShortText({
       displayName: 'Service Name',
-      description: 'The service name of your Oracle database instance. (Required for Service Name connection)',
+      description: 'Oracle service name',
       required: false,
     }),
     connectionString: Property.LongText({
       displayName: 'Connection String',
-      description: 'Your full Oracle DB connection string, e.g., "host:port/serviceName". (Required for Connection String type)',
+      description: 'Full connection string (e.g., host:port/serviceName)',
       required: false,
     }),
     user: Property.ShortText({

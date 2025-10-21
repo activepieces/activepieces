@@ -1,95 +1,129 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+  Property,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+import crypto from 'crypto';
+import dayjs from 'dayjs';
 import { oracleDbAuth } from '../common/auth';
 import { OracleDbClient } from '../common/client';
 import { oracleDbProps } from '../common/props';
+import oracledb from 'oracledb';
+
+type OrderDirection = 'ASC' | 'DESC';
+
+const polling: Polling<
+  PiecePropValueSchema<typeof oracleDbAuth>,
+  {
+    tableName: string;
+    orderBy: string;
+    orderDirection: OrderDirection | undefined;
+  }
+> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth, propsValue, lastItemId }) => {
+    const client = new OracleDbClient(auth);
+    await client['connect']();
+
+    if (!client['connection']) {
+      throw new Error('Database connection failed');
+    }
+
+    const lastItem = lastItemId as string;
+    const lastOrderKey = lastItem ? lastItem.split('|')[0] : null;
+    const direction = propsValue.orderDirection || 'DESC';
+    
+    let sql: string;
+    const binds: oracledb.BindParameters = {};
+
+    if (lastOrderKey === null) {
+      sql = `SELECT * FROM "${propsValue.tableName}" ORDER BY "${propsValue.orderBy}" ${direction} FETCH FIRST 5 ROWS ONLY`;
+    } else {
+      const operator = direction === 'DESC' ? '>=' : '<=';
+      sql = `SELECT * FROM "${propsValue.tableName}" WHERE "${propsValue.orderBy}" ${operator} :lastKey ORDER BY "${propsValue.orderBy}" ${direction}`;
+      binds['lastKey'] = lastOrderKey;
+    }
+
+    const result = await client['connection'].execute(sql, binds, {
+      outFormat: oracledb.OUT_FORMAT_OBJECT,
+    });
+
+    await client.close();
+
+    const rows = (result.rows as Record<string, any>[]) || [];
+    const items = rows.map((row) => {
+      const rowHash = crypto
+        .createHash('md5')
+        .update(JSON.stringify(row))
+        .digest('hex');
+      const isTimestamp = dayjs(row[propsValue.orderBy]).isValid();
+      const orderValue = isTimestamp
+        ? dayjs(row[propsValue.orderBy]).toISOString()
+        : row[propsValue.orderBy];
+      return {
+        id: orderValue + '|' + rowHash,
+        data: row,
+      };
+    });
+
+    return items;
+  },
+};
 
 export const newRowTrigger = createTrigger({
   auth: oracleDbAuth,
   name: 'new_row',
   displayName: 'New Row',
-  description: 'Triggers when a new row is created in a table.',
+  description: 'Triggers when a new row is created',
   props: {
+    description: Property.MarkDown({
+      value: `**NOTE:** Fetches latest rows using the order column (newest first), then keeps polling for new rows.`,
+    }),
     tableName: oracleDbProps.tableName(),
     orderBy: oracleDbProps.orderBy(),
-    filter: oracleDbProps.filter(),
+    orderDirection: Property.StaticDropdown<OrderDirection>({
+      displayName: 'Order Direction',
+      description: 'Sort direction to fetch newest rows first',
+      required: true,
+      options: {
+        options: [
+          { label: 'Ascending', value: 'ASC' },
+          { label: 'Descending', value: 'DESC' },
+        ],
+      },
+      defaultValue: 'DESC',
+    }),
   },
   type: TriggerStrategy.POLLING,
+  sampleData: {},
 
   async onEnable(context) {
-    const { tableName, orderBy, filter } = context.propsValue;
-    const client = new OracleDbClient(context.auth);
-
-    const latestRowsResult = await client.getLatestRows(
-      tableName,
-      orderBy,
-      (filter as Record<string, unknown>) || {}
-    );
-
-    let lastValue = null;
-    if (latestRowsResult.rows && latestRowsResult.rows.length > 0) {
-      lastValue = (latestRowsResult.rows[0] as Record<string, unknown>)[
-        orderBy
-      ];
-    }
-
-    await context.store.put('lastValue', lastValue);
+    await pollingHelper.onEnable(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+      auth: context.auth,
+    });
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async onDisable(_context) {
-    // No action needed.
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, {
+      store: context.store,
+      propsValue: context.propsValue,
+      auth: context.auth,
+    });
   },
 
   async run(context) {
-    const { tableName, orderBy, filter } = context.propsValue;
-    const client = new OracleDbClient(context.auth);
-    let lastValue = await context.store.get('lastValue');
-
-    const filterConditions = (filter as Record<string, unknown>) || {};
-
-    if (lastValue === null || lastValue === undefined) {
-      const latestRowsResult = await client.getLatestRows(
-        tableName,
-        orderBy,
-        filterConditions
-      );
-
-      if (latestRowsResult.rows && latestRowsResult.rows.length > 0) {
-        const newLastValue = (
-          latestRowsResult.rows[0] as Record<string, unknown>
-        )[orderBy];
-        await context.store.put('lastValue', newLastValue);
-        lastValue = newLastValue;
-      }
-
-      return [];
-    }
-
-    const newRows = await client.getNewRows(
-      tableName,
-      orderBy,
-      lastValue,
-      filterConditions
-    );
-
-    if (newRows.length > 0) {
-      const newLastValue = newRows[newRows.length - 1][orderBy];
-      await context.store.put('lastValue', newLastValue);
-      return newRows;
-    }
-
-    return [];
+    return await pollingHelper.poll(polling, context);
   },
 
   async test(context) {
-    const { tableName, orderBy, filter } = context.propsValue;
-    const client = new OracleDbClient(context.auth);
-    const result = await client.getLatestRows(
-      tableName,
-      orderBy,
-      (filter as Record<string, unknown>) || {}
-    );
-    return result.rows || [];
+    return await pollingHelper.test(polling, context);
   },
-  sampleData: {},
 });

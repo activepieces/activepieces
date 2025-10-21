@@ -30,70 +30,10 @@ export const oracleDbProps = {
       },
     }),
 
-  row: () =>
-    Property.Json({
-      displayName: 'Row',
-      description:
-        'The row object to insert, with keys as column names and values as the data.',
-      required: true,
-      defaultValue: {
-        COLUMN_NAME: 'value',
-      },
-    }),
-
-  rows: () =>
-    Property.Json({
-      displayName: 'Rows',
-      description:
-        'An array of row objects to insert. All objects must have the same keys (column names).',
-      required: true,
-      defaultValue: [
-        { COLUMN_1: 'value_a', COLUMN_2: 1 },
-        { COLUMN_1: 'value_b', COLUMN_2: 2 },
-      ],
-    }),
-
-  sql: () =>
-    Property.LongText({
-      displayName: 'SQL Query',
-      description:
-        "The SQL query or PL/SQL block to execute. Use bind variables for security (e.g., :id). Do not include a trailing semicolon ';'.",
-      required: true,
-      defaultValue: 'SELECT * FROM employees WHERE department_id = :dept_id',
-    }),
-
-  binds: () =>
-    Property.Json({
-      displayName: 'Bind Parameters',
-      description:
-        'An optional key-value object for bind variables used in your SQL query.',
-      required: false,
-      defaultValue: { dept_id: 90 },
-    }),
-
-  values: () =>
-    Property.Json({
-      displayName: 'Values to Update',
-      description:
-        'A key-value object where keys are the column names to update and values are the new data.',
-      required: true,
-      defaultValue: { SALARY: 8000 },
-    }),
-
-  filter: () =>
-    Property.Json({
-      displayName: 'Filter Conditions (WHERE)',
-      description:
-        'A key-value object to build the WHERE clause. Multiple conditions are joined by AND. **Important: An empty object will match ALL rows.**',
-      required: true,
-      defaultValue: { ID: 101 },
-    }),
-
   orderBy: () =>
     Property.Dropdown({
       displayName: 'Order By Column',
-      description:
-        'Select a column that consistently increases over time, like an ID or a CREATED_AT timestamp.',
+      description: 'Column that increases over time (ID or timestamp)',
       required: true,
       refreshers: ['tableName'],
       options: async (propsValue) => {

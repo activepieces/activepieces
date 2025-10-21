@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { oracleDbAuth } from '../common/auth';
 import { OracleDbClient } from '../common/client';
 import { oracleDbProps } from '../common/props';
@@ -7,19 +7,32 @@ export const insertRowAction = createAction({
   auth: oracleDbAuth,
   name: 'insert_row',
   displayName: 'Insert Row',
-  description: 'Insert a single row into a table.',
+  description: 'Insert a row into an Oracle table',
   props: {
     tableName: oracleDbProps.tableName(),
-    row: oracleDbProps.row(),
+    row: Property.Object({
+      displayName: 'Row',
+      description: 'Column names and values to insert',
+      required: true,
+      defaultValue: {
+        COLUMN_NAME: 'value',
+      },
+    }),
   },
   async run(context) {
     const { tableName, row } = context.propsValue;
-    const client = new OracleDbClient(context.auth);
 
     if (typeof row !== 'object' || row === null || Array.isArray(row)) {
-      throw new Error("The 'Row' property must be a valid JSON object.");
+      throw new Error("Row must be a valid object with column names as keys");
     }
 
-    return await client.insertRow(tableName, row as Record<string, unknown>);
+    try {
+      const client = new OracleDbClient(context.auth);
+      return await client.insertRow(tableName, row as Record<string, unknown>);
+    } catch (error) {
+      throw new Error(
+        `Failed to insert row into ${tableName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   },
 });

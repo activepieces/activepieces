@@ -1,5 +1,4 @@
 import { OracleDbAuth } from './types';
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import oracledb from 'oracledb';
 
 interface ExecuteManyResult {
@@ -52,7 +51,7 @@ export class OracleDbClient {
   public async insertRow(
     tableName: string,
     rowData: Record<string, unknown>
-  ): Promise<oracledb.Result<unknown>> {
+  ): Promise<{ success: boolean; rowsAffected: number }> {
     await this.connect();
 
     if (!this.connection) {
@@ -66,17 +65,26 @@ export class OracleDbClient {
     const quotedTableName = `"${tableName}"`;
     const sql = `INSERT INTO ${quotedTableName} (${quotedColumns}) VALUES (${placeholders})`;
 
-    const result = await this.connection.execute(sql, values, {
-      autoCommit: true,
-    });
-    await this.close();
-    return result;
+    try {
+      const result = await this.connection.execute(sql, values, {
+        autoCommit: true,
+      });
+      await this.close();
+      
+      return {
+        success: true,
+        rowsAffected: result.rowsAffected || 0,
+      };
+    } catch (error: any) {
+      await this.close();
+      throw this.handleOracleError(error);
+    }
   }
 
   public async insertRows(
     tableName: string,
     rowsData: Record<string, unknown>[]
-  ): Promise<ExecuteManyResult> {
+  ): Promise<{ success: boolean; rowsAffected: number }> {
     await this.connect();
 
     if (!this.connection) {
@@ -92,18 +100,27 @@ export class OracleDbClient {
 
     const bindData = rowsData.map((row) => columns.map((col) => row[col]));
 
-    const result = await this.connection.executeMany(sql, bindData, {
-      autoCommit: true,
-    });
-    await this.close();
-    return result;
+    try {
+      const result = await this.connection.executeMany(sql, bindData, {
+        autoCommit: true,
+      });
+      await this.close();
+      
+      return {
+        success: true,
+        rowsAffected: result.rowsAffected || 0,
+      };
+    } catch (error: any) {
+      await this.close();
+      throw this.handleOracleError(error);
+    }
   }
 
   public async updateRow(
     tableName: string,
     values: Record<string, unknown>,
     filter: Record<string, unknown>
-  ): Promise<oracledb.Result<unknown>> {
+  ): Promise<{ success: boolean; rowsAffected: number }> {
     await this.connect();
 
     if (!this.connection) {
@@ -121,32 +138,39 @@ export class OracleDbClient {
 
     const binds: oracledb.BindParameters = {};
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     for (const key of valueKeys) {
       binds[`set_${key}`] = values[key] as any;
     }
     for (const key of filterKeys) {
       binds[`whr_${key}`] = filter[key] as any;
     }
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     let sql = `UPDATE "${tableName}" SET ${setClause}`;
     if (whereClause) {
       sql += ` WHERE ${whereClause}`;
     }
 
-    const result = await this.connection.execute(sql, binds, {
-      autoCommit: true,
-    });
+    try {
+      const result = await this.connection.execute(sql, binds, {
+        autoCommit: true,
+      });
 
-    await this.close();
-    return result;
+      await this.close();
+      
+      return {
+        success: true,
+        rowsAffected: result.rowsAffected || 0,
+      };
+    } catch (error: any) {
+      await this.close();
+      throw this.handleOracleError(error);
+    }
   }
 
   public async deleteRow(
     tableName: string,
     filter: Record<string, unknown>
-  ): Promise<oracledb.Result<unknown>> {
+  ): Promise<{ success: boolean; rowsAffected: number }> {
     await this.connect();
 
     if (!this.connection) {
@@ -160,26 +184,33 @@ export class OracleDbClient {
       .join(' AND ');
 
     const binds: oracledb.BindParameters = {};
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     for (const key of filterKeys) {
       binds[`whr_${key}`] = filter[key] as any;
     }
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     const sql = `DELETE FROM "${tableName}" WHERE ${whereClause}`;
 
-    const result = await this.connection.execute(sql, binds, {
-      autoCommit: true,
-    });
+    try {
+      const result = await this.connection.execute(sql, binds, {
+        autoCommit: true,
+      });
 
-    await this.close();
-    return result;
+      await this.close();
+      
+      return {
+        success: true,
+        rowsAffected: result.rowsAffected || 0,
+      };
+    } catch (error: any) {
+      await this.close();
+      throw this.handleOracleError(error);
+    }
   }
 
   public async findRow(
     tableName: string,
     filter: Record<string, unknown>
-  ): Promise<oracledb.Result<unknown>> {
+  ): Promise<unknown[]> {
     await this.connect();
 
     if (!this.connection) {
@@ -193,39 +224,51 @@ export class OracleDbClient {
       .join(' AND ');
 
     const binds: oracledb.BindParameters = {};
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     for (const key of filterKeys) {
       binds[`whr_${key}`] = filter[key] as any;
     }
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     const sql = `SELECT * FROM "${tableName}" WHERE ${whereClause}`;
 
-    const result = await this.connection.execute(sql, binds, {
-      outFormat: oracledb.OUT_FORMAT_OBJECT,
-    });
+    try {
+      const result = await this.connection.execute(sql, binds, {
+        outFormat: oracledb.OUT_FORMAT_OBJECT,
+      });
 
-    await this.close();
-    return result;
+      await this.close();
+      return (result.rows as unknown[]) || [];
+    } catch (error: any) {
+      await this.close();
+      throw this.handleOracleError(error);
+    }
   }
 
   public async execute(
     sql: string,
     binds: oracledb.BindParameters
-  ): Promise<oracledb.Result<unknown>> {
+  ): Promise<{ rows: unknown[]; rowsAffected?: number }> {
     await this.connect();
 
     if (!this.connection) {
       throw new Error('Database connection failed and was not established.');
     }
 
-    const result = await this.connection.execute(sql, binds, {
-      autoCommit: true,
-      outFormat: oracledb.OUT_FORMAT_OBJECT,
-    });
+    try {
+      const result = await this.connection.execute(sql, binds, {
+        autoCommit: true,
+        outFormat: oracledb.OUT_FORMAT_OBJECT,
+      });
 
-    await this.close();
-    return result;
+      await this.close();
+      
+      return {
+        rows: (result.rows as unknown[]) || [],
+        rowsAffected: result.rowsAffected,
+      };
+    } catch (error: any) {
+      await this.close();
+      throw this.handleOracleError(error);
+    }
   }
 
   public async getNewRows(
@@ -245,7 +288,6 @@ export class OracleDbClient {
 
     const whereClause = whereConditions.join(' AND ');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const binds: Record<string, any> = { lastValue };
     for (const key of filterKeys) {
       binds[`whr_${key}`] = filter[key];
@@ -277,11 +319,9 @@ export class OracleDbClient {
       .join(' AND ');
 
     const binds: oracledb.BindParameters = {};
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     for (const key of filterKeys) {
       binds[`whr_${key}`] = filter[key] as any;
     }
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     let sql = `SELECT * FROM "${tableName}"`;
     if (whereClause) {
@@ -323,5 +363,27 @@ export class OracleDbClient {
       await this.connection.close();
       this.connection = undefined;
     }
+  }
+
+  private handleOracleError(error: any): Error {
+    const errorNum = error?.errorNum;
+    let message = error?.message || 'Unknown Oracle error';
+
+    // Common Oracle error codes
+    if (errorNum === 1) {
+      message = `Unique constraint violated: ${message}`;
+    } else if (errorNum === 2290 || errorNum === 2291 || errorNum === 2292) {
+      message = `Constraint violation: ${message}`;
+    } else if (errorNum === 1400) {
+      message = `Required column missing: ${message}`;
+    } else if (errorNum === 904 || errorNum === 942) {
+      message = `Invalid column or table: ${message}`;
+    } else if (errorNum === 1722) {
+      message = `Invalid number format: ${message}`;
+    } else if (errorNum === 12899) {
+      message = `Value too large for column: ${message}`;
+    }
+
+    return new Error(message);
   }
 }
