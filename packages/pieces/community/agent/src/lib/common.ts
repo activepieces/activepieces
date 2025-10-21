@@ -1,6 +1,6 @@
 import { AI_USAGE_MCP_ID_HEADER, AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from "@activepieces/common-ai";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool, McpResult, McpToolsListResult, McpToolCallResult } from "@activepieces/shared"
+import {  ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool, McpResult, McpToolsListResult, McpToolCallResult, AgentResult, WebsocketClientEvent } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
@@ -127,6 +127,26 @@ async function getMcpClient(params: AgentToolsParams) {
 }
 
 export const agentCommon = {
+    async reportAgentProgress(params: ReportAgentProgressParams) {
+        const agentOutputUrl = `${params.apiUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/emit-agent-output`
+
+        await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: agentOutputUrl,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: params.token,
+            },
+            body: {
+                event: params.event,
+                agentOutput: params.agentOutput,
+            },
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json, text/event-stream',
+            },
+        })
+    },
   async agentTools(params: AgentToolsParams) {
     const mcpClient = await getMcpClient(params)
     const builtInTools = await buildInternalTools(params)
@@ -226,19 +246,28 @@ export const agentCommon = {
       .map((block) => block.markdown)
       .join('\n')
   },
-
-  constructSystemPrompt(systemPrompt: string): string {
+    constructSystemPrompt(systemPrompt: string): string {
     return `
-You are an autonomous assistant designed to efficiently achieve the user's goal.
-YOU MUST ALWAYS call the mark as complete tool with the output or message wether you have successfully completed the task or not.
-You MUST ALWAYS do the requested task before calling the mark as complete tool.
-**Today's Date**: ${new Date().toISOString()}  
-Use this to interpret time-based queries like "this week" or "due tomorrow."
----
-${systemPrompt}
-    `.trim()
-  },
+    You are an autonomous assistant designed to efficiently accomplish the user's goal.
+
+    ### Core Directives:
+    1. **Always** perform the requested task before calling the \`mark as complete\` tool.  
+    2. **Always** call the \`mark as complete\` tool after finishing a task or answering a question — even if it fails.  
+    - Include the output, result, or failure reason in the call.  
+    3. After using **any tool** (except \`mark as complete\`), you must **immediately provide a one-line explanation** of what you did with that tool.  
+    - If the tool call fails, briefly explain **why** it failed.  
+    4. Be concise, factual, and action-driven. Avoid unnecessary explanations.
+
+    **Current Date:** ${new Date().toISOString()}  
+    (Use this to interpret time-based queries like “this week” or “due tomorrow.”)
+
+    ---
+
+    ${systemPrompt}
+    `.trim();
+    }
 }
+
 
 type AgentToolsParams = {
     outputFields: AgentOutputField[]
@@ -248,4 +277,14 @@ type AgentToolsParams = {
     flowId: string
     flowVersionId: string
     stepName: string
+}
+
+type ReportAgentProgressParams = {
+    apiUrl: string
+    token: string
+    flowId: string
+    flowVersionId: string
+    stepName: string
+    agentOutput: AgentResult
+    event: WebsocketClientEvent.AGENT_RUN_COMPLETE | WebsocketClientEvent.AGENT_RUN_PROGRESS
 }

@@ -1,12 +1,14 @@
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CreateMCPServerFromStepParams, flowStructureUtil, McpTool } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CreateMCPServerFromStepParams, EmitAgentPeiceOutput, flowStructureUtil, McpTool } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
+import { StatusCodes } from 'http-status-codes'
 import { mcpServerHandler } from '../../mcp/mcp-server/mcp-server-handler'
 import { flowService } from './flow.service'
 
-export const flowMcpController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.post('/:flowId/versions/:flowVersionId/steps/:stepName/mcp-server', CreateMCPServerFromStepRequest, async (request, reply) => {
+export const flowMcpController: FastifyPluginAsyncTypebox = async (app) => {
+    app.post('/:flowId/versions/:flowVersionId/steps/:stepName/mcp-server', CreateMCPServerFromStepRequest, async (request, reply) => {
         const flowVersion = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.flowId,
             projectId: request.principal.projectId,
@@ -30,6 +32,16 @@ export const flowMcpController: FastifyPluginAsyncTypebox = async (fastify) => {
 
         return reply
     })
+
+    app.post('/:flowId/versions/:flowVersionId/steps/:stepName/emit-agent-output', EmitAgentPieceOutputRequest, async (request, reply)  => {
+        const { agentOutput, event } = request.body
+
+        app.io.to(request.principal.projectId).emit(event, {
+            agentOutput,
+        })
+
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
 }
 
 const CreateMCPServerFromStepRequest = {
@@ -38,5 +50,18 @@ const CreateMCPServerFromStepRequest = {
     },
     schema: {
         params: CreateMCPServerFromStepParams,
+    },
+}
+
+const EmitAgentPieceOutputRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: EmitAgentPeiceOutput,
+        body: Type.Object({
+            event: Type.String(),
+            agentOutput: Type.Unknown(),
+        }),
     },
 }

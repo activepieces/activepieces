@@ -1,47 +1,96 @@
-import { ApMarkdown } from '@/components/custom/markdown';
+import { useEffect, useState } from 'react';
+
+import { useSocket } from '@/components/socket-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  AgentResult,
+  type AgentResult,
+  AgentTaskStatus,
   ContentBlockType,
-  MarkdownVariant,
+  WebsocketClientEvent,
 } from '@activepieces/shared';
 
-import { AgentToolBlock } from '../agent-tool-block';
-
-import { AgentPromptBlock } from './agent-prompt-block';
+import {
+  AgentToolBlock,
+  DoneBlock,
+  MarkdownBlock,
+  PromptBlock,
+  ThinkingBlock,
+} from '../agent-block';
 
 type AgentTimelineProps = {
   className?: string;
-  agentResult: AgentResult;
+  agentResult?: AgentResult;
 };
 
-const AgentTimeline = ({ agentResult, className = '' }: AgentTimelineProps) => {
+const defaultResult: AgentResult = {
+  message: null,
+  prompt: '',
+  status: AgentTaskStatus.IN_PROGRESS,
+  steps: [],
+};
+
+export const AgentTimeline = ({
+  agentResult,
+  className = '',
+}: AgentTimelineProps) => {
+  const socket = useSocket();
+  const [liveResult, setLiveResult] = useState<AgentResult>(
+    agentResult ?? defaultResult,
+  );
+
+  useEffect(() => setLiveResult(agentResult ?? defaultResult), [agentResult]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUpdate = ({ agentOutput }: { agentOutput: AgentResult }) => {
+      try {
+        setLiveResult(agentOutput);
+      } catch (error) {
+        console.error('Error setting live result:', error);
+      }
+    };
+
+    socket.on(WebsocketClientEvent.AGENT_RUN_PROGRESS, handleUpdate);
+    socket.on(WebsocketClientEvent.AGENT_RUN_COMPLETE, handleUpdate);
+
+    return () => {
+      socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS, handleUpdate);
+      socket.off(WebsocketClientEvent.AGENT_RUN_COMPLETE, handleUpdate);
+    };
+  }, [socket]);
+
+  const result = liveResult || agentResult;
+  const { steps = [], status } = result;
+
+  console.log(result);
+
   return (
-    <div className={`h-full ${className}`}>
-      {agentResult.prompt !== '' && (
-        <AgentPromptBlock prompt={agentResult.prompt} />
-      )}
-      <ScrollArea className="flex-1 min-h-0 mt-3">
-        <div className="flex flex-col gap-3">
-          {agentResult?.steps?.map((step, index) => {
-            return (
-              <div key={index} className="animate-fade">
-                {step.type === ContentBlockType.MARKDOWN && (
-                  <ApMarkdown
-                    markdown={step.markdown}
-                    variant={MarkdownVariant.BORDERLESS}
-                  />
-                )}
-                {step.type === ContentBlockType.TOOL_CALL && (
-                  <AgentToolBlock block={step} index={index} />
-                )}
-              </div>
-            );
+    <div className={`h-full flex w-full flex-col ${className}`}>
+      <ScrollArea className="flex-1 min-h-0 relative">
+        <div className="absolute left-1.5 top-4 bottom-8 w-[1px] bg-border" />
+
+        <div className="space-y-7 pb-4">
+          {result.prompt && <PromptBlock prompt={result.prompt} />}
+
+          {steps.map((step, index) => {
+            switch (step.type) {
+              case ContentBlockType.MARKDOWN:
+                return <MarkdownBlock key={index} step={step} index={index} />;
+              case ContentBlockType.TOOL_CALL:
+                return (
+                  <AgentToolBlock key={index} block={step} index={index} />
+                );
+              default:
+                return null;
+            }
           })}
+
+          {status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
+
+          {status === AgentTaskStatus.COMPLETED && <DoneBlock />}
         </div>
       </ScrollArea>
     </div>
   );
 };
-
-export { AgentTimeline };

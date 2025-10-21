@@ -1,7 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { AIErrorResponse } from '@activepieces/common-ai'
 import { agentCommon, AI_MODELS } from '../common';
-import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
+import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus, WebsocketClientEvent } from '@activepieces/shared';
 import { APICallError, stepCountIs, streamText } from 'ai';
 
 export const runAgent = createAction({
@@ -85,14 +85,18 @@ export const runAgent = createAction({
       message: null,
     }
 
-    const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
-        outputFields: structuredOutput as AgentOutputField[],
+    const commonParams = {
         apiUrl: context.server.apiUrl,
         token: server.token,
-        tools: agentTools as McpTool[],
         flowId: context.flows.current.id,
         flowVersionId: context.flows.current.version.id,
         stepName: context.step.name
+    }
+
+    const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
+        outputFields: structuredOutput as AgentOutputField[],
+        tools: agentTools as McpTool[],
+        ...commonParams
     })
 
     const selectedModel = agentCommon.getModelById(aiModel as string)
@@ -126,6 +130,11 @@ export const runAgent = createAction({
                     markdown: currentText,
                 })
                 currentText = ''
+                await agentCommon.reportAgentProgress({
+                  ...commonParams,
+                  agentOutput: result,
+                  event: WebsocketClientEvent.AGENT_RUN_PROGRESS
+                })
             }
             const metadata = agentCommon.getMetadata(chunk.toolName, agentTools as McpTool[], {
                 toolName: chunk.toolName,
@@ -137,6 +146,11 @@ export const runAgent = createAction({
                 startTime: new Date().toISOString(),
             })
             result.steps.push(metadata)
+            await agentCommon.reportAgentProgress({
+              ...commonParams,
+              agentOutput: result,
+              event: WebsocketClientEvent.AGENT_RUN_PROGRESS
+            })
         }
         else if (chunk.type === 'tool-result') {
             const lastBlockIndex = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
@@ -148,6 +162,11 @@ export const runAgent = createAction({
                 endTime: new Date().toISOString(),
                 output: chunk.output,
             }
+            await agentCommon.reportAgentProgress({
+              ...commonParams,
+              agentOutput: result,
+              event: WebsocketClientEvent.AGENT_RUN_PROGRESS
+            })
         }
         else if (chunk.type === 'error') {
             result.status = AgentTaskStatus.FAILED
@@ -158,6 +177,11 @@ export const runAgent = createAction({
             else {
                 result.message = agentCommon.concatMarkdown(result.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
             }
+            await agentCommon.reportAgentProgress({
+              ...commonParams,
+              agentOutput: result,
+              event: WebsocketClientEvent.AGENT_RUN_COMPLETE
+            })
             return result
         }
     }
@@ -173,8 +197,15 @@ export const runAgent = createAction({
     }
 
     const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
+
     result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
     result.message = agentCommon.concatMarkdown(result.steps)
+
+    await agentCommon.reportAgentProgress({
+      ...commonParams,
+      agentOutput: result,
+      event: WebsocketClientEvent.AGENT_RUN_COMPLETE
+    })
 
     return result
   }
