@@ -116,7 +116,7 @@ export const McpPieceTool = ({
                   title={`${t('Delete')} ${toolName}`}
                   message={t('Are you sure you want to delete this tool?')}
                   mutationFn={async () =>
-                    await removeTool(tools.map((tool) => tool.id))
+                    await removeTool(tools.map((tool) => tool.toolName))
                   }
                   entityName={t('Tool')}
                 >

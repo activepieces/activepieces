@@ -50,7 +50,7 @@ export const McpToolsSection = ({
 
   const removeTool = async (toolIds: string[]): Promise<void> => {
     const newTools = tools.filter(
-      (tool: McpTool) => !toolIds.includes(tool.id),
+      (tool: McpTool) => !toolIds.includes(tool.toolName),
     );
     onToolsUpdate(newTools);
   };

@@ -4,7 +4,6 @@ import DataGrid, { DataGridHandle } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
 
-import { useSocket } from '@/components/socket-provider';
 import { useTheme } from '@/components/theme-provider';
 import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
 import { ApTableHeader } from '@/features/tables/components/ap-table-header';
