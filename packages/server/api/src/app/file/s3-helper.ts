@@ -15,15 +15,11 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         if (!isNil(existingFile?.s3Key)) {
             return existingFile.s3Key
         }
-        const now = dayjs()
-        const datePath = `${now.format('YYYY/MM/DD/HH')}`
-        if (platformId) {
-            return `platform/${platformId}/${type}/${datePath}/${fileId}`
-        }
-        else if (projectId) {
-            return `project/${projectId}/${type}/${datePath}/${fileId}`
-        }
-        else {
+        if (!isNil(platformId)) {
+            return `platform/${platformId}/${type}/${fileId}`
+        } else if (!isNil(projectId)) {
+            return `project/${projectId}/${type}/${fileId}`
+        } else {
             throw new Error('Either platformId or projectId must be provided')
         }
     },
