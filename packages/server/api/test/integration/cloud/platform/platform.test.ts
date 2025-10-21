@@ -1,3 +1,4 @@
+import { PlanName } from '@activepieces/ee-shared'
 import {
     CopilotProviderType,
     FilteredPieceBehavior,
@@ -17,6 +18,7 @@ import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
+
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
@@ -193,7 +195,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(20)
+            expect(Object.keys(responseBody).length).toBe(21)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -237,6 +239,32 @@ describe('Platform API', () => {
             expect(responseBody?.message).toBe(
                 'userPlatformId and paramId should be equal',
             )
+        })
+    }),
+    describe('delete platform endpoint', () => {
+        it('deletes a platform by id', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
     })
 })

@@ -30,7 +30,7 @@ import { platformRepo, platformService } from './platform.service'
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-    app.post('/:id', UpdatePlatformRequest, async (req) => {
+    app.post('/:id', UpdatePlatformRequest, async (req ) => {
         const { smtp } = req.body
         if (smtp) { 
             await smtpEmailSender(req.log).validateOrThrow(smtp)

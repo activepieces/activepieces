@@ -16,6 +16,7 @@ import {
     ProjectMember,
     SigningKey,
 } from '@activepieces/ee-shared'
+import { apDayjs } from '@activepieces/server-shared'
 import {
     AiOverageState,
     apId,
@@ -64,7 +65,6 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
-import { apDayjs } from '../../../src/app/helper/dayjs-helper'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
@@ -236,6 +236,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         todosEnabled: platformPlan?.todosEnabled ?? false,
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
+        plan: platformPlan?.plan,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
