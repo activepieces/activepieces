@@ -19,8 +19,10 @@ import { OutgoingWebhookDialog } from './outgoing-webhook-dialog';
 
 const OutgoingWebhookActions = ({
   webhook,
+  projects,
 }: {
   webhook: OutgoingWebhook;
+  projects: Project[];
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { mutate: deleteWebhook, isPending: isDeleting } =
@@ -39,7 +41,7 @@ const OutgoingWebhookActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <OutgoingWebhookDialog webhook={webhook}>
+          <OutgoingWebhookDialog webhook={webhook} projects={projects}>
             <DropdownMenuItem
               onSelect={(e) => {
                 e.preventDefault();

@@ -12,11 +12,13 @@ import OutgoingWebhookActions from './outgoing-webhook-actions';
 interface OutgoingWebhooksTableProps {
   webhooks: SeekPage<OutgoingWebhook> | undefined;
   isLoading: boolean;
+  projects: Project[];
 }
 
 export const OutgoingWebhooksTable = ({
   webhooks,
   isLoading,
+  projects,
 }: OutgoingWebhooksTableProps) => {
   const columns: ColumnDef<RowDataWithActions<OutgoingWebhook>>[] = [
     {
@@ -81,7 +83,7 @@ export const OutgoingWebhooksTable = ({
     {
       id: 'actions',
       cell: ({ row }) => (
-        <OutgoingWebhookActions webhook={row.original} />
+        <OutgoingWebhookActions webhook={row.original} projects={projects}/>
       ),
     },
   ];

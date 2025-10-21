@@ -1,10 +1,12 @@
 import {
   ApplicationEventName,
+  CreateOutgoingWebhookRequestBody,
   FlowCreatedEvent,
   OutgoingWebhook,
   OutgoingWebhookScope,
+  UpdateOutgoingWebhookRequestBody,
 } from '@activepieces/ee-shared';
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, PlatformId, ProjectId, SeekPage, spreadIfDefined, WorkerJobType } from '@activepieces/shared';
+import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, Cursor, ErrorCode, PlatformId, ProjectId, SeekPage, WorkerJobType } from '@activepieces/shared';
 import { FastifyBaseLogger } from 'fastify';
 import { repoFactory } from '../../core/db/repo-factory';
 import {
@@ -25,20 +27,21 @@ export const outgoingWebhookRepo = repoFactory<OutgoingWebhookSchema>(
 );
 
 export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
-  create: async (params: CreateParams): Promise<OutgoingWebhook> => {
-    assertUrlIsExternal(params.url)
+  create: async (
+    request: CreateOutgoingWebhookRequestBody,
+    platformId: string
+  ): Promise<OutgoingWebhook> => {
+    assertUrlIsExternal(request.url)
     return outgoingWebhookRepo().save({
+      ...request,
       id: apId(),
-      ...params,
+      platformId,
     });
   },
-  update: async ({ id, platformId, url, events, scope, projectId }: UpdateParams): Promise<OutgoingWebhook> => {
-    if (url) assertUrlIsExternal(url)
+  update: async ({ id, platformId, request }: UpdateParams): Promise<OutgoingWebhook> => {
+    assertUrlIsExternal(request.url)
     await outgoingWebhookRepo().update({ id, platformId }, {
-      ...spreadIfDefined('url', url),
-      ...spreadIfDefined('events', events),
-      ...spreadIfDefined('scope', scope),
-      ...spreadIfDefined('projectId', projectId),
+      ...request,
     });
     return outgoingWebhookRepo().findOneByOrFail({ id, platformId });
   },
@@ -50,7 +53,6 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
   },
   list: async ({
     platformId,
-    projectId,
     cursorRequest,
     limit,
   }: ListParams): Promise<SeekPage<OutgoingWebhook>> => {
@@ -69,14 +71,6 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
       .where({
         platformId,
       })
-      .andWhere(
-        '(outgoing_webhook.scope = :platformScope) OR (outgoing_webhook.scope = :projectScope AND outgoing_webhook.projectId = :projectId)',
-        {
-          platformScope: OutgoingWebhookScope.PLATFORM,
-          projectScope: OutgoingWebhookScope.PROJECT,
-          projectId,
-        }
-      )
 
     const { data, cursor } = await paginator.paginate(queryBuilder);
 
@@ -94,11 +88,11 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
             projectScope: OutgoingWebhookScope.PROJECT,
             projectId,
         })
-    }
+    }            
     AddAPArrayContainsToQueryBuilder(qb, 'events', [event])
     const webhooks = await qb.getMany()
 
-    await Promise.all(webhooks.map(webhook =>
+    await Promise.all(webhooks.map(webhook => 
         jobQueue(log).add({
             type: JobType.ONE_TIME,
             id: apId(),
@@ -167,33 +161,19 @@ export const createMockAuditEvent = (): FlowCreatedEvent => {
   }
 }
 
-type CreateParams =
-  | {
-      platformId: PlatformId;
-      scope: OutgoingWebhookScope.PLATFORM;
-      url: string;
-      events: ApplicationEventName[];
-      projectId?: undefined;
-    }
-  | {
-      platformId: PlatformId;
-      scope: OutgoingWebhookScope.PROJECT;
-      url: string;
-      events: ApplicationEventName[];
-      projectId: ProjectId;
-    };
-
-type UpdateParams = { id: string, platformId: PlatformId } & Partial<CreateParams>
-
 type DeleteParams = {
   id: string;
   platformId: string;
 };
 
+type UpdateParams = {
+  id: string;
+  platformId: string;
+  request: UpdateOutgoingWebhookRequestBody;
+};
 
 type ListParams = {
   platformId: PlatformId;
-  projectId: ProjectId;
   cursorRequest: Cursor;
   limit?: number;
 };
