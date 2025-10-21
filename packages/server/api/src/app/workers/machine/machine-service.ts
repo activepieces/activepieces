@@ -1,5 +1,6 @@
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
+    ApEdition,
     ExecutionMode,
     isNil,
     MachineInformation,
@@ -33,13 +34,16 @@ export const machineService = (_log: FastifyBaseLogger) => {
         async onConnection(platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
             let executionMode = system.getOrThrow(AppSystemProp.EXECUTION_MODE)
             if (!isNil(platformIdForDedicatedWorker)) {
-                const dedicatedWorkerConfig = await platformPlanService(_log).getDedicatedWorkerConfig(platformIdForDedicatedWorker)
-                if (!isNil(dedicatedWorkerConfig)) {
-                    if (dedicatedWorkerConfig.trustedEnvironment) {
-                        executionMode = ExecutionMode.SANDBOX_CODE_ONLY
-                    }
-                    else {
-                        executionMode = ExecutionMode.SANDBOXED
+                const edition = system.getEdition()
+                if (edition !== ApEdition.COMMUNITY) {
+                    const dedicatedWorkerConfig = await platformPlanService(_log).getDedicatedWorkerConfig(platformIdForDedicatedWorker)
+                    if (!isNil(dedicatedWorkerConfig)) {
+                        if (dedicatedWorkerConfig.trustedEnvironment) {
+                            executionMode = ExecutionMode.SANDBOX_CODE_ONLY
+                        }
+                        else {
+                            executionMode = ExecutionMode.SANDBOXED
+                        }
                     }
                 }
             }

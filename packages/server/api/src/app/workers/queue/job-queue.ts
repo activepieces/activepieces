@@ -1,5 +1,5 @@
 import { apDayjsDuration, AppSystemProp, getPlatformQueueName, QueueName } from '@activepieces/server-shared'
-import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, PlatformId } from '@activepieces/shared'
+import { ApEdition, ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, PlatformId } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -11,13 +11,18 @@ import { AddJobParams, JobType, QueueManager } from './queue-manager'
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
+const isCommunityEdition = system.getEdition() === ApEdition.COMMUNITY
 
 const dedicatedWorkersQueues = new Map<string, Queue>()
 export let sharedWorkerJobsQueue: Queue | undefined = undefined
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async init(): Promise<void> {
-        const platformIdsWithDedicatedWorkers = await platformPlanService(log).getPlatformsIdsWithDedicatedWorkers()
+        let platformIdsWithDedicatedWorkers: string[] = []
+        
+        if (!isCommunityEdition) {
+            platformIdsWithDedicatedWorkers = await platformPlanService(log).getPlatformsIdsWithDedicatedWorkers()
+        }
         
         await Promise.all([
             ...platformIdsWithDedicatedWorkers.map(async (platformId) => {
@@ -34,7 +39,11 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         const { type, data } = params
 
         const platformId = data.platformId
-        const isDedicatedWorkersEnabled = await platformPlanService(log).isDedicatedWorkersEnabled(platformId)
+        let isDedicatedWorkersEnabled = false
+
+        if (!isCommunityEdition) {
+            isDedicatedWorkersEnabled = await platformPlanService(log).isDedicatedWorkersEnabled(platformId)
+        }
 
         const queue = isDedicatedWorkersEnabled
             ? await ensureQueueExists({ log, queueName: getPlatformQueueName(platformId), platformId })

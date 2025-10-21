@@ -156,7 +156,7 @@ export const platformService = {
         }
         return {
             ...platform,
-            usage: await platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id),
+            usage: await getUsage(platform),
             plan: await getPlan(platform),
         }
     },

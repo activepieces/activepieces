@@ -472,7 +472,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
         RestrictOnDeleteProjectForFlow1760376319952,
         RemoveTriggerRunEntity1760993216501,
-        AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
     ]
 
     const edition = system.getEdition()
@@ -572,6 +571,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformAnalyticsReportEntity1753091760355,
                 AddBillingCycle1754559781173,
                 EligibileForTrial1754852385518,
+                AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
             )
             break
         case ApEdition.COMMUNITY:
