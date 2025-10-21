@@ -8,9 +8,9 @@
     import { extractionFailed } from "./lib/triggers/extraction-failed";
     import { PieceCategory } from "@activepieces/shared";
 
-    
+
     export const extractaAi = createPiece({
-      displayName: "Extracta AI",
+      displayName: "Extracta.ai",
       description: "An AI document extraction & content analysis platform that transforms unstructured files (PDFs, images, URLs, etc.) into structured data.",
       auth: extractaAiAuth,
       minimumSupportedRelease: '0.36.1',
