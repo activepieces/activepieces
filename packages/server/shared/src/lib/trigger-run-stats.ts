@@ -1,7 +1,7 @@
-import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
 import { PlatformId, ProjectId, TriggerRunStatus, TriggerStatusReport } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Redis from 'ioredis'
+import { apDayjs, apDayjsDuration } from './dayjs-helper'
 
 export const triggerRunStats = (_log: FastifyBaseLogger, redisConnection: Redis) => ({
     async save({ platformId, pieceName, status }: SaveParams): Promise<void> {
@@ -25,9 +25,9 @@ export const triggerRunStats = (_log: FastifyBaseLogger, redisConnection: Redis)
     },
 })
 
-export const triggerRunRedisKey = (platformId: PlatformId, pieceName: string, formattedDate: string, status: TriggerRunStatus | "*") => `trigger_run:${platformId}:${pieceName}:${formattedDate}:${status}`
+export const triggerRunRedisKey = (platformId: PlatformId, pieceName: string, formattedDate: string, status: TriggerRunStatus | '*') => `trigger_run:${platformId}:${pieceName}:${formattedDate}:${status}`
 
-interface ParsedRedisRecord {
+type ParsedRedisRecord = {
     pieceName: string
     day: string
     status: TriggerRunStatus
@@ -41,13 +41,13 @@ const parseRedisRecords = (redisKeys: string[], values: (string | null)[]): Pars
             pieceName: parts[2],
             day: parts[3],
             status: parts[4] as TriggerRunStatus,
-            count: Number(values[index]) || 0
+            count: Number(values[index]) || 0,
         }
     })
 }
 
 const aggregateRecords = (records: ParsedRedisRecord[]): TriggerStatusReport => {
-    const pieceNameToDayToStats = new Map<string, Map<string, { success: number; failure: number }>>()
+    const pieceNameToDayToStats = new Map<string, Map<string, { success: number, failure: number }>>()
 
     for (const record of records) {
         if (!pieceNameToDayToStats.has(record.pieceName)) {
@@ -61,13 +61,14 @@ const aggregateRecords = (records: ParsedRedisRecord[]): TriggerStatusReport => 
         const dayStats = dayMap.get(dayKey)!
         if (record.status === TriggerRunStatus.COMPLETED) {
             dayStats.success += record.count
-        } else {
+        }
+        else {
             dayStats.failure += record.count
         }
     }
     const pieces: TriggerStatusReport['pieces'] = {}
     for (const [pieceName, dayMap] of pieceNameToDayToStats) {
-        const dailyStats: Record<string, { success: number; failure: number }> = {}
+        const dailyStats: Record<string, { success: number, failure: number }> = {}
         let totalRuns = 0
         for (const [day, stats] of dayMap) {
             dailyStats[day] = stats
@@ -75,7 +76,7 @@ const aggregateRecords = (records: ParsedRedisRecord[]): TriggerStatusReport => 
         }
         pieces[pieceName] = {
             dailyStats,
-            totalRuns
+            totalRuns,
         }
     }
 

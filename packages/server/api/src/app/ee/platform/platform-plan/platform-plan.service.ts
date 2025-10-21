@@ -20,6 +20,7 @@ type UpdatePlatformBillingParams = {
 const edition = system.getEdition()
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
+ 
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(platformPlan)) return platformPlan
@@ -107,6 +108,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
+    },
+    async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
+        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
+        return platformPlan.plan === PlanName.PLUS || platformPlan.plan === PlanName.BUSINESS || platformPlan.plan === PlanName.FREE
     },
 })
 
