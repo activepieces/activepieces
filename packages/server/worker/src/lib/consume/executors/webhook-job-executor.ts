@@ -5,6 +5,7 @@ import {
     EventPayload,
     FlowVersion,
     isNil,
+    PlatformId,
     ProgressUpdateType,
     TriggerRunStatus,
     WebhookJobData,
@@ -60,7 +61,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 span.setAttribute('webhook.projectId', data.projectId)
 
                 if (saveSampleData) {
-                    await handleSampleData(jobId, flowVersion, engineToken, workerToken, data.projectId, webhookLogger, payload, timeoutInSeconds)
+                    await handleSampleData(jobId, flowVersion, engineToken, workerToken, data.projectId, data.platformId, webhookLogger, payload, timeoutInSeconds)
                 }
 
                 const onlySaveSampleData = !execute
@@ -74,6 +75,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                     jobId,
                     flowVersion,
                     payload,
+                    platformId: data.platformId,
                     projectId: data.projectId,
                     simulate: saveSampleData,
                     timeoutInSeconds,
@@ -120,6 +122,7 @@ async function handleSampleData(
     engineToken: string,
     workerToken: string,
     projectId: string,
+    platformId: PlatformId,
     log: FastifyBaseLogger,
     payload: EventPayload,
     timeoutInSeconds: number,
@@ -128,6 +131,7 @@ async function handleSampleData(
         jobId,
         flowVersion: latestFlowVersion,
         payload,
+        platformId,
         projectId,
         simulate: true,
         timeoutInSeconds,
