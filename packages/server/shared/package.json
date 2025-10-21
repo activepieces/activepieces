@@ -11,6 +11,7 @@
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
     "axios": "1.8.3",
+    "chokidar": "4.0.3",
     "axios-retry": "4.4.1",
     "dayjs": "1.11.9",
     "@sentry/node": "7.120.0",
