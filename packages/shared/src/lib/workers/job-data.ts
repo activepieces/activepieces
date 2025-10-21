@@ -41,6 +41,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_AGENT:
+        case WorkerJobType.OUTGOING_WEBHOOK:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job.environment, job.synchronousHandlerId)

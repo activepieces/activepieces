@@ -110,6 +110,7 @@ export const WorkerSettingsResponse = Type.Object({
     PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
     MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
     JWT_SECRET: Type.String(),
+    OUTGOING_WEBHOOK_TIMEOUT_SECONDS: Type.Number(),
 })
 
 export type WorkerSettingsResponse = Static<typeof WorkerSettingsResponse>
