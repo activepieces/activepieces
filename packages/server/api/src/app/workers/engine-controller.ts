@@ -53,9 +53,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
 
 
-        if (!isNil(stepNameToTest)) {
+        if (!isNil(stepNameToTest) && !isNil(logsFileId)) {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
-                logsFileId: logsFileId ?? '',
+                logsFileId,
                 projectId: request.principal.projectId,
                 status: runDetails.status,
                 runId,

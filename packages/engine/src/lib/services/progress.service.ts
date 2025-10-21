@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -95,18 +95,20 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         const { flowExecutorContext, engineConstants } = params
         const runDetails = await flowExecutorContext.toResponse()
         const runDetailsWithoutSteps = { ...runDetails, steps: undefined }
-        const executionState = await logSerializer.serialize({
-            executionState: {
-                steps: runDetails.steps as Record<string, StepOutput>,
-            },
-            tasks: flowExecutorContext.tasks,
-        })
+        // Execution state serialization disabled
+        // const executionState = await logSerializer.serialize({
+        //     executionState: {
+        //         steps: runDetails.steps as Record<string, StepOutput>,
+        //     },
+        //     tasks: flowExecutorContext.tasks,
+        // })
 
-        assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
-        const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
-        if (!uploadLogResponse.ok) {
-            throw new ProgressUpdateError('Failed to upload execution state', uploadLogResponse)
-        }
+        // Execution state upload disabled
+        // assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
+        // const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+        // if (!uploadLogResponse.ok) {
+        //     throw new ProgressUpdateError('Failed to upload execution state', uploadLogResponse)
+        // }
 
         const request: UpdateRunProgressRequest = {
             runId: engineConstants.flowRunId,
@@ -115,7 +117,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             runDetails: runDetailsWithoutSteps,
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
-            logsFileId: engineConstants.logsFileId,
+            logsFileId: undefined, // Disabled
             stepNameToTest: engineConstants.stepNameToTest,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
@@ -144,24 +146,24 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
-    const response = await fetchWithRetry(uploadUrl, {
-        method: 'PUT',
-        body: executionState,
-        headers: {
-            'Content-Type': 'application/octet-stream',
-        },
-        redirect: 'manual',
-        retries: 3,
-        retryDelay: 3000,
-    })
+// const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
+//     const response = await fetchWithRetry(uploadUrl, {
+//         method: 'PUT',
+//         body: executionState,
+//         headers: {
+//             'Content-Type': 'application/octet-stream',
+//         },
+//         redirect: 'manual',
+//         retries: 3,
+//         retryDelay: 3000,
+//     })
 
-    if (followRedirects && response.status >= 300 && response.status < 400) {
-        const location = response.headers.get('location')!
-        return uploadExecutionState(location, executionState, false)
-    }
-    return response
-}
+//     if (followRedirects && response.status >= 300 && response.status < 400) {
+//         const location = response.headers.get('location')!
+//         return uploadExecutionState(location, executionState, false)
+//     }
+//     return response
+// }
 
 
 type UpdateStepProgressParams = {
