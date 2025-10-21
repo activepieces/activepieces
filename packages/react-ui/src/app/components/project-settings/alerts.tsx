@@ -86,32 +86,6 @@ export const AlertsSettings = () => {
   } = alertQueries.useAlertsEmailList();
   const { mutate: deleteAlert } = alertMutations.useDeleteAlert();
 
-  const notificationMutation = useMutation<
-    ProjectWithLimits,
-    Error,
-    {
-      notifyStatus: NotificationStatus;
-    }
-  >({
-    mutationFn: (request) => {
-      updateCurrentProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId()!, request);
-    },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
-        duration: 3000,
-      });
-    },
-  });
-
-  const onChangeStatus = (status: NotificationStatus) => {
-    notificationMutation.mutate({
-      notifyStatus: status,
-    });
-  };
-
   const writeAlertPermission =
     checkAccess(Permission.WRITE_ALERT) &&
     checkAccess(Permission.WRITE_PROJECT);
@@ -138,30 +112,6 @@ export const AlertsSettings = () => {
           )}
         </CardHeader>
         <CardContent className="space-y-3">
-          <AlertOption
-            title={t('Every Failed Run')}
-            description={t('Get an email alert when a flow fails.')}
-            onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
-            icon={<BellIcon className="w-4 h-4" />}
-            isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
-            disabled={writeAlertPermission === false}
-          />
-          <AlertOption
-            title={t('First Seen')}
-            description={t('Get an email alert when a new issue is created.')}
-            onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
-            icon={<EyeOpenIcon className="w-4 h-4" />}
-            isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
-            disabled={writeAlertPermission === false}
-          />
-          <AlertOption
-            title={t('Never')}
-            description={t('Turn off email notifications.')}
-            onClick={() => onChangeStatus(NotificationStatus.NEVER)}
-            icon={<EyeNoneIcon className="w-4 h-4" />}
-            isActive={project?.notifyStatus === NotificationStatus.NEVER}
-            disabled={writeAlertPermission === false}
-          />
         </CardContent>
       </Card>
 

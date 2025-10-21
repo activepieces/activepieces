@@ -36,7 +36,6 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
             releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
@@ -84,7 +83,6 @@ export const projectService = {
             {
                 ...spreadIfDefined('externalId', externalId),
                 ...spreadIfDefined('displayName', request.displayName),
-                ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
             },
@@ -243,7 +241,6 @@ type ExistsParams = {
 type UpdateParams = {
     displayName?: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
     metadata?: Metadata
 }
@@ -253,7 +250,6 @@ type CreateParams = {
     displayName: string
     platformId: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     metadata?: Metadata
 }
 

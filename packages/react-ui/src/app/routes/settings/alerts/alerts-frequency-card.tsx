@@ -32,31 +32,6 @@ const AlertFrequencyCard = React.memo(() => {
   const writeAlertPermission =
     checkAccess(Permission.WRITE_ALERT) &&
     checkAccess(Permission.WRITE_PROJECT);
-  const mutation = useMutation<
-    ProjectWithLimits,
-    Error,
-    {
-      notifyStatus: NotificationStatus;
-    }
-  >({
-    mutationFn: (request) => {
-      updateCurrentProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId()!, request);
-    },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
-        duration: 3000,
-      });
-    },
-  });
-
-  const onChangeStatus = (status: NotificationStatus) => {
-    mutation.mutate({
-      notifyStatus: status,
-    });
-  };
 
   return (
     <Card className="w-full">
@@ -80,30 +55,6 @@ const AlertFrequencyCard = React.memo(() => {
         )}
       </CardHeader>
       <CardContent className="grid gap-1">
-        <AlertOption
-          title={t('Every Failed Run')}
-          description={t('Get an email alert when a flow fails.')}
-          onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
-          icon={<BellIcon className="mt-px size-5" />}
-          isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
-          disabled={writeAlertPermission === false}
-        />
-        <AlertOption
-          title={t('First Seen')}
-          description={t('Get an email alert when a new issue created.')}
-          onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
-          icon={<EyeOpenIcon className="mt-px size-5" />}
-          isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
-          disabled={writeAlertPermission === false}
-        />
-        <AlertOption
-          title={t('Never')}
-          description={t('Turn off email notifications.')}
-          onClick={() => onChangeStatus(NotificationStatus.NEVER)}
-          icon={<EyeNoneIcon className="mt-px size-5" />}
-          isActive={project?.notifyStatus === NotificationStatus.NEVER}
-          disabled={writeAlertPermission === false}
-        />
       </CardContent>
     </Card>
   );

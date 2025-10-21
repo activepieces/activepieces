@@ -1,4 +1,3 @@
-import { NotificationStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -13,12 +12,6 @@ const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400
 const HOURLY_LIMIT = 5
 const DAILY_LIMIT = 15
-
-export const alertsHandler = (log: FastifyBaseLogger) => ({
-    [NotificationStatus.NEVER]: async (_: IssueParams): Promise<void> => Promise.resolve(),
-    [NotificationStatus.ALWAYS]: async (params: IssueParams): Promise<void> => sendAlertOnFlowRun(params, log),
-    [NotificationStatus.NEW_ISSUE]: async (params: IssueParams): Promise<void> => sendAlertOnNewIssue(params, log),
-})
 
 async function scheduleSendingReminder(params: IssueRemindersParams, log: FastifyBaseLogger): Promise<void> {
     const { projectId } = params
