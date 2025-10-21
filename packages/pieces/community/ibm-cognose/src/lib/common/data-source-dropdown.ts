@@ -12,7 +12,7 @@ export const dataSourceDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please authenticate first'
+        placeholder: 'Connect your account first'
       };
     }
 
@@ -24,10 +24,18 @@ export const dataSourceDropdown = Property.Dropdown({
         const data = response.body;
         const dataSources = data.dataSources || [];
         
+        if (dataSources.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No data sources found'
+          };
+        }
+        
         return {
           disabled: false,
           options: dataSources.map((ds: any) => ({
-            label: `${ds.defaultName} (${ds.id})`,
+            label: ds.defaultName || ds.id,
             value: ds.id
           }))
         };

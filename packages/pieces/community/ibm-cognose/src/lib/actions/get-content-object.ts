@@ -8,46 +8,46 @@ export const getContentObjectAction = createAction({
   auth: ibmCognoseAuth,
   name: 'get_content_object',
   displayName: 'Get Content Object',
-  description: 'Retrieves the details of a specific content object from IBM Cognos Analytics',
+  description: 'Get content object details',
   props: {
     objectId: contentObjectDropdown,
     fields: Property.ShortText({
       displayName: 'Extra Fields',
-      description: 'Optional comma-separated list of extra fields to retrieve (e.g., "owner,permissions,children")',
+      description: 'Comma-separated list of extra fields (e.g., owner,permissions,children)',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
     const { objectId, fields } = propsValue;
 
-    // Create Cognos client
-    const client = new CognosClient(auth);
+    try {
+      const client = new CognosClient(auth);
 
-    // Build query parameters
-    const queryParams = [];
-    if (fields && fields.trim()) {
-      queryParams.push(`fields=${encodeURIComponent(fields.trim())}`);
-    }
+      const queryParams = [];
+      if (fields && fields.trim()) {
+        queryParams.push(`fields=${encodeURIComponent(fields.trim())}`);
+      }
 
-    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+      const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
 
-    // Get the content object details
-    const response = await client.makeAuthenticatedRequest(
-      `/content/${objectId}${queryString}`, 
-      HttpMethod.GET
-    );
+      const response = await client.makeAuthenticatedRequest(
+        `/content/${objectId}${queryString}`, 
+        HttpMethod.GET
+      );
 
-    if (response.status === 200) {
-      return {
-        success: true,
-        contentObject: response.body,
-      };
-    } else if (response.status === 401) {
-      throw new Error('Authentication required. Please check your credentials.');
-    } else if (response.status === 404) {
-      throw new Error(`Content object with ID '${objectId}' not found`);
-    } else {
-      throw new Error(`Failed to retrieve content object: ${response.status} ${response.body}`);
+      if (response.status === 200) {
+        return response.body;
+      } else if (response.status === 401) {
+        throw new Error('Authentication failed. Check your credentials.');
+      } else if (response.status === 404) {
+        throw new Error(`Content object not found`);
+      } else {
+        throw new Error(`Failed to retrieve: ${response.status} ${response.body}`);
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to retrieve content object: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   },
 });

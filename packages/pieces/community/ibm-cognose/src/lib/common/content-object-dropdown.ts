@@ -12,7 +12,7 @@ export const contentObjectDropdown = Property.Dropdown({
       return {
         disabled: true,
         options: [],
-        placeholder: 'Please authenticate first'
+        placeholder: 'Connect your account first'
       };
     }
 
@@ -24,10 +24,18 @@ export const contentObjectDropdown = Property.Dropdown({
         const data = response.body;
         const contentObjects = data.content || [];
         
+        if (contentObjects.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No content objects found'
+          };
+        }
+        
         return {
           disabled: false,
           options: contentObjects.map((obj: any) => ({
-            label: `${obj.defaultName || 'Unnamed'} (${obj.type || 'Unknown'}) - ${obj.id}`,
+            label: `${obj.defaultName || 'Unnamed'} (${obj.type || 'Unknown'})`,
             value: obj.id
           }))
         };

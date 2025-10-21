@@ -8,32 +8,37 @@ export const deleteDataSourceAction = createAction({
   auth: ibmCognoseAuth,
   name: 'delete_data_source',
   displayName: 'Delete Data Source',
-  description: 'Deletes an existing data source from IBM Cognos Analytics',
+  description: 'Delete a data source',
   props: {
     datasourceId: dataSourceDropdown,
   },
   async run({ auth, propsValue }) {
     const { datasourceId } = propsValue;
 
-   
-    const client = new CognosClient(auth);
+    try {
+      const client = new CognosClient(auth);
 
-    const response = await client.makeAuthenticatedRequest(
-      `/dataSources/${datasourceId}`, 
-      HttpMethod.DELETE
-    );
+      const response = await client.makeAuthenticatedRequest(
+        `/dataSources/${datasourceId}`, 
+        HttpMethod.DELETE
+      );
 
-    if (response.status === 204) {
-      return {
-        success: true,
-        message: `Data source '${datasourceId}' deleted successfully`,
-      };
-    } else if (response.status === 401) {
-      throw new Error('Authentication required. Please check your credentials.');
-    } else if (response.status === 404) {
-      throw new Error(`Data source with ID '${datasourceId}' not found`);
-    } else {
-      throw new Error(`Failed to delete data source: ${response.status} ${response.body}`);
+      if (response.status === 204) {
+        return {
+          success: true,
+          message: `Data source deleted successfully`,
+        };
+      } else if (response.status === 401) {
+        throw new Error('Authentication failed. Check your credentials.');
+      } else if (response.status === 404) {
+        throw new Error(`Data source not found`);
+      } else {
+        throw new Error(`Failed to delete: ${response.status} ${response.body}`);
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to delete data source: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   },
 });

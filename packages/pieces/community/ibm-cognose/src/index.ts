@@ -9,6 +9,7 @@ import {
   createCustomApiCallAction
 } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
+import { CognosClient } from './lib/common/cognos-client';
 import { createDataSourceAction } from './lib/actions/create-data-source';
 import { updateDataSourceAction } from './lib/actions/update-data-source';
 import { deleteDataSourceAction } from './lib/actions/delete-data-source';
@@ -30,40 +31,47 @@ Enter your Cognos Analytics credentials:
   props: {
     baseurl: Property.ShortText({
       displayName: 'Base URL',
-      description: 'The base URL for your Cognos server (e.g., https://your-cognos-server.com)',
+      description: 'Cognos server URL (e.g., https://your-cognos-server.com)',
       required: true
     }),
     CAMNamespace: Property.ShortText({
       displayName: 'CAM Namespace',
-      description: 'The CAM namespace for authentication (e.g., LDAP)',
+      description: 'CAM namespace for authentication (e.g., LDAP)',
       required: true
     }),
     username: Property.ShortText({
       displayName: 'Username',
-      description: 'Your Cognos username',
+      description: 'Cognos username',
       required: true
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'Your Cognos password',
+      description: 'Cognos password',
       required: true
     })
   },
   validate: async ({ auth }) => {
-    // For now, just validate that username and password are provided
-    // The actual server validation will happen when actions are executed
-    const { username, password, CAMNamespace } = auth;
+    const { username, password, CAMNamespace, baseurl } = auth;
 
-    if (!username || !password || !CAMNamespace) {
+    if (!username || !password || !CAMNamespace || !baseurl) {
       return {
         valid: false,
-        error: 'Username, password, and CAM Namespace are required'
+        error: 'All fields are required'
       };
     }
 
-    return {
-      valid: true
-    };
+    try {
+      const client = new CognosClient(auth as any);
+      await client.createSession();
+      return {
+        valid: true
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   }
 });
 
@@ -75,7 +83,7 @@ export const ibmCognose = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/ibm-cognose.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: [],
+  authors: ['fortunamide', 'onyedikachi-david'],
   actions: [
     createDataSourceAction,
     getDataSourceAction,
@@ -86,36 +94,25 @@ export const ibmCognose = createPiece({
     moveContentObjectAction,
     copyContentObjectAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://your-cognos-server.com/api/v1', // TODO: Configure server URL
+      baseUrl: (auth) => `${(auth as any).baseurl}/api/v1`,
       auth: ibmCognoseAuth,
       authMapping: async (auth: any) => {
-        // Create session first to get authentication token
-        const parameters = [
-          { name: 'CAMNamespace', value: auth.CAMNamespace },
-          { name: 'CAMUsername', value: auth.username },
-          { name: 'CAMPassword', value: auth.password }
-        ];
-
-        const sessionResponse = await httpClient.sendRequest({
-          method: HttpMethod.PUT,
-          url: 'https://your-cognos-server.com/api/v1/session', // TODO: Configure server URL
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: {
-            parameters
+        try {
+          const client = new CognosClient(auth);
+          await client.createSession();
+          
+          if (client['sessionCookies']) {
+            return {
+              Cookie: client['sessionCookies']
+            };
           }
-        });
 
-        // Extract session cookies for subsequent requests
-        const cookies = sessionResponse.headers?.['set-cookie'];
-        if (cookies) {
-          return {
-            Cookie: Array.isArray(cookies) ? cookies.join('; ') : cookies
-          };
+          return {};
+        } catch (error) {
+          throw new Error(
+            `Failed to authenticate: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         }
-
-        return {};
       }
     })
   ],

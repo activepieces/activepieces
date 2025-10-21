@@ -8,23 +8,23 @@ export const updateDataSourceAction = createAction({
   auth: ibmCognoseAuth,
   name: 'update_data_source',
   displayName: 'Update Data Source',
-  description: 'Updates an existing data source in IBM Cognos Analytics',
+  description: 'Update an existing data source',
   props: {
     datasourceId: dataSourceDropdown,
     defaultName: Property.ShortText({
       displayName: 'Data Source Name',
-      description: 'The new name for the data source (optional)',
+      description: 'New name for the data source',
       required: false,
     }),
     disabled: Property.Checkbox({
       displayName: 'Disabled',
-      description: 'Whether the data source should be disabled',
+      description: 'Disable the data source',
       required: false,
       defaultValue: false,
     }),
     hidden: Property.Checkbox({
       displayName: 'Hidden',
-      description: 'Whether the data source should be hidden',
+      description: 'Hide the data source',
       required: false,
       defaultValue: false,
     }),
@@ -32,48 +32,50 @@ export const updateDataSourceAction = createAction({
   async run({ auth, propsValue }) {
     const { datasourceId, defaultName, disabled, hidden } = propsValue;
 
-    // Create Cognos client
-    const client = new CognosClient(auth);
+    try {
+      const client = new CognosClient(auth);
 
-    // Build the update definition (only include fields that are provided)
-    const updateDefinition: any = {};
-    
-    if (defaultName) {
-      updateDefinition.defaultName = defaultName;
-    }
-    
-    if (disabled !== undefined) {
-      updateDefinition.disabled = disabled;
-    }
-    
-    if (hidden !== undefined) {
-      updateDefinition.hidden = hidden;
-    }
+      const updateDefinition: any = {};
+      
+      if (defaultName) {
+        updateDefinition.defaultName = defaultName;
+      }
+      
+      if (disabled !== undefined) {
+        updateDefinition.disabled = disabled;
+      }
+      
+      if (hidden !== undefined) {
+        updateDefinition.hidden = hidden;
+      }
 
-    // If no fields to update, return early
-    if (Object.keys(updateDefinition).length === 0) {
-      throw new Error('At least one field must be provided to update the data source');
-    }
+      if (Object.keys(updateDefinition).length === 0) {
+        throw new Error('At least one field must be provided to update');
+      }
 
-    // Update the data source
-    const response = await client.makeAuthenticatedRequest(
-      `/dataSources/${datasourceId}`, 
-      HttpMethod.PUT, 
-      updateDefinition
-    );
+      const response = await client.makeAuthenticatedRequest(
+        `/dataSources/${datasourceId}`, 
+        HttpMethod.PUT, 
+        updateDefinition
+      );
 
-    if (response.status === 204) {
-      return {
-        success: true,
-        message: `Data source '${datasourceId}' updated successfully`,
-        updatedFields: updateDefinition,
-      };
-    } else if (response.status === 401) {
-      throw new Error('Authentication required. Please check your credentials.');
-    } else if (response.status === 404) {
-      throw new Error(`Data source with ID '${datasourceId}' not found`);
-    } else {
-      throw new Error(`Failed to update data source: ${response.status} ${response.body}`);
+      if (response.status === 204 || response.status === 200) {
+        return {
+          success: true,
+          message: `Data source updated successfully`,
+          updatedFields: updateDefinition,
+        };
+      } else if (response.status === 401) {
+        throw new Error('Authentication failed. Check your credentials.');
+      } else if (response.status === 404) {
+        throw new Error(`Data source not found`);
+      } else {
+        throw new Error(`Failed to update: ${response.status} ${response.body}`);
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to update data source: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   },
 });
