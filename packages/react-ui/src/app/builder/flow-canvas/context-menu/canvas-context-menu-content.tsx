@@ -8,6 +8,7 @@ import {
   Route,
   RouteOff,
   Trash,
+  Pencil
 } from 'lucide-react';
 
 import {
@@ -40,6 +41,8 @@ import {
   CanvasShortcuts,
   ContextMenuType,
 } from './canvas-context-menu';
+
+import { RenameStepDialog } from './rename-step-dialog';
 
 const ShortcutWrapper = ({
   children,
@@ -110,6 +113,10 @@ export const CanvasContextMenuContent = ({
     selectedNodes.length === 1 &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
+  const showRename =
+    selectedNodes.length === 1 &&
+    !readonly &&
+    contextMenuType === ContextMenuType.STEP;
   const showCopy =
     !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
   const showDuplicate =
@@ -148,6 +155,17 @@ export const CanvasContextMenuContent = ({
         >
           <ArrowLeftRight className="w-4 h-4"></ArrowLeftRight> {t('Replace')}
         </ContextMenuItem>
+      )}
+      {showRename && (
+        <RenameStepDialog stepName={selectedNodes[0]}>
+          <ContextMenuItem
+            disabled={disabled}
+            className="flex items-center gap-2"
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Pencil className="w-4 h-4"></Pencil> {t('Rename')}
+          </ContextMenuItem>
+        </RenameStepDialog>
       )}
       {showCopy && (
         <ContextMenuItem
