@@ -2,9 +2,9 @@ import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ErrorCode, FileType, isNil, Upl
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { fileService } from '../../../file/file.service'
 import { s3Helper } from '../../../file/s3-helper'
 import { flowRunLogsService } from './flow-run-logs-service'
-import { fileService } from '../../../file/file.service'
 
 export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
     app.put('/logs', {

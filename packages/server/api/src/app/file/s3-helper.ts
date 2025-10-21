@@ -17,9 +17,11 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         }
         if (!isNil(platformId)) {
             return `platform/${platformId}/${type}/${fileId}`
-        } else if (!isNil(projectId)) {
+        }
+        else if (!isNil(projectId)) {
             return `project/${projectId}/${type}/${fileId}`
-        } else {
+        }
+        else {
             throw new Error('Either platformId or projectId must be provided')
         }
     },

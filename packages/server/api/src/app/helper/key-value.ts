@@ -38,7 +38,8 @@ export const distributedStore = {
             }
             try {
                 result[field] = JSON.parse(value)
-            } catch {
+            }
+            catch (error) {
                 result[field] = value
             }
         }

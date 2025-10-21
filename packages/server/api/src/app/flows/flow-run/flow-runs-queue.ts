@@ -122,7 +122,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 data: job.data,
                             }, '[runsMetadataQueue#worker] Error saving runs metadata')
                             exceptionHandler.handle(error, log)
-                            throw error;
+                            throw error
                         }
                     },
                 })
