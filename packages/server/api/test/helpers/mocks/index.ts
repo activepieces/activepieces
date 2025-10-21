@@ -176,8 +176,6 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         deleted: project?.deleted ?? null,
         ownerId: project?.ownerId ?? apId(),
         displayName: project?.displayName ?? faker.lorem.word(),
-        notifyStatus:
-            project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,

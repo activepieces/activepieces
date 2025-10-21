@@ -23,15 +23,15 @@ export const alertsService = (log: FastifyBaseLogger) => ({
 
         const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
 
-        await alertsHandler(log)[project.notifyStatus]({
-            flowRunId,
-            projectId: issue.projectId,
-            platformId: platform.id,
-            flowId: issue.flowId,
-            flowName: flowVersion.displayName,
-            issueCount: issue.count,
-            createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
-        })
+        // await alertsHandler(log)[project.notifyStatus]({
+        //     flowRunId,
+        //     projectId: issue.projectId,
+        //     platformId: platform.id,
+        //     flowId: issue.flowId,
+        //     flowName: flowVersion.displayName,
+        //     issueCount: issue.count,
+        //     createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+        // })
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
