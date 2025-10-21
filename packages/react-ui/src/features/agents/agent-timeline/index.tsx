@@ -15,7 +15,7 @@ import {
   MarkdownBlock,
   PromptBlock,
   ThinkingBlock,
-} from '../agent-block';
+} from './timeline-blocks';
 
 type AgentTimelineProps = {
   className?: string;
