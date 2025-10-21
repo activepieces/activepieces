@@ -154,6 +154,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     projectId: oldFlowRun.projectId,
                     failParentOnFailure: oldFlowRun.failParentOnFailure,
                     parentRunId: oldFlowRun.id,
+                    logging: true,
                 })
             }
         }
@@ -194,6 +195,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const platformId = await projectService.getPlatformId(flowRun.projectId)
         if (matchRequestId || !checkRequestId) {
             return addToQueue({
+                logging: true,
                 payload,
                 flowRun,
                 platformId,
@@ -258,6 +260,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         platformId,
         stepNameToTest,
         environment,
+        logging,
     }: StartParams): Promise<FlowRun> {
         return tracer.startActiveSpan('flowRun.start', {
             attributes: {
@@ -290,6 +293,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     payload,
                     executeTrigger,
                     executionType,
+                    logging,
                     synchronousHandlerId,
                     httpRequestId,
                     progressUpdateType,
@@ -324,6 +328,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             stepNameToTest,
         }, log)
         return addToQueue({
+            logging: true,
             flowRun,
             payload: triggerPayload,
             executionType: ExecutionType.BEGIN,
@@ -397,6 +402,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         }
         await addToQueue({
+            logging: true,
             payload,
             flowRun,
             platformId: await projectService.getPlatformId(flowRun.projectId),
@@ -503,6 +509,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
         type: JobType.ONE_TIME,
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            logging: params.logging,
             synchronousHandlerId: params.synchronousHandlerId ?? null,
             projectId: params.flowRun.projectId,
             platformId: params.platformId,
@@ -603,6 +610,7 @@ type GetOneParams = {
 type AddToQueueParams = {
     flowRun: FlowRun
     platformId: PlatformId
+    logging: boolean
     payload: unknown
     executeTrigger: boolean
     executionType: ExecutionType
@@ -619,6 +627,7 @@ type StartParams = {
     environment: RunEnvironment
     flowVersionId: FlowVersionId
     projectId: ProjectId
+    logging: boolean
     parentRunId?: FlowRunId
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string

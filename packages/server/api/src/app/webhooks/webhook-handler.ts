@@ -136,6 +136,7 @@ export const webhookHandler = {
                     payload,
                     synchronousHandlerId,
                     projectId,
+                    logging: params.logging,
                     executeTrigger: true,
                     httpRequestId: webhookRequestId,
                     executionType: ExecutionType.BEGIN,
@@ -204,6 +205,7 @@ type SyncWebhookParams = {
     platformId: PlatformId
     flowVersionToRun: WebhookFlowVersionToRun
     flow: Flow
+    logging: boolean
     logger: FastifyBaseLogger
     webhookRequestId: string
     synchronousHandlerId: string

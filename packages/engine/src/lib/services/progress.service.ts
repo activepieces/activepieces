@@ -102,10 +102,13 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             tasks: flowExecutorContext.tasks,
         })
 
-        assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
-        const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
-        if (!uploadLogResponse.ok) {
-            throw new ProgressUpdateError('Failed to upload execution state', uploadLogResponse)
+        const loggingEnabled = updateParams.engineConstants.logging
+        if (loggingEnabled) {
+            assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
+            const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+            if (!uploadLogResponse.ok) {
+                throw new ProgressUpdateError('Failed to upload execution state', uploadLogResponse)
+            }
         }
 
         const request: UpdateRunProgressRequest = {
@@ -115,7 +118,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             runDetails: runDetailsWithoutSteps,
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
-            logsFileId: engineConstants.logsFileId,
+            logsFileId: loggingEnabled ? engineConstants.logsFileId : undefined,
             stepNameToTest: engineConstants.stepNameToTest,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')

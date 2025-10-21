@@ -51,6 +51,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 id: pausedRun.id,
                 type: JobType.ONE_TIME,
                 data: {
+                    logging: true,
                     projectId: pausedRun.projectId,
                     platformId: await projectService.getPlatformId(pausedRun.projectId),
                     environment: pausedRun.environment,

@@ -22,6 +22,7 @@ export const webhookService = {
         execute,
         onRunCreated,
         parentRunId,
+        logging = true,
         failParentOnFailure,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         return tracer.startActiveSpan('webhook.service.handle', {
@@ -121,6 +122,7 @@ export const webhookService = {
                     payload: payload ?? await data(flow.projectId),
                     projectId: flow.projectId,
                     flow,
+                    logging,
                     platformId: flowExecutionResult.platformId,
                     runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                     logger: pinoLogger,
@@ -160,5 +162,6 @@ type HandleWebhookParams = {
     execute: boolean
     onRunCreated?: (run: FlowRun) => void
     parentRunId?: string
+    logging?: boolean
     failParentOnFailure: boolean
 }

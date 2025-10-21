@@ -105,6 +105,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     sampleData?: Record<string, unknown>
     logsUploadUrl?: string
     logsFileId?: string
+    logging: boolean
 }
 
 export enum ProgressUpdateType {

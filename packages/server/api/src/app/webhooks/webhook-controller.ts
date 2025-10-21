@@ -9,7 +9,7 @@ import {
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
 import { FastifyRequest } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
@@ -25,7 +25,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     app.all(
         '/:flowId/sync',
         WEBHOOK_PARAMS,
-        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+        async (request, reply) => {
             return tracer.startActiveSpan('webhook.receive.sync', {
                 attributes: {
                     'webhook.flowId': request.params.flowId,
@@ -40,6 +40,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                         flowId: request.params.flowId,
                         async: false,
                         flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        logging: request.query.logging ?? true,
                         saveSampleData: await triggerSourceService(request.log).existsByFlowId({
                             flowId: request.params.flowId,
                             simulate: true,
@@ -165,6 +166,9 @@ const WEBHOOK_PARAMS = {
     },
     schema: {
         params: WebhookUrlParams,
+        querystring: Type.Object({
+            logging: Type.Optional(Type.Boolean()),
+        }),
     },
 }
 

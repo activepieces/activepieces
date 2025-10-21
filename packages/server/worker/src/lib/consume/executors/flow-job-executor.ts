@@ -26,6 +26,7 @@ async function prepareInput(
         case ExecutionType.BEGIN: {
 
             return {
+                logging: jobData.logging,
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
@@ -50,6 +51,7 @@ async function prepareInput(
         case ExecutionType.RESUME: {
 
             return {
+                logging: true,
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,

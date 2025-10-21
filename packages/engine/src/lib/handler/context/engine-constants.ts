@@ -27,6 +27,7 @@ type EngineConstantsParams = {
     stepNameToTest?: string
     logsUploadUrl?: string
     logsFileId?: string
+    logging: boolean
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -64,7 +65,7 @@ export class EngineConstants {
     public readonly stepNameToTest?: string
     public readonly logsUploadUrl?: string
     public readonly logsFileId?: string
-
+    public readonly logging: boolean
     private project: Project | null = null
 
     public get isRunningApTests(): boolean {
@@ -106,6 +107,7 @@ export class EngineConstants {
         this.stepNameToTest = params.stepNameToTest
         this.logsUploadUrl = params.logsUploadUrl
         this.logsFileId = params.logsFileId
+        this.logging = params.logging
     }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
@@ -133,6 +135,7 @@ export class EngineConstants {
             stepNameToTest: input.stepNameToTest ?? undefined,
             logsUploadUrl: input.logsUploadUrl,
             logsFileId: input.logsFileId,
+            logging: input.logging,
         })
     }
 
@@ -159,6 +162,7 @@ export class EngineConstants {
             resumePayload: undefined,
             runEnvironment: undefined,
             stepNameToTest: undefined,
+            logging: true,
         })
     }
 
@@ -185,6 +189,7 @@ export class EngineConstants {
             resumePayload: undefined,
             runEnvironment: undefined,
             stepNameToTest: undefined,
+            logging: true,
         })
     }
 
@@ -211,6 +216,7 @@ export class EngineConstants {
             resumePayload: undefined,
             runEnvironment: undefined,
             stepNameToTest: undefined,
+            logging: true,
         })
     }
 

@@ -119,6 +119,7 @@ export const ExecuteFlowJobData = Type.Object({
     stepNameToTest: Type.Optional(Type.String()),
     sampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
     logsUploadUrl: Type.String(),
+    logging: Type.Boolean(),
     logsFileId: Type.String(),
     traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
