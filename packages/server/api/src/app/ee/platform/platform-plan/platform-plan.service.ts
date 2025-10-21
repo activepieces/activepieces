@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlanName } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PlanName } from '@activepieces/ee-shared'
 import { apDayjs, AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -111,7 +111,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     },
     async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
         const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
-        return platformPlan.plan === PlanName.PLUS || platformPlan.plan === PlanName.BUSINESS || platformPlan.plan === PlanName.FREE
+        return isCloudPlanButNotEnterprise(platformPlan.plan)
     },
 })
 
