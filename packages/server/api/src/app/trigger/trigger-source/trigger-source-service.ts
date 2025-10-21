@@ -142,7 +142,7 @@ type GetByFlowIdParams = {
 type GetFlowIdParamsWithProjectId = {
     flowId: string
     projectId: string
-    simulate: boolean
+    simulate: boolean | undefined
 }
 
 type GetTriggerParams = {

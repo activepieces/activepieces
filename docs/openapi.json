@@ -967,9 +967,6 @@
                   "flowVersionId": {
                     "type": "string"
                   },
-                  "flowDisplayName": {
-                    "type": "string"
-                  },
                   "status": {
                     "anyOf": [
                       {
@@ -1035,7 +1032,6 @@
                   "environment",
                   "flowId",
                   "flowVersionId",
-                  "flowDisplayName",
                   "status"
                 ]
               },
@@ -1157,9 +1153,6 @@
                   "flowVersionId": {
                     "type": "string"
                   },
-                  "flowDisplayName": {
-                    "type": "string"
-                  },
                   "status": {
                     "anyOf": [
                       {
@@ -1225,7 +1218,6 @@
                   "environment",
                   "flowId",
                   "flowVersionId",
-                  "flowDisplayName",
                   "status"
                 ]
               },
@@ -2144,6 +2136,13 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "backupFiles": {
+                "type": "object",
+                "nullable": true,
+                "additionalProperties": {
+                  "type": "string"
+                }
               }
             },
             "required": [
@@ -2717,8 +2716,13 @@
           "flowVersionId": {
             "type": "string"
           },
-          "flowDisplayName": {
-            "type": "string"
+          "flowVersion": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              }
+            }
           },
           "logsFileId": {
             "type": "string",
@@ -2942,7 +2946,6 @@
           "flowId",
           "failParentOnFailure",
           "flowVersionId",
-          "flowDisplayName",
           "status",
           "startTime",
           "environment"
@@ -7680,6 +7683,13 @@
                               "items": {
                                 "type": "string"
                               }
+                            },
+                            "backupFiles": {
+                              "type": "object",
+                              "nullable": true,
+                              "additionalProperties": {
+                                "type": "string"
+                              }
                             }
                           },
                           "required": [
@@ -8230,6 +8240,13 @@
                           "items": {
                             "type": "string"
                           }
+                        },
+                        "backupFiles": {
+                          "type": "object",
+                          "nullable": true,
+                          "additionalProperties": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
@@ -8662,6 +8679,13 @@
                               "connectionIds": {
                                 "type": "array",
                                 "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "backupFiles": {
+                                "type": "object",
+                                "nullable": true,
+                                "additionalProperties": {
                                   "type": "string"
                                 }
                               }
@@ -11443,6 +11467,13 @@
                           "items": {
                             "type": "string"
                           }
+                        },
+                        "backupFiles": {
+                          "type": "object",
+                          "nullable": true,
+                          "additionalProperties": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
@@ -11760,6 +11791,13 @@
                         "connectionIds": {
                           "type": "array",
                           "items": {
+                            "type": "string"
+                          }
+                        },
+                        "backupFiles": {
+                          "type": "object",
+                          "nullable": true,
+                          "additionalProperties": {
                             "type": "string"
                           }
                         }
@@ -12111,8 +12149,13 @@
                           "flowVersionId": {
                             "type": "string"
                           },
-                          "flowDisplayName": {
-                            "type": "string"
+                          "flowVersion": {
+                            "type": "object",
+                            "properties": {
+                              "displayName": {
+                                "type": "string"
+                              }
+                            }
                           },
                           "logsFileId": {
                             "type": "string",
@@ -12219,7 +12262,6 @@
                           "flowId",
                           "failParentOnFailure",
                           "flowVersionId",
-                          "flowDisplayName",
                           "status",
                           "startTime",
                           "environment"
@@ -12307,8 +12349,13 @@
                     "flowVersionId": {
                       "type": "string"
                     },
-                    "flowDisplayName": {
-                      "type": "string"
+                    "flowVersion": {
+                      "type": "object",
+                      "properties": {
+                        "displayName": {
+                          "type": "string"
+                        }
+                      }
                     },
                     "logsFileId": {
                       "type": "string",
@@ -12420,7 +12467,6 @@
                     "flowId",
                     "failParentOnFailure",
                     "flowVersionId",
-                    "flowDisplayName",
                     "status",
                     "startTime",
                     "environment"
@@ -14355,6 +14401,13 @@
                                         "items": {
                                           "type": "string"
                                         }
+                                      },
+                                      "backupFiles": {
+                                        "type": "object",
+                                        "nullable": true,
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        }
                                       }
                                     },
                                     "required": [
@@ -14872,6 +14925,13 @@
                                               "items": {
                                                 "type": "string"
                                               }
+                                            },
+                                            "backupFiles": {
+                                              "type": "object",
+                                              "nullable": true,
+                                              "additionalProperties": {
+                                                "type": "string"
+                                              }
                                             }
                                           },
                                           "required": [
@@ -15376,6 +15436,13 @@
                                       "connectionIds": {
                                         "type": "array",
                                         "items": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "backupFiles": {
+                                        "type": "object",
+                                        "nullable": true,
+                                        "additionalProperties": {
                                           "type": "string"
                                         }
                                       }
@@ -15953,6 +16020,13 @@
                                         "items": {
                                           "type": "string"
                                         }
+                                      },
+                                      "backupFiles": {
+                                        "type": "object",
+                                        "nullable": true,
+                                        "additionalProperties": {
+                                          "type": "string"
+                                        }
                                       }
                                     },
                                     "required": [
@@ -16475,6 +16549,13 @@
                                       "connectionIds": {
                                         "type": "array",
                                         "items": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "backupFiles": {
+                                        "type": "object",
+                                        "nullable": true,
+                                        "additionalProperties": {
                                           "type": "string"
                                         }
                                       }
@@ -18314,379 +18395,6 @@
         }
       }
     },
-    "/v1/queue-metrics": {
-      "get": {
-        "tags": [
-          "queue-metrics"
-        ],
-        "description": "Get metrics",
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "statsPerJobType": {
-                      "type": "object",
-                      "properties": {
-                        "RENEW_WEBHOOK": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_POLLING": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "DELAYED_FLOW": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_WEBHOOK": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_FLOW": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_AGENT": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_VALIDATION": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_TRIGGER_HOOK": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_PROPERTY": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_EXTRACT_PIECE_INFORMATION": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        },
-                        "EXECUTE_TOOL": {
-                          "type": "object",
-                          "properties": {
-                            "active": {
-                              "type": "number"
-                            },
-                            "queued": {
-                              "type": "number"
-                            },
-                            "failed": {
-                              "type": "number"
-                            },
-                            "retrying": {
-                              "type": "number"
-                            },
-                            "delayed": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "active",
-                            "queued",
-                            "failed",
-                            "retrying",
-                            "delayed"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "RENEW_WEBHOOK",
-                        "EXECUTE_POLLING",
-                        "DELAYED_FLOW",
-                        "EXECUTE_WEBHOOK",
-                        "EXECUTE_FLOW",
-                        "EXECUTE_AGENT",
-                        "EXECUTE_VALIDATION",
-                        "EXECUTE_TRIGGER_HOOK",
-                        "EXECUTE_PROPERTY",
-                        "EXECUTE_EXTRACT_PIECE_INFORMATION",
-                        "EXECUTE_TOOL"
-                      ]
-                    },
-                    "totalStats": {
-                      "type": "object",
-                      "properties": {
-                        "active": {
-                          "type": "number"
-                        },
-                        "queued": {
-                          "type": "number"
-                        },
-                        "failed": {
-                          "type": "number"
-                        },
-                        "retrying": {
-                          "type": "number"
-                        },
-                        "delayed": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "active",
-                        "queued",
-                        "failed",
-                        "retrying",
-                        "delayed"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "statsPerJobType",
-                    "totalStats"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/projects": {
       "post": {
         "tags": [
@@ -20148,6 +19856,13 @@
                       "connectionIds": {
                         "type": "array",
                         "items": {
+                          "type": "string"
+                        }
+                      },
+                      "backupFiles": {
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
                           "type": "string"
                         }
                       }
@@ -22211,6 +21926,75 @@
           }
         }
       }
+    },
+    "/v1/queue-metrics": {
+      "get": {
+        "tags": [
+          "queue-metrics"
+        ],
+        "description": "Get metrics",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "active": {
+                          "type": "number"
+                        },
+                        "delayed": {
+                          "type": "number"
+                        },
+                        "prioritized": {
+                          "type": "number"
+                        },
+                        "waiting": {
+                          "type": "number"
+                        },
+                        "waiting-children": {
+                          "type": "number"
+                        },
+                        "completed": {
+                          "type": "number"
+                        },
+                        "failed": {
+                          "type": "number"
+                        },
+                        "paused": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "active",
+                        "delayed",
+                        "prioritized",
+                        "waiting",
+                        "waiting-children",
+                        "completed",
+                        "failed",
+                        "paused"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "stats"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "servers": [
@@ -22224,3 +22008,6 @@
     "description": "Find more info here"
   }
 }
+
+SimplyCodes
+

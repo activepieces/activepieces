@@ -1,11 +1,11 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { cryptoUtils, fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { CodeArtifact } from '../runner/engine-runner-types'
+import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
-import { cacheState } from './cache-state'
+import { cacheState, NO_SAVE_GUARD } from './cache-state'
 import { packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
@@ -41,9 +41,14 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
-
 export const codeBuilder = (log: FastifyBaseLogger) => ({
-    getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {
+    getCodesFolder({
+        codesFolderPath,
+        flowVersionId,
+    }: {
+        codesFolderPath: string
+        flowVersionId: string
+    }): string {
         return path.join(codesFolderPath, flowVersionId)
     },
     async processCodeStep({
@@ -51,7 +56,10 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
         codesFolderPath,
     }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
-        const flowVersionPath = this.getCodesFolder({ codesFolderPath, flowVersionId })
+        const flowVersionPath = this.getCodesFolder({
+            codesFolderPath,
+            flowVersionId,
+        })
         const codePath = path.join(flowVersionPath, name)
         log.debug({
             message: 'CodeBuilder#processCodeStep',
@@ -60,15 +68,14 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
             codePath,
         })
 
-        return memoryLock.runExclusive(`code-builder-${flowVersionId}-${name}`, async () => {
-            try {
-                const cache = cacheState(codePath)
-                const cachedHash = await cache.cacheCheckState(codePath)
-                const currentHash = await cryptoUtils.hashObject(sourceCode)
-
-                if (cachedHash === currentHash) {
-                    return
-                }
+        const currentHash = await cryptoUtils.hashObject(sourceCode)
+        const cache = cacheState(codePath, log)
+        await cache.getOrSetCache({
+            key: codePath,
+            cacheMiss: (value: string) => {
+                return value !== currentHash
+            },
+            installFn: async () => {
                 const { code, packageJson } = sourceCode
 
                 const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
@@ -78,36 +85,41 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
                 await fileSystemUtils.threadSafeMkdir(codePath)
 
-
-
                 await installDependencies({
                     path: codePath,
                     packageJson: getPackageJson(packageJson),
                     log,
                 })
 
-                await compileCode({
-                    path: codePath,
-                    code,
-                    log,
-                })
+                try {
+                    await compileCode({
+                        path: codePath,
+                        code,
+                        log,
+                    })
+                }
+                catch (error: unknown) {
+                    log.error(
+                        error,
+                        `[CodeBuilder#processCodeStep], codePath: ${codePath}`,
+                    )
 
-                await cache.setCache(codePath, currentHash)
-            }
-            catch (error: unknown) {
-                log.error(error, `[CodeBuilder#processCodeStep], codePath: ${codePath}`)
-
-                await handleCompilationError({
-                    codePath,
-                    error,
-                })
-            }
+                    await handleCompilationError({
+                        codePath,
+                        error,
+                    })
+                }
+                return currentHash
+            },
+            skipSave: NO_SAVE_GUARD,
         })
     },
 })
 
 function getPackageJson(packageJson: string): string {
-    const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
+    const isPackagesAllowed =
+    workerMachine.getSettings().EXECUTION_MODE !==
+    ExecutionMode.SANDBOX_CODE_ONLY
     if (isPackagesAllowed) {
         const packageJsonObject = JSON.parse(packageJson)
         return JSON.stringify({
@@ -135,10 +147,12 @@ const installDependencies = async ({
     }
     await packageManager(log).add({
         path,
-        dependencies: Object.entries(packageJsonObject.dependencies).map(([dependency, spec]) => ({
-            alias: dependency,
-            spec: spec as string,
-        })),
+        dependencies: Object.entries(packageJsonObject.dependencies).map(
+            ([dependency, spec]) => ({
+                alias: dependency,
+                spec: spec as string,
+            }),
+        ),
     })
 }
 
@@ -147,7 +161,10 @@ const compileCode = async ({
     code,
     log,
 }: CompileCodeParams): Promise<void> => {
-    await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, { encoding: 'utf8', flag: 'w' })
+    await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, {
+        encoding: 'utf8',
+        flag: 'w',
+    })
     await fs.writeFile(`${path}/index.ts`, code, { encoding: 'utf8', flag: 'w' })
 
     await packageManager(log).exec({
@@ -160,7 +177,8 @@ const handleCompilationError = async ({
     codePath,
     error,
 }: HandleCompilationErrorParams): Promise<void> => {
-    const errorHasStdout = typeof error === 'object' && error && 'stdout' in error
+    const errorHasStdout =
+    typeof error === 'object' && error && 'stdout' in error
     const stdoutError = errorHasStdout ? error.stdout : undefined
     const genericError = `${error ?? 'error compiling'}`
     const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
@@ -172,7 +190,6 @@ const handleCompilationError = async ({
 
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }
-
 
 type ProcessCodeStepParams = {
     artifact: CodeArtifact
