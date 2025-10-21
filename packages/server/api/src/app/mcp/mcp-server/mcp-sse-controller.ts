@@ -67,7 +67,9 @@ async function handleStreamableHttpRequest(
         await transport.handleRequest(req.raw, reply.raw, req.body)
     }
     catch (error) {
-        logger.error('Error handling MCP request:', error)
+        logger.error({ 
+            error,
+        }, 'Error handling MCP request')
         if (!reply.raw.headersSent) {
             await reply.status(500).send({
                 jsonrpc: '2.0',

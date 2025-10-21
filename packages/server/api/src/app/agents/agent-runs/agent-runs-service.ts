@@ -1,4 +1,4 @@
-import { ActivepiecesError, AgentRun, AgentTaskStatus, apId, Cursor, ErrorCode, isNil, SeekPage, spreadIfDefined, UpdateAgentRunRequestBody, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, AgentRun, AgentTaskStatus, apId, Cursor, ErrorCode, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, SeekPage, spreadIfDefined, UpdateAgentRunRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, FindOperator } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -82,6 +82,7 @@ export const agentRunsService = (log: FastifyBaseLogger) => ({
             type: JobType.ONE_TIME,
             data: {
                 ...params,
+                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 jobType: WorkerJobType.EXECUTE_AGENT,
                 agentId: params.agentId,
                 platformId,

@@ -551,7 +551,9 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
+        filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
     })
+    
     await databaseConnection().getRepository('platform').save(mockPlatform)
     const hasPlanTable = databaseConnection().hasMetadata(PlatformPlanEntity)
     if (hasPlanTable) {
