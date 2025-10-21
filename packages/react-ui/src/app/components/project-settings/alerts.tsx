@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Bell, Trash } from 'lucide-react';
 import { AddAlertEmailDialog } from '@/app/routes/settings/alerts/add-alert-email-dialog';
@@ -16,29 +15,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import {
   alertQueries,
   alertMutations,
 } from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { projectApi } from '@/lib/project-api';
 import { Alert, MAX_ALERTS_PER_DAY } from '@activepieces/ee-shared';
 import {
   Permission,
-  ProjectWithLimits,
-  NotificationStatus,
 } from '@activepieces/shared';
 
-
-
 export const AlertsSettings = () => {
-  const { updateCurrentProject } = projectHooks.useCurrentProject();
   const { checkAccess } = useAuthorization();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const {
     data: alertsData,
@@ -47,50 +35,20 @@ export const AlertsSettings = () => {
   } = alertQueries.useAlertsEmailList();
   const { mutate: deleteAlert } = alertMutations.useDeleteAlert();
 
-  const notificationMutation = useMutation<
-    ProjectWithLimits,
-    Error,
-    {
-      notifyStatus: NotificationStatus;
-    }
-  >({
-    mutationFn: (request) => {
-      updateCurrentProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId()!, request);
-    },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
-        duration: 3000,
-      });
-    },
-  });
-
   const writeAlertPermission =
     checkAccess(Permission.WRITE_ALERT) &&
     checkAccess(Permission.WRITE_PROJECT);
 
   return (
     <>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            {t('Alert Frequency')}
-          </CardTitle>
-
-
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-            <p className="text-xs text-amber-700">
-              <span className="font-medium">⚠️ Note:</span>{' '}
-              {t(
-                `Note: You will receive alerts when any flow in this project fails. To avoid spam, alerts will only be sent for the first ${MAX_ALERTS_PER_DAY} failures per day. Any additional failures will be included in a summary email sent at the end of the day.`,
-              )}
-            </p>
-          </div>
-        </CardHeader>
-      </Card>
-
+      <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+        <p className="text-xs text-amber-700">
+          <span className="font-medium">⚠️</span>{' '}
+          {t(
+            `Note: You will receive alerts when any flow in this project fails. To avoid spam, alerts will only be sent for the first ${MAX_ALERTS_PER_DAY} failures per day. Any additional failures will be included in a summary email sent at the end of the day.`,
+          )}
+        </p>
+      </div>
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
