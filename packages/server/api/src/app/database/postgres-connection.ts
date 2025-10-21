@@ -561,7 +561,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformAnalyticsReportEntity1753091760355,
                 AddBillingCycle1754559781173,
                 EligibileForTrial1754852385518,
-                RemoveAgentLimitFromPlatfromPlanEntity1760607967671
+                RemoveAgentLimitFromPlatfromPlanEntity1760607967671,
             )
             break
         case ApEdition.COMMUNITY:
