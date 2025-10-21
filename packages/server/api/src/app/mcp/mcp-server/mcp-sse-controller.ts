@@ -46,6 +46,78 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+async function handleStreamableHttpRequest(
+    req: FastifyRequest,
+    reply: FastifyReply,
+    mcpId: string,
+    projectId: string,
+    logger: FastifyBaseLogger,
+): Promise<void> {
+    try {
+        const { server } = await createMcpServer({
+            mcpId,
+            logger,
+            projectId,
+        })
+
+        const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined,
+        })
+
+
+        reply.raw.on('close', async () => {
+            await transport.close()
+            await server.close()
+        })
+
+        await server.connect(transport)
+        await transport.handleRequest(req.raw, reply.raw, req.body)
+    }
+    catch (error) {
+        logger.error({ 
+            error,
+        }, 'Error handling MCP request')
+        if (!reply.raw.headersSent) {
+            await reply.status(500).send({
+                jsonrpc: '2.0',
+                error: {
+                    code: -32603,
+                    message: 'Internal server error',
+                },
+                id: null,
+            })
+        }
+    }
+}
+
+async function handleSSERequest(
+    reply: FastifyReply,
+    mcpId: string,
+    projectId: string,
+    logger: FastifyBaseLogger,
+): Promise<void> {
+    const transport = new SSEServerTransport('/api/v1/mcp/messages', reply.raw)
+    const { server } = await createMcpServer({
+        mcpId,
+        projectId,
+        logger,
+    })
+
+    await mcpSessionManager(logger).add(transport.sessionId, server, transport)
+    await server.connect(transport)
+
+    const heartbeatInterval = setInterval(() => {
+        void reply.raw.write(': heartbeat\n\n')
+        logger.info(`Heartbeat sent for session ${transport.sessionId}`)
+    }, HEARTBEAT_INTERVAL)
+
+    reply.raw.on('close', async () => {
+        clearInterval(heartbeatInterval)
+        logger.info(`Connection closed for session ${transport.sessionId}`)
+        await mcpSessionManager(logger).publish(transport.sessionId, {}, 'remove')
+    })
+}
+
 const MessagesRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,

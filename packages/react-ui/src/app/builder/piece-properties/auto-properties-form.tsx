@@ -18,7 +18,13 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-import { AgentPieceProps, isNil } from '@activepieces/shared';
+import { AgentPieceProps,
+  FlowActionType,
+  FlowTriggerType,
+  isNil,
+  PropertyExecutionType,
+  Step,
+} from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
@@ -52,11 +58,20 @@ const AutoPropertiesFormComponent = React.memo(
     onValueChange,
   }: AutoFormProps) => {
     const form = useFormContext();
+    const step = form.getValues() as Step;
+
 
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
           {Object.entries(props).map(([propertyName]) => {
+            const isPieceStep =
+              step.type === FlowActionType.PIECE ||
+              step.type === FlowTriggerType.PIECE;
+            const dynamicInputModeToggled = isPieceStep
+              ? step.settings.propertySettings[propertyName]?.type ===
+                PropertyExecutionType.DYNAMIC
+              : false;
             return (
               <FormField
                 key={propertyName}
@@ -82,6 +97,7 @@ const AutoPropertiesFormComponent = React.memo(
                     markdownVariables: markdownVariables ?? {},
                     useMentionTextInput: useMentionTextInput,
                     disabled: disabled ?? false,
+                    dynamicInputModeToggled,
                   })
                 }
               />
@@ -102,6 +118,7 @@ type selectFormComponentForPropertyParams = {
   markdownVariables: Record<string, string>;
   useMentionTextInput: boolean;
   disabled: boolean;
+  dynamicInputModeToggled: boolean;
 };
 
 export const selectFormComponentForProperty = ({
@@ -113,6 +130,7 @@ export const selectFormComponentForProperty = ({
   markdownVariables,
   useMentionTextInput,
   disabled,
+  dynamicInputModeToggled,
 }: selectFormComponentForPropertyParams) => {
   if (propertyName === AgentPieceProps.AGENT_TOOLS) {
     return <AgentTools disabled={disabled} agentToolsField={field} />;
@@ -130,6 +148,7 @@ export const selectFormComponentForProperty = ({
           disabled={disabled}
           inputName={inputName}
           allowDynamicValues={allowDynamicValues}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           <ArrayPieceProperty
             disabled={disabled}
@@ -148,6 +167,7 @@ export const selectFormComponentForProperty = ({
           inputName={inputName}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           <DictionaryProperty
             disabled={disabled}
@@ -167,6 +187,7 @@ export const selectFormComponentForProperty = ({
           inputName={inputName}
           allowDynamicValues={allowDynamicValues}
           placeBeforeLabelText={true}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           <FormControl>
             <Switch
@@ -195,6 +216,7 @@ export const selectFormComponentForProperty = ({
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           <SearchableSelect
             options={property.options.options}
@@ -215,6 +237,7 @@ export const selectFormComponentForProperty = ({
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           {useMentionTextInput ? (
             <BuilderJsonEditorWrapper
@@ -235,6 +258,7 @@ export const selectFormComponentForProperty = ({
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           <MultiSelectPieceProperty
             placeholder={property.options.placeholder ?? t('Select an option')}
@@ -260,6 +284,7 @@ export const selectFormComponentForProperty = ({
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           <DynamicDropdownPieceProperty
             refreshers={property.refreshers}
@@ -287,6 +312,7 @@ export const selectFormComponentForProperty = ({
           propertyName={propertyName}
           disabled={disabled}
           allowDynamicValues={false}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           {useMentionTextInput ? (
             <TextInputWithMentions
@@ -338,6 +364,7 @@ export const selectFormComponentForProperty = ({
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
+          dynamicInputModeToggled={dynamicInputModeToggled}
         >
           <ColorPicker value={field.value} onChange={field.onChange} />
         </AutoFormFieldWrapper>

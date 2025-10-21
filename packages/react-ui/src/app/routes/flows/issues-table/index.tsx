@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, CheckCircle, CheckIcon } from 'lucide-react';
-import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 
@@ -11,13 +10,14 @@ import {
   DataTable,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
+  DataTableFilters,
 } from '@/components/ui/data-table';
 import { toast } from '@/components/ui/use-toast';
 import { issuesApi } from '@/features/issues/api/issues-api';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { IssueStatus, Permission } from '@activepieces/shared';
+import { IssueStatus, Permission, PopulatedIssue } from '@activepieces/shared';
 
 import { issuesTableColumns } from './columns';
 
@@ -39,32 +39,28 @@ export function IssuesTable() {
     }
   });
 
-  const filters = useMemo(
-    () => [
-      {
-        type: 'select',
-        id: 'status',
-        title: t('Status'),
-        accessorKey: 'status',
-        options: [
-          {
-            label: t('Unresolved'),
-            value: IssueStatus.UNRESOLVED,
-          },
-          {
-            label: t('Resolved'),
-            value: IssueStatus.RESOLVED,
-          },
-          {
-            label: t('Archived'),
-            value: IssueStatus.ARCHIVED,
-          },
-        ],
-        icon: CheckIcon,
-      } as const,
-    ],
-    [],
-  );
+  const filters: DataTableFilters<keyof PopulatedIssue>[] = [
+    {
+      type: 'select',
+      title: t('Status'),
+      accessorKey: 'status',
+      options: [
+        {
+          label: t('Unresolved'),
+          value: IssueStatus.UNRESOLVED,
+        },
+        {
+          label: t('Resolved'),
+          value: IssueStatus.RESOLVED,
+        },
+        {
+          label: t('Archived'),
+          value: IssueStatus.ARCHIVED,
+        },
+      ],
+      icon: CheckIcon,
+    },
+  ];
 
   const { data, isLoading } = useQuery({
     queryKey: ['issues', currentSearchParams, projectId],

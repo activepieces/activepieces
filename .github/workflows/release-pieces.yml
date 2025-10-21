@@ -13,6 +13,9 @@ concurrency:
   group: release-pieces
   cancel-in-progress: false
 
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  
 jobs:
   Release-Pieces:
     if: github.repository == 'activepieces/activepieces'

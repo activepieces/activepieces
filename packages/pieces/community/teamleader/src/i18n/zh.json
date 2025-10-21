@@ -1,5 +1,4 @@
 {
-  "Teamleader": "Teamleader",
   "\n    To obtain your OAuth2 credentials:\n    \n    1. Go to the Teamleader Marketplace (https://marketplace.teamleader.eu)\n    2. Log in or create an account\n    3. Go to \"Build\" and click \"Create a new Integration\"\n    4. Fill in the required information\n    5. On your integration's settings page, configure:\n       - Add `https://cloud.activepieces.com/redirect` to the allowed redirect URIs\n       - Select all required scopes for your integration\n    6. Copy the Client ID and Client Secret\n    ": "\n    To obtain your OAuth2 credentials:\n    \n    1. Go to the Teamleader Marketplace (https://marketplace.teamleader.eu)\n    2. Log in or create an account\n    3. Go to \"Build\" and click \"Create a new Integration\"\n    4. Fill in the required information\n    5. On your integration's settings page, configure:\n       - Add `https://cloud.activepieces.com/redirect` to the allowed redirect URIs\n       - Select all required scopes for your integration\n    6. Copy the Client ID and Client Secret\n    ",
   "Create Contact": "Create Contact",
   "Update Contact": "Update Contact",

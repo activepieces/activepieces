@@ -76,7 +76,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
     public async paginate(
         builder: SelectQueryBuilder<Entity>,
     ): Promise<PagingResult<Entity>> {
-        const entities = await this.appendPagingQuery(builder).getMany()
+
+        const entities = 
+            await this.appendPagingQuery(builder).getMany()
+
         const hasMore = entities.length > this.limit
 
         if (hasMore) {
@@ -98,7 +101,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         if (this.hasAfterCursor() || (hasMore && this.hasBeforeCursor())) {
             this.nextBeforeCursor = this.encode(entities[0])
         }
-
+        
         return this.toPagingResult(entities)
     }
 

@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { ApEdition, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
     DataSource,
@@ -57,7 +57,6 @@ import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
-import { TriggerRunEntity } from '../trigger/trigger-run/trigger-run.entity'
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
@@ -106,7 +105,6 @@ function getEntities(): EntitySchema<unknown>[] {
         McpRunEntity,
         AIUsageEntity,
         TriggerSourceEntity,
-        TriggerRunEntity,
     ]
 
     switch (edition) {
@@ -142,20 +140,9 @@ function getEntities(): EntitySchema<unknown>[] {
     return entities
 }
 
-const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-
-    const value: Partial<Record<ApEnvironment, boolean>> = {
-        [ApEnvironment.TESTING]: true,
-    }
-
-    return value[env] ?? false
-}
-
 export const commonProperties = {
     subscribers: [],
     entities: getEntities(),
-    synchronize: getSynchronize(),
 }
 
 let _databaseConnection: DataSource | null = null

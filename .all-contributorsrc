@@ -2039,6 +2039,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "uvenkatateja",
+      "name": "uvenkatateja",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118493739?v=4",
+      "profile": "https://github.com/uvenkatateja",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "akramcodez",
+      "name": "SK Akram",
+      "avatar_url": "https://avatars.githubusercontent.com/u/179671552?v=4",
+      "profile": "http://akramcodez.tech",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

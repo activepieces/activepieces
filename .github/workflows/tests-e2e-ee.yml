@@ -6,6 +6,10 @@ on:
 
 env:
   AP_EDITION: ee
+  AP_DEV_PIECES: store,webhook
+  AP_PIECES_SYNC_MODE: NONE
+  AP_PIECES_SOURCE: FILE
+  AP_API_KEY: api-key
   AP_LICENSE_KEY: ${{ secrets.EE_LICENSE_KEY }}
   AP_DB_TYPE: POSTGRES
   AP_POSTGRES_HOST: localhost
@@ -14,8 +18,8 @@ env:
   AP_POSTGRES_PASSWORD: postgres
   AP_POSTGRES_DATABASE: activepieces
   AP_POSTGRES_USE_SSL: "false"
-  AP_ENCRYPTION_KEY: ${{ secrets.EE_ENCRYPTION_KEY }}
-  AP_JWT_SECRET: ${{ secrets.EE_JWT_SECRET }}
+  AP_JWT_SECRET: "secret"
+  AP_ENCRYPTION_KEY: "fdbe51af3678563560972e4a912aee6d"
   AP_FRONTEND_URL: http://localhost:4200
   AP_REDIS_URL: redis://localhost:6379
   AP_QUEUE_MODE: REDIS
@@ -25,8 +29,8 @@ env:
 
 jobs:
   test-e2e-ee:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 30
     
     services:
       postgres:
@@ -55,6 +59,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
         
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -70,8 +77,7 @@ jobs:
         
       - name: Run E2E tests
         run: |
-          cd packages/tests-e2e
-          npx playwright test
+          npm run test:e2e
         env:
           CI: true
           
