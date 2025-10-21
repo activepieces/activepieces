@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import {  WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerCache } from './cache/worker-cache'
@@ -42,6 +42,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         })
 
         socket.on('disconnect', async () => {
+            await jobQueueWorker(log).pause()
             log.info({
                 message: 'Disconnected from server',
             })
