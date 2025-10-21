@@ -6,6 +6,7 @@ import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 
+import { AddDedicatedWorkersToPlatformPlanSqlite1761071895332 } from './migration/1761071895332-AddDedicatedWorkersToPlatformPlanSqlite'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -322,6 +323,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowVersionBackupFileSqlite1759964539150,
         AddRunFlowVersionIdForForeignKeySqlite1760346793809,
         RestrictOnDeleteProjectForFlowSqlite1760376811542,
+        AddDedicatedWorkersToPlatformPlanSqlite1761071895332,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

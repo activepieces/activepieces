@@ -8,7 +8,7 @@ import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
 import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
-import { jobQueue, workerJobsQueue } from '../job-queue'
+import { jobQueue, sharedWorkerJobsQueue } from '../job-queue'
 import { JobType } from '../queue-manager'
 
 const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v5'
@@ -55,7 +55,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     projectId: pausedRun.projectId,
                 })
                 try {
-                    const job = await workerJobsQueue?.getJob(pausedRun.id)
+                    const job = await sharedWorkerJobsQueue?.getJob(pausedRun.id)
                     await job?.remove()
                 }
                 catch (e) {

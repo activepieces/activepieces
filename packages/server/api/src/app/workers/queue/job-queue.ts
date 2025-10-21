@@ -1,29 +1,44 @@
-import { apDayjsDuration, AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY } from '@activepieces/shared'
+import { apDayjsDuration, AppSystemProp, getPlatformQueueName, QueueName } from '@activepieces/server-shared'
+import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, PlatformId } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
+import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { system } from '../../helper/system/system'
 import { AddJobParams, JobType, QueueManager } from './queue-manager'
-
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
-export let workerJobsQueue: Queue | undefined = undefined
+const dedicatedWorkersQueues = new Map<string, Queue>()
+export let sharedWorkerJobsQueue: Queue | undefined = undefined
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async init(): Promise<void> {
-        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
-        await Promise.all(queues)
-        log.info('[redisQueueManager#init] Redis queues initialized')
+        const platformIdsWithDedicatedWorkers = await platformPlanService(log).getPlatformsIdsWithDedicatedWorkers()
+        
+        await Promise.all([
+            ...platformIdsWithDedicatedWorkers.map(async (platformId) => {
+                const queue = await ensureQueueExists({ log, queueName: getPlatformQueueName(platformId), platformId })
+                dedicatedWorkersQueues.set(platformId, queue)
+            }),
+            ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS, platformId: undefined }),
+        ])
+
+        log.info('[jobQueue#init] Dynamic queue system initialized')
     },
+
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { type, data } = params
 
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const platformId = data.platformId
+        const isDedicatedWorkersEnabled = await platformPlanService(log).isDedicatedWorkersEnabled(platformId)
+
+        const queue = isDedicatedWorkersEnabled
+            ? await ensureQueueExists({ log, queueName: getPlatformQueueName(platformId), platformId })
+            : await ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS })
 
         switch (type) {
             case JobType.REPEATING: {
@@ -49,22 +64,39 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
             }
         }
     },
+
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const allQueues = [sharedWorkerJobsQueue, ...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+
+        await Promise.allSettled(
+            allQueues.map(queue => queue.removeJobScheduler(flowVersionId)),
+        )
+
         log.info({
             flowVersionId,
-        }, '[redisQueue#removeRepeatingJob] removing the jobs')
-        await queue.removeJobScheduler(flowVersionId)
+        }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
+    },
+
+    getAllQueues(): Queue[] {
+        const queues = [sharedWorkerJobsQueue, ...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+        return queues
     },
 })
 
-async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
-    if (!isNil(workerJobsQueue)) {
-        return workerJobsQueue
+async function ensureQueueExists({ log, queueName, platformId }: { log: FastifyBaseLogger, queueName: string, platformId?: PlatformId }): Promise<Queue> {
+    if (queueName === QueueName.WORKER_JOBS && sharedWorkerJobsQueue) {
+        return sharedWorkerJobsQueue
     }
-    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
 
-    const options = {
+    if (platformId) {
+        const cachedQueue = dedicatedWorkersQueues.get(platformId)
+        if (cachedQueue) {
+            return cachedQueue
+        }
+    }
+
+    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
+    const queue = new Queue(queueName, {
         telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
         connection: await redisConnections.create(),
         defaultJobOptions: {
@@ -79,13 +111,25 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
                 count: REDIS_FAILED_JOB_RETRY_COUNT,
             },
         },
+    })
+    
+    await queue.removeGlobalConcurrency()
+    await queue.waitUntilReady()
 
+    if (platformId) {
+        dedicatedWorkersQueues.set(platformId, queue)
+        log.info({
+            platformId,
+            queueName,
+        }, '[jobQueue#ensureQueueExists] Dedicated worker queue created')
+    }
+    else if (queueName === QueueName.WORKER_JOBS) {
+        sharedWorkerJobsQueue = queue
+        log.info({
+            queueName,
+        }, '[jobQueue#ensureQueueExists] Shared worker jobs queue created')
     }
 
-    workerJobsQueue = new Queue(queueName, options)
-    await workerJobsQueue.removeGlobalConcurrency()
-    await workerJobsQueue.waitUntilReady()
-
-    return workerJobsQueue
+    return queue
 }
 

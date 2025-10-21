@@ -25,7 +25,7 @@ export const workerMachine = {
         }, 0) / cpus.length * 100
 
         const ip = (await networkUtils.getPublicIp()).ip
-        const diskInfo = await getDiskInfo()        
+        const diskInfo = await getDiskInfo()
 
         return {
             diskInfo,
@@ -49,6 +49,7 @@ export const workerMachine = {
                 ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
+                ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', settings?.PLATFORM_ID_FOR_DEDICATED_WORKER),
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
@@ -60,6 +61,7 @@ export const workerMachine = {
         settings = {
             ..._settings,
             ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
+            ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)),
         }
 
         const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
@@ -108,6 +110,9 @@ export const workerMachine = {
     },
     getPublicApiUrl: (): string => {
         return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
+    },
+    getPlatformIdForDedicatedWorker: (): string | undefined => {
+        return environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
 }
 

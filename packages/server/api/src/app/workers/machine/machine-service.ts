@@ -1,5 +1,7 @@
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
+    ExecutionMode,
+    isNil,
     MachineInformation,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
@@ -12,6 +14,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { WorkerMachineEntity } from './machine-entity'
@@ -27,12 +30,25 @@ export const machineService = (_log: FastifyBaseLogger) => {
             })
             await workerRepo().delete({ id: request.workerId })
         },
-        async onConnection(): Promise<WorkerSettingsResponse> {
+        async onConnection(platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+            let executionMode = system.getOrThrow(AppSystemProp.EXECUTION_MODE)
+            if (!isNil(platformIdForDedicatedWorker)) {
+                const dedicatedWorkerConfig = await platformPlanService(_log).getDedicatedWorkerConfig(platformIdForDedicatedWorker)
+                if (!isNil(dedicatedWorkerConfig)) {
+                    if (dedicatedWorkerConfig.trustedEnvironment) {
+                        executionMode = ExecutionMode.SANDBOX_CODE_ONLY
+                    }
+                    else {
+                        executionMode = ExecutionMode.SANDBOXED
+                    }
+                }
+            }
+
             return  {
                 JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
-                EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
+                EXECUTION_MODE: executionMode,
                 TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
                 AGENT_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),

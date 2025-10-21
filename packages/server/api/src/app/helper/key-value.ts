@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared'
 import { redisConnections } from '../database/redis-connections'
 
 
@@ -17,12 +18,38 @@ export const distributedStore = {
         const redisClient = await redisConnections.useExisting()
         const value = await redisClient.get(key)
         if (!value) return null
+
         return JSON.parse(value) as T
     },
 
     async delete(key: string): Promise<void> {
         const redisClient = await redisConnections.useExisting()
         await redisClient.del(key)
+    },
+
+    async putBoolean(key: string, value: boolean): Promise<void> {
+        const redisClient = await redisConnections.useExisting()
+        await redisClient.set(key, value ? '1' : '0')
+    },
+
+    async getBoolean(key: string): Promise<boolean | null> {
+        const redisClient = await redisConnections.useExisting()
+        const value = await redisClient.get(key)
+        if (isNil(value)) return null
+        return value === '1'
+    },
+
+    async putBooleanBatch(keyValuePairs: Array<{ key: string, value: boolean }>): Promise<void> {
+        if (keyValuePairs.length === 0) return
+
+        const redisClient = await redisConnections.useExisting()
+        const multi = redisClient.multi()
+
+        for (const { key, value } of keyValuePairs) {
+            multi.set(key, value ? '1' : '0')
+        }
+
+        await multi.exec()
     },
 
     async hgetJson<T extends Record<string, unknown>>(key: string): Promise<T | null> {
@@ -74,5 +101,4 @@ export const distributedStore = {
             await redisClient.expire(key, ttlInSeconds)
         }
     },
-
 }

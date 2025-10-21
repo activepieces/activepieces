@@ -1,4 +1,5 @@
 import { AgentJobData, ApId, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData } from '@activepieces/shared'
+import { Queue } from 'bullmq'
 
 export enum JobType {
     REPEATING = 'repeating',
@@ -26,5 +27,6 @@ export type QueueManager = {
     init(): Promise<void>
     add<JT extends JobType>(params: AddJobParams<JT>): Promise<void>
     removeRepeatingJob(params: RemoveParams): Promise<void>
+    getAllQueues(): Queue[]
 }
 
