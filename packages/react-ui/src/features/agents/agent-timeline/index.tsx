@@ -1,6 +1,10 @@
+import { t } from 'i18next';
+import { Lightbulb } from 'lucide-react';
+
 import { ApMarkdown } from '@/components/custom/markdown';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import {
   AgentTaskStatus,
@@ -23,14 +27,11 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
   const { data: agentRun } = agentRunHooks.useGet(agentRunId);
 
   const { data: agent } = agentHooks.useGet(agentRun?.agentId);
-  const showSkeleton =
-    isNil(agentRun) ||
-    isNil(agent) ||
-    agentRun.status === AgentTaskStatus.IN_PROGRESS;
+  const showSkeleton = isNil(agentRun) || isNil(agent);
 
   if (showSkeleton) {
     return (
-      <div>
+      <div className={className}>
         <div className="flex items-center gap-3 mt-6 mb-3">
           <ImageWithFallback
             src={agent?.profilePictureUrl}
@@ -44,36 +45,35 @@ const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
     );
   }
   return (
-    <div className={`h-full ${className}`}>
+    <ScrollArea className={`h-full ${className}`}>
       {agentRun.prompt !== '' && <AgentPromptBlock prompt={agentRun.prompt} />}
-      <div className="flex items-center gap-3 mt-6">
-        <ImageWithFallback
-          src={agent?.profilePictureUrl}
-          alt={agent?.displayName}
-          className="size-8 rounded-full"
-        ></ImageWithFallback>
-        <div className="text-sm">{agent?.displayName}</div>
+      <Separator className="my-3" />
+      <div className="font-semibold mb-3">{t('Response')}</div>
+
+      <div className="flex flex-col gap-3">
+        {agentRun.steps.map((step, index) => {
+          return (
+            <div key={index} className="animate-fade">
+              {step.type === ContentBlockType.MARKDOWN && (
+                <ApMarkdown
+                  markdown={step.markdown}
+                  variant={MarkdownVariant.BORDERLESS}
+                />
+              )}
+              {step.type === ContentBlockType.TOOL_CALL && (
+                <AgentToolBlock block={step} index={index} />
+              )}
+            </div>
+          );
+        })}
       </div>
-      <ScrollArea className="flex-1 min-h-0 mt-3">
-        <div className="flex flex-col gap-3">
-          {agentRun.steps.map((step, index) => {
-            return (
-              <div key={index} className="animate-fade">
-                {step.type === ContentBlockType.MARKDOWN && (
-                  <ApMarkdown
-                    markdown={step.markdown}
-                    variant={MarkdownVariant.BORDERLESS}
-                  />
-                )}
-                {step.type === ContentBlockType.TOOL_CALL && (
-                  <AgentToolBlock block={step} index={index} />
-                )}
-              </div>
-            );
-          })}
+      {agentRun.status === AgentTaskStatus.IN_PROGRESS && (
+        <div className="flex items-center gap-2 mt-5 py-3 border rounded-md px-4">
+          <Lightbulb className="size-5 animate-primary-color-pulse" />
+          <div className="text-sm font-semibold">{t('Thinking...')}</div>
         </div>
-      </ScrollArea>
-    </div>
+      )}
+    </ScrollArea>
   );
 };
 

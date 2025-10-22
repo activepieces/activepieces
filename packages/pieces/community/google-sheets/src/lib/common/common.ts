@@ -9,7 +9,7 @@ import { isNil, isString } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { googleSheetsAuth } from '../../';
-import { transformWorkSheetValues } from '../triggers/helpers';
+import { mapRowsToColumnLabels } from '../triggers/helpers';
 
 export const googleSheetsCommon = {
 	baseUrl: 'https://sheets.googleapis.com/v4/spreadsheets',
@@ -55,6 +55,7 @@ type GetGoogleSheetRowsProps = {
 	sheetId: number;
 	rowIndex_s: number | undefined;
 	rowIndex_e: number | undefined;
+	headerRow?: number;
 };
 
 async function getGoogleSheetRows({
@@ -63,6 +64,7 @@ async function getGoogleSheetRows({
 	sheetId,
 	rowIndex_s,
 	rowIndex_e,
+	headerRow = 1,
 }: GetGoogleSheetRowsProps): Promise<{ row: number; values: { [x: string]: string } }[]> {
 	// Define the API endpoint and headers
 	// Send the API request
@@ -90,19 +92,23 @@ async function getGoogleSheetRows({
 
 	const headerResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
 		method: HttpMethod.GET,
-		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A1:ZZZ1`)}`,
+		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A${headerRow}:ZZZ${headerRow}`)}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
 			token: accessToken,
 		},
 	});
 
+	if (!headerResponse.body.values) {
+		throw new Error(`Unable to read headers from row ${headerRow} in sheet "${sheetName}". The row appears to be empty or inaccessible.`);
+	}
+
 	const headers = headerResponse.body.values[0] ?? [];
 	const headerCount = headers.length;
 
 	const startingRow = rowIndex_s ? rowIndex_s - 1 : 0;
 
-	const labeledRowValues = transformWorkSheetValues(
+	const labeledRowValues = mapRowsToColumnLabels(
 		rowsResponse.body.values,
 		startingRow,
 		headerCount,
@@ -128,6 +134,7 @@ export async function getHeaderRow({
 		sheetId,
 		rowIndex_s: 1,
 		rowIndex_e: 1,
+		headerRow: 1,
 	});
 	if (rows.length === 0) {
 		return undefined;
@@ -172,6 +179,52 @@ export function stringifyArray(object: unknown[]): string[] {
 			return val;
 		}
 		return JSON.stringify(val);
+	});
+}
+
+export async function mapRowsToHeaderNames(
+	rows:any[],
+	useHeaderNames: boolean,
+	spreadsheetId: string,
+	sheetId: number,
+	headerRow: number,
+	accessToken: string
+): Promise<any[]> {
+	if (!useHeaderNames) {
+		return rows;
+	}
+
+	const headerRows = await getGoogleSheetRows({
+		spreadsheetId,
+		accessToken,
+		sheetId,
+		rowIndex_s: headerRow,
+		rowIndex_e: headerRow,
+	});
+
+	if (headerRows.length === 0) {
+		return rows;
+	}
+
+	const headers = Object.values(headerRows[0].values);
+	if (headers.length === 0) {
+		return rows;
+	}
+
+	// map rows to use header names as keys instead of column letters
+	return rows.map(row => {
+		const newValues: Record<string, any> = {};
+		Object.keys(row.values).forEach((columnLetter) => {
+			const columnIndex = labelToColumn(columnLetter);
+			const headerName = headers[columnIndex];
+			if (headerName) {
+				newValues[headerName] = row.values[columnLetter];
+			}
+			else{
+				newValues[columnLetter] = row.values[columnLetter];
+			}
+		});
+		return { ...row, values: newValues };
 	});
 }
 

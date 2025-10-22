@@ -15,9 +15,15 @@ export const findRowByNumAction = createAction({
       description: 'The row number to get from the sheet',
       required: true,
     }),
+    headerRow: Property.Number({
+      displayName: 'Header Row',
+      description: 'Which row contains the headers?',
+      required: true,
+      defaultValue: 1,
+    }),
   },
   async run(context) {
-    const {spreadsheetId,sheetId,rowNumber} = context.propsValue;
+    const {spreadsheetId,sheetId,rowNumber,headerRow} = context.propsValue;
 
     if (!areSheetIdsValid(spreadsheetId,sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -29,6 +35,7 @@ export const findRowByNumAction = createAction({
       spreadsheetId: spreadsheetId as string,
       rowIndex_s: rowNumber,
       rowIndex_e: rowNumber,
+      headerRow: headerRow,
     });
     return row[0];
   },

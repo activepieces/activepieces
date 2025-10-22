@@ -468,7 +468,7 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         failParentOnFailure: flowRun?.failParentOnFailure ?? false,
         parentRunId: flowRun?.parentRunId ?? undefined,
         flowVersionId: flowRun?.flowVersionId ?? apId(),
-        flowDisplayName: flowRun?.flowDisplayName ?? faker.lorem.word(),
+        flowVersion: flowRun?.flowVersion,
         logsFileId: flowRun?.logsFileId ?? null,
         tasks: flowRun?.tasks,
         status: flowRun?.status ?? faker.helpers.enumValue(FlowRunStatus),
@@ -551,7 +551,9 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
+        filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
     })
+    
     await databaseConnection().getRepository('platform').save(mockPlatform)
     const hasPlanTable = databaseConnection().hasMetadata(PlatformPlanEntity)
     if (hasPlanTable) {

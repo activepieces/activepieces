@@ -1,5 +1,4 @@
 {
-  "Zoo": "Dierentuin",
   "Generate and iterate on 3D models from text descriptions using ML endpoints.": "Genereer en itereer op 3D-modellen vanuit tekst beschrijvingen met behulp van ML eindpunten.",
   "Your Zoo API Key (Bearer Token).": "Je Zoo API-sleutel (naast token).",
   "Generate CAD Model": "Genereer CAD model",

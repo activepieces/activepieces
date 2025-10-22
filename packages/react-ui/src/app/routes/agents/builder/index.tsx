@@ -10,6 +10,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AgentBuilderProvider,
@@ -145,11 +146,13 @@ const AgentBuilderContent = ({
           <div className="hidden md:block w-0 md:w-1/3 bg-background border-l h-full overflow-hidden">
             {testSectionIsOpen && <AgentPreviewSection />}
             {!testSectionIsOpen && (
-              <div className="flex flex-col h-full p-4 gap-8 w-full bg-background overflow-hidden">
-                <AgentToolSection />
-                {showUseInFlow && <LinkedFlowsSection agent={initialAgent} />}
-                <AgentStructuredOutput />
-              </div>
+              <ScrollArea className="h-full">
+                <div className="flex flex-col h-full p-4 gap-8 w-full bg-background overflow-hidden">
+                  <AgentToolSection />
+                  {showUseInFlow && <LinkedFlowsSection agent={initialAgent} />}
+                  <AgentStructuredOutput />
+                </div>
+              </ScrollArea>
             )}
           </div>
         </div>

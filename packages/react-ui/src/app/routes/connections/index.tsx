@@ -27,6 +27,7 @@ import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   DataTable,
+  DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/ui/data-table';
@@ -129,7 +130,7 @@ function AppConnectionsPage() {
     label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
     value: owner.email,
   }));
-  const filters = [
+  const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
     {
       type: 'select',
       title: t('Status'),
@@ -141,28 +142,27 @@ function AppConnectionsPage() {
         };
       }),
       icon: CheckIcon,
-    } as const,
+    },
     {
       type: 'select',
       title: t('Pieces'),
       accessorKey: 'pieceName',
       icon: AppWindow,
       options: pieceOptions,
-    } as const,
+    },
     {
       type: 'input',
       title: t('Name'),
       accessorKey: 'displayName',
       icon: Tag,
-      options: [],
-    } as const,
+    },
     {
       type: 'select',
       title: t('Owner'),
       accessorKey: 'owner',
       icon: User,
       options: ownersOptions ?? [],
-    } as const,
+    },
   ];
 
   const columns: ColumnDef<

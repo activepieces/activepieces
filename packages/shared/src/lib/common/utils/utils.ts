@@ -26,16 +26,17 @@ export function insertAt<T>(array: T[], index: number, item: T): T[] {
     return [...array.slice(0, index), item, ...array.slice(index)]
 }
 
-export function debounce<T>(func: (...args: T[]) => void, wait: number): (...args: T[]) => void {
+export function debounce<T>(func: (...args: T[]) => void, wait: number): (key?: string, ...args: T[]) => void {
     let timeout: NodeJS.Timeout
-
-    return function (...args: T[]) {
+    let currentKey: string | undefined
+    return function (key?: string, ...args: T[]) {
         const later = () => {
-            clearTimeout(timeout)
             func(...args)
         }
-
-        clearTimeout(timeout)
+        if (currentKey === key) {
+            clearTimeout(timeout)
+        }
+        currentKey = key
         timeout = setTimeout(later, wait)
     }
 }

@@ -19,27 +19,27 @@ export class AuthenticationPage extends BasePage {
     await this.page.getByTestId('sign-in-button').click();
   }
 
-  async signUp() {
+  async signUp(params?: { email?: string; password?: string; firstName?: string; lastName?: string }) {
     await this.page.goto(this.signUpUrl);
 
     const firstNameField = this.page.getByTestId('sign-up-first-name');
     await firstNameField.click();
-    await firstNameField.fill('Bugs');
+    await firstNameField.fill(params?.firstName || 'Bugs');
     await firstNameField.press('Tab');
 
     const lastNameField = this.page.getByTestId('sign-up-last-name');
     await lastNameField.click();
-    await lastNameField.fill('Bunny');
+    await lastNameField.fill(params?.lastName || 'Bunny');
     await lastNameField.press('Tab');
 
     const emailField = this.page.getByTestId('sign-up-email');
     await emailField.click();
-    await emailField.fill(faker.internet.email());
+    await emailField.fill(params?.email || faker.internet.email());
     await emailField.press('Tab');
 
     const passwordField = this.page.getByTestId('sign-up-password');
     await passwordField.click();
-    await passwordField.fill(faker.internet.password({
+    await passwordField.fill(params?.password || faker.internet.password({
       pattern: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?a-zA-Z0-9]/,
       length: 12,
       prefix: '0'

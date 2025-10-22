@@ -1,4 +1,4 @@
-import { apId, UserInteractionJobDataWithoutWatchingInformation } from '@activepieces/shared'
+import { apId, LATEST_JOB_DATA_SCHEMA_VERSION, UserInteractionJobDataWithoutWatchingInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue/job-queue'
@@ -14,6 +14,7 @@ export const userInteractionWatcher = (log: FastifyBaseLogger) => ({
                 ...request,
                 requestId: id,
                 webserverId: engineResponseWatcher(log).getServerId(),
+                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             },
         })
         return engineResponseWatcher(log).oneTimeListener<T>(id, false, undefined, undefined)

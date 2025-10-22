@@ -42,6 +42,8 @@
   "The ID of the document to append text to": "Het ID van het document aan tekst toe te voegen",
   "Curly Braces {{}}": "Krullende races {{}}",
   "Square Brackets [[]]": "Haakjes [[]]",
+  "Single Curly Braces {}": "Enkele gekrulde races {}",
+  "Single Square Brackets []": "Enkele vierkante balken []",
   "GET": "KRIJG",
   "POST": "POSTE",
   "PATCH": "BEKIJK",

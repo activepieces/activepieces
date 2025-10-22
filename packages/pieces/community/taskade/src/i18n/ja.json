@@ -1,5 +1,4 @@
 {
-  "Taskade": "Taskade",
   "collaboration platform for remote teams to organize and manage projects": "リモートチームがプロジェクトを整理・管理するためのコラボレーションプラットフォーム",
   "\n\t1. Navigate to https://taskade.com/settings/password and scroll down to Personal Access Tokens.\n\t2. Create your personal access token with any name.": "\n\t1. https://taskade.com/settings/password に移動し、パーソナルアクセストークンまでスクロールします。\n\t2. 任意の名前でパーソナルアクセストークンを作成します。",
   "Create Task": "タスクを作成",

@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { CheckCircle2, Search, WorkflowIcon, X, Check } from 'lucide-react';
 
 import {
-  DataTableFilter,
+  DataTableFilters,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -143,13 +143,12 @@ export const mcpRunColumns = (
   },
 ];
 
-export const mcpRunFilters = (): DataTableFilter<keyof McpRun>[] => [
+export const mcpRunFilters = (): DataTableFilters<keyof McpRun>[] => [
   {
     type: 'input',
     title: t('Action Name'),
     accessorKey: 'metadata',
     icon: Search,
-    options: [],
   },
   {
     type: 'select',

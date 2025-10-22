@@ -14,7 +14,7 @@ export const AgentToolBlockHeader: React.FC<AgentToolBlockHeaderProps> = ({
   isDone,
   markAsComplete,
 }) => (
-  <div className="flex items-center gap-4 w-full">
+  <div className="flex items-center gap-2 w-full">
     {isDone ? (
       markAsComplete ? (
         <CircleCheck className="h-4 w-4 text-green-700 shrink-0" />

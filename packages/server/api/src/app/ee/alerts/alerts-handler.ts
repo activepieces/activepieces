@@ -1,7 +1,7 @@
 import { NotificationStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis'
+import { redisConnections } from '../../database/redis-connections'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'

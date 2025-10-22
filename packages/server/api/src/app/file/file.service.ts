@@ -72,10 +72,13 @@ export const fileService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async updateSize(params: UpdateSizeParams): Promise<void> {
-        await fileRepo().update(params.fileId, {
-            size: params.size,
+    async exists(params: GetOneParams): Promise<boolean> {
+        const file = await fileRepo().findOneBy({
+            projectId: params.projectId,
+            id: params.fileId,
+            type: params.type,
         })
+        return !isNil(file)
     },
     async getFile({ projectId, fileId, type }: GetOneParams): Promise<File | null> {
         const file = await fileRepo().findOneBy({
@@ -176,11 +179,6 @@ type GetDataResponse = {
     fileName?: string
 }
 
-type UpdateSizeParams = {
-    fileId: FileId
-    size: number
-}
-
 function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
     if (isExecutionDataFileThatExpires(type)) {
@@ -200,6 +198,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
+        case FileType.FLOW_VERSION_BACKUP:
             return false
         default:
             throw new Error(`File type ${type} is not supported`)

@@ -5,9 +5,9 @@ export class BuilderPage extends BasePage {
   url = `/builder`;
 
   async selectInitialTrigger(params: { piece: string; trigger: string }) {
-    await this.page.locator('div[data-testid="rf__node-trigger"]').filter({ hasText: 'Select Trigger' }).click();
+    await this.page.getByTestId('rf__node-trigger').filter({ hasText: 'Select Trigger' }).click();
     await this.page.getByTestId('pieces-search-input').fill(params.trigger);
-    await this.page.getByText(params.trigger).click({ timeout: 10000 });
+    await this.page.getByText(params.trigger).click();
   }
 
   async addAction(params: { piece: string; action: string }) {
@@ -49,7 +49,7 @@ export class BuilderPage extends BasePage {
 
   async publishFlow() {
     await this.page.getByRole('button', { name: 'Publish' }).click();
-    await this.page.waitForTimeout(5000);
+    await this.page.waitForTimeout(15000);
   }
 
   async waitFor() {

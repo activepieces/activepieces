@@ -18,5 +18,5 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../coverage/packages/server/api',
-  testTimeout: 120000
+  testTimeout: 200000
 };

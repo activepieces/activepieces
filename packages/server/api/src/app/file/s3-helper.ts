@@ -8,19 +8,18 @@ import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { fileRepo } from './file.service'
 
+
 export const s3Helper = (log: FastifyBaseLogger) => ({
     async constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): Promise<string> {
         const existingFile = await fileRepo().findOneBy({ id: fileId })
         if (!isNil(existingFile?.s3Key)) {
             return existingFile.s3Key
         }
-        const now = dayjs()
-        const datePath = `${now.format('YYYY/MM/DD/HH')}`
-        if (platformId) {
-            return `platform/${platformId}/${type}/${datePath}/${fileId}`
+        if (!isNil(platformId)) {
+            return `platform/${platformId}/${type}/${fileId}`
         }
-        else if (projectId) {
-            return `project/${projectId}/${type}/${datePath}/${fileId}`
+        else if (!isNil(projectId)) {
+            return `project/${projectId}/${type}/${fileId}`
         }
         else {
             throw new Error('Either platformId or projectId must be provided')
@@ -66,7 +65,9 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             Key: s3Key,
             ResponseContentDisposition: `attachment; filename="${fileName}"`,
         })
-        return getSignedUrl(client, command)
+        return getSignedUrl(client, command, {
+            expiresIn: dayjs.duration(7, 'days').asSeconds(),
+        })
     },
     async putS3SignedUrl(s3Key: string, contentLength?: number | undefined): Promise<string> {
         const client = getS3Client()
@@ -75,7 +76,9 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             Key: s3Key,
             ContentLength: contentLength,
         })
-        return getSignedUrl(client, command)
+        return getSignedUrl(client, command, {
+            expiresIn: dayjs.duration(7, 'days').asSeconds(),
+        })
     },
     async deleteFiles(s3Keys: string[]): Promise<void> {
         if (s3Keys.length === 0) {

@@ -1,4 +1,4 @@
-name: E2E Tests
+name: Checkly E2E Tests
 
 on:
   workflow_call:

@@ -1,5 +1,4 @@
 {
-  "TrueLayer": "TrueLayer",
   "Connect with TrueLayer to leverage secure open banking services. This integration allows seamless interaction with TrueLayer's API to manage various financial processes.": "TrueLayerと接続してセキュアなオープンバンキングサービスを活用することで、TrueLayerのAPIとのシームレスな相互作用により、さまざまな金融プロセスを管理することができます。",
   "Authentication for TrueLayer API": "TrueLayer API の認証",
   "Create payout": "支払いを作成",

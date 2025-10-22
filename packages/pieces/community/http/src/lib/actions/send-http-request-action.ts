@@ -339,10 +339,7 @@ export const httpSendRequestAction = createAction({
         attempts++;
 
         if (stopFlow) {
-          context.run.stop({
-            response: (error as HttpError).response,
-          });
-          return (error as HttpError).response;
+          throw error;
         }
 
         switch (failureMode) {
@@ -373,10 +370,7 @@ export const httpSendRequestAction = createAction({
             if (attempts < 3) continue;
             throw error;
           case 'continue_none':
-            context.run.stop({
-              response: (error as HttpError).response,
-            });
-            return (error as HttpError).response;
+           throw error;
           default:
             throw error;
         }

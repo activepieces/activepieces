@@ -24,7 +24,7 @@ export const memoryLock = {
     isTimeoutError: (e: unknown): boolean => {
         return e === E_TIMEOUT
     },
-    runExclusive: async <T>(key: string, fn: () => Promise<T>): Promise<T> => {
+    runExclusive: async <T>({ key, fn }: RunExclusiveParams<T>): Promise<T> => {
         const lock = await memoryLock.acquire(key)
         try {
             return await fn()
@@ -33,6 +33,11 @@ export const memoryLock = {
             await lock.release()
         }
     },
+}
+
+type RunExclusiveParams<T> = {
+    key: string
+    fn: () => Promise<T>
 }
 
 export type ApLock = {

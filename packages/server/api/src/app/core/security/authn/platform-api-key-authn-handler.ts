@@ -39,7 +39,18 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
 
     protected async doHandle(request: FastifyRequest): Promise<void> {
         const apiKeyValue = this.extractApiKeyValue(request)
-        const apiKey = await apiKeyService.getByValueOrThrow(apiKeyValue)
+        let apiKey: ApiKey | null = null
+        try {
+            apiKey = await apiKeyService.getByValueOrThrow(apiKeyValue)
+        }
+        catch (e) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHENTICATION,
+                params: {
+                    message: 'invalid api key',
+                },
+            })
+        }
         const principal = await this.createPrincipal(request, apiKey)
         request.principal = principal
     }

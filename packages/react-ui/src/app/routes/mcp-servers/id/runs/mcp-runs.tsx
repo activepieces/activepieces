@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Activity } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 import { DataTable } from '@/components/ui/data-table';
@@ -46,8 +46,8 @@ export const McpHistoryPage = () => {
     enabled: !!mcpId,
   });
 
-  const columns = useMemo(() => mcpRunColumns(metadata ?? []), [metadata]);
-  const filters = useMemo(() => mcpRunFilters(), []);
+  const columns = mcpRunColumns(metadata ?? []);
+  const filters = mcpRunFilters();
 
   return (
     <div className="w-full ">

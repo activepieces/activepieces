@@ -16,10 +16,11 @@ export const getVendor = createAction({
     }),
   },
   async run(context) {
-    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } = context.auth;
+    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
+      context.auth;
     const { vendorId } = context.propsValue;
 
-    const baseUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/vendor/${vendorId}`;
+    const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/vendor/${vendorId}`;
     const httpMethod = HttpMethod.GET;
 
     const authHeader = createOAuthHeader(
@@ -28,17 +29,17 @@ export const getVendor = createAction({
       consumerSecret,
       tokenId,
       tokenSecret,
-      baseUrl,
+      requestUrl,
       httpMethod
     );
 
     const response = await httpClient.sendRequest({
       method: httpMethod,
-      url: baseUrl,
+      url: requestUrl,
       headers: {
         Authorization: authHeader,
-        'prefer': 'transient',
-        'Cookie': 'NS_ROUTING_VERSION=LAGGING',
+        prefer: 'transient',
+        Cookie: 'NS_ROUTING_VERSION=LAGGING',
       },
     });
 

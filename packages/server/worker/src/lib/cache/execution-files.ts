@@ -2,8 +2,8 @@ import path from 'path'
 import { fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
 import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceManager } from '../piece-manager'
-import { CodeArtifact } from '../runner/engine-runner-types'
+import { pieceManager } from '../cache/pieces'
+import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
@@ -46,12 +46,13 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         }, 'Installed code in sandbox')
 
         const startTimeEngine = performance.now()
-        await engineInstaller(log).install({
+        const { cacheHit } = await engineInstaller(log).install({
             path: GLOBAL_CACHE_COMMON_PATH,
         })
         log.info({
             path: GLOBAL_CACHE_COMMON_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeEngine)}ms`,
+            cacheHit,
         }, 'Installed engine in sandbox')
 
         const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)

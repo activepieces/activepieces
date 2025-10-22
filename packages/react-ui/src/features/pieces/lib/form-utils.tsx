@@ -9,6 +9,7 @@ import {
   PieceMetadata,
   PieceMetadataModel,
   PieceMetadataModelSummary,
+  PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
@@ -104,7 +105,79 @@ const buildInputSchemaForStep = (
   }
 };
 
-const getDefaultValueForStep = ({
+export const getDefaultPropertyValue = ({
+  property,
+  dynamicInputModeToggled,
+}: {
+  property: PieceProperty;
+  dynamicInputModeToggled: boolean;
+}) => {
+  switch (property.type) {
+    case PropertyType.ARRAY: {
+      const isInlinedItemMode = dynamicInputModeToggled && property.properties;
+      if (isInlinedItemMode) {
+        return {};
+      } else if (dynamicInputModeToggled) {
+        return '';
+      }
+      return property.defaultValue ?? [];
+    }
+    case PropertyType.OBJECT:
+    case PropertyType.JSON: {
+      if (dynamicInputModeToggled) {
+        return '';
+      }
+      return property.defaultValue ?? {};
+    }
+    case PropertyType.SHORT_TEXT:
+    case PropertyType.LONG_TEXT:
+    case PropertyType.MARKDOWN:
+    case PropertyType.FILE:
+    case PropertyType.DATE_TIME:
+    case PropertyType.NUMBER: {
+      return property.defaultValue ?? '';
+    }
+    case PropertyType.DYNAMIC: {
+      return {};
+    }
+    case PropertyType.CHECKBOX: {
+      if (dynamicInputModeToggled) {
+        return '';
+      }
+      return property.defaultValue ?? false;
+    }
+    case PropertyType.DROPDOWN:
+    case PropertyType.STATIC_DROPDOWN:
+    case PropertyType.MULTI_SELECT_DROPDOWN:
+    case PropertyType.STATIC_MULTI_SELECT_DROPDOWN: {
+      if (dynamicInputModeToggled) {
+        return '';
+      }
+      if (
+        property.type === PropertyType.MULTI_SELECT_DROPDOWN ||
+        property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
+      ) {
+        return property.defaultValue ?? [];
+      }
+      return property.defaultValue ?? null;
+    }
+    case PropertyType.COLOR: {
+      if (dynamicInputModeToggled) {
+        return '';
+      }
+      return property.defaultValue ?? '';
+    }
+    case PropertyType.OAUTH2:
+    case PropertyType.CUSTOM_AUTH:
+    case PropertyType.BASIC_AUTH:
+    case PropertyType.SECRET_TEXT:
+    case PropertyType.CUSTOM: {
+      return '';
+    }
+  }
+};
+
+export const getDefaultValueForStep = ({
   props,
   existingInput,
   propertySettings,
@@ -113,56 +186,20 @@ const getDefaultValueForStep = ({
   existingInput: Record<string, unknown>;
   propertySettings?: Record<string, PropertySettings>;
 }): Record<string, unknown> => {
-  const defaultValues: Record<string, unknown> = {};
-  const entries = Object.entries(props);
-  for (const [name, property] of entries) {
-    switch (property.type) {
-      case PropertyType.CHECKBOX: {
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? false;
-        break;
-      }
-      case PropertyType.ARRAY: {
-        const isInlineInputArray =
-          !isNil(propertySettings) && propertySettings[name];
-        const existingValue = existingInput[name];
-        if (!isNil(existingValue)) {
-          defaultValues[name] = existingValue;
-        } else if (isInlineInputArray && !isNil(property.properties)) {
-          defaultValues[name] = {};
-        } else {
-          defaultValues[name] = property.defaultValue ?? [];
-        }
-        break;
-      }
-      case PropertyType.MARKDOWN:
-      case PropertyType.DATE_TIME:
-      case PropertyType.SHORT_TEXT:
-      case PropertyType.LONG_TEXT:
-      case PropertyType.FILE:
-      case PropertyType.STATIC_DROPDOWN:
-      case PropertyType.DROPDOWN:
-      case PropertyType.BASIC_AUTH:
-      case PropertyType.CUSTOM_AUTH:
-      case PropertyType.SECRET_TEXT:
-      case PropertyType.CUSTOM:
-      case PropertyType.COLOR:
-      case PropertyType.MULTI_SELECT_DROPDOWN:
-      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      case PropertyType.JSON:
-      case PropertyType.NUMBER:
-      case PropertyType.OAUTH2: {
-        defaultValues[name] = existingInput[name] ?? property.defaultValue;
-        break;
-      }
-      case PropertyType.OBJECT:
-      case PropertyType.DYNAMIC:
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? {};
-        break;
-    }
-  }
-  return defaultValues;
+  return Object.entries(props).reduce<Record<string, unknown>>(
+    (defaultValues, [propertyName, property]) => {
+      defaultValues[propertyName] =
+        existingInput[propertyName] ??
+        getDefaultPropertyValue({
+          property,
+          dynamicInputModeToggled:
+            propertySettings?.[propertyName]?.type ===
+            PropertyExecutionType.DYNAMIC,
+        });
+      return defaultValues;
+    },
+    {},
+  );
 };
 
 const createPropertySettingsForStep = ({
@@ -265,7 +302,9 @@ const buildConnectionSchema = (
 export const formUtils = {
   /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
   removeUndefinedFromInput: (step: FlowAction | FlowTrigger) => {
-    const copiedStep = JSON.parse(JSON.stringify(step));
+    const copiedStep = JSON.parse(JSON.stringify(step)) as
+      | FlowAction
+      | FlowTrigger;
     if (
       copiedStep.type !== FlowTriggerType.PIECE &&
       copiedStep.type !== FlowActionType.PIECE
@@ -412,7 +451,7 @@ export const formUtils = {
     switch (type) {
       case FlowActionType.LOOP_ON_ITEMS:
         return Type.Composite([
-          LoopOnItemsActionSchema,
+          Type.Omit(LoopOnItemsActionSchema, ['settings']),
           Type.Object({
             settings: Type.Object({
               items: Type.String({

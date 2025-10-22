@@ -1,4 +1,4 @@
-FROM node:18.20.5-bullseye-slim AS base
+FROM node:20.19-bullseye-slim AS base
 
 # Use a cache mount for apt to speed up the process
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         procps && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.15.0 pm2@6.0.10
+RUN npm i -g npm@9.9.3 pnpm@9.15.0 pm2@6.0.10 typescript@4.9.4
 
 # Set the locale
 ENV LANG en_US.UTF-8
@@ -49,8 +49,11 @@ RUN npm ci
 
 COPY . .
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui
+# Set NX_NO_CLOUD environment variable
+ENV NX_NO_CLOUD=true
+
+RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force

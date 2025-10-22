@@ -17,6 +17,7 @@ import { useForm } from 'react-hook-form';
 import { Markdown } from 'tiptap-markdown';
 
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
@@ -144,10 +145,10 @@ export const AgentPromptEditor = () => {
           </div>
         </div>
       )}
-      <div className="h-full overflow-auto flex">
-        <div className="grow">
+      <div className="h-full flex">
+        <ScrollArea className="h-full pr-4 grow">
           <EditorContent editor={editor} />
-        </div>
+        </ScrollArea>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

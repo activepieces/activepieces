@@ -1,56 +1,101 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
+import { workerDistributedLock } from '../utils/worker-redis'
+import { workerCache } from './worker-cache'
 
 type CacheMap = Record<string, string>
 
-const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
-
+const cachePath = (folderPath: string): string =>
+    join(folderPath, 'cache.json')
 const cached: Record<string, CacheMap | null> = {}
-const getCache = async (folderPath: string): Promise<CacheMap> => {
-    if (isNil(cached[folderPath])) {
-        const filePath = cachePath(folderPath)
-        const cacheExists = await fileSystemUtils.fileExists(filePath)
-        if (!cacheExists) {
-            await saveToCache({}, folderPath)
-        }
-        cached[folderPath] = await readCache(folderPath)
-    }
-    const cache = (cached[folderPath] as CacheMap) || {}
-    return cache
-}
+export const NO_SAVE_GUARD = (_: string): boolean => false
 
-export const cacheState = (folderPath: string) => {
+export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
     return {
-        async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
-                const cache = await getCache(folderPath)
-                return cache[cacheAlias]
+        async getOrSetCache({
+            cacheMiss,
+            key,
+            installFn,
+            skipSave,
+        }: CacheStateParams): Promise<CacheResult> {
+            const cache = await readCacheFromMemory(folderPath)
+            const value = cache[key] as string | null
+            if (!isNil(value) && !cacheMiss(value)) {
+                return {
+                    cacheHit: true,
+                    state: value,
+                }
+            }
+            const cacheId = await workerCache(log).getCacheId()
+            return workerDistributedLock(log).runExclusive({
+                key: `cache-save-${folderPath}-${cacheId}`,
+                timeoutInSeconds: 30 * 60,
+                fn: async () => {
+                    const cacheFromDisk = await readCacheFromFile(folderPath)
+                    const valueFromDisk = cacheFromDisk[key]
+                    if (!isNil(valueFromDisk) && !cacheMiss(valueFromDisk)) {
+                        cached[folderPath] = cacheFromDisk
+                        return { cacheHit: true, state: valueFromDisk }
+                    }
+                    const value = await installFn()
+                    if (skipSave(value)) {
+                        return {
+                            cacheHit: false,
+                            state: value,
+                        }
+                    }
+                    const freshCache = await cacheState(folderPath, log).saveCache(
+                        key,
+                        value,
+                    )
+                    cached[folderPath] = freshCache
+                    return {
+                        cacheHit: false,
+                        state: value,
+                    }
+                },
             })
         },
-        async setCache(cacheAlias: string, state: string): Promise<void> {
-            const cacheKey = `${folderPath}-${cacheAlias}`
-            return memoryLock.runExclusive(cacheKey, async () => {
-                const cache = await getCache(folderPath)
-                cache[cacheAlias] = state
-                await saveToCache(cache, folderPath)
-            })
+        saveCache: async (key: string, value: string): Promise<CacheMap> => {
+            await fileSystemUtils.threadSafeMkdir(folderPath)
+            const cacheFilePath = cachePath(folderPath)
+            const freshCache = await readCacheFromFile(folderPath)
+            freshCache[key] = value
+            await writeFileAtomic(cacheFilePath, JSON.stringify(freshCache), 'utf8')
+            return freshCache
         },
     }
 }
 
-
-async function saveToCache(cache: CacheMap, folderPath: string): Promise<void> {
-    await fileSystemUtils.threadSafeMkdir(folderPath)
+async function readCacheFromFile(folderPath: string): Promise<CacheMap> {
     const filePath = cachePath(folderPath)
-    await writeFileAtomic(filePath, JSON.stringify(cache), 'utf8')
-}
-
-async function readCache(folderPath: string): Promise<CacheMap> {
-    const filePath = cachePath(folderPath)
+    const fileExists = await fileSystemUtils.fileExists(filePath)
+    if (!fileExists) {
+        return {}
+    }
     const fileContent = await readFile(filePath, 'utf8')
     return JSON.parse(fileContent)
+}
+
+async function readCacheFromMemory(folderPath: string): Promise<CacheMap> {
+    if (isNil(cached[folderPath])) {
+        cached[folderPath] = await readCacheFromFile(folderPath)
+    }
+    return cached[folderPath]
+}
+
+type CacheResult = {
+    cacheHit: boolean
+    state: string | null
+}
+
+type CacheStateParams = {
+    key: string
+    cacheMiss: (value: string) => boolean
+    installFn: () => Promise<string>
+    skipSave: (value: string) => boolean
 }

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import snowflake, { Statement, SnowflakeError } from 'snowflake-sdk';
 import { snowflakeAuth } from '../../index';
+import { configureConnection } from '../common';
 
 type QueryResult = unknown[] | undefined;
 type QueryResults = { query: string; result: QueryResult }[];
@@ -54,19 +55,11 @@ export const runMultipleQueries = createAction({
   },
 
   async run(context) {
-    const { username, password, role, database, warehouse, account } =
-      context.auth;
-
-    const connection = snowflake.createConnection({
-      application: context.propsValue.application,
-      timeout: context.propsValue.timeout,
-      username,
-      password,
-      role,
-      database,
-      warehouse,
-      account,
-    });
+    const connection = configureConnection(
+      context.auth,
+      context.propsValue.application,
+      context.propsValue.timeout
+    );
 
     return new Promise<QueryResults>((resolve, reject) => {
       connection.connect(async function (err: SnowflakeError | undefined) {

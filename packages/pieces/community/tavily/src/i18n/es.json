@@ -1,5 +1,4 @@
 {
-  "Tavily": "Tavily",
   "Search engine tailored for AI agents.": "Motor de búsqueda adaptado a los agentes de IA.",
   "\nFollow these steps to obtain your Tavily API Key:\n\n1. Visit [tavily](https://tavily.com/) and create an account.\n2. Log in and navigate to your dashboard.\n3. Locate and copy your API key from the dashboard.\n": "\nSigue estos pasos para obtener tu clave API de Tavily:\n\n1. Visita [tavily](https://tavily.com/) y crea una cuenta.\n2. Inicie sesión y vaya a su panel de control.\n3. Localice y copie su clave API del panel de control.\n",
   "Search": "Buscar",

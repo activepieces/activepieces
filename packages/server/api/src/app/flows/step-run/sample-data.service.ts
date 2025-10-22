@@ -105,7 +105,7 @@ export async function saveSampleData({
     const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
     const fileType = type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
     const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step, fileType, log)
-    const data = Buffer.from(JSON.stringify(payload))
+    const data = dataType === SampleDataDataType.STRING && typeof payload === 'string' ? Buffer.from(payload) : Buffer.from(JSON.stringify(payload))
     return fileService(log).save({
         projectId,
         fileId,

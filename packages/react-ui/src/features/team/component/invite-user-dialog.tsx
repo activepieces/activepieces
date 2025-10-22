@@ -170,13 +170,13 @@ export const InviteUserDialog = ({
     });
   };
 
-  if (embedState.isEmbedded) {
+  if (embedState.isEmbedded || !userHasPermissionToInviteUser) {
     return null;
   }
 
   return (
     <>
-      {userHasPermissionToInviteUser && (
+      {
         <Dialog
           open={open}
           modal
@@ -355,7 +355,7 @@ export const InviteUserDialog = ({
             )}
           </DialogContent>
         </Dialog>
-      )}
+      }
     </>
   );
 };

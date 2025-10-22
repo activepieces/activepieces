@@ -21,6 +21,22 @@ type DynamicPropertiesProps = {
   disabled: boolean;
 };
 
+const removeOptionsFromDropdownPropertiesSchema = (
+  schema: PiecePropertyMap,
+) => {
+  return Object.fromEntries(
+    Object.entries(schema).map(([key, value]) => {
+      if (
+        value.type === PropertyType.STATIC_DROPDOWN ||
+        value.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
+      ) {
+        return [key, { ...value, options: { disabled: false, options: [] } }];
+      }
+      return [key, value];
+    }),
+  );
+};
+
 const DynamicPropertiesImplementation = React.memo(
   (props: DynamicPropertiesProps) => {
     const [flowVersion, readonly] = useBuilderStateContext((state) => [
@@ -29,17 +45,26 @@ const DynamicPropertiesImplementation = React.memo(
     ]);
     const form = useFormContext<FlowAction | FlowTrigger>();
     const { updateFormSchema } = useStepSettingsContext();
-    const isFirstRender = useRef(true);
-    const previousValues = useRef<undefined | unknown[]>(undefined);
+    const allInputValues = useWatch({
+      name: `settings.input`,
+      control: form.control,
+    });
+    const refreshersPropertiesNames = [...props.refreshers, 'auth'];
+    const refresherValues = refreshersPropertiesNames.reduce<
+      Record<string, unknown>
+    >((acc, refresher) => {
+      acc[refresher] = allInputValues[refresher];
+      return acc;
+    }, {});
+    const previousValues = useRef<Record<string, unknown>>(refresherValues);
     const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
       DynamicPropertiesContext,
     );
     const [propertyMap, setPropertyMap] = useState<
       PiecePropertyMap | undefined
     >(undefined);
-    const newRefreshers = [...props.refreshers, 'auth'];
 
-    const { mutate, isPending, error } =
+    const { mutate, isPending } =
       piecesHooks.usePieceOptions<PropertyType.DYNAMIC>({
         onMutate: () => {
           propertyLoadingStarted(props.propertyName);
@@ -52,28 +77,9 @@ const DynamicPropertiesImplementation = React.memo(
           propertyLoadingFinished(props.propertyName);
         },
       });
-    if (error) {
-      throw error;
-    }
-    /* eslint-disable react-hooks/rules-of-hooks */
-    const refresherValues = newRefreshers.map((refresher) =>
-      useWatch({
-        name: `settings.input.${refresher}` as const,
-        control: form.control,
-      }),
-    );
-    /* eslint-enable react-hooks/rules-of-hooks */
 
     useDeepCompareEffectNoCheck(() => {
-      const input: Record<string, unknown> = {};
-      newRefreshers.forEach((refresher, index) => {
-        input[refresher] = refresherValues[index];
-      });
-
-      if (
-        !isFirstRender.current &&
-        !deepEqual(previousValues.current, refresherValues)
-      ) {
+      if (!deepEqual(previousValues.current, refresherValues)) {
         // the field state won't be cleared if you only unset the parent prop value
         if (propertyMap) {
           Object.keys(propertyMap).forEach((childPropName) => {
@@ -81,7 +87,8 @@ const DynamicPropertiesImplementation = React.memo(
               `settings.input.${props.propertyName}.${childPropName}` as const,
               null,
               {
-                shouldValidate: true,
+                //never validate for each prop, it can be a long list of props and cause the browser to freeze
+                shouldValidate: false,
               },
             );
           });
@@ -92,7 +99,6 @@ const DynamicPropertiesImplementation = React.memo(
       }
 
       previousValues.current = refresherValues;
-      isFirstRender.current = false;
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion } = settings;
@@ -103,7 +109,7 @@ const DynamicPropertiesImplementation = React.memo(
             pieceVersion,
             propertyName: props.propertyName,
             actionOrTriggerName: actionOrTriggerName,
-            input,
+            input: refresherValues,
             flowVersionId: flowVersion.id,
             flowId: flowVersion.flowId,
           },
@@ -123,16 +129,17 @@ const DynamicPropertiesImplementation = React.memo(
                 ],
             });
             setPropertyMap(response.options);
-
+            const schemaWithoutDropdownOptions =
+              removeOptionsFromDropdownPropertiesSchema(response.options);
             updateFormSchema(
               `settings.input.${props.propertyName}`,
-              response.options,
+              schemaWithoutDropdownOptions,
             );
 
             if (!readonly) {
               form.setValue(
                 `settings.propertySettings.${props.propertyName}.schema`,
-                response.options,
+                schemaWithoutDropdownOptions,
               );
             }
 
@@ -147,7 +154,7 @@ const DynamicPropertiesImplementation = React.memo(
           },
         },
       );
-    }, refresherValues);
+    }, [refresherValues]);
 
     return (
       <>
