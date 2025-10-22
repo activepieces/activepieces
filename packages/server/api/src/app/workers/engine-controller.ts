@@ -1,5 +1,5 @@
 
-import { CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -8,8 +8,6 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
-import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from './engine-response-watcher'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
@@ -79,29 +77,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         )
         return {}
     })
-
-    app.post('/create-trigger-run', CreateTriggerRunParams, async (request) => {
-        const { status, payload, flowId, simulate, jobId } = request.body
-        const { projectId } = request.principal
-        const trigger = await triggerSourceService(request.log).getByFlowId({
-            flowId,
-            projectId,
-            simulate,
-        })
-        if (!isNil(trigger)) {
-            await triggerRunService(request.log).create({
-                status,
-                payload,
-                triggerSourceId: trigger.id,
-                projectId,
-                pieceName: trigger.pieceName,
-                pieceVersion: trigger.pieceVersion,
-                jobId,
-            })
-        }
-
-    })
-
 
     app.get('/flows', GetLockedVersionRequest, async (request) => {
         const flowVersion = await flowVersionService(request.log).getOneOrThrow(request.query.versionId)
@@ -213,15 +188,6 @@ const GetLockedVersionRequest = {
     },
 }
 
-const CreateTriggerRunParams = {
-
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        body: CreateTriggerRunRequestBody,
-    },
-}
 
 const UpdateFlowResponseParams = {
     config: {

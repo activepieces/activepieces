@@ -30,16 +30,16 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
             })
             return domainHelper.getInternalApiUrl({ path: `/v1/flow-runs/logs?token=${token}`, platformId: null })
         },
-        async upsertMetadata(request: UploadLogsToken): Promise<void> {
-            const fileExists = await fileService(log).exists({
+        async upsertMetadata(request: UploadLogsToken): Promise<File> {
+            const file = await fileService(log).getFile({
                 projectId: request.projectId,
                 fileId: request.logsFileId,
                 type: FileType.FLOW_RUN_LOG,
             })
-            if (fileExists) {
-                return
+            if (!isNil(file)) {
+                return file
             }
-            await upsertFile(request, log, null)
+            return upsertFile(request, log, null)
         },
         async uploadDirectly(request: UploadLogsToken, content: Buffer): Promise<void> {
             await upsertFile(request, log, content)
