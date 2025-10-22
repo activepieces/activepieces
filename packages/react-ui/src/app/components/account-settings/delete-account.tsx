@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { Trash } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { isCloudPlanButNotEnterprise } from '@activepieces/ee-shared';
@@ -23,6 +29,7 @@ export const DeleteAccount = () => {
   const userEmail = user?.email;
   const form = useForm<{ email: string }>({
     reValidateMode: 'onChange',
+    mode: 'onChange',
     resolver: (values) => {
       const errors: Record<string, { message: string }> = {};
       if (values.email !== userEmail) {
@@ -37,6 +44,9 @@ export const DeleteAccount = () => {
     },
   });
   const { mutate: deleteAccount, isPending } = platformHooks.useDeleteAccount();
+  const isDeleteButtonDisabled =
+    !isNil(form.formState.errors.email) ||
+    form.getValues('email') !== userEmail;
 
   if (!isCloudPlanButNotEnterprise(platform.plan.plan) || isNil(userEmail)) {
     return null;
@@ -47,7 +57,7 @@ export const DeleteAccount = () => {
       <Separator />
       <Form {...form}>
         <form
-          className="flex items-center justify-between"
+          className="w-full"
           onSubmit={form.handleSubmit(() => deleteAccount())}
         >
           <FormField
@@ -56,21 +66,53 @@ export const DeleteAccount = () => {
             render={({ field }) => {
               return (
                 <FormItem>
-                  <FormLabel>{t('Email')}</FormLabel>
-                  <Input {...field} placeholder={userEmail} />
-                  <FormDescription>
-                    {t(
-                      'Please enter your email to delete your account, this action is irreversible.',
-                    )}
-                  </FormDescription>
+                  <FormLabel className="flex items-center gap-2 mb-2">
+                    {' '}
+                    <Trash className="w-4 h-4" /> {t('Delete Your Account')}
+                  </FormLabel>
+                  <div className="flex items-center gap-4 w-full">
+                    <Input
+                      {...field}
+                      className="grow"
+                      placeholder={userEmail}
+                      autoComplete="off"
+                    />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div>
+                          <Button
+                            variant="destructive"
+                            type="submit"
+                            disabled={isDeleteButtonDisabled}
+                            loading={isPending}
+                          >
+                            {t('Delete')}
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      {isDeleteButtonDisabled && (
+                        <TooltipContent>
+                          {t('Please enter your email first.')}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </div>
                   <FormMessage />
+
+                  <FormDescription>
+                    <p className="mt-2">
+                      {t(
+                        'Enter your email to delete your account, including your flows, connections, agents, tables and projects.',
+                      )}{' '}
+                      <span className="text-foreground font-semibold">
+                        {t('This action is irreversible.')}
+                      </span>
+                    </p>
+                  </FormDescription>
                 </FormItem>
               );
             }}
           />
-          <Button variant="destructive" type="submit" loading={isPending}>
-            {t('Delete Account')}
-          </Button>
         </form>
       </Form>
     </>
