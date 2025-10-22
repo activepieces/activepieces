@@ -27,6 +27,7 @@ import {
   AppConnectionWithoutSensitiveData,
   PieceAction,
   PieceTrigger,
+  PropertyExecutionType,
   isNil,
 } from '@activepieces/shared';
 
@@ -74,6 +75,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
 
   const isGlobalConnection =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
+  const dynamicInputModeToggled =
+    form.getValues().settings.propertySettings['auth']?.type ===
+    PropertyExecutionType.DYNAMIC;
   return (
     <FormField
       control={form.control}
@@ -108,6 +112,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               hideDescription={true}
               inputName="settings.input.auth"
               allowDynamicValues={!params.isTrigger}
+              dynamicInputModeToggled={dynamicInputModeToggled}
             >
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
@@ -160,6 +165,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     <SelectValue
                       className="truncate flex-grow flex-shrink"
                       placeholder={t('Select a connection')}
+                      data-testid="select-connection-value"
                     >
                       {!isNil(field.value) &&
                       !isNil(

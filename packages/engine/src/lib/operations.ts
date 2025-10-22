@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import {
     BeginExecuteFlowOperation,
     EngineOperation,
@@ -5,7 +6,7 @@ import {
     EngineResponse,
     EngineResponseStatus,
     ExecuteActionResponse,
-    ExecuteExtractPieceMetadata,
+    ExecuteExtractPieceMetadataOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteToolOperation,
@@ -33,9 +34,8 @@ import { flowExecutor } from './handler/flow-executor'
 import { pieceHelper } from './helper/piece-helper'
 import { triggerHelper } from './helper/trigger-helper'
 import { progressService } from './services/progress.service'
-import { utils } from './utils'
 
-const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
+const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<FlowRunResponse>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
     const output: FlowExecutorContext = await executieSingleStepOrFlowOperation(input)
     const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
@@ -47,16 +47,15 @@ const executeFlow = async (input: ExecuteFlowOperation): Promise<EngineResponse<
     const response = await newContext.toResponse()
     return {
         status: EngineResponseStatus.OK,
-        response: {
-            status: response.status,
-            error: response.error,
-        },
+        response,
+
     }
 }
 
 const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): Promise<FlowExecutorContext> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
-    if (constants.testSingleStepMode) {
+    const testSingleStepMode = !isNil(constants.stepNameToTest)
+    if (testSingleStepMode) {
         const testContext = await testExecutionContext.stateFromFlowVersion({
             apiUrl: input.internalApiUrl,
             flowVersion: input.flowVersion,
@@ -195,10 +194,9 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
     try {
-
         switch (operationType) {
             case EngineOperationType.EXTRACT_PIECE_METADATA: {
-                const input = operation as ExecuteExtractPieceMetadata
+                const input = operation as ExecuteExtractPieceMetadataOperation
                 const output = await pieceHelper.extractPieceMetadata({
                     params: input,
                     pieceSource: EngineConstants.PIECE_SOURCES,
@@ -265,13 +263,20 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     response: output,
                 }
             }
+            default: {
+                return {
+                    status: EngineResponseStatus.INTERNAL_ERROR,
+                    response: {},
+                    error: `Unsupported operation type: ${operationType}`,
+                }
+            }
         }
     }
     catch (e) {
-        console.error(e)
         return {
-            status: EngineResponseStatus.ERROR,
-            response: utils.tryParseJson((e as Error).message),
+            status: EngineResponseStatus.INTERNAL_ERROR,
+            response: {},
+            error: inspect(e),
         }
     }
 }

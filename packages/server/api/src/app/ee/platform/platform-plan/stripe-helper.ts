@@ -1,12 +1,11 @@
 import {  ApSubscriptionStatus, BillingCycle, CreateSubscriptionParams, PlanName, StripePlanName } from '@activepieces/ee-shared'
-import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { apDayjs, AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil, PlatformRole, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { getRedisConnection } from '../../../database/redis-connection'
-import { apDayjs } from '../../../helper/dayjs-helper'
+import { redisConnections } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { userService } from '../../../user/user-service'
 import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, BUSINESS_PLAN_PRICE_ID, BUSINESS_PLAN_PRICE_IDS, PLUS_PLAN_PRICE_ID, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_ID, USER_SEAT_PRICE_ID } from './platform-plan-helper'
@@ -45,7 +44,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const redisConnection = getRedisConnection()
+        const redisConnection = await redisConnections.useExisting()
         const key = `trial-gift-${platformId}-${customerId}`
         const redisValue = await redisConnection.get(key)
         const parsedGiftTrial = redisValue 
@@ -101,7 +100,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 isNil(platformPlan.stripeSubscriptionId) || 
                 platformPlan.stripeSubscriptionStatus === ApSubscriptionStatus.CANCELED
             ) {
-                const redisConnection = getRedisConnection()
+                const redisConnection = await redisConnections.useExisting()
                 const key = `trial-gift-${platformPlan.platformId}-${platformPlan.stripeCustomerId}`
                 await platformPlanService(log).update({
                     platformId: platformPlan.platformId,
@@ -180,6 +179,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                     platformId,
                 },
             },
+            allow_promotion_codes: true,
             success_url: `${frontendUrl}/platform/setup/billing/success?action=create`,
             cancel_url: `${frontendUrl}/platform/setup/billing/error`,
             customer: customerId,
@@ -263,9 +263,10 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
      
         }
         catch (error) {
-            log.error(`Failed to handle subscription scheduling ${error}`, { 
+            log.error({ 
+                error,
                 subscriptionId, 
-            })
+            }, 'Failed to handle subscription scheduling')
             return '/platform/setup/billing/error'
         }
     },
@@ -411,7 +412,7 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
         },
     })
 
-    logger.info('Updated subscription schedule for plan change', {
+    logger.info({
         scheduleId,
         subscriptionId: subscription.id,
         currentPlan: currentCycle === newCycle ? 'unchanged' : 'cycle-changed',
@@ -420,7 +421,7 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
         newCycle,
         effectiveDate: new Date(currentPeriodEnd * 1000).toISOString(),
         willCancel: isFreeDowngrade,
-    })
+    }, 'Updated subscription schedule for plan change')
 }
 
 async function createSubscriptionSchedule(params: CreateSubscriptionScheduleParams): Promise<Stripe.SubscriptionSchedule> {

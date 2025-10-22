@@ -6,11 +6,14 @@ import { getPersonPaths } from './lib/actions/people/get-person-paths';
 import { sortPeople } from './lib/actions/people/sort-people';
 import { enrichEmail } from './lib/actions/people/enrich-email';
 import { enrichPersonBasic } from './lib/actions/people/enrich-person-basic';
+import { enrichPersonBasicBulk } from './lib/actions/people/enrich-person-basic-bulk';
 import { enrichEmailsBulk } from './lib/actions/people/enrich-emails-bulk';
 
 // Company actions
+import { getCompanyPaths } from './lib/actions/companies/get-company-paths';
 import { sortCompanies } from './lib/actions/companies/sort-companies';
 import { enrichCompanyBasic } from './lib/actions/companies/enrich-company-basic';
+import { enrichCompanyBasicBulk } from './lib/actions/companies/enrich-company-basic-bulk';
 
 export const villageAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -35,10 +38,13 @@ export const village = createPiece({
     sortPeople,
     enrichEmail,
     enrichPersonBasic,
+    enrichPersonBasicBulk,
     enrichEmailsBulk,
     // Company actions
+    getCompanyPaths,
     sortCompanies,
     enrichCompanyBasic,
+    enrichCompanyBasicBulk,
   ],
   triggers: [],
 });

@@ -31,7 +31,9 @@ export const FlowRun = Type.Object({
     failParentOnFailure: Type.Boolean(),
     tags: Type.Optional(Type.Array(Type.String())),
     flowVersionId: Type.String(),
-    flowDisplayName: Type.String(),
+    flowVersion: Type.Optional(Type.Object({
+        displayName: Type.Optional(Type.String()),
+    })),
     logsFileId: Nullable(Type.String()),
     tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),

@@ -6,7 +6,7 @@
   "The link of your Jira instance (e.g https://example.atlassian.net)": "Le lien de votre instance Jira (par exemple https://example.atlassian.net)",
   "The email you use to login to Jira": "L'e-mail que vous utilisez pour vous connecter à Jira",
   "Your Jira API Token": "Votre jeton API Jira",
-  "\nYou can generate your API token from:\n***https://id.atlassian.com/manage-profile/security/api-tokens***\n    ": "\nYou can generate your API token from:\n***https://id.atlassian.com/manage-profile/security/api-tokens***\n    ",
+  "\nYou can generate your API token from:\n***https://id.atlassian.com/manage-profile/security/api-tokens***\n    ": "\nVous pouvez générer votre jeton API depuis :\n***https://id.atlassian.com/manage-profile/security/api-tokens***\n    ",
   "Create Issue": "Créer un problème",
   "Update Issue": "Mettre à jour le problème",
   "Find User": "Trouver un utilisateur",

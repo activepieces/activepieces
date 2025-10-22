@@ -9,19 +9,43 @@ import snowflake from 'snowflake-sdk';
 const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
 
+function formatPrivateKey(privateKey: string): string {
+  const privateKeyLines = privateKey
+    .replace('-----BEGIN PRIVATE KEY-----', '')
+    .replace('-----END PRIVATE KEY-----', '')
+    .trim()
+    .split(' ');
+
+  return [
+    '-----BEGIN PRIVATE KEY-----',
+    ...privateKeyLines,
+    '-----END PRIVATE KEY-----',
+  ].join('\n');
+}
+
 export function configureConnection(
-  auth: PiecePropValueSchema<typeof snowflakeAuth>
+  auth: PiecePropValueSchema<typeof snowflakeAuth>,
+  application = DEFAULT_APPLICATION_NAME,
+  timeout = DEFAULT_QUERY_TIMEOUT
 ) {
-  return snowflake.createConnection({
-    application: DEFAULT_APPLICATION_NAME,
-    timeout: DEFAULT_QUERY_TIMEOUT,
+  const connectionOptions: snowflake.ConnectionOptions = {
+    application: application,
+    timeout: timeout,
     username: auth.username,
-    password: auth.password,
     role: auth.role,
     database: auth.database,
     warehouse: auth.warehouse,
     account: auth.account,
-  });
+  };
+
+  if (auth.privateKey) {
+    connectionOptions.privateKey = formatPrivateKey(auth.privateKey);
+    connectionOptions.authenticator = 'SNOWFLAKE_JWT';
+  } else {
+    connectionOptions.password = auth.password;
+  }
+
+  return snowflake.createConnection(connectionOptions);
 }
 
 export async function connect(conn: snowflake.Connection) {

@@ -24,11 +24,19 @@ import {
   flowStructureUtil,
   SampleDataFileType,
   TriggerTestStrategy,
+  SampleDataDataType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { testStepUtils } from './test-step-utils';
+
+const stringifyNullOrUndefined = (data: undefined | null) => {
+  if (data === undefined) {
+    return 'undefined';
+  }
+  return 'null';
+};
 
 export const testStepHooks = {
   useUpdateSampleData: (
@@ -60,14 +68,22 @@ export const testStepHooks = {
           return;
         }
 
-        setSampleData(step.name, response.output);
-        if (response.success && !isNil(response.output)) {
+        if (response.success) {
+          //if the output is undefined it will fail to save sample data unless we stringify it
+          const output = isNil(response.output)
+            ? stringifyNullOrUndefined(response.output)
+            : response.output;
+          setSampleData(step.name, output);
           const updatedFlowVersion = await flowsApi.update(flowId, {
             type: FlowOperationType.SAVE_SAMPLE_DATA,
             request: {
               stepName,
-              payload: response.output,
+              payload: output,
               type: SampleDataFileType.OUTPUT,
+              dataType:
+                typeof response.output === 'string'
+                  ? SampleDataDataType.STRING
+                  : SampleDataDataType.JSON,
             },
           });
           const modifiedStep = flowStructureUtil.getStep(

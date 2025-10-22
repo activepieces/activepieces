@@ -36,7 +36,7 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "TÊTE",
+  "HEAD": "HEAD",
   "New Email": "Nouvel e-mail",
   "New Labeled Email": "Nouvel e-mail libellé",
   "Triggers when new mail is found in your Gmail inbox": "Se déclenche quand un nouveau courrier est trouvé dans votre boîte de réception Gmail",

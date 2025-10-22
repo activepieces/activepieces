@@ -1,5 +1,4 @@
 {
-  "TextCortex AI": "IA de TextCortex",
   "AI-powered writing assistant for content creation, code generation, translations, and more using multiple AI models.": "Asistente para la creación de contenidos, generación de código, traducciones y más usando múltiples modelos de IA.",
   "To get your TextCortex API key:\n1. Sign up for free at https://textcortex.com\n2. Go to your account settings\n3. Navigate to the API Key section\n4. Generate and copy your API key\n\nYour API key should start with 'gAAAAAB...'": "Para obtener tu clave API de TextCortex:\n1. Regístrate gratis en https://textcortex.com\n2. Ve a la configuración de tu cuenta\n3. Navegue a la sección de Clave API\n4. Genere y copie su clave API\n\nSu clave API debería comenzar con 'gAAAAB...'",
   "Send Prompt": "Enviar aviso",

@@ -36,6 +36,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
+            flowRunIds: request.query.flowRunIds,
         })
     })
 
@@ -54,7 +55,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await flowRunService(req.log).addToQueue({
+        await flowRunService(req.log).resume({
             flowRunId: req.params.id,
             requestId: req.params.requestId,
             payload: {
