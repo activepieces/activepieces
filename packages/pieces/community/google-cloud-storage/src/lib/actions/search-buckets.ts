@@ -8,48 +8,83 @@ export const searchBuckets = createAction({
   auth: googleCloudStorageAuth,
   name: 'search_buckets',
   displayName: 'Search Buckets',
-  description: 'List and search buckets in a Google Cloud project',
+  description: 'Search buckets by name. Perfect for finding buckets in your project.',
   props: {
     projectId: projectIdProperty,
-    nameFilter: Property.ShortText({
-      displayName: 'Name Filter',
-      description: 'Filter buckets by name (partial match)',
+    prefix: Property.ShortText({
+      displayName: 'Name Prefix',
+      description: 'Filter buckets whose names begin with this prefix',
       required: false,
+    }),
+    includeSoftDeleted: Property.Checkbox({
+      displayName: 'Include Soft-Deleted',
+      description: 'Include soft-deleted bucket versions in results',
+      required: false,
+    }),
+    projection: Property.StaticDropdown({
+      displayName: 'Projection',
+      description: 'Set of properties to return',
+      required: false,
+      options: {
+        options: [
+          { label: 'No ACLs (faster)', value: 'noAcl' },
+          { label: 'Full (includes ACLs)', value: 'full' },
+        ],
+      },
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'Token for pagination',
+      description: 'Token for pagination (from previous response)',
       required: false,
     }),
-    pageSize: Property.Number({
-      displayName: 'Page Size',
+    maxResults: Property.Number({
+      displayName: 'Max Results',
       description: 'Maximum number of buckets to return',
       required: false,
     }),
   },
   async run(context) {
-    const { projectId, nameFilter, pageToken, pageSize } = context.propsValue;
+    const {
+      projectId,
+      prefix,
+      includeSoftDeleted,
+      projection,
+      pageToken,
+      maxResults
+    } = context.propsValue;
     const auth = context.auth as OAuth2PropertyValue;
 
     const params = new URLSearchParams();
-    params.append('project', projectId);
+    params.append('project', projectId!);
+    if (prefix) params.append('prefix', prefix);
+    if (includeSoftDeleted) params.append('softDeleted', 'true');
+    if (projection) params.append('projection', projection);
     if (pageToken) params.append('pageToken', pageToken);
-    if (pageSize) params.append('maxResults', pageSize.toString());
+    if (maxResults) params.append('maxResults', maxResults.toString());
 
     const path = `/b?${params.toString()}`;
-    const response = await gcsCommon.makeRequest(HttpMethod.GET, path, auth.access_token);
 
-    let filteredItems = response.items || [];
+    try {
+      const response = await gcsCommon.makeRequest(HttpMethod.GET, path, auth.access_token);
 
-    if (nameFilter) {
-      filteredItems = filteredItems.filter((bucket: any) =>
-        bucket.name.toLowerCase().includes(nameFilter.toLowerCase())
-      );
+      return {
+        success: true,
+        projectId,
+        items: response.items || [],
+        nextPageToken: response.nextPageToken,
+        totalBuckets: response.items?.length || 0,
+      };
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        throw new Error('Access denied. You need storage.buckets.list permission to search buckets in this project.');
+      }
+      if (error.response?.status === 404) {
+        throw new Error(`Project "${projectId}" not found or you don't have access to it.`);
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid search parameters. Check your project ID and other filters.');
+      }
+      throw new Error(`Failed to search buckets: ${error.message || 'Unknown error'}`);
     }
-
-    return {
-      items: filteredItems,
-      nextPageToken: response.nextPageToken,
-    };
   },
 });

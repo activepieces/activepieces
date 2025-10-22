@@ -8,7 +8,7 @@ export const createBucket = createAction({
   auth: googleCloudStorageAuth,
   name: 'create_bucket',
   displayName: 'Create Bucket',
-  description: 'Create a new Google Cloud Storage bucket',
+  description: 'Create a new bucket in a specified location/configuration. Perfect for automating storage provisioning for new projects.',
   props: {
     projectId: projectIdProperty,
     name: bucketNameProperty,
@@ -54,7 +54,20 @@ export const createBucket = createAction({
       bucketConfig.labels = labels;
     }
 
-    const response = await gcsCommon.makeRequest(HttpMethod.POST, `/b?project=${projectId}`, auth.access_token, bucketConfig);
-    return response;
+    try {
+      const response = await gcsCommon.makeRequest(HttpMethod.POST, `/b?project=${projectId}`, auth.access_token, bucketConfig);
+      return response;
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        throw new Error(`Bucket "${name}" already exists. Bucket names must be globally unique.`);
+      }
+      if (error.response?.status === 403) {
+        throw new Error('Access denied. Check your permissions for the selected project.');
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid bucket configuration. Check bucket name format and project settings.');
+      }
+      throw new Error(`Failed to create bucket: ${error.message || 'Unknown error'}`);
+    }
   },
 });

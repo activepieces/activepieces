@@ -6,15 +6,16 @@ import {
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 export const gcsCommon = {
-  baseUrl: 'https://www.googleapis.com/storage/v1',
+  gcsBaseUrl: 'https://www.googleapis.com/storage/v1',
+  pubsubBaseUrl: 'https://pubsub.googleapis.com/v1',
 
-  async makeRequest(
+  async makeGCSRequest(
     method: HttpMethod,
     path: string,
     accessToken: string,
     body?: any
   ): Promise<any> {
-    const url = path.startsWith('http') ? path : `${this.baseUrl}${path}`;
+    const url = path.startsWith('http') ? path : `${this.gcsBaseUrl}${path}`;
 
     const response = await httpClient.sendRequest({
       method,
@@ -27,5 +28,36 @@ export const gcsCommon = {
     });
 
     return response.body;
+  },
+
+  async makePubSubRequest(
+    method: HttpMethod,
+    path: string,
+    accessToken: string,
+    body?: any
+  ): Promise<any> {
+    const url = path.startsWith('http') ? path : `${this.pubsubBaseUrl}${path}`;
+
+    const response = await httpClient.sendRequest({
+      method,
+      url,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: accessToken,
+      },
+      body,
+    });
+
+    return response.body;
+  },
+
+  // For backward compatibility
+  async makeRequest(
+    method: HttpMethod,
+    path: string,
+    accessToken: string,
+    body?: any
+  ): Promise<any> {
+    return this.makeGCSRequest(method, path, accessToken, body);
   },
 };

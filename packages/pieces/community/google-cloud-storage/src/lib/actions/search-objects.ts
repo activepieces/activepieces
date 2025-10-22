@@ -8,69 +8,92 @@ export const searchObjects = createAction({
   auth: googleCloudStorageAuth,
   name: 'search_objects',
   displayName: 'Search Objects',
-  description: 'List and search objects in a Google Cloud Storage bucket',
+  description: 'Search objects by criteria. Perfect for finding files in your bucket.',
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,
     prefix: Property.ShortText({
       displayName: 'Prefix',
-      description: 'Filter objects by prefix',
+      description: 'Filter objects whose names begin with this prefix',
+      required: false,
+    }),
+    matchGlob: Property.ShortText({
+      displayName: 'Glob Pattern',
+      description: 'Glob pattern to filter results (e.g., "folder/*", "backup-*.txt")',
       required: false,
     }),
     delimiter: Property.ShortText({
       displayName: 'Delimiter',
-      description: 'Delimiter for hierarchical listing',
+      description: 'Delimiter for hierarchical listing (commonly "/")',
+      required: false,
+    }),
+    includeFoldersAsPrefixes: Property.Checkbox({
+      displayName: 'Include Folders',
+      description: 'Include empty folders and managed folders in results',
+      required: false,
+    }),
+    versions: Property.Checkbox({
+      displayName: 'Include Versions',
+      description: 'List all versions of objects as distinct results',
       required: false,
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'Token for pagination',
+      description: 'Token for pagination (from previous response)',
       required: false,
     }),
-    pageSize: Property.Number({
-      displayName: 'Page Size',
-      description: 'Maximum number of objects to return',
-      required: false,
-    }),
-    updatedMin: Property.DateTime({
-      displayName: 'Updated After',
-      description: 'Only return objects updated after this time',
-      required: false,
-    }),
-    updatedMax: Property.DateTime({
-      displayName: 'Updated Before',
-      description: 'Only return objects updated before this time',
+    maxResults: Property.Number({
+      displayName: 'Max Results',
+      description: 'Maximum number of objects to return (recommended: ≤1000)',
       required: false,
     }),
   },
   async run(context) {
-    const { bucket, prefix, delimiter, pageToken, pageSize, updatedMin, updatedMax } = context.propsValue;
+    const {
+      bucket,
+      prefix,
+      matchGlob,
+      delimiter,
+      includeFoldersAsPrefixes,
+      versions,
+      pageToken,
+      maxResults
+    } = context.propsValue;
     const auth = context.auth as OAuth2PropertyValue;
 
     const params = new URLSearchParams();
     if (prefix) params.append('prefix', prefix);
+    if (matchGlob) params.append('matchGlob', matchGlob);
     if (delimiter) params.append('delimiter', delimiter);
+    if (includeFoldersAsPrefixes) params.append('includeFoldersAsPrefixes', 'true');
+    if (versions) params.append('versions', 'true');
     if (pageToken) params.append('pageToken', pageToken);
-    if (pageSize) params.append('maxResults', pageSize.toString());
+    if (maxResults) params.append('maxResults', maxResults.toString());
 
     const path = `/b/${bucket}/o?${params.toString()}`;
-    const response = await gcsCommon.makeRequest(HttpMethod.GET, path, auth.access_token);
 
-    let filteredItems = response.items || [];
+    try {
+      const response = await gcsCommon.makeRequest(HttpMethod.GET, path, auth.access_token);
 
-    if (updatedMin || updatedMax) {
-      filteredItems = filteredItems.filter((item: any) => {
-        const updated = new Date(item.updated);
-        if (updatedMin && updated < new Date(updatedMin)) return false;
-        if (updatedMax && updated > new Date(updatedMax)) return false;
-        return true;
-      });
+      return {
+        success: true,
+        bucket,
+        items: response.items || [],
+        nextPageToken: response.nextPageToken,
+        prefixes: response.prefixes || [],
+        totalItems: response.items?.length || 0,
+      };
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        throw new Error('Access denied. You need storage.objects.list permission to search objects in this bucket.');
+      }
+      if (error.response?.status === 404) {
+        throw new Error(`Bucket "${bucket}" not found.`);
+      }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid search parameters. Check your prefix, glob pattern, or other filters.');
+      }
+      throw new Error(`Failed to search objects: ${error.message || 'Unknown error'}`);
     }
-
-    return {
-      items: filteredItems,
-      nextPageToken: response.nextPageToken,
-      prefixes: response.prefixes,
-    };
   },
 });
