@@ -7,6 +7,7 @@ import {
     FlowStatus,
     FlowTriggerType,
     FlowVersionState,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
     PackageType,
     PieceType,
     ProgressUpdateType,
@@ -147,15 +148,23 @@ describe('flow execution', () => {
         await databaseConnection()
             .getRepository('flow_version')
             .save([mockFlowVersion])
-
+            
+        const logsFileId = apId()
+            
         const mockFlowRun = createMockFlowRun({
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
             flowId: mockFlow.id,
             status: FlowRunStatus.RUNNING,
+            logsFileId,
         })
         await databaseConnection().getRepository('flow_run').save([mockFlowRun])
-
+        const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
+            logsFileId,
+            projectId: mockProject.id,
+            flowRunId: mockFlowRun.id,
+            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+        })
         const engineToken = await accessTokenManager.generateEngineToken({
             platformId: mockPlatform.id,
             projectId: mockProject.id,
@@ -163,15 +172,8 @@ describe('flow execution', () => {
         await flowWorker(mockLog).init({
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
-
+       
         await waitForSocketConnection()
-        const logsFileId = mockFlowRun.logsFileId ?? apId()
-        const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
-            logsFileId,
-            projectId: mockProject.id,
-            flowRunId: mockFlowRun.id,
-            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-        })
         await flowJobExecutor(mockLog).executeFlow({
             jobData: {
                 flowVersionId: mockFlowVersion.id,
@@ -187,7 +189,7 @@ describe('flow execution', () => {
                 executionType: ExecutionType.BEGIN,
                 logsFileId,
                 logsUploadUrl,
-                schemaVersion: mockFlowVersion.schemaVersion ? Number.parseInt(mockFlowVersion.schemaVersion) : 8,
+                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             },
             attemptsStarted: 1,
             engineToken,
