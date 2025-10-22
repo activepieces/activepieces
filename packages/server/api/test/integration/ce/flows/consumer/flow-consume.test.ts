@@ -158,12 +158,13 @@ describe('flow execution', () => {
             status: FlowRunStatus.RUNNING,
         })
         await databaseConnection().getRepository('flow_run').save([mockFlowRun])
-        const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
+        const logsUploadUrl = ( await flowRunLogsService(mockLog).constructUploadUrl({
             logsFileId,
             projectId: mockProject.id,
             flowRunId: mockFlowRun.id,
             behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-        })
+        }))
+            .replace('http://localhost:4200/api/', 'http://localhost:3000/')
         const engineToken = await accessTokenManager.generateEngineToken({
             platformId: mockPlatform.id,
             projectId: mockProject.id,
@@ -195,11 +196,13 @@ describe('flow execution', () => {
             timeoutInSeconds: 1000,
         })
 
+
         const flowRun = await databaseConnection()
             .getRepository('flow_run')
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
+
 
         expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
