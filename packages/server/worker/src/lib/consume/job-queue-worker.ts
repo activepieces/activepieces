@@ -28,6 +28,7 @@ let worker: Worker<JobData>
 export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     async start(workerToken: string): Promise<void> {
         if (!isNil(worker)) {
+            worker.resume()
             return
         }
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
@@ -89,21 +90,27 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-            {
-                connection: await workerRedisConnections.create(),
-                telemetry: isOtpEnabled
-                    ? new BullMQOtel(QueueName.WORKER_JOBS)
-                    : undefined,
-                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-                autorun: true,
-                stalledInterval: 30000,
-                maxStalledCount: 5,
-            },
+        {
+            connection: await workerRedisConnections.create(),
+            telemetry: isOtpEnabled
+                ? new BullMQOtel(QueueName.WORKER_JOBS)
+                : undefined,
+            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+            autorun: true,
+            stalledInterval: 30000,
+            maxStalledCount: 5,
+        },
         )
         await worker.waitUntilReady()
         log.info({
             message: 'Job queue worker started',
         })
+    },
+    async pause(): Promise<void> {
+        if (isNil(worker)) {
+            return
+        }
+        await worker.pause()
     },
     async close(): Promise<void> {
         if (isNil(worker)) {
@@ -112,7 +119,6 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         await worker.close()
     },
 })
-
 
 async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
     shouldSkip: boolean

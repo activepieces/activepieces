@@ -38,7 +38,8 @@ export const distributedStore = {
             }
             try {
                 result[field] = JSON.parse(value)
-            } catch (error) {
+            }
+            catch (error) {
                 result[field] = value
             }
         }
@@ -65,13 +66,13 @@ export const distributedStore = {
     async merge<T extends Record<string, unknown>>(key: string, value: T, ttlInSeconds?: number): Promise<void> {
         const redisClient = await redisConnections.useExisting()
         const serializedFields: Record<string, string> = {}
-        
+
         for (const [field, fieldValue] of Object.entries(value)) {
             serializedFields[field] = JSON.stringify(fieldValue)
         }
-        
+
         await redisClient.hset(key, serializedFields)
-        
+
         if (ttlInSeconds) {
             await redisClient.expire(key, ttlInSeconds)
         }

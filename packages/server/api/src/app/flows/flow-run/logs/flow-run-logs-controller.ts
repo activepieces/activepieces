@@ -2,6 +2,7 @@ import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ErrorCode, FileType, isNil, Upl
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { fileService } from '../../../file/file.service'
 import { s3Helper } from '../../../file/s3-helper'
 import { flowRunLogsService } from './flow-run-logs-service'
 
@@ -18,12 +19,11 @@ export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
             const { token } = request.query as { token: string }
             const decodedToken = await flowRunLogsService(request.log).verifyToken(token)
             if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
-                const s3Key = await s3Helper(request.log).constructS3Key(undefined, decodedToken.projectId, FileType.FLOW_RUN_LOG, decodedToken.logsFileId)
-                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl(s3Key)
+                const fileMetadata = await flowRunLogsService(request.log).upsertMetadata(decodedToken)
+                const s3SignedUrl = await s3Helper(request.log).putS3SignedUrl(fileMetadata.s3Key!)
                 request.log.info({
-                    s3Key,
+                    s3Key: fileMetadata.s3Key,
                 }, 'Redirecting to S3 signed URL')
-                await flowRunLogsService(request.log).upsertMetadata(decodedToken)
                 return reply.redirect(s3SignedUrl)
             }
         },
@@ -48,9 +48,13 @@ export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (request, reply) => {
         const { token } = request.query
         const decodedToken = await flowRunLogsService(request.log).verifyToken(token)
+        const file = await fileService(request.log).getFileOrThrow({
+            projectId: decodedToken.projectId,
+            fileId: decodedToken.logsFileId,
+            type: FileType.FLOW_RUN_LOG,
+        })
         if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
-            const s3Key = await s3Helper(request.log).constructS3Key(undefined, decodedToken.projectId, FileType.FLOW_RUN_LOG, decodedToken.logsFileId)
-            const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(s3Key, decodedToken.logsFileId)
+            const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(file.s3Key!, file.fileName!)
             return reply.redirect(s3SignedUrl)
         }
         const logs = await flowRunLogsService(request.log).getLogs(decodedToken)
