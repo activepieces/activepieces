@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
 import {
+  AGENT_PIECE_NAME,
   AgentResult,
   FlowAction,
   FlowActionType,
@@ -23,7 +24,7 @@ const isRunAgent = (step?: FlowAction) => {
   return (
     !isNil(step) &&
     step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-agent' &&
+    step.settings.pieceName === AGENT_PIECE_NAME &&
     step.settings.actionName === 'run_agent'
   );
 };

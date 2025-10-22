@@ -18,6 +18,7 @@ import {
 import { AgentOutputFieldType } from '@activepieces/shared';
 
 import { FieldTypeIcon } from './field-type-icon';
+import { t } from 'i18next';
 
 interface AddFieldPopoverProps {
   onAddField: (
@@ -25,9 +26,10 @@ interface AddFieldPopoverProps {
     name: string,
     description: string,
   ) => void;
+  disabled: boolean
 }
 
-export const AddFieldPopover = ({ onAddField }: AddFieldPopoverProps) => {
+export const AddFieldPopover = ({ onAddField, disabled }: AddFieldPopoverProps) => {
   const [fieldType, setFieldType] = useState<AgentOutputFieldType | undefined>(
     undefined,
   );
@@ -48,9 +50,9 @@ export const AddFieldPopover = ({ onAddField }: AddFieldPopoverProps) => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full">
+        <Button variant="outline" className="w-full" disabled={disabled}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Field
+          {t("Add Field")}
         </Button>
       </PopoverTrigger>
       <PopoverContent

@@ -42,8 +42,8 @@ export const runAgent = createAction({
           displayName: 'Tool Name',
           required: true
         }),
-        mcpId: Property.ShortText({
-          displayName: 'Mcp Id',
+        flowId: Property.ShortText({
+          displayName: 'Flow Id',
           required: false
         })
       }

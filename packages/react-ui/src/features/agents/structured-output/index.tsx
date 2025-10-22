@@ -18,8 +18,10 @@ const PLACEHOLDER_FIELD: AgentOutputField = {
 
 export const AgentStructuredOutput = ({
   structuredOutputField,
+  disabled,
 }: {
   structuredOutputField: ControllerRenderProps;
+  disabled: boolean
 }) => {
   const value = structuredOutputField.value;
   const outputFields = Array.isArray(value)
@@ -64,6 +66,7 @@ export const AgentStructuredOutput = ({
           checked={isStructuredOutputEnabled}
           onCheckedChange={handleToggleStructuredOutput}
           size="sm"
+          disabled={disabled}
         />
       </div>
 
@@ -100,6 +103,7 @@ export const AgentStructuredOutput = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveField(field.displayName)}
+                            disabled={disabled}
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -115,7 +119,7 @@ export const AgentStructuredOutput = ({
               {t('No structured output fields yet.')}
             </div>
           )}
-          <AddFieldPopover onAddField={handleAddField} />
+          <AddFieldPopover disabled={disabled} onAddField={handleAddField} />
         </div>
       )}
     </div>
