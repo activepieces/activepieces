@@ -3,7 +3,6 @@ import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-serv
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { system } from '../../helper/system/system'
 
-
 const enrichFlowIdAndLogsUrl: JobMigration = {
     targetSchemaVersion: 5,
     migrate: async (job: JobData) => {

@@ -3,13 +3,13 @@ import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
 import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineProcessManager } from '../runner/process/engine-process-manager'
+import { engineProcessManager } from '../compute/process/engine-process-manager'
 
 const execAsync = promisify(exec)
 
-let settings: WorkerMachineHealthcheckResponse | undefined
+let settings: WorkerSettingsResponse | undefined
 
 const workerId = apId()
 
@@ -56,7 +56,7 @@ export const workerMachine = {
             freeSandboxes: engineProcessManager.getFreeSandboxes(),
         }
     },
-    init: async (_settings: WorkerMachineHealthcheckResponse, log: FastifyBaseLogger) => {
+    init: async (_settings: WorkerSettingsResponse, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
             ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
@@ -81,6 +81,10 @@ export const workerMachine = {
     getSettings: () => {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
+    },
+    getSettingOrThrow: (prop: keyof WorkerSettingsResponse) => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings[prop]
     },
     getInternalApiUrl: (): string => {
         if (environmentVariables.hasAppModules()) {

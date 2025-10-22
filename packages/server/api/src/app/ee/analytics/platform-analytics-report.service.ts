@@ -4,29 +4,26 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, MoreThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { distributedLock } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { distributedLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
 import { auditLogRepo } from '../audit-logs/audit-event-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
+
 export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     refreshReport: async (platformId: PlatformId) => {
-        const lock = await distributedLock.acquireLock({
+        await distributedLock(log).runExclusive({
             key: `platform-analytics-report-${platformId}`,
-            timeout: 30000,
-            log,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                await refreshReport(platformId, log)
+            },
         })
-        try {
-            await refreshReport(platformId, log)
-        }
-        finally {
-            await lock.release()
-        }
         return platformAnalyticsReportRepo().findOneBy({ platformId })
     },
     getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {

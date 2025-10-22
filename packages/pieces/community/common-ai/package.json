@@ -4,15 +4,15 @@
   "type": "commonjs",
   "dependencies": {
     "tslib": "^2.3.0",
+    "@activepieces/shared": "0.24.1",
+    "@activepieces/pieces-framework": "0.20.1",
+    "@activepieces/pieces-common": "0.8.1",
     "@ai-sdk/anthropic": "2.0.3",
     "@ai-sdk/google": "2.0.6",
     "@ai-sdk/openai": "2.0.12",
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
     "ai": "5.0.12",
-    "@sinclair/typebox": "0.34.11",
-    "@activepieces/shared": "0.24.1",
-    "@activepieces/pieces-framework": "0.20.1",
-    "@activepieces/pieces-common": "0.8.1"
+    "@sinclair/typebox": "0.34.11"
   }
 }

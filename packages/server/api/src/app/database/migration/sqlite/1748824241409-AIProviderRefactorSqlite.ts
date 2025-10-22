@@ -73,7 +73,10 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
                 }
                 catch (error) {
                     errorCount++
-                    log.error(`Failed to transform config for provider ${provider.id}:`, error)
+                    log.error({ 
+                        error,
+                        providerId: provider.id,
+                    }, 'Failed to transform config for provider')
                     throw new Error(`Migration failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`)
                 }
             }
@@ -93,7 +96,9 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
 
         }
         catch (error) {
-            log.error('Migration failed, restoring from backup:', error)
+            log.error({ 
+                error,
+            }, 'Migration failed, restoring from backup:')
                 
             // Restore from backup
             await queryRunner.query('DROP TABLE "ai_provider"')
@@ -159,7 +164,10 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
                 }
                 catch (error) {
                     errorCount++
-                    log.error(`Failed to reverse transform config for provider ${provider.id}:`, error)
+                    log.error({ 
+                        error,
+                        providerId: provider.id,
+                    }, 'Failed to reverse transform config for provider')
                     
                     // Don't use a fallback - keep original data and fail the migration
                     throw new Error(`Rollback failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`)
@@ -180,7 +188,9 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
 
         }
         catch (error) {
-            log.error('Rollback failed, restoring from backup:', error)
+            log.error({ 
+                error,
+            }, 'Rollback failed, restoring from backup:')
             
             await queryRunner.query('DROP TABLE "ai_provider"')
             await queryRunner.query('ALTER TABLE "ai_provider_backup" RENAME TO "ai_provider"')

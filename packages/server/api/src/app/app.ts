@@ -18,7 +18,7 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
-import { redisConnections } from './database/redis'
+import { redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -89,7 +89,6 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
-import { jobQueueWorker } from './workers/queue/job-queue-worker'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
@@ -339,7 +338,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
-        await jobQueueWorker(app.log).close()
         await systemJobsSchedule(app.log).close()
         await engineResponseWatcher(app.log).shutdown()
     })

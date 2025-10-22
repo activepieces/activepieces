@@ -1,9 +1,8 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, FlowRun, FlowStatus, isNil, PlatformUsageMetric, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { apId, EngineHttpResponse, EventPayload, FlowRun, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { projectLimitsService } from '../ee/projects/project-plan/project-plan.service'
 import { flowExecutionCache } from '../flows/flow/flow-execution-cache'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { handshakeHandler } from './handshake-handler'
@@ -56,7 +55,7 @@ export const webhookService = {
                     }
                 }
                 const { flow } = flowExecutionResult
-                if (flow.status === FlowStatus.DISABLED) {
+                if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
                     pinoLogger.info('trigger source not found, returning NOT FOUND')
                     span.setAttribute('webhook.triggerSourceFound', false)
                     return {
@@ -72,17 +71,6 @@ export const webhookService = {
                 span.setAttribute('webhook.projectId', flow.projectId)
                 const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
                 span.setAttribute('webhook.flowVersionId', flowVersionIdToRun)
-
-                const exceededLimit = await projectLimitsService(pinoLogger).checkTasksExceededLimit(flow.projectId)
-                if (exceededLimit) {
-                    span.setAttribute('webhook.quotaExceeded', true)
-                    throw new ActivepiecesError({
-                        code: ErrorCode.QUOTA_EXCEEDED,
-                        params: {
-                            metric: PlatformUsageMetric.TASKS,
-                        },
-                    })
-                }
 
                 const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
                     payload: (payload ?? await data(flow.projectId)) as TriggerPayload,

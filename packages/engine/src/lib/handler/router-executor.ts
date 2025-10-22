@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -65,7 +65,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
 
     try {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
-            if (constants.testSingleStepMode) {
+            if (!isNil(constants.stepNameToTest)) {
                 break
             }
             const condition = routerOutput.output?.branches[i].evaluation
