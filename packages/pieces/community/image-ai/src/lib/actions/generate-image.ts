@@ -3,7 +3,7 @@ import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepi
 import { generateText, ImageModel, ImagePart } from 'ai';
 import { experimental_generateImage as generateImage } from 'ai';
 import { aiProps } from '@activepieces/common-ai';
-import { LanguageModelV2 } from '@ai-sdk/provider';
+import { LanguageModelV2, ImageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import { isNil } from '@activepieces/shared';
 
@@ -23,16 +23,16 @@ const getGeneratedImage = async ({
   advancedOptions?: DynamicPropsValue;
 }) =>{
   
-  if(providerName === 'google') {
   const model = createAIModel({
     providerName,
-    modelInstance: modelInstance as LanguageModelV2,
+    modelInstance:  modelInstance,
     engineToken,
     baseURL,
     metadata: {
       feature: AIUsageFeature.IMAGE_AI,
     },
   });
+  if(providerName === 'google') {
   const images = advancedOptions?.['image'] as Array<{ file: ApFile }> | undefined ?? [];
   const imageFiles = images.map<ImagePart>(image => {
     const fileType = image.file.extension ? mime.lookup(image.file.extension) : 'image/jpeg';
@@ -42,7 +42,8 @@ const getGeneratedImage = async ({
     }
   });
   const result = await generateText({
-    model,
+    //this casting is done on purpose for some reason to use the google models we need to use it this way https://ai-sdk.dev/cookbook/guides/google-gemini-image-generation#editing-images
+    model: model as LanguageModelV2,
     providerOptions: {
       google: { responseModalities: ['TEXT', 'IMAGE'] },
     },
@@ -74,7 +75,7 @@ const getGeneratedImage = async ({
    }
    else{
     const response = await generateImage({
-      model: modelInstance as ImageModel,
+      model: model as ImageModelV2,
       prompt: prompt,
       providerOptions: {
         [providerName]: {

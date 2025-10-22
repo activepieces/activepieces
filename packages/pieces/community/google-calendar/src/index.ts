@@ -31,6 +31,8 @@ export const googleCalendarAuth = PieceAuth.OAuth2({
   scope: [
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/calendar.readonly',
+    // TODO: Add the scope after Google App Verification
+    // 'https://www.googleapis.com/auth/calendar.calendarlist'
   ],
 });
 
@@ -51,6 +53,8 @@ export const googleCalendar = createPiece({
     'khaledmashaly',
     'abuaboud',
     'ikus060',
+    'Cloudieunnie',
+    'sanket-a11y'
   ],
   auth: googleCalendarAuth,
   actions: [
@@ -62,6 +66,8 @@ export const googleCalendar = createPiece({
     deleteEventAction,
     findFreeBusy,
     getEventById,
+    // TODO: add action after calendarList scope is verified
+    // addCalendarToCalendarlist,
     createCustomApiCallAction({
       auth: googleCalendarAuth,
       baseUrl() {

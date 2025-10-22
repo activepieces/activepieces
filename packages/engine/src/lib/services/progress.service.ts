@@ -1,14 +1,12 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, FileLocation, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, NotifyFrontendRequest, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { ProgressUpdateError } from '../helper/execution-errors'
 
-const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
-const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_STORAGE_LOCATION === FileLocation.S3
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
@@ -101,16 +99,24 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             executionState: {
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
+            tasks: flowExecutorContext.tasks,
         })
-        const request = {
+
+        assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
+        const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
+        if (!uploadLogResponse.ok) {
+            throw new ProgressUpdateError('Failed to upload execution state', uploadLogResponse)
+        }
+
+        const request: UpdateRunProgressRequest = {
             runId: engineConstants.flowRunId,
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
-            executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
-            executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
             failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
+            logsFileId: engineConstants.logsFileId,
+            stepNameToTest: engineConstants.stepNameToTest,
         }
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
         if (requestHash === lastRequestHash) {
@@ -121,20 +127,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         if (!response.ok) {
             throw new ProgressUpdateError('Failed to send progress update', response)
         }
-        if (USE_SIGNED_URL) {
-            const responseBody: UpdateRunProgressResponse = await response.json()
-            if (isNil(responseBody.uploadUrl)) {
-                throw new ProgressUpdateError('Upload URL is not available', response)
-            }
-            await uploadExecutionState(responseBody.uploadUrl, executionState)
-        }
-        await notifyFrontend(engineConstants, {
-            type: WebsocketClientEvent.FLOW_RUN_PROGRESS,
-            data: {
-                runId: engineConstants.flowRunId,
-                testSingleStepMode: engineConstants.testSingleStepMode,
-            },
-        })
+
     })
 }
 
@@ -151,28 +144,25 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<void> => {
-    await fetchWithRetry(uploadUrl, {
+const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
+    const response = await fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,
         headers: {
             'Content-Type': 'application/octet-stream',
         },
+        redirect: 'manual',
         retries: 3,
         retryDelay: 3000,
     })
+
+    if (followRedirects && response.status >= 300 && response.status < 400) {
+        const location = response.headers.get('location')!
+        return uploadExecutionState(location, executionState, false)
+    }
+    return response
 }
 
-const notifyFrontend = async (engineConstants: EngineConstants, request: NotifyFrontendRequest): Promise<void> => {
-    await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/notify-frontend`).toString(), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineConstants.engineToken}`,
-        },
-        body: JSON.stringify(request),
-    })
-}
 
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants

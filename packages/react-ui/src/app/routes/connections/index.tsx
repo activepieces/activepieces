@@ -8,6 +8,7 @@ import {
   User,
   Replace,
   Trash2,
+  Plus,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -26,6 +27,7 @@ import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   DataTable,
+  DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/ui/data-table';
@@ -128,7 +130,7 @@ function AppConnectionsPage() {
     label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
     value: owner.email,
   }));
-  const filters = [
+  const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
     {
       type: 'select',
       title: t('Status'),
@@ -140,28 +142,27 @@ function AppConnectionsPage() {
         };
       }),
       icon: CheckIcon,
-    } as const,
+    },
     {
       type: 'select',
       title: t('Pieces'),
       accessorKey: 'pieceName',
       icon: AppWindow,
       options: pieceOptions,
-    } as const,
+    },
     {
       type: 'input',
       title: t('Name'),
       accessorKey: 'displayName',
       icon: Tag,
-      options: [],
-    } as const,
+    },
     {
       type: 'select',
       title: t('Owner'),
       accessorKey: 'owner',
       icon: User,
       options: ownersOptions ?? [],
-    } as const,
+    },
   ];
 
   const columns: ColumnDef<
@@ -435,7 +436,6 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="destructive"
-                    size="sm"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -463,7 +463,6 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="outline"
-                    size="sm"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
                     <Replace className="h-4 w-4" />
@@ -483,10 +482,9 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="default"
-                    size="sm"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
-                    {t('New Connection')}
+                    <Plus className="h-4 w-4" /> {t('New Connection')}
                   </Button>
                 </NewConnectionDialog>
               </PermissionNeededTooltip>

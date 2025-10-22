@@ -1,5 +1,4 @@
 {
-  "TextCortex AI": "TextCortex AI",
   "AI-powered writing assistant for content creation, code generation, translations, and more using multiple AI models.": "複数のAIモデルを使用してコンテンツの作成、コード生成、翻訳などを行うAIによるライティングアシスタントです。",
   "To get your TextCortex API key:\n1. Sign up for free at https://textcortex.com\n2. Go to your account settings\n3. Navigate to the API Key section\n4. Generate and copy your API key\n\nYour API key should start with 'gAAAAAB...'": "To get your TextCortex API key:\n1. Sign up for free at https://textcortex.com\n2. Go to your account settings\n3. Navigate to the API Key section\n4. Generate and copy your API key\n\nYour API key should start with 'gAAAAAB...'",
   "Send Prompt": "Send Prompt",

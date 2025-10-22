@@ -169,67 +169,72 @@ const ProjectReleasesPage = () => {
             </a>
           </>
         }
-      >
-        <div className="flex items-center gap-2">
-          <PushEverythingDialog>
-            <Button
-              className="h-9"
-              variant="outline"
-              disabled={!doesUserHavePermissionToWriteRelease}
-            >
-              {t('Push Everything')}
-            </Button>
-          </PushEverythingDialog>
-          <PermissionNeededTooltip
-            hasPermission={doesUserHavePermissionToWriteRelease}
-          >
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="h-9 w-full"
-                  disabled={!doesUserHavePermissionToWriteRelease}
-                >
-                  {t('Create Release')}
-                  <ChevronDown className="h-3 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <ApplyButton
-                    variant="ghost"
-                    onSuccess={refetch}
-                    className="w-full justify-start"
-                    request={{ type: ProjectReleaseType.GIT }}
-                  >
-                    <div className="flex flex-row gap-2 items-center">
-                      <GitBranch className="size-4" />
-                      <span>{t('From Git')}</span>
-                    </div>
-                  </ApplyButton>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" asChild>
-                  <SelectionButton
-                    variant="ghost"
-                    onSuccess={refetch}
-                    className="w-full justify-start"
-                    ReleaseType={ProjectReleaseType.PROJECT}
-                  >
-                    <div className="flex flex-row gap-2 items-center">
-                      <FolderOpenDot className="size-4" />
-                      <span>{t('From Project')}</span>
-                    </div>
-                  </SelectionButton>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </PermissionNeededTooltip>
-        </div>
-      </DashboardPageHeader>
+      ></DashboardPageHeader>
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}
         emptyStateIcon={<Package className="size-14" />}
         columns={columns}
+        bulkActions={[
+          {
+            render: () => (
+              <div className="flex items-center gap-2">
+                <PushEverythingDialog>
+                  <Button
+                    className="h-9"
+                    variant="outline"
+                    disabled={!doesUserHavePermissionToWriteRelease}
+                  >
+                    {t('Push Everything')}
+                  </Button>
+                </PushEverythingDialog>
+                <PermissionNeededTooltip
+                  hasPermission={doesUserHavePermissionToWriteRelease}
+                >
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="h-9 w-full"
+                        disabled={!doesUserHavePermissionToWriteRelease}
+                      >
+                        {t('Create Release')}
+                        <ChevronDown className="h-3 w-4 ml-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem className="cursor-pointer" asChild>
+                        <ApplyButton
+                          variant="ghost"
+                          onSuccess={refetch}
+                          className="w-full justify-start"
+                          request={{ type: ProjectReleaseType.GIT }}
+                        >
+                          <div className="flex flex-row gap-2 items-center">
+                            <GitBranch className="size-4" />
+                            <span>{t('From Git')}</span>
+                          </div>
+                        </ApplyButton>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer" asChild>
+                        <SelectionButton
+                          variant="ghost"
+                          onSuccess={refetch}
+                          className="w-full justify-start"
+                          ReleaseType={ProjectReleaseType.PROJECT}
+                        >
+                          <div className="flex flex-row gap-2 items-center">
+                            <FolderOpenDot className="size-4" />
+                            <span>{t('From Project')}</span>
+                          </div>
+                        </SelectionButton>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </PermissionNeededTooltip>
+              </div>
+            ),
+          },
+        ]}
         page={data}
         isLoading={isLoading}
         onRowClick={(row) => {

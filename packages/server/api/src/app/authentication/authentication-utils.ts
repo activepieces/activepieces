@@ -18,6 +18,7 @@ export const authenticationUtils = {
         const isInvited = await userInvitationsService(log).hasAnyAcceptedInvitations({
             platformId,
             email,
+            
         })
         if (!isInvited) {
             throw new ActivepiecesError({

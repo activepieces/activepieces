@@ -37,14 +37,12 @@ type PiecesCardListProps = {
   searchQuery: string;
   operation: PieceSelectorOperation;
   stepToReplacePieceDisplayName?: string;
-  listHeight: number;
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   searchQuery,
   operation,
   stepToReplacePieceDisplayName,
-  listHeight,
 }) => {
   const isMobile = useIsMobile();
   const [selectedPieceMetadataInPieceSelector] = useBuilderStateContext(
@@ -108,7 +106,6 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
             items={virtualizedItems}
             estimateSize={(index) => virtualizedItems[index].height}
             getItemKey={(index) => virtualizedItems[index].id}
-            listHeight={listHeight}
             renderItem={(item) => {
               if (item.isCategory) {
                 return (
@@ -122,7 +119,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
               }
               return (
                 <PieceCardListItem
-                  pieceMetadata={item}
+                  pieceMetadata={item.pieceMetadata}
                   searchQuery={searchQuery}
                   operation={operation}
                   isTemporaryDisabledUntilNextCursorMove={!mouseMoved}
@@ -153,8 +150,15 @@ type VirtualizedItem = {
   id: string;
   displayName: string;
   height: number;
-  isCategory: boolean;
-};
+} & (
+  | {
+      isCategory: true;
+    }
+  | {
+      isCategory: false;
+      pieceMetadata: StepMetadataWithSuggestions;
+    }
+);
 const transformPiecesMetadataToVirtualizedItems = (
   searchResult: CategorizedStepMetadataWithSuggestions[],
   showActionsOrTriggersInsidePiecesList: boolean,
@@ -172,13 +176,14 @@ const transformPiecesMetadataToVirtualizedItems = (
     category.metadata.forEach((pieceMetadata, index) => {
       result.push({
         id: `${pieceMetadata.displayName}-${index}`,
-        ...pieceMetadata,
         height: getItemHeight(
           pieceMetadata,
           showActionsOrTriggersInsidePiecesList,
           agents,
         ),
         isCategory: false,
+        pieceMetadata,
+        displayName: pieceMetadata.displayName,
       });
     });
     return result;

@@ -1,15 +1,14 @@
 import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, getPlanLimits, PlanName  } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { apDayjs, AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
-import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
 import { emailService } from '../../helper/email/email-service'
 import { platformUsageService } from '../platform-usage-service'
 import { ACTIVE_FLOW_PRICE_IDS, AI_CREDIT_PRICE_IDS, BUSINESS_PLAN_PRICE_IDS, PlatformPlanHelper, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_IDS, USER_SEAT_PRICE_IDS } from './platform-plan-helper'
@@ -71,11 +70,11 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         }
 
                         const { plan: newPlan, cycle } = PlatformPlanHelper.getPlanFromSubscription(subscription)
-                        request.log.info('Processing subscription event', {
+                        request.log.info({
                             webhookType: webhook.type,
                             subscriptionStatus: subscription.status,
                             newPlan,
-                        })
+                        }, 'Processing subscription event')
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
                         const { stripeSubscriptionId } = await platformPlanService(request.log).updateByCustomerId({
@@ -125,10 +124,10 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer
 
                         if (isNil(customer.email)) {
-                            request.log.warn('Customer email is missing, cannot send trial ending reminder.', {
+                            request.log.warn({
                                 customerId: customer.id,
                                 subscriptionId: subscription.id,
-                            })
+                            }, 'Customer email is missing, cannot send trial ending reminder.')
                             break
                         }
 

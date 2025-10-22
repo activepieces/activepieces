@@ -19,7 +19,6 @@ import {
   FlowOperationType,
   FlowTrigger,
   FlowTriggerType,
-  debounce,
   isNil,
 } from '@activepieces/shared';
 
@@ -36,7 +35,6 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepCard } from './step-card';
 import { useStepSettingsContext } from './step-settings-context';
-
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectHooks.useCurrentProject();
@@ -68,42 +66,18 @@ const StepSettingsContainer = () => {
     currentValuesRef.current = defaultValues;
     form.reset(defaultValues);
     form.trigger();
-    if (defaultValues.type === FlowActionType.LOOP_ON_ITEMS) {
-      //TODO: fix this, for some reason if the form is not triggered, the items input error is not shown
-      setTimeout(() => {
-        form.trigger('settings.items');
-      }, 1);
-    }
   }, [defaultValues]);
 
   //Needed to show new code from Ask AI
   useEffect(() => {
     form.reset(selectedStep);
     form.trigger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshStepFormSettingsToggle]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
-  const debouncedTrigger = useMemo(() => {
-    return debounce((newTrigger: FlowTrigger) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: newTrigger,
-      });
-    }, 200);
-  }, [applyOperation]);
-
-  const debouncedAction = useMemo(() => {
-    return debounce((newAction: FlowAction) => {
-      applyOperation({
-        type: FlowOperationType.UPDATE_ACTION,
-        request: newAction,
-      });
-    }, 200);
-  }, [applyOperation]);
   const currentValuesRef = useRef<FlowAction | FlowTrigger>(defaultValues);
   const form = useForm<FlowAction | FlowTrigger>({
     mode: 'all',
@@ -135,9 +109,15 @@ const StepSettingsContainer = () => {
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
-        debouncedTrigger({ ...cleanedNewValues, valid });
+        applyOperation({
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: { ...cleanedNewValues, valid },
+        });
       } else {
-        debouncedAction({ ...cleanedNewValues, valid });
+        applyOperation({
+          type: FlowOperationType.UPDATE_ACTION,
+          request: { ...cleanedNewValues, valid },
+        });
       }
       return result;
     },
@@ -196,7 +176,7 @@ const StepSettingsContainer = () => {
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={55}>
+            <ResizablePanel defaultSize={55} className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="flex flex-col gap-4 px-4 pb-6">
                   <StepCard step={modifiedStep}></StepCard>
@@ -250,7 +230,7 @@ const StepSettingsContainer = () => {
             {!readonly && (
               <>
                 <ResizableHandle withHandle={true} />
-                <ResizablePanel defaultSize={45}>
+                <ResizablePanel defaultSize={45} className="min-h-[130px]">
                   <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
                     {modifiedStep.type && (
                       <TestStepContainer

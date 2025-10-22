@@ -42,6 +42,8 @@
   "The ID of the document to append text to": "A ID do documento para anexar texto a",
   "Curly Braces {{}}": "Chaves Curly {{}}",
   "Square Brackets [[]]": "Braçadeiras quadradas [[]]",
+  "Single Curly Braces {}": "Chaves Únicas {}",
+  "Single Square Brackets []": "Chaves Quadradas Únicas []",
   "GET": "OBTER",
   "POST": "POSTAR",
   "PATCH": "COMPRAR",

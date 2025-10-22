@@ -77,7 +77,6 @@
       }
     }
   },
-  "nxCloudAccessToken": "Y2Y3YzhhNjYtZWI4OC00M2Y0LWIwY2ItMWJhNTBjYzA3ZDA0fHJlYWQtb25seQ==",
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
@@ -116,5 +115,6 @@
   },
   "useDaemonProcess": false,
   "parallel": 3,
-  "cacheDirectory": ".nx/cache"
+  "cacheDirectory": ".nx/cache",
+  "nxCloudId": "642638e2fe2ac16f0fb09003"
 }

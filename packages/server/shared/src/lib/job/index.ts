@@ -1,19 +1,10 @@
 import {
     EngineOperationType,
+    JobData,
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { DelayedJobData, JobData } from './job-data'
-
-export enum JobType {
-    WEBHOOK = 'WEBHOOK',
-    ONE_TIME = 'ONE_TIME',
-    REPEATING = 'REPEATING',
-    DELAYED = 'DELAYED',
-    USERS_INTERACTION = 'USERS_INTERACTION',
-    AGENTS = 'AGENTS',
-}
 
 export enum JobStatus {
     COMPLETED = 'COMPLETED',
@@ -21,25 +12,9 @@ export enum JobStatus {
 }
 
 export enum QueueName {
-    WEBHOOK = 'webhookJobs',
-    ONE_TIME = 'oneTimeJobs',
-    SCHEDULED = 'repeatableJobs',
-    USERS_INTERACTION = 'usersInteractionJobs',
-    AGENTS = 'agentsJobs',
+    WORKER_JOBS = 'workerJobs',
 }
 
-export const PollJobRequest = Type.Object({
-    queueName: Type.Enum(QueueName),
-})
-
-export type PollJobRequest = Static<typeof PollJobRequest>
-
-export const UpdateJobRequest = Type.Object({
-    queueName: Type.Enum(QueueName),
-    status: Type.Enum(JobStatus),
-    message: Type.Optional(Type.String()),
-})
-export type UpdateJobRequest = Static<typeof UpdateJobRequest>
 
 export const ApQueueJob = Type.Object({
     id: Type.String(),
@@ -56,6 +31,11 @@ export const SendEngineUpdateRequest = Type.Object({
     response: Type.Unknown(),
 })
 export type SendEngineUpdateRequest = Static<typeof SendEngineUpdateRequest>
+
+export const MigrateJobsRequest = Type.Object({
+    jobData: Type.Record(Type.String(), Type.Unknown()),
+})
+export type MigrateJobsRequest = Static<typeof MigrateJobsRequest>
 
 export const SavePayloadRequest = Type.Object({
     flowId: Type.String(),
@@ -74,17 +54,12 @@ export const SubmitPayloadsRequest = Type.Object({
     environment: Type.Enum(RunEnvironment),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
+    platformId: Type.String(),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
 
-export const GetRunForWorkerRequest = Type.Object({
-    runId: Type.String(),
-})
-export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
 
-export const ResumeRunRequest = Type.Omit(DelayedJobData, ['flowId'])
-export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
 
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
