@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared'
 import { redisConnections } from '../database/redis-connections'
 
 
@@ -31,13 +32,14 @@ export const distributedStore = {
         if (!hashData || Object.keys(hashData).length === 0) return null
         const result: Record<string, unknown> = {}
         for (const [field, value] of Object.entries(hashData)) {
-            if (value && value.trim().length > 0) {
-                try {
-                    result[field] = JSON.parse(value)
-                }
-                catch {
-                    result[field] = value
-                }
+            const hasValue = !isNil(value) && value.trim().length > 0
+            if (!hasValue) {
+                continue
+            }
+            try {
+                result[field] = JSON.parse(value)
+            } catch (error) {
+                result[field] = value
             }
         }
         return result as T
