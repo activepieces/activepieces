@@ -156,7 +156,6 @@ describe('flow execution', () => {
             projectId: mockProject.id,
             flowId: mockFlow.id,
             status: FlowRunStatus.RUNNING,
-            logsFileId,
         })
         await databaseConnection().getRepository('flow_run').save([mockFlowRun])
         const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
