@@ -29,7 +29,7 @@ export const mcpServerHandler = {
             await transport.handleRequest(req.raw, reply.raw, req.body)
         }
         catch (error) {
-            logger.error('Error handling MCP request:', error)
+            logger.error(`Error handling MCP request: ${error}`)
             if (!reply.raw.headersSent) {
                 await reply.status(500).send({
                     jsonrpc: '2.0',

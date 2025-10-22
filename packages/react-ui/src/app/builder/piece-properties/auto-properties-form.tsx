@@ -18,7 +18,8 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
-import { AgentPieceProps,
+import {
+  AgentPieceProps,
   FlowActionType,
   FlowTriggerType,
   isNil,
@@ -59,7 +60,6 @@ const AutoPropertiesFormComponent = React.memo(
   }: AutoFormProps) => {
     const form = useFormContext();
     const step = form.getValues() as Step;
-
 
     return (
       Object.keys(props).length > 0 && (

@@ -270,12 +270,12 @@ import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1
 import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
 import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
-import { RemoveAgentidFromMcpEntity1760452015041 } from './migration/postgres/1760452015041-remove-agentid-from-mcp-entity'
-import { RemoveAgentLimitFromPlatfromPlanEntity1760607967671 } from './migration/postgres/1760607967671-remove-agent-limit-from-platfrom-plan-entity'
 import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759772332795-RemoveFlowRunDisplayName'
 import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
 import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
 import { RestrictOnDeleteProjectForFlow1760376319952 } from './migration/postgres/1760376319952-RestrictOnDeleteProjectForFlow'
+import { RemoveAgentidFromMcpEntity1760452015041 } from './migration/postgres/1760452015041-remove-agentid-from-mcp-entity'
+import { RemoveAgentLimitFromPlatfromPlanEntity1760607967671 } from './migration/postgres/1760607967671-remove-agent-limit-from-platfrom-plan-entity'
 import { RemoveTriggerRunEntity1760993216501 } from './migration/postgres/1760993216501-RemoveTriggerRunEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {

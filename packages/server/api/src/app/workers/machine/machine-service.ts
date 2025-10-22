@@ -34,7 +34,6 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
                 TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
-                AGENT_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
                 LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
