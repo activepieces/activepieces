@@ -13,7 +13,7 @@ export const UpdateRunProgressRequest = Type.Object({
     httpRequestId: Nullable(Type.String()),
     failedStepName: Type.Optional(Type.String()),
     logsFileId: Type.Optional(Type.String()),
-    testSingleStepMode: Type.Optional(Type.Boolean()),
+    stepNameToTest: Type.Optional(Type.String()),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
