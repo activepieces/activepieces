@@ -2,20 +2,17 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { cyberarkAuth } from '../../index';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { groupIdDropdown } from '../common/group-dropdown';
+import { memberIdDropdown } from '../common/member-dropdown';
 import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 
 export const addMemberToGroup = createAction({
   auth: cyberarkAuth,
   name: 'add_member_to_group',
   displayName: 'Add Member to Group',
-  description: 'Adds a user as a member to an existing Vault group',
+  description: 'Adds a user as a member to an existing Vault group (requires Add/Update users permissions)',
   props: {
     groupId: groupIdDropdown,
-    memberId: Property.ShortText({
-      displayName: 'Member ID',
-      description: 'The name of the Vault user or LDAP group to add to the Vault group',
-      required: true,
-    }),
+    memberId: memberIdDropdown,
     memberType: Property.StaticDropdown({
       displayName: 'Member Type',
       description: 'The type of user being added to the Vault group',
@@ -37,7 +34,13 @@ export const addMemberToGroup = createAction({
   async run(context) {
     const authData = await getAuthToken(context.auth as CyberArkAuth);
 
-    // Validate required fields
+    if (!context.propsValue.memberId) {
+      return {
+        success: false,
+        error: 'Member ID is required. Please select or enter a member.',
+      };
+    }
+
     if (context.propsValue.memberType === 'domain' && !context.propsValue.domainName) {
       return {
         success: false,
@@ -45,13 +48,11 @@ export const addMemberToGroup = createAction({
       };
     }
 
-    // Build the request body
     const requestBody: any = {
       memberId: context.propsValue.memberId,
       memberType: context.propsValue.memberType,
     };
 
-    // Add domain name if provided
     if (context.propsValue.domainName) {
       requestBody.domainName = context.propsValue.domainName;
     }

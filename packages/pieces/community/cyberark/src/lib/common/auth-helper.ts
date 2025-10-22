@@ -28,13 +28,11 @@ export async function getAuthToken(auth: CyberArkAuth): Promise<AuthToken> {
     });
 
     if (response.status === 200 && response.body) {
-      // Clean the token - remove quotes if present and trim whitespace
       let token = response.body;
       if (typeof token === 'string') {
         token = token.replace(/^["']|["']$/g, '').trim();
       }
       
-      // Validate token doesn't contain invalid characters
       if (typeof token === 'string' && token.length > 0) {
         return {
           token: token,

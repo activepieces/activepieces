@@ -7,7 +7,7 @@ export const findUser = createAction({
   auth: cyberarkAuth,
   name: 'find_user',
   displayName: 'Find User',
-  description: 'Returns a list of existing users in the Vault based on filter criteria',
+  description: 'Returns a list of existing users in the Vault based on filter criteria (requires Audit users permissions)',
   props: {
     filter: Property.ShortText({
       displayName: 'Filter',
@@ -47,16 +47,27 @@ export const findUser = createAction({
       description: 'Filter to show only component users',
       required: false,
     }),
-    userType: Property.ShortText({
+    userType: Property.StaticDropdown({
       displayName: 'User Type',
-      description: 'Filter by specific user type (e.g., EPVUser, Built-InAdmins)',
+      description: 'Filter by specific user type',
       required: false,
+      options: {
+        options: [
+          { label: 'EPV User', value: 'EPVUser' },
+          { label: 'Built-in Admins', value: 'Built-InAdmins' },
+          { label: 'LDAP User', value: 'LDAP' },
+          { label: 'CPM', value: 'CPM' },
+          { label: 'PVWA', value: 'PVWA' },
+          { label: 'PSM', value: 'PSM' },
+          { label: 'App Provider', value: 'AppProvider' },
+          { label: 'Other (specify in Filter)', value: '' },
+        ],
+      },
     }),
   },
   async run(context) {
     const authData = await getAuthToken(context.auth as CyberArkAuth);
 
-    // Build query parameters
     const queryParams = new URLSearchParams();
 
     if (context.propsValue.filter) {
@@ -87,7 +98,7 @@ export const findUser = createAction({
       queryParams.append('componentUser', context.propsValue.componentUser.toString());
     }
 
-    if (context.propsValue.userType) {
+    if (context.propsValue.userType && context.propsValue.userType !== '') {
       queryParams.append('userType', context.propsValue.userType);
     }
 

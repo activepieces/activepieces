@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createUser } from './lib/actions/create-user';
 import { updateUser } from './lib/actions/update-user';
 import { deleteUser } from './lib/actions/delete-user';
@@ -37,10 +38,12 @@ export const cyberarkAuth = PieceAuth.CustomAuth({
 
 export const cyberark = createPiece({
   displayName: 'CyberArk',
+  description: 'Manage users, groups, and access controls in CyberArk Privileged Access Management',
   auth: cyberarkAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/cyberark.png',
-  authors: [],
+  authors: ['fortunamide', 'onyedikachi-david'],
+  categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     createUser,
     updateUser,

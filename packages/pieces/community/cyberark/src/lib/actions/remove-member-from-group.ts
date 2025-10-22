@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { cyberarkAuth } from '../../index';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { groupIdDropdown } from '../common/group-dropdown';
+import { memberIdDropdown } from '../common/member-dropdown';
 import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 
 export const removeMemberFromGroup = createAction({
@@ -11,19 +12,22 @@ export const removeMemberFromGroup = createAction({
   description: 'Removes a specific user from a user group in the Vault',
   props: {
     groupId: groupIdDropdown,
-    memberName: Property.ShortText({
-      displayName: 'Member Name',
-      description: 'The name of the group member to be removed',
-      required: true,
-    }),
+    memberId: memberIdDropdown,
   },
   async run(context) {
     const authData = await getAuthToken(context.auth as CyberArkAuth);
 
+    if (!context.propsValue.memberId) {
+      return {
+        success: false,
+        error: 'Member ID is required. Please select or enter a member.',
+      };
+    }
+
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.DELETE,
-        url: `${authData.serverUrl}/PasswordVault/API/UserGroups/${context.propsValue.groupId}/Members/${encodeURIComponent(context.propsValue.memberName)}/`,
+        url: `${authData.serverUrl}/PasswordVault/API/UserGroups/${context.propsValue.groupId}/Members/${encodeURIComponent(String(context.propsValue.memberId))}/`,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': authData.token,
@@ -33,7 +37,7 @@ export const removeMemberFromGroup = createAction({
       if (response.status === 204 || response.status === 200) {
         return {
           success: true,
-          message: `Successfully removed ${context.propsValue.memberName} from group ${context.propsValue.groupId}`,
+          message: `Successfully removed ${context.propsValue.memberId} from group ${context.propsValue.groupId}`,
         };
       } else {
         return {

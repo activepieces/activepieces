@@ -25,7 +25,7 @@ export const createUser = createAction({
       description: 'Password for first-time login (max 39 characters)',
       required: false,
     }),
-    authenticationMethod: Property.StaticMultiSelectDropdown({
+    authenticationMethod: Property.StaticDropdown({
       displayName: 'Authentication Method',
       description: 'The authentication method for login',
       required: false,
@@ -36,7 +36,7 @@ export const createUser = createAction({
           { label: 'LDAP', value: 'AuthTypeLDAP' },
         ],
       },
-      defaultValue: ['AuthTypePass'],
+      defaultValue: 'AuthTypePass',
     }),
     allowedAuthenticationMethods: Property.StaticMultiSelectDropdown({
       displayName: 'Allowed Authentication Methods',
@@ -97,7 +97,6 @@ export const createUser = createAction({
         ],
       },
     }),
-    // Personal Details
     firstName: Property.ShortText({
       displayName: 'First Name',
       description: 'First name (max 29 characters)',
@@ -113,7 +112,6 @@ export const createUser = createAction({
       description: 'Last name (max 29 characters)',
       required: false,
     }),
-    // Contact Information
     homeEmail: Property.ShortText({
       displayName: 'Home Email',
       description: 'Home email address (max 319 characters)',
@@ -134,11 +132,134 @@ export const createUser = createAction({
       description: 'Business phone number (max 24 characters)',
       required: false,
     }),
+    cellularNumber: Property.ShortText({
+      displayName: 'Cellular Phone',
+      description: 'Cellular phone number (max 24 characters)',
+      required: false,
+    }),
+    faxNumber: Property.ShortText({
+      displayName: 'Fax Number',
+      description: 'Fax number (max 24 characters)',
+      required: false,
+    }),
+    pagerNumber: Property.ShortText({
+      displayName: 'Pager Number',
+      description: 'Pager number (max 24 characters)',
+      required: false,
+    }),
+    expiryDate: Property.DateTime({
+      displayName: 'Expiry Date',
+      description: 'Date when the user expires',
+      required: false,
+    }),
+    unAuthorizedInterfaces: Property.StaticMultiSelectDropdown({
+      displayName: 'Unauthorized Interfaces',
+      description: 'Interfaces the user cannot access',
+      required: false,
+      options: {
+        options: [
+          { label: 'PSM', value: 'PSM' },
+          { label: 'PSMP', value: 'PSMP' },
+          { label: 'PVWA', value: 'PVWA' },
+          { label: 'WINCLIENT', value: 'WINCLIENT' },
+          { label: 'PTA', value: 'PTA' },
+          { label: 'PACLI', value: 'PACLI' },
+          { label: 'HTTPGW', value: 'HTTPGW' },
+          { label: 'EVD', value: 'EVD' },
+          { label: 'PIMSu', value: 'PIMSu' },
+          { label: 'AIMApp', value: 'AIMApp' },
+          { label: 'CPM', value: 'CPM' },
+          { label: 'PVWAApp', value: 'PVWAApp' },
+          { label: 'PSMApp', value: 'PSMApp' },
+          { label: 'AppPrv', value: 'AppPrv' },
+          { label: 'PSMPApp', value: 'PSMPApp' },
+        ],
+      },
+    }),
+    workStreet: Property.ShortText({
+      displayName: 'Work Street',
+      description: 'Business street address (max 29 characters)',
+      required: false,
+    }),
+    workCity: Property.ShortText({
+      displayName: 'Work City',
+      description: 'Business city (max 19 characters)',
+      required: false,
+    }),
+    workState: Property.ShortText({
+      displayName: 'Work State',
+      description: 'Business state (max 19 characters)',
+      required: false,
+    }),
+    workZip: Property.ShortText({
+      displayName: 'Work ZIP',
+      description: 'Business ZIP code (max 19 characters)',
+      required: false,
+    }),
+    workCountry: Property.ShortText({
+      displayName: 'Work Country',
+      description: 'Business country (max 19 characters)',
+      required: false,
+    }),
+    street: Property.ShortText({
+      displayName: 'Home Street',
+      description: 'Home street address (max 29 characters)',
+      required: false,
+    }),
+    city: Property.ShortText({
+      displayName: 'Home City',
+      description: 'Home city (max 19 characters)',
+      required: false,
+    }),
+    state: Property.ShortText({
+      displayName: 'Home State',
+      description: 'Home state (max 19 characters)',
+      required: false,
+    }),
+    zip: Property.ShortText({
+      displayName: 'Home ZIP',
+      description: 'Home ZIP code (max 19 characters)',
+      required: false,
+    }),
+    country: Property.ShortText({
+      displayName: 'Home Country',
+      description: 'Home country (max 19 characters)',
+      required: false,
+    }),
+    title: Property.ShortText({
+      displayName: 'Title',
+      description: 'Professional title (max 49 characters)',
+      required: false,
+    }),
+    organization: Property.ShortText({
+      displayName: 'Organization',
+      description: 'Organization name (max 49 characters)',
+      required: false,
+    }),
+    department: Property.ShortText({
+      displayName: 'Department',
+      description: 'Department (max 49 characters)',
+      required: false,
+    }),
+    profession: Property.ShortText({
+      displayName: 'Profession',
+      description: 'Profession (max 49 characters)',
+      required: false,
+    }),
+    homePage: Property.ShortText({
+      displayName: 'Home Page',
+      description: 'Personal website (max 319 characters)',
+      required: false,
+    }),
+    otherEmail: Property.ShortText({
+      displayName: 'Other Email',
+      description: 'Additional email address (max 319 characters)',
+      required: false,
+    }),
   },
   async run(context) {
     const authData = await getAuthToken(context.auth as CyberArkAuth);
 
-    // Build the request body
     const requestBody: any = {
       username: context.propsValue.username,
       userType: context.propsValue.userType || 'EPVUser',
@@ -147,7 +268,6 @@ export const createUser = createAction({
       passwordNeverExpires: context.propsValue.passwordNeverExpires ?? false,
     };
 
-    // Add optional fields if provided
     if (context.propsValue.initialPassword) {
       requestBody.initialPassword = context.propsValue.initialPassword;
     }
@@ -160,6 +280,12 @@ export const createUser = createAction({
     if (context.propsValue.location) {
       requestBody.location = context.propsValue.location;
     }
+    if (context.propsValue.expiryDate) {
+      requestBody.expiryDate = Math.floor(new Date(context.propsValue.expiryDate).getTime() / 1000);
+    }
+    if (context.propsValue.unAuthorizedInterfaces) {
+      requestBody.unAuthorizedInterfaces = context.propsValue.unAuthorizedInterfaces;
+    }
     if (context.propsValue.description) {
       requestBody.description = context.propsValue.description;
     }
@@ -167,29 +293,50 @@ export const createUser = createAction({
       requestBody.vaultAuthorization = context.propsValue.vaultAuthorization;
     }
 
-    // Add personal details if any are provided
     const personalDetails: any = {};
     if (context.propsValue.firstName) personalDetails.firstName = context.propsValue.firstName;
     if (context.propsValue.middleName) personalDetails.middleName = context.propsValue.middleName;
     if (context.propsValue.lastName) personalDetails.lastName = context.propsValue.lastName;
+    if (context.propsValue.street) personalDetails.street = context.propsValue.street;
+    if (context.propsValue.city) personalDetails.city = context.propsValue.city;
+    if (context.propsValue.state) personalDetails.state = context.propsValue.state;
+    if (context.propsValue.zip) personalDetails.zip = context.propsValue.zip;
+    if (context.propsValue.country) personalDetails.country = context.propsValue.country;
+    if (context.propsValue.title) personalDetails.title = context.propsValue.title;
+    if (context.propsValue.organization) personalDetails.organization = context.propsValue.organization;
+    if (context.propsValue.department) personalDetails.department = context.propsValue.department;
+    if (context.propsValue.profession) personalDetails.profession = context.propsValue.profession;
     if (Object.keys(personalDetails).length > 0) {
       requestBody.personalDetails = personalDetails;
     }
 
-    // Add internet details if any are provided
     const internet: any = {};
+    if (context.propsValue.homePage) internet.homePage = context.propsValue.homePage;
     if (context.propsValue.homeEmail) internet.homeEmail = context.propsValue.homeEmail;
     if (context.propsValue.businessEmail) internet.businessEmail = context.propsValue.businessEmail;
+    if (context.propsValue.otherEmail) internet.otherEmail = context.propsValue.otherEmail;
     if (Object.keys(internet).length > 0) {
       requestBody.internet = internet;
     }
 
-    // Add phone details if any are provided
     const phones: any = {};
     if (context.propsValue.homeNumber) phones.homeNumber = context.propsValue.homeNumber;
     if (context.propsValue.businessNumber) phones.businessNumber = context.propsValue.businessNumber;
+    if (context.propsValue.cellularNumber) phones.cellularNumber = context.propsValue.cellularNumber;
+    if (context.propsValue.faxNumber) phones.faxNumber = context.propsValue.faxNumber;
+    if (context.propsValue.pagerNumber) phones.pagerNumber = context.propsValue.pagerNumber;
     if (Object.keys(phones).length > 0) {
       requestBody.phones = phones;
+    }
+
+    const businessAddress: any = {};
+    if (context.propsValue.workStreet) businessAddress.workStreet = context.propsValue.workStreet;
+    if (context.propsValue.workCity) businessAddress.workCity = context.propsValue.workCity;
+    if (context.propsValue.workState) businessAddress.workState = context.propsValue.workState;
+    if (context.propsValue.workZip) businessAddress.workZip = context.propsValue.workZip;
+    if (context.propsValue.workCountry) businessAddress.workCountry = context.propsValue.workCountry;
+    if (Object.keys(businessAddress).length > 0) {
+      requestBody.businessAddress = businessAddress;
     }
 
     try {

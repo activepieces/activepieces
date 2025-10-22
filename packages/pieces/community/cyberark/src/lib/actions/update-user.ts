@@ -47,9 +47,9 @@ export const updateUser = createAction({
       required: false,
       defaultValue: false
     }),
-    expiryDate: Property.Number({
+    expiryDate: Property.DateTime({
       displayName: 'Expiry Date',
-      description: 'User expiration date (Unix timestamp)',
+      description: 'Date when the user expires',
       required: false
     }),
     userActivityLogRetentionDays: Property.Number({
@@ -58,7 +58,7 @@ export const updateUser = createAction({
       required: false,
       defaultValue: 90
     }),
-    authenticationMethod: Property.StaticMultiSelectDropdown({
+    authenticationMethod: Property.StaticDropdown({
       displayName: 'Authentication Method',
       description: 'The authentication method for login',
       required: false,
@@ -69,7 +69,7 @@ export const updateUser = createAction({
           { label: 'LDAP', value: 'AuthTypeLDAP' }
         ]
       },
-      defaultValue: ['AuthTypePass']
+      defaultValue: 'AuthTypePass'
     }),
     allowedAuthenticationMethods: Property.StaticMultiSelectDropdown({
       displayName: 'Allowed Authentication Methods',
@@ -95,8 +95,15 @@ export const updateUser = createAction({
           { label: 'WINCLIENT', value: 'WINCLIENT' },
           { label: 'PTA', value: 'PTA' },
           { label: 'PACLI', value: 'PACLI' },
-          { label: 'HTTPGWEVD', value: 'HTTPGWEVD' },
-          { label: 'GUI', value: 'GUI' }
+          { label: 'HTTPGW', value: 'HTTPGW' },
+          { label: 'EVD', value: 'EVD' },
+          { label: 'PIMSu', value: 'PIMSu' },
+          { label: 'AIMApp', value: 'AIMApp' },
+          { label: 'CPM', value: 'CPM' },
+          { label: 'PVWAApp', value: 'PVWAApp' },
+          { label: 'PSMApp', value: 'PSMApp' },
+          { label: 'AppPrv', value: 'AppPrv' },
+          { label: 'PSMPApp', value: 'PSMPApp' }
         ]
       }
     }),
@@ -146,7 +153,6 @@ export const updateUser = createAction({
         ]
       }
     }),
-    // Personal Details
     firstName: Property.ShortText({
       displayName: 'First Name',
       description: 'First name (max 29 characters)',
@@ -182,7 +188,6 @@ export const updateUser = createAction({
       description: 'Profession (max 49 characters)',
       required: false
     }),
-    // Address
     street: Property.ShortText({
       displayName: 'Street',
       description: 'Street address (max 29 characters)',
@@ -208,7 +213,6 @@ export const updateUser = createAction({
       description: 'Country (max 19 characters)',
       required: false
     }),
-    // Business Address
     workStreet: Property.ShortText({
       displayName: 'Work Street',
       description: 'Work street address (max 29 characters)',
@@ -234,7 +238,6 @@ export const updateUser = createAction({
       description: 'Work country (max 19 characters)',
       required: false
     }),
-    // Internet
     homePage: Property.ShortText({
       displayName: 'Home Page',
       description: 'Home page URL (max 319 characters)',
@@ -255,7 +258,6 @@ export const updateUser = createAction({
       description: 'Other email address (max 319 characters)',
       required: false
     }),
-    // Phones
     homeNumber: Property.ShortText({
       displayName: 'Home Phone',
       description: 'Home phone number (max 24 characters)',
@@ -280,12 +282,21 @@ export const updateUser = createAction({
       displayName: 'Pager Number',
       description: 'Pager number (max 24 characters)',
       required: false
+    }),
+    loginFromHour: Property.DateTime({
+      displayName: 'Login From Hour',
+      description: 'Starting time when user can log in',
+      required: false
+    }),
+    loginToHour: Property.DateTime({
+      displayName: 'Login To Hour',
+      description: 'Ending time when user can log in',
+      required: false
     })
   },
   async run(context) {
     const authData = await getAuthToken(context.auth as CyberArkAuth);
 
-    // Build the request body - ALL properties must be included as per API spec
     const requestBody: any = {
       id: parseInt(context.propsValue.userId as string),
       username: context.propsValue.username,
@@ -299,17 +310,21 @@ export const updateUser = createAction({
       location: context.propsValue.location || '\\\\'
     };
 
-    // Add optional fields
     if (context.propsValue.expiryDate) {
-      requestBody.expiryDate = context.propsValue.expiryDate;
+      requestBody.expiryDate = Math.floor(new Date(context.propsValue.expiryDate).getTime() / 1000);
+    }
+    if (context.propsValue.loginFromHour) {
+      requestBody.loginFromHour = Math.floor(new Date(context.propsValue.loginFromHour).getTime() / 1000);
+    }
+    if (context.propsValue.loginToHour) {
+      requestBody.loginToHour = Math.floor(new Date(context.propsValue.loginToHour).getTime() / 1000);
     }
     if (context.propsValue.userActivityLogRetentionDays !== undefined) {
       requestBody.userActivityLogRetentionDays =
         context.propsValue.userActivityLogRetentionDays;
     }
     if (context.propsValue.authenticationMethod) {
-      requestBody.authenticationMethod =
-        context.propsValue.authenticationMethod;
+      requestBody.authenticationMethod = [context.propsValue.authenticationMethod];
     }
     if (context.propsValue.allowedAuthenticationMethods) {
       requestBody.allowedAuthenticationMethods =
@@ -332,7 +347,6 @@ export const updateUser = createAction({
       requestBody.vaultAuthorization = context.propsValue.vaultAuthorization;
     }
 
-    // Add personal details if any are provided
     const personalDetails: any = {};
     if (context.propsValue.firstName)
       personalDetails.firstName = context.propsValue.firstName;
@@ -360,7 +374,6 @@ export const updateUser = createAction({
       requestBody.personalDetails = personalDetails;
     }
 
-    // Add business address if any are provided
     const businessAddress: any = {};
     if (context.propsValue.workStreet)
       businessAddress.workStreet = context.propsValue.workStreet;
@@ -376,7 +389,6 @@ export const updateUser = createAction({
       requestBody.businessAddress = businessAddress;
     }
 
-    // Add internet details if any are provided
     const internet: any = {};
     if (context.propsValue.homePage)
       internet.homePage = context.propsValue.homePage;
@@ -390,7 +402,6 @@ export const updateUser = createAction({
       requestBody.internet = internet;
     }
 
-    // Add phone details if any are provided
     const phones: any = {};
     if (context.propsValue.homeNumber)
       phones.homeNumber = context.propsValue.homeNumber;
