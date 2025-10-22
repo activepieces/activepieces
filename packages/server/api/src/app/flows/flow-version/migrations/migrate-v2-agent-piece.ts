@@ -1,5 +1,5 @@
-import { FlowVersion } from '../../flow-version'
-import { AGENT_PIECE_NAME } from '../../util/flow-structure-util'
+import { FlowVersion } from '../../../../../../../shared/src/lib/flows/flow-version'
+import { AGENT_PIECE_NAME } from '../../../../../../../shared/src/lib/flows/util/flow-structure-util'
 import { flowMigrationUtil } from './flow-migration-util'
 import { Migration } from '.'
 

@@ -33,7 +33,6 @@ export type AgentResult = {
 }
 
 export enum AgentPieceProps {
-    MCP_ID = 'mcpId',
     AGENT_TOOLS = 'agentTools',
     STRUCTURED_OUTPUT = 'structuredOutput',
     PROMPT = 'prompt',

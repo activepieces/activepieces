@@ -1,4 +1,4 @@
-import { FlowVersion } from '../../flow-version'
+import { FlowVersion } from '@activepieces/shared'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
@@ -6,6 +6,7 @@ import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
 import { migratePropertySettingsV6 } from './migrate-v6-property-settings'
+import { moveAgentsToFlowVerion } from './move-agents-to-flow-version'
 
 export type Migration = {
     targetSchemaVersion: string | undefined
@@ -20,6 +21,7 @@ const migrations: Migration[] = [
     migrateAgentPieceV4,
     migrateHttpToWebhookV5,
     migratePropertySettingsV6,
+    moveAgentsToFlowVerion
 ] as const
 
 export const flowMigrations = {

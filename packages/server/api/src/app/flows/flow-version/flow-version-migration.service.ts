@@ -20,15 +20,12 @@ export const flowVersionMigrationService = {
 
         log.info('Starting flow version migration')
 
-        const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion)
-        if (flowVersion.schemaVersion === migratedFlowVersion.schemaVersion) {
-            return flowVersion
-        }
-
         const backupFiles = flowVersion.backupFiles ?? {}
         if (!isNil(flowVersion.schemaVersion)) {
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
         }
+
+        const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion)
         
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,

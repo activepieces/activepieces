@@ -1,9 +1,6 @@
 import semver from 'semver'
-import { FlowActionType } from '../../actions/action'
-import { FlowVersion } from '../../flow-version'
-import { PropertyExecutionType } from '../../properties'
-import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
+import { FlowActionType, flowStructureUtil, FlowVersion, PropertyExecutionType } from '@activepieces/shared'
 
 const HTTP_PIECE_NAME = '@activepieces/piece-http'
 const WEBHOOK_PIECE_NAME = '@activepieces/piece-webhook'

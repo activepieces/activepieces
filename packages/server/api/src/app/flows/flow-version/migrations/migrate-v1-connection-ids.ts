@@ -1,5 +1,4 @@
-import { FlowVersion } from '../../flow-version'
-import { flowStructureUtil } from '../../util/flow-structure-util'
+import { flowStructureUtil, FlowVersion } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateConnectionIds: Migration = {
