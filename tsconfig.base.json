@@ -794,6 +794,9 @@
       "@activepieces/piece-openai": [
         "packages/pieces/community/openai/src/index.ts"
       ],
+      "@activepieces/piece-oracle-database": [
+        "packages/pieces/community/oracle-database/src/index.ts"
+      ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],

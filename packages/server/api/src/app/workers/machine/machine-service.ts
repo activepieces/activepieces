@@ -1,26 +1,24 @@
-import { AppSystemProp, QueueName, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     MachineInformation,
-    WorkerMachineHealthcheckResponse,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
+    WorkerSettingsResponse,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
-import { app } from '../../server'
-import { jobQueue } from '../queue/job-queue'
 import { WorkerMachineEntity } from './machine-entity'
-import { machineRouting } from './machine-routing'
 
 const workerRepo = repoFactory(WorkerMachineEntity)
-const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
 
-export const machineService = (log: FastifyBaseLogger) => {
+export const machineService = (_log: FastifyBaseLogger) => {
     return {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
             system.globalLogger().info({
@@ -28,73 +26,15 @@ export const machineService = (log: FastifyBaseLogger) => {
                 workerId: request.workerId,
             })
             await workerRepo().delete({ id: request.workerId })
-            await machineRouting.onDisconnect({
-                workerId: request.workerId,
-            })
-            await machineService(log).updateConcurrency()
         },
-        async acquire(): Promise<string> {
-            const workerId = await machineRouting.acquire()
-            const sockets = await app?.io.to(workerId).fetchSockets()
-            if (sockets && sockets.length > 0) {
-                return workerId
-            }
-            else {
-                await machineService(log).onDisconnect({
-                    workerId,
-                })
-                return machineService(log).acquire()
-            }
-        },
-        async release(workerId: string): Promise<void> {
-            await machineRouting.release(workerId)
-        },
-        async getConcurrency(): Promise<Record<QueueName, number>> {
-            const machines = await machineService(log).list()
-            const flowWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.WORKER_CONCURRENCY]) || 0), 0)
-            return {
-                [QueueName.WORKER_JOBS]: flowWorkerConcurrency,
-            }
-        },
-        async updateConcurrency(): Promise<void> {
-            const concurrency = await machineService(log).getConcurrency()
-            await Promise.all(Object.entries(concurrency).map(([queueName, concurrency]) => jobQueue(log).setConcurrency(queueName as QueueName, concurrency)))
-        },
-        async onHeartbeat({
-            workerId,
-            totalSandboxes,
-            diskInfo,
-            cpuUsagePercentage,
-            ramUsagePercentage,
-            totalAvailableRamInBytes,
-            workerProps,
-            ip,
-            freeSandboxes,
-        }: OnHeartbeatParams): Promise<WorkerMachineHealthcheckResponse> {
-            await machineRouting.onHeartbeat({
-                workerId,
-                totalSandboxes,
-                freeSandboxes,
-            })
-            await workerRepo().upsert({
-                information: {
-                    diskInfo,
-                    cpuUsagePercentage,
-                    ramUsagePercentage,
-                    totalAvailableRamInBytes,
-                    workerProps,
-                    ip,
-                    totalSandboxes,
-                    freeSandboxes,
-                },
-                updated: dayjs().toISOString(),
-                id: workerId,
-            }, ['id'])
-
-            const response: WorkerMachineHealthcheckResponse = {
+        async onConnection(): Promise<WorkerSettingsResponse> {
+            return  {
+                JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
+                TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
+                AGENT_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
                 LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
@@ -114,17 +54,54 @@ export const machineService = (log: FastifyBaseLogger) => {
                 PUBLIC_URL: await domainHelper.getPublicUrl({
                     path: '',
                 }),
+                PROJECT_RATE_LIMITER_ENABLED: system.getBooleanOrThrow(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED),
+                MAX_CONCURRENT_JOBS_PER_PROJECT: system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+                REDIS_TYPE: redisConnections.getRedisType(),
+                REDIS_SSL_CA_FILE: system.get(AppSystemProp.REDIS_SSL_CA_FILE),
+                REDIS_DB: system.getNumber(AppSystemProp.REDIS_DB) ?? undefined,
+                REDIS_HOST: system.get(AppSystemProp.REDIS_HOST),
+                REDIS_PASSWORD: system.get(AppSystemProp.REDIS_PASSWORD),
+                REDIS_PORT: system.get(AppSystemProp.REDIS_PORT),
+                REDIS_URL: system.get(AppSystemProp.REDIS_URL),
+                REDIS_USER: system.get(AppSystemProp.REDIS_USER),
+                REDIS_USE_SSL: system.get(AppSystemProp.REDIS_USE_SSL) === 'true',
+                REDIS_SENTINEL_ROLE: system.get(AppSystemProp.REDIS_SENTINEL_ROLE),
+                REDIS_SENTINEL_HOSTS: system.get(AppSystemProp.REDIS_SENTINEL_HOSTS),
+                REDIS_SENTINEL_NAME: system.get(AppSystemProp.REDIS_SENTINEL_NAME),
             }
-
-            await machineService(log).updateConcurrency()
-
-            return response
+        },
+        async onHeartbeat({
+            workerId,
+            totalSandboxes,
+            diskInfo,
+            cpuUsagePercentage,
+            ramUsagePercentage,
+            totalAvailableRamInBytes,
+            workerProps,
+            ip,
+            freeSandboxes,
+        }: OnHeartbeatParams): Promise<void> {
+            await workerRepo().upsert({
+                information: {
+                    diskInfo,
+                    cpuUsagePercentage,
+                    ramUsagePercentage,
+                    totalAvailableRamInBytes,
+                    workerProps,
+                    ip,
+                    totalSandboxes,
+                    freeSandboxes,
+                },
+                updated: dayjs().toISOString(),
+                id: workerId,
+            }, ['id'])
         },
         async list(): Promise<WorkerMachineWithStatus[]> {
-            const offlineThreshold = dayjs().subtract(OFFLINE_THRESHOLD, 'ms').utc()
             const allWorkers = await workerRepo().find()
+            const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+
             const workersToDelete = allWorkers.filter(worker => dayjs(worker.updated).isBefore(offlineThreshold))
 
             if (workersToDelete.length > 0) {
