@@ -20,7 +20,14 @@ import { apDayjs } from '@activepieces/server-shared'
 import {
     AiOverageState,
     apId,
+    AppConnection,
+    AppConnectionScope,
+    AppConnectionStatus,
+    AppConnectionType,
     assertNotNullOrUndefined,
+    Cell,
+    Field,
+    FieldType,
     File,
     FileCompression,
     FileLocation,
@@ -48,8 +55,10 @@ import {
     ProjectRelease,
     ProjectReleaseType,
     ProjectRole,
+    Record,
     RoleType,
     RunEnvironment,
+    Table,
     TemplateType,
     User,
     UserIdentity,
@@ -519,6 +528,116 @@ export const createMockFlowVersion = (
     }
 }
 
+export const createMockConnection = (connection: Partial<AppConnection>, ownerId: string): AppConnection<AppConnectionType.SECRET_TEXT> => {
+    return {
+        id: connection?.id ?? apId(),
+        created: connection?.created ?? faker.date.recent().toISOString(),
+        updated: connection?.updated ?? faker.date.recent().toISOString(),
+        platformId: connection?.platformId ?? apId(),
+        projectIds: connection?.projectIds ?? [],
+        pieceName: connection?.pieceName ?? faker.lorem.word(),
+        displayName: connection?.displayName ?? faker.lorem.word(),
+        type: AppConnectionType.SECRET_TEXT,
+        scope: AppConnectionScope.PROJECT,
+        status: AppConnectionStatus.ACTIVE,
+        ownerId,
+        value: {
+            type: AppConnectionType.SECRET_TEXT,
+            secret_text: faker.lorem.word(),
+        },
+        metadata: connection?.metadata ?? {},
+        externalId: connection?.externalId ?? apId(),
+        owner: null,
+    }
+}
+
+const createMockTable = ({ projectId }: { projectId: string }): Table => {
+    return {
+        id: apId(),
+        created: faker.date.recent().toISOString(),
+        updated: faker.date.recent().toISOString(),
+        projectId,
+        externalId: apId(),
+        name: faker.lorem.word(),
+    }
+}
+
+const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+    return {
+        id: apId(),
+        created: faker.date.recent().toISOString(),
+        updated: faker.date.recent().toISOString(),
+        tableId,
+        name: faker.lorem.word(),
+        data: {
+            options: [],
+        },
+        externalId: apId(),
+        projectId,
+        type: FieldType.STATIC_DROPDOWN,
+    }
+}
+const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+    return {
+        id: apId(),
+        created: faker.date.recent().toISOString(),
+        updated: faker.date.recent().toISOString(),
+        tableId,
+        projectId,
+    }
+}
+
+const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+    return {
+        id: apId(),
+        created: faker.date.recent().toISOString(),
+        updated: faker.date.recent().toISOString(),
+        recordId,
+        fieldId,
+        projectId,
+        value: faker.lorem.word(),
+    }
+}
+
+
+type Solution = {
+    table: Table
+    connection: AppConnection<AppConnectionType.SECRET_TEXT>
+    flow: Flow
+    flowRun: FlowRun
+    flowVersion: FlowVersion
+    cell: Cell
+}
+
+export const createMockSolutionAndSave = async ({ projectId, platformId, userId }: { projectId: string, platformId: string, userId: string }): Promise<Solution> => {
+    const table = createMockTable({ projectId })
+    const field = createMockField({ tableId: table.id, projectId })
+    const record = createMockRecord({ tableId: table.id, projectId })
+    const cell = createMockCell({ recordId: record.id, fieldId: field.id, projectId })
+    const connection = createMockConnection({ projectIds: [projectId], platformId }, userId)
+    const flow = createMockFlow({ projectId })
+    const flowVersion = createMockFlowVersion({ flowId: flow.id })
+    const flowRun = createMockFlowRun({ projectId, flowId: flow.id, flowVersionId: flowVersion.id })
+    await databaseConnection().getRepository('table').save([table])
+    await databaseConnection().getRepository('field').save([field])
+    await databaseConnection().getRepository('record').save([record])
+    await databaseConnection().getRepository('cell').save([cell])
+    await databaseConnection().getRepository('connection').save([connection])
+    await databaseConnection().getRepository('flow').save([flow])
+    await databaseConnection().getRepository('flow_version').save([flowVersion])
+    await databaseConnection().getRepository('flow_run').save([flowRun])
+    return { table, connection, flow, flowRun, flowVersion, cell }
+}
+
+export const checkIfSolutionExistsInDb = async (solution: Solution): Promise<boolean> => {
+    const table = await databaseConnection().getRepository('table').findOneBy({ id: solution.table.id })
+    const connection = await databaseConnection().getRepository('connection').findOneBy({ id: solution.connection.id })
+    const flow = await databaseConnection().getRepository('flow').findOneBy({ id: solution.flow.id })
+    const flowRun = await databaseConnection().getRepository('flow_run').findOneBy({ id: solution.flowRun.id })
+    const flowVersion = await databaseConnection().getRepository('flow_version').findOneBy({ id: solution.flowVersion.id })
+    const cell = await databaseConnection().getRepository('cell').findOneBy({ id: solution.cell.id })
+    return table !== null && connection !== null && flow !== null && flowRun !== null && flowVersion !== null && cell !== null
+}
 export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Partial<UserIdentity>, user?: Partial<User> }) => {
     const mockUserIdentity = createMockUserIdentity({
         verified: true,
