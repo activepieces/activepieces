@@ -5,7 +5,6 @@ import {
 import {
     apId,
     FlowStatus,
-    NotificationStatus,
     Platform,
     PlatformRole,
     PrincipalType,

@@ -1,6 +1,6 @@
 import { ApId } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { AlertChannel } from './alerts-dto'
+import { Alert } from './alerts-dto'
 
 export const ListAlertsParams = Type.Object({
     projectId: ApId,
@@ -9,10 +9,10 @@ export const ListAlertsParams = Type.Object({
 })
 export type ListAlertsParams = Static<typeof ListAlertsParams>
 
-export const CreateAlertParams = Type.Object({
-    projectId: ApId,
-    channel: Type.Enum(AlertChannel),
-    receiver: Type.String({}),
-})
+export const CreateAlertParams = Type.Omit(Alert, ['created', 'updated', 'id', 'projectId'])
 
 export type CreateAlertParams = Static<typeof CreateAlertParams>
+
+export const UpdateAlertParams = Type.Partial(Type.Omit(CreateAlertParams, ['channel']))
+
+export type UpdateAlertParams = Static<typeof UpdateAlertParams>

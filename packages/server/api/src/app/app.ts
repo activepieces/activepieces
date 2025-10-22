@@ -92,6 +92,7 @@ import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 import { outgoingWebhooksModule } from './ee/outging-webhooks/outgoing-webhooks.module'
+import { alertsScheduledJob } from './ee/alerts/alerts-scheduled-job'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -325,6 +326,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(queueMetricsModule)
             await app.register(outgoingWebhooksModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            await alertsScheduledJob(app.log).init()
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)

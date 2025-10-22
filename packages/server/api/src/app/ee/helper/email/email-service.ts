@@ -1,5 +1,5 @@
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { Alert, AlertChannel, AlertEvent, OtpType } from '@activepieces/ee-shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, parseToJsonIfPossible, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { issuesService } from '../../../flows/issues/issues-service'
@@ -10,6 +10,7 @@ import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
+import { AlertSummaryEventStats } from '../../alerts/alerts-scheduled-job'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -43,6 +44,57 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendAlert(alert: Alert, event: AlertEvent, payload: unknown): Promise<void> {
+        const emails = alert.receivers
+        if (emails.length === 0) {
+            return
+        }
+
+        const project = await projectService.getOne(alert.projectId)
+        assertNotNullOrUndefined(project, 'project')
+        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+        const stringifiedPayload = typeof JSON.stringify(parseToJsonIfPossible(payload)) === 'string' ? JSON.stringify(parseToJsonIfPossible(payload)) : ''
+
+        await emailSender(log).send({
+            emails,
+            platformId: platform.id,
+            templateData: {
+                name: 'alert',
+                vars: {
+                    alertName: alert.name,
+                    alertDescription: alert.description,
+                    event,
+                    payload: stringifiedPayload,
+                },
+            },
+        })
+    },
+
+    async sendAlertSummary(alert: Alert, eventsStats: AlertSummaryEventStats[]): Promise<void> {
+        const emails = alert.receivers
+        if (emails.length === 0) {
+            return
+        }
+
+        const project = await projectService.getOne(alert.projectId)
+        assertNotNullOrUndefined(project, 'project')
+        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+      
+
+        await emailSender(log).send({
+            emails,
+            platformId: platform.id,
+            templateData: {
+                name: 'alert-summary',
+                vars: {
+                    alertName: alert.name,
+                    alertDescription: alert.description,
+                    stringifiedStats: JSON.stringify(eventsStats),
+                },
+            },
+        })
+    },
+
     async sendIssueCreatedNotification({
         projectId,
         flowName,
@@ -63,7 +115,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receivers).flat()
         
         if (emails.length === 0) {
             return
@@ -97,7 +149,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         }
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receivers).flat()
 
         if (emails.length === 0) {
             return
@@ -174,7 +226,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         }
 
         const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receivers).flat()
         
         const issuesUrl = await domainHelper.getPublicUrl({
             platformId: job.platformId,
@@ -223,7 +275,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receivers).flat()
         const project = await projectService.getOneOrThrow(projectId)
 
         if (emails.length === 0) {

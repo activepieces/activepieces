@@ -1,4 +1,4 @@
-import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
+import { CreateAlertParams, ListAlertsParams, UpdateAlertParams } from '@activepieces/ee-shared'
 import { ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { alertsService } from './alerts-service'
@@ -13,10 +13,16 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateAlertRequest, async (req) => {
-        return alertsService(req.log).add({
-            projectId: req.body.projectId,
-            channel: req.body.channel,
-            receiver: req.body.receiver,
+        return alertsService(req.log).create({
+            ...req.body,
+            projectId: req.principal.projectId,
+        })
+    })
+
+    app.patch('/:id', UpdateAlertRequest, async (req) => {
+        return alertsService(req.log).update({
+            id: req.params.id,
+            request: req.body,
         })
     })
 
@@ -48,6 +54,21 @@ const CreateAlertRequest = {
     },
     schema: {
         body: CreateAlertParams,
+    },
+}
+
+const UpdateAlertRequest = {
+    config: {
+        permission: Permission.WRITE_ALERT,
+        allowedPrincipals: [
+            PrincipalType.USER,
+        ],
+    },
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        body: UpdateAlertParams,
     },
 }
 

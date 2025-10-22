@@ -1,64 +1,28 @@
-import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, ApId, ErrorCode, PopulatedIssue, SeekPage } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { Alert, AlertEvent, CreateAlertParams, ListAlertsParams, UpdateAlertParams } from '@activepieces/ee-shared'
+import { apId, ApId, ProjectId, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
 import { AlertEntity } from './alerts-entity'
+import { AddAPArrayContainsToQueryBuilder } from '../../database/database-connection'
+import { handlerAlertTrigger } from './alerts-handler'
 
 const repo = repoFactory(AlertEntity)
 
 export const alertsService = (log: FastifyBaseLogger) => ({
-    async sendAlertOnRunFinish({ issue, flowRunId }: { issue: PopulatedIssue, flowRunId: string }): Promise<void> {
-        const project = await projectService.getOneOrThrow(issue.projectId)
-        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        if (platform.plan.embeddingEnabled) {
-            return
-        }
-
-        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
-
-        // await alertsHandler(log)[project.notifyStatus]({
-        //     flowRunId,
-        //     projectId: issue.projectId,
-        //     platformId: platform.id,
-        //     flowId: issue.flowId,
-        //     flowName: flowVersion.displayName,
-        //     issueCount: issue.count,
-        //     createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
-        // })
-    },
-    async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
+    async create(request: CreateAlertParams & { projectId: ProjectId }): Promise<Alert> {
         const alertId = apId()
-        const existingAlert = await repo().findOneBy({
-            projectId,
-            receiver,
-        })
-
-        if (existingAlert) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EXISTING_ALERT_CHANNEL,
-                params: {
-                    email: receiver,
-                },
-            })
-        }
-
-        await repo().createQueryBuilder()
-            .insert()
-            .into(AlertEntity)
-            .values({
+        return await repo().save({
+                ...request,
                 id: alertId,
-                channel,
-                projectId,
-                receiver,
-                created: dayjs().toISOString(),
-            })
-            .execute()
+        })
+    },
+    async update({ id, request }: { id: string, request: UpdateAlertParams }): Promise<Alert> {
+        await repo().update({ id }, {
+            ...request,
+        })
+        return await repo().findOneByOrFail({ id })
     },
     async list({ projectId, cursor, limit }: ListAlertsParams): Promise<SeekPage<Alert>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
@@ -85,10 +49,18 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             id: alertId,
         })
     },
+    async trigger({projectId, event, payload}: TriggerParams): Promise<void> {
+        const qb = await repo().createQueryBuilder('alert').where('alert.projectId = :projectId', { projectId })
+        AddAPArrayContainsToQueryBuilder(qb, 'events', [event])
+        const alerts = await qb.getMany()
+        log.info({ name: 'alertsService#trigger' }, `Found ${alerts.length} alerts for event ${event} in project ${projectId}`)
+
+        await Promise.all(alerts.map((alert) => handlerAlertTrigger(alert, event, payload, log)))
+    },
 })
 
-type AddPrams = { 
-    projectId: string
-    channel: AlertChannel
-    receiver: string 
+type TriggerParams = {
+    projectId: ProjectId,
+    event: AlertEvent,
+    payload: unknown,
 }

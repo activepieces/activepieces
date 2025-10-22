@@ -1,7 +1,9 @@
+import { Alert } from '@activepieces/ee-shared'
 import { PlatformId, ProjectId } from '@activepieces/shared'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
+    ALERT_SUMMARY = 'alert-summary',
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
     TRIAL_TRACKER = 'trial-tracker',
@@ -37,7 +39,12 @@ type OneDayLeftOnTrialEmailSystemJobData = {
     firstName?: string
 }
 
+type AlertSummarySystemJobData = {
+    alert: Alert
+}
+
 type SystemJobDataMap = {
+    [SystemJobName.ALERT_SUMMARY]: AlertSummarySystemJobData
     [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
     [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>

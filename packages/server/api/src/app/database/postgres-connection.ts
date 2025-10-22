@@ -277,6 +277,7 @@ import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migrati
 import { RestrictOnDeleteProjectForFlow1760376319952 } from './migration/postgres/1760376319952-RestrictOnDeleteProjectForFlow'
 import { RemoveTriggerRunEntity1760993216501 } from './migration/postgres/1760993216501-RemoveTriggerRunEntity'
 import { RemoveProjectNotifyStatus1761056570728 } from './migration/postgres/1761056570728-RemoveProjectNotifyStatus'
+import { ChangeAlertEntity1761126290246 } from './migration/postgres/1761126290246-ChangeAlertEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -468,12 +469,14 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndexOnTriggerRun1757557714045,
         DeleteHandshakeFromTriggerSource1758108135968,
         AddIndexForAppEvents1759392852559,
+        AddOutgoingWebhooks1759332023650,
         RemoveFlowRunDisplayName1759772332795,
         AddFlowVersionBackupFile1759964470862,
         AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
         RestrictOnDeleteProjectForFlow1760376319952,
         RemoveTriggerRunEntity1760993216501,
         RemoveProjectNotifyStatus1761056570728,
+        ChangeAlertEntity1761126290246,
     ]
 
     const edition = system.getEdition()
@@ -573,7 +576,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformAnalyticsReportEntity1753091760355,
                 AddBillingCycle1754559781173,
                 EligibileForTrial1754852385518,
-                AddOutgoingWebhooks1759332023650,
             )
             break
         case ApEdition.COMMUNITY:

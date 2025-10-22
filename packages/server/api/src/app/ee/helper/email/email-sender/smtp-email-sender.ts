@@ -140,6 +140,8 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
         'issues-reminder': `You have unresolved issues for ${vars.projectName}`,
         'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
+        'alert': `Alert!! ${vars.alertName}`,
+        'alert-summary': `Your summary for ${vars.alertName}`,
     }
 
     return templateToSubject[templateName]

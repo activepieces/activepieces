@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
+import { AlertEvent, ApplicationEventName } from '@activepieces/ee-shared'
 
 export type EmailSender = {
     send: (args: SendArgs) => Promise<void>
@@ -16,7 +17,7 @@ const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
         return smtpEmailSender(log)
     }
 
-    return logEmailSender(log)
+    return smtpEmailSender(log)
 }
 export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
 
@@ -82,6 +83,19 @@ type SevenDaysInTrialTemplateData = BaseEmailTemplateData<'7-days-in-trial', {
     firstName: string
 }>
 
+type AlertTemplateData = BaseEmailTemplateData<'alert', {
+    alertName: string
+    alertDescription: string
+    event: AlertEvent
+    payload: string
+}>
+
+type AlertSummaryTemplateData = BaseEmailTemplateData<'alert-summary', {
+    alertName: string
+    alertDescription: string
+    stringifiedStats: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | QuotaEmailTemplateData
@@ -94,6 +108,8 @@ export type EmailTemplateData =
   | OneDayLeftOnTrialTemplateData
   | WelcomeToTrialTemplateData
   | SevenDaysInTrialTemplateData
+  | AlertTemplateData
+  | AlertSummaryTemplateData
 
 type SendArgs = {
     emails: string[]

@@ -2,46 +2,41 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
-
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Alert, AlertChannel } from '@activepieces/ee-shared';
-
+import { Alert, AlertChannel, ApplicationEventName } from '@activepieces/ee-shared';
 import { alertsApi } from './api';
-
-type Params = {
-  email: string;
-};
+import { CreateAlertParams, UpdateAlertParams } from '@activepieces/ee-shared';
+import { SeekPage } from '@activepieces/shared';
 
 export const alertsKeys = {
   all: ['alerts-email-list'] as const,
 };
 
+export type MutateAlertParams = CreateAlertParams | ( UpdateAlertParams & { id: string } );
 type Options = {
   setOpen: (open: boolean) => void;
   form: UseFormReturn<any>;
 };
 
 export const alertMutations = {
-  useCreateAlert: ({ setOpen, form }: Options) => {
+  useMutateAlert: ({ setOpen, form }: Options) => {
     const queryClient = useQueryClient();
-
-    return useMutation<Alert, Error, Params>({
-      mutationFn: async (params) =>
-        alertsApi.create({
-          receiver: params.email,
-          projectId: authenticationSession.getProjectId()!,
-          channel: AlertChannel.EMAIL,
-        }),
-      onSuccess: (data) => {
+    return useMutation<Alert, Error, MutateAlertParams>({
+      mutationFn: (params) => {
+        if ('id' in params) {
+          return alertsApi.update(params.id, params);
+        } else {
+          return alertsApi.create(params);
+        }
+      },
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: alertsKeys.all });
         toast({
-          title: t('Success'),
+          title: t('Success'), 
           description: t('Your changes have been saved.'),
-          duration: 3000,
         });
-        setOpen(false);
       },
       onError: (error) => {
         if (api.isError(error)) {
@@ -78,14 +73,12 @@ export const alertMutations = {
 
 export const alertQueries = {
   useAlertsEmailList: () =>
-    useQuery<Alert[], Error, Alert[]>({
+    useQuery<SeekPage<Alert>, Error>({
       queryKey: alertsKeys.all,
-      queryFn: async () => {
-        const page = await alertsApi.list({
+      queryFn: async () =>
+         await alertsApi.list({
           projectId: authenticationSession.getProjectId()!,
           limit: 100,
-        });
-        return page.data;
-      },
+        })
     }),
 };

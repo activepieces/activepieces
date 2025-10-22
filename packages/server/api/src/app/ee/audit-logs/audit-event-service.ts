@@ -24,6 +24,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
 import { outgoingWebhookService } from '../outging-webhooks/outgoing-webhooks.service'
+import { alertsService } from '../alerts/alerts-service'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
@@ -101,9 +102,9 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
 async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: FastifyBaseLogger): Promise<void> {
     const platformId = info.platformId
     const platform = await platformService.getOneWithPlanOrThrow(platformId)
-    if (!platform.plan.auditLogEnabled) {
-        return
-    }
+    // if (!platform.plan.auditLogEnabled) {
+    //     return
+    // }
     const user = info.userId ? await userService.getOneOrFail({
         id: info.userId,
     }) : undefined
@@ -138,6 +139,11 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: 
         outgoingWebhookService(log).trigger({
             platformId: info.platformId,
             projectId: info.projectId,
+            event: cleanedEvent.action,
+            payload: cleanedEvent,
+        }),
+        alertsService(log).trigger({
+            projectId: info.projectId ?? '',
             event: cleanedEvent.action,
             payload: cleanedEvent,
         }),

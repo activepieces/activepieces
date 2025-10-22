@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+>
+  <head>
+    <!--[if gte mso 9]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:AllowPNG />
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="format-detection" content="date=no" />
+    <meta name="format-detection" content="address=no" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <!--[if !mso]><!-->
+    <link
+      href="../fonts/multiple-fonts.css"
+      rel="stylesheet"
+    />
+    <!--<![endif]-->
+    <title>Alert Summary</title>
+    <!--[if gte mso 9]>
+      <style type="text/css" media="all">
+        sup {
+          font-size: 100%!important !important;
+        }
+      </style>
+    <![endif]-->
+    <style type="text/css" media="screen">
+      @font-face {
+        font-family: 'Graphik';
+        src: url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Regular-Web.5a0c1a002e.woff')
+            format('woff'),
+          url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Regular-Web.5e78809d4d.eot')
+            format('embedded-opentype'),
+          url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Regular-Web.9806bc37bf.woff')
+            format('woff');
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Graphik';
+        src: url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Medium-Web.abf6e1188f.woff')
+            format('woff'),
+          url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Medium-Web.2523d1a466.eot')
+            format('embedded-opentype'),
+          url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Medium-Web.4327644773.woff')
+            format('woff');
+        font-weight: 500;
+        font-style: normal;
+      }
+      body {
+        padding: 0 !important;
+        margin: 0 auto !important;
+        display: block !important;
+        min-width: 100% !important;
+        width: 100% !important;
+        background: #fff;
+        -webkit-text-size-adjust: none;
+      }
+      a {
+        color: #4353ff;
+        text-decoration: none;
+      }
+      p {
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      img {
+        -ms-interpolation-mode: bicubic;
+      }
+      .mcnPreviewText {
+        display: none !important;
+      }
+      .text-btn a {
+        display: block;
+      }
+      .text-footer.black a {
+        color: #000001;
+      }
+      .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .stats-table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 500;
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 2px solid #e9ecef;
+        font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', Helvetica, sans-serif;
+        font-size: 14px;
+      }
+      .stats-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #e9ecef;
+        font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', Helvetica, sans-serif;
+        font-size: 14px;
+        color: #495057;
+      }
+      .stats-table tr:last-child td {
+        border-bottom: none;
+      }
+      .stats-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+      }
+      .event-name {
+        font-weight: 500;
+        color: #212529;
+      }
+      .event-count {
+        font-weight: 600;
+        color: #4353ff;
+        text-align: right;
+      }
+      @media only screen and (max-device-width: 520px),
+        only screen and (max-width: 520px) {
+        u + .body .gwfw {
+          width: 100% !important;
+          width: 100vw !important;
+        }
+        .td,
+        .m-shell {
+          width: 100% !important;
+          min-width: 100% !important;
+        }
+        .text-btn {
+          width: 100% !important;
+        }
+        .text-btn a {
+          width: 100% !important;
+        }
+        .stats-table {
+          font-size: 12px;
+        }
+        .stats-table th,
+        .stats-table td {
+          padding: 8px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="body"
+    style="
+      padding: 0 !important;
+      margin: 0 auto !important;
+      display: block !important;
+      min-width: 100% !important;
+      width: 100% !important;
+      background: #fff;
+      -webkit-text-size-adjust: none;
+    "
+  >
+    <span
+      class="mcnPreviewText"
+      style="display: none !important; font-size: 0px; line-height: 0px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; visibility: hidden; mso-hide: all"
+      >Alert Summary</span
+    >
+    <center>
+      <table
+        align="center"
+        border="0"
+        cellpadding="0"
+        cellspacing="0"
+        height="100%"
+        width="100%"
+        id="bodyTable"
+        style="
+          border-collapse: collapse;
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+          -ms-text-size-adjust: 100%;
+          -webkit-text-size-adjust: 100%;
+          height: 100% !important;
+          margin: 0;
+          padding: 0;
+          width: 100% !important;
+          background-color: #ffffff;
+        "
+      >
+        <tbody>
+          <tr>
+            <td
+              align="center"
+              valign="top"
+              id="bodyCell"
+              style="
+                mso-line-height-rule: exactly;
+                -ms-text-size-adjust: 100%;
+                -webkit-text-size-adjust: 100%;
+                height: 100% !important;
+                margin: 0;
+                padding: 0;
+                width: 100% !important;
+                border-top: 0;
+              "
+            >
+              <table
+                border="0"
+                cellpadding="0"
+                cellspacing="0"
+                width="100%"
+                class="m-shell"
+                style="
+                  border-collapse: collapse;
+                  mso-table-lspace: 0pt;
+                  mso-table-rspace: 0pt;
+                  -ms-text-size-adjust: 100%;
+                  -webkit-text-size-adjust: 100%;
+                  width: 100% !important;
+                  min-width: 100% !important;
+                  background-color: #ffffff;
+                "
+              >
+                <tbody>
+                  <tr>
+                    <td
+                      class="td"
+                      style="
+                        mso-line-height-rule: exactly;
+                        -ms-text-size-adjust: 100%;
+                        -webkit-text-size-adjust: 100%;
+                        width: 100% !important;
+                        min-width: 100% !important;
+                      "
+                    >
+                      <table
+                        role="presentation"
+                        border="0"
+                        cellpadding="0"
+                        cellspacing="0"
+                        width="100%"
+                        style="border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt"
+                      >
+                        <tbody>
+                          <tr>
+                            <td style="padding: 0px 60px" class="p30-20" bgcolor="#ffffff">
+                              <table
+                                role="presentation"
+                                width="100%"
+                                border="0"
+                                cellspacing="0"
+                                cellpadding="0"
+                              >
+                                <tbody>
+                                  <tr>
+                                    <td
+                                      style="
+                                        padding-bottom: 30px;
+                                        font-family: 'Graphik',
+                                          '-apple-system',
+                                          'BlinkMacSystemFont', 'Segoe UI',
+                                          'Roboto', 'Oxygen', 'Ubuntu',
+                                          'Cantarell', 'Fira Sans',
+                                          'Droid Sans', 'Helvetica',
+                                          sans-serif !important;
+                                        font-size: 14px;
+                                        line-height: 24px;
+                                        min-width: auto !important;
+                                        color: #000001;
+                                        text-align: center;
+                                      "
+                                      class="text-footer black center"
+                                    >
+                                      <img
+                                        src="https://d3e54v103j8qbb.cloudfront.net/images/ap-logo.png"
+                                        alt="Activepieces"
+                                        style="
+                                          display: block;
+                                          width: 120px;
+                                          height: auto;
+                                          margin: 0 auto 30px auto;
+                                        "
+                                      />
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <table
+                        role="presentation"
+                        border="0"
+                        cellpadding="0"
+                        cellspacing="0"
+                        width="100%"
+                        style="border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt"
+                      >
+                        <tbody>
+                          <tr>
+                            <td style="padding: 0px 60px" class="p30-20" bgcolor="#ffffff">
+                              <table
+                                role="presentation"
+                                width="100%"
+                                border="0"
+                                cellspacing="0"
+                                cellpadding="0"
+                              >
+                                <tbody>
+                                  <tr>
+                                    <td
+                                      style="
+                                        padding-bottom: 30px;
+                                        font-family: 'Graphik',
+                                          '-apple-system',
+                                          'BlinkMacSystemFont', 'Segoe UI',
+                                          'Roboto', 'Oxygen', 'Ubuntu',
+                                          'Cantarell', 'Fira Sans',
+                                          'Droid Sans', 'Helvetica',
+                                          sans-serif !important;
+                                        font-size: 24px;
+                                        line-height: 32px;
+                                        min-width: auto !important;
+                                        color: #000001;
+                                        text-align: center;
+                                        font-weight: 500;
+                                      "
+                                      class="text-footer black center"
+                                    >
+                                      Alert Summary
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <table
+                        role="presentation"
+                        border="0"
+                        cellpadding="0"
+                        cellspacing="0"
+                        width="100%"
+                        style="border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt"
+                      >
+                        <tbody>
+                          <tr>
+                            <td style="padding: 0px 60px" class="p30-20" bgcolor="#ffffff">
+                              <table
+                                role="presentation"
+                                width="100%"
+                                border="0"
+                                cellspacing="0"
+                                cellpadding="0"
+                              >
+                                <tbody>
+                                  <tr>
+                                    <td
+                                      style="
+                                        padding-bottom: 20px;
+                                        font-family: 'Graphik',
+                                          '-apple-system',
+                                          'BlinkMacSystemFont', 'Segoe UI',
+                                          'Roboto', 'Oxygen', 'Ubuntu',
+                                          'Cantarell', 'Fira Sans',
+                                          'Droid Sans', 'Helvetica',
+                                          sans-serif !important;
+                                        font-size: 18px;
+                                        line-height: 26px;
+                                        min-width: auto !important;
+                                        color: #000001;
+                                        font-weight: 500;
+                                      "
+                                      class="text-footer black"
+                                    >
+                                      {{alertName}}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td
+                                      style="
+                                        padding-bottom: 30px;
+                                        font-family: 'Graphik',
+                                          '-apple-system',
+                                          'BlinkMacSystemFont', 'Segoe UI',
+                                          'Roboto', 'Oxygen', 'Ubuntu',
+                                          'Cantarell', 'Fira Sans',
+                                          'Droid Sans', 'Helvetica',
+                                          sans-serif !important;
+                                        font-size: 14px;
+                                        line-height: 22px;
+                                        min-width: auto !important;
+                                        color: #666666;
+                                      "
+                                      class="text-footer black"
+                                    >
+                                      {{alertDescription}}
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <table
+                        role="presentation"
+                        border="0"
+                        cellpadding="0"
+                        cellspacing="0"
+                        width="100%"
+                        style="border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt"
+                      >
+                        <tbody>
+                          <tr>
+                            <td style="padding: 0px 60px" class="p30-20" bgcolor="#ffffff">
+                              <table
+                                role="presentation"
+                                width="100%"
+                                border="0"
+                                cellspacing="0"
+                                cellpadding="0"
+                              >
+                                <tbody>
+                                  <tr>
+                                    <td
+                                      style="
+                                        padding-bottom: 20px;
+                                        font-family: 'Graphik',
+                                          '-apple-system',
+                                          'BlinkMacSystemFont', 'Segoe UI',
+                                          'Roboto', 'Oxygen', 'Ubuntu',
+                                          'Cantarell', 'Fira Sans',
+                                          'Droid Sans', 'Helvetica',
+                                          sans-serif !important;
+                                        font-size: 16px;
+                                        line-height: 24px;
+                                        min-width: auto !important;
+                                        color: #000001;
+                                        font-weight: 500;
+                                      "
+                                      class="text-footer black"
+                                    >
+                                      Event Statistics
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td
+                                      style="
+                                        font-family: 'Graphik',
+                                          '-apple-system',
+                                          'BlinkMacSystemFont', 'Segoe UI',
+                                          'Roboto', 'Oxygen', 'Ubuntu',
+                                          'Cantarell', 'Fira Sans',
+                                          'Droid Sans', 'Helvetica',
+                                          sans-serif !important;
+                                        font-size: 14px;
+                                        line-height: 22px;
+                                        min-width: auto !important;
+                                        color: #000001;
+                                      "
+                                      class="text-footer black"
+                                    >
+                                      <table class="stats-table" role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                        <thead>
+                                          <tr>
+                                            <th style="text-align: left;">Event Type</th>
+                                            <th style="text-align: right;">Count</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          <script type="text/javascript">
+                                            // Parse the stringified stats and render the table
+                                            (function() {
+                                              try {
+                                                var stats = JSON.parse('{{stringifiedStats}}');
+                                                var tbody = document.querySelector('.stats-table tbody');
+                                                
+                                                if (stats && stats.length > 0) {
+                                                  stats.forEach(function(stat) {
+                                                    var row = document.createElement('tr');
+                                                    row.innerHTML = 
+                                                      '<td class="event-name">' + stat.event + '</td>' +
+                                                      '<td class="event-count">' + stat.count + '</td>';
+                                                    tbody.appendChild(row);
+                                                  });
+                                                } else {
+                                                  var row = document.createElement('tr');
+                                                  row.innerHTML = '<td colspan="2" style="text-align: center; color: #999999; font-style: italic;">No events recorded</td>';
+                                                  tbody.appendChild(row);
+                                                }
+                                              } catch (e) {
+                                                var tbody = document.querySelector('.stats-table tbody');
+                                                var row = document.createElement('tr');
+                                                row.innerHTML = '<td colspan="2" style="text-align: center; color: #dc3545;">Error loading statistics</td>';
+                                                tbody.appendChild(row);
+                                              }
+                                            })();
+                                          </script>
+                                        </tbody>
+                                      </table>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <table
+                        role="presentation"
+                        border="0"
+                        cellpadding="0"
+                        cellspacing="0"
+                        width="100%"
+                        style="border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt"
+                      >
+                        <tbody>
+                          <tr>
+                            <td style="padding: 0px 60px" class="p30-20" bgcolor="#ffffff">
+                              <table
+                                role="presentation"
+                                width="100%"
+                                border="0"
+                                cellspacing="0"
+                                cellpadding="0"
+                              >
+                                <tbody>
+                                  <tr>
+                                    <td
+                                      style="
+                                        padding-top: 30px;
+                                        padding-bottom: 30px;
+                                        font-family: 'Graphik',
+                                          '-apple-system',
+                                          'BlinkMacSystemFont', 'Segoe UI',
+                                          'Roboto', 'Oxygen', 'Ubuntu',
+                                          'Cantarell', 'Fira Sans',
+                                          'Droid Sans', 'Helvetica',
+                                          sans-serif !important;
+                                        font-size: 12px;
+                                        line-height: 18px;
+                                        min-width: auto !important;
+                                        color: #999999;
+                                        text-align: center;
+                                      "
+                                      class="text-footer black center"
+                                    >
+                                      This is an automated alert summary from Activepieces.<br />
+                                      Generated on {{currentDate}}
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </center>
+  </body>
+</html>

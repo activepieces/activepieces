@@ -33,10 +33,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             return createUserAndPlatform(userIdentity, log)
         }
 
-        await authenticationUtils.assertUserIsInvitedToPlatformOrProject(log, {
-            email: params.email,
-            platformId: params.platformId,
-        })
+        // await authenticationUtils.assertUserIsInvitedToPlatformOrProject(log, {
+        //     email: params.email,
+        //     platformId: params.platformId,
+        // })
         const userIdentity = await userIdentityService(log).create({
             ...params,
             verified: true,

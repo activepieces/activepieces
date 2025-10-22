@@ -6,7 +6,6 @@ import {
     ErrorCode,
     isNil,
     Metadata,
-    NotificationStatus,
     PlatformRole,
     PlatformUsageMetric,
     Project,
