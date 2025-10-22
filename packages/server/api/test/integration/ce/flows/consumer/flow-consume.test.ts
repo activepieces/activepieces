@@ -1,5 +1,6 @@
 import { fileCompressor } from '@activepieces/server-shared'
 import {
+    apId,
     ExecutionType,
     FlowActionType,
     FlowRunStatus,
@@ -11,6 +12,7 @@ import {
     ProgressUpdateType,
     PropertyExecutionType,
     RunEnvironment,
+    UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -18,6 +20,7 @@ import { flowJobExecutor, flowWorker, workerMachine } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { flowRunLogsService } from '../../../../../src/app/flows/flow-run/logs/flow-run-logs-service'
 import { setupServer } from '../../../../../src/app/server'
 import {
     createMockFlow,
@@ -162,8 +165,13 @@ describe('flow execution', () => {
         })
 
         await waitForSocketConnection()
-
-
+        const logsFileId = mockFlowRun.logsFileId ?? apId()
+        const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
+            logsFileId,
+            projectId: mockProject.id,
+            flowRunId: mockFlowRun.id,
+            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+        })
         await flowJobExecutor(mockLog).executeFlow({
             jobData: {
                 flowVersionId: mockFlowVersion.id,
@@ -177,8 +185,11 @@ describe('flow execution', () => {
                 synchronousHandlerId: null,
                 progressUpdateType: ProgressUpdateType.NONE,
                 executionType: ExecutionType.BEGIN,
+                logsFileId,
+                logsUploadUrl,
+                schemaVersion: mockFlowVersion.schemaVersion ? Number.parseInt(mockFlowVersion.schemaVersion) : 8,
             },
-            attempsStarted: 1,
+            attemptsStarted: 1,
             engineToken,
             timeoutInSeconds: 1000,
         })
