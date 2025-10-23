@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { MigrateJobsRequest, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
 import { Agent, AgentRun, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
@@ -100,9 +100,6 @@ export const workerApiService = (workerToken: string) => {
                     span.end()
                 }
             })
-        },
-        async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
-            await client.post('/v1/workers/send-engine-update', request)
         },
     }
 }
