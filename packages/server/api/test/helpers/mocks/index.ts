@@ -260,8 +260,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             faker.helpers.enumValue(FilteredPieceBehavior),
         smtp: platform?.smtp,
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
-
-        copilotSettings: platform?.copilotSettings ?? undefined,
     }
 }
 

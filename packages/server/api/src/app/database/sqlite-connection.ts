@@ -154,6 +154,7 @@ import { AddFlowVersionBackupFileSqlite1759964539150 } from './migration/sqlite/
 import { AddRunFlowVersionIdForForeignKeySqlite1760346793809 } from './migration/sqlite/1760346793809-AddRunFlowVersionIdForForeignKeySqlite'
 import { RestrictOnDeleteProjectForFlowSqlite1760376811542 } from './migration/sqlite/1760376811542-RestrictOnDeleteProjectForFlowSqlite'
 import { RemoveTriggerRunEntity1760992394073 } from './migration/sqlite/1760992394073-RemoveTriggerRunEntity'
+import { DeprecateCopilotSQLITE1761223879376 } from './migration/sqlite/1761223879376-DeprecateCopilotSQLITE'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -324,6 +325,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddRunFlowVersionIdForForeignKeySqlite1760346793809,
         RestrictOnDeleteProjectForFlowSqlite1760376811542,
         RemoveTriggerRunEntity1760992394073,
+        DeprecateCopilotSQLITE1761223879376
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
