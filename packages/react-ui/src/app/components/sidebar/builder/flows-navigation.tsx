@@ -237,6 +237,7 @@ function DefaultFolder({
                 folderId="NULL"
                 variant="small"
                 className="opacity-0 group-hover/item:opacity-100"
+                refetch={refetch}
               />
             </div>
           </SidebarMenuButton>
@@ -293,6 +294,7 @@ function RegularFolder({
                 folderId={folder.id}
                 variant="small"
                 className="group-hover/item:opacity-100 opacity-0"
+                refetch={refetch}
               />
               <FolderActions
                 hideFlowCount={true}
