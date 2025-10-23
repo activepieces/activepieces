@@ -18,7 +18,9 @@ import { BullMQOtel } from 'bullmq-otel'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
+import { projectWorkerCache } from '../cache/project-worker-cache'
 import { workerMachine } from '../utils/machine'
+import { tokenUtls } from '../utils/token-utils'
 import { workerRedisConnections } from '../utils/worker-redis'
 import { jobConsmer } from './job-consmer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
@@ -45,7 +47,13 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 }
 
                 assertNotNullOrUndefined(jobId, 'jobId')
-                const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
+                const project = isNil(job.data.projectId) ? null : await projectWorkerCache(log).getProject({
+                    engineToken: await tokenUtls.generateEngineToken({ jobId, projectId: job.data.projectId!, platformId: job.data.platformId }),
+                    projectId: job.data.projectId,
+                })
+                const maxConcurrentJobsPerProject = isNil(project) ? null : project.maxConcurrentJobs
+
+                const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data, maxConcurrentJobsPerProject)
                 if (shouldRateLimit) {
                     await job.moveToDelayed(
                         dayjs().add(Math.min(240, 20 * (job.attemptsStarted + 1)), 'seconds').valueOf(),

@@ -134,7 +134,6 @@
     "@types/imapflow": "1.0.23",
     "@types/js-yaml": "4.0.9",
     "@types/pg-format": "1.0.5",
-    "@types/proper-lockfile": "4.1.4",
     "@types/showdown": "2.0.6",
     "@uiw/codemirror-theme-github": "4.23.0",
     "@uiw/react-codemirror": "4.23.0",
@@ -456,7 +455,7 @@
     "@nx/nx-linux-x64-gnu": "18.0.4",
     "@nx/nx-win32-x64-msvc": "18.0.4",
     "@rollup/rollup-darwin-arm64": "4.20.0",
-    "@rollup/rollup-linux-arm-gnueabihf": "4.200",
+    "@rollup/rollup-linux-arm-gnueabihf": "4.20.0",
     "@rollup/rollup-linux-arm64-gnu": "4.20.0"
   },
   "nx": {
