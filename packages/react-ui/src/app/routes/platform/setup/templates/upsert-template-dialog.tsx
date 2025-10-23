@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,7 +22,6 @@ import { templatesApi } from '@/features/templates/lib/templates-api';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 import {
   FlowTemplate,
-  FlowVersionState,
   FlowVersionTemplate,
   TemplateType,
 } from '@activepieces/shared';
@@ -182,7 +182,9 @@ export const UpsertTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const migratedTemplate = JSON.parse(text) as FlowTemplate;
+                            const migratedTemplate = JSON.parse(
+                              text,
+                            ) as FlowTemplate;
                             field.onChange(migratedTemplate);
                           } catch (e) {
                             form.setError('template', {
