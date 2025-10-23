@@ -212,14 +212,14 @@ function extractConnectionIdsFromAuth(auth: string): string[] {
 }
 
 function extractAgentIds(flowVersion: FlowVersion): string[] {
-    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
-}
-
-function getExternalAgentId(action: Step) {
-    if (isAgentPiece(action) && 'agentId' in action.settings.input) {
-        return action.settings.input.agentId
+    const getExternalAgentId = (action: Step) => {
+        if (isAgentPiece(action) && 'agentId' in action.settings.input) {
+            return action.settings.input.agentId
+        }
+        return null
     }
-    return null
+
+    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
 }
 
 function isAgentPiece(action: Step) {

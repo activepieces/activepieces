@@ -6,7 +6,6 @@ import {
     CountFlowsRequest,
     CreateFlowRequest,
     ErrorCode,
-    flowMigrations,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
@@ -39,6 +38,7 @@ import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-pla
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowService } from './flow.service'
+import { flowMigrations } from '../flow-version/migrations'
 
 const DEFAULT_PAGE_SIZE = 10
 

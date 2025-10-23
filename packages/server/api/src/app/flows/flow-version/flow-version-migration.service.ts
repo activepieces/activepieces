@@ -1,5 +1,4 @@
 import { 
-    flowMigrations,
     FlowVersion, 
     isNil,
     LATEST_SCHEMA_VERSION,
@@ -8,6 +7,7 @@ import {
 import { system } from '../../helper/system/system'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
+import { flowMigrations } from './migrations'
 
 const log = system.globalLogger()
 

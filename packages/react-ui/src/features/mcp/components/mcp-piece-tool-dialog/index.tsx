@@ -1,8 +1,17 @@
+import type {
+  McpPieceTool,
+  McpToolRequest,
+  McpTool,
+} from '@activepieces/shared';
+import { isNil, McpToolType } from '@activepieces/shared';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import { ChevronLeft, Search } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
+
+import { McpPieceActionsDialog } from './mcp-piece-actions';
+import { McpPiecesContent } from './mcp-pieces-content';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,15 +31,6 @@ import {
 } from '@/components/ui/tooltip';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import type {
-  McpPieceTool,
-  McpToolRequest,
-  McpTool,
-} from '@activepieces/shared';
-import { isNil, McpToolType } from '@activepieces/shared';
-
-import { McpPieceActionsDialog } from './mcp-piece-actions';
-import { McpPiecesContent } from './mcp-pieces-content';
 
 type McpPieceDialogProps = {
   children: React.ReactNode;
@@ -243,8 +243,3 @@ export function McpPieceDialog({
     </Dialog>
   );
 }
-
-// 1. we will steam
-// 2. tabs [json, thinking]
-// 3. updating the timlinae ui
-// 4. use mark complete (make it done).

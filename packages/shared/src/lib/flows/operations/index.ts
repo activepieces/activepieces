@@ -15,7 +15,6 @@ import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
-import { flowMigrations } from '../../../../../server/api/src/app/flows/flow-version/migrations'
 import { _moveAction } from './move-action'
 import { _moveBranch } from './move-branch'
 import { _getOperationsForPaste } from './paste-operations'
@@ -419,19 +418,19 @@ export const flowOperations = {
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
-            case FlowOperationType.IMPORT_FLOW: {
-                const migratedFlow = flowMigrations.apply({
-                    ...clonedVersion,
-                    trigger: operation.request.trigger,
-                    displayName: operation.request.displayName,
-                    schemaVersion: operation.request.schemaVersion,
-                })
-                const operations = _importFlow(clonedVersion, migratedFlow)
-                operations.forEach((operation) => {
-                    clonedVersion = flowOperations.apply(clonedVersion, operation)
-                })
-                break
-            }
+            // case FlowOperationType.IMPORT_FLOW: {
+            //     const migratedFlow = flowMigrations.apply({
+            //         ...clonedVersion,
+            //         trigger: operation.request.trigger,
+            //         displayName: operation.request.displayName,
+            //         schemaVersion: operation.request.schemaVersion,
+            //     })
+            //     const operations = _importFlow(clonedVersion, migratedFlow)
+            //     operations.forEach((operation) => {
+            //         clonedVersion = flowOperations.apply(clonedVersion, operation)
+            //     })
+            //     break
+            // }
             case FlowOperationType.SET_SKIP_ACTION: {
                 clonedVersion = _skipAction(clonedVersion, operation.request)
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
