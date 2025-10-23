@@ -4,11 +4,11 @@ import {
 } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { flowService } from '../../flows/flow/flow.service'
 import { mcpServerHandler } from '../../mcp/mcp-server/mcp-server-handler'
-import { flowService } from './flow.service'
 
-export const flowMcpController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/:flowId/versions/:flowVersionId/steps/:stepName/mcp-server', CreateMCPServerFromStepRequest, async (request, reply) => {
+export const mcpFlowSseControllerController: FastifyPluginAsyncTypebox = async (app) => {
+    app.post('/:flowId/versions/:flowVersionId/steps/:stepName/mcp', CreateMCPServerFromStepRequest, async (request, reply) => {
         const flowVersion = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.flowId,
             projectId: request.principal.projectId,
