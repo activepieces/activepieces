@@ -132,7 +132,6 @@ export const PlatformPlan = Type.Object({
     agentsLimit: Nullable(Type.Number()),
 
     dedicatedWorkers: Nullable(Type.Object({
-        workersCount: Type.Number(),
         trustedEnvironment: Type.Boolean(),
     })),
 })
