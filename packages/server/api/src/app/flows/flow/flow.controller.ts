@@ -265,8 +265,9 @@ const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDe
             done()
         }).catch((error) => {
             request.log.error(error)
-           
         })
+    } else {
+        done()
     }
 }
 
