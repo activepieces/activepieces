@@ -31,7 +31,7 @@ import { SelectFlowTemplateDialog } from '../components/select-flow-template-dia
 import { flowsApi } from './flows-api';
 
 type CreateFlowDropdownProps = {
-  refetch?: () => void;
+  refetch: () => void | null;
   variant?: 'default' | 'small';
   className?: string;
   folderId?: string;

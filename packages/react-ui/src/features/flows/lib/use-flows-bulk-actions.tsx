@@ -175,7 +175,7 @@ export const useFlowsBulkActions = ({
                   </ConfirmationDeleteDialog>
                 </PermissionNeededTooltip>
               )}
-              <CreateFlowDropdown />
+              <CreateFlowDropdown refetch={refetch} />
             </div>
           );
         },
