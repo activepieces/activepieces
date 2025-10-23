@@ -43,13 +43,12 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         jobId,
         )
     },
-    async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
+    async shouldBeLimited(jobId: string | undefined, data: JobData, maxConcurrentJobsPerProject: number | null): Promise<{
         shouldRateLimit: boolean
     }> {
         const projectRateLimiterEnabled = workerMachine.getSettings().PROJECT_RATE_LIMITER_ENABLED
-        const maxConcurrentJobsPerProject = workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
         const flowTimeoutInMilliseconds = apDayjsDuration(workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, 'seconds').add(1, 'minute').asMilliseconds()
-        if (isNil(data.projectId) || !projectRateLimiterEnabled || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
+        if (isNil(data.projectId) || !projectRateLimiterEnabled || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || isNil(maxConcurrentJobsPerProject)) {
             return {
                 shouldRateLimit: false,
             }

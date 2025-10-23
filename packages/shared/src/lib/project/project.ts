@@ -61,6 +61,7 @@ export const Project = Type.Object({
     displayName: Type.String(),
     notifyStatus: Type.Enum(NotificationStatus),
     platformId: ApId,
+    maxConcurrentJobs: Type.Number(),
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
     metadata: Nullable(Metadata),

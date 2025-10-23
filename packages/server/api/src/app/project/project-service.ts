@@ -36,6 +36,7 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
+            maxConcurrentJobs: params.maxConcurrentJobs ?? 100,
             notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
             releasesEnabled: false,
         }
@@ -255,6 +256,7 @@ type CreateParams = {
     externalId?: string
     notifyStatus?: NotificationStatus
     metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type GetByPlatformIdAndExternalIdParams = {

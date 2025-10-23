@@ -14,6 +14,7 @@ export const GLOBAL_CODE_CACHE_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERS
 export const ENGINE_PATH = path.join(GLOBAL_CACHE_COMMON_PATH, 'main.js')
 export const GLOBAL_CACHE_PIECES_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'pieces')
 export const GLOBAL_CACHE_FLOWS_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'flows')
+export const GLOBAL_CACHE_PROJECTS_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'projects')
 export enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',
