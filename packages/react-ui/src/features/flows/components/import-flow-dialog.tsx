@@ -193,8 +193,10 @@ const ImportFlowDialog = (
     setErrorMessage('');
     const file = files[0];
     const newTemplates: FlowTemplate[] = [];
-
-    if (file.type === 'application/zip' && !props.insideBuilder) {
+    const isZipFile =
+      file.type === 'application/zip' ||
+      file.type === 'application/x-zip-compressed';
+    if (isZipFile && !props.insideBuilder) {
       const zip = new JSZip();
       const zipContent = await zip.loadAsync(file);
       const jsonFiles = Object.keys(zipContent.files).filter((fileName) =>
@@ -221,10 +223,6 @@ const ImportFlowDialog = (
       setErrorMessage(t('Unsupported file type'));
       return;
     }
-
-    console.log('handleFileChange 3');
-    console.log(newTemplates);
-
     setTemplates(newTemplates);
   };
 
