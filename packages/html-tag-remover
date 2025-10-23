@@ -1,0 +1,37 @@
+import { createAction, Property } from '@activepieces/framework';
+
+export const removeHtmlTagsAction = createAction({
+    name: 'remove_html_tags',
+    displayName: 'Remove HTML Tags',
+    description: 'Cleans HTML content, leaving only raw text.',
+    props: {
+        html_content: Property.LongText({
+            displayName: 'HTML Content',
+            description: 'The HTML text to be cleaned (e.g., email body).',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const html = context.props.html_content;
+
+        if (!html) {
+            // Handle case where input is empty or null
+            return { clean_text: '' };
+        }
+
+        // 1. Remove script and style tags completely
+        let cleanedText = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "");
+        cleanedText = cleanedText.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, "");
+
+        // 2. Remove all remaining HTML tags
+        cleanedText = cleanedText.replace(/<[^>]*>/g, "");
+
+        // 3. Normalize whitespace (remove extra line breaks and spaces)
+        cleanedText = cleanedText.replace(/(\r\n|\n|\r)/gm, " ").replace(/\s\s+/g, ' ').trim();
+
+        // The output is a simple object containing the cleaned text
+        return {
+            clean_text: cleanedText
+        };
+    },
+});
