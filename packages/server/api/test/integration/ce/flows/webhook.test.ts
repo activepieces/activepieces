@@ -1,4 +1,4 @@
-import { PrincipalType } from '@activepieces/shared'
+import { FlowStatus, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
@@ -43,6 +43,7 @@ describe('Webhook Service', () => {
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
             id: NOT_FOUND_TRIGGER_SOURCE_FLOW_ID,
+            status: FlowStatus.DISABLED,
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
         const mockToken = await generateMockToken({
