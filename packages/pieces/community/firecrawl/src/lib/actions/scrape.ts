@@ -45,6 +45,10 @@ function forSimpleOutputFormat(format: string): string {
   return format;
 }
 
+function isPdfUrl(url: string): boolean {
+  return url.toLowerCase().endsWith('.pdf');
+}
+
 // screenshot always included in output so that user can pass it into a google drive and keep track of what is being scraped
 function forDefaultScreenshot(): any {
   return {
@@ -275,29 +279,36 @@ export const scrape = createAction({
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
-    
+
     // prep to pass into firecrawl
     const format = propsValue.formats as string;
     const formatsArray: any[] = [];
 
-    // user selection
-    if (format === 'screenshot') {
-      const screenshotFormat = forScreenshotOutputFormat(propsValue.screenshotOptions);
-      formatsArray.push(screenshotFormat);
-    } else if (format === 'json') {
-      const jsonFormat = forJsonOutputFormat(propsValue.jsonExtractionType, propsValue.jsonExtractionConfig);
-      formatsArray.push(jsonFormat);
+    // add parser to body object if pdf is detected
+    if (isPdfUrl(propsValue.url)){
+      body['parsers'] = ["pdf"];
+      formatsArray.push('markdown');
+      body['formats'] = formatsArray
     } else {
-      const simpleFormat = forSimpleOutputFormat(format);
-      formatsArray.push(simpleFormat);
-    }
+      // user selection
+      if (format === 'screenshot') {
+        const screenshotFormat = forScreenshotOutputFormat(propsValue.screenshotOptions);
+        formatsArray.push(screenshotFormat);
+      } else if (format === 'json') {
+        const jsonFormat = forJsonOutputFormat(propsValue.jsonExtractionType, propsValue.jsonExtractionConfig);
+        formatsArray.push(jsonFormat);
+      } else {
+        const simpleFormat = forSimpleOutputFormat(format);
+        formatsArray.push(simpleFormat);
+      }
 
-    if (format !== 'screenshot') {
-      const defaultScreenshot = forDefaultScreenshot();
-      formatsArray.push(defaultScreenshot);
-    }
+      if (format !== 'screenshot') {
+        const defaultScreenshot = forDefaultScreenshot();
+        formatsArray.push(defaultScreenshot);
+      }
 
-    body['formats'] = formatsArray;
+      body['formats'] = formatsArray;
+    }
     
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
