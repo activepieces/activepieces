@@ -9,7 +9,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { AlertEntity } from './alerts-entity'
-import { alertsHandler } from './alerts-handler'
+import { handlerAlertTrigger } from './alerts-handler'
 
 const repo = repoFactory(AlertEntity)
 
@@ -17,21 +17,19 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     async sendAlertOnRunFinish({ issue, flowRunId }: { issue: PopulatedIssue, flowRunId: string }): Promise<void> {
         const project = await projectService.getOneOrThrow(issue.projectId)
         const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        if (platform.plan.embeddingEnabled) {
-            return
-        }
 
         const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
 
-        await alertsHandler(log)[project.notifyStatus]({
+        await handlerAlertTrigger({
             flowRunId,
             projectId: issue.projectId,
             platformId: platform.id,
+            projectName: project.displayName,
             flowId: issue.flowId,
             flowName: flowVersion.displayName,
             issueCount: issue.count,
             createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
-        })
+        }, log)
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
@@ -88,8 +86,8 @@ export const alertsService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type AddPrams = { 
+type AddPrams = {
     projectId: string
     channel: AlertChannel
-    receiver: string 
+    receiver: string
 }

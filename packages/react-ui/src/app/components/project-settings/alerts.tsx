@@ -1,9 +1,6 @@
-import { BellIcon, EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Bell, Trash } from 'lucide-react';
-import React from 'react';
-
+import { Bell, Trash } from 'lucide-react';
 import { AddAlertEmailDialog } from '@/app/routes/settings/alerts/add-alert-email-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,53 +25,17 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import { cn } from '@/lib/utils';
-import { Alert } from '@activepieces/ee-shared';
+import { Alert, MAX_ALERTS_PER_DAY } from '@activepieces/ee-shared';
 import {
   Permission,
   ProjectWithLimits,
   NotificationStatus,
 } from '@activepieces/shared';
 
-const AlertOption = ({
-  title,
-  description,
-  onClick,
-  icon,
-  isActive,
-  disabled,
-}: {
-  title: string;
-  description: string;
-  onClick: () => void;
-  icon: React.ReactNode;
-  isActive: boolean;
-  disabled: boolean;
-}) => (
-  <Button
-    variant="ghost"
-    onClick={onClick}
-    disabled={disabled}
-    className={cn(
-      'flex items-center gap-3 p-4 h-auto justify-start w-full rounded-lg border transition-all',
-      isActive
-        ? 'bg-muted border-primary text-primary'
-        : 'border-border hover:border-primary/30 hover:bg-muted',
-    )}
-  >
-    <div className="shrink-0">{icon}</div>
-    <div className="text-left">
-      <div className="font-medium text-sm mb-1">{title}</div>
-      <div className="text-xs text-muted-foreground leading-relaxed">
-        {description}
-      </div>
-    </div>
-    {isActive && <Check className="w-4 h-4 ml-auto mt-1 text-primary" />}
-  </Button>
-);
+
 
 export const AlertsSettings = () => {
-  const { project, updateCurrentProject } = projectHooks.useCurrentProject();
+  const { updateCurrentProject } = projectHooks.useCurrentProject();
   const { checkAccess } = useAuthorization();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -106,12 +67,6 @@ export const AlertsSettings = () => {
     },
   });
 
-  const onChangeStatus = (status: NotificationStatus) => {
-    notificationMutation.mutate({
-      notifyStatus: status,
-    });
-  };
-
   const writeAlertPermission =
     checkAccess(Permission.WRITE_ALERT) &&
     checkAccess(Permission.WRITE_PROJECT);
@@ -123,46 +78,17 @@ export const AlertsSettings = () => {
           <CardTitle className="flex items-center gap-2 text-base">
             {t('Alert Frequency')}
           </CardTitle>
-          <CardDescription className="text-sm">
-            {t('Choose what you want to be notified about.')}
-          </CardDescription>
-          {writeAlertPermission === false && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-              <p className="text-xs text-amber-700">
-                <span className="font-medium">⚠️ Limited Access:</span>{' '}
-                {t(
-                  'Project and alert permissions are required to change this setting.',
-                )}
-              </p>
-            </div>
-          )}
+
+
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <p className="text-xs text-amber-700">
+              <span className="font-medium">⚠️ Note:</span>{' '}
+              {t(
+                `Note: You will receive alerts when any flow in this project fails. To avoid spam, alerts will only be sent for the first ${MAX_ALERTS_PER_DAY} failures per day. Any additional failures will be included in a summary email sent at the end of the day.`,
+              )}
+            </p>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <AlertOption
-            title={t('Every Failed Run')}
-            description={t('Get an email alert when a flow fails.')}
-            onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
-            icon={<BellIcon className="w-4 h-4" />}
-            isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
-            disabled={writeAlertPermission === false}
-          />
-          <AlertOption
-            title={t('First Seen')}
-            description={t('Get an email alert when a new issue is created.')}
-            onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
-            icon={<EyeOpenIcon className="w-4 h-4" />}
-            isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
-            disabled={writeAlertPermission === false}
-          />
-          <AlertOption
-            title={t('Never')}
-            description={t('Turn off email notifications.')}
-            onClick={() => onChangeStatus(NotificationStatus.NEVER)}
-            icon={<EyeNoneIcon className="w-4 h-4" />}
-            isActive={project?.notifyStatus === NotificationStatus.NEVER}
-            disabled={writeAlertPermission === false}
-          />
-        </CardContent>
       </Card>
 
       <Card>

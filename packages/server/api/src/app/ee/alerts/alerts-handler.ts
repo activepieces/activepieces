@@ -1,72 +1,42 @@
-import { NotificationStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
-import { SystemJobName } from '../../helper/system-jobs/common'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
+import { apDayjsDuration } from '@activepieces/server-shared'
+import { MAX_ALERTS_PER_DAY } from '@activepieces/ee-shared'
 
-const HOUR_IN_SECONDS = 3600
-const DAY_IN_SECONDS = 86400
-const HOURLY_LIMIT = 5
-const DAILY_LIMIT = 15
 
-export const alertsHandler = (log: FastifyBaseLogger) => ({
-    [NotificationStatus.NEVER]: async (_: IssueParams): Promise<void> => Promise.resolve(),
-    [NotificationStatus.ALWAYS]: async (params: IssueParams): Promise<void> => sendAlertOnFlowRun(params, log),
-    [NotificationStatus.NEW_ISSUE]: async (params: IssueParams): Promise<void> => sendAlertOnNewIssue(params, log),
-})
+const DAY_IN_SECONDS = apDayjsDuration(1, 'day').asSeconds()
 
-async function scheduleSendingReminder(params: IssueRemindersParams, log: FastifyBaseLogger): Promise<void> {
-    const { projectId } = params
-    if (params.issueCount === 1) {
-        const project = await projectService.getOneOrThrow(projectId)
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        const reminderKey = `reminder:${projectId}`
-        const redisConnection = await redisConnections.useExisting()
-        const isEmailScheduled = await redisConnection.get(reminderKey)
-        if (isEmailScheduled) {
-            return
-        }
+export const alertEventKey = (projectId: string) => `flow_fail_count:${projectId}`
 
-        const endOfDay = dayjs().endOf('day')
-        await redisConnection.set(reminderKey, 0, 'EXAT', endOfDay.unix())
-        
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.ISSUES_REMINDER,
-                data: {
-                    projectId,
-                    platformId: platform.id,
-                    projectName: project.displayName,
-                },
-                jobId: `issues-reminder-${projectId}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: endOfDay,
-            },
-        })
-    }
-}
+export async function handlerAlertTrigger(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
 
-async function sendAlertOnNewIssue(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
-    const { platformId, issueCount } = params
+    const redisConnection = await redisConnections.useExisting()
+    const alertSentToday = await redisConnection.get(alertEventKey(params.projectId))
 
-    const isOldIssue = issueCount > 1
-    if (isOldIssue) {
+    await redisConnection.incr(alertEventKey(params.projectId)) // should be cleared also when job runs
+    await redisConnection.expire(alertEventKey(params.projectId), DAY_IN_SECONDS)
+
+    if (!alertSentToday || Number(alertSentToday) < MAX_ALERTS_PER_DAY) {
+        await sendAlertOnFlowFailure(params, log)
         return
     }
+
+    await scheduleSendingReminder(params, log)
+}
+
+async function sendAlertOnFlowFailure(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
+    const { platformId } = params
 
     const issueUrl = await domainHelper.getPublicUrl({
         platformId,
         path: 'runs?limit=10#Issues',
     })
 
-    await scheduleSendingReminder({ projectId: params.projectId, issueCount: params.issueCount }, log)
     await emailService(log).sendIssueCreatedNotification({
         ...params,
         issueOrRunsPath: issueUrl,
@@ -74,44 +44,42 @@ async function sendAlertOnNewIssue(params: IssueParams, log: FastifyBaseLogger):
     })
 }
 
-async function sendAlertOnFlowRun(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
-    const { flowId, platformId, flowRunId } = params
-    const hourlyFlowIdKey = `alerts:hourly:${flowId}`
-    const dailyFlowIdKey = `alerts:daily:${flowId}`
-
-    const [hourlyCount, dailyCount] = await Promise.all([
-        incrementAndExpire(hourlyFlowIdKey, HOUR_IN_SECONDS),
-        incrementAndExpire(dailyFlowIdKey, DAY_IN_SECONDS),
-    ])
-
-    if (hourlyCount > HOURLY_LIMIT || dailyCount > DAILY_LIMIT) {
-        return
-    }
-
-    const flowRunsUrl = await domainHelper.getInternalUrl({
-        platformId,
-        path: `runs/${flowRunId}`,
-    })
-
-    await scheduleSendingReminder({ projectId: params.projectId, issueCount: params.issueCount }, log)
-    await emailService(log).sendIssueCreatedNotification({
-        ...params,
-        issueOrRunsPath: flowRunsUrl,
-        isIssue: false,
+async function scheduleSendingReminder(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
+    const endOfDay = dayjs().endOf('day')
+    await systemJobsSchedule(log).upsertJob({
+        job: {
+            name: SystemJobName.ISSUES_REMINDER,
+            data: {
+                projectId: params.projectId,
+                platformId: params.platformId,
+                projectName: params.projectName,
+            },
+            jobId: `issues-reminder-${params.projectId}`,
+        },
+        schedule: {
+            type: 'one-time',
+            date: endOfDay,
+        },
     })
 }
 
-async function incrementAndExpire(key: string, expiryTime: number): Promise<number> {
-    const redis = await redisConnections.useExisting()
-    const count = await redis.incr(key)
-    if (count === 1) {
-        await redis.expire(key, expiryTime)
+export async function runScheduledReminderJob(data: SystemJobData<SystemJobName.ISSUES_REMINDER>, log: FastifyBaseLogger) {
+    const redisConnection = await redisConnections.useExisting()
+    const alertSentToday = await redisConnection.get(alertEventKey(data.projectId))
+
+    if (alertSentToday && Number(alertSentToday) > MAX_ALERTS_PER_DAY) {
+        await redisConnection.del(alertEventKey(data.projectId))
+        await emailService(log).sendReminderJobHandler({
+            projectId: data.projectId,
+            projectName: data.projectName,
+            platformId: data.platformId,
+        })
     }
-    return count
 }
 
 type IssueParams = {
     projectId: string
+    projectName: string
     platformId: string
     flowId: string
     flowRunId: string
@@ -119,5 +87,3 @@ type IssueParams = {
     issueCount: number
     createdAt: string
 }
-
-type IssueRemindersParams = Pick<IssueParams, 'projectId' | 'issueCount'>
