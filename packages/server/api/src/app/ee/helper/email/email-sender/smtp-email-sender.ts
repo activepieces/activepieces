@@ -97,7 +97,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
             return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
         },
         renderIssues() {
-            if (templateData.name === 'issues-reminder') {
+            if (templateData.name === 'issues-summary') {
                 return JSON.parse(templateData.vars.issues)
             }
         },
@@ -138,7 +138,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
-        'issues-reminder': `You have unresolved issues for ${vars.projectName}`,
+        'issues-summary': `Your issues summary for ${vars.projectName}`,
         'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
     }
 

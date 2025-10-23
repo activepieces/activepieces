@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@activepieces/shared';
 
 import { AlertsSettings } from './alerts';
 import { GeneralSettings } from './general';
@@ -45,6 +46,10 @@ export function ProjectSettingsDialog({
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const { checkAccess } = useAuthorization();
 
+  const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
+  const { data: showProjectMembers } = flagsHooks.useFlag(
+    ApFlagId.SHOW_PROJECT_MEMBERS,
+  );
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
@@ -72,13 +77,14 @@ export function ProjectSettingsDialog({
       id: 'team' as TabId,
       label: t('Team'),
       icon: <Users className="w-4 h-4" />,
-      disabled: !checkAccess(Permission.READ_PROJECT_MEMBER),
+      disabled:
+        !checkAccess(Permission.READ_PROJECT_MEMBER) || !showProjectMembers,
     },
     {
       id: 'alerts' as TabId,
       label: t('Alerts'),
       icon: <Bell className="w-4 h-4" />,
-      disabled: !checkAccess(Permission.READ_ALERT),
+      disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
   ].filter((tab) => !tab.disabled);
 
