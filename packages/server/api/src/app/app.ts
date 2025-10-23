@@ -298,7 +298,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, (data) => runScheduledReminderJob(data, app.log))
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => runScheduledReminderJob(data, app.log))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
@@ -323,7 +323,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             await app.register(queueMetricsModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => runScheduledReminderJob(data, app.log))
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
