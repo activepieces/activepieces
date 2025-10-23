@@ -1,8 +1,4 @@
-import { FlowActionType } from '../../actions/action'
-import { FlowVersion } from '../../flow-version'
-import { FlowTriggerType } from '../../triggers/trigger'
-import { flowStructureUtil } from '../../util/flow-structure-util'
-
+import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 
 export const flowMigrationUtil = {
     pinPieceToVersion(flowVersion: FlowVersion, pieceName: string, pieceVersion: string) {

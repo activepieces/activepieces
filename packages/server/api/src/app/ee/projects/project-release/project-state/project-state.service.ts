@@ -1,4 +1,4 @@
-import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, flowMigrations, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
+import { AgentOperationType, AgentState, AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, McpState, PopulatedAgent, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
 import { agentsService } from '../../../../agents/agents-service'
@@ -6,6 +6,7 @@ import { appConnectionService } from '../../../../app-connection/app-connection-
 import { fileService } from '../../../../file/file.service'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
 import { flowService } from '../../../../flows/flow/flow.service'
+import { flowMigrations } from '../../../../flows/flow/migrations'
 import { mcpService } from '../../../../mcp/mcp-service'
 import { fieldService } from '../../../../tables/field/field.service'
 import { tableService } from '../../../../tables/table/table.service'
@@ -299,11 +300,11 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         }
         return Value.Clean(AgentState, agentState) as AgentState
     },
-    getFlowState(flow: PopulatedFlow): FlowState {
+    async getFlowState(flow: PopulatedFlow): Promise<FlowState> {
         const flowState: FlowState = {
             ...flow,
             externalId: flow.externalId ?? flow.id,
-            version: flowMigrations.apply(flow.version),
+            version: await flowMigrations.apply(flow.version),
         }
         const cleanedFlowState = Value.Clean(FlowState, flowState) as FlowState
         cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : Value.Clean(FlowAction, cleanedFlowState.version.trigger.nextAction)
@@ -360,7 +361,7 @@ async function handleCreateField(projectId: ProjectId, field: FieldState, tableI
 }
 
 async function toProjectState({ flows, connections, tables, agents, log }: ToProjectStateParams): Promise<ProjectState> {
-    const flowsInProjectState: FlowState[] = flows.map((flow) => projectStateService(log).getFlowState(flow))
+    const flowsInProjectState: FlowState[] = await Promise.all(flows.map(async (flow) => projectStateService(log).getFlowState(flow)))
 
     const tablesInProjectState: TableState[] = tables.map((table) => projectStateService(log).getTableState(table))
 
