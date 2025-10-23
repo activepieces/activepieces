@@ -18,8 +18,9 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
-import { redisConnections } from './database/redis'
+import { redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
+import { alertsService } from './ee/alerts/alerts-service'
 import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
@@ -38,7 +39,6 @@ import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
-import { emailService } from './ee/helper/email/email-service'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
@@ -89,11 +89,14 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
-import { jobQueueWorker } from './workers/queue/job-queue-worker'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
+
+    app.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, async (_request: FastifyRequest, payload: unknown) => {
+        return payload as Buffer
+    })
 
     await app.register(swagger, {
         hideUntagged: true,
@@ -294,7 +297,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => alertsService(app.log).runScheduledReminderJob(data))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
@@ -319,7 +322,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             await app.register(queueMetricsModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => alertsService(app.log).runScheduledReminderJob(data))
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
@@ -335,7 +338,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
-        await jobQueueWorker(app.log).close()
         await systemJobsSchedule(app.log).close()
         await engineResponseWatcher(app.log).shutdown()
     })

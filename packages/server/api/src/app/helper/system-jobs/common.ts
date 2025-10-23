@@ -6,14 +6,14 @@ export enum SystemJobName {
     PIECES_SYNC = 'pieces-sync',
     TRIAL_TRACKER = 'trial-tracker',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
-    ISSUES_REMINDER = 'issue-reminder',
+    ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
     AI_USAGE_REPORT = 'ai-usage-report',
     SEVEN_DAYS_IN_TRIAL = 'seven-days-in-trial',
     ONE_DAY_LEFT_ON_TRIAL = 'one-day-left-on-trial',
 }
 
-type IssuesReminderSystemJobData = {
+type IssuesSummarySystemJobData = {
     projectId: ProjectId
     projectName: string
     platformId: string
@@ -38,7 +38,7 @@ type OneDayLeftOnTrialEmailSystemJobData = {
 }
 
 type SystemJobDataMap = {
-    [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
+    [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
     [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>

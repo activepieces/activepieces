@@ -21,9 +21,7 @@ import { TagInput } from '@/components/ui/tag-input';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 import {
-  flowMigrations,
   FlowTemplate,
-  FlowVersionState,
   FlowVersionTemplate,
   TemplateType,
 } from '@activepieces/shared';
@@ -184,28 +182,9 @@ export const UpsertTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const json = JSON.parse(text) as FlowTemplate;
-                            const migratedFlowVersion = flowMigrations.apply({
-                              agentIds: [],
-                              connectionIds: [],
-                              created: new Date().toISOString(),
-                              displayName: '',
-                              flowId: '',
-                              id: '',
-                              updated: new Date().toISOString(),
-                              updatedBy: '',
-                              valid: false,
-                              trigger: json.template.trigger,
-                              state: FlowVersionState.DRAFT,
-                            });
-                            const migratedTemplate: FlowVersionTemplate = {
-                              trigger: migratedFlowVersion.trigger,
-                              agentIds: migratedFlowVersion.agentIds,
-                              connectionIds: migratedFlowVersion.connectionIds,
-                              displayName: migratedFlowVersion.displayName,
-                              valid: migratedFlowVersion.valid,
-                              schemaVersion: migratedFlowVersion.schemaVersion,
-                            };
+                            const migratedTemplate = JSON.parse(
+                              text,
+                            ) as FlowTemplate;
                             field.onChange(migratedTemplate);
                           } catch (e) {
                             form.setError('template', {
