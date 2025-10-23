@@ -163,7 +163,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendReminderJobHandler(job: {
+    async sendIssuesSummary(job: {
         projectId: string
         platformId: string
         projectName: string
@@ -195,7 +195,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             emails,
             platformId: job.platformId,
             templateData: {
-                name: 'issues-reminder',
+                name: 'issues-summary',
                 vars: {
                     issuesUrl,
                     issuesCount: issues.data.length.toString(),

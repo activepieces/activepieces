@@ -26,7 +26,7 @@ export async function handlerAlertTrigger(params: IssueParams, log: FastifyBaseL
         return
     }
 
-    await scheduleSendingReminder(params, log)
+    await scheduleIssuesSummary(params, log)
 }
 
 async function sendAlertOnFlowFailure(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
@@ -44,11 +44,11 @@ async function sendAlertOnFlowFailure(params: IssueParams, log: FastifyBaseLogge
     })
 }
 
-async function scheduleSendingReminder(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
+async function scheduleIssuesSummary(params: IssueParams, log: FastifyBaseLogger): Promise<void> {
     const endOfDay = dayjs().endOf('day')
     await systemJobsSchedule(log).upsertJob({
         job: {
-            name: SystemJobName.ISSUES_REMINDER,
+            name: SystemJobName.ISSUES_SUMMARY,
             data: {
                 projectId: params.projectId,
                 platformId: params.platformId,
@@ -63,13 +63,13 @@ async function scheduleSendingReminder(params: IssueParams, log: FastifyBaseLogg
     })
 }
 
-export async function runScheduledReminderJob(data: SystemJobData<SystemJobName.ISSUES_REMINDER>, log: FastifyBaseLogger) {
+export async function runScheduledReminderJob(data: SystemJobData<SystemJobName.ISSUES_SUMMARY>, log: FastifyBaseLogger) {
     const redisConnection = await redisConnections.useExisting()
     const alertSentToday = await redisConnection.get(alertEventKey(data.projectId))
 
     if (alertSentToday && Number(alertSentToday) > MAX_ALERTS_PER_DAY) {
         await redisConnection.del(alertEventKey(data.projectId))
-        await emailService(log).sendReminderJobHandler({
+        await emailService(log).sendIssuesSummary({
             projectId: data.projectId,
             projectName: data.projectName,
             platformId: data.platformId,
