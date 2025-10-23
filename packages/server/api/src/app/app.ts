@@ -20,6 +20,7 @@ import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
 import { redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
+import { alertsService } from './ee/alerts/alerts-service'
 import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
@@ -90,7 +91,6 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
-import { alertsService } from './ee/alerts/alerts-service'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 

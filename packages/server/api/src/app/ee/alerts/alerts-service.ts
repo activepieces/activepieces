@@ -1,20 +1,20 @@
 import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
+import { apDayjsDuration } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, PopulatedIssue, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { projectService } from '../../project/project-service'
-import { AlertEntity } from './alerts-entity'
-import { redisConnections } from '../../database/redis-connections'
-import { apDayjsDuration } from '@activepieces/server-shared'
 import { system } from '../../helper/system/system'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { projectService } from '../../project/project-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
+import { AlertEntity } from './alerts-entity'
 
 const repo = repoFactory(AlertEntity)
 const DAY_IN_SECONDS = apDayjsDuration(1, 'day').asSeconds()
@@ -23,7 +23,7 @@ const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.get
 
 export const alertsService = (log: FastifyBaseLogger) => ({
     async sendAlertOnRunFinish({ issue, flowRunId }: { issue: PopulatedIssue, flowRunId: string }): Promise<void> {
-        if(!paidEditions){
+        if (!paidEditions) {
             return
         }
         const redisConnection = await redisConnections.useExisting()
@@ -31,7 +31,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         const numberOfFailures = await redisConnection.incrby(failureKey, 1)
         await redisConnection.expire(failureKey, DAY_IN_SECONDS)
 
-        if(numberOfFailures > 1) {
+        if (numberOfFailures > 1) {
             return
         }
         

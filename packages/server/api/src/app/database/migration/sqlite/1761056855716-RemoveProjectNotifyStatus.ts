@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemoveProjectNotifyStatus1761056855716 implements MigrationInterface {
     name = 'RemoveProjectNotifyStatus1761056855716'
@@ -6,7 +6,7 @@ export class RemoveProjectNotifyStatus1761056855716 implements MigrationInterfac
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "notifyStatus"
-        `);
+        `)
        
     }
 
@@ -14,7 +14,7 @@ export class RemoveProjectNotifyStatus1761056855716 implements MigrationInterfac
         await queryRunner.query(`
             ALTER TABLE "project"
             ADD "notifyStatus" TEXT NOT NULL DEFAULT 'ALWAYS'
-        `);
+        `)
     }
 
 }
