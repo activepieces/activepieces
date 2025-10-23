@@ -31,7 +31,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
         try {
             const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
-            const flowState = projectStateService(log).getFlowState(flow)
+            const flowState = await projectStateService(log).getFlowState(flow)
             await fs.writeFile(flowJsonPath, JSON.stringify(flowState, null, 2))
         }
         catch (error) {
@@ -101,7 +101,7 @@ async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger):
     const flows: FlowState[] = []
     for (const file of flowFiles) {
         const flow: PopulatedFlow = JSON.parse(await fs.readFile(path.join(flowFolderPath, file), 'utf-8'))
-        const flowState = projectStateService(log).getFlowState(flow)
+        const flowState = await projectStateService(log).getFlowState(flow)
         flows.push(flowState)
     }
     return flows

@@ -418,19 +418,13 @@ export const flowOperations = {
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
-            // case FlowOperationType.IMPORT_FLOW: {
-            //     const migratedFlow = flowMigrations.apply({
-            //         ...clonedVersion,
-            //         trigger: operation.request.trigger,
-            //         displayName: operation.request.displayName,
-            //         schemaVersion: operation.request.schemaVersion,
-            //     })
-            //     const operations = _importFlow(clonedVersion, migratedFlow)
-            //     operations.forEach((operation) => {
-            //         clonedVersion = flowOperations.apply(clonedVersion, operation)
-            //     })
-            //     break
-            // }
+            case FlowOperationType.IMPORT_FLOW: {
+                const operations = _importFlow(clonedVersion, operation.request)
+                operations.forEach((operation) => {
+                    clonedVersion = flowOperations.apply(clonedVersion, operation)
+                })
+                break
+            }
             case FlowOperationType.SET_SKIP_ACTION: {
                 clonedVersion = _skipAction(clonedVersion, operation.request)
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)

@@ -3,7 +3,7 @@ import { Migration } from '.'
 
 export const migrateConnectionIds: Migration = {
     targetSchemaVersion: '1',
-    migrate: (flowVersion: FlowVersion): FlowVersion => {
+    migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         return {
             ...flowVersion,
             schemaVersion: '2',

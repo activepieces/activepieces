@@ -6,11 +6,11 @@ import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
 import { migratePropertySettingsV6 } from './migrate-v6-property-settings'
-import { moveAgentsToFlowVerion } from './move-agents-to-flow-version'
+import { moveAgentsToFlowVerion } from './migrate-v7-agents-to-flow-version'
 
 export type Migration = {
     targetSchemaVersion: string | undefined
-    migrate: (flowVersion: FlowVersion) => FlowVersion
+    migrate: (flowVersion: FlowVersion) => Promise<FlowVersion>
 }
 
 const migrations: Migration[] = [
@@ -21,16 +21,16 @@ const migrations: Migration[] = [
     migrateAgentPieceV4,
     migrateHttpToWebhookV5,
     migratePropertySettingsV6,
-    moveAgentsToFlowVerion
+    moveAgentsToFlowVerion,
 ] as const
 
 export const flowMigrations = {
-    apply: (flowVersion: FlowVersion): FlowVersion => {
-        return migrations.reduce((acc, migration: Migration) => {
-            if (acc.schemaVersion === migration.targetSchemaVersion) {
-                return migration.migrate(acc)
+    apply: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
+        for (const migration of migrations) {
+            if (flowVersion.schemaVersion === migration.targetSchemaVersion) {
+                flowVersion = await migration.migrate(flowVersion)
             }
-            return acc
-        }, flowVersion)
+        }
+        return flowVersion
     },
 }

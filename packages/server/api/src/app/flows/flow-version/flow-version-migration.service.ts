@@ -4,10 +4,10 @@ import {
     LATEST_SCHEMA_VERSION,
     spreadIfDefined,
 } from '@activepieces/shared'
-import { system } from '../../helper/system/system'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
+import { system } from '../../helper/system/system'
 
 const log = system.globalLogger()
 
@@ -25,8 +25,8 @@ export const flowVersionMigrationService = {
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
         }
 
-        const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion)
-        
+        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion)
+
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,
             ...spreadIfDefined('trigger', migratedFlowVersion.trigger),

@@ -1,5 +1,6 @@
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 import {
+  FlowTemplate,
   FlowVersionTemplate,
   TemplateType,
 } from '@activepieces/shared';
@@ -178,38 +179,19 @@ export const UpsertTemplateDialog = ({
                     type="file"
                     accept=".json"
                     onChange={(e) => {
-                      // e.target.files &&
-                      //   e.target.files[0].text().then((text) => {
-                      //     try {
-                      //       const json = JSON.parse(text) as FlowTemplate;
-                      //       const migratedFlowVersion = flowMigrations.apply({
-                      //         agentIds: [],
-                      //         connectionIds: [],
-                      //         created: new Date().toISOString(),
-                      //         displayName: '',
-                      //         flowId: '',
-                      //         id: '',
-                      //         updated: new Date().toISOString(),
-                      //         updatedBy: '',
-                      //         valid: false,
-                      //         trigger: json.template.trigger,
-                      //         state: FlowVersionState.DRAFT,
-                      //       });
-                      //       const migratedTemplate: FlowVersionTemplate = {
-                      //         trigger: migratedFlowVersion.trigger,
-                      //         agentIds: migratedFlowVersion.agentIds,
-                      //         connectionIds: migratedFlowVersion.connectionIds,
-                      //         displayName: migratedFlowVersion.displayName,
-                      //         valid: migratedFlowVersion.valid,
-                      //         schemaVersion: migratedFlowVersion.schemaVersion,
-                      //       };
-                      //       field.onChange(migratedTemplate);
-                      //     } catch (e) {
-                      //       form.setError('template', {
-                      //         message: t('Invalid JSON'),
-                      //       });
-                      //     }
-                      //   });
+                      e.target.files &&
+                        e.target.files[0].text().then((text) => {
+                          try {
+                            const migratedTemplate = JSON.parse(
+                              text,
+                            ) as FlowTemplate;
+                            field.onChange(migratedTemplate);
+                          } catch (e) {
+                            form.setError('template', {
+                              message: t('Invalid JSON'),
+                            });
+                          }
+                        });
                     }}
                     required
                     id="template"

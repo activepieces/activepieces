@@ -3,7 +3,7 @@ import { Migration } from '.'
 
 export const migratePropertySettingsV6: Migration = {
     targetSchemaVersion: '6',
-    migrate: (flowVersion: FlowVersion): FlowVersion => {
+    migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             const input = step.settings?.input ?? {}
             const sampleDataFileId = step.settings?.inputUiInfo?.sampleDataFileId

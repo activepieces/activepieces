@@ -1,10 +1,9 @@
-
 import { BranchExecutionType, FlowAction, FlowActionType, flowStructureUtil, FlowVersion, RouterAction, RouterExecutionType } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateBranchToRouter: Migration = {
     targetSchemaVersion: undefined,
-    migrate: (flowVersion: FlowVersion) => {
+    migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             const unschemedStep = step as unknown as { type: string, settings: { conditions: unknown[] }, onSuccessAction: FlowAction | null, onFailureAction: FlowAction | null }
             if (unschemedStep.type === 'BRANCH') {
