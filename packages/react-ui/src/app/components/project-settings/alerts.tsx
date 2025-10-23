@@ -1,6 +1,8 @@
 import { t } from 'i18next';
 import { Bell, Trash } from 'lucide-react';
+
 import { AddAlertEmailDialog } from '@/app/routes/settings/alerts/add-alert-email-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,10 +22,7 @@ import {
   alertMutations,
 } from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Alert, MAX_ALERTS_PER_DAY } from '@activepieces/ee-shared';
-import {
-  Permission,
-} from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 
 export const AlertsSettings = () => {
   const { checkAccess } = useAuthorization();
@@ -41,14 +40,17 @@ export const AlertsSettings = () => {
 
   return (
     <>
-      <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-        <p className="text-xs text-amber-700">
-          <span className="font-medium">⚠️</span>{' '}
-          {t(
-            `Note: You will receive alerts when any flow in this project fails. To avoid spam, alerts will only be sent for the first ${MAX_ALERTS_PER_DAY} failures per day. Any additional failures will be included in a summary email sent at the end of the day.`,
-          )}
-        </p>
-      </div>
+      <Alert variant="default">
+        <Bell className="inline w-4 h-4 text-amber-900" />
+        <div className="flex flex-col gap-1">
+          <AlertTitle>{t('Frequency')}</AlertTitle>
+          <AlertDescription className="text-sm">
+            {t(
+              'You’ll get an email if any flow fails. Only the first failure per flow each day sends an alert. Other failures are summarized in a daily email.',
+            )}
+          </AlertDescription>
+        </div>
+      </Alert>
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -77,7 +79,7 @@ export const AlertsSettings = () => {
             )}
             <div className="space-y-2">
               {Array.isArray(alertsData) &&
-                alertsData.map((alert: Alert) => (
+                alertsData.map((alert) => (
                   <div
                     className="flex items-center justify-between p-3 border rounded-lg hover:shadow-sm transition-all"
                     key={alert.id}

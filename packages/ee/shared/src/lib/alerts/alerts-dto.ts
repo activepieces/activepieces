@@ -5,7 +5,6 @@ export enum AlertChannel {
     EMAIL = 'EMAIL',
 }
 
-export const MAX_ALERTS_PER_DAY = 3
 
 export const Alert = Type.Object({
     ...BaseModelSchema,
