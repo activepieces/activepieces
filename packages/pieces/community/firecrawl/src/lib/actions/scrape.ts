@@ -1,6 +1,7 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
+import { Metadata } from '@activepieces/shared';
 
 function forScreenshotOutputFormat(screenshotOptions: any): any {
   let fullPage = true;
@@ -288,7 +289,7 @@ export const scrape = createAction({
     if (isPdfUrl(propsValue.url)){
       body['parsers'] = ["pdf"];
       formatsArray.push('markdown');
-      body['formats'] = formatsArray
+      body['formats'] = formatsArray;
     } else {
       // user selection
       if (format === 'screenshot') {
@@ -322,15 +323,22 @@ export const scrape = createAction({
 
     const result = response.body;
 
-    await downloadAndSaveScreenshot(result, context);
-
-    // reorder the data object to put screenshot first, then user's selected format only
-    result.data = {
-      screenshot: result.data.screenshot,
-      [format]: result.data[format],
-      metadata: result.data.metadata
-    };
-
+    if (isPdfUrl(propsValue.url)) {
+      // pdfs only have markdown, no screenshot
+      result.data = {
+        note_to_user: "pdf detected. we only support markdown output format for pdfs.",
+        markdown: result.data.markdown,
+        metadata: result.data.metadata,
+      }
+    } else {
+      await downloadAndSaveScreenshot(result, context);
+      // reorder the data object to put screenshot first, then user's selected format only
+      result.data = {
+        screenshot: result.data.screenshot,
+        [format]: result.data[format],
+        metadata: result.data.metadata
+      };
+    }
     return result;
   },
 }); 
