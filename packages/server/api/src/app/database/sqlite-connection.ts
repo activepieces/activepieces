@@ -325,7 +325,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddRunFlowVersionIdForForeignKeySqlite1760346793809,
         RestrictOnDeleteProjectForFlowSqlite1760376811542,
         RemoveTriggerRunEntity1760992394073,
-        DeprecateCopilotSQLITE1761223879376
+        DeprecateCopilotSQLITE1761223879376,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

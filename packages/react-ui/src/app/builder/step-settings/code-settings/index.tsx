@@ -9,12 +9,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  CodeAction,
-  FlowOperationType,
-  MarkdownVariant,
-} from '@activepieces/shared';
+import { CodeAction, MarkdownVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
@@ -37,9 +32,9 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
-  const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
-    (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
-  );
+  const [refreshStepFormSettingsToggle] = useBuilderStateContext((state) => [
+    state.refreshStepFormSettingsToggle,
+  ]);
   return (
     <div className="flex flex-col gap-4">
       <FormField

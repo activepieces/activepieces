@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
     name = 'DeprecateCopilotSQLITE1761223879376'
@@ -6,10 +6,10 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -26,7 +26,7 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow"(
                     "id",
@@ -49,20 +49,20 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 "externalId",
                 "metadata"
             FROM "flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow"
                 RENAME TO "flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -88,7 +88,7 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
@@ -129,20 +129,20 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 "smtp",
                 "pinnedPieces"
             FROM "platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "platform"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -160,7 +160,7 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 SET NULL ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow"(
                     "id",
@@ -183,33 +183,33 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 "externalId",
                 "metadata"
             FROM "flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow"
                 RENAME TO "flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow"
                 RENAME TO "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -226,7 +226,7 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow"(
                     "id",
@@ -249,20 +249,20 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 "externalId",
                 "metadata"
             FROM "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -289,7 +289,7 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
@@ -330,20 +330,20 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 "smtp",
                 "pinnedPieces"
             FROM "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow"
                 RENAME TO "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -361,7 +361,7 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow"(
                     "id",
@@ -384,16 +384,16 @@ export class DeprecateCopilotSQLITE1761223879376 implements MigrationInterface {
                 "externalId",
                 "metadata"
             FROM "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
     }
 
 }

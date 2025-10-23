@@ -472,7 +472,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
         RestrictOnDeleteProjectForFlow1760376319952,
         RemoveTriggerRunEntity1760993216501,
-        DeprecateCopilot1761221158764
+        DeprecateCopilot1761221158764,
     ]
 
     const edition = system.getEdition()

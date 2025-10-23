@@ -565,7 +565,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       askAiButtonProps: null,
       setAskAiButtonProps: (props) => {
         return set((state) => {
-          let leftSidebar = state.leftSidebar;
+          const leftSidebar = state.leftSidebar;
 
           let rightSidebar = state.rightSidebar;
           if (props && props.type === FlowOperationType.UPDATE_ACTION) {
