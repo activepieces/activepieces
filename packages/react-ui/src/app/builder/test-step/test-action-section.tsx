@@ -109,7 +109,6 @@ const TestStepSectionImplementation = React.memo(
     const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-    console.log('lastTestDate', lastTestDate);
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const handleTodoCreateTask = async () => {
