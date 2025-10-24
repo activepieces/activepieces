@@ -24,6 +24,16 @@ export const pubsub = {
         const redisClientSubscriber = await getRedisClientSubscriber()
         await redisClientSubscriber.unsubscribe(channel)
     },
+    async close(): Promise<void> {
+        if (!isNil(redisClientSubscriber)) {
+            await redisClientSubscriber.quit()
+            redisClientSubscriber = null
+        }
+        if (!isNil(redisClientPublisher)) {
+            await redisClientPublisher.quit()
+            redisClientPublisher = null
+        }
+    },
 }
 
 async function getRedisClientSubscriber(): Promise<Redis> {

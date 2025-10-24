@@ -18,7 +18,7 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
-import { redisConnections } from './database/redis-connections'
+import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { alertsService } from './ee/alerts/alerts-service'
 import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
@@ -339,6 +339,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
         await systemJobsSchedule(app.log).close()
+        await redisConnections.destroy()
+        await distributedLock(app.log).destroy()
         await engineResponseWatcher(app.log).shutdown()
     })
 
