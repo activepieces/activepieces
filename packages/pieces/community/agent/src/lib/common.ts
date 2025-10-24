@@ -63,26 +63,6 @@ async function buildInternalTools(params: AgentToolsParams) {
 }
 
 export const agentCommon = {
-    async reportAgentProgress(params: ReportAgentProgressParams) {
-        const agentOutputUrl = `${params.apiUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/emit-agent-output`
-
-        await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: agentOutputUrl,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: params.token,
-            },
-            body: {
-                event: params.event,
-                agentOutput: params.agentOutput,
-            },
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json, text/event-stream',
-            },
-        })
-    },
     async agentTools(params: AgentToolsParams) {
         const mcpServerUrl = `${params.apiUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp`
         const transport = new StreamableHTTPClientTransport(new URL(mcpServerUrl), {
@@ -219,14 +199,4 @@ type AgentToolsParams = {
     flowId: string
     flowVersionId: string
     stepName: string
-}
-
-type ReportAgentProgressParams = {
-    apiUrl: string
-    token: string
-    flowId: string
-    flowVersionId: string
-    stepName: string
-    agentOutput: AgentResult
-    event: WebsocketClientEvent.AGENT_RUN_COMPLETE | WebsocketClientEvent.AGENT_RUN_PROGRESS
 }

@@ -1,7 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { AIErrorResponse } from '@activepieces/common-ai'
 import { agentCommon, AI_MODELS } from '../common';
-import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus, WebsocketClientEvent } from '@activepieces/shared';
+import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
 import { APICallError, stepCountIs, streamText } from 'ai';
 
 export const runAgent = createAction({
@@ -130,11 +130,9 @@ export const runAgent = createAction({
                     markdown: currentText,
                 })
                 currentText = ''
-                await agentCommon.reportAgentProgress({
-                  ...commonParams,
-                  agentOutput: result,
-                  event: WebsocketClientEvent.AGENT_RUN_PROGRESS
-                })
+                context.output.update({ data: { 
+                  ...result
+                }})
             }
             const metadata = agentCommon.getMetadata(chunk.toolName, agentTools as McpTool[], {
                 toolName: chunk.toolName,
@@ -146,11 +144,9 @@ export const runAgent = createAction({
                 startTime: new Date().toISOString(),
             })
             result.steps.push(metadata)
-            await agentCommon.reportAgentProgress({
-              ...commonParams,
-              agentOutput: result,
-              event: WebsocketClientEvent.AGENT_RUN_PROGRESS
-            })
+            context.output.update({ data: { 
+              ...result
+            }})
         }
         else if (chunk.type === 'tool-result') {
             const lastBlockIndex = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
@@ -162,11 +158,9 @@ export const runAgent = createAction({
                 endTime: new Date().toISOString(),
                 output: chunk.output,
             }
-            await agentCommon.reportAgentProgress({
-              ...commonParams,
-              agentOutput: result,
-              event: WebsocketClientEvent.AGENT_RUN_PROGRESS
-            })
+            context.output.update({ data: { 
+              ...result
+            }})
         }
         else if (chunk.type === 'error') {
             result.status = AgentTaskStatus.FAILED
@@ -177,11 +171,9 @@ export const runAgent = createAction({
             else {
                 result.message = agentCommon.concatMarkdown(result.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
             }
-            await agentCommon.reportAgentProgress({
-              ...commonParams,
-              agentOutput: result,
-              event: WebsocketClientEvent.AGENT_RUN_COMPLETE
-            })
+            context.output.update({ data: { 
+              ...result
+            }})
             return result
         }
     }
@@ -200,12 +192,9 @@ export const runAgent = createAction({
 
     result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
     result.message = agentCommon.concatMarkdown(result.steps)
-
-    await agentCommon.reportAgentProgress({
-      ...commonParams,
-      agentOutput: result,
-      event: WebsocketClientEvent.AGENT_RUN_COMPLETE
-    })
+    context.output.update({ data: { 
+      ...result
+    }})
 
     return result
   }

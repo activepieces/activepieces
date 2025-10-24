@@ -6,10 +6,3 @@ export const CreateMCPServerFromStepParams = Type.Object({
     stepName: Type.String(),
 })
 export type CreateMCPServerFromStepParams = Static<typeof CreateMCPServerFromStepParams>
-
-export const EmitAgentPeiceOutput = Type.Object({
-    flowId: Type.String(),
-    flowVersionId: Type.String(),
-    stepName: Type.String(),
-})
-export type EmitAgentPeiceOutput = Static<typeof EmitAgentPeiceOutput>

@@ -1,9 +1,7 @@
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CreateMCPServerFromStepParams, EmitAgentPeiceOutput, flowStructureUtil, McpTool } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, CreateMCPServerFromStepParams, flowStructureUtil, McpTool } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
-import { StatusCodes } from 'http-status-codes'
 import { flowService } from '../../flows/flow/flow.service'
 import { mcpServerHandler } from '../../mcp/mcp-server/mcp-server-handler'
 
@@ -32,16 +30,6 @@ export const mcpFlowSseControllerController: FastifyPluginAsyncTypebox = async (
 
         return reply
     })
-
-    app.post('/:flowId/versions/:flowVersionId/steps/:stepName/emit-agent-output', EmitAgentPieceOutputRequest, async (request, reply)  => {
-        const { agentOutput, event } = request.body
-
-        app.io.to(request.principal.projectId).emit(event, {
-            agentOutput,
-        })
-
-        return reply.status(StatusCodes.NO_CONTENT).send()
-    })
 }
 
 const CreateMCPServerFromStepRequest = {
@@ -50,18 +38,5 @@ const CreateMCPServerFromStepRequest = {
     },
     schema: {
         params: CreateMCPServerFromStepParams,
-    },
-}
-
-const EmitAgentPieceOutputRequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        params: EmitAgentPeiceOutput,
-        body: Type.Object({
-            event: Type.String(),
-            agentOutput: Type.Unknown(),
-        }),
     },
 }

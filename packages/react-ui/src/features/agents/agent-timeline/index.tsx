@@ -6,6 +6,7 @@ import {
   type AgentResult,
   AgentTaskStatus,
   ContentBlockType,
+  StepRunResponse,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 
@@ -43,20 +44,20 @@ export const AgentTimeline = ({
   useEffect(() => {
     if (!socket) return;
 
-    const handleUpdate = ({ agentOutput }: { agentOutput: AgentResult }) => {
+    const handleUpdate = ({ response }: { response: StepRunResponse }) => {
       try {
-        setLiveResult(agentOutput);
+        setLiveResult(response.output as AgentResult);
       } catch (error) {
         console.error('Error setting live result:', error);
       }
     };
 
-    socket.on(WebsocketClientEvent.AGENT_RUN_PROGRESS, handleUpdate);
-    socket.on(WebsocketClientEvent.AGENT_RUN_COMPLETE, handleUpdate);
+    socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleUpdate);
+    socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleUpdate);
 
     return () => {
-      socket.off(WebsocketClientEvent.AGENT_RUN_PROGRESS, handleUpdate);
-      socket.off(WebsocketClientEvent.AGENT_RUN_COMPLETE, handleUpdate);
+      socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, handleUpdate);
+      socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleUpdate);
     };
   }, [socket]);
 
