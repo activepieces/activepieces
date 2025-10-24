@@ -75,6 +75,18 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_ALERTS,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_PROJECT_MEMBERS,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CAN_CONFIGURE_AI_PROVIDER,
                 value: true,
                 created,

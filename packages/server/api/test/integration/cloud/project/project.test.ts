@@ -5,7 +5,6 @@ import {
 import {
     apId,
     FlowStatus,
-    NotificationStatus,
     Platform,
     PlatformRole,
     PrincipalType,
@@ -191,7 +190,6 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
                 },
@@ -212,7 +210,6 @@ describe('Project API', () => {
 
             expect(responseBody.id).toBe(mockProject.id)
             expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.notifyStatus).toBe(request.notifyStatus)
         })
 
         it('it should update project as platform owner with api key', async () => {
@@ -221,7 +218,6 @@ describe('Project API', () => {
             const tasks = faker.number.int({ min: 1, max: 100000 })
             const request = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
                 },
@@ -258,7 +254,6 @@ describe('Project API', () => {
             const tasks = faker.number.int({ min: 1, max: 100000 })
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
                 },
@@ -277,7 +272,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
             expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.notifyStatus).toBe(request.notifyStatus)
             expect(responseBody.plan.tasks).toEqual(tasks)
         })
 
@@ -312,7 +306,6 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
             }
             const response = await app?.inject({
                 method: 'POST',
@@ -344,7 +337,6 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
             }
 
             // act
@@ -390,7 +382,6 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
                 metadata,
                 plan: {
                     tasks,
@@ -411,7 +402,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody.id).toBe(mockProject.id)
             expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.notifyStatus).toBe(request.notifyStatus)
             expect(responseBody.metadata).toEqual(metadata)
         })
     })

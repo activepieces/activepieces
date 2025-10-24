@@ -36,7 +36,6 @@ import {
     FlowVersionState,
     InvitationStatus,
     InvitationType,
-    NotificationStatus,
     PackageType,
     PiecesFilterType,
     PieceType,
@@ -176,8 +175,6 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         deleted: project?.deleted ?? null,
         ownerId: project?.ownerId ?? apId(),
         displayName: project?.displayName ?? faker.lorem.word(),
-        notifyStatus:
-            project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
@@ -234,8 +231,8 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
         todosEnabled: platformPlan?.todosEnabled ?? false,
-        stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
-        stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
+        stripeSubscriptionEndDate: dayjs().endOf('month').unix(),
+        stripeSubscriptionStartDate: dayjs().startOf('month').unix(),
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
