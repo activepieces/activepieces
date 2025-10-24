@@ -1,5 +1,7 @@
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useContext, useRef, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,7 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
+type ActionWithoutNext = Omit<FlowAction, 'nextAction'>;
 enum DialogType {
   NONE = 'NONE',
   TODO_CREATE_TASK = 'TODO_CREATE_TASK',
@@ -70,10 +73,11 @@ const TestStepSectionImplementation = React.memo(
     const [todoId, setTodoId] = useState<string | null>(null);
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
-        sampleData: state.outputSampleData[currentStep.name],
-        sampleDataInput: state.inputSampleData[currentStep.name],
+        sampleData: state.sampleData[currentStep.name],
+        sampleDataInput: state.sampleDataInput[currentStep.name],
       };
     });
+    const form = useFormContext<ActionWithoutNext>();
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
     const { mutate: testAction, isPending: isWatingTestResult } =
@@ -88,6 +92,7 @@ const TestStepSectionImplementation = React.memo(
     const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
+
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const handleTodoCreateTask = async () => {

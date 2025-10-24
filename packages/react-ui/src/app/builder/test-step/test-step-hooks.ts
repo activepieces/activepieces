@@ -6,6 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import { useSocket } from '@/components/socket-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
@@ -38,15 +39,20 @@ const stringifyNullOrUndefined = (data: undefined | null) => {
 };
 
 export const testStepHooks = {
-  useUpdateSampleData: (stepName: string) => {
+  useUpdateSampleData: (
+    stepName: string,
+    onSuccess?: (step: FlowTrigger | FlowAction) => void,
+  ) => {
     const queryClient = useQueryClient();
-    const { flowVersionId, applyOperation, step, setSampleData } =
+    const { setSampleData, flowVersionId, applyOperation, flowId, step } =
       useBuilderStateContext((state) => {
         return {
+          sampleDataInput: state.sampleDataInput[stepName],
+          setSampleData: state.setSampleData,
           flowVersionId: state.flowVersion.id,
           step: flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
+          flowId: state.flow.id,
           applyOperation: state.applyOperation,
-          setSampleData: state.setSampleData,
         };
       });
 
@@ -54,60 +60,57 @@ export const testStepHooks = {
       mutationFn: async ({
         response,
       }: {
-        response:
-          | {
-              testType: 'trigger' | 'mockData' | 'todo';
-              output?: unknown;
-              success: boolean;
-            }
-          | ({ testType: 'action'; success: boolean } & StepRunResponse);
+        response: { output?: unknown; success: boolean };
       }) => {
         if (isNil(step)) {
           console.error(`Step ${stepName} not found`);
           toast(INTERNAL_ERROR_TOAST);
           return;
         }
+
         if (response.success) {
           //if the output is undefined it will fail to save sample data unless we stringify it
           const output = isNil(response.output)
             ? stringifyNullOrUndefined(response.output)
             : response.output;
-          setSampleData({ stepName: step.name, type: 'output', value: output });
-          if (response.testType === 'action') {
-            const input = isNil(response.input)
-              ? stringifyNullOrUndefined(response.input)
-              : response.input;
-            setSampleData({ stepName: step.name, type: 'input', value: input });
-            applyOperation({
-              type: FlowOperationType.SAVE_SAMPLE_DATA,
-              request: {
-                stepName: step.name,
-                payload: input,
-                type: SampleDataFileType.INPUT,
-                dataType:
-                  typeof input === 'string'
-                    ? SampleDataDataType.STRING
-                    : SampleDataDataType.JSON,
-              },
-            });
-            applyOperation({
-              type: FlowOperationType.SAVE_SAMPLE_DATA,
-              request: {
-                stepName: step.name,
-                payload: output,
-                type: SampleDataFileType.OUTPUT,
-                dataType:
-                  typeof output === 'string'
-                    ? SampleDataDataType.STRING
-                    : SampleDataDataType.JSON,
-              },
-            });
+          setSampleData(step.name, output);
+          const updatedFlowVersion = await flowsApi.update(flowId, {
+            type: FlowOperationType.SAVE_SAMPLE_DATA,
+            request: {
+              stepName,
+              payload: output,
+              type: SampleDataFileType.OUTPUT,
+              dataType:
+                typeof response.output === 'string'
+                  ? SampleDataDataType.STRING
+                  : SampleDataDataType.JSON,
+            },
+          });
+          const modifiedStep = flowStructureUtil.getStep(
+            stepName,
+            updatedFlowVersion.version.trigger,
+          );
+          if (!isNil(modifiedStep)) {
+            if (flowStructureUtil.isTrigger(modifiedStep?.type)) {
+              applyOperation({
+                type: FlowOperationType.UPDATE_TRIGGER,
+                request: modifiedStep as FlowTrigger,
+              });
+            } else {
+              applyOperation({
+                type: FlowOperationType.UPDATE_ACTION,
+                request: modifiedStep as FlowAction,
+              });
+            }
           }
+          return modifiedStep;
         }
       },
-      onSuccess: () => {
-        //we do this so next time the user enters the builder, the sample data is refetched
+      onSuccess: (step) => {
         sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
+        if (step) {
+          onSuccess?.(step);
+        }
       },
     });
   },
@@ -150,11 +153,7 @@ export const testStepHooks = {
           if (!deepEqual(ids, newIds)) {
             if (newData.data.length > 0) {
               await updateSampleData({
-                response: {
-                  testType: 'trigger',
-                  success: true,
-                  output: newData.data[0].payload,
-                },
+                response: { success: true, output: newData.data[0].payload },
               });
             }
             return newData.data;
@@ -193,11 +192,7 @@ export const testStepHooks = {
           mockData,
         });
         await updateSampleData({
-          response: {
-            testType: 'mockData',
-            success: true,
-            output: data.payload,
-          },
+          response: { success: true, output: data.payload },
         });
         return data;
       },
@@ -228,11 +223,7 @@ export const testStepHooks = {
         });
         if (data.length > 0) {
           await updateSampleData({
-            response: {
-              testType: 'trigger',
-              success: true,
-              output: data[0].payload,
-            },
+            response: { success: true, output: data[0].payload },
           });
         }
         return data;
@@ -322,7 +313,7 @@ export const testStepHooks = {
         setConsoleLogs?.(errorMessage ?? null);
         if (success) {
           updateSampleData({
-            response: { testType: 'action', ...testStepResponse },
+            response: testStepResponse,
           });
           onSuccess?.();
         } else {
