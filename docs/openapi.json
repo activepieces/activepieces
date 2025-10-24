@@ -13669,27 +13669,6 @@
                       },
                       "nullable": true
                     },
-                    "copilotSettings": {
-                      "type": "object",
-                      "properties": {
-                        "providers": {
-                          "type": "object",
-                          "properties": {
-                            "openai": {
-                              "type": "object",
-                              "properties": {}
-                            },
-                            "azureOpenai": {
-                              "type": "object",
-                              "properties": {}
-                            }
-                          }
-                        }
-                      },
-                      "required": [
-                        "providers"
-                      ]
-                    },
                     "smtp": {
                       "type": "object",
                       "properties": {},
@@ -22008,6 +21987,3 @@
     "description": "Find more info here"
   }
 }
-
-SimplyCodes
-

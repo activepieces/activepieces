@@ -22,10 +22,6 @@ import { platformApi } from '../lib/platforms-api';
 import { flagsHooks } from './flags-hooks';
 
 export const platformHooks = {
-  isCopilotEnabled: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    return Object.keys(platform?.copilotSettings?.providers ?? {}).length > 0;
-  },
   useCurrentPlatform: () => {
     const currentPlatformId = authenticationSession.getPlatformId();
     const query = useSuspenseQuery({
