@@ -1,4 +1,4 @@
-import { AppSystemProp, ContainerType, PiecesSource, QueueMode, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, PiecesSource, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { s3Helper } from '../file/s3-helper'
@@ -96,7 +96,6 @@ const systemPropValidators: {
     [AppSystemProp.POSTGRES_POOL_SIZE]: numberValidator,
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: numberValidator,
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: booleanValidator,
-    [AppSystemProp.QUEUE_MODE]: enumValidator(Object.values(QueueMode)),
     [AppSystemProp.QUEUE_UI_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,
     [AppSystemProp.QUEUE_UI_USERNAME]: stringValidator,
