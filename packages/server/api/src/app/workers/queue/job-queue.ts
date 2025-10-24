@@ -5,7 +5,7 @@ import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
-import { AddJobParams, JobType, QueueManager } from './queue-manager'
+import { AddJobParams, JobType } from './queue-manager'
 
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
@@ -14,16 +14,15 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 
 export let workerJobsQueue: Queue | undefined = undefined
 
-export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
+export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
-        await Promise.all(queues)
-        log.info('[redisQueueManager#init] Redis queues initialized')
+        await ensureWorkerQueueExists()
+        log.info('[jobQueue#init] Job queue initialized')
     },
     async add(params: AddJobParams<JobType>): Promise<void> {
         const { type, data } = params
 
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const queue = await ensureWorkerQueueExists()
 
         switch (type) {
             case JobType.REPEATING: {
@@ -50,22 +49,29 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
         }
     },
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS)
+        const queue = await ensureWorkerQueueExists()
         log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
         await queue.removeJobScheduler(flowVersionId)
     },
+    async close(): Promise<void> {
+        log.info('[jobQueue#close] Closing job queue')
+     
+        if (workerJobsQueue) {
+            await workerJobsQueue.close()
+        }
+    },
 })
 
-async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
+async function ensureWorkerQueueExists(): Promise<Queue> {
     if (!isNil(workerJobsQueue)) {
         return workerJobsQueue
     }
     const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
 
     const options = {
-        telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
+        telemetry: isOtpEnabled ? new BullMQOtel(QueueName.WORKER_JOBS) : undefined,
         connection: await redisConnections.create(),
         defaultJobOptions: {
             attempts: 5,
@@ -82,7 +88,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
 
     }
 
-    workerJobsQueue = new Queue(queueName, options)
+    workerJobsQueue = new Queue(QueueName.WORKER_JOBS, options)
     await workerJobsQueue.removeGlobalConcurrency()
     await workerJobsQueue.waitUntilReady()
 

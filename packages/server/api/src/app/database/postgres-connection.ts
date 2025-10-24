@@ -277,6 +277,8 @@ import { RestrictOnDeleteProjectForFlow1760376319952 } from './migration/postgre
 import { RemoveAgentidFromMcpEntity1760452015041 } from './migration/postgres/1760452015041-remove-agentid-from-mcp-entity'
 import { RemoveAgentLimitFromPlatfromPlanEntity1760607967671 } from './migration/postgres/1760607967671-remove-agent-limit-from-platfrom-plan-entity'
 import { RemoveTriggerRunEntity1760993216501 } from './migration/postgres/1760993216501-RemoveTriggerRunEntity'
+import { RemoveProjectNotifyStatus1761056570728 } from './migration/postgres/1761056570728-RemoveProjectNotifyStatus'
+import { DeprecateCopilot1761221158764 } from './migration/postgres/1761221158764-DeprecateCopilot'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -474,6 +476,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
         RestrictOnDeleteProjectForFlow1760376319952,
         RemoveTriggerRunEntity1760993216501,
+        DeprecateCopilot1761221158764,
+        RemoveProjectNotifyStatus1761056570728,
     ]
 
     const edition = system.getEdition()

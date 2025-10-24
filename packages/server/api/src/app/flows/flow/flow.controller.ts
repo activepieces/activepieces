@@ -267,6 +267,9 @@ const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDe
        
         })
     }
+    else {
+        done()
+    }
 }
 
 const UpdateFlowRequestOptions = {

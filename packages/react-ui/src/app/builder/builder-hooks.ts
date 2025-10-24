@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
   createContext,
@@ -77,7 +78,6 @@ export enum LeftSideBarType {
   RUNS = 'runs',
   VERSIONS = 'versions',
   RUN_DETAILS = 'run-details',
-  AI_COPILOT = 'chat',
   NONE = 'none',
 }
 
@@ -96,8 +96,8 @@ export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
-  sampleData: Record<string, unknown>;
-  sampleDataInput: Record<string, unknown>;
+  outputSampleData: Record<string, unknown>;
+  inputSampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -133,8 +133,11 @@ export type BuilderState = {
   selectStepByName: (stepName: string) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
-  setSampleData: (stepName: string, payload: unknown) => void;
-  setSampleDataInput: (stepName: string, payload: unknown) => void;
+  setSampleData: (params: {
+    stepName: string;
+    type: 'input' | 'output';
+    value: unknown;
+  }) => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
@@ -191,13 +194,17 @@ export type BuilderState = {
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  'flow' | 'flowVersion' | 'readonly' | 'run' | 'sampleData' | 'sampleDataInput'
+  | 'flow'
+  | 'flowVersion'
+  | 'readonly'
+  | 'run'
+  | 'outputSampleData'
+  | 'inputSampleData'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set, get) => {
-    console.log('createBuilderStore');
     const flowUpdatesQueue = new PromiseQueue();
     const debouncedAddToFlowUpdatesQueue = debounce(
       (updateRequest: () => Promise<void>) => {
@@ -228,8 +235,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               {},
             )
           : {},
-      sampleData: initialState.sampleData,
-      sampleDataInput: initialState.sampleDataInput,
+      outputSampleData: initialState.outputSampleData,
+      inputSampleData: initialState.inputSampleData,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
       leftSidebar: initialState.run
@@ -335,24 +342,32 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         });
       },
       setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
-      setSampleData: (stepName: string, payload: unknown) =>
+      setSampleData: ({
+        stepName,
+        value,
+        type,
+      }: {
+        stepName: string;
+        value: unknown;
+        type: 'input' | 'output';
+      }) =>
         set((state) => {
+          if (type === 'input') {
+            return {
+              inputSampleData: {
+                ...state.inputSampleData,
+                [stepName]: value,
+              },
+            };
+          }
           return {
-            sampleData: {
-              ...state.sampleData,
-              [stepName]: payload,
+            outputSampleData: {
+              ...state.outputSampleData,
+              [stepName]: value,
             },
           };
         }),
-      setSampleDataInput: (stepName: string, payload: unknown) =>
-        set((state) => {
-          return {
-            sampleDataInput: {
-              ...state.sampleDataInput,
-              [stepName]: payload,
-            },
-          };
-        }),
+
       clearRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
@@ -364,10 +379,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       exitStepSettings: () =>
         set((state) => ({
           rightSidebar: RightSideBarType.NONE,
-          leftSidebar:
-            state.leftSidebar === LeftSideBarType.AI_COPILOT
-              ? LeftSideBarType.NONE
-              : state.leftSidebar,
+          leftSidebar: state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
           askAiButtonProps: null,
@@ -468,7 +480,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             console.warn('Cannot apply operation while readonly');
             return state;
           }
-          const newFlowVersion = flowOperations.apply(
+          let newFlowVersion = flowOperations.apply(
             state.flowVersion,
             operation,
           );
@@ -500,17 +512,55 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               flowUpdatesQueue.halt();
             }
           };
-          const isDebouncableOperation =
-            operation.type === FlowOperationType.UPDATE_TRIGGER ||
-            operation.type === FlowOperationType.UPDATE_ACTION;
-          if (isDebouncableOperation) {
-            debouncedAddToFlowUpdatesQueue(
-              operation.request.name,
-              updateRequest,
-            );
-          } else {
-            flowUpdatesQueue.add(updateRequest);
+
+          switch (operation.type) {
+            case FlowOperationType.SAVE_SAMPLE_DATA: {
+              debouncedAddToFlowUpdatesQueue(
+                operation.request.stepName,
+                updateRequest,
+              );
+              const step = flowStructureUtil.getStep(
+                operation.request.stepName,
+                newFlowVersion.trigger,
+              );
+              if (isNil(step)) {
+                console.error(`Step ${operation.request.stepName} not found`);
+                return state;
+              }
+              step.settings.sampleData = {
+                ...step.settings.sampleData,
+                lastTestDate: dayjs().toISOString(),
+              };
+              if (
+                step.type === FlowTriggerType.PIECE ||
+                step.type === FlowTriggerType.EMPTY
+              ) {
+                newFlowVersion = flowOperations.apply(newFlowVersion, {
+                  type: FlowOperationType.UPDATE_TRIGGER,
+                  request: step,
+                });
+              } else {
+                newFlowVersion = flowOperations.apply(newFlowVersion, {
+                  type: FlowOperationType.UPDATE_ACTION,
+                  request: step,
+                });
+              }
+
+              break;
+            }
+            case FlowOperationType.UPDATE_TRIGGER:
+            case FlowOperationType.UPDATE_ACTION: {
+              debouncedAddToFlowUpdatesQueue(
+                operation.request.name,
+                updateRequest,
+              );
+              break;
+            }
+            default: {
+              flowUpdatesQueue.add(updateRequest);
+            }
           }
+
           return { flowVersion: newFlowVersion };
         }),
       setVersion: (flowVersion: FlowVersion) => {
@@ -569,12 +619,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       askAiButtonProps: null,
       setAskAiButtonProps: (props) => {
         return set((state) => {
-          let leftSidebar = state.leftSidebar;
-          if (props) {
-            leftSidebar = LeftSideBarType.AI_COPILOT;
-          } else if (state.leftSidebar === LeftSideBarType.AI_COPILOT) {
-            leftSidebar = LeftSideBarType.NONE;
-          }
+          const leftSidebar = state.leftSidebar;
 
           let rightSidebar = state.rightSidebar;
           if (props && props.type === FlowOperationType.UPDATE_ACTION) {
