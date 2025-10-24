@@ -474,6 +474,9 @@
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
       ],
+      "@activepieces/piece-google-cloud-storage": [
+        "packages/pieces/community/google-cloud-storage/src/index.ts"
+      ],
       "@activepieces/piece-google-contacts": [
         "packages/pieces/community/google-contacts/src/index.ts"
       ],

@@ -7,6 +7,7 @@ import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
+import { workerDistributedLock, workerRedisConnections } from './utils/worker-redis'
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
@@ -91,6 +92,8 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             socket.disconnect()
         }
 
+        await workerRedisConnections.destroy()
+        await workerDistributedLock(log).destroy()
         clearTimeout(heartbeatInterval)
         if (workerMachine.hasSettings()) {
             await engineRunner(log).shutdownAllWorkers()
