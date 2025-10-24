@@ -33,7 +33,7 @@ const getDataSelectorStructure: (
     try {
       return dataSelectorUtils.traverseStep(
         step,
-        state.outputSampleData,
+        state.sampleData,
         state.isFocusInsideListMapperModeInput,
       );
     } catch (error) {
