@@ -337,12 +337,8 @@ export const scrape = createAction({
       formatsArray.push(defaultScreenshot);
     }
 
-    body['formats'] = formatsArray;
-
-    let result: any;
-
-    if (propsValue.formats === 'json') {
-      // /extract endpoint with polling
+    // Add JSON format if selected
+    if (format === 'json') {
       const extractConfig = {
         prompt: propsValue.extractPrompt?.['prompt'],
         mode: propsValue.extractMode?.['mode'],
@@ -350,83 +346,36 @@ export const scrape = createAction({
       };
 
       const jsonFormat = forJsonOutputFormat(extractConfig);
-
-      const extractBody: Record<string, any> = {
-        urls: [propsValue.url],
+      formatsArray.push({
+        type: 'json',
         prompt: jsonFormat.prompt,
-        schema: jsonFormat.schema,
-      };
-
-      // start extract job
-      const startResponse = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: 'https://api.firecrawl.dev/v2/extract',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth}`,
-        },
-        body: extractBody,
+        schema: jsonFormat.schema
       });
-
-      const jobId = startResponse.body.id;
-
-      // poll for completion
-      let completed = false;
-      let extractResult: any;
-      const maxAttempts = 60; // 5 min
-      let attempts = 0;
-
-      while (!completed && attempts < maxAttempts) {
-        attempts++;
-
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
-        // check status
-        const statusResponse = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `https://api.firecrawl.dev/v2/extract/${jobId}`,
-          headers: {
-            'Authorization': `Bearer ${auth}`,
-          },
-        });
-
-        const jobStatus = statusResponse.body.status;
-
-        if (jobStatus === 'completed') {
-          completed = true;
-          extractResult = statusResponse.body;
-        } else if (jobStatus === 'failed') {
-          throw new Error(`Extract job failed: ${JSON.stringify(statusResponse.body)}`);
-        }
-      }
-
-      if (!completed) {
-        throw new Error('Extract job timed out after 5 minutes');
-      }
-
-      result = extractResult;
-    } else {
-      // /scrape end point
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: 'https://api.firecrawl.dev/v2/scrape',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth}`,
-        },
-        body: body,
-      });
-      result = response.body;
-
-      await downloadAndSaveScreenshot(result, context);
-
-      // reorder the data object to put screenshot first, then user's selected format only
-      result.data = {
-        screenshot: result.data.screenshot,
-        [format]: result.data[format],
-        metadata: result.data.metadata
-      };
     }
+
+    body['formats'] = formatsArray;
+
+    // All formats use /scrape endpoint
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://api.firecrawl.dev/v2/scrape',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth}`,
+      },
+      body: body,
+    });
+
+    const result = response.body;
+
+    await downloadAndSaveScreenshot(result, context);
+
+    // reorder the data object to put screenshot first, then user's selected format only
+    result.data = {
+      screenshot: result.data.screenshot,
+      [format]: result.data[format],
+      metadata: result.data.metadata
+    };
 
     return result;
   },
