@@ -1,7 +1,6 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
     FlowRunStatus,
-    isFlowRunStateTerminal,
     isNil,
     StepOutputStatus,
     StepRunResponse,
@@ -20,23 +19,16 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
             if (isNil(params.stepNameToTest)) {
                 return null
             }
-            // In single-step execution mode, the engine executes the step directly without traverse the flow, which means the step will always be at the root level
+
             const stepOutput = flowLogs?.executionState?.steps?.[params.stepNameToTest]
 
-            const isTerminalOutput = isFlowRunStateTerminal({
-                status: params.status,
-                ignoreInternalError: false,
-            })
-            if (isNil(stepOutput) || !isTerminalOutput) {
-                return null
-            }
-            const isSuccess = stepOutput.status === StepOutputStatus.SUCCEEDED || stepOutput.status === StepOutputStatus.PAUSED
+            const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
             return {
                 runId: params.runId,
                 success: isSuccess,
-                input: stepOutput.input,
-                output: stepOutput.output,
-                standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
+                input: stepOutput?.input,
+                output: stepOutput?.output,
+                standardError: isSuccess ? '' : (stepOutput?.errorMessage as string),
                 standardOutput: '',
             }
         }
@@ -44,9 +36,8 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
             exceptionHandler.handle(error, log)
             return null
         }
-    },
+    }
 })
-
 
 type NotifyStepFinishedParams = {
     logsFileId: string
