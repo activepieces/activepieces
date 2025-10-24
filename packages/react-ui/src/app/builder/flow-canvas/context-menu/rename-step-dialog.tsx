@@ -45,11 +45,12 @@ const RenameStepDialog: React.FC<RenameStepDialogProps> = ({
   stepName,
 }) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [flowVersion, applyOperation, setLastRerenderPieceSettingsTimeStamp] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.applyOperation,
-    state.setLastRerenderPieceSettingsTimeStamp,
-  ]);
+  const [flowVersion, applyOperation, setLastRerenderPieceSettingsTimeStamp] =
+    useBuilderStateContext((state) => [
+      state.flowVersion,
+      state.applyOperation,
+      state.setLastRerenderPieceSettingsTimeStamp,
+    ]);
 
   const step = flowStructureUtil.getStep(stepName, flowVersion.trigger);
 
@@ -71,7 +72,9 @@ const RenameStepDialog: React.FC<RenameStepDialogProps> = ({
     }
 
     try {
-      const isTrigger = 'type' in step && Object.values(FlowTriggerType).includes(step.type as FlowTriggerType);
+      const isTrigger =
+        'type' in step &&
+        Object.values(FlowTriggerType).includes(step.type as FlowTriggerType);
 
       if (isTrigger) {
         applyOperation({

@@ -1,3 +1,10 @@
+import {
+  FlowAction,
+  FlowActionType,
+  FlowOperationType,
+  flowStructureUtil,
+  StepLocationRelativeToParent,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowLeftRight,
@@ -8,24 +15,8 @@ import {
   Route,
   RouteOff,
   Trash,
-  Pencil
+  Pencil,
 } from 'lucide-react';
-
-import {
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-} from '@/components/ui/context-menu';
-import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
-import {
-  FlowAction,
-  FlowActionType,
-  FlowOperationType,
-  flowStructureUtil,
-  StepLocationRelativeToParent,
-} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -41,8 +32,16 @@ import {
   CanvasShortcuts,
   ContextMenuType,
 } from './canvas-context-menu';
-
 import { RenameStepDialog } from './rename-step-dialog';
+
+import {
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+} from '@/components/ui/context-menu';
+import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
 
 const ShortcutWrapper = ({
   children,
