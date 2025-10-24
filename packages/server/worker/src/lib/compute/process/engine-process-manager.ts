@@ -286,6 +286,6 @@ async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger
 
 function isWorkerNotResuable(): boolean {
     const isDevelopment = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-    const isSandboxed = workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED
-    return isDevelopment || isSandboxed
+    const isSandboxProcessOnly = workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED
+    return isDevelopment || isSandboxProcessOnly
 }

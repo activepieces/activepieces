@@ -18,6 +18,7 @@ const loadCodeSandbox = async (): Promise<CodeSandbox> => {
         [ExecutionMode.UNSANDBOXED]: loadNoOpCodeSandbox,
         [ExecutionMode.SANDBOXED]: loadNoOpCodeSandbox,
         [ExecutionMode.SANDBOX_CODE_ONLY]: loadV8IsolateSandbox,
+        [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: loadV8IsolateSandbox,
     }
     assertNotNullOrUndefined(EXECUTION_MODE, 'AP_EXECUTION_MODE')
     const loader = loaders[EXECUTION_MODE]

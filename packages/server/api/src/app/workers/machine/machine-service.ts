@@ -39,10 +39,10 @@ export const machineService = (_log: FastifyBaseLogger) => {
                     const dedicatedWorkerConfig = await platformPlanService(_log).getDedicatedWorkerConfig(platformIdForDedicatedWorker)
                     if (!isNil(dedicatedWorkerConfig)) {
                         if (dedicatedWorkerConfig.trustedEnvironment) {
-                            executionMode = ExecutionMode.SANDBOX_CODE_ONLY
+                            executionMode = ExecutionMode.SANDBOXED
                         }
                         else {
-                            executionMode = ExecutionMode.SANDBOXED
+                            executionMode = ExecutionMode.SANDBOX_CODE_AND_PROCESS
                         }
                     }
                 }
