@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, QueueMode, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -50,7 +50,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.PIECES_SOURCE]: PiecesSource.DB,
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
-    [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [AppSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
