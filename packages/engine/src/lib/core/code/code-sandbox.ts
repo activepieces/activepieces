@@ -16,7 +16,7 @@ const loadV8IsolateSandbox = async (): Promise<CodeSandbox> => {
 const loadCodeSandbox = async (): Promise<CodeSandbox> => {
     const loaders = {
         [ExecutionMode.UNSANDBOXED]: loadNoOpCodeSandbox,
-        [ExecutionMode.SANDBOXED]: loadNoOpCodeSandbox,
+        [ExecutionMode.SANDBOX_PROCESS]: loadNoOpCodeSandbox,
         [ExecutionMode.SANDBOX_CODE_ONLY]: loadV8IsolateSandbox,
         [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: loadV8IsolateSandbox,
     }

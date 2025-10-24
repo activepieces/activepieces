@@ -257,7 +257,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const edition = system.getEdition()
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && environment === ApEnvironment.PRODUCTION) {
         const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.SANDBOX_CODE_AND_PROCESS].includes(executionMode)) {
+        if (![ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.SANDBOX_CODE_AND_PROCESS].includes(executionMode)) {
             throw new Error(JSON.stringify({
                 message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',

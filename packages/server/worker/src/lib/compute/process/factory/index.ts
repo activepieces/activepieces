@@ -8,7 +8,7 @@ import { noSandboxProcess } from './no-sandbox-process'
 
 const factory = {
     [ExecutionMode.UNSANDBOXED]: noSandboxProcess,
-    [ExecutionMode.SANDBOXED]: isolateSandboxProcess,
+    [ExecutionMode.SANDBOX_PROCESS]: isolateSandboxProcess,
     [ExecutionMode.SANDBOX_CODE_ONLY]: noSandboxProcess,
     [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: isolateSandboxProcess,
 }

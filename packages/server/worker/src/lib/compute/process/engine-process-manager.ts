@@ -288,7 +288,7 @@ function isWorkerNotResuable(): boolean {
     const settings = workerMachine.getSettings()
     const isDev = settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT
     const isDedicated = !isNil(settings.PLATFORM_ID_FOR_DEDICATED_WORKER)
-    const isSandboxed = settings.EXECUTION_MODE === ExecutionMode.SANDBOXED
+    const isSandboxed = settings.EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS
   
     if (isDev) return true
     if (isDedicated) return false
