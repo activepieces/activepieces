@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import axios from 'axios'
-import { getMigratedEnvironmentValue } from './env-migrations'
+import { environmentMigrations } from './env-migrations'
 
 export const systemConstants = {
     PACKAGE_ARCHIVE_PATH: 'cache/archives',
@@ -149,7 +149,8 @@ export const environmentVariables = {
         return value ? parseInt(value) : undefined
     },
     getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
-        return getMigratedEnvironmentValue(prop)
+        const environmnetVariables = environmentMigrations.migrate()
+        return environmnetVariables[prop]
     },
     getEnvironmentOrThrow: (prop: WorkerSystemProp | AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)

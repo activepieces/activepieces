@@ -1,112 +1,40 @@
 import { ExecutionMode } from '@activepieces/shared'
 import { RedisType } from './redis/types'
-import { AppSystemProp, PiecesSource, SystemProp } from './system-props'
+import { AppSystemProp, PiecesSource } from './system-props'
 
-export enum MigrationType {
-    RENAME = 'RENAME',
-    VALUE_TRANSFORM = 'VALUE_TRANSFORM',
-}
+const envPrefix = (prop: string) => `AP_${prop}`
 
-type RenameEnvironmentMigration = {
-    type: MigrationType.RENAME
-    newProp: SystemProp
-    oldProp: string
-}
+export const environmentMigrations = {
+    migrate(): Record<string, string | undefined> {
 
-type ValueTransformEnvironmentMigration = {
-    type: MigrationType.VALUE_TRANSFORM
-    prop: SystemProp
-    transform: (value: string) => string | undefined
-}
-
-export type EnvironmentMigration = RenameEnvironmentMigration | ValueTransformEnvironmentMigration
-
-let cachedMigrations: EnvironmentMigration[] | null = null
-
-function getEnvironmentMigrations(): EnvironmentMigration[] {
-    if (cachedMigrations) {
-        return cachedMigrations
-    }
-    
-    cachedMigrations = [
-        {
-            type: MigrationType.RENAME,
-            newProp: AppSystemProp.REDIS_TYPE,
-            oldProp: 'QUEUE_MODE',
-        },
-        {
-            type: MigrationType.VALUE_TRANSFORM,
-            prop: AppSystemProp.REDIS_TYPE,
-            transform: (value: string): RedisType | undefined => {
-                if (Object.values(RedisType).includes(value as RedisType)) {
-                    return value as RedisType
-                }
-                if (value === 'REDIS') {
-                    return RedisType.STANDALONE
-                }
-                return undefined
-            },
-        },
-        {
-            type: MigrationType.VALUE_TRANSFORM,
-            prop: AppSystemProp.PIECES_SOURCE,
-            transform: (value: string): PiecesSource | undefined => {
-                if (value === 'CLOUD_AND_DB') {
-                    return PiecesSource.DB
-                }
-                return undefined
-            },
-        },
-        {
-            type: MigrationType.VALUE_TRANSFORM,
-            prop: AppSystemProp.EXECUTION_MODE,
-            transform: (value: string): ExecutionMode | undefined => {
-                if (value === 'SANDBOXED') {
-                    return ExecutionMode.SANDBOX_PROCESS
-                }
-                return undefined
-            },
-        },
-    ]
-    
-    return cachedMigrations
-}
-
-export function getMigratedEnvironmentValue(prop: SystemProp): string | undefined {
-    const envVarName = `AP_${prop}`
-    let value = process.env[envVarName]
-    
-    const migrations = getEnvironmentMigrations()
-
-    if (!value) {
-        const renameMigration = migrations.find(
-            (m): m is RenameEnvironmentMigration =>
-                m.type === MigrationType.RENAME && m.newProp === prop,
-        )
-
-        if (renameMigration) {
-            const oldEnvVarName = `AP_${renameMigration.oldProp}`
-            const oldValue = process.env[oldEnvVarName]
-            if (oldValue) {
-                value = oldValue
-            }
+        return {
+            ...process.env,
+            [envPrefix(AppSystemProp.PIECES_SOURCE)]: migratePiecesSource(process.env[AppSystemProp.PIECES_SOURCE]),
+            [envPrefix(AppSystemProp.EXECUTION_MODE)]: migrateExecutionMode(process.env[AppSystemProp.EXECUTION_MODE]),
+            [envPrefix(AppSystemProp.REDIS_TYPE)]: migrateRedisType(process.env[AppSystemProp.REDIS_TYPE]),
         }
+    },
+}
+
+function migrateRedisType(currentRedisType: string | undefined): string | undefined {
+    const queueMode = process.env['AP_QUEUE_MODE']
+    if (queueMode === 'MEMORY') {
+        return RedisType.MEMORY
     }
+    return currentRedisType
+}
 
-    if (value) {
-        const valueTransformMigrations = migrations.filter(
-            (m): m is ValueTransformEnvironmentMigration =>
-                m.type === MigrationType.VALUE_TRANSFORM && m.prop === prop,
-        )
-
-        for (const migration of valueTransformMigrations) {
-            const transformedValue = migration.transform(value)
-            if (transformedValue !== undefined) {
-                value = transformedValue
-            }
-        }
+function migrateExecutionMode(currentExecutionMode: string | undefined): string | undefined {
+    if (currentExecutionMode === 'SANDBOXED') {
+        return ExecutionMode.SANDBOX_PROCESS
     }
+    return currentExecutionMode
+}
 
-    return value
+function migratePiecesSource(currentPiecesSource: string | undefined): string | undefined {
+    if (currentPiecesSource === 'CLOUD_AND_DB') {
+        return PiecesSource.DB
+    }
+    return currentPiecesSource
 }
 
