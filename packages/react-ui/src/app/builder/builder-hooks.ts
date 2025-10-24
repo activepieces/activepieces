@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
   createContext,
@@ -96,8 +95,8 @@ export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
-  outputSampleData: Record<string, unknown>;
-  inputSampleData: Record<string, unknown>;
+  sampleData: Record<string, unknown>;
+  sampleDataInput: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -133,11 +132,8 @@ export type BuilderState = {
   selectStepByName: (stepName: string) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
-  setSampleData: (params: {
-    stepName: string;
-    type: 'input' | 'output';
-    value: unknown;
-  }) => void;
+  setSampleData: (stepName: string, payload: unknown) => void;
+  setSampleDataInput: (stepName: string, payload: unknown) => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
@@ -194,17 +190,13 @@ export type BuilderState = {
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  | 'flow'
-  | 'flowVersion'
-  | 'readonly'
-  | 'run'
-  | 'outputSampleData'
-  | 'inputSampleData'
+  'flow' | 'flowVersion' | 'readonly' | 'run' | 'sampleData' | 'sampleDataInput'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set, get) => {
+    console.log('createBuilderStore');
     const flowUpdatesQueue = new PromiseQueue();
     const debouncedAddToFlowUpdatesQueue = debounce(
       (updateRequest: () => Promise<void>) => {
@@ -235,8 +227,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               {},
             )
           : {},
-      outputSampleData: initialState.outputSampleData,
-      inputSampleData: initialState.inputSampleData,
+      sampleData: initialState.sampleData,
+      sampleDataInput: initialState.sampleDataInput,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
       leftSidebar: initialState.run
@@ -342,32 +334,24 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         });
       },
       setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
-      setSampleData: ({
-        stepName,
-        value,
-        type,
-      }: {
-        stepName: string;
-        value: unknown;
-        type: 'input' | 'output';
-      }) =>
+      setSampleData: (stepName: string, payload: unknown) =>
         set((state) => {
-          if (type === 'input') {
-            return {
-              inputSampleData: {
-                ...state.inputSampleData,
-                [stepName]: value,
-              },
-            };
-          }
           return {
-            outputSampleData: {
-              ...state.outputSampleData,
-              [stepName]: value,
+            sampleData: {
+              ...state.sampleData,
+              [stepName]: payload,
             },
           };
         }),
-
+      setSampleDataInput: (stepName: string, payload: unknown) =>
+        set((state) => {
+          return {
+            sampleDataInput: {
+              ...state.sampleDataInput,
+              [stepName]: payload,
+            },
+          };
+        }),
       clearRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
@@ -480,7 +464,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             console.warn('Cannot apply operation while readonly');
             return state;
           }
-          let newFlowVersion = flowOperations.apply(
+          const newFlowVersion = flowOperations.apply(
             state.flowVersion,
             operation,
           );
@@ -512,55 +496,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               flowUpdatesQueue.halt();
             }
           };
-
-          switch (operation.type) {
-            case FlowOperationType.SAVE_SAMPLE_DATA: {
-              debouncedAddToFlowUpdatesQueue(
-                operation.request.stepName,
-                updateRequest,
-              );
-              const step = flowStructureUtil.getStep(
-                operation.request.stepName,
-                newFlowVersion.trigger,
-              );
-              if (isNil(step)) {
-                console.error(`Step ${operation.request.stepName} not found`);
-                return state;
-              }
-              step.settings.sampleData = {
-                ...step.settings.sampleData,
-                lastTestDate: dayjs().toISOString(),
-              };
-              if (
-                step.type === FlowTriggerType.PIECE ||
-                step.type === FlowTriggerType.EMPTY
-              ) {
-                newFlowVersion = flowOperations.apply(newFlowVersion, {
-                  type: FlowOperationType.UPDATE_TRIGGER,
-                  request: step,
-                });
-              } else {
-                newFlowVersion = flowOperations.apply(newFlowVersion, {
-                  type: FlowOperationType.UPDATE_ACTION,
-                  request: step,
-                });
-              }
-
-              break;
-            }
-            case FlowOperationType.UPDATE_TRIGGER:
-            case FlowOperationType.UPDATE_ACTION: {
-              debouncedAddToFlowUpdatesQueue(
-                operation.request.name,
-                updateRequest,
-              );
-              break;
-            }
-            default: {
-              flowUpdatesQueue.add(updateRequest);
-            }
+          const isDebouncableOperation =
+            operation.type === FlowOperationType.UPDATE_TRIGGER ||
+            operation.type === FlowOperationType.UPDATE_ACTION;
+          if (isDebouncableOperation) {
+            debouncedAddToFlowUpdatesQueue(
+              operation.request.name,
+              updateRequest,
+            );
+          } else {
+            flowUpdatesQueue.add(updateRequest);
           }
-
           return { flowVersion: newFlowVersion };
         }),
       setVersion: (flowVersion: FlowVersion) => {

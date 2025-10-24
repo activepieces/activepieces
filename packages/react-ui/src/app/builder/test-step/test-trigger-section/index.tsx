@@ -49,8 +49,8 @@ const TestTriggerSection = React.memo(
     const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
       useBuilderStateContext((state) => {
         return {
-          sampleData: state.outputSampleData[formValues.name],
-          sampleDataInput: state.inputSampleData[formValues.name],
+          sampleData: state.sampleData[formValues.name],
+          sampleDataInput: state.sampleDataInput[formValues.name],
           setChatDrawerOpenSource: state.setChatDrawerOpenSource,
         };
       });
