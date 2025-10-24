@@ -112,6 +112,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         }
     },
     async getPlatformsIdsWithDedicatedWorkers(): Promise<string[]> {
+        if (edition === ApEdition.COMMUNITY) {
+            return []
+        }
+
         const platformPlans = await platformPlanRepo().find({
             select: ['platformId'],
             where: {
@@ -132,6 +136,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return platformIds
     },
     async isDedicatedWorkersEnabled(platformId: string): Promise<boolean> {
+        if (edition === ApEdition.COMMUNITY) {
+            return false
+        }
+
         const isEnabled = await distributedStore.getBoolean(getPlatformHasDedicatedWorkersKey(platformId))
         if (!isNil(isEnabled)) {
             return isEnabled
@@ -147,6 +155,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return true
     },
     async getDedicatedWorkerConfig(platformId: string): Promise<PlatformPlan['dedicatedWorkers']> {
+        if (edition === ApEdition.COMMUNITY) {
+            return null
+        }
+
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (isNil(platformPlan?.dedicatedWorkers)) {
             return null

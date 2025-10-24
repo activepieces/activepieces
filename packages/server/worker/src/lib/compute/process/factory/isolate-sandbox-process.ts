@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { arch } from 'node:process'
 import { execPromise, fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
-import { ExecutionMode, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { workerMachine } from '../../../utils/machine'
@@ -60,15 +60,11 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
 })
 
 function getEnvironmentVariables(env: Record<string, string | undefined>, workerId: string): string[] {
-    const executionMode = workerMachine.getSettings().EXECUTION_MODE
-    const isSandboxCodeAndProcess = executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
-    
     return Object.entries({
         ...env,
         AP_BASE_CODE_DIRECTORY: '/codes',
         HOME: '/tmp/',
         WORKER_ID: workerId,
-        ...(isSandboxCodeAndProcess && { AP_EXECUTION_MODE: ExecutionMode.SANDBOX_CODE_ONLY }),
     }).map(([key, value]) => `--env=${key}='${value}'`)
 }
 

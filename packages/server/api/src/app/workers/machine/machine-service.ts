@@ -1,6 +1,5 @@
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
-    ApEdition,
     ExecutionMode,
     isNil,
     MachineInformation,
@@ -32,21 +31,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
             await workerRepo().delete({ id: request.workerId })
         },
         async onConnection(platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
-            let executionMode = system.getOrThrow(AppSystemProp.EXECUTION_MODE)
-            if (!isNil(platformIdForDedicatedWorker)) {
-                const edition = system.getEdition()
-                if (edition !== ApEdition.COMMUNITY) {
-                    const dedicatedWorkerConfig = await platformPlanService(_log).getDedicatedWorkerConfig(platformIdForDedicatedWorker)
-                    if (!isNil(dedicatedWorkerConfig)) {
-                        if (dedicatedWorkerConfig.trustedEnvironment) {
-                            executionMode = ExecutionMode.SANDBOXED
-                        }
-                        else {
-                            executionMode = ExecutionMode.SANDBOX_CODE_AND_PROCESS
-                        }
-                    }
-                }
-            }
+            const executionMode = await getExecutionMode(_log, platformIdForDedicatedWorker)
 
             return  {
                 JWT_SECRET: await jwtUtils.getJwtSecret(),
@@ -137,6 +122,21 @@ export const machineService = (_log: FastifyBaseLogger) => {
             }))
         },
     }
+}
+
+
+async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
+    const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
+    if (isNil(platformIdForDedicatedWorker)) {
+        return executionMode
+    }
+
+    const dedicatedWorkerConfig = await platformPlanService(log).getDedicatedWorkerConfig(platformIdForDedicatedWorker)
+    if (isNil(dedicatedWorkerConfig) || dedicatedWorkerConfig.trustedEnvironment) {
+        return executionMode
+    }
+
+    return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
 type OnDisconnectParams = {

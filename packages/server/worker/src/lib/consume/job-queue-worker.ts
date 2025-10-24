@@ -32,11 +32,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
             return
         }
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
-        let queueName: string = QueueName.WORKER_JOBS
-        const platformIdForDedicatedWorker = workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER
-        if (!isNil(platformIdForDedicatedWorker)) {
-            queueName = getPlatformQueueName(platformIdForDedicatedWorker)
-        }
+        const queueName = getWorkerQueueName()
         worker = new Worker<JobData>(queueName, async (job, token) => {
             try {
                 const jobId = job.id
@@ -170,4 +166,12 @@ async function shouldSkipDisabledFlow(data: JobData): Promise<boolean> {
         }
     }
     return false
+}
+
+function getWorkerQueueName(): string {
+    const platformIdForDedicatedWorker = workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER
+    if (!isNil(platformIdForDedicatedWorker)) {
+        return getPlatformQueueName(platformIdForDedicatedWorker)
+    }
+    return QueueName.WORKER_JOBS
 }
