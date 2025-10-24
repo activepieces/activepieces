@@ -82,15 +82,15 @@ export const CanvasContextMenuContent = ({
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
       !!(flowStructureUtil.getStep(node, flowVersion.trigger) as FlowAction)
-        ?.skip,
+        ?.skip
   );
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
-    (node) => node === flowVersion.trigger.name,
+    (node) => node === flowVersion.trigger.name
   );
 
   const firstSelectedStep = flowStructureUtil.getStep(
     selectedNodes[0],
-    flowVersion.trigger,
+    flowVersion.trigger
   );
   const showPasteAfterLastStep =
     !readonly && contextMenuType === ContextMenuType.CANVAS;
@@ -242,7 +242,7 @@ export const CanvasContextMenuContent = ({
                   stepLocationRelativeToParent:
                     StepLocationRelativeToParent.INSIDE_LOOP,
                 },
-                applyOperation,
+                applyOperation
               );
             }}
             className="flex items-center gap-2"
@@ -262,7 +262,7 @@ export const CanvasContextMenuContent = ({
                   stepLocationRelativeToParent:
                     StepLocationRelativeToParent.AFTER,
                 },
-                applyOperation,
+                applyOperation
               );
             }}
             className="flex items-center gap-2"
@@ -293,13 +293,13 @@ export const CanvasContextMenuContent = ({
                               StepLocationRelativeToParent.INSIDE_BRANCH,
                             branchIndex,
                           },
-                          applyOperation,
+                          applyOperation
                         );
                       }}
                     >
                       {branch.branchName}
                     </ContextMenuItem>
-                  ),
+                  )
                 )}
               <ContextMenuItem
                 onClick={() => {
@@ -321,7 +321,7 @@ export const CanvasContextMenuContent = ({
                       branchIndex:
                         firstSelectedStep.settings.branches.length - 1,
                     },
-                    applyOperation,
+                    applyOperation
                   );
                 }}
               >
