@@ -1,5 +1,5 @@
 
-import { AGENT_PIECE_NAME, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isFlowRunStateTerminal, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -62,19 +62,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
             
             if (!isNil(response)) {
-                const isAgentStep = stepNameToTest === AGENT_PIECE_NAME
-                
-                const isAgentStepFinished = isAgentStep && 
-                    stepRunProgressHandler(request.log).isStepExecutionComplete(response, runDetails.status)
-                
-                let wsEvent
-                if (isAgentStep && !isAgentStepFinished) {
-                    wsEvent = WebsocketClientEvent.AGENT_RUN_PROGRESS
-                }
-                else {
-                    wsEvent = WebsocketClientEvent.TEST_STEP_FINISHED
-                }
-                
+                const isTerminalOutput = isFlowRunStateTerminal({
+                    status: runDetails.status,
+                    ignoreInternalError: false,
+                })
+
+                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRES
                 app.io.to(request.principal.projectId).emit(wsEvent, response)
             }
         }
