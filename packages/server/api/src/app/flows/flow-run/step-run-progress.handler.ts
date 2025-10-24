@@ -36,7 +36,7 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
             exceptionHandler.handle(error, log)
             return null
         }
-    }
+    },
 })
 
 type NotifyStepFinishedParams = {
