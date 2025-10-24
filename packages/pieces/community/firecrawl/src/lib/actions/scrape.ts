@@ -1,7 +1,7 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
-import { Metadata } from '@activepieces/shared';
+import Ajv from 'ajv';
 
 function forScreenshotOutputFormat(screenshotOptions: any): any {
   let fullPage = true;
@@ -16,38 +16,71 @@ function forScreenshotOutputFormat(screenshotOptions: any): any {
   };
 }
 
-function forJsonOutputFormat(jsonExtractionType: any, jsonExtractionConfig: any): any {
-  if (!jsonExtractionType || !jsonExtractionType['type']) {
-    return 'json';
+function forJsonOutputFormat(jsonExtractionConfig: any): any {
+
+  if (!jsonExtractionConfig['schema']){
+    throw new Error('schema is required.')
   }
 
-  const extractionType = jsonExtractionType['type'] as string;
+  // follow logic from utility ai- extract structured data
+  let schemaDefinition: any;
 
-  if (extractionType === 'schema') {
-    if (jsonExtractionConfig && jsonExtractionConfig['schema']) {
-      return {
-        type: 'json',
-        schema: jsonExtractionConfig['schema'],
-      };
+  if (jsonExtractionConfig['mode'] === 'advanced'){
+    const ajv = new Ajv();
+    let schema = jsonExtractionConfig['schema']['fields'];
+    const isValidSchema = ajv.validateSchema(schema);
+
+    if (!isValidSchema) {
+      throw new Error(
+        JSON.stringify({
+          message: 'Invalid JSON schema',
+          errors: ajv.errors,
+        }),
+      );
     }
-  } else if (extractionType === 'prompt') {
-    if (jsonExtractionConfig && jsonExtractionConfig['prompt']) {
-      return {
-        type: 'json',
-        prompt: jsonExtractionConfig['prompt'],
+
+    schemaDefinition = schema;
+  } else {
+    const fields = jsonExtractionConfig['schema']['fields'] as Array<{
+      name: string,
+      description?: string;
+      type: string;
+      isRequired: boolean;
+    }>;
+
+    const properties: Record<string, unknown> = {};
+    const required: string[] =[];
+
+    fields.forEach((field) => {
+      if (!/^[a-zA-Z0-9_.-]+$/.test(field.name)) {
+        throw new Error(`Invalid field name: ${field.name}. Field names can only contain letters, numbers, underscores, dots and hyphens.`);
+      }
+
+      properties[field.name] = {
+        type: field.type,
+        description: field.description,
       };
-    }
+
+      if (field.isRequired) {
+        required.push(field.name);
+      }
+    });
+
+    schemaDefinition = {
+      type: 'object' as const,
+      properties,
+      required,
+    };
   }
 
-  return 'json';
+  return {
+    prompt: jsonExtractionConfig['prompt'],
+    schema: schemaDefinition,
+  }
 }
 
 function forSimpleOutputFormat(format: string): string {
   return format;
-}
-
-function isPdfUrl(url: string): boolean {
-  return url.toLowerCase().endsWith('.pdf');
 }
 
 // screenshot always included in output so that user can pass it into a google drive and keep track of what is being scraped
@@ -173,7 +206,6 @@ export const scrape = createAction({
       props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
         const format = propsValue['formats'] as unknown as string;
 
-        // Only show if 'screenshot' is selected
         if (format !== 'screenshot') {
           return {};
         }
@@ -188,9 +220,9 @@ export const scrape = createAction({
         };
       },
     }),
-    jsonExtractionType: Property.DynamicProperties({
-      displayName: 'JSON Extraction Type',
-      description: 'Choose how to extract JSON data.',
+    extractPrompt: Property.DynamicProperties({
+      displayName: 'Extraction Prompt',
+      description: 'Prompt for extracting data.',
       required: false,
       refreshers: ['formats'],
       props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
@@ -201,26 +233,20 @@ export const scrape = createAction({
         }
 
         return {
-          type: Property.StaticDropdown({
-            displayName: 'Extraction Type',
-            description: 'Choose how to extract JSON data.',
-            required: true,
-            options: {
-              options: [
-                { label: 'Schema', value: 'schema' },
-                { label: 'Prompt', value: 'prompt' }
-              ]
-            },
-            defaultValue: 'schema',
+          prompt: Property.LongText({
+            displayName: 'Extraction Prompt',
+            description: 'Describe what information you want to extract.',
+            required: false,
+            defaultValue: 'Extract the following data from the provided text.',
           }),
         };
       },
     }),
-    jsonExtractionConfig: Property.DynamicProperties({
-      displayName: 'JSON Extraction Config',
-      description: 'Configure JSON extraction.',
+    extractMode: Property.DynamicProperties({
+      displayName: 'Schema Mode',
+      description: 'Data schema type.',
       required: false,
-      refreshers: ['formats', 'jsonExtractionType'],
+      refreshers: ['formats'],
       props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
         const format = propsValue['formats'] as unknown as string;
 
@@ -228,44 +254,90 @@ export const scrape = createAction({
           return {};
         }
 
-        const jsonExtractionType = propsValue['jsonExtractionType'] as Record<string, any>;
-
-        if (!jsonExtractionType || !jsonExtractionType['type']) {
-          return {};
-        }
-
-        const extractionType = jsonExtractionType['type'] as string;
-
-        if (extractionType === 'schema') {
+        return {
+          mode: Property.StaticDropdown<'simple' | 'advanced'>({
+            displayName: 'Data Schema Type',
+            description: 'For complex schema, you can use advanced mode.',
+            required: true,
+            defaultValue: 'simple',
+            options: {
+              disabled: false,
+              options: [
+                { label: 'Simple', value: 'simple' },
+                { label: 'Advanced', value: 'advanced' },
+              ],
+            },
+          }),
+        };
+      },
+    }),
+    extractSchema: Property.DynamicProperties({
+      displayName: 'Data Definition',
+      required: false,
+      refreshers: ['extractMode'],
+      props: async (propsValue) => {
+        const mode = propsValue['extractMode']?.['mode'] as unknown as 'simple' | 'advanced';
+        if (mode === 'advanced') {
           return {
-            schema: Property.Json({
+            fields: Property.Json({
               displayName: 'JSON Schema',
-              description: 'JSON schema defining the structure of data to extract.',
+              description:
+                'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
               required: true,
               defaultValue: {
-                "type": "object",
-                "properties": {
-                  "company_name": {"type": "string"},
-                  "pricing_tiers": {"type": "array", "items": {"type": "string"}},
-                  "has_free_tier": {"type": "boolean"}
-                }
+                type: 'object',
+                properties: {
+                  name: {
+                    type: 'string',
+                  },
+                  age: {
+                    type: 'number',
+                  },
+                },
+                required: ['name'],
               },
             }),
           };
         }
-
-        if (extractionType === 'prompt') {
-          return {
-            prompt: Property.LongText({
-              displayName: 'JSON Prompt',
-              description: 'Describe what information you want to extract in natural language.',
-              required: true,
-              defaultValue: 'Extract the main product information including name, price, and description.',
-            }),
-          };
-        }
-
-        return {};
+        return {
+          fields: Property.Array({
+            displayName: 'Data Definition',
+            required: true,
+            properties: {
+              name: Property.ShortText({
+                displayName: 'Name',
+                description:
+                  'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+                required: true,
+              }),
+              description: Property.LongText({
+                displayName: 'Description',
+                description:
+                  'Brief description of the data, this hints for the AI on what to look for',
+                required: false,
+              }),
+              type: Property.StaticDropdown({
+                displayName: 'Data Type',
+                description: 'Type of parameter.',
+                required: true,
+                defaultValue: 'string',
+                options: {
+                  disabled: false,
+                  options: [
+                    { label: 'Text', value: 'string' },
+                    { label: 'Number', value: 'number' },
+                    { label: 'Boolean', value: 'boolean' },
+                  ],
+                },
+              }),
+              isRequired: Property.Checkbox({
+                displayName: 'Fail if Not present?',
+                required: true,
+                defaultValue: false,
+              }),
+            },
+          }),
+        };
       },
     }),
   },
@@ -280,58 +352,107 @@ export const scrape = createAction({
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
-
+    
     // prep to pass into firecrawl
     const format = propsValue.formats as string;
     const formatsArray: any[] = [];
 
-    // add parser to body object if pdf is detected
-    if (isPdfUrl(propsValue.url)){
-      body['parsers'] = ["pdf"];
-      formatsArray.push('markdown');
-      body['formats'] = formatsArray;
-    } else {
-      // user selection
-      if (format === 'screenshot') {
-        const screenshotFormat = forScreenshotOutputFormat(propsValue.screenshotOptions);
-        formatsArray.push(screenshotFormat);
-      } else if (format === 'json') {
-        const jsonFormat = forJsonOutputFormat(propsValue.jsonExtractionType, propsValue.jsonExtractionConfig);
-        formatsArray.push(jsonFormat);
-      } else {
-        const simpleFormat = forSimpleOutputFormat(format);
-        formatsArray.push(simpleFormat);
-      }
-
-      if (format !== 'screenshot') {
-        const defaultScreenshot = forDefaultScreenshot();
-        formatsArray.push(defaultScreenshot);
-      }
-
-      body['formats'] = formatsArray;
+    // user selection
+    if (format === 'screenshot') {
+      const screenshotFormat = forScreenshotOutputFormat(propsValue.screenshotOptions);
+      formatsArray.push(screenshotFormat);
+    } else if (format !== 'json') {
+      const simpleFormat = forSimpleOutputFormat(format);
+      formatsArray.push(simpleFormat);
     }
-    
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.firecrawl.dev/v2/scrape',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
-      },
-      body: body,
-    });
 
-    const result = response.body;
+    if (format !== 'screenshot') {
+      const defaultScreenshot = forDefaultScreenshot();
+      formatsArray.push(defaultScreenshot);
+    }
 
-    if (isPdfUrl(propsValue.url)) {
-      // pdfs only have markdown, no screenshot
-      result.data = {
-        note_to_user: "pdf detected. we only support markdown output format for pdfs.",
-        markdown: result.data.markdown,
-        metadata: result.data.metadata,
+    body['formats'] = formatsArray;
+
+    let result: any;
+
+    if (propsValue.formats === 'json') {
+      // /extract endpoint with polling
+      const extractConfig = {
+        prompt: propsValue.extractPrompt?.['prompt'],
+        mode: propsValue.extractMode?.['mode'],
+        schema: propsValue.extractSchema
+      };
+
+      const jsonFormat = forJsonOutputFormat(extractConfig);
+
+      const extractBody: Record<string, any> = {
+        urls: [propsValue.url],
+        prompt: jsonFormat.prompt,
+        schema: jsonFormat.schema,
+      };
+
+      // start extract job
+      const startResponse = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://api.firecrawl.dev/v2/extract',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth}`,
+        },
+        body: extractBody,
+      });
+
+      const jobId = startResponse.body.id;
+
+      // poll for completion
+      let completed = false;
+      let extractResult: any;
+      const maxAttempts = 60; // 5 min
+      let attempts = 0;
+
+      while (!completed && attempts < maxAttempts) {
+        attempts++;
+
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
+        const statusResponse = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: `https://api.firecrawl.dev/v2/extract/${jobId}`,
+          headers: {
+            'Authorization': `Bearer ${auth}`,
+          },
+        });
+
+        const jobStatus = statusResponse.body.status;
+
+        if (jobStatus === 'completed') {
+          completed = true;
+          extractResult = statusResponse.body;
+        } else if (jobStatus === 'failed') {
+          throw new Error(`Extract job failed: ${JSON.stringify(statusResponse.body)}`);
+        }
       }
+
+      if (!completed) {
+        throw new Error('Extract job timed out after 5 minutes');
+      }
+
+      result = extractResult;
     } else {
+      // /scrape end point
+      const response = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://api.firecrawl.dev/v2/scrape',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth}`,
+        },
+        body: body,
+      });
+      result = response.body;
+
       await downloadAndSaveScreenshot(result, context);
+
       // reorder the data object to put screenshot first, then user's selected format only
       result.data = {
         screenshot: result.data.screenshot,
@@ -339,6 +460,7 @@ export const scrape = createAction({
         metadata: result.data.metadata
       };
     }
+
     return result;
   },
 }); 

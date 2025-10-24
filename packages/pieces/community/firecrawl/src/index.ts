@@ -4,6 +4,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { scrape } from './lib/actions/scrape';
 import { startCrawl } from './lib/actions/start-crawl';
 import { crawlResults } from './lib/actions/crawl-results';
+import { map } from './lib/actions/map';
 
 const markdownDescription = `
 Follow these steps to obtain your Firecrawl API Key:
@@ -52,14 +53,16 @@ export const firecrawl = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["geekyme-fsmk", "geekyme"],
+  authors: ["geekyme-fsmk", "geekyme", "arinmakk"],
   auth: firecrawlAuth,
   actions: [
     scrape,
     startCrawl,
     crawlResults,
+    map,
+
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.firecrawl.dev/v1',
+      baseUrl: () => 'https://api.firecrawl.dev/v2',
       auth: firecrawlAuth,
       authMapping: async (auth) => ({
         'Authorization': `Bearer ${auth}`,
