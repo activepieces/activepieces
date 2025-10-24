@@ -2,19 +2,7 @@ import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@ac
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
 import Ajv from 'ajv';
-
-function forScreenshotOutputFormat(screenshotOptions: any): any {
-  let fullPage = true;
-
-  if (screenshotOptions['fullPage'] === false) {
-    fullPage = false;
-  }
-
-  return {
-    type: 'screenshot',
-    fullPage: fullPage,
-  };
-}
+import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot } from '../common/common';
 
 function forJsonOutputFormat(jsonExtractionConfig: any): any {
 
@@ -79,39 +67,11 @@ function forJsonOutputFormat(jsonExtractionConfig: any): any {
   }
 }
 
-function forSimpleOutputFormat(format: string): string {
-  return format;
-}
-
 // screenshot always included in output so that user can pass it into a google drive and keep track of what is being scraped
 function forDefaultScreenshot(): any {
   return {
     type: 'screenshot',
     fullPage: true,
-  };
-}
-
-// function to download screenshot and save as file
-async function downloadAndSaveScreenshot(result: any, context: any): Promise<void> {
-  const screenshotUrl = result.data.screenshot;
-
-  const response = await httpClient.sendRequest({
-    method: HttpMethod.GET,
-    url: screenshotUrl,
-    responseType: 'arraybuffer'
-  });
-
-  const fileName = `screenshot-${Date.now()}.png`;
-
-  const fileUrl = await context.files.write({
-    fileName: fileName,
-    data: Buffer.from(response.body),
-  });
-
-  // replace the screenshot url with the saved file info
-  result.data.screenshot = {
-    fileName: fileName,
-    fileUrl: fileUrl,
   };
 }
 
@@ -274,9 +234,15 @@ export const scrape = createAction({
     extractSchema: Property.DynamicProperties({
       displayName: 'Data Definition',
       required: false,
-      refreshers: ['extractMode'],
-      props: async (propsValue) => {
+      refreshers: ['formats', 'extractMode'],
+      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
         const mode = propsValue['extractMode']?.['mode'] as unknown as 'simple' | 'advanced';
+        const format = propsValue['formats'] as unknown as string;
+
+        if (format !== 'json') {
+          return {}; 
+        }
+
         if (mode === 'advanced') {
           return {
             fields: Property.Json({
@@ -415,6 +381,7 @@ export const scrape = createAction({
 
         await new Promise(resolve => setTimeout(resolve, 5000));
 
+        // check status
         const statusResponse = await httpClient.sendRequest({
           method: HttpMethod.GET,
           url: `https://api.firecrawl.dev/v2/extract/${jobId}`,
