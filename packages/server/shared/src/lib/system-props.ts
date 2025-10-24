@@ -150,7 +150,7 @@ export const environmentVariables = {
     },
     getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
         const environmnetVariables = environmentMigrations.migrate()
-        return environmnetVariables[prop]
+        return environmnetVariables['AP_' + prop]
     },
     getEnvironmentOrThrow: (prop: WorkerSystemProp | AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)
