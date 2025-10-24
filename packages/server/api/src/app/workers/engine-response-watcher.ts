@@ -59,6 +59,7 @@ export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
         })
     },
 
+    // TODO: Remove this when it's all over
     async publish<T>(
         requestId: string,
         workerServerId: string, 

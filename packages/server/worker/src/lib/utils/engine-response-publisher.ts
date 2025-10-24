@@ -4,7 +4,7 @@ import { workerRedisConnections } from './worker-redis'
 
 type EngineResponseWithId<T> = { requestId: string, response: T }
 
-const pubsub = pubsubFactory(() => workerRedisConnections.create())
+const pubsub = pubsubFactory(workerRedisConnections.create)
 
 export const engineResponsePublisher = (log: FastifyBaseLogger) => ({
     async publish<T>(

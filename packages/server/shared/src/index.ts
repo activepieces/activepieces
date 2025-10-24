@@ -15,6 +15,7 @@ export * from './lib/system-props'
 export * from './lib/ap-axios'
 
 export * from './lib/redis/distributed-lock-factory'
+export * from './lib/redis/distributed-store-factory'
 
 export * from './lib/redis/types'
 export * from './lib/redis/index'

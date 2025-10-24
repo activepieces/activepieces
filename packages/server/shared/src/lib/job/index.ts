@@ -6,6 +6,8 @@ import {
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
+export * from './runs-metadata-queue-factory'
+
 export enum JobStatus {
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
@@ -13,6 +15,7 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
+    RUNS_METADATA = 'runsMetadata',
 }
 
 
@@ -24,6 +27,12 @@ export const ApQueueJob = Type.Object({
 })
 
 export type ApQueueJob = Static<typeof ApQueueJob>
+export const SendEngineUpdateRequest = Type.Object({
+    workerServerId: Type.String(),
+    requestId: Type.String(),
+    response: Type.Unknown(),
+})
+export type SendEngineUpdateRequest = Static<typeof SendEngineUpdateRequest>
 
 export const MigrateJobsRequest = Type.Object({
     jobData: Type.Record(Type.String(), Type.Unknown()),
