@@ -28,7 +28,7 @@ export const distributedLock = distributedLockFactory(redisConnections.create)
 
 function getRedisType() {
     const checkIfUserHasDeprecatedQueueMode =
-    system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY
+        system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY
     if (checkIfUserHasDeprecatedQueueMode) {
         return RedisType.MEMORY
     }

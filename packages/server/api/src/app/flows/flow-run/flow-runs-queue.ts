@@ -1,4 +1,4 @@
-import { apAxios, apDayjsDuration, AppSystemProp } from '@activepieces/server-shared'
+import { apAxios, apDayjsDuration, AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { ApId, assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, ProjectId, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { Queue, Worker } from 'bullmq'
@@ -117,7 +117,11 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             })
                         }
                         catch (error) {
-                            log.error(error, '[runsMetadataQueue#worker] Error saving runs metadata')
+                            log.error({
+                                error,
+                                data: job.data,
+                            }, '[runsMetadataQueue#worker] Error saving runs metadata')
+                            exceptionHandler.handle(error, log)
                             throw error
                         }
                     },
@@ -150,6 +154,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     get(): Queue<RunsMetadataJobData> {
         assertNotNullOrUndefined(runsMetadataQueueInstance, 'Runs metadata queue not initialized')
         return runsMetadataQueueInstance
+    },
+    async close(): Promise<void> {
+        if (runsMetadataQueueInstance) {
+            await runsMetadataQueueInstance.close()
+        }
+
+        if (runsMetadataWorker) {
+            await runsMetadataWorker.close()
+        }
     },
 
 })
