@@ -1,5 +1,6 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
+    AGENT_PIECE_NAME,
     FlowRunStatus,
     isFlowRunStateTerminal,
     isNil,
@@ -12,6 +13,8 @@ import { flowRunLogsService } from './logs/flow-run-logs-service'
 export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
     async extractStepResponse(params: NotifyStepFinishedParams): Promise<StepRunResponse | null> {
         try {
+            const isAgentStep = params.stepNameToTest === AGENT_PIECE_NAME
+
             const flowLogs = await flowRunLogsService(log).getLogs({
                 logsFileId: params.logsFileId,
                 projectId: params.projectId,
@@ -20,23 +23,36 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
             if (isNil(params.stepNameToTest)) {
                 return null
             }
-            // In single-step execution mode, the engine executes the step directly without traverse the flow, which means the step will always be at the root level
+
             const stepOutput = flowLogs?.executionState?.steps?.[params.stepNameToTest]
 
             const isTerminalOutput = isFlowRunStateTerminal({
                 status: params.status,
                 ignoreInternalError: false,
             })
-            if (isNil(stepOutput) || !isTerminalOutput) {
+            
+            if (!isAgentStep && (isNil(stepOutput) || !isTerminalOutput)) {
                 return null
             }
-            const isSuccess = stepOutput.status === StepOutputStatus.SUCCEEDED || stepOutput.status === StepOutputStatus.PAUSED
+            
+            if (isAgentStep && isNil(stepOutput)) {
+                return {
+                    runId: params.runId,
+                    success: false,
+                    input: undefined,
+                    output: undefined,
+                    standardError: '',
+                    standardOutput: '',
+                }
+            }
+
+            const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
             return {
                 runId: params.runId,
                 success: isSuccess,
-                input: stepOutput.input,
-                output: stepOutput.output,
-                standardError: isSuccess ? '' : (stepOutput.errorMessage as string),
+                input: stepOutput?.input,
+                output: stepOutput?.output,
+                standardError: isSuccess ? '' : (stepOutput?.errorMessage as string),
                 standardOutput: '',
             }
         }
@@ -45,8 +61,16 @@ export const stepRunProgressHandler = (log: FastifyBaseLogger) => ({
             return null
         }
     },
+    isStepExecutionComplete(response: StepRunResponse, flowStatus: FlowRunStatus): boolean {
+        const isTerminalFlowState = isFlowRunStateTerminal({
+            status: flowStatus,
+            ignoreInternalError: false,
+        })
+        
+        const hasStepOutput = !isNil(response.output) || !isNil(response.standardError)
+        return isTerminalFlowState || response.success || hasStepOutput
+    },
 })
-
 
 type NotifyStepFinishedParams = {
     logsFileId: string

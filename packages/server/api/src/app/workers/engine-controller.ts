@@ -1,5 +1,5 @@
 
-import { EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { AGENT_PIECE_NAME, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -30,7 +30,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, stepNameToTest, logsFileId } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName, stepNameToTest, logsFileId } = request.body
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
@@ -52,7 +52,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             logsFileId,
         })
 
-
         if (!isNil(stepNameToTest)) {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
                 logsFileId: logsFileId ?? '',
@@ -61,8 +60,22 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 runId,
                 stepNameToTest,
             })
+            
             if (!isNil(response)) {
-                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+                const isAgentStep = stepNameToTest === AGENT_PIECE_NAME
+                
+                const isAgentStepFinished = isAgentStep && 
+                    stepRunProgressHandler(request.log).isStepExecutionComplete(response, runDetails.status)
+                
+                let wsEvent
+                if (isAgentStep && !isAgentStepFinished) {
+                    wsEvent = WebsocketClientEvent.AGENT_RUN_PROGRESS
+                }
+                else {
+                    wsEvent = WebsocketClientEvent.TEST_STEP_FINISHED
+                }
+                
+                app.io.to(request.principal.projectId).emit(wsEvent, response)
             }
         }
         return reply.status(StatusCodes.NO_CONTENT).send()
