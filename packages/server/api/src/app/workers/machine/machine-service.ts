@@ -32,7 +32,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
         },
         async onConnection(platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
             const executionMode = await getExecutionMode(_log, platformIdForDedicatedWorker)
-
+            const isDedicatedWorker = !isNil(platformIdForDedicatedWorker)
             return {
                 JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
@@ -59,7 +59,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 PUBLIC_URL: await domainHelper.getPublicUrl({
                     path: '',
                 }),
-                PROJECT_RATE_LIMITER_ENABLED: system.getBooleanOrThrow(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED),
+                PROJECT_RATE_LIMITER_ENABLED: isDedicatedWorker ? false : system.getBooleanOrThrow(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED),
                 MAX_CONCURRENT_JOBS_PER_PROJECT: system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),

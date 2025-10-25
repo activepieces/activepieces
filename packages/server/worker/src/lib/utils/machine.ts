@@ -57,6 +57,9 @@ export const workerMachine = {
             freeSandboxes: engineProcessManager.getFreeSandboxes(),
         }
     },
+    isDedicatedWorker: () => {
+        return !isNil(workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER)
+    },
     init: async (_settings: WorkerSettingsResponse, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,

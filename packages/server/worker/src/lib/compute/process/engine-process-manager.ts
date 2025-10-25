@@ -290,7 +290,7 @@ function isWorkerReusable(): boolean {
     if (isDev) {
         return false
     }
-    const isDedicated = !isNil(settings.PLATFORM_ID_FOR_DEDICATED_WORKER)
+    const isDedicated = workerMachine.isDedicatedWorker()
     if (isDedicated) {
         return true
     }
