@@ -33,7 +33,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
         async onConnection(platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
             const executionMode = await getExecutionMode(_log, platformIdForDedicatedWorker)
 
-            return  {
+            return {
                 JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
@@ -132,10 +132,12 @@ async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWo
     }
 
     const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
-    if (isNil(dedicatedWorkerConfig) || dedicatedWorkerConfig.trustedEnvironment) {
+    if (isNil(dedicatedWorkerConfig)) {
         return executionMode
     }
-
+    if (dedicatedWorkerConfig.trustedEnvironment) {
+        return ExecutionMode.SANDBOX_PROCESS
+    }
     return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
