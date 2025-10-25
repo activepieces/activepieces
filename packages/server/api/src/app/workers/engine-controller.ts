@@ -67,7 +67,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                     ignoreInternalError: false,
                 })
 
-                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRES
+                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRESS
                 app.io.to(request.principal.projectId).emit(wsEvent, response)
             }
         }

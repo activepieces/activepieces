@@ -37,8 +37,8 @@ import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-r
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
+import { flowMigrations } from '../flow-version/migrations'
 import { flowService } from './flow.service'
-import { flowMigrations } from './migrations'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -61,7 +61,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
-
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
 
@@ -265,6 +264,7 @@ const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDe
             done()
         }).catch((error) => {
             request.log.error(error)
+       
         })
     }
     else {

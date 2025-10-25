@@ -154,7 +154,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customRolesEnabled: key.customRolesEnabled,
                 manageProjectsEnabled: key.manageProjectsEnabled,
                 managePiecesEnabled: key.managePiecesEnabled,
-                agentsLimit: undefined,
                 mcpsEnabled: key.mcpsEnabled,
                 todosEnabled: key.todosEnabled,
                 tablesEnabled: key.tablesEnabled,

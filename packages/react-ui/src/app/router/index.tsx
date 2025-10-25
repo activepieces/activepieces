@@ -31,7 +31,6 @@ import { ProjectDashboardLayout } from '../components/project-dashboard-layout';
 import ProjectSettingsLayout from '../components/project-settings-layout';
 import { BuilderNavigationSidebar } from '../components/sidebar/builder';
 import NotFoundPage from '../routes/404-page';
-import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
@@ -134,16 +133,6 @@ const routes = [
       </PageTitle>
     ),
   },
-  ...ProjectRouterWrapper({
-    path: '/agents',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Agents">
-          <AgentsPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
   {
     path: '/chats/:flowId',
     element: (

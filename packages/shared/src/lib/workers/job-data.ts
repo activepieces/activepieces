@@ -40,7 +40,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.RENEW_WEBHOOK:
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
-        case WorkerJobType.EXECUTE_AGENT:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job.environment, job.synchronousHandlerId)
@@ -59,7 +58,6 @@ export enum WorkerJobType {
     EXECUTE_POLLING = 'EXECUTE_POLLING',
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
-    EXECUTE_AGENT = 'EXECUTE_AGENT',
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
@@ -70,7 +68,6 @@ export enum WorkerJobType {
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_WEBHOOK,
     WorkerJobType.EXECUTE_FLOW,
-    WorkerJobType.EXECUTE_AGENT,
     WorkerJobType.EXECUTE_VALIDATION,
     WorkerJobType.EXECUTE_TRIGGER_HOOK,
     WorkerJobType.EXECUTE_PROPERTY,
@@ -124,17 +121,6 @@ export const ExecuteFlowJobData = Type.Object({
 })
 export type ExecuteFlowJobData = Static<typeof ExecuteFlowJobData>
 
-export const AgentJobData = Type.Object({
-    jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
-    agentId: Type.String(),
-    projectId: Type.String(),
-    schemaVersion: Type.Number(),
-    platformId: Type.String(),
-    agentRunId: Type.String(),
-    prompt: Type.String(),
-})
-export type AgentJobData = Static<typeof AgentJobData>
-
 export const WebhookJobData = Type.Object({
     projectId: Type.String(),
     platformId: Type.String(),
@@ -152,7 +138,6 @@ export const WebhookJobData = Type.Object({
     traceContext: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
-
 
 export const ExecuteValidateAuthJobData = Type.Object({
     requestId: Type.String(),
@@ -249,6 +234,5 @@ export const JobData = Type.Union([
     ExecuteFlowJobData,
     WebhookJobData,
     UserInteractionJobData,
-    AgentJobData,
 ])
 export type JobData = Static<typeof JobData>

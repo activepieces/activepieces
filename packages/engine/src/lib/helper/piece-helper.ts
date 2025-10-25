@@ -58,6 +58,9 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
+                step: {
+                    name: params.actionOrTriggerName,
+                },
                 connections: utils.createConnectionManager({
                     projectId: params.projectId,
                     engineToken: params.engineToken,

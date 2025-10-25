@@ -50,6 +50,9 @@ export const triggerHelper = {
             run: {
                 id: constants.flowRunId,
             },
+            step: {
+                name: triggerName,
+            },
             project: {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
@@ -91,6 +94,9 @@ export const triggerHelper = {
                 flowId: params.flowVersion.flowId,
                 engineToken: params.engineToken,
             }),
+            step: {
+                name: triggerName,
+            },
             app: {
                 createListeners({ events, identifierKey, identifierValue }: Listener): void {
                     appListeners.push({ events, identifierValue, identifierKey })

@@ -90,6 +90,7 @@ const StepSettingsContainer = () => {
         context,
         options,
       );
+
       const cleanedNewValues = formUtils.removeUndefinedFromInput(values);
       const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
         currentValuesRef.current,
@@ -131,6 +132,7 @@ const StepSettingsContainer = () => {
     [FlowActionType.CODE, FlowActionType.PIECE].includes(
       modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
+
   return (
     <Form {...form}>
       <form

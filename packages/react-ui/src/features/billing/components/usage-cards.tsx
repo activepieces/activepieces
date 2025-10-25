@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import {
-  Bot,
   ClipboardCheck,
   Database,
   LayoutGrid,
@@ -41,8 +40,7 @@ export const UsageCards = ({
   return (
     <div
       className={cn('grid gap-6', {
-        'grid-cols-3': true,
-        'grid-cols-4': isBusinessPlan,
+        'grid-cols-4': true,
         '2xl:grid-cols-3': plan.plan === PlanName.PLUS,
         '2xl:grid-cols-7': isFree,
       })}
@@ -93,13 +91,6 @@ export const UsageCards = ({
         title={t('Tables')}
         used={usage.tables}
         total={plan.tablesLimit}
-      />
-
-      <UsageCard
-        icon={<Bot className="w-4 h-4" />}
-        title={t('Agents')}
-        used={usage.agents}
-        total={plan.agentsLimit}
       />
     </div>
   );

@@ -5,9 +5,9 @@ import {
     spreadIfDefined,
 } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
-import { flowMigrations } from '../flow/migrations'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
+import { flowMigrations } from './migrations'
 
 const log = system.globalLogger()
 
@@ -20,12 +20,10 @@ export const flowVersionMigrationService = {
 
         log.info('Starting flow version migration')
 
-
         const backupFiles = flowVersion.backupFiles ?? {}
         if (!isNil(flowVersion.schemaVersion)) {
             backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
         }
-        
 
         const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion)
 
