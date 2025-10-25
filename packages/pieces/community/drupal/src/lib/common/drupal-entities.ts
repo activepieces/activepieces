@@ -227,6 +227,50 @@ export async function fetchEntityFieldConfig(auth: DrupalAuthType, entityType: s
 }
 
 /**
+ * Checks if the entity type and bundle are supported by the workflow
+ *
+ * This gets the actual workflow configuration on the site and determines if the
+ * given entity type and bundle is supported by the workflow.
+ *
+ * @param auth - Drupal authentication credentials
+ * @param entityType - The entity type (e.g., 'node', 'user')
+ * @param bundle - The bundle (e.g., 'article', 'page')
+ * @returns True if the entity type and bundle are supported by the workflow,
+ * false otherwise
+ */
+export async function isEntitySupportingWorkflow(auth: DrupalAuthType, entityType: string, bundle: string): Promise<boolean> {
+  try {
+    const response = await makeJsonApiRequest(
+      auth,
+      `${auth.website_url}/jsonapi/workflow/workflow`,
+      HttpMethod.GET
+    );
+
+    if (response.status === 200 && response.body) {
+      const workflows = (response.body as any).data || [];
+      let found = false;
+      workflows.forEach((workflow: any) => {
+        const attrs = workflow?.attributes ?? {};
+        const typeSettings = attrs?.type_settings ?? {};
+        const entityTypes = typeSettings?.entity_types ?? {};
+
+        if (!entityTypes) {
+          return;
+        }
+        if (entityTypes[entityType].includes(bundle)) {
+          found = true;
+        }
+      });
+      return found;
+    }
+  } catch (e) {
+    // Ignore this as the workflow may not be supported or the endpoint missing.
+  }
+
+  return false;
+}
+
+/**
  * Checks if a field type can be edited with simple form inputs
  *
  * Some Drupal field types are too complex for simple text/checkbox inputs
@@ -300,6 +344,11 @@ export async function getEditableFieldsWithLabels(
     weight: number;
   }> = [];
 
+  const baseFields = ['title', 'name'];
+  if (!await isEntitySupportingWorkflow(auth, entityType, bundle)) {
+    baseFields.push('status');
+  }
+
   for (const [fieldName, config] of Object.entries(formDisplayContent)) {
     if (config && typeof config === 'object' && config.type) {
       const configInfo = fieldConfig[fieldName];
@@ -317,7 +366,7 @@ export async function getEditableFieldsWithLabels(
         }
       } else {
         // Base field - check if it's editable
-        if (['title', 'name', 'status'].includes(fieldName)) {
+        if (baseFields.includes(fieldName)) {
           fields.push({
             name: fieldName,
             type: fieldName === 'status' ? 'boolean' : 'string',

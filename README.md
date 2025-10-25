@@ -68,7 +68,7 @@ When you contribute pieces to Activepieces they become automatically available a
 
 <img src="/docs/resources/create-action.png" alt="">
 
-- **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
+- **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK to help you build flows inside the builder.
 
 - **🏢 Enterprise-Ready**: Developers set up the tools, and anyone in the organization can use the no-code builder. Full customization from branding to control.
 
@@ -131,7 +131,7 @@ Read more about the feature comparison here https://www.activepieces.com/docs/ab
 
 # 🌐 Contributions
 
-We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
+We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/developers/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
 ## 📚 Translations
 

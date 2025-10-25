@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
-import { AddJobParams, JobType, QueueManager } from './queue-manager'
+import { AddJobParams, JobType } from './queue-manager'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -14,7 +14,7 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 
 const dedicatedWorkersQueues = new Map<string, Queue>()
 
-export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
+export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {        
         const platformIdsWithDedicatedWorkers = await dedicatedWorkers(log).getPlatformIds()
         
@@ -85,6 +85,13 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
             throw Error('Shared queue not initialized')
         }
         return queue
+    },
+    async close(): Promise<void> {
+        log.info('[jobQueue#close] Closing job queue')
+        const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+        await Promise.allSettled(
+            allQueues.map(queue => queue.close()),
+        )
     },
 })
 

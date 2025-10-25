@@ -14,13 +14,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
 
 
-export enum CopilotInstanceTypes {
-    AZURE_OPENAI = 'AZURE_OPENAI',
-    OPENAI = 'OPENAI',
-}
-
-
-
 export enum DatabaseType {
     POSTGRES = 'POSTGRES',
     SQLITE3 = 'SQLITE3',
