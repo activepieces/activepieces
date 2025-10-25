@@ -28,7 +28,11 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             reconnection: true,
         })
 
-        socket.auth = { token: workerToken, workerId: workerMachine.getWorkerId() }
+        socket.auth = {
+            token: workerToken,
+            workerId: workerMachine.getWorkerId(),
+            platformIdForDedicatedWorker: workerMachine.getPlatformIdForDedicatedWorker(),
+        }
 
         socket.on('connect', async () => {
             log.info({

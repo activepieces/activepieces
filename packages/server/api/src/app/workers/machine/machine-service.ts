@@ -1,5 +1,7 @@
 import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
+    ExecutionMode,
+    isNil,
     MachineInformation,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
@@ -12,6 +14,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { WorkerMachineEntity } from './machine-entity'
@@ -27,12 +30,14 @@ export const machineService = (_log: FastifyBaseLogger) => {
             })
             await workerRepo().delete({ id: request.workerId })
         },
-        async onConnection(): Promise<WorkerSettingsResponse> {
-            return  {
+        async onConnection(platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+            const executionMode = await getExecutionMode(_log, platformIdForDedicatedWorker)
+            const isDedicatedWorker = !isNil(platformIdForDedicatedWorker)
+            return {
                 JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
-                EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
+                EXECUTION_MODE: executionMode,
                 TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
@@ -53,7 +58,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 PUBLIC_URL: await domainHelper.getPublicUrl({
                     path: '',
                 }),
-                PROJECT_RATE_LIMITER_ENABLED: system.getBooleanOrThrow(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED),
+                PROJECT_RATE_LIMITER_ENABLED: isDedicatedWorker ? false : system.getBooleanOrThrow(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED),
                 MAX_CONCURRENT_JOBS_PER_PROJECT: system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
@@ -116,6 +121,23 @@ export const machineService = (_log: FastifyBaseLogger) => {
             }))
         },
     }
+}
+
+
+async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
+    const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
+    if (isNil(platformIdForDedicatedWorker)) {
+        return executionMode
+    }
+
+    const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
+    if (isNil(dedicatedWorkerConfig)) {
+        return executionMode
+    }
+    if (dedicatedWorkerConfig.trustedEnvironment) {
+        return ExecutionMode.SANDBOX_PROCESS
+    }
+    return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
 type OnDisconnectParams = {

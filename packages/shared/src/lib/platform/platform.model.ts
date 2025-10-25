@@ -92,7 +92,11 @@ export const PlatformPlan = Type.Object({
     projectsLimit: Nullable(Type.Number()),
     tablesLimit: Nullable(Type.Number()),
     mcpLimit: Nullable(Type.Number()),
-    activeFlowsLimit: Nullable(Type.Number())
+    activeFlowsLimit: Nullable(Type.Number()),
+
+    dedicatedWorkers: Nullable(Type.Object({
+        trustedEnvironment: Type.Boolean(),
+    })),
 })
 export type PlatformPlan = Static<typeof PlatformPlan>
 
