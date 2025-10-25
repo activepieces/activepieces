@@ -1,4 +1,4 @@
-import { apDayjsDuration, AppSystemProp, getPlatformQueueName, QueueName } from '@activepieces/server-shared'
+import { apDayjsDuration, AppSystemProp, getPlatformQueueName, memoryLock, QueueName } from '@activepieces/server-shared'
 import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -15,9 +15,9 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 const dedicatedWorkersQueues = new Map<string, Queue>()
 
 export const jobQueue = (log: FastifyBaseLogger) => ({
-    async init(): Promise<void> {        
+    async init(): Promise<void> {
         const platformIdsWithDedicatedWorkers = await dedicatedWorkers(log).getPlatformIds()
-        
+
         await Promise.all([
             ...platformIdsWithDedicatedWorkers.map(async (platformId) => {
                 const queueName = await getQueueName(platformId, log)
@@ -97,45 +97,54 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
 
 async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, queueName: string }): Promise<Queue> {
     const existingQueue = dedicatedWorkersQueues.get(queueName)
-    if (existingQueue) {
+    if (!isNil(existingQueue)) {
         return existingQueue
     }
+    return memoryLock.runExclusive({
+        key: `ensure_queue_exists_${queueName}`,
+        fn: async () => {
+            const existingQueue = dedicatedWorkersQueues.get(queueName)
+            if (!isNil(existingQueue)) {
+                return existingQueue
+            }
 
-    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-    const queue = new Queue(queueName, {
-        telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
-        connection: await redisConnections.create(),
-        defaultJobOptions: {
-            attempts: 5,
-            backoff: {
-                type: 'exponential',
-                delay: EIGHT_MINUTES_IN_MILLISECONDS,
-            },
-            removeOnComplete: true,
-            removeOnFail: {
-                age: REDIS_FAILED_JOB_RETENTION_DAYS,
-                count: REDIS_FAILED_JOB_RETRY_COUNT,
-            },
+            const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
+            const queue = new Queue(queueName, {
+                telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
+                connection: await redisConnections.create(),
+                defaultJobOptions: {
+                    attempts: 5,
+                    backoff: {
+                        type: 'exponential',
+                        delay: EIGHT_MINUTES_IN_MILLISECONDS,
+                    },
+                    removeOnComplete: true,
+                    removeOnFail: {
+                        age: REDIS_FAILED_JOB_RETENTION_DAYS,
+                        count: REDIS_FAILED_JOB_RETRY_COUNT,
+                    },
+                },
+            })
+
+            await queue.removeGlobalConcurrency()
+            await queue.waitUntilReady()
+
+            dedicatedWorkersQueues.set(queueName, queue)
+
+            log.info({
+                queueName,
+            }, '[jobQueue#ensureQueueExists] Queue created')
+
+            return queue    
         },
     })
-    
-    await queue.removeGlobalConcurrency()
-    await queue.waitUntilReady()
-
-    dedicatedWorkersQueues.set(queueName, queue)
-    
-    log.info({
-        queueName,
-    }, '[jobQueue#ensureQueueExists] Queue created')
-
-    return queue
 }
 
 async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
     if (!platformId) {
         return QueueName.WORKER_JOBS
     }
-    
+
     const isDedicatedWorkersEnabled = await dedicatedWorkers(log).isEnabledForPlatform(platformId)
     return isDedicatedWorkersEnabled ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
 }
