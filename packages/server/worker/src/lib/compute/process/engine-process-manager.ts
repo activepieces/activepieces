@@ -66,10 +66,12 @@ export const engineProcessManager = {
             }, 'Acquired worker')
             assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
-            const workerIsDead = isNil(processes[workerIndex]) || !processes[workerIndex]?.connected || !isWorkerReusable()
+            const workerIsDisconnected = isNil(processes[workerIndex]) || !engineSocketServer.isConnected(processIds[workerIndex])
+            const workerIsDead = workerIsDisconnected || !isWorkerReusable()
             if (workerIsDead) {
                 log.info({
                     workerIndex,
+                    workerIsDisconnected,
                 }, 'Worker is not available, creating a new one')
                 if (!isNil(processes[workerIndex])) {
                     await forceTerminate(processes[workerIndex], log)

@@ -70,6 +70,10 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 throw error
             }
         },
+        isConnected(workerId: string): boolean {
+            const socket = sockets[workerId]
+            return !isNil(socket) && socket.readyState === WebSocket.OPEN
+        },
 
         cleanupSocket(workerId: string): void {
             const socket = sockets[workerId]
