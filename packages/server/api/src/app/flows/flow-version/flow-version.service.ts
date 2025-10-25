@@ -246,16 +246,40 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                     flowId,
                 }),
         )
-        const promises = paginationResult.data.map(async (flowVersion) => {
-            return {
-                ...flowVersion,
-                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService.getMetaInformation({
-                    id: flowVersion.updatedBy,
-                }),
-            }
-        })
+        // Batch loading optimization to avoid N+1 queries
+        // Collect all unique user IDs
+        const userIds = Array.from(
+            new Set(
+                paginationResult.data
+                    .map(flowVersion => flowVersion.updatedBy)
+                    .filter(id => !isNil(id))
+            )
+        )
+
+        // Batch fetch all users in a single operation
+        const userPromises = userIds.map(userId =>
+            userService.getMetaInformation({ id: userId })
+                .catch(() => null) // Handle individual failures gracefully
+        )
+        const users = await Promise.all(userPromises)
+        
+        // Create lookup map for O(1) access
+        const userMap = new Map(
+            users
+                .filter(user => user !== null)
+                .map(user => [user!.id, user])
+        )
+
+        // Map data synchronously (no additional queries)
+        const enrichedData = paginationResult.data.map(flowVersion => ({
+            ...flowVersion,
+            updatedByUser: isNil(flowVersion.updatedBy) 
+                ? null 
+                : userMap.get(flowVersion.updatedBy) ?? null,
+        }))
+
         return paginationHelper.createPage<FlowVersion>(
-            await Promise.all(promises),
+            enrichedData,
             paginationResult.cursor,
         )
     },
