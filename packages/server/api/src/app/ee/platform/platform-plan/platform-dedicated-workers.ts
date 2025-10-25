@@ -42,7 +42,7 @@ export const dedicatedWorkers = (_log: FastifyBaseLogger) => ({
     },
     async updateWorkerConfig({ operation, platformId, trustedEnvironment }: UpdateParams): Promise<void> {
         const platformKey = getPlatformHasDedicatedWorkersKey(platformId)
-        await platformPlanRepo().update(platformId, { dedicatedWorkers: operation === 'enable' ? { trustedEnvironment } : null })
+        await platformPlanRepo().update({ platformId }, { dedicatedWorkers: operation === 'enable' ? { trustedEnvironment } : null })
         if (operation === 'enable') {
             await distributedStore.putBoolean(platformKey, true)
         }
