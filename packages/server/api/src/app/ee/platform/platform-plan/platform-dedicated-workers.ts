@@ -10,7 +10,7 @@ const getPlatformHasDedicatedWorkersKey = (platformId: string): string => `platf
 
 export const dedicatedWorkers = (_log: FastifyBaseLogger) => ({
     async getPlatformIds(): Promise<string[]> {
-        if (edition === ApEdition.COMMUNITY) {
+        if (edition !== ApEdition.CLOUD) {
             return []
         }
 
@@ -21,39 +21,37 @@ export const dedicatedWorkers = (_log: FastifyBaseLogger) => ({
             },
         })
         const platformIds = platformPlans.map(({ platformId }) => platformId)
-        
+
         const cacheEntries = platformIds.map(platformId => ({
             key: getPlatformHasDedicatedWorkersKey(platformId),
             value: true,
         }))
-        
+
         if (cacheEntries.length > 0) {
             await distributedStore.putBooleanBatch(cacheEntries)
         }
-        
+
         return platformIds
     },
     async isEnabledForPlatform(platformId: string): Promise<boolean> {
-        if (edition === ApEdition.COMMUNITY) {
+        if (edition !== ApEdition.CLOUD) {
             return false
         }
 
-        const isEnabled = await distributedStore.getBoolean(getPlatformHasDedicatedWorkersKey(platformId))
-        if (!isNil(isEnabled)) {
-            return isEnabled
+        return await distributedStore.getBoolean(getPlatformHasDedicatedWorkersKey(platformId)) ?? false
+    },
+    async updateWorkerConfig({ operation, platformId, trustedEnvironment }: UpdateParams): Promise<void> {
+        const platformKey = getPlatformHasDedicatedWorkersKey(platformId)
+        await platformPlanRepo().update(platformId, { dedicatedWorkers: operation === 'enable' ? { trustedEnvironment } : null })
+        if (operation === 'enable') {
+            await distributedStore.putBoolean(platformKey, true)
         }
-
-        const platformPlan = await platformPlanRepo().findOne({ where: { platformId }, select: ['dedicatedWorkers'] })
-        if (isNil(platformPlan?.dedicatedWorkers)) {
-            await distributedStore.putBoolean(getPlatformHasDedicatedWorkersKey(platformId), false)
-            return false
+        else {
+            await distributedStore.delete(platformKey)
         }
-
-        await distributedStore.putBoolean(getPlatformHasDedicatedWorkersKey(platformId), true)
-        return true
     },
     async getWorkerConfig(platformId: string): Promise<PlatformPlan['dedicatedWorkers']> {
-        if (edition === ApEdition.COMMUNITY) {
+        if (edition !== ApEdition.CLOUD) {
             return null
         }
 
@@ -65,3 +63,9 @@ export const dedicatedWorkers = (_log: FastifyBaseLogger) => ({
     },
 })
 
+
+type UpdateParams = {
+    operation: 'enable' | 'disable'
+    platformId: string
+    trustedEnvironment: boolean
+}

@@ -9,9 +9,9 @@ export const environmentMigrations = {
 
         return {
             ...process.env,
-            [envPrefix(AppSystemProp.PIECES_SOURCE)]: migratePiecesSource(process.env[AppSystemProp.PIECES_SOURCE]),
-            [envPrefix(AppSystemProp.EXECUTION_MODE)]: migrateExecutionMode(process.env[AppSystemProp.EXECUTION_MODE]),
-            [envPrefix(AppSystemProp.REDIS_TYPE)]: migrateRedisType(process.env[AppSystemProp.REDIS_TYPE]),
+            [envPrefix(AppSystemProp.PIECES_SOURCE)]: migratePiecesSource(process.env[envPrefix(AppSystemProp.PIECES_SOURCE)]),
+            [envPrefix(AppSystemProp.EXECUTION_MODE)]: migrateExecutionMode(process.env[envPrefix(AppSystemProp.EXECUTION_MODE)]),
+            [envPrefix(AppSystemProp.REDIS_TYPE)]: migrateRedisType(process.env[envPrefix(AppSystemProp.REDIS_TYPE)]),
         }
     },
 }
