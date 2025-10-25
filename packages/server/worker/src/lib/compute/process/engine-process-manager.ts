@@ -66,7 +66,7 @@ export const engineProcessManager = {
             }, 'Acquired worker')
             assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
-            const workerIsDead = isNil(processes[workerIndex]) || !processes[workerIndex]?.connected || isWorkerNotResuable()
+            const workerIsDead = isNil(processes[workerIndex]) || !processes[workerIndex]?.connected || !isWorkerReusable()
             if (workerIsDead) {
                 log.info({
                     workerIndex,
@@ -232,7 +232,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
         if (!isNil(timeoutWorker)) {
             clearTimeout(timeoutWorker)
         }
-        if (isWorkerNotResuable()) {
+        if (!isWorkerReusable()) {
             if (!isNil(processes[workerIndex])) {
                 await forceTerminate(processes[workerIndex], log)
             }
@@ -284,8 +284,16 @@ async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger
 }
 
 
-function isWorkerNotResuable(): boolean {
-    const isDevelopment = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-    const isSandboxed = workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED
-    return isDevelopment || isSandboxed
+function isWorkerReusable(): boolean {
+    const settings = workerMachine.getSettings()
+    const isDev = settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT
+    if (isDev) {
+        return false
+    }
+    const isDedicated = !isNil(settings.PLATFORM_ID_FOR_DEDICATED_WORKER)
+    if (isDedicated) {
+        return true
+    }
+    const trustedEnvironment = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED].includes(settings.EXECUTION_MODE as ExecutionMode)
+    return trustedEnvironment
 }

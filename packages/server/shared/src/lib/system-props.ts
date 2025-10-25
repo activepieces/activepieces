@@ -1,5 +1,6 @@
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import axios from 'axios'
+import { environmentMigrations } from './env-migrations'
 
 export const systemConstants = {
     PACKAGE_ARCHIVE_PATH: 'cache/archives',
@@ -69,10 +70,6 @@ export enum AppSystemProp {
     POSTGRES_USERNAME = 'POSTGRES_USERNAME',
     POSTGRES_USE_SSL = 'POSTGRES_USE_SSL',
     PROJECT_RATE_LIMITER_ENABLED = 'PROJECT_RATE_LIMITER_ENABLED',
-    /**
-     * @deprecated Use REDIS_TYPE instead
-     */
-    QUEUE_MODE = 'QUEUE_MODE',
     QUEUE_UI_ENABLED = 'QUEUE_UI_ENABLED',
     QUEUE_UI_PASSWORD = 'QUEUE_UI_PASSWORD',
     QUEUE_UI_USERNAME = 'QUEUE_UI_USERNAME',
@@ -120,10 +117,6 @@ export enum AppSystemProp {
     WEBHOOK_TIMEOUT_SECONDS = 'WEBHOOK_TIMEOUT_SECONDS',
 }
 export enum PiecesSource {
-    /**
-   * @deprecated Use `DB`, as `CLOUD_AND_DB` is no longer supported.
-   */
-    CLOUD_AND_DB = 'CLOUD_AND_DB',
     DB = 'DB',
     FILE = 'FILE',
 }
@@ -141,6 +134,7 @@ export enum WorkerSystemProp {
 
     // Optional
     WORKER_CONCURRENCY = 'WORKER_CONCURRENCY',
+    PLATFORM_ID_FOR_DEDICATED_WORKER = 'PLATFORM_ID_FOR_DEDICATED_WORKER',
 }
 
 
@@ -154,7 +148,8 @@ export const environmentVariables = {
         return value ? parseInt(value) : undefined
     },
     getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
-        return process.env[`AP_${prop}`]
+        const environmnetVariables = environmentMigrations.migrate()
+        return environmnetVariables['AP_' + prop]
     },
     getEnvironmentOrThrow: (prop: WorkerSystemProp | AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)

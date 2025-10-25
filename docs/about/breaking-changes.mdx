@@ -17,10 +17,12 @@ icon: "hammer"
 ### What has changed?
 
 - In separate workers setup, now they have access to Redis.
+- `AP_EXECUTION_MODE` mode `SANDBOXED` is now deprecated and replaced with `SANDBOX_PROCESS`
 
 ### When is action necessary?
 
 - If you have separate workers setup, you should make sure that workers have access to Redis.
+- If you are using `AP_EXECUTION_MODE` mode `SANDBOXED`, you should replace it with `SANDBOX_PROCESS`
 
 ## 0.70.0
 
