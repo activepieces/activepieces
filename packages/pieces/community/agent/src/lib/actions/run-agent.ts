@@ -120,6 +120,7 @@ export const runAgent = createAction({
     let currentText = ''
     try {
       for await (const chunk of fullStream) {
+        
         if (chunk.type === 'text-delta') {
             currentText += chunk.text
         }

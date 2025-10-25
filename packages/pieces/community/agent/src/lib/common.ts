@@ -1,13 +1,11 @@
 import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from "@activepieces/common-ai";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool, McpResult, McpToolsListResult, McpToolCallResult, AgentResult, WebsocketClientEvent } from "@activepieces/shared"
+import { ContentBlockType, agentbuiltInToolsNames, AgentStepBlock, isNil, ToolCallContentBlock, AgentOutputFieldType, ToolCallType, McpToolType, assertNotNullOrUndefined, AgentOutputField, McpTool } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { type Schema as AiSchema, tool, experimental_createMCPClient } from "ai";
 import z, { ZodRawShape, ZodSchema } from "zod";
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp';
-
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 export const AI_MODELS: AIModel[] = SUPPORTED_AI_PROVIDERS.flatMap(provider =>
     provider.languageModels.map(model => ({
@@ -64,7 +62,9 @@ async function buildInternalTools(params: AgentToolsParams) {
 
 export const agentCommon = {
     async agentTools(params: AgentToolsParams) {
+
         const mcpServerUrl = `${params.apiUrl}v1/flows/${params.flowId}/versions/${params.flowVersionId}/steps/${params.stepName}/mcp`
+
         const transport = new StreamableHTTPClientTransport(new URL(mcpServerUrl), {
             requestInit: {
                 headers: {
@@ -72,9 +72,10 @@ export const agentCommon = {
                 },
             }
         })
-        const mcpClient = await experimental_createMCPClient({transport})
+        const mcpClient = await experimental_createMCPClient({ transport })
+
         const builtInTools = await buildInternalTools(params)
-        const mcpTools = isNil(mcpClient) ? {} : await mcpClient.tools()
+        const mcpTools = isNil(mcpClient) || params.tools.length === 0 ? {} : await mcpClient.tools()
         return {
             tools: async () => {
                 return {

@@ -6,6 +6,7 @@ import {
   type AgentResult,
   AgentTaskStatus,
   ContentBlockType,
+  isNil,
   StepRunResponse,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -13,6 +14,7 @@ import {
 import {
   AgentToolBlock,
   DoneBlock,
+  FailedBlock,
   MarkdownBlock,
   PromptBlock,
   ThinkingBlock,
@@ -44,12 +46,9 @@ export const AgentTimeline = ({
   useEffect(() => {
     if (!socket) return;
 
-    const handleUpdate = ({ response }: { response: StepRunResponse }) => {
-      try {
-        setLiveResult(response.output as AgentResult);
-      } catch (error) {
-        console.error('Error setting live result:', error);
-      }
+    const handleUpdate = (data: StepRunResponse) => {
+      if (isNil(data.output)) return
+      setLiveResult(data.output as AgentResult);
     };
 
     socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleUpdate);
@@ -64,12 +63,10 @@ export const AgentTimeline = ({
   const result = liveResult || agentResult;
   const { steps = [], status } = result;
 
-  console.log(result);
-
   return (
     <div className={`h-full flex w-full flex-col ${className}`}>
       <ScrollArea className="flex-1 min-h-0 relative">
-        <div className="absolute left-1.5 top-4 bottom-8 w-[1px] bg-border" />
+        <div className="absolute left-2 top-4 bottom-8 w-[1px] bg-border" />
 
         <div className="space-y-7 pb-4">
           {result.prompt && <PromptBlock prompt={result.prompt} />}
@@ -90,6 +87,8 @@ export const AgentTimeline = ({
           {status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
 
           {status === AgentTaskStatus.COMPLETED && <DoneBlock />}
+
+          {status === AgentTaskStatus.FAILED && <FailedBlock />}
         </div>
       </ScrollArea>
     </div>
