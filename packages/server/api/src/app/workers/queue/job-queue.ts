@@ -4,7 +4,7 @@ import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
-import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
+import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
 import { AddJobParams, JobType, QueueManager } from './queue-manager'
 
@@ -16,7 +16,7 @@ const dedicatedWorkersQueues = new Map<string, Queue>()
 
 export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
     async init(): Promise<void> {        
-        const platformIdsWithDedicatedWorkers = await platformPlanService(log).getPlatformsIdsWithDedicatedWorkers()
+        const platformIdsWithDedicatedWorkers = await dedicatedWorkers(log).getPlatformIds()
         
         await Promise.all([
             ...platformIdsWithDedicatedWorkers.map(async (platformId) => {
@@ -129,7 +129,7 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
         return QueueName.WORKER_JOBS
     }
     
-    const isDedicatedWorkersEnabled = await platformPlanService(log).isDedicatedWorkersEnabled(platformId)
+    const isDedicatedWorkersEnabled = await dedicatedWorkers(log).isEnabledForPlatform(platformId)
     return isDedicatedWorkersEnabled ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
 }
 

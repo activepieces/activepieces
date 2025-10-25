@@ -14,7 +14,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
+import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { WorkerMachineEntity } from './machine-entity'
@@ -131,7 +131,7 @@ async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWo
         return executionMode
     }
 
-    const dedicatedWorkerConfig = await platformPlanService(log).getDedicatedWorkerConfig(platformIdForDedicatedWorker)
+    const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
     if (isNil(dedicatedWorkerConfig) || dedicatedWorkerConfig.trustedEnvironment) {
         return executionMode
     }
