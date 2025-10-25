@@ -9,9 +9,9 @@ export const environmentMigrations = {
 
         return {
             ...process.env,
-            [envPrefix(AppSystemProp.PIECES_SOURCE)]: migratePiecesSource(process.env[envPrefix(AppSystemProp.PIECES_SOURCE)]),
-            [envPrefix(AppSystemProp.EXECUTION_MODE)]: migrateExecutionMode(process.env[envPrefix(AppSystemProp.EXECUTION_MODE)]),
-            [envPrefix(AppSystemProp.REDIS_TYPE)]: migrateRedisType(process.env[envPrefix(AppSystemProp.REDIS_TYPE)]),
+            [envPrefix(AppSystemProp.PIECES_SOURCE)]: migratePiecesSource(getRawValue(AppSystemProp.PIECES_SOURCE)),
+            [envPrefix(AppSystemProp.EXECUTION_MODE)]: migrateExecutionMode(getRawValue(AppSystemProp.EXECUTION_MODE)),
+            [envPrefix(AppSystemProp.REDIS_TYPE)]: migrateRedisType(getRawValue(AppSystemProp.REDIS_TYPE)),
         }
     },
 }
@@ -38,3 +38,6 @@ function migratePiecesSource(currentPiecesSource: string | undefined): string | 
     return currentPiecesSource
 }
 
+function getRawValue(prop: string): string | undefined {
+    return process.env[envPrefix(prop)]
+}
