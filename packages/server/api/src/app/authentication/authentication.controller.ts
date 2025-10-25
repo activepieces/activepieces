@@ -22,7 +22,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
-
+        
         const platformId = await platformUtils.getPlatformIdForRequest(request)
         const signUpResponse = await authenticationService(request.log).signUp({
             ...request.body,
@@ -53,7 +53,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             password: request.body.password,
             predefinedPlatformId,
         })
-
+        
         const responsePlatformId = response.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
         eventsHooks.get(request.log).sendUserEvent({
