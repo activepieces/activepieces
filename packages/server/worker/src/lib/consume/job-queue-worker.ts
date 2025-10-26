@@ -47,9 +47,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 }
 
                 assertNotNullOrUndefined(jobId, 'jobId')
-                const maxConcurrentJobsPerProject = await getMaxConcurrentJobsPerProject(job.data.projectId)
-
-                const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data, maxConcurrentJobsPerProject)
+                const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
                 if (shouldRateLimit) {
                     await job.moveToDelayed(
                         dayjs().add(Math.min(240, 20 * (job.attemptsStarted + 1)), 'seconds').valueOf(),
@@ -179,10 +177,3 @@ function getWorkerQueueName(): string {
     return QueueName.WORKER_JOBS
 }
 
-async function getMaxConcurrentJobsPerProject(projectId: ProjectId | undefined): Promise<number> {
-    const storedValue = !isNil(projectId) ? await workerDistributedStore.get(getProjectMaxConcurrentJobsKey(projectId)) : null
-    if (isNil(storedValue)) {
-        return workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
-    }
-    return Number(storedValue)
-}

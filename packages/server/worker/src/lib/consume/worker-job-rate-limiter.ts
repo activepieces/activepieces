@@ -1,8 +1,8 @@
-import { apDayjsDuration } from '@activepieces/server-shared'
-import { ExecuteFlowJobData, isNil, JobData, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import { apDayjsDuration, getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
+import { ExecuteFlowJobData, isNil, JobData, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../utils/machine'
-import { workerRedisConnections } from '../utils/worker-redis'
+import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
@@ -38,12 +38,12 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         
         return 1
             `,
-        1,
-        setKey,
-        jobId,
+            1,
+            setKey,
+            jobId,
         )
     },
-    async shouldBeLimited(jobId: string | undefined, data: JobData, maxConcurrentJobsPerProject: number): Promise<{
+    async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
     }> {
         const projectRateLimiterEnabled = workerMachine.getSettings().PROJECT_RATE_LIMITER_ENABLED
@@ -60,11 +60,13 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             }
         }
 
+
+        const maxConcurrentJobsPerProject = await getMaxConcurrentJobsPerProject(data.projectId)
         const setKey = projectSetKey(data.projectId)
         const currentTime = Date.now()
         const jobWithTimestamp = `${jobId}:${currentTime}`
         const redisConnection = await workerRedisConnections.useExisting()
-     
+
         const result = await redisConnection.eval(
             `
     local setKey = KEYS[1]
@@ -119,3 +121,11 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
     },
 
 })
+
+async function getMaxConcurrentJobsPerProject(projectId: ProjectId | undefined): Promise<number> {
+    const storedValue = !isNil(projectId) ? await workerDistributedStore.get(getProjectMaxConcurrentJobsKey(projectId)) : null
+    if (!isNil(storedValue)) {
+        return Number(storedValue)
+    }
+    return workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
+}
