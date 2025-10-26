@@ -1,5 +1,4 @@
 import { AgentJobData, ApId, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData } from '@activepieces/shared'
-import { Queue } from 'bullmq'
 
 export enum JobType {
     REPEATING = 'repeating',
