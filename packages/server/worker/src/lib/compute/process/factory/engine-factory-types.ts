@@ -21,4 +21,5 @@ type CreateEngineParams = {
     customPiecesPath: string
     flowVersionId: string | undefined
     options: EngineProcessOptions
+    reusable: boolean
 }
