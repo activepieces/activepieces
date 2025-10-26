@@ -50,7 +50,7 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
-type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+type IssuesSummaryTemplateData = BaseEmailTemplateData<'issues-summary', {
     issuesUrl: string
     issues: string
     issuesCount: string
@@ -88,7 +88,7 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | IssuesReminderTemplateData
+  | IssuesSummaryTemplateData
   | TriggerFailureThresholdTemplateData
   | ThreeDaysLeftOnTrialTemplateData
   | OneDayLeftOnTrialTemplateData

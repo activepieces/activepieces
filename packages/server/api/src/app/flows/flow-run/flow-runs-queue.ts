@@ -155,6 +155,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(runsMetadataQueueInstance, 'Runs metadata queue not initialized')
         return runsMetadataQueueInstance
     },
+    async close(): Promise<void> {
+        if (runsMetadataQueueInstance) {
+            await runsMetadataQueueInstance.close()
+        }
+
+        if (runsMetadataWorker) {
+            await runsMetadataWorker.close()
+        }
+    },
 
 })
 

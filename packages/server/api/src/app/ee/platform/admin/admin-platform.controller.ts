@@ -1,6 +1,6 @@
 import { StripePlanName } from '@activepieces/ee-shared'
 import { apDayjs } from '@activepieces/server-shared'
-import { AdminRetryRunsRequestBody, apId, ApplyLicenseKeyByEmailRequestBody, ExecutionType, FlowRunStatus, GiftTrialByEmailRequestBody, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, PrincipalType, ProgressUpdateType, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, apId, ApplyLicenseKeyByEmailRequestBody, DiscriminatedUnion, ExecutionType, FlowRunStatus, GiftTrialByEmailRequestBody, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, PrincipalType, ProgressUpdateType, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -9,6 +9,7 @@ import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-s
 import { projectService } from '../../../project/project-service'
 import { jobQueue } from '../../../workers/queue/job-queue'
 import { JobType } from '../../../workers/queue/queue-manager'
+import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
 import { stripeHelper } from '../platform-plan/stripe-helper'
 import { adminPlatformService } from './admin-platform.service'
 
@@ -29,6 +30,17 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)
         return res.status(StatusCodes.OK).send()
     })
+
+
+    app.post('/dedicated-workers', ConfigureDedicatedWorkersRequest, async (req, res) => {
+        await dedicatedWorkers(req.log).updateWorkerConfig({
+            operation: req.body.operation,
+            platformId: req.body.platformId,
+            trustedEnvironment: req.body.trustedEnvironment,
+        })
+        return res.status(StatusCodes.OK).send()
+    })
+
 
     app.post('/retry-paused-runs', RetryPausedRuns, async (req, res) => {
 
@@ -86,6 +98,19 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         return res.status(StatusCodes.PARTIAL_CONTENT).send({ errors })
     })
+}
+
+const ConfigureDedicatedWorkersRequest = {
+    schema: {
+        body: Type.Object({
+            operation: Type.Union([Type.Literal('enable'), Type.Literal('disable')]),
+            platformId: Type.String(),
+            trustedEnvironment: Type.Boolean(),
+        }),
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.SUPER_USER],
+    },
 }
 
 const RetryPausedRuns = {

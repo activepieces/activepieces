@@ -64,7 +64,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
+
         if (emails.length === 0) {
             return
         }
@@ -162,8 +162,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: otpToTemplate[type],
         })
     },
-    
-    async sendReminderJobHandler(job: {
+
+    async sendIssuesSummary(job: {
         projectId: string
         platformId: string
         projectName: string
@@ -175,27 +175,27 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
-        const issuesUrl = await domainHelper.getPublicUrl({
-            platformId: job.platformId,
-            path: 'runs?limit=10#Issues',
-        })
-
-        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
-            ...issue, 
-            created: dayjs(issue.created).format('MMM D, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
-        }))
 
         if (emails.length === 0) {
             return
         }
 
+        const issuesUrl = await domainHelper.getPublicUrl({
+            platformId: job.platformId,
+            path: 'runs?limit=10#Issues',
+        })
+
+        const issuesWithFormattedDate = issues.data.map((issue) => ({
+            ...issue,
+            created: dayjs(issue.created).format('MMM D, h:mm a'),
+            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'),
+        }))
+
         await emailSender(log).send({
             emails,
             platformId: job.platformId,
             templateData: {
-                name: 'issues-reminder',
+                name: 'issues-summary',
                 vars: {
                     issuesUrl,
                     issuesCount: issues.data.length.toString(),

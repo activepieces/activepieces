@@ -30,7 +30,7 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
         await execPromise(`${isolateBinaryPath} --box-id=${workerIndex} --init`)
 
         const propagatedEnvVars = getEnvironmentVariables(options.env, workerId)
-        const dirsToBindArgs: string[] = await getDirsToBindArgs(params.flowVersionId, params.customPiecesPath)
+        const dirsToBindArgs: string[] = await getDirsToBindArgs(params.flowVersionId, params.customPiecesPath, params.reusable)
         const args = [
             ...dirsToBindArgs,
             '--share-net',
@@ -68,7 +68,7 @@ function getEnvironmentVariables(env: Record<string, string | undefined>, worker
     }).map(([key, value]) => `--env=${key}='${value}'`)
 }
 
-async function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: string): Promise<string[]> {
+async function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: string, reusable: boolean): Promise<string[]> {
     const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
 
     const dirsToBind = [
@@ -76,10 +76,17 @@ async function getDirsToBindArgs(flowVersionId: string | undefined, customPieces
         `--dir=/etc/=${etcDir}`,
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
     ]
-    const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
-    if (fExists) {
-        dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
+    
+    if (reusable) {
+        dirsToBind.push(`--dir=/codes=${path.resolve(GLOBAL_CODE_CACHE_PATH)}`)
     }
+    else {
+        const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
+        if (fExists) {
+            dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
+        }
+    }
+    
     if (customPiecesPath) {
         dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
     }
