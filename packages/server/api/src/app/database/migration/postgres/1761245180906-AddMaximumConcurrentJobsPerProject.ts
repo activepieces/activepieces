@@ -6,7 +6,7 @@ export class AddMaximumConcurrentJobsPerProject1761245180906 implements Migratio
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "project"
-            ADD "maxConcurrentJobs" integer NOT NULL DEFAULT '100'
+            ADD "maxConcurrentJobs" integer NOT NULL
         `)
     }
 

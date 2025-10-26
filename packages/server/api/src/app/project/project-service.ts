@@ -21,7 +21,10 @@ import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
+import { distributedStore } from '../helper/key-value'
+import { AppSystemProp, getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 
+const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
@@ -35,9 +38,10 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            maxConcurrentJobs: params.maxConcurrentJobs ?? 100,
+            maxConcurrentJobs: params.maxConcurrentJobs ?? MAX_CONCURRENT_JOBS_PER_PROJECT,
             releasesEnabled: false,
         }
+        await distributedStore.put(getProjectMaxConcurrentJobsKey(newProject.id), params.maxConcurrentJobs ?? MAX_CONCURRENT_JOBS_PER_PROJECT)
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
         return savedProject

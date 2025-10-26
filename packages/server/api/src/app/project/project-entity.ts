@@ -60,7 +60,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         maxConcurrentJobs: {
             type: Number,
             nullable: false,
-            default: 100,
         },
         releasesEnabled: {
             type: Boolean,

@@ -1,5 +1,5 @@
 import { OtpType } from '@activepieces/ee-shared'
-import { cryptoUtils } from '@activepieces/server-shared'
+import { AppSystemProp, cryptoUtils } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
@@ -12,6 +12,8 @@ import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { userIdentityService } from './user-identity/user-identity-service'
+
+const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
@@ -214,7 +216,7 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
         displayName: userIdentity.firstName + '\'s Project',
         ownerId: user.id,
         platformId: platform.id,
-        maxConcurrentJobs: 100,
+        maxConcurrentJobs: MAX_CONCURRENT_JOBS_PER_PROJECT,
     })
 
     const cloudEdition = system.getEdition()
