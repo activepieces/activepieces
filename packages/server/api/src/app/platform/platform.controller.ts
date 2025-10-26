@@ -3,6 +3,7 @@ import {
     ApEdition,
     ApId,
     assertEqual,
+    assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
     PlatformWithoutSensitiveData,
@@ -54,6 +55,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
+            assertNotNullOrUndefined(req.principal.platform.id, 'platformId')
             const isCloudNonEnterprisePlan = await platformPlanService(req.log).isCloudNonEnterprisePlan(req.params.id)
             if (!isCloudNonEnterprisePlan) {
                 throw new ActivepiecesError({

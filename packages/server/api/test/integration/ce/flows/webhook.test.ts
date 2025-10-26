@@ -5,7 +5,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockFlow, mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 const MOCK_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa1'
@@ -39,12 +39,19 @@ describe('Webhook Service', () => {
     }),
     it('should return NOT FOUND if the flow is disabled', async () => {
         const { mockProject } = await mockAndSaveBasicSetup()
+    
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
-            id: MOCK_FLOW_ID,
             status: FlowStatus.DISABLED,
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+        })
+        await databaseConnection().getRepository('flow_version').save([mockFlowVersion])
+        await databaseConnection().getRepository('flow').update(mockFlow.id, {
+            publishedVersionId: mockFlowVersion.id,
+        })
         const mockToken = await generateMockToken({
             type: PrincipalType.USER,
             projectId: mockProject.id,
