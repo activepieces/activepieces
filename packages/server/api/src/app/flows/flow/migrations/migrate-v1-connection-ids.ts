@@ -1,10 +1,9 @@
-import { FlowVersion } from '../../flow-version'
-import { flowStructureUtil } from '../../util/flow-structure-util'
+import { flowStructureUtil, FlowVersion } from '@activepieces/shared'
 import { Migration } from '.'
 
 export const migrateConnectionIds: Migration = {
     targetSchemaVersion: '1',
-    migrate: (flowVersion: FlowVersion): FlowVersion => {
+    migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         return {
             ...flowVersion,
             schemaVersion: '2',

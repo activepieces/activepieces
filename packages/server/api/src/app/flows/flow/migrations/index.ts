@@ -1,4 +1,4 @@
-import { FlowVersion } from '../../flow-version'
+import { FlowVersion } from '@activepieces/shared'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
@@ -9,7 +9,7 @@ import { migratePropertySettingsV6 } from './migrate-v6-property-settings'
 
 export type Migration = {
     targetSchemaVersion: string | undefined
-    migrate: (flowVersion: FlowVersion) => FlowVersion
+    migrate: (flowVersion: FlowVersion) => Promise<FlowVersion>
 }
 
 const migrations: Migration[] = [
@@ -23,12 +23,12 @@ const migrations: Migration[] = [
 ] as const
 
 export const flowMigrations = {
-    apply: (flowVersion: FlowVersion): FlowVersion => {
-        return migrations.reduce((acc, migration: Migration) => {
-            if (acc.schemaVersion === migration.targetSchemaVersion) {
-                return migration.migrate(acc)
+    apply: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
+        for (const migration of migrations) {
+            if (flowVersion.schemaVersion === migration.targetSchemaVersion) {
+                flowVersion = await migration.migrate(flowVersion)
             }
-            return acc
-        }, flowVersion)
+        }
+        return flowVersion
     },
 }

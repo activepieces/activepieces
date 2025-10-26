@@ -80,10 +80,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             array: isPostgres(),
             nullable: false,
         },
-        copilotSettings: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
-        },
     },
     indices: [],
     relations: {

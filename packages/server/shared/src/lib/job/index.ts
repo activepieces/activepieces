@@ -18,6 +18,9 @@ export enum QueueName {
     RUNS_METADATA = 'runsMetadata',
 }
 
+export const getPlatformQueueName = (platformId: string): string => {
+    return `platform-${platformId}-jobs`
+}
 
 export const ApQueueJob = Type.Object({
     id: Type.String(),

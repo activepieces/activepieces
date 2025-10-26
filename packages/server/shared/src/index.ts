@@ -12,6 +12,7 @@ export * from './lib/logger'
 export * from './lib/webhook-secrets-util'
 export * from './lib/exec'
 export * from './lib/system-props'
+export * from './lib/env-migrations'
 export * from './lib/ap-axios'
 
 export * from './lib/redis/distributed-lock-factory'

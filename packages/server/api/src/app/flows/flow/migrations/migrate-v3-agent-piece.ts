@@ -1,11 +1,11 @@
-import { FlowVersion } from '../../flow-version'
-import { AGENT_PIECE_NAME } from '../../util/flow-structure-util'
+
+import { AGENT_PIECE_NAME, FlowVersion } from '@activepieces/shared'
 import { flowMigrationUtil } from './flow-migration-util'
 import { Migration } from '.'
 
 export const migrateAgentPieceV3: Migration = {
     targetSchemaVersion: '3',
-    migrate: (flowVersion: FlowVersion): FlowVersion => {
+    migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowMigrationUtil.pinPieceToVersion(flowVersion, AGENT_PIECE_NAME, '0.2.2')
         return {
             ...newVersion,

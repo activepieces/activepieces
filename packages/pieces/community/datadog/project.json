@@ -5,9 +5,7 @@
   "projectType": "library",
   "release": {
     "version": {
-      "manifestRootsToUpdate": [
-        "dist/{projectRoot}"
-      ],
+      "manifestRootsToUpdate": ["dist/{projectRoot}"],
       "currentVersionResolver": "git-tag",
       "fallbackCurrentVersionResolver": "disk"
     }
@@ -16,9 +14,7 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/datadog",
         "tsConfig": "packages/pieces/community/datadog/tsconfig.lib.json",
@@ -35,10 +31,7 @@
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       },
-      "dependsOn": [
-        "prebuild",
-        "^build"
-      ]
+      "dependsOn": ["prebuild", "^build"]
     },
     "prebuild": {
       "executor": "nx:run-commands",
@@ -72,9 +65,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

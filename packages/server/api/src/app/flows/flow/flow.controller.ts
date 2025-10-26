@@ -6,7 +6,6 @@ import {
     CountFlowsRequest,
     CreateFlowRequest,
     ErrorCode,
-    flowMigrations,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
@@ -39,6 +38,7 @@ import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-pla
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowService } from './flow.service'
+import { flowMigrations } from './migrations'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -243,7 +243,7 @@ const CreateFlowRequestOptions = {
 const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDefaultExpression, RawReplyDefaultExpression, FlowOperationRouteGeneric> = (request, _, done) => {
 
     if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
-        const migratedFlowVersion = flowMigrations.apply({
+        flowMigrations.apply({
             agentIds: [],
             connectionIds: [],
             created: new Date().toISOString(),
@@ -256,11 +256,20 @@ const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDe
             trigger: request.body.request.trigger,
             state: FlowVersionState.DRAFT,
             schemaVersion: request.body.request.schemaVersion,
+        }).then((migratedFlowVersion) => {
+            request.body.request = {
+                ...request.body.request,
+                trigger: migratedFlowVersion.trigger,
+                schemaVersion: migratedFlowVersion.schemaVersion,
+            }
+            done()
+        }).catch((error) => {
+            request.log.error(error)
         })
-        request.body.request.trigger = migratedFlowVersion.trigger
-        request.body.request.schemaVersion = migratedFlowVersion.schemaVersion
     }
-    done()
+    else {
+        done()
+    }
 }
 
 const UpdateFlowRequestOptions = {

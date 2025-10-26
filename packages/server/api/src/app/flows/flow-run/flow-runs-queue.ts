@@ -137,6 +137,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     get(): ReturnType<typeof queue.get> {
         return queue.get()
     },
+    async close(): Promise<void> {
+        if (runsMetadataQueueInstance) {
+            await runsMetadataQueueInstance.close()
+        }
+
+        if (runsMetadataWorker) {
+            await runsMetadataWorker.close()
+        }
+    },
 
 })
 
