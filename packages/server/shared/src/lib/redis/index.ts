@@ -12,7 +12,7 @@ const mutexLock = new Mutex()
 export function redisConnectionFactory(
     settings: () => RedisConnectionSettings,
 ) {
-    return {
+    const factory = {
         getRedisType(): RedisType {
             return settings().REDIS_TYPE as RedisType
         },
@@ -40,7 +40,7 @@ export function redisConnectionFactory(
                 if (!isNil(redisConnectionInstance)) {
                     return redisConnectionInstance
                 }
-                redisConnectionInstance = await this.create()
+                redisConnectionInstance = await factory.create()
                 return redisConnectionInstance
             })
         },
@@ -51,6 +51,7 @@ export function redisConnectionFactory(
             }
         },
     }
+    return factory
 }
 
 

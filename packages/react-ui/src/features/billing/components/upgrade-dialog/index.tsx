@@ -281,7 +281,6 @@ export const UpgradeDialog: FC = () => {
     [PlatformUsageMetric.USER_SEATS]: t(
       'You have run out of user seats. Upgrade to get more.',
     ),
-    [PlatformUsageMetric.AGENTS]: t('Upgrade to unlock agents.'),
   };
 
   const message = dialog.metric ? messages[dialog.metric] : undefined;
