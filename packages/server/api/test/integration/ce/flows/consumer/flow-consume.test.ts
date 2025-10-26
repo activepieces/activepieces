@@ -7,7 +7,6 @@ import {
     FlowStatus,
     FlowTriggerType,
     FlowVersionState,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
     PackageType,
     PieceType,
     ProgressUpdateType,

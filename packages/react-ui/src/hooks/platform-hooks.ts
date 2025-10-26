@@ -23,7 +23,6 @@ import { platformApi } from '../lib/platforms-api';
 import { flagsHooks } from './flags-hooks';
 
 export const platformHooks = {
-
   useDeleteAccount: () => {
     const navigate = useNavigate();
     return useMutation({
