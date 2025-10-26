@@ -1,6 +1,5 @@
 import { PlanName } from '@activepieces/ee-shared'
 import {
-    CopilotProviderType,
     FilteredPieceBehavior,
     PlatformRole,
     PrincipalType,
@@ -162,14 +161,6 @@ describe('Platform API', () => {
                             idpMetadata: faker.internet.password(),
                         },
                     },
-                    copilotSettings: {
-                        providers: {
-                            [CopilotProviderType.OPENAI]: {
-                                baseUrl: faker.internet.password(),
-                                apiKey: faker.internet.password(),
-                            },
-                        },
-                    },
                 },
             })
 
@@ -203,7 +194,6 @@ describe('Platform API', () => {
             expect(responseBody.federatedAuthProviders.google).toStrictEqual({
                 clientId: mockPlatform.federatedAuthProviders?.google?.clientId,
             })
-            expect(responseBody.copilotSettings.providers.openai).toStrictEqual({})
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)

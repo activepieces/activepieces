@@ -81,7 +81,6 @@ export type ApErrorParams =
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
-    | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
     | MemoryIssueParams
     | InvalidCustomDomainErrorParams
@@ -464,10 +463,6 @@ export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE
     message: string
 }>
 
-export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED, {
-    message: string
-}>
-
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
@@ -562,7 +557,6 @@ export enum ErrorCode {
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
-    COPILOT_FAILED = 'COPILOT_FAILED',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',

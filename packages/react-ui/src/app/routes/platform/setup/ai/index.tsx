@@ -11,7 +11,6 @@ import { PlatformRole, ApFlagId, ApEdition } from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
-import { CopilotSetup } from './copilot';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 export default function AIProvidersPage() {
@@ -41,7 +40,7 @@ export default function AIProvidersPage() {
       locked={currentUser?.platformRole !== PlatformRole.ADMIN}
       lockTitle={t('Unlock AI')}
       lockDescription={t(
-        'Set your AI providers & copilot settings so your users enjoy a seamless building experience with our universal AI pieces',
+        'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
       <div className="flex flex-col w-full gap-4">
@@ -82,8 +81,6 @@ export default function AIProvidersPage() {
             );
           })}
         </div>
-
-        <CopilotSetup />
       </div>
     </LockedFeatureGuard>
   );

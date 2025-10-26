@@ -43,7 +43,6 @@ import {
     FlowVersionState,
     InvitationStatus,
     InvitationType,
-    NotificationStatus,
     PackageType,
     PiecesFilterType,
     PieceType,
@@ -185,8 +184,6 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         deleted: project?.deleted ?? null,
         ownerId: project?.ownerId ?? apId(),
         displayName: project?.displayName ?? faker.lorem.word(),
-        notifyStatus:
-            project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
@@ -270,8 +267,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             faker.helpers.enumValue(FilteredPieceBehavior),
         smtp: platform?.smtp,
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
-
-        copilotSettings: platform?.copilotSettings ?? undefined,
     }
 }
 

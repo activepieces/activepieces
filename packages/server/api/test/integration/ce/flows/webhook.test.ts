@@ -8,12 +8,11 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockFlow, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-const NOT_FOUND_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa1'
-const NOT_FOUND_TRIGGER_SOURCE_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa2'
+const MOCK_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa1'
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-   
+
 })
 
 afterAll(async () => {
@@ -31,18 +30,18 @@ describe('Webhook Service', () => {
 
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/webhooks/${NOT_FOUND_FLOW_ID}`,
+            url: `/v1/webhooks/${MOCK_FLOW_ID}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
         })
         expect(response?.statusCode).toBe(StatusCodes.GONE)
     }),
-    it('should return NOT FOUND if the trigger source is not found', async () => {
+    it('should return NOT FOUND if the flow is disabled', async () => {
         const { mockProject } = await mockAndSaveBasicSetup()
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
-            id: NOT_FOUND_TRIGGER_SOURCE_FLOW_ID,
+            id: MOCK_FLOW_ID,
             status: FlowStatus.DISABLED,
         })
         await databaseConnection().getRepository('flow').save([mockFlow])

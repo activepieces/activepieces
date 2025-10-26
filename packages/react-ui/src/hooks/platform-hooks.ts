@@ -23,10 +23,7 @@ import { platformApi } from '../lib/platforms-api';
 import { flagsHooks } from './flags-hooks';
 
 export const platformHooks = {
-  isCopilotEnabled: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    return Object.keys(platform?.copilotSettings?.providers ?? {}).length > 0;
-  },
+
   useDeleteAccount: () => {
     const navigate = useNavigate();
     return useMutation({

@@ -61,11 +61,11 @@ jobs:
 
       - name: Deploy App
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=app.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/app.yml --skip-push; exit"'
 
       - name: Deploy Workers
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=worker.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/worker.yml --skip-push; exit"'
 
   Deploy-Checkly:
     name: Deploy E2E Tests Checkly
