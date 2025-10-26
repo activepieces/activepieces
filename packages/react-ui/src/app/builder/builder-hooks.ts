@@ -515,10 +515,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
           switch (operation.type) {
             case FlowOperationType.SAVE_SAMPLE_DATA: {
-              debouncedAddToFlowUpdatesQueue(
-                operation.request.stepName,
-                updateRequest,
-              );
+              flowUpdatesQueue.add(updateRequest);
               const step = flowStructureUtil.getStep(
                 operation.request.stepName,
                 newFlowVersion.trigger,
