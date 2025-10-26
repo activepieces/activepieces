@@ -1,11 +1,10 @@
 import { isNil } from '@activepieces/shared'
-import { redisConnections } from '../database/redis-connections'
+import Redis from 'ioredis'
 
-
-export const distributedStore = {
+export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
     async put(key: string, value: unknown, ttlInSeconds?: number): Promise<void> {
         const serializedValue = JSON.stringify(value)
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         if (ttlInSeconds) {
             await redisClient.setex(key, ttlInSeconds, serializedValue)
         }
@@ -15,7 +14,7 @@ export const distributedStore = {
     },
 
     async get<T>(key: string): Promise<T | null> {
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         const value = await redisClient.get(key)
         if (!value) return null
 
@@ -23,17 +22,17 @@ export const distributedStore = {
     },
 
     async delete(key: string): Promise<void> {
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         await redisClient.del(key)
     },
 
     async putBoolean(key: string, value: boolean): Promise<void> {
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         await redisClient.set(key, value ? '1' : '0')
     },
 
     async getBoolean(key: string): Promise<boolean | null> {
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         const value = await redisClient.get(key)
         if (isNil(value)) return null
         return value === '1'
@@ -42,7 +41,7 @@ export const distributedStore = {
     async putBooleanBatch(keyValuePairs: Array<{ key: string, value: boolean }>): Promise<void> {
         if (keyValuePairs.length === 0) return
 
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         const multi = redisClient.multi()
 
         for (const { key, value } of keyValuePairs) {
@@ -53,7 +52,7 @@ export const distributedStore = {
     },
 
     async hgetJson<T extends Record<string, unknown>>(key: string): Promise<T | null> {
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         const hashData = await redisClient.hgetall(key)
         if (!hashData || Object.keys(hashData).length === 0) return null
         const result: Record<string, unknown> = {}
@@ -76,7 +75,7 @@ export const distributedStore = {
         key: string,
         fieldValuePairs: [string, unknown][],
     ): Promise<void> {
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         const lua = `
             for i = 1, #ARGV, 2 do
                 if redis.call('HGET', KEYS[1], ARGV[i]) == ARGV[i+1] then
@@ -90,7 +89,7 @@ export const distributedStore = {
     },
 
     async merge<T extends Record<string, unknown>>(key: string, value: T, ttlInSeconds?: number): Promise<void> {
-        const redisClient = await redisConnections.useExisting()
+        const redisClient = await getRedisClient()
         const serializedFields: Record<string, string> = {}
 
         for (const [field, fieldValue] of Object.entries(value)) {
@@ -103,4 +102,4 @@ export const distributedStore = {
             await redisClient.expire(key, ttlInSeconds)
         }
     },
-}
+})
