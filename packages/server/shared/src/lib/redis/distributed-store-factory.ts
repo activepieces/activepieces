@@ -17,12 +17,38 @@ export const createDistributedStore = (getRedisClient: () => Promise<Redis>) => 
         const redisClient = await getRedisClient()
         const value = await redisClient.get(key)
         if (!value) return null
+
         return JSON.parse(value) as T
     },
 
     async delete(key: string): Promise<void> {
         const redisClient = await getRedisClient()
         await redisClient.del(key)
+    },
+
+    async putBoolean(key: string, value: boolean): Promise<void> {
+        const redisClient = await getRedisClient()
+        await redisClient.set(key, value ? '1' : '0')
+    },
+
+    async getBoolean(key: string): Promise<boolean | null> {
+        const redisClient = await getRedisClient()
+        const value = await redisClient.get(key)
+        if (isNil(value)) return null
+        return value === '1'
+    },
+
+    async putBooleanBatch(keyValuePairs: Array<{ key: string, value: boolean }>): Promise<void> {
+        if (keyValuePairs.length === 0) return
+
+        const redisClient = await getRedisClient()
+        const multi = redisClient.multi()
+
+        for (const { key, value } of keyValuePairs) {
+            multi.set(key, value ? '1' : '0')
+        }
+
+        await multi.exec()
     },
 
     async hgetJson<T extends Record<string, unknown>>(key: string): Promise<T | null> {

@@ -1,6 +1,6 @@
 import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
-import { Worker } from 'bullmq'
+import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -134,12 +134,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
         await queue.add(params)
     },
 
-    get(): ReturnType<typeof queue.get> {
+    get(): Queue<RunsMetadataJobData> {
         return queue.get()
     },
     async close(): Promise<void> {
-        if (runsMetadataQueueInstance) {
-            await runsMetadataQueueInstance.close()
+        if (queue.get()) {
+            await queue.get().close()
         }
 
         if (runsMetadataWorker) {

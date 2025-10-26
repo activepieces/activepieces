@@ -23,6 +23,16 @@ export const pubsubFactory = (redisFactory: () => Promise<Redis>) => ({
         const redisClientSubscriber = await getRedisClientSubscriber(redisFactory)
         await redisClientSubscriber.unsubscribe(channel)
     },
+    async close(): Promise<void> {
+        if (!isNil(redisClientSubscriber)) {
+            await redisClientSubscriber.quit()
+            redisClientSubscriber = null
+        }
+        if (!isNil(redisClientPublisher)) {
+            await redisClientPublisher.quit()
+            redisClientPublisher = null
+        }
+    },
 })
 
 async function getRedisClientSubscriber(redisFactory: () => Promise<Redis>): Promise<Redis> {
