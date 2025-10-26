@@ -22,9 +22,8 @@ import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
 import { distributedStore } from '../database/redis-connections'
-import { AppSystemProp, getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
+import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 
-const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
