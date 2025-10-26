@@ -88,6 +88,7 @@ export const moveAgentsToFlowVerion: Migration = {
                 step.displayName = agent?.displayName as string
                 step.settings = {
                     ...step.settings,
+                    pieceVersion: '0.3.0',
                     input: {
                         [AgentPieceProps.PROMPT]: `${agent?.systemPrompt}, ${prompt}`,
                         [AgentPieceProps.AI_MODEL]: 'openai-gpt-4o',
