@@ -10,6 +10,7 @@ import {
     JOB_PRIORITY,
     JobData,
     LATEST_JOB_DATA_SCHEMA_VERSION,
+    ProjectId,
     RATE_LIMIT_PRIORITY,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -46,7 +47,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 }
 
                 assertNotNullOrUndefined(jobId, 'jobId')
-                const maxConcurrentJobsPerProject = isNil(job.data.projectId) ? null : Number(await workerDistributedStore.get(getProjectMaxConcurrentJobsKey(job.data.projectId)))
+                const maxConcurrentJobsPerProject = await getMaxConcurrentJobsPerProject(job.data.projectId)
 
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data, maxConcurrentJobsPerProject)
                 if (shouldRateLimit) {
@@ -176,4 +177,12 @@ function getWorkerQueueName(): string {
         return getPlatformQueueName(platformIdForDedicatedWorker)
     }
     return QueueName.WORKER_JOBS
+}
+
+async function getMaxConcurrentJobsPerProject(projectId: ProjectId | undefined): Promise<number> {
+    const storedValue = !isNil(projectId) ? await workerDistributedStore.get(getProjectMaxConcurrentJobsKey(projectId)) : null
+    if (isNil(storedValue)) {
+        return workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
+    }
+    return Number(storedValue)
 }

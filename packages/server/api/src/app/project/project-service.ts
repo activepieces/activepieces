@@ -38,10 +38,12 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            maxConcurrentJobs: params.maxConcurrentJobs ?? MAX_CONCURRENT_JOBS_PER_PROJECT,
+            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
-        await distributedStore.put(getProjectMaxConcurrentJobsKey(newProject.id), params.maxConcurrentJobs ?? MAX_CONCURRENT_JOBS_PER_PROJECT)
+        if (!isNil(params.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(newProject.id), params.maxConcurrentJobs)
+        }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
         return savedProject
@@ -89,6 +91,7 @@ export const projectService = {
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
+                ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -247,6 +250,7 @@ type UpdateParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type CreateParams = {

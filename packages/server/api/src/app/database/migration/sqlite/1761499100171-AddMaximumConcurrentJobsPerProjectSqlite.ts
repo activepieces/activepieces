@@ -1,12 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { AppSystemProp } from '@activepieces/server-shared'
-import { system } from "../../../helper/system/system";
 
-// Didn't use getOrThrow here because if we decide to remove this value from AppSystemProp in the future, using getOrThrow would break this migration.
-const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumber(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT) ?? 100
-
-export class AddMaximumConcurrentJobsPerProjectSqlite1761484763182 implements MigrationInterface {
-    name = 'AddMaximumConcurrentJobsPerProjectSqlite1761484763182'
+export class AddMaximumConcurrentJobsPerProjectSqlite1761499100171 implements MigrationInterface {
+    name = 'AddMaximumConcurrentJobsPerProjectSqlite1761499100171'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -27,7 +22,7 @@ export class AddMaximumConcurrentJobsPerProjectSqlite1761484763182 implements Mi
                 "deleted" datetime,
                 "releasesEnabled" boolean NOT NULL DEFAULT (0),
                 "metadata" text,
-                "maxConcurrentJobs" integer NOT NULL,
+                "maxConcurrentJobs" integer,
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
@@ -43,8 +38,7 @@ export class AddMaximumConcurrentJobsPerProjectSqlite1761484763182 implements Mi
                     "externalId",
                     "deleted",
                     "releasesEnabled",
-                    "metadata",
-                    "maxConcurrentJobs"
+                    "metadata"
                 )
             SELECT "id",
                 "created",
@@ -55,8 +49,7 @@ export class AddMaximumConcurrentJobsPerProjectSqlite1761484763182 implements Mi
                 "externalId",
                 "deleted",
                 "releasesEnabled",
-                "metadata",
-                ${MAX_CONCURRENT_JOBS_PER_PROJECT}
+                "metadata"
             FROM "project"
         `);
         await queryRunner.query(`

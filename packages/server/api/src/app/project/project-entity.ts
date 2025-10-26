@@ -59,7 +59,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         maxConcurrentJobs: {
             type: Number,
-            nullable: false,
+            nullable: true,
         },
         releasesEnabled: {
             type: Boolean,

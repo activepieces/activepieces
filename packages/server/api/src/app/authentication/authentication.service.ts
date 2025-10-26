@@ -215,8 +215,7 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     const defaultProject = await projectService.create({
         displayName: userIdentity.firstName + '\'s Project',
         ownerId: user.id,
-        platformId: platform.id,
-        maxConcurrentJobs: MAX_CONCURRENT_JOBS_PER_PROJECT,
+        platformId: platform.id
     })
     const cloudEdition = system.getEdition()
 
