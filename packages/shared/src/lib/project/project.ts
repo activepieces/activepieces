@@ -54,6 +54,7 @@ export const Project = Type.Object({
     ownerId: Type.String(),
     displayName: Type.String(),
     platformId: ApId,
+    maxConcurrentJobs: Nullable(Type.Number()),
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
     metadata: Nullable(Metadata),

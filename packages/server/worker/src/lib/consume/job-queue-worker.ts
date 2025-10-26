@@ -1,4 +1,4 @@
-import { QueueName } from '@activepieces/server-shared'
+import { getPlatformQueueName, getProjectMaxConcurrentJobsKey, QueueName } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     ConsumeJobResponseStatus,
@@ -10,6 +10,7 @@ import {
     JOB_PRIORITY,
     JobData,
     LATEST_JOB_DATA_SCHEMA_VERSION,
+    ProjectId,
     RATE_LIMIT_PRIORITY,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -19,7 +20,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
-import { workerRedisConnections } from '../utils/worker-redis'
+import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
 import { jobConsmer } from './job-consmer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
 
@@ -32,7 +33,8 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
             return
         }
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
-        worker = new Worker<JobData>(QueueName.WORKER_JOBS, async (job, token) => {
+        const queueName = getWorkerQueueName()
+        worker = new Worker<JobData>(queueName, async (job, token) => {
             try {
                 const jobId = job.id
                 const { shouldSkip } = await preHandler(workerToken, job)
@@ -166,3 +168,12 @@ async function shouldSkipDisabledFlow(data: JobData): Promise<boolean> {
     }
     return false
 }
+
+function getWorkerQueueName(): string {
+    const platformIdForDedicatedWorker = workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER
+    if (!isNil(platformIdForDedicatedWorker)) {
+        return getPlatformQueueName(platformIdForDedicatedWorker)
+    }
+    return QueueName.WORKER_JOBS
+}
+

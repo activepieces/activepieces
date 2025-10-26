@@ -4,7 +4,6 @@ import React, { useContext, useRef, useState } from 'react';
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import {
   FlowAction,
@@ -14,10 +13,8 @@ import {
   PopulatedTodo,
   flowStructureUtil,
   isNil,
-  StepRunResponse,
 } from '@activepieces/shared';
 
-import { AgentRunDialog } from '../../../features/agents/agent-run-dialog';
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
@@ -37,7 +34,6 @@ type TestActionComponentProps = {
 enum DialogType {
   NONE = 'NONE',
   TODO_CREATE_TASK = 'TODO_CREATE_TASK',
-  AGENT = 'AGENT',
   WEBHOOK = 'WEBHOOK',
 }
 
@@ -46,14 +42,6 @@ const isTodoCreateTask = (step: FlowAction) => {
     step.type === FlowActionType.PIECE &&
     step.settings.pieceName === '@activepieces/piece-todos' &&
     step.settings.actionName === 'createTodoAndWait'
-  );
-};
-
-const isRunAgent = (step: FlowAction) => {
-  return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-agent' &&
-    step.settings.actionName === 'run_agent'
   );
 };
 
@@ -80,14 +68,10 @@ const TestStepSectionImplementation = React.memo(
     );
     const socket = useSocket();
     const [todoId, setTodoId] = useState<string | null>(null);
-    const [agentProgress, setAgentProgress] = useState<StepRunResponse | null>(
-      null,
-    );
-    const agentRunId = stepUtils.getAgentRunId(agentProgress);
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
-        sampleData: state.outputSampleData[currentStep.name],
-        sampleDataInput: state.inputSampleData[currentStep.name],
+        sampleData: state.sampleData[currentStep.name],
+        sampleDataInput: state.sampleDataInput[currentStep.name],
       };
     });
     const abortControllerRef = useRef<AbortController>(new AbortController());
@@ -99,16 +83,12 @@ const TestStepSectionImplementation = React.memo(
         setErrorMessage,
         setConsoleLogs,
         onSuccess: undefined,
-        onProgress: (progress: any) => {
-          if (isRunAgent(currentStep)) {
-            setAgentProgress(progress);
-          }
-        },
       });
 
     const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
+
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const handleTodoCreateTask = async () => {
@@ -123,19 +103,8 @@ const TestStepSectionImplementation = React.memo(
       }
     };
 
-    const handleRunAgent = async () => {
-      setActiveDialog(DialogType.AGENT);
-      setAgentProgress(null);
-      abortControllerRef.current = new AbortController();
-      testAction({
-        abortSignal: abortControllerRef.current.signal,
-      });
-    };
-
     const onTestButtonClick = async () => {
-      if (isRunAgent(currentStep)) {
-        handleRunAgent();
-      } else if (isTodoCreateTask(currentStep)) {
+      if (isTodoCreateTask(currentStep)) {
         handleTodoCreateTask();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
@@ -147,13 +116,14 @@ const TestStepSectionImplementation = React.memo(
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
       setTodoId(null);
-      setAgentProgress(null);
       abortControllerRef.current.abort();
       setMutationKey([Date.now().toString()]);
     };
+
     const isTesting =
       activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+
     return (
       <>
         {!sampleDataExists && (
@@ -167,8 +137,6 @@ const TestStepSectionImplementation = React.memo(
                 onKeyboardShortcut={() => {
                   if (isTodoCreateTask(currentStep)) {
                     handleTodoCreateTask();
-                  } else if (isRunAgent(currentStep)) {
-                    handleRunAgent();
                   } else {
                     testAction(undefined);
                   }
@@ -184,6 +152,7 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
+            currentStep={currentStep}
             isValid={currentStep.valid}
             isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
@@ -211,14 +180,6 @@ const TestStepSectionImplementation = React.memo(
                   ? TodoType.INTERNAL
                   : TodoType.EXTERNAL
               }
-            />
-          )}
-        {activeDialog === DialogType.AGENT &&
-          currentStep.type === FlowActionType.PIECE && (
-            <AgentRunDialog
-              open={true}
-              onOpenChange={(open) => !open && handleCloseDialog()}
-              agentRunId={agentRunId}
             />
           )}
         {activeDialog === DialogType.WEBHOOK && (

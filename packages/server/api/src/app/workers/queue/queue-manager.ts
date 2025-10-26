@@ -1,4 +1,4 @@
-import { AgentJobData, ApId, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, OutgoingWebhookJobData } from '@activepieces/shared'
+import { ApId, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, OutgoingWebhookJobData } from '@activepieces/shared'
 
 export enum JobType {
     REPEATING = 'repeating',
@@ -14,7 +14,7 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | AgentJobData | OutgoingWebhookJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | OutgoingWebhookJobData, JobType.ONE_TIME>
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams
 

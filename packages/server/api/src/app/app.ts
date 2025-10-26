@@ -7,8 +7,6 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
-import { agentModule } from './agents/agent-module'
-import { agentRunsModule } from './agents/agent-runs/agent-runs-module'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -212,11 +210,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tablesModule)
     await app.register(userModule)
     await app.register(todoModule)
-    await app.register(adminPlatformModule)
     await app.register(changelogModule)
-    await app.register(agentModule)
     await app.register(todoActivityModule)
-    await app.register(agentRunsModule)
     await app.register(solutionsModule)
 
     app.get(
@@ -268,6 +263,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
+            await app.register(adminPlatformModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)

@@ -1,3 +1,4 @@
+import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -15,6 +16,7 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { distributedStore } from '../database/redis-connections'
 import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
@@ -35,10 +37,14 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
+            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
+        if (!isNil(params.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        }
         return savedProject
     },
     async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {
@@ -84,6 +90,7 @@ export const projectService = {
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
+                ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -242,6 +249,7 @@ type UpdateParams = {
     externalId?: string
     releasesEnabled?: boolean
     metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type CreateParams = {
@@ -250,6 +258,7 @@ type CreateParams = {
     platformId: string
     externalId?: string
     metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type GetByPlatformIdAndExternalIdParams = {
