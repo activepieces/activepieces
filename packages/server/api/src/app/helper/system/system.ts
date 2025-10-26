@@ -47,7 +47,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
-    [AppSystemProp.AGENT_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '10',
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '180',
