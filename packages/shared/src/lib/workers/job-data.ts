@@ -247,10 +247,6 @@ export const JobData = Type.Union([
     ExecuteFlowJobData,
     WebhookJobData,
     UserInteractionJobData,
-<<<<<<< HEAD
-    AgentJobData,
     OutgoingWebhookJobData,
-=======
->>>>>>> origin/main
 ])
 export type JobData = Static<typeof JobData>
