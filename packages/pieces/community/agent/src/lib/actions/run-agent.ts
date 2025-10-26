@@ -126,68 +126,64 @@ export const runAgent = createAction({
     })
 
     let currentText = ''
-    try {
-      for await (const chunk of fullStream) {
-        
-        if (chunk.type === 'text-delta') {
-            currentText += chunk.text
-        }
-        else if (chunk.type === 'tool-call') { 
-            if (currentText.length > 0) {
-                result.steps.push({
-                    type: ContentBlockType.MARKDOWN,
-                    markdown: currentText,
-                })
-                currentText = ''
-                context.output.update({ data: { 
-                  ...result
-                }})
-            }
-            const metadata = agentCommon.getMetadata(chunk.toolName, agentTools as McpTool[], {
-                toolName: chunk.toolName,
-                toolCallId: chunk.toolCallId,
-                type: ContentBlockType.TOOL_CALL,
-                status: ToolCallStatus.IN_PROGRESS,
-                input: chunk.input as Record<string, unknown>,
-                output: undefined,
-                startTime: new Date().toISOString(),
-            })
-            result.steps.push(metadata)
-            context.output.update({ data: { 
-              ...result
-            }})
-        }
-        else if (chunk.type === 'tool-result') {
-            const lastBlockIndex = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
-            const lastBlock = result.steps[lastBlockIndex] as ToolCallContentBlock
-            assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
-            result.steps[lastBlockIndex] = {
-                ...lastBlock,
-                status: ToolCallStatus.COMPLETED,
-                endTime: new Date().toISOString(),
-                output: chunk.output,
-            }
-            context.output.update({ data: { 
-              ...result
-            }})
-        }
-        else if (chunk.type === 'error') {
-            result.status = AgentTaskStatus.FAILED
-            if (APICallError.isInstance(chunk.error)) {
-                const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
-                result.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
-            }
-            else {
-                result.message = agentCommon.concatMarkdown(result.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
-            }
-            context.output.update({ data: { 
-              ...result
-            }})
-            return result
-        }
-    }
-    } catch (error) {
-      throw error
+    for await (const chunk of fullStream) {
+      
+      if (chunk.type === 'text-delta') {
+          currentText += chunk.text
+      }
+      else if (chunk.type === 'tool-call') { 
+          if (currentText.length > 0) {
+              result.steps.push({
+                  type: ContentBlockType.MARKDOWN,
+                  markdown: currentText,
+              })
+              currentText = ''
+              context.output.update({ data: { 
+                ...result
+              }})
+          }
+          const metadata = agentCommon.getMetadata(chunk.toolName, agentTools as McpTool[], {
+              toolName: chunk.toolName,
+              toolCallId: chunk.toolCallId,
+              type: ContentBlockType.TOOL_CALL,
+              status: ToolCallStatus.IN_PROGRESS,
+              input: chunk.input as Record<string, unknown>,
+              output: undefined,
+              startTime: new Date().toISOString(),
+          })
+          result.steps.push(metadata)
+          context.output.update({ data: { 
+            ...result
+          }})
+      }
+      else if (chunk.type === 'tool-result') {
+          const lastBlockIndex = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
+          const lastBlock = result.steps[lastBlockIndex] as ToolCallContentBlock
+          assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
+          result.steps[lastBlockIndex] = {
+              ...lastBlock,
+              status: ToolCallStatus.COMPLETED,
+              endTime: new Date().toISOString(),
+              output: chunk.output,
+          }
+          context.output.update({ data: { 
+            ...result
+          }})
+      }
+      else if (chunk.type === 'error') {
+          result.status = AgentTaskStatus.FAILED
+          if (APICallError.isInstance(chunk.error)) {
+              const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
+              result.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
+          }
+          else {
+              result.message = agentCommon.concatMarkdown(result.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
+          }
+          context.output.update({ data: { 
+            ...result
+          }})
+          return result
+      }
     }
 
     if (currentText.length > 0) {

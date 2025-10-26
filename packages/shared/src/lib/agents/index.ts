@@ -26,10 +26,10 @@ export enum AgentTaskStatus {
 }
 
 export type AgentResult = {
-  prompt: string,
-  steps: AgentStepBlock[]
-  status: AgentTaskStatus
-  message: string | null
+    prompt: string
+    steps: AgentStepBlock[]
+    status: AgentTaskStatus
+    message: string | null
 }
 
 export enum AgentPieceProps {
@@ -37,7 +37,7 @@ export enum AgentPieceProps {
     STRUCTURED_OUTPUT = 'structuredOutput',
     PROMPT = 'prompt',
     MAX_STEPS = 'maxSteps',
-    AI_MODEL = 'aiModel'
+    AI_MODEL = 'aiModel',
 }
 
 export enum ContentBlockType {
