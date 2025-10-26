@@ -1,4 +1,4 @@
-import { apAxios, AppSystemProp, exceptionHandler, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-shared'
+import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
 import { Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -18,11 +18,11 @@ const queue = runsMetadataQueueFactory({ createRedisConnection: redisConnections
 
 export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const queueName = 'runsMetadata'
-        const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
+        const queueName = QueueName.RUNS_METADATA
+        const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED) ?? false
 
         const config: RunsMetadataQueueConfig = {
-            isOtelEnabled: system.getBoolean(AppSystemProp.OTEL_ENABLED) ?? false,
+            isOtelEnabled,
             redisFailedJobRetentionDays: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
             redisFailedJobRetentionMaxCount: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
         }
@@ -127,7 +127,10 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     },
 
     async add(params: RunsMetadataUpsertData): Promise<void> {
-        console.log('[runsMetadataQueue#add] Adding runs metadata to queue', params)
+        log.info({
+            runId: params.id,
+            projectId: params.projectId,
+        }, '[runsMetadataQueue#add] Adding runs metadata to queue')
         await queue.add(params)
     },
 

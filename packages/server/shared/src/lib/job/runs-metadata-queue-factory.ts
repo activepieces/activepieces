@@ -4,8 +4,7 @@ import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
 import { apDayjsDuration } from '../dayjs-helper'
 import { DistributedStore } from '../redis/distributed-store-factory'
-
-const QUEUE_NAME = 'runsMetadata'
+import { QueueName } from './index'
 
 export const redisMetadataKey = (runId: ApId): string => `runs_metadata:${runId}`
 
@@ -23,9 +22,9 @@ export const runsMetadataQueueFactory = ({
 
     return {
         async init(config: RunsMetadataQueueConfig): Promise<void> {
-            queueInstance = new Queue<RunsMetadataJobData>(QUEUE_NAME, {
+            queueInstance = new Queue<RunsMetadataJobData>(QueueName.RUNS_METADATA, {
                 connection: await createRedisConnection(),
-                telemetry: config.isOtelEnabled ? new BullMQOtel(QUEUE_NAME) : undefined,
+                telemetry: config.isOtelEnabled ? new BullMQOtel(QueueName.RUNS_METADATA) : undefined,
                 defaultJobOptions: {
                     attempts: 5,
                     backoff: {
@@ -43,6 +42,7 @@ export const runsMetadataQueueFactory = ({
         },
 
         async add(params: RunsMetadataUpsertData): Promise<void> {
+            console.warn('params in runsMetadataQueueFactory', params)
             if (!queueInstance) {
                 throw new Error('Runs metadata queue not initialized')
             }
