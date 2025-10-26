@@ -8,7 +8,6 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from './engine-response-watcher'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
@@ -95,11 +94,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             flowVersion,
             projectId: request.principal.projectId,
         })
-    })
-
-    app.get('/projects/:projectId', GetProjectRequestParams, async (request) => {
-        const { projectId } = request.params
-        return projectService.getOneOrThrow(projectId)
     })
 
     app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
@@ -207,17 +201,5 @@ const UpdateFlowResponseParams = {
     },
     schema: {
         body: SendFlowResponseRequest,
-    },
-}
-
-
-const GetProjectRequestParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        params: Type.Object({
-            projectId: Type.String(),
-        }),
     },
 }

@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { Agent, AgentRun, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, Project, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { Agent, AgentRun, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import fetchRetry from 'fetch-retry'
@@ -150,9 +150,6 @@ export const engineApiService = (engineToken: string) => {
             return client.get<FlowVersion | null>('/v1/engine/flows', {
                 params: request,
             })
-        },
-        async getProject(projectId: string): Promise<Project> {
-            return client.get<Project>(`/v1/engine/projects/${projectId}`, {})
         },
     }
 }
