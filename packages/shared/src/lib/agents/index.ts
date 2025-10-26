@@ -37,7 +37,6 @@ export enum AgentPieceProps {
     STRUCTURED_OUTPUT = 'structuredOutput',
     PROMPT = 'prompt',
     MAX_STEPS = 'maxSteps',
-    AI_PROVIDER = 'aiProvider',
     AI_MODEL = 'aiModel'
 }
 

@@ -34,13 +34,21 @@ export const runAgent = createAction({
           displayName: 'Type',
           required: true
         }),
+        toolName: Property.ShortText({
+          displayName: 'Tool Name',
+          required: true
+        }),
+        mcpId: Property.ShortText({
+          displayName: 'Mcp Id',
+          required: false
+        }),
         pieceMetadata: Property.Json({
           displayName: 'Piece Metadata',
           required: false,
         }),
-        toolName: Property.ShortText({
-          displayName: 'Tool Name',
-          required: true
+        flow: Property.Json({
+          displayName: 'Populated Flow',
+          required: false,
         }),
         flowId: Property.ShortText({
           displayName: 'Flow Id',

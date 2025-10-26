@@ -4,17 +4,10 @@ import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
 
 import { AddFieldPopover } from './add-field-popover';
 import { FieldTypeIcon } from './field-type-icon';
-
-const PLACEHOLDER_FIELD: AgentOutputField = {
-  displayName: '__placeholder__',
-  description: '',
-  type: AgentOutputFieldType.TEXT,
-};
 
 export const AgentStructuredOutput = ({
   structuredOutputField,
@@ -27,22 +20,6 @@ export const AgentStructuredOutput = ({
   const outputFields = Array.isArray(value)
     ? (value as AgentOutputField[])
     : [];
-
-  const visibleFields = outputFields.filter(
-    (f) => f.displayName !== PLACEHOLDER_FIELD.displayName,
-  );
-
-  const isStructuredOutputEnabled = outputFields.some(
-    (f) => f.displayName === PLACEHOLDER_FIELD.displayName,
-  );
-
-  const handleToggleStructuredOutput = (enabled: boolean) => {
-    if (enabled) {
-      structuredOutputField.onChange([PLACEHOLDER_FIELD]);
-    } else {
-      structuredOutputField.onChange([]);
-    }
-  };
 
   const handleAddField = (
     type: AgentOutputFieldType,
@@ -62,21 +39,14 @@ export const AgentStructuredOutput = ({
     <div>
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-medium">{t('Structured Output')}</h2>
-        <Switch
-          checked={isStructuredOutputEnabled}
-          onCheckedChange={handleToggleStructuredOutput}
-          size="sm"
-          disabled={disabled}
-        />
       </div>
 
-      {isStructuredOutputEnabled && (
         <div className="flex flex-col gap-2 mt-4">
-          {visibleFields.length > 0 ? (
+          {outputFields.length > 0 ? (
             <Card>
               <CardContent className="px-2 py-2">
                 <div className="flex flex-col gap-3">
-                  {visibleFields.map((field, idx) => (
+                  {outputFields.map((field, idx) => (
                     <div
                       key={field.displayName + field.type + idx}
                       className="flex items-center justify-between"
@@ -121,7 +91,6 @@ export const AgentStructuredOutput = ({
           )}
           <AddFieldPopover disabled={disabled} onAddField={handleAddField} />
         </div>
-      )}
     </div>
   );
 };
