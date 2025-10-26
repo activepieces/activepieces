@@ -1,4 +1,4 @@
-import { Static, Type } from "@sinclair/typebox";
+import { Static, Type } from '@sinclair/typebox'
 
 export const CreateMCPServerFromStepParams = Type.Object({
     flowId: Type.String(),
