@@ -43,6 +43,7 @@ beforeAll(async () => {
     mockLog = app.log
 })
 
+
 afterEach(async () => {
     await flowWorker(mockLog).close()
 })
@@ -151,9 +152,7 @@ describe('flow execution', () => {
         await databaseConnection()
             .getRepository('flow_version')
             .save([mockFlowVersion])
-            
-        const logsFileId = apId()
-            
+
         const mockFlowRun = createMockFlowRun({
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
@@ -161,13 +160,6 @@ describe('flow execution', () => {
             status: FlowRunStatus.RUNNING,
         })
         await databaseConnection().getRepository('flow_run').save([mockFlowRun])
-        const logsUploadUrl = ( await flowRunLogsService(mockLog).constructUploadUrl({
-            logsFileId,
-            projectId: mockProject.id,
-            flowRunId: mockFlowRun.id,
-            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-        }))
-            .replace('http://localhost:4200/api/', 'http://localhost:3000/')
         const engineToken = await accessTokenManager.generateEngineToken({
             platformId: mockPlatform.id,
             projectId: mockProject.id,
@@ -175,7 +167,15 @@ describe('flow execution', () => {
         await flowWorker(mockLog).init({
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
-       
+        await new Promise(resolve => setTimeout(resolve, 10000))
+        const logsFileId = apId()
+        const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
+            logsFileId,
+            projectId: mockProject.id,
+            flowRunId: mockFlowRun.id,
+            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+        })
+
         await flowJobExecutor(mockLog).executeFlow({
             jobData: {
                 flowVersionId: mockFlowVersion.id,
@@ -246,6 +246,5 @@ describe('flow execution', () => {
         })
     }, 120000)
 })
-
 
 
