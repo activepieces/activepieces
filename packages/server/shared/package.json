@@ -8,7 +8,6 @@
     "@activepieces/pieces-framework": "0.20.1",
     "@activepieces/shared": "0.24.1",
     "tslib": "2.6.2",
-    "chokidar": "4.0.3",
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
     "axios": "1.8.3",

@@ -1,6 +1,7 @@
 import {
     AppSystemProp,
     distributedLockFactory,
+    distributedStoreFactory,
     redisConnectionFactory,
     RedisType,
 } from '@activepieces/server-shared'
@@ -24,3 +25,4 @@ export const redisConnections = redisConnectionFactory(() => {
 })
 
 export const distributedLock = distributedLockFactory(redisConnections.create)
+export const distributedStore = distributedStoreFactory(redisConnections.useExisting)
