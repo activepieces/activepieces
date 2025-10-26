@@ -1,0 +1,7 @@
+{
+  "flow run failed": "flow run failed",
+  "triggers when A flow run has failed": "triggers when A flow run has failed",
+  "Select flows that triggers this action when failed": "Select flows that triggers this action when failed",
+  "Flows": "Flows",
+  "Flows that triggers this action when failed": "Flows that triggers this action when failed"
+}

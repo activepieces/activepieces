@@ -1,0 +1,7 @@
+{
+  "flow run failed": "流程运行失败",
+  "triggers when A flow run has failed": "当流程运行失败时触发",
+  "Select flows that triggers this action when failed": "请选择在失败时触发此操作的流程",
+  "Flows": "流程",
+  "Flows that triggers this action when failed": "在失败时触发此操作的流程"
+}

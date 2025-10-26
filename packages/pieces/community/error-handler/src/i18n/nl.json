@@ -1,0 +1,7 @@
+{
+  "flow run failed": "Flow-uitvoering mislukt",
+  "triggers when A flow run has failed": "Wordt geactiveerd wanneer een flow-uitvoering is mislukt",
+  "Select flows that triggers this action when failed": "Selecteer flows die deze actie activeren bij mislukking",
+  "Flows": "Flows",
+  "Flows that triggers this action when failed": "Flows die deze actie activeren bij mislukking"
+}

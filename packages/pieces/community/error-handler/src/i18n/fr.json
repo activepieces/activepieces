@@ -1,0 +1,7 @@
+{
+  "flow run failed": "Exécution du flux échouée",
+  "triggers when A flow run has failed": "Déclencheur lorsque l'exécution d'un flux a échoué",
+  "Select flows that triggers this action when failed": "Sélectionnez les flux qui déclenchent cette action en cas d'échec",
+  "Flows": "Flux",
+  "Flows that triggers this action when failed": "Flux qui déclenchent cette action en cas d'échec"
+}

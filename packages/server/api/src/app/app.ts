@@ -91,6 +91,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import { flowWebhookModule } from './flows/flow-webhook/flow-webhook-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -191,6 +192,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flowModule)
     await app.register(pieceModule)
     await app.register(flowRunModule)
+    await app.register(flowWebhookModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
     await app.register(openapiModule)

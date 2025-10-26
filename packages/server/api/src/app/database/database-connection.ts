@@ -63,6 +63,7 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
+import { FlowWebhookEntity } from '../flows/flow-webhook/flow-webhook-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 
@@ -109,6 +110,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AIUsageEntity,
         AgentRunEntity,
         TriggerSourceEntity,
+        FlowWebhookEntity,
     ]
 
     switch (edition) {
@@ -132,7 +134,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 PlatformPlanEntity,
-           
+
             )
             break
         case ApEdition.COMMUNITY:

@@ -1,0 +1,7 @@
+{
+  "flow run failed": "Ejecución del flujo fallida",
+  "triggers when A flow run has failed": "Se activa cuando falla una ejecución del flujo",
+  "Select flows that triggers this action when failed": "Selecciona los flujos que activan esta acción al fallar",
+  "Flows": "Flujos",
+  "Flows that triggers this action when failed": "Flujos que activan esta acción al fallar"
+}

@@ -8,6 +8,7 @@ import { platformUsageService } from '../../ee/platform/platform-usage-service'
 import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
+import { flowWebhookService } from '../flow-webhook/flow-webhook-service'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -18,10 +19,16 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         })) {
             return
         }
-        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStepName)) {
-            const issue = await issuesService(log).add(flowRun)
-            if (paidEditions) {
-                await alertsService(log).sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
+        if (isFailedState(flowRun.status) && !isNil(flowRun.failedStepName)) {
+            await flowWebhookService(log).triggerWebhooks({
+                flowRun,
+                projectId: flowRun.projectId,
+            })
+            if (flowRun.environment === RunEnvironment.PRODUCTION ){
+                const issue = await issuesService(log).add(flowRun)
+                if (paidEditions) {
+                    await alertsService(log).sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
+                }
             }
         }
         if (isNil(flowRun.tasks) || !paidEditions) {

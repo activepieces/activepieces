@@ -383,6 +383,9 @@
       "@activepieces/piece-emailoctopus": [
         "packages/pieces/community/emailoctopus/src/index.ts"
       ],
+      "@activepieces/piece-error-handler": [
+        "packages/pieces/community/error-handler/src/index.ts"
+      ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],

@@ -83,7 +83,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     }
 
     workerJobsQueue = new Queue(queueName, options)
-    await workerJobsQueue.removeGlobalConcurrency()
+    // await workerJobsQueue.removeGlobalConcurrency()
     await workerJobsQueue.waitUntilReady()
 
     return workerJobsQueue

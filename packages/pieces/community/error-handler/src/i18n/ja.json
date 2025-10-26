@@ -1,0 +1,7 @@
+{
+  "flow run failed": "フロー実行に失敗しました",
+  "triggers when A flow run has failed": "フロー実行が失敗したときにトリガーされます",
+  "Select flows that triggers this action when failed": "失敗時にこのアクションをトリガーするフローを選択してください",
+  "Flows": "フロー",
+  "Flows that triggers this action when failed": "失敗時にこのアクションをトリガーするフロー"
+}
