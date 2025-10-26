@@ -1,3 +1,4 @@
+import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -15,14 +16,13 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { distributedStore } from '../database/redis-connections'
 import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
-import { distributedStore } from '../database/redis-connections'
-import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 
 export const projectRepo = repoFactory(ProjectEntity)
 

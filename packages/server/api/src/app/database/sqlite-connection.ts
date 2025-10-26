@@ -331,7 +331,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeprecateCopilotSQLITE1761223879376,
         RemoveProjectNotifyStatus1761056855716,
         RemoveAgentidFromMcpEntity1761428653922,
-        AddMaximumConcurrentJobsPerProjectSqlite1761499100171
+        AddMaximumConcurrentJobsPerProjectSqlite1761499100171,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
