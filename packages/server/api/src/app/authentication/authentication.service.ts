@@ -18,38 +18,31 @@ const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MA
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
         if (!isNil(params.platformId)) {
-            console.log('HAHAHAHAHA before assertEmailAuthIsEnabled', params)
             await authenticationUtils.assertEmailAuthIsEnabled({
                 platformId: params.platformId,
                 provider: params.provider,
             })
-            console.log('HAHAHAHAHA after assertEmailAuthIsEnabled', params)
             await authenticationUtils.assertDomainIsAllowed({
                 email: params.email,
                 platformId: params.platformId,
             })
         }
         if (isNil(params.platformId)) {
-            console.log('HAHAHAHAHA before create userIdentity inside isNil(params.platformId)', params)
             const userIdentity = await userIdentityService(log).create({
                 ...params,
                 verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
             })
-            console.log('HAHAHAHAHA after create userIdentity inside isNil(params.platformId)', userIdentity)
             return createUserAndPlatform(userIdentity, log)
         }
 
-        console.log('HAHAHAHAHA before assertUserIsInvitedToPlatformOrProject', params)
         await authenticationUtils.assertUserIsInvitedToPlatformOrProject(log, {
             email: params.email,
             platformId: params.platformId,
         })
-        console.log('HAHAHAHAHA before create userIdentity', params)
         const userIdentity = await userIdentityService(log).create({
             ...params,
             verified: true,
         })
-        console.log('HAHAHAHAHA after create userIdentity', userIdentity)
         const user = await userService.create({
             identityId: userIdentity.id,
             platformRole: PlatformRole.MEMBER,
@@ -206,36 +199,29 @@ async function getUserForPlatform(identityId: string, platform: PlatformWithoutS
 }
 
 async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
-    console.log('HAHAHAHAHA before create user', userIdentity)
     const user = await userService.create({
         identityId: userIdentity.id,
         platformRole: PlatformRole.ADMIN,
         platformId: null,
     })
-    console.log('HAHAHAHAHA after create user', user)
     const platform = await platformService.create({
         ownerId: user.id,
         name: userIdentity.firstName + '\'s Platform',
     })
-    console.log('HAHAHAHAHA after create platform', platform)
     await userService.addOwnerToPlatform({
         platformId: platform.id,
         id: user.id,
     })
-    console.log('HAHAHAHAHA after addOwnerToPlatform', user)
-    console.log('HAHAHAHAHA before create maxConcurrentJobs', MAX_CONCURRENT_JOBS_PER_PROJECT)
     const defaultProject = await projectService.create({
         displayName: userIdentity.firstName + '\'s Project',
         ownerId: user.id,
         platformId: platform.id,
         maxConcurrentJobs: MAX_CONCURRENT_JOBS_PER_PROJECT,
     })
-    console.log('HAHAHAHAHA after create defaultProject', defaultProject)
     const cloudEdition = system.getEdition()
 
     switch (cloudEdition) {
         case ApEdition.CLOUD:
-            console.log('HAHAHAHAHA before createAndSend', userIdentity.email)
             await otpService(log).createAndSend({
                 platformId: platform.id,
                 email: userIdentity.email,
