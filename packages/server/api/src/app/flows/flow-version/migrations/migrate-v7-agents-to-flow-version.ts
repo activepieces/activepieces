@@ -92,7 +92,7 @@ export const moveAgentsToFlowVerion: Migration = {
                         [AgentPieceProps.PROMPT]: `${agent?.systemPrompt}, ${prompt}`,
                         [AgentPieceProps.AI_MODEL]: 'openai-gpt-4o',
                         [AgentPieceProps.MAX_STEPS]: agent?.maxSteps,
-                        [AgentPieceProps.STRUCTURED_OUTPUT]: JSON.parse(agent?.outputFields as string || '[]'),
+                        [AgentPieceProps.STRUCTURED_OUTPUT]: typeof agent?.outputFields === 'string' ? JSON.parse(agent?.outputFields as string || '[]') : [],
                         [AgentPieceProps.AGENT_TOOLS]: tools,
                     },
                 }
