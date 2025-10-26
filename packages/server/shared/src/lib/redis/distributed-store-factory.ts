@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import Redis from 'ioredis'
 
-export const createDistributedStore = (getRedisClient: () => Promise<Redis>) => ({
+export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
     async put(key: string, value: unknown, ttlInSeconds?: number): Promise<void> {
         const serializedValue = JSON.stringify(value)
         const redisClient = await getRedisClient()
@@ -103,6 +103,3 @@ export const createDistributedStore = (getRedisClient: () => Promise<Redis>) => 
         }
     },
 })
-
-export type DistributedStore = ReturnType<typeof createDistributedStore>
-
