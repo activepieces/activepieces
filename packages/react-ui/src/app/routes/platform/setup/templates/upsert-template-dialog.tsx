@@ -1,17 +1,9 @@
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
-import {
-  FlowTemplate,
-  FlowVersionTemplate,
-  TemplateType,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { Textarea } from '../../../../../components/ui/textarea';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +19,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TagInput } from '@/components/ui/tag-input';
 import { templatesApi } from '@/features/templates/lib/templates-api';
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import {
+  FlowTemplate,
+  FlowVersionTemplate,
+  TemplateType,
+} from '@activepieces/shared';
+
+import { Textarea } from '../../../../../components/ui/textarea';
 
 const UpsertFlowTemplateSchema = Type.Object({
   displayName: Type.String({

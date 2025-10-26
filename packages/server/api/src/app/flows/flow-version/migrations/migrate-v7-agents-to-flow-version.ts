@@ -23,6 +23,7 @@ export const moveAgentsToFlowVerion: Migration = {
                     const agent = agentResults[0]
 
                     const dbTools = await db.query('SELECT * FROM mcp_tool WHERE "mcpId" = $1', [agent.mcpId])
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const tools = dbTools.map((tool: any) =>  {
                         if (tool.type === McpToolType.PIECE) {
                             const pieceMetadata = JSON.parse(tool.pieceMetadata) 
@@ -30,16 +31,17 @@ export const moveAgentsToFlowVerion: Migration = {
                                 type: tool.type,
                                 toolName: pieceMetadata.actionName,
                                 pieceMetadata,
-                                mcpId: tool.mcpId
+                                mcpId: tool.mcpId,
                             }
-                        } else {
+                        }
+                        else {
                             const populatedFlow = JSON.parse(tool.flow) as PopulatedFlow
                             return {
                                 type: tool.type,
                                 toolName: populatedFlow.id,
                                 mcpId: tool.mcpId,
                                 flow: populatedFlow, 
-                                flowId: tool.flowId
+                                flowId: tool.flowId,
                             }
                         }
                     })
@@ -50,7 +52,7 @@ export const moveAgentsToFlowVerion: Migration = {
                     }
                 }
                 return null
-            })
+            }),
         )
         
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {

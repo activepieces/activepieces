@@ -329,7 +329,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveTriggerRunEntity1760992394073,
         DeprecateCopilotSQLITE1761223879376,
         RemoveProjectNotifyStatus1761056855716,
-        RemoveAgentidFromMcpEntity1761428653922
+        RemoveAgentidFromMcpEntity1761428653922,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

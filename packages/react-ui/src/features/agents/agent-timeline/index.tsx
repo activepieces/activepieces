@@ -47,7 +47,7 @@ export const AgentTimeline = ({
     if (!socket) return;
 
     const handleUpdate = (data: StepRunResponse) => {
-      if (isNil(data.output)) return
+      if (isNil(data.output)) return;
       setLiveResult(data.output as AgentResult);
     };
 

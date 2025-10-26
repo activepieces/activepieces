@@ -135,7 +135,12 @@ export const selectFormComponentForProperty = ({
   if (propertyName === AgentPieceProps.AGENT_TOOLS) {
     return <AgentTools disabled={disabled} agentToolsField={field} />;
   } else if (propertyName === AgentPieceProps.STRUCTURED_OUTPUT) {
-    return <AgentStructuredOutput disabled={disabled} structuredOutputField={field} />;
+    return (
+      <AgentStructuredOutput
+        disabled={disabled}
+        structuredOutputField={field}
+      />
+    );
   }
 
   switch (property.type) {
