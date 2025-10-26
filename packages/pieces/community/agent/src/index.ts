@@ -7,7 +7,7 @@ export const agent = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.71.0',
   logoUrl: "https://cdn.activepieces.com/pieces/agent.png",
-  authors: ['Gamal72', 'abuaboud', 'amrdb'],
+  authors: ['Gamal72', 'abuaboud', 'amrdb', 'Louai-Zokerburg'],
   description: "Let an AI assistant help you with tasks using tools.",
   actions: [runAgent],
   triggers: [],

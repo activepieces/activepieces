@@ -4,6 +4,7 @@ import {
     FlowActionType,
     flowStructureUtil,
     FlowVersion,
+    isNil,
     McpTool,
     McpToolType,
     PopulatedFlow,
@@ -22,7 +23,19 @@ export const moveAgentsToFlowVerion: Migration = {
                     const agentResults = await db.query('SELECT * FROM agent WHERE "externalId" = $1', [step.settings.input['agentId']])
                     const agent = agentResults[0]
 
+                    if (isNil(agent)) {
+                        return null
+                    }
+
                     const dbTools = await db.query('SELECT * FROM mcp_tool WHERE "mcpId" = $1', [agent.mcpId])
+
+                    if (isNil(dbTools)) {
+                        return {
+                            agent,
+                            tools: []
+                        }
+                    }
+
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const tools = dbTools.map((tool: any) =>  {
                         if (tool.type === McpToolType.PIECE) {
@@ -51,6 +64,7 @@ export const moveAgentsToFlowVerion: Migration = {
                         tools,
                     }
                 }
+
                 return null
             }),
         )
