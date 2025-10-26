@@ -73,6 +73,18 @@ export const testStepHooks = {
             ? stringifyNullOrUndefined(response.output)
             : response.output;
           setSampleData({ stepName: step.name, type: 'output', value: output });
+          applyOperation({
+            type: FlowOperationType.SAVE_SAMPLE_DATA,
+            request: {
+              stepName: step.name,
+              payload: output,
+              type: SampleDataFileType.OUTPUT,
+              dataType:
+                typeof output === 'string'
+                  ? SampleDataDataType.STRING
+                  : SampleDataDataType.JSON,
+            },
+          });
           if (response.testType === 'action') {
             const input = isNil(response.input)
               ? stringifyNullOrUndefined(response.input)
@@ -86,18 +98,6 @@ export const testStepHooks = {
                 type: SampleDataFileType.INPUT,
                 dataType:
                   typeof input === 'string'
-                    ? SampleDataDataType.STRING
-                    : SampleDataDataType.JSON,
-              },
-            });
-            applyOperation({
-              type: FlowOperationType.SAVE_SAMPLE_DATA,
-              request: {
-                stepName: step.name,
-                payload: output,
-                type: SampleDataFileType.OUTPUT,
-                dataType:
-                  typeof output === 'string'
                     ? SampleDataDataType.STRING
                     : SampleDataDataType.JSON,
               },

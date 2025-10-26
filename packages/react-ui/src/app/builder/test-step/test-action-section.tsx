@@ -164,15 +164,7 @@ const TestStepSectionImplementation = React.memo(
                 size="sm"
                 onClick={onTestButtonClick}
                 keyboardShortcut="G"
-                onKeyboardShortcut={() => {
-                  if (isTodoCreateTask(currentStep)) {
-                    handleTodoCreateTask();
-                  } else if (isRunAgent(currentStep)) {
-                    handleRunAgent();
-                  } else {
-                    testAction(undefined);
-                  }
-                }}
+                onKeyboardShortcut={onTestButtonClick}
                 loading={isTesting || isSaving}
                 disabled={!currentStep.valid || isLoadingDynamicProperties}
               >
