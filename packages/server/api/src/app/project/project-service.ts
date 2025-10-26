@@ -40,11 +40,11 @@ export const projectService = {
             maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
-        if (!isNil(params.maxConcurrentJobs)) {
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(newProject.id), params.maxConcurrentJobs)
-        }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
+        if (!isNil(params.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        }
         return savedProject
     },
     async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {
