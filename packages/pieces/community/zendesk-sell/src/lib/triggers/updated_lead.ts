@@ -1,109 +1,127 @@
-import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { zendeskSellAuth } from '../common/auth';
-import { MarkdownVariant } from '@activepieces/shared';
+import {
+    createTrigger,
+    TriggerStrategy,
+    Property,
+    Store,
+    TriggerHookContext
+} from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
+import { callZendeskApi } from '../common/client';
 
+const STORE_KEY = 'updatedLead_last_poll_time';
 
-interface ZendeskSellWebhookPayload {
-    data: {
-        id: number;
-        first_name?: string;
-        last_name?: string;
-        organization_name?: string;
-        email?: string;
-        status?: string;
-        updated_at: string;
-    };
-    meta: {
-        type: string;
-        event_type: string;
-    };
+interface ZendeskLeadItem {
+    data: ZendeskLead;
+    meta: { type: string };
 }
+interface ZendeskLead {
+    id: number;
+    first_name?: string;
+    last_name?: string;
+    organization_name?: string;
+    email?: string;
+    status?: string;
+    updated_at: string;
+}
+
+interface TriggerPropsValue {}
 
 export const updatedLead = createTrigger({
     auth: zendeskSellAuth,
     name: 'updated_lead',
     displayName: 'Updated Lead',
-    description: 'Fires when an existing lead record is updated.',
-    props: {
-        liveMarkdown: Property.MarkDown({
-            value: `
-            **Live URL:**
-            \`\`\`text
-            {{webhookUrl}}
-            \`\`\``,
-            variant: MarkdownVariant.BORDERLESS,
-        }),
-        instructions: Property.MarkDown({
-            value: `
-            **Manual Setup Required**
-            1.  Go to your Zendesk Sell account.
-            2.  Navigate to **Settings > Integrations > Webhooks**.
-            3.  Click **Add webhook**.
-            4.  Paste the **Live URL** (from above) into the **URL** field.
-            5.  Under **Event subscriptions**, find and select **Lead > Updated**.
-            6.  Save the webhook.
-            `
-        }),
-    },
+    description: 'Fires when an existing lead record is updated (polls for updates).',
+    props: {},
     sampleData: {
-        "meta": {
-            "type": "lead",
-            "event_type": "updated",
-            "event_time": "2025-10-18T10:25:00Z"
-        },
-        "data": {
-            "id": 1,
-            "creator_id": 1,
-            "owner_id": 1,
-            "first_name": "Mark",
-            "last_name": "Johnson",
-            "organization_name": "Design Services Inc.",
-            "status": "Contacted",
-            "source_id": 10,
-            "title": "Senior Designer",
-            "description": "Updated description.",
-            "email": "mark.johnson@example.com",
-            "phone": "508-778-6516",
-            "mobile": "508-778-6517",
-            "address": {
-                "line1": "2726 Smith Street",
-                "city": "Hyannis",
-                "postal_code": "02601",
-                "state": "MA",
-                "country": "US"
-            },
-            "tags": [
-                "important",
-                "follow-up"
-            ],
-            "created_at": "2024-08-27T16:32:56Z",
-            "updated_at": "2025-10-18T10:25:00Z"
-        }
+        "id": 1,
+        "creator_id": 1,
+        "owner_id": 1,
+        "first_name": "Mark",
+        "last_name": "Johnson",
+        "organization_name": "Design Services Inc.",
+        "status": "Contacted",
+        "source_id": 10,
+        "title": "Senior Designer",
+        "description": "Updated description.",
+        "email": "mark.johnson@example.com",
+        "phone": "508-778-6516",
+        "mobile": "508-778-6517",
+        "created_at": "2024-08-27T16:32:56Z",
+        "updated_at": "2025-10-18T10:25:00Z"
     },
-    type: TriggerStrategy.WEBHOOK,
-    
+    type: TriggerStrategy.POLLING,
 
-    async onEnable() {
-        return;
+    async test(context) {
+        const { auth } = context;
+
+        const response = await callZendeskApi<{ items: ZendeskLeadItem[] }>(
+            HttpMethod.GET,
+            'v2/leads',
+            auth as ZendeskSellAuthValue,
+            undefined,
+            {
+                sort_by: 'updated_at:desc',
+                per_page: '1',
+            }
+        );
+
+        if (response.body.items && response.body.items.length > 0) {
+            return [response.body.items[0].data];
+        }
+        return [{}];
     },
-    
-    async onDisable() {
-        return;
+
+    async onEnable(context) {
+        await context.store.put(STORE_KEY, Math.floor(Date.now() / 1000));
+        console.log(`Initialized ${STORE_KEY} for updatedLead`);
+    },
+
+    async onDisable(context) {
+        await context.store.delete(STORE_KEY);
+        console.log(`Cleaned up ${STORE_KEY} for updatedLead`);
     },
 
     async run(context) {
-        const body = context.payload.body as ZendeskSellWebhookPayload;
+        const { auth, store } = context;
+        const lastPollTimeSeconds = await store.get<number>(STORE_KEY) ?? 0;
 
-        if (body.meta && body.meta.type === 'lead' && body.meta.event_type === 'updated') {
-            return [body];
-        }
-        
-        if (Array.isArray(body)) {
-            return body.filter((item: any) => 
-                item.meta && item.meta.type === 'lead' && item.meta.event_type === 'updated'
-            );
+        console.log(`Polling leads updated after timestamp (seconds): ${lastPollTimeSeconds}`);
+
+        const response = await callZendeskApi<{ items: ZendeskLeadItem[] }>(
+            HttpMethod.GET,
+            'v2/leads',
+            auth as ZendeskSellAuthValue,
+            undefined,
+            {
+                sort_by: 'updated_at:asc',
+                per_page: '100',
+            }
+        );
+
+        const leads = response.body.items.map(item => item.data);
+        let maxTimestampSeconds = lastPollTimeSeconds;
+        const updatedLeadsSinceLastPoll: ZendeskLead[] = [];
+
+        for (const lead of leads) {
+            const updatedAtSeconds = Math.floor(new Date(lead.updated_at).getTime() / 1000);
+
+            if (updatedAtSeconds > lastPollTimeSeconds) {
+                updatedLeadsSinceLastPoll.push(lead);
+                if (updatedAtSeconds > maxTimestampSeconds) {
+                    maxTimestampSeconds = updatedAtSeconds;
+                }
+            }
         }
 
-        return [];
+        if (updatedLeadsSinceLastPoll.length > 0) {
+            await store.put(STORE_KEY, maxTimestampSeconds);
+            console.log(`Updated ${STORE_KEY} to: ${maxTimestampSeconds}`);
+        } else {
+             console.log(`No leads updated since last poll time: ${lastPollTimeSeconds}`);
+        }
+
+        console.log(`Found ${updatedLeadsSinceLastPoll.length} updated leads.`);
+        return updatedLeadsSinceLastPoll;
     },
 });
