@@ -157,6 +157,7 @@ import { RemoveTriggerRunEntity1760992394073 } from './migration/sqlite/17609923
 import { RemoveProjectNotifyStatus1761056855716 } from './migration/sqlite/1761056855716-RemoveProjectNotifyStatus'
 import { DeprecateCopilotSQLITE1761223879376 } from './migration/sqlite/1761223879376-DeprecateCopilotSQLITE'
 import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761428653922-remove-agentid-from-mcp-entity' 
+import { AddMaximumConcurrentJobsPerProjectSqlite1761484763182 } from './migration/sqlite/1761484763182-AddMaximumConcurrentJobsPerProjectSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -330,6 +331,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeprecateCopilotSQLITE1761223879376,
         RemoveProjectNotifyStatus1761056855716,
         RemoveAgentidFromMcpEntity1761428653922,
+        AddMaximumConcurrentJobsPerProjectSqlite1761484763182
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
