@@ -48,7 +48,7 @@ export const FlowWebhookEntity = new EntitySchema<FlowWebhookSchema>({
                 },
                 inverseJoinColumn: {
                     name: 'flow_id',
-                    referencedColumnName: 'id',
+                    referencedColumnName: 'externalId',
                 }
             }               
         }

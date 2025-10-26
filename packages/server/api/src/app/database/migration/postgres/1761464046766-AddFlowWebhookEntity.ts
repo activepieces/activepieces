@@ -42,7 +42,7 @@ export class AddFlowWebhookEntity1761464046766 implements MigrationInterface {
         `);
         await queryRunner.query(`
             ALTER TABLE "flow-webhook-trigger-flow"
-            ADD CONSTRAINT "FK_b13c4b33941b89da9ee704274d6" FOREIGN KEY ("flow_id") REFERENCES "flow"("id") ON DELETE CASCADE ON UPDATE CASCADE
+            ADD CONSTRAINT "FK_b13c4b33941b89da9ee704274d6" FOREIGN KEY ("flow_id") REFERENCES "flow"("externalId") ON DELETE CASCADE ON UPDATE CASCADE
         `);
     }
 

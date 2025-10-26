@@ -1,11 +1,12 @@
 import { FastifyBaseLogger } from 'fastify';
 import { FlowWebhookEntity } from './flow-webhook-entity';
-import { apId, FlowRun, FlowWebhook } from '@activepieces/shared';
+import { apId, assertNotNullOrUndefined, FlowRun, FlowWebhook, isNil } from '@activepieces/shared';
 import { repoFactory } from '../../core/db/repo-factory';
 import { webhookService } from '../../webhooks/webhook.service';
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler';
 import { In } from 'typeorm';
 import { flowRepo } from '../flow/flow.repo';
+import { flowService } from '../flow/flow.service';
 
 const flowWebhookRepo = repoFactory<FlowWebhook>(FlowWebhookEntity);
 export const flowWebhookService = (log: FastifyBaseLogger) => ({
@@ -45,10 +46,12 @@ export const flowWebhookService = (log: FastifyBaseLogger) => ({
         flowRun,
         projectId,
     }: TriggerWebhooksParams): Promise<void> {
+        const flow = await flowService(log).getOneById(flowRun.flowId)
+        assertNotNullOrUndefined(flow, 'flow');
         const webhooks = await flowWebhookRepo()
-            .createQueryBuilder('fw')
-            .innerJoin('fw.triggerFlows', 'tf', 'tf.id = :flowId', { flowId: flowRun.flowId })
-            .where('fw.projectId = :projectId', { projectId })
+            .createQueryBuilder('flow_webhook')
+            .innerJoin('flow_webhook.triggerFlows', 'tf', 'tf.externalId = :flowExternalId', { flowExternalId: flow.externalId })
+            .where('flow_webhook.projectId = :projectId', { projectId })
             .getMany();
        
         if (webhooks.length === 0) {
