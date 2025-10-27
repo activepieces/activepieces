@@ -23,7 +23,7 @@ describe('Platform Project Service', () => {
     describe('Hard delete Project', () => {
         it('Hard deletes associated flows', async () => {
             // arrange
-            const { mockProject } = await mockAndSaveBasicSetup()
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })
             await databaseConnection().getRepository('flow').save([mockFlow])
@@ -44,7 +44,7 @@ describe('Platform Project Service', () => {
             })
 
             // act
-            await platformProjectService(mockLog).hardDelete({ id: mockProject.id })
+            await platformProjectService(mockLog).hardDelete({ id: mockProject.id, platformId: mockPlatform.id })
 
             // assert
             const flowCount = await databaseConnection().getRepository('flow').countBy({ projectId: mockProject.id })
@@ -68,7 +68,7 @@ describe('Platform Project Service', () => {
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
             // act
-            await platformProjectService(mockLog).hardDelete({ id: mockProject.id })
+            await platformProjectService(mockLog).hardDelete({ id: mockProject.id, platformId: mockPlatform.id })
 
             // assert
             const fileCount = await databaseConnection().getRepository('file').countBy({ projectId: mockProject.id })
