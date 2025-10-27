@@ -9,18 +9,19 @@ export const getPerson = createAction({
   displayName: 'Get Person',
   description: 'Retrieve detailed information about a person from your Folk workspace.',
   props: {
-    contactId: folkProps.person_id(true),
+    personId: folkProps.person_id(true),
   },
   async run(context) {
-    const { contactId } = context.propsValue;
+    const { personId } = context.propsValue;
 
     const response = await folkClient.getPerson({
       apiKey: context.auth,
-      contactId: contactId as string,
+      contactId: personId as string,
     });
 
     return {
-      contact: response.contact,
+      data: response.data,
+      success: true,
     };
   },
 });

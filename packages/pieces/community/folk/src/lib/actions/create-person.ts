@@ -12,7 +12,7 @@ export const createPerson = createAction({
     firstName: Property.ShortText({
       displayName: 'First Name',
       description: 'The first name of the person',
-      required: true,
+      required: false,
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
@@ -24,104 +24,129 @@ export const createPerson = createAction({
       description: 'The full name of the person (alternative to first/last)',
       required: false,
     }),
+    description: Property.LongText({
+      displayName: 'Description',
+      description: 'A short description of the person',
+      required: false,
+    }),
+    birthday: Property.ShortText({
+      displayName: 'Birthday',
+      description: 'The birthday in YYYY-MM-DD format',
+      required: false,
+    }),
     jobTitle: Property.ShortText({
       displayName: 'Job Title',
       description: 'The job title of the person',
       required: false,
     }),
-    companyId: folkProps.company_id(false),
-    emails: Property.Array({
-      displayName: 'Emails',
-      description: 'Email addresses for the person',
+    companyIds: Property.Array({
+      displayName: 'Company IDs',
+      description: 'The IDs of companies to associate with the person. The first company will be primary.',
       required: false,
       properties: {
-        email: Property.ShortText({
+        value: Property.ShortText({
+          displayName: 'Company ID',
+          required: true,
+        }),
+      },
+    }),
+    companyNames: Property.Array({
+      displayName: 'Company Names',
+      description: 'Company names to create or associate with. Companies will be created if they don\'t exist.',
+      required: false,
+      properties: {
+        value: Property.ShortText({
+          displayName: 'Company Name',
+          required: true,
+        }),
+      },
+    }),
+    addresses: Property.Array({
+      displayName: 'Addresses',
+      description: 'Physical addresses for the person. The first address is primary.',
+      required: false,
+      properties: {
+        value: Property.ShortText({
+          displayName: 'Address',
+          required: true,
+        }),
+      },
+    }),
+    emails: Property.Array({
+      displayName: 'Emails',
+      description: 'Email addresses for the person. The first email is primary.',
+      required: false,
+      properties: {
+        value: Property.ShortText({
           displayName: 'Email',
           required: true,
         }),
-        label: Property.ShortText({
-          displayName: 'Label',
-          description: 'Label for the email (e.g., work, personal)',
-          required: false,
-        }),
       },
     }),
-    links: Property.Array({
-      displayName: 'Links',
-      description: 'Website links for the person',
-      required: false,
-      properties: {
-        link: Property.ShortText({
-          displayName: 'URL',
-          required: true,
-        }),
-        label: Property.ShortText({
-          displayName: 'Label',
-          description: 'Label for the link (e.g., website, linkedin)',
-          required: false,
-        }),
-      },
-    }),
-    phoneNumbers: Property.Array({
+    phones: Property.Array({
       displayName: 'Phone Numbers',
-      description: 'Phone numbers for the person',
+      description: 'Phone numbers for the person. The first phone is primary.',
       required: false,
       properties: {
-        phone: Property.ShortText({
+        value: Property.ShortText({
           displayName: 'Phone Number',
           required: true,
         }),
-        label: Property.ShortText({
-          displayName: 'Label',
-          required: false,
-        }),
       },
     }),
-    notes: Property.LongText({
-      displayName: 'Notes',
-      description: 'Additional notes about the person',
+    urls: Property.Array({
+      displayName: 'URLs',
+      description: 'Website URLs for the person. The first URL is primary.',
       required: false,
+      properties: {
+        value: Property.ShortText({
+          displayName: 'URL',
+          required: true,
+        }),
+      },
     }),
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   async run(context) {
-    const { firstName, lastName, fullName, jobTitle, companyId, emails, links, phoneNumbers, notes, groupId } = context.propsValue;
+    const { firstName, lastName, fullName, description, birthday, jobTitle, companyIds, companyNames, addresses, emails, phones, urls, groupId } = context.propsValue;
 
     const personData: any = {};
 
-    if (fullName) {
-      personData.fullName = fullName;
-    } else {
-      personData.firstName = firstName;
-      if (lastName) personData.lastName = lastName;
-    }
-
+    if (firstName) personData.firstName = firstName;
+    if (lastName) personData.lastName = lastName;
+    if (fullName) personData.fullName = fullName;
+    if (description) personData.description = description;
+    if (birthday) personData.birthday = birthday;
     if (jobTitle) personData.jobTitle = jobTitle;
-    if (companyId) personData.companyId = companyId;
+
+    const companies: any[] = [];
+    if (companyIds && Array.isArray(companyIds)) {
+      companies.push(...companyIds.map((c: any) => ({ id: c.value || c })));
+    }
+    if (companyNames && Array.isArray(companyNames)) {
+      companies.push(...companyNames.map((c: any) => ({ name: c.value || c })));
+    }
+    if (companies.length > 0) personData.companies = companies;
+
+    if (addresses && Array.isArray(addresses) && addresses.length > 0) {
+      personData.addresses = addresses.map((addr: any) => addr.value || addr);
+    }
 
     if (emails && Array.isArray(emails) && emails.length > 0) {
-      personData.emails = emails.map((e: any) => ({
-        email: e.email,
-        label: e.label || 'work',
-      }));
+      personData.emails = emails.map((e: any) => e.value || e);
     }
 
-    if (links && Array.isArray(links) && links.length > 0) {
-      personData.links = links.map((l: any) => ({
-        link: l.link,
-        label: l.label || 'website',
-      }));
+    if (phones && Array.isArray(phones) && phones.length > 0) {
+      personData.phones = phones.map((p: any) => p.value || p);
     }
 
-    if (phoneNumbers && Array.isArray(phoneNumbers) && phoneNumbers.length > 0) {
-      personData.phoneNumbers = phoneNumbers.map((p: any) => ({
-        phone: p.phone,
-        label: p.label || 'work',
-      }));
+    if (urls && Array.isArray(urls) && urls.length > 0) {
+      personData.urls = urls.map((u: any) => u.value || u);
     }
 
-    if (notes) personData.notes = notes;
-    if (groupId) personData.groupId = groupId;
+    if (groupId) {
+      personData.groups = [{ id: groupId }];
+    }
 
     const response = await folkClient.createPerson({
       apiKey: context.auth,
@@ -129,7 +154,7 @@ export const createPerson = createAction({
     });
 
     return {
-      contact: response.contact,
+      person: response.data,
       success: true,
     };
   },

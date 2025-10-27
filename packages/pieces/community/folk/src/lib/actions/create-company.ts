@@ -14,94 +14,90 @@ export const createCompany = createAction({
       description: 'The name of the company',
       required: true,
     }),
-    emails: Property.Array({
-      displayName: 'Emails',
-      description: 'Email addresses for the company',
+    description: Property.LongText({
+      displayName: 'Description',
+      description: 'A short description of the company',
+      required: false,
+    }),
+    industry: Property.ShortText({
+      displayName: 'Industry',
+      description: 'The industry the company operates in',
+      required: false,
+    }),
+    addresses: Property.Array({
+      displayName: 'Addresses',
+      description: 'Physical addresses for the company. The first address is primary.',
       required: false,
       properties: {
-        email: Property.ShortText({
+        value: Property.ShortText({
+          displayName: 'Address',
+          required: true,
+        }),
+      },
+    }),
+    emails: Property.Array({
+      displayName: 'Emails',
+      description: 'Email addresses for the company. The first email is primary.',
+      required: false,
+      properties: {
+        value: Property.ShortText({
           displayName: 'Email',
           required: true,
         }),
-        label: Property.ShortText({
-          displayName: 'Label',
-          description: 'Label for the email (e.g., work, personal)',
-          required: false,
-        }),
       },
     }),
-    links: Property.Array({
-      displayName: 'Links',
-      description: 'Website links for the company',
-      required: false,
-      properties: {
-        link: Property.ShortText({
-          displayName: 'URL',
-          required: true,
-        }),
-        label: Property.ShortText({
-          displayName: 'Label',
-          description: 'Label for the link (e.g., website, linkedin)',
-          required: false,
-        }),
-      },
-    }),
-    phoneNumbers: Property.Array({
+    phones: Property.Array({
       displayName: 'Phone Numbers',
-      description: 'Phone numbers for the company',
+      description: 'Phone numbers for the company. The first phone is primary.',
       required: false,
       properties: {
-        phone: Property.ShortText({
+        value: Property.ShortText({
           displayName: 'Phone Number',
           required: true,
         }),
-        label: Property.ShortText({
-          displayName: 'Label',
-          required: false,
-        }),
       },
     }),
-    notes: Property.LongText({
-      displayName: 'Notes',
-      description: 'Additional notes about the company',
+    urls: Property.Array({
+      displayName: 'URLs',
+      description: 'Website URLs for the company. The first URL is primary.',
       required: false,
+      properties: {
+        value: Property.ShortText({
+          displayName: 'URL',
+          required: true,
+        }),
+      },
     }),
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   async run(context) {
-    const { name, emails, links, phoneNumbers, notes, groupId } = context.propsValue;
+    const { name, description, industry, addresses, emails, phones, urls, groupId } = context.propsValue;
 
     const companyData: any = {
       name,
     };
 
+    if (description) companyData.description = description;
+    if (industry) companyData.industry = industry;
+
+    if (addresses && Array.isArray(addresses) && addresses.length > 0) {
+      companyData.addresses = addresses.map((addr: any) => addr.value || addr);
+    }
+
     if (emails && Array.isArray(emails) && emails.length > 0) {
-      companyData.emails = emails.map((e: any) => ({
-        email: e.email,
-        label: e.label || 'work',
-      }));
+      companyData.emails = emails.map((e: any) => e.value || e);
     }
 
-    if (links && Array.isArray(links) && links.length > 0) {
-      companyData.links = links.map((l: any) => ({
-        link: l.link,
-        label: l.label || 'website',
-      }));
+    if (phones && Array.isArray(phones) && phones.length > 0) {
+      companyData.phones = phones.map((p: any) => p.value || p);
     }
 
-    if (phoneNumbers && Array.isArray(phoneNumbers) && phoneNumbers.length > 0) {
-      companyData.phoneNumbers = phoneNumbers.map((p: any) => ({
-        phone: p.phone,
-        label: p.label || 'work',
-      }));
-    }
-
-    if (notes) {
-      companyData.notes = notes;
+    if (urls && Array.isArray(urls) && urls.length > 0) {
+      companyData.urls = urls.map((u: any) => u.value || u);
     }
 
     if (groupId) {
-      companyData.groupId = groupId;
+      companyData.groups = [{ id: groupId }];
     }
 
     const response = await folkClient.createCompany({
@@ -110,7 +106,7 @@ export const createCompany = createAction({
     });
 
     return {
-      company: response.company,
+      company: response.data,
       success: true,
     };
   },

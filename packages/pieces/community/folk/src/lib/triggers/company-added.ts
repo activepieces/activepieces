@@ -3,7 +3,7 @@ import {
     TriggerStrategy,
     PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { folkAuth } from '../common/auth';
 import { folkClient } from '../common/client';
 

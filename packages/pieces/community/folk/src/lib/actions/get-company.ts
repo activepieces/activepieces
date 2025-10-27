@@ -20,7 +20,7 @@ export const getCompany = createAction({
     });
 
     return {
-      company: response.company,
+      company: response.data,
     };
   },
 });

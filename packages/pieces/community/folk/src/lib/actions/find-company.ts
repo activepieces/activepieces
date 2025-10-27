@@ -23,8 +23,9 @@ export const findCompany = createAction({
     });
 
     return {
-      companies: response.companies || [],
-      count: response.companies?.length || 0,
+      companies: response.data?.items || [],
+      count: response.data?.items?.length || 0,
+      pagination: response.data?.pagination,
     };
   },
 });

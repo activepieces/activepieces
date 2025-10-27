@@ -6,7 +6,7 @@ export const folkClient = {
   async testConnection(apiKey: string): Promise<void> {
     await this.makeRequest<any>({
       method: HttpMethod.GET,
-      url: '/v1/people/list',
+      url: '/v1/people?limit=1',
       apiKey,
     });
   },
@@ -28,7 +28,7 @@ export const folkClient = {
       method,
       url: `${this.baseUrl}${url}`,
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         ...headers,
       },
@@ -36,13 +36,23 @@ export const folkClient = {
     });
 
     if (response.status >= 400) {
-      throw new Error(`Folk API error: ${response.status} ${JSON.stringify(response.body)}`);
+      throw new Error(
+        `Folk API error: ${response.status} ${JSON.stringify(response.body)}`
+      );
     }
 
     return response.body;
   },
 
-  async getPeople({ apiKey, limit = 100, offset = 0 }: { apiKey: string; limit?: number; offset?: number }) {
+  async getPeople({
+    apiKey,
+    limit = 100,
+    offset = 0,
+  }: {
+    apiKey: string;
+    limit?: number;
+    offset?: number;
+  }) {
     return this.makeRequest<{ people: any[] }>({
       method: HttpMethod.GET,
       url: `/v1/people/list?limit=${limit}&offset=${offset}`,
@@ -50,8 +60,58 @@ export const folkClient = {
     });
   },
 
-  async getPerson({ apiKey, contactId }: { apiKey: string; contactId: string }) {
-    return this.makeRequest<{ contact: any }>({
+  async getPeopleWithFilters({
+    apiKey,
+    limit = 20,
+    cursor,
+    combinator = 'and',
+    nameFilter,
+    emailFilter,
+  }: {
+    apiKey: string;
+    limit?: number;
+    cursor?: string;
+    combinator?: 'and' | 'or';
+    nameFilter?: string;
+    emailFilter?: string;
+  }) {
+    const params = new URLSearchParams();
+
+    if (limit) params.append('limit', limit.toString());
+    if (cursor) params.append('cursor', cursor);
+    if (combinator) params.append('combinator', combinator);
+
+    // Add filters using the deep object format
+    if (nameFilter) {
+      params.append('filter[fullName][contains]', nameFilter);
+    }
+    if (emailFilter) {
+      params.append('filter[emails][contains]', emailFilter);
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `/v1/people?${queryString}` : '/v1/people';
+
+    return this.makeRequest<{
+      data: {
+        items: any[];
+        pagination: { nextLink?: string };
+      };
+    }>({
+      method: HttpMethod.GET,
+      url,
+      apiKey,
+    });
+  },
+
+  async getPerson({
+    apiKey,
+    contactId,
+  }: {
+    apiKey: string;
+    contactId: string;
+  }) {
+    return this.makeRequest<{ data: any }>({
       method: HttpMethod.GET,
       url: `/v1/people/${contactId}`,
       apiKey,
@@ -67,16 +127,24 @@ export const folkClient = {
   },
 
   async createPerson({ apiKey, data }: { apiKey: string; data: any }) {
-    return this.makeRequest<{ contact: any }>({
+    return this.makeRequest<{ data: any }>({
       method: HttpMethod.POST,
-      url: '/v1/people/create',
+      url: '/v1/people',
       apiKey,
       body: data,
     });
   },
 
-  async updatePerson({ apiKey, contactId, data }: { apiKey: string; contactId: string; data: any }) {
-    return this.makeRequest<{ contact: any }>({
+  async updatePerson({
+    apiKey,
+    contactId,
+    data,
+  }: {
+    apiKey: string;
+    contactId: string;
+    data: any;
+  }) {
+    return this.makeRequest<{ data: any }>({
       method: HttpMethod.PATCH,
       url: `/v1/people/${contactId}`,
       apiKey,
@@ -84,7 +152,15 @@ export const folkClient = {
     });
   },
 
-  async getCompanies({ apiKey, limit = 100, offset = 0 }: { apiKey: string; limit?: number; offset?: number }) {
+  async getCompanies({
+    apiKey,
+    limit = 100,
+    offset = 0,
+  }: {
+    apiKey: string;
+    limit?: number;
+    offset?: number;
+  }) {
     return this.makeRequest<{ companies: any[] }>({
       method: HttpMethod.GET,
       url: `/v1/companies/list?limit=${limit}&offset=${offset}`,
@@ -92,8 +168,14 @@ export const folkClient = {
     });
   },
 
-  async getCompany({ apiKey, companyId }: { apiKey: string; companyId: string }) {
-    return this.makeRequest<{ company: any }>({
+  async getCompany({
+    apiKey,
+    companyId,
+  }: {
+    apiKey: string;
+    companyId: string;
+  }) {
+    return this.makeRequest<{ data: any }>({
       method: HttpMethod.GET,
       url: `/v1/companies/${companyId}`,
       apiKey,
@@ -101,24 +183,36 @@ export const folkClient = {
   },
 
   async searchCompany({ apiKey, query }: { apiKey: string; query: string }) {
-    return this.makeRequest<{ companies: any[] }>({
+    return this.makeRequest<{
+      data: { items: any[]; pagination: { nextLink: string } };
+    }>({
       method: HttpMethod.GET,
-      url: `/v1/companies/search?query=${encodeURIComponent(query)}`,
+      url: `/v1/companies?limit=100&filter[name][contains]=${encodeURIComponent(
+        query
+      )}`,
       apiKey,
     });
   },
 
   async createCompany({ apiKey, data }: { apiKey: string; data: any }) {
-    return this.makeRequest<{ company: any }>({
+    return this.makeRequest<{ data: any }>({
       method: HttpMethod.POST,
-      url: '/v1/companies/create',
+      url: '/v1/companies',
       apiKey,
       body: data,
     });
   },
 
-  async updateCompany({ apiKey, companyId, data }: { apiKey: string; companyId: string; data: any }) {
-    return this.makeRequest<{ company: any }>({
+  async updateCompany({
+    apiKey,
+    companyId,
+    data,
+  }: {
+    apiKey: string;
+    companyId: string;
+    data: any;
+  }) {
+    return this.makeRequest<{ data: any }>({
       method: HttpMethod.PATCH,
       url: `/v1/companies/${companyId}`,
       apiKey,
@@ -134,4 +228,3 @@ export const folkClient = {
     });
   },
 };
-

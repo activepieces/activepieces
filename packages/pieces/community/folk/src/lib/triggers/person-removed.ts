@@ -3,19 +3,19 @@ import {
     TriggerStrategy,
     PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { folkAuth } from '../common/auth';
 import { folkClient } from '../common/client';
 
 const polling: Polling<PiecePropValueSchema<typeof folkAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.LAST_ITEM,
     async items({ auth }) {
-        const response = await folkClient.getPeople({
+        const response = await folkClient.getPeopleWithFilters({
             apiKey: auth as string,
             limit: 100,
         });
 
-        const people = response.people || [];
+        const people = response.data?.items || [];
         
         return people
             .filter((person: any) => person.deletedAt)
