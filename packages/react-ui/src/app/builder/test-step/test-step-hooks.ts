@@ -275,14 +275,12 @@ export const testStepHooks = {
     setErrorMessage,
     setConsoleLogs,
     onSuccess,
-    onProgress,
     mutationKey,
   }: {
     currentStep: FlowAction;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
     onSuccess: (() => void) | undefined;
-    onProgress?: (progress: StepRunResponse) => void;
     mutationKey?: string[];
   }) => {
     const socket = useSocket();
@@ -294,25 +292,30 @@ export const testStepHooks = {
     return useMutation<StepRunResponse, Error, TestActionMutationParams>({
       mutationKey,
       mutationFn: async (params: TestActionMutationParams) => {
-        if (!isNil(params?.preExistingSampleData)) {
+        if (
+          params?.type === 'webhookAction' &&
+          !isNil(params?.preExistingSampleData)
+        ) {
           return params.preExistingSampleData;
         }
-        const response = await flowRunsApi.testStep(
+        const todoParams =
+          params?.type === 'todoAction'
+            ? {
+                isForTodo: true as const,
+                onProgress: params.onProgress,
+              }
+            : {
+                isForTodo: false as const,
+                onProgress: undefined,
+              };
+        const response = await flowRunsApi.testStep({
           socket,
-          {
+          request: {
             flowVersionId,
             stepName: currentStep.name,
           },
-          (progress) => {
-            if (params?.abortSignal?.aborted) {
-              throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
-            }
-            onProgress?.(progress);
-          },
-        );
-        if (params?.abortSignal?.aborted) {
-          throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
-        }
+          ...todoParams,
+        });
         return response;
       },
       onSuccess: (testStepResponse: StepRunResponse) => {
@@ -358,8 +361,12 @@ const useRequiredStateToTestSteps = () => {
 
 type TestActionMutationParams =
   | {
-      preExistingSampleData?: StepRunResponse;
-      abortSignal?: AbortSignal;
+      preExistingSampleData: StepRunResponse;
+      type: 'webhookAction';
+    }
+  | {
+      type: 'todoAction';
+      onProgress: (progress: StepRunResponse) => void;
     }
   | undefined;
 

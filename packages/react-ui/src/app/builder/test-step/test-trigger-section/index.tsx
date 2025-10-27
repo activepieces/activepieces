@@ -142,7 +142,13 @@ const TestTriggerSection = React.memo(
               </p>
               <ManualWebhookTestButton
                 isWebhookTestingDialogOpen={isTestingDialogOpen}
-                setIsWebhookTestingDialogOpen={setIsTestingDialogOpen}
+                setIsWebhookTestingDialogOpen={(value) => {
+                  setIsTestingDialogOpen(value);
+                  if (!value) {
+                    abortControllerRef.current.abort();
+                    abortControllerRef.current = new AbortController();
+                  }
+                }}
               />
             </div>
           );
