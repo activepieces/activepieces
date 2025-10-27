@@ -1,4 +1,4 @@
-import { BILLING_CYCLE_HIERARCHY, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PlanName, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, BILLING_CYCLE_HIERARCHY, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PlanName, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlatformPlanLimits, PlatformRole, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
 import Stripe from 'stripe'
@@ -192,6 +192,10 @@ export const PlatformPlanHelper = {
     getPlanFromSubscription: (subscription: Stripe.Subscription): { plan: PlanName, cycle: BillingCycle } => {
         const isDev = stripeSecretKey?.startsWith('sk_test')
         const env = isDev ? 'dev' : 'prod'
+
+        if (![ApSubscriptionStatus.ACTIVE].includes(subscription.status as ApSubscriptionStatus)) {
+            return { plan: PlanName.FREE, cycle: BillingCycle.MONTHLY }
+        }
 
         const priceId = subscription.items.data[0].price.id
         switch (priceId) {
