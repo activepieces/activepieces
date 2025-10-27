@@ -3,12 +3,11 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/jira-cloud/src",
   "projectType": "library",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/jira-cloud",
         "tsConfig": "packages/pieces/community/jira-cloud/tsconfig.lib.json",
@@ -54,15 +53,11 @@
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-jira-cloud {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -71,6 +66,5 @@
         "jestConfig": "packages/pieces/community/jira-cloud/jest.config.ts"
       }
     }
-  },
-  "tags": []
+  }
 }

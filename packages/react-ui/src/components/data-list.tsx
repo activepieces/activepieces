@@ -1,40 +1,49 @@
 import React from 'react';
 
 type DataListProps = {
-  data: Record<string, any>;
+  data?: Record<string, any>;
   className?: string;
 };
 
 function formatValue(value: any): string {
-  if (Array.isArray(value)) {
-    return value.join(', ');
-  }
-  if (value === null || value === undefined) {
-    return '';
-  }
+  if (Array.isArray(value)) return value.join(', ');
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }
 
-export const DataList: React.FC<DataListProps> = ({ data, className = '' }) => {
-  const entries = Object.entries(data ?? {})
-    .map(([key, value]) => [key, formatValue(value)])
-    .filter(([_, value]) => value !== '');
+export const DataList: React.FC<DataListProps> = ({
+  data = {},
+  className = '',
+}) => {
+  const entries = Object.entries(data).filter(
+    ([_, value]) => value !== null && value !== undefined,
+  );
+
+  if (entries.length === 0) {
+    return (
+      <div className={`text-sm text-muted-foreground italic ${className}`}>
+        No data available
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={`relative rounded-lg bg-background py-4 w-full ${className}`}
-      style={{ minWidth: 0, width: '100%' }}
+    <dl
+      className={`grid gap-y-2 text-sm leading-relaxed ${className}`}
+      style={{ wordBreak: 'break-word' }}
     >
-      <dl className="space-y-2 w-full">
-        {entries.map(([key, value]) => (
-          <div key={key} className="flex items-start gap-2 w-full">
-            <dt className="w-28 text-sm font-semibold flex-shrink-0 self-start">
-              {key}:
-            </dt>
-            <dd className="text-sm break-all text-primary flex-1">{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+      {entries.map(([key, value]) => (
+        <div
+          key={key}
+          className="grid grid-cols-[auto,1fr] gap-x-3 items-start"
+        >
+          <dt className="font-medium text-muted-foreground capitalize">
+            {key}
+          </dt>
+          <dd className="text-primary">{formatValue(value)}</dd>
+        </div>
+      ))}
+    </dl>
   );
 };

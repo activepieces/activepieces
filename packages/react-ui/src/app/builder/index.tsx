@@ -6,6 +6,7 @@ import {
   LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
+  useShowBuilderIsSavingWarningBeforeLeaving,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
@@ -40,7 +41,6 @@ import {
 import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
-import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { LEFT_SIDEBAR_ID } from './flow-canvas/utils/consts';
 import { FlowVersionsList } from './flow-versions';
@@ -89,24 +89,18 @@ const constructContainerKey = ({
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [
-    setRun,
-    flowVersion,
-    leftSidebar,
-    rightSidebar,
-    run,
-    canExitRun,
-    selectedStep,
-  ] = useBuilderStateContext((state) => [
-    state.setRun,
-    state.flowVersion,
-    state.leftSidebar,
-    state.rightSidebar,
-    state.run,
-    state.canExitRun,
-    state.selectedStep,
-  ]);
+  const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep] =
+    useBuilderStateContext((state) => [
+      state.setRun,
+      state.flowVersion,
+      state.leftSidebar,
+      state.rightSidebar,
+      state.run,
+      state.selectedStep,
+    ]);
+
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  useShowBuilderIsSavingWarningBeforeLeaving();
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -185,17 +179,6 @@ const BuilderPage = () => {
 
   return (
     <div className="flex h-full w-full flex-col relative">
-      {run && (
-        <RunDetailsBar
-          canExitRun={canExitRun}
-          run={run}
-          isLoading={isSwitchingToDraftPending}
-          exitRun={() => {
-            socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-            switchToDraft();
-          }}
-        />
-      )}
       <div className="z-50">
         <BuilderHeader />
       </div>
@@ -216,7 +199,6 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-            {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
           </div>
         </ResizablePanel>
 
@@ -234,6 +216,17 @@ const BuilderPage = () => {
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
+
+            <RunDetailsBar
+              run={run}
+              isLoading={isSwitchingToDraftPending}
+              exitRun={() => {
+                socket.removeAllListeners(
+                  WebsocketClientEvent.FLOW_RUN_PROGRESS,
+                );
+                switchToDraft();
+              }}
+            />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls

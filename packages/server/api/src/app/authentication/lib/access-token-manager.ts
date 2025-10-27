@@ -30,7 +30,7 @@ export const accessTokenManager = {
         return jwtUtils.sign({
             payload: enginePrincipal,
             key: secret,
-            expiresInSeconds: dayjs.duration(2, 'days').asSeconds(),
+            expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
         })
     },
 

@@ -1,80 +1,96 @@
-import { ApMarkdown } from '@/components/custom/markdown';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { useEffect, useState } from 'react';
+
+import { useSocket } from '@/components/socket-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import {
+  type AgentResult,
   AgentTaskStatus,
   ContentBlockType,
   isNil,
-  MarkdownVariant,
+  StepRunResponse,
+  WebsocketClientEvent,
 } from '@activepieces/shared';
 
-import { AgentToolBlock } from '../agent-tool-block';
-import { agentHooks, agentRunHooks } from '../lib/agent-hooks';
-
-import { AgentPromptBlock } from './agent-prompt-block';
+import {
+  AgentToolBlock,
+  DoneBlock,
+  FailedBlock,
+  MarkdownBlock,
+  PromptBlock,
+  ThinkingBlock,
+} from './timeline-blocks';
 
 type AgentTimelineProps = {
   className?: string;
-  agentRunId: string | null | undefined;
+  agentResult?: AgentResult;
 };
 
-const AgentTimeline = ({ agentRunId, className = '' }: AgentTimelineProps) => {
-  const { data: agentRun } = agentRunHooks.useGet(agentRunId);
+const defaultResult: AgentResult = {
+  message: null,
+  prompt: '',
+  status: AgentTaskStatus.IN_PROGRESS,
+  steps: [],
+};
 
-  const { data: agent } = agentHooks.useGet(agentRun?.agentId);
-  const showSkeleton =
-    isNil(agentRun) ||
-    isNil(agent) ||
-    agentRun.status === AgentTaskStatus.IN_PROGRESS;
+export const AgentTimeline = ({
+  agentResult,
+  className = '',
+}: AgentTimelineProps) => {
+  const socket = useSocket();
+  const [liveResult, setLiveResult] = useState<AgentResult>(
+    agentResult ?? defaultResult,
+  );
 
-  if (showSkeleton) {
-    return (
-      <div>
-        <div className="flex items-center gap-3 mt-6 mb-3">
-          <ImageWithFallback
-            src={agent?.profilePictureUrl}
-            alt={agent?.displayName}
-            className="size-8 rounded-full"
-          ></ImageWithFallback>
-          <Skeleton className="h-4 w-24"></Skeleton>
-        </div>
-        <SkeletonList numberOfItems={6} className="h-8"></SkeletonList>
-      </div>
-    );
-  }
+  useEffect(() => setLiveResult(agentResult ?? defaultResult), [agentResult]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUpdate = (data: StepRunResponse) => {
+      if (isNil(data.output)) return;
+      setLiveResult(data.output as AgentResult);
+    };
+
+    socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleUpdate);
+    socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleUpdate);
+
+    return () => {
+      socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, handleUpdate);
+      socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleUpdate);
+    };
+  }, [socket]);
+
+  const result = liveResult || agentResult;
+  const { steps = [], status } = result;
+
   return (
-    <div className={`h-full ${className}`}>
-      {agentRun.prompt !== '' && <AgentPromptBlock prompt={agentRun.prompt} />}
-      <div className="flex items-center gap-3 mt-6">
-        <ImageWithFallback
-          src={agent?.profilePictureUrl}
-          alt={agent?.displayName}
-          className="size-8 rounded-full"
-        ></ImageWithFallback>
-        <div className="text-sm">{agent?.displayName}</div>
-      </div>
-      <ScrollArea className="flex-1 min-h-0 mt-3">
-        <div className="flex flex-col gap-3">
-          {agentRun.steps.map((step, index) => {
-            return (
-              <div key={index} className="animate-fade">
-                {step.type === ContentBlockType.MARKDOWN && (
-                  <ApMarkdown
-                    markdown={step.markdown}
-                    variant={MarkdownVariant.BORDERLESS}
-                  />
-                )}
-                {step.type === ContentBlockType.TOOL_CALL && (
-                  <AgentToolBlock block={step} index={index} />
-                )}
-              </div>
-            );
+    <div className={`h-full flex w-full flex-col ${className}`}>
+      <ScrollArea className="flex-1 min-h-0 relative">
+        <div className="absolute left-2 top-4 bottom-8 w-[1px] bg-border" />
+
+        <div className="space-y-7 pb-4">
+          {result.prompt && <PromptBlock prompt={result.prompt} />}
+
+          {steps.map((step, index) => {
+            switch (step.type) {
+              case ContentBlockType.MARKDOWN:
+                return <MarkdownBlock key={index} step={step} index={index} />;
+              case ContentBlockType.TOOL_CALL:
+                return (
+                  <AgentToolBlock key={index} block={step} index={index} />
+                );
+              default:
+                return null;
+            }
           })}
+
+          {status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
+
+          {status === AgentTaskStatus.COMPLETED && <DoneBlock />}
+
+          {status === AgentTaskStatus.FAILED && <FailedBlock />}
         </div>
       </ScrollArea>
     </div>
   );
 };
-
-export { AgentTimeline };

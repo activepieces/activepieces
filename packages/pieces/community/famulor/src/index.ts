@@ -48,7 +48,7 @@ export const famulorAuth =  PieceAuth.SecretText({
   })
 
 export const famulor = createPiece({
-  displayName: "Famulor",
+  displayName: "Famulor AI - Voice Agent",
   auth:famulorAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/famulor.png",

@@ -1,6 +1,13 @@
-import { flowMigrations, FlowVersion, LATEST_SCHEMA_VERSION, spreadIfDefined } from '@activepieces/shared'
+import { 
+    FlowVersion, 
+    isNil,
+    LATEST_SCHEMA_VERSION,
+    spreadIfDefined,
+} from '@activepieces/shared'
 import { system } from '../../helper/system/system'
+import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
+import { flowMigrations } from './migrations'
 
 const log = system.globalLogger()
 
@@ -13,15 +20,19 @@ export const flowVersionMigrationService = {
 
         log.info('Starting flow version migration')
 
-        const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion)
-        if (flowVersion.schemaVersion === migratedFlowVersion.schemaVersion) {
-            return flowVersion
+        const backupFiles = flowVersion.backupFiles ?? {}
+        if (!isNil(flowVersion.schemaVersion)) {
+            backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
         }
+
+        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion)
+
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,
             ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
             connectionIds: migratedFlowVersion.connectionIds,
             agentIds: migratedFlowVersion.agentIds,
+            backupFiles,
         })
         log.info('Flow version migration completed')
         return migratedFlowVersion

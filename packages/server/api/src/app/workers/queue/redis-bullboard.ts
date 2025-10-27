@@ -5,9 +5,10 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
+import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { system } from '../../helper/system/system'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
-import { bullMqGroups } from './job-queue'
+import { jobQueue } from './job-queue'
 
 const QUEUE_BASE_PATH = '/ui'
 
@@ -36,8 +37,17 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         authenticate: true,
     })
 
-    const allQueues = [...Object.values(bullMqGroups).map((queue) => new BullMQAdapter(queue)),
-        new BullMQAdapter(systemJobsQueue)]
+    const jobQueues = jobQueue(app.log).getAllQueues()
+    assertNotNullOrUndefined(jobQueues.length > 0, 'No job queues available')
+    assertNotNullOrUndefined(runsMetadataQueue(app.log).get(), 'runsMetadataQueueInstance')
+
+    const jobQueueAdapters = jobQueues.map(queue => new BullMQAdapter(queue))
+
+    const allQueues = [
+        ...jobQueueAdapters,
+        new BullMQAdapter(systemJobsQueue),
+        new BullMQAdapter(runsMetadataQueue(app.log).get()),
+    ]
 
     const serverAdapter = new FastifyAdapter()
     createBullBoard({

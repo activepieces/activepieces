@@ -42,6 +42,8 @@
   "The ID of the document to append text to": "L'ID du document à ajouter au texte",
   "Curly Braces {{}}": "Bretelles amplitudes {{}}",
   "Square Brackets [[]]": "Crochets [[]]",
+  "Single Curly Braces {}": "Accolades simples {}",
+  "Single Square Brackets []": "Crochets simples []",
   "GET": "OBTENIR",
   "POST": "POSTER",
   "PATCH": "PATCH",

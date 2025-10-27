@@ -1,5 +1,5 @@
 import { ProjectPlanLimits, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AiOverageState,
@@ -76,6 +76,10 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         if (edition === ApEdition.COMMUNITY) {
             return false
         }
+        const skipProjectLimitsCheck = system.getBoolean(AppSystemProp.SKIP_PROJECT_LIMITS_CHECK)
+        if (skipProjectLimitsCheck) {
+            return false
+        }
 
         const projectPlan = await this.ensureProjectUnlockedAndGetPlatformPlan(projectId)
 
@@ -84,11 +88,15 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
             const { startDate, endDate } = await platformPlanService(log).getBillingDates(platformPlan)
 
-            const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'tasks', startDate, endDate })
-            const platformTasksUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate })
+            const [platformTasksUsage, projectTasksUsage] = await Promise.all([
+                platformUsageService(log).getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate }),
+                platformUsageService(log).getProjectUsage({ projectId, metric: 'tasks', startDate, endDate }),
+            ])
 
-            const tasksPlatformLimit = await platformReachedLimit({ platformPlan, platformUsage: platformTasksUsage, log, usageType: 'tasks' })
-            const tasksPorjectLimit = await projectReachedLimit({ projectPlan, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectTasksUsage, log, usageType: 'tasks' })
+            const [tasksPlatformLimit, tasksPorjectLimit] = await Promise.all([
+                platformReachedLimit({ platformPlan, platformUsage: platformTasksUsage, log, usageType: 'tasks' }),
+                projectReachedLimit({ projectPlan, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectTasksUsage, log, usageType: 'tasks' }),
+            ])
 
             return tasksPorjectLimit || tasksPlatformLimit
         }
@@ -139,7 +147,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 
         return projectPlan
     },
-    
+
 })
 
 async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): Promise<boolean> {

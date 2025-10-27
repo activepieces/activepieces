@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
 import { columnToLabel } from '../common/common';
+import { isNil } from '@activepieces/shared';
 
 export async function getWorkSheetName(
 	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
@@ -128,13 +129,24 @@ export function hashObject(obj: Record<string, unknown>): string {
 	hash.update(JSON.stringify(obj));
 	return hash.digest('hex');
 }
-
-export function transformWorkSheetValues(rowValues: any[][], oldRowCount: number,headerCount: number) {
+// returns an array of row number and cells values mapped to column labels
+export function mapRowsToColumnLabels(rowValues: any[][], oldRowCount: number, headerCount: number) {
 	const result = [];
 	for (let i = 0; i < rowValues.length; i++) {
-		const values: any = {};
-		for (let j = 0; j < Math.max(headerCount,rowValues[i].length) ; j++) {
-			values[columnToLabel(j)] = rowValues[i][j] ?? "";
+		const values: Record<string, string> = {};
+		for (let j = 0; j < Math.max(headerCount, rowValues[i].length); j++) {
+			const columnLabel = columnToLabel(j);
+			if (isNil(rowValues[i][j])) {
+				values[columnLabel] = "";
+			} else if (typeof rowValues[i][j] === "string") {
+				values[columnLabel] = rowValues[i][j];
+			}
+			else if ('toString' in rowValues[i][j]) {
+				values[columnLabel] = rowValues[i][j].toString();
+			}
+			else {
+				values[columnLabel] = `${rowValues[i][j]}`;
+			}
 		}
 		result.push({
 			row: oldRowCount + i + 1,

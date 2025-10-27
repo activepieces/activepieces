@@ -18,7 +18,6 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
       state.flowVersion,
       state.loopsIndexes,
     ]);
-
   const stepOutput = useMemo(() => {
     return run && run.steps
       ? flowRunUtils.extractStepOutput(
@@ -38,15 +37,6 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     stepOutput.type === FlowActionType.LOOP_ON_ITEMS
       ? stepOutput.output.iterations.length
       : 0;
-
-  useMemo(() => {
-    if (
-      totalIterations <= currentIndex ||
-      currentIndex === Number.MAX_SAFE_INTEGER
-    ) {
-      setLoopIndex(stepName, totalIterations - 1);
-    }
-  }, [totalIterations, currentIndex]);
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value ?? '1';

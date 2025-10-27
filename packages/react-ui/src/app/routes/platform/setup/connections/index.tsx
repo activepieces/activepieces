@@ -16,6 +16,7 @@ import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   DataTable,
+  DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/ui/data-table';
@@ -38,7 +39,7 @@ import {
 } from '@activepieces/shared';
 
 const STATUS_QUERY_PARAM = 'status';
-const filters = [
+const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
   {
     type: 'select',
     title: t('Status'),
@@ -50,7 +51,7 @@ const filters = [
       };
     }),
     icon: CheckIcon,
-  } as const,
+  },
 ];
 
 const GlobalConnectionsTable = () => {

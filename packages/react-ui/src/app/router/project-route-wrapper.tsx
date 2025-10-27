@@ -28,7 +28,7 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
 
   const { checkAccess } = useAuthorization();
 
-  if (isNil(projectIdFromParams) || isNil(projectIdFromParams)) {
+  if (isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
   const failedToSwitchToProject =

@@ -1,5 +1,4 @@
 {
-  "Text Helper": "Text Helper",
   "Tools for text processing": "Tools for text processing",
   "Concatenate": "Concatenate",
   "Replace": "替换",
@@ -10,6 +9,7 @@
   "Remove HTML Tags": "Remove HTML Tags",
   "Slugify": "Slugify",
   "Use Default Value if Input is Empty": "Use Default Value if Input is Empty",
+  "List to Text Table": "List to Text Table",
   "Concatenate two or more texts": "Concatenate two or more texts",
   "Replaces all instances of any word, character or phrase in text, with another.": "Replaces all instances of any word, character or phrase in text, with another.",
   "Split a text by a delimiter": "Split a text by a delimiter",
@@ -19,6 +19,7 @@
   "Removes every HTML tag and returns plain text": "Removes every HTML tag and returns plain text",
   "Slugifies strings.": "Slugifies strings.",
   "Checks your input and returns the default value, if the input is an empty text or list": "Checks your input and returns the default value, if the input is an empty text or list",
+  "Convert a list of items to a text table": "Convert a list of items to a text table",
   "Texts": "Texts",
   "Separator": "分隔符",
   "Text": "文本",
@@ -39,6 +40,7 @@
   "HTML content": "HTML content",
   "Enter value": "Enter value",
   "Default Value": "默认值",
+  "List": "List",
   "The text that separates the texts you want to concatenate": "The text that separates the texts you want to concatenate",
   "Can be plain text or a regex expression.": "Can be plain text or a regex expression.",
   "Leave empty to delete found results.": "Leave empty to delete found results.",
@@ -51,6 +53,7 @@
   "Whether to add an ID to headers during conversion": "Whether to add an ID to headers during conversion",
   "Parses line breaks as &lt;br&gt;, without needing 2 spaces at the end of the line": "Parses line breaks as &lt;br&gt;, without needing 2 spaces at the end of the line",
   "The HTML to convert to markdown": "The HTML to convert to markdown",
+  "List of items to convert to a text table": "List of items to convert to a text table",
   "Default": "Default",
   "Original": "Original",
   "GitHub": "GitHub"
