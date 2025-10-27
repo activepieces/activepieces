@@ -1,16 +1,11 @@
 import {
     createTrigger,
     TriggerStrategy,
-    Property,
-    Store,
-    TriggerHookContext
+    PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
 import { callZendeskApi } from '../common/client';
-
-const STORE_KEY = 'newDeal_seen_ids';
-const MAX_SEEN_IDS = 1000;
 
 interface ZendeskDealItem {
     data: ZendeskDeal;
@@ -26,6 +21,27 @@ interface ZendeskDeal {
 }
 
 interface TriggerPropsValue {}
+
+const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, TriggerPropsValue> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, propsValue, lastFetchEpochMS }) {
+		const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
+			HttpMethod.GET,
+			'v2/deals',
+			auth as ZendeskSellAuthValue,
+			undefined,
+			{
+				sort_by: 'created_at:desc',
+				per_page: lastFetchEpochMS === 0 ? '10' : '100',
+			}
+		);
+
+		return response.body.items.map((item) => ({
+			epochMilliSeconds: new Date(item.data.created_at).getTime(),
+			data: item.data,
+		}));
+	},
+};
 
 export const newDeal = createTrigger({
     auth: zendeskSellAuth,
@@ -48,92 +64,27 @@ export const newDeal = createTrigger({
     },
     type: TriggerStrategy.POLLING,
 
-    async test(context) {
-        const { auth } = context;
-
-        const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
-            HttpMethod.GET,
-            'v2/deals',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '1',
-            }
-        );
-
-        if (response.body.items && response.body.items.length > 0) {
-            return [response.body.items[0].data];
-        }
-        return [{}];
-    },
-
     async onEnable(context) {
-        const { auth, store } = context;
-        console.log(`Initializing ${STORE_KEY} for newDeal`);
-
-        const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
-            HttpMethod.GET,
-            'v2/deals',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '100',
-            }
-        );
-        const initialIds = response.body.items.map(item => item.data.id.toString());
-        await store.put<string[]>(STORE_KEY, initialIds.slice(0, MAX_SEEN_IDS));
-        console.log(`Stored initial ${initialIds.length} deal IDs.`);
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
     },
 
     async onDisable(context) {
-        await context.store.delete(STORE_KEY);
-        console.log(`Cleaned up ${STORE_KEY} for newDeal`);
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
+    },
+
+    async test(context) {
+        return await pollingHelper.test(polling, context);
     },
 
     async run(context) {
-        const { auth, store } = context;
-        const seenDealIds = await store.get<string[]>(STORE_KEY) ?? [];
-
-        console.log(`Polling for new deals. Currently seen IDs: ${seenDealIds.length}`);
-
-        const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
-            HttpMethod.GET,
-            'v2/deals',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '100',
-            }
-        );
-
-        const deals = response.body.items.map(item => item.data);
-        const newDeals: ZendeskDeal[] = [];
-        const currentBatchIds: string[] = [];
-
-        for (const deal of deals) {
-            const dealIdStr = deal.id.toString();
-            currentBatchIds.push(dealIdStr);
-            if (!seenDealIds.includes(dealIdStr)) {
-                newDeals.push(deal);
-            }
-        }
-
-        if (newDeals.length > 0) {
-            const updatedSeenIds = [...new Set([...currentBatchIds, ...seenDealIds])].slice(0, MAX_SEEN_IDS);
-            await store.put(STORE_KEY, updatedSeenIds);
-            console.log(`Found ${newDeals.length} new deals. Updated seen IDs count: ${updatedSeenIds.length}`);
-        } else {
-            console.log("No new deals found in this poll.");
-             const updatedSeenIds = [...new Set([...currentBatchIds, ...seenDealIds])].slice(0, MAX_SEEN_IDS);
-             if (updatedSeenIds.length !== seenDealIds.length){
-                 await store.put(STORE_KEY, updatedSeenIds);
-                 console.log(`Pruned seen IDs. Count: ${updatedSeenIds.length}`);
-             }
-        }
-
-        return newDeals.reverse();
+        return await pollingHelper.poll(polling, context);
     },
 });

@@ -1,16 +1,11 @@
 import {
     createTrigger,
     TriggerStrategy,
-    Property, // Keep Property
-    Store,
-    TriggerHookContext
+    PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
 import { callZendeskApi } from '../common/client';
-
-const STORE_KEY = 'newContact_seen_ids';
-const MAX_SEEN_IDS = 1000;
 
 
 interface ZendeskContactItem {
@@ -26,6 +21,27 @@ interface ZendeskContact {
 
 
 interface TriggerPropsValue {}
+
+const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, TriggerPropsValue> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, propsValue, lastFetchEpochMS }) {
+		const response = await callZendeskApi<{ items: ZendeskContactItem[] }>(
+			HttpMethod.GET,
+			'v2/contacts',
+			auth as ZendeskSellAuthValue,
+			undefined,
+			{
+				sort_by: 'created_at:desc',
+				per_page: lastFetchEpochMS === 0 ? '10' : '100',
+			}
+		);
+
+		return response.body.items.map((item) => ({
+			epochMilliSeconds: new Date(item.data.created_at).getTime(),
+			data: item.data,
+		}));
+	},
+};
 
 export const newContact = createTrigger({
     auth: zendeskSellAuth,
@@ -52,96 +68,27 @@ export const newContact = createTrigger({
     },
     type: TriggerStrategy.POLLING,
 
-    async test(context) {
-        const { auth } = context;
-
-        const response = await callZendeskApi<{ items: ZendeskContactItem[] }>(
-            HttpMethod.GET,
-            'v2/contacts',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '1', 
-            }
-        );
-
-        if (response.body.items && response.body.items.length > 0) {
-            return [response.body.items[0].data]; 
-        }
-        return [{}];
-    },
-
-
     async onEnable(context) {
-        const { auth, store } = context;
-        console.log(`Initializing ${STORE_KEY} for newContact`);
-
-
-        const response = await callZendeskApi<{ items: ZendeskContactItem[] }>(
-            HttpMethod.GET,
-            'v2/contacts',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '100',
-            }
-        );
-        const initialIds = response.body.items.map(item => item.data.id.toString());
-        await store.put<string[]>(STORE_KEY, initialIds.slice(0, MAX_SEEN_IDS)); // Store as strings
-        console.log(`Stored initial ${initialIds.length} contact IDs.`);
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
     },
-
 
     async onDisable(context) {
-        await context.store.delete(STORE_KEY);
-        console.log(`Cleaned up ${STORE_KEY} for newContact`);
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
     },
 
+    async test(context) {
+        return await pollingHelper.test(polling, context);
+    },
 
     async run(context) {
-        const { auth, store } = context;
-        const seenContactIds = await store.get<string[]>(STORE_KEY) ?? [];
-
-        console.log(`Polling for new contacts. Currently seen IDs: ${seenContactIds.length}`);
-
-        const response = await callZendeskApi<{ items: ZendeskContactItem[] }>(
-            HttpMethod.GET,
-            'v2/contacts',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '100', 
-            }
-        );
-
-        const contacts = response.body.items.map(item => item.data);
-        const newContacts: ZendeskContact[] = [];
-        const currentBatchIds: string[] = [];
-
-        for (const contact of contacts) {
-            const contactIdStr = contact.id.toString();
-            currentBatchIds.push(contactIdStr);
-            if (!seenContactIds.includes(contactIdStr)) {
-                newContacts.push(contact);
-            }
-        }
-
-        if (newContacts.length > 0) {
-            const updatedSeenIds = [...new Set([...currentBatchIds, ...seenContactIds])].slice(0, MAX_SEEN_IDS);
-            await store.put(STORE_KEY, updatedSeenIds);
-            console.log(`Found ${newContacts.length} new contacts. Updated seen IDs count: ${updatedSeenIds.length}`);
-        } else {
-            console.log("No new contacts found in this poll.");
-             const updatedSeenIds = [...new Set([...currentBatchIds, ...seenContactIds])].slice(0, MAX_SEEN_IDS);
-             if (updatedSeenIds.length !== seenContactIds.length){ 
-                 await store.put(STORE_KEY, updatedSeenIds);
-                 console.log(`Pruned seen IDs. Count: ${updatedSeenIds.length}`);
-             }
-        }
-
-        return newContacts.reverse();
+        return await pollingHelper.poll(polling, context);
     },
 });

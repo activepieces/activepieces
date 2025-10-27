@@ -2,16 +2,13 @@ import {
     createTrigger,
     TriggerStrategy,
     Property,
-    Store,
-    TriggerHookContext
+    PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
 import { zendeskSellCommon } from '../common/props';
 import { callZendeskApi } from '../common/client';
 
-
-const LAST_POLL_TIME_STORE_KEY = 'dealEntersStage_last_poll_time_v2';
 const PREVIOUS_DEAL_STAGES_STORE_KEY = 'dealEntersStage_previous_stages_v2';
 
 interface ZendeskDealItem {
@@ -33,6 +30,27 @@ interface TriggerPropsValue {
 
 
 type PreviousDealStagesMap = Record<string, number>;
+
+const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, {}> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, propsValue, lastFetchEpochMS }) {
+		const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
+			HttpMethod.GET,
+			'v2/deals',
+			auth as ZendeskSellAuthValue,
+			undefined,
+			{
+				sort_by: 'updated_at:desc',
+				per_page: lastFetchEpochMS === 0 ? '10' : '100',
+			}
+		);
+
+		return response.body.items.map((item) => ({
+			epochMilliSeconds: new Date(item.data.updated_at).getTime(),
+			data: item.data,
+		}));
+	},
+};
 
 export const dealEntersStage = createTrigger({
     auth: zendeskSellAuth,
@@ -56,95 +74,59 @@ export const dealEntersStage = createTrigger({
 
 
     async test(context) {
-        const { auth, propsValue } = context;
-        const targetStageId = propsValue.stage_id;
-
-        const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
-            HttpMethod.GET,
-            'v2/deals',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'updated_at:desc',
-                per_page: '100', 
-            }
-        );
-
-        const deals = response.body.items.map(item => item.data);
-        const matchingDeal = deals.find(deal => deal.stage_id === targetStageId);
-
+        // For test, we need to handle the case where stage_id might be undefined
+        const testDeals = await pollingHelper.test(polling, context) as ZendeskDeal[];
+        const matchingDeal = testDeals.find(deal => deal.stage_id === context.propsValue.stage_id);
         return [matchingDeal ?? {}];
     },
 
     async onEnable(context) {
-        await context.store.put(LAST_POLL_TIME_STORE_KEY, Math.floor(Date.now() / 1000));
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
+        // Initialize custom state for stage tracking
         await context.store.put<PreviousDealStagesMap>(PREVIOUS_DEAL_STAGES_STORE_KEY, {});
         console.log(`Initialized store for dealEntersStage`);
     },
 
     async onDisable(context) {
-        await context.store.delete(LAST_POLL_TIME_STORE_KEY);
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
         await context.store.delete(PREVIOUS_DEAL_STAGES_STORE_KEY);
         console.log(`Cleaned up store for dealEntersStage`);
     },
 
 
     async run(context) {
-        const { auth, propsValue, store } = context;
-        const targetStageId = propsValue.stage_id;
-        const lastPollTimeSeconds = await store.get<number>(LAST_POLL_TIME_STORE_KEY) ?? 0;
+        const { propsValue, store } = context;
+        const targetStageId = propsValue.stage_id!;
         const previousDealStages = await store.get<PreviousDealStagesMap>(PREVIOUS_DEAL_STAGES_STORE_KEY) ?? {};
 
-        console.log(`Polling deals updated after timestamp (seconds): ${lastPollTimeSeconds}`);
+        console.log(`Polling deals for stage transitions to stage ${targetStageId}`);
 
-        const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
-            HttpMethod.GET,
-            'v2/deals',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'updated_at:asc',
-                per_page: '100', 
-            }
-        );
-
-        const deals = response.body.items.map(item => item.data);
-        let maxTimestampSeconds = lastPollTimeSeconds;
+        // Get all deals using polling helper
+        const deals = await pollingHelper.poll(polling, context) as ZendeskDeal[];
         const dealsEnteringTargetStage: ZendeskDeal[] = [];
-        const currentDealStages: PreviousDealStagesMap = { ...previousDealStages }; 
+        const currentDealStages: PreviousDealStagesMap = { ...previousDealStages };
 
         for (const deal of deals) {
-            const updatedAtSeconds = Math.floor(new Date(deal.updated_at).getTime() / 1000);
+            const dealIdStr = deal.id.toString();
+            const previousStageId = previousDealStages[dealIdStr];
+            const currentStageId = deal.stage_id;
 
-            if (updatedAtSeconds > lastPollTimeSeconds) {
-                const dealIdStr = deal.id.toString();
-                const previousStageId = previousDealStages[dealIdStr];
-                const currentStageId = deal.stage_id;
-
-                if (currentStageId === targetStageId && previousStageId !== undefined && previousStageId !== targetStageId) {
-                    console.log(`Deal ${deal.id} entered stage ${targetStageId} (from ${previousStageId})`);
-                    dealsEnteringTargetStage.push(deal);
-                }
-                 currentDealStages[dealIdStr] = currentStageId;
-
-
-
-                if (updatedAtSeconds > maxTimestampSeconds) {
-                    maxTimestampSeconds = updatedAtSeconds;
-                }
+            if (currentStageId === targetStageId && previousStageId !== undefined && previousStageId !== targetStageId) {
+                console.log(`Deal ${deal.id} entered stage ${targetStageId} (from ${previousStageId})`);
+                dealsEnteringTargetStage.push(deal);
             }
-        }
-
-
-        if (maxTimestampSeconds > lastPollTimeSeconds) {
-            await store.put(LAST_POLL_TIME_STORE_KEY, maxTimestampSeconds);
-            console.log(`Updated ${LAST_POLL_TIME_STORE_KEY} to: ${maxTimestampSeconds}`);
-        } else {
-             console.log(`No new deals found since last poll time: ${lastPollTimeSeconds}`);
+            currentDealStages[dealIdStr] = currentStageId;
         }
 
         await store.put(PREVIOUS_DEAL_STAGES_STORE_KEY, currentDealStages);
-
 
         console.log(`Found ${dealsEnteringTargetStage.length} deals entering stage ${targetStageId}`);
         return dealsEnteringTargetStage;

@@ -1,16 +1,11 @@
 import {
     createTrigger,
     TriggerStrategy,
-    Property,
-    Store,
-    TriggerHookContext
+    PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
 import { callZendeskApi } from '../common/client';
-
-const STORE_KEY = 'newLead_seen_ids';
-const MAX_SEEN_IDS = 1000;
 
 interface ZendeskLeadItem {
     data: ZendeskLead;
@@ -26,6 +21,27 @@ interface ZendeskLead {
 }
 
 interface TriggerPropsValue {}
+
+const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, TriggerPropsValue> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, propsValue, lastFetchEpochMS }) {
+		const response = await callZendeskApi<{ items: ZendeskLeadItem[] }>(
+			HttpMethod.GET,
+			'v2/leads',
+			auth as ZendeskSellAuthValue,
+			undefined,
+			{
+				sort_by: 'created_at:desc',
+				per_page: lastFetchEpochMS === 0 ? '10' : '100',
+			}
+		);
+
+		return response.body.items.map((item) => ({
+			epochMilliSeconds: new Date(item.data.created_at).getTime(),
+			data: item.data,
+		}));
+	},
+};
 
 export const newLead = createTrigger({
     auth: zendeskSellAuth,
@@ -50,91 +66,26 @@ export const newLead = createTrigger({
     type: TriggerStrategy.POLLING,
 
     async test(context) {
-        const { auth } = context;
-
-        const response = await callZendeskApi<{ items: ZendeskLeadItem[] }>(
-            HttpMethod.GET,
-            'v2/leads',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '1',
-            }
-        );
-
-        if (response.body.items && response.body.items.length > 0) {
-            return [response.body.items[0].data];
-        }
-        return [{}];
+        return await pollingHelper.test(polling, context);
     },
 
     async onEnable(context) {
-        const { auth, store } = context;
-        console.log(`Initializing ${STORE_KEY} for newLead`);
-
-        const response = await callZendeskApi<{ items: ZendeskLeadItem[] }>(
-            HttpMethod.GET,
-            'v2/leads',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '100',
-            }
-        );
-        const initialIds = response.body.items.map(item => item.data.id.toString());
-        await store.put<string[]>(STORE_KEY, initialIds.slice(0, MAX_SEEN_IDS));
-        console.log(`Stored initial ${initialIds.length} lead IDs.`);
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
     },
 
     async onDisable(context) {
-        await context.store.delete(STORE_KEY);
-        console.log(`Cleaned up ${STORE_KEY} for newLead`);
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
     },
 
     async run(context) {
-        const { auth, store } = context;
-        const seenLeadIds = await store.get<string[]>(STORE_KEY) ?? [];
-
-        console.log(`Polling for new leads. Currently seen IDs: ${seenLeadIds.length}`);
-
-        const response = await callZendeskApi<{ items: ZendeskLeadItem[] }>(
-            HttpMethod.GET,
-            'v2/leads',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'created_at:desc',
-                per_page: '100',
-            }
-        );
-
-        const leads = response.body.items.map(item => item.data);
-        const newLeads: ZendeskLead[] = [];
-        const currentBatchIds: string[] = [];
-
-        for (const lead of leads) {
-            const leadIdStr = lead.id.toString();
-            currentBatchIds.push(leadIdStr);
-            if (!seenLeadIds.includes(leadIdStr)) {
-                newLeads.push(lead);
-            }
-        }
-
-        if (newLeads.length > 0) {
-            const updatedSeenIds = [...new Set([...currentBatchIds, ...seenLeadIds])].slice(0, MAX_SEEN_IDS);
-            await store.put(STORE_KEY, updatedSeenIds);
-            console.log(`Found ${newLeads.length} new leads. Updated seen IDs count: ${updatedSeenIds.length}`);
-        } else {
-            console.log("No new leads found in this poll.");
-            const updatedSeenIds = [...new Set([...currentBatchIds, ...seenLeadIds])].slice(0, MAX_SEEN_IDS);
-            if (updatedSeenIds.length !== seenLeadIds.length){
-                 await store.put(STORE_KEY, updatedSeenIds);
-                 console.log(`Pruned seen IDs. Count: ${updatedSeenIds.length}`);
-            }
-        }
-
-        return newLeads.reverse();
+        return await pollingHelper.poll(polling, context);
     },
 });

@@ -1,15 +1,11 @@
 import {
     createTrigger,
     TriggerStrategy,
-    Property,
-    Store,
-    TriggerHookContext
+    PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
 import { callZendeskApi } from '../common/client';
-
-const STORE_KEY = 'updatedDeal_last_poll_time';
 
 interface ZendeskDealItem {
     data: ZendeskDeal;
@@ -26,6 +22,27 @@ interface ZendeskDeal {
 }
 
 interface TriggerPropsValue {}
+
+const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, TriggerPropsValue> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, propsValue, lastFetchEpochMS }) {
+		const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
+			HttpMethod.GET,
+			'v2/deals',
+			auth as ZendeskSellAuthValue,
+			undefined,
+			{
+				sort_by: 'updated_at:desc',
+				per_page: lastFetchEpochMS === 0 ? '10' : '100',
+			}
+		);
+
+		return response.body.items.map((item) => ({
+			epochMilliSeconds: new Date(item.data.updated_at).getTime(),
+			data: item.data,
+		}));
+	},
+};
 
 export const updatedDeal = createTrigger({
     auth: zendeskSellAuth,
@@ -46,76 +63,27 @@ export const updatedDeal = createTrigger({
     },
     type: TriggerStrategy.POLLING,
 
-    async test(context) {
-        const { auth } = context;
-
-        const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
-            HttpMethod.GET,
-            'v2/deals',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'updated_at:desc',
-                per_page: '1',
-            }
-        );
-
-        if (response.body.items && response.body.items.length > 0) {
-            return [response.body.items[0].data];
-        }
-        return [{}];
-    },
-
     async onEnable(context) {
-        await context.store.put(STORE_KEY, Math.floor(Date.now() / 1000));
-        console.log(`Initialized ${STORE_KEY} for updatedDeal`);
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
     },
 
     async onDisable(context) {
-        await context.store.delete(STORE_KEY);
-        console.log(`Cleaned up ${STORE_KEY} for updatedDeal`);
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
+    },
+
+    async test(context) {
+        return await pollingHelper.test(polling, context);
     },
 
     async run(context) {
-        const { auth, store } = context;
-        const lastPollTimeSeconds = await store.get<number>(STORE_KEY) ?? 0;
-
-        console.log(`Polling deals updated after timestamp (seconds): ${lastPollTimeSeconds}`);
-
-        const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
-            HttpMethod.GET,
-            'v2/deals',
-            auth as ZendeskSellAuthValue,
-            undefined,
-            {
-                sort_by: 'updated_at:asc',
-                per_page: '100',
-            }
-        );
-
-        const deals = response.body.items.map(item => item.data);
-        let maxTimestampSeconds = lastPollTimeSeconds;
-        const updatedDealsSinceLastPoll: ZendeskDeal[] = [];
-
-        for (const deal of deals) {
-            const updatedAtSeconds = Math.floor(new Date(deal.updated_at).getTime() / 1000);
-
-            if (updatedAtSeconds > lastPollTimeSeconds) {
-                updatedDealsSinceLastPoll.push(deal);
-                if (updatedAtSeconds > maxTimestampSeconds) {
-                    maxTimestampSeconds = updatedAtSeconds;
-                }
-            }
-        }
-
-        if (updatedDealsSinceLastPoll.length > 0) {
-            await store.put(STORE_KEY, maxTimestampSeconds);
-            console.log(`Updated ${STORE_KEY} to: ${maxTimestampSeconds}`);
-        } else {
-             console.log(`No deals updated since last poll time: ${lastPollTimeSeconds}`);
-        }
-
-        console.log(`Found ${updatedDealsSinceLastPoll.length} updated deals.`);
-        return updatedDealsSinceLastPoll;
+        return await pollingHelper.poll(polling, context);
     },
 });
