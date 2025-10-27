@@ -98,6 +98,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowId: constants.flowId,
                 flowVersionId: constants.flowVersionId,
             }),
+            step: {
+                name: action.name,
+            },
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({
                 apiUrl: constants.internalApiUrl,
@@ -139,7 +142,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
-        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
+        const testSingleStepMode = !isNil(constants.stepNameToTest)
+        const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 

@@ -57,21 +57,7 @@ export const delayForAction = createAction({
     });
 
     const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;
-    let delayInMs: number;
-    switch (unit) {
-      case TimeUnit.SECONDS:
-        delayInMs = ctx.propsValue.delayFor * 1000;
-        break;
-      case TimeUnit.MINUTES:
-        delayInMs = ctx.propsValue.delayFor * 60 * 1000;
-        break;
-      case TimeUnit.HOURS:
-        delayInMs = ctx.propsValue.delayFor * 60 * 60 * 1000;
-        break;
-      case TimeUnit.DAYS:
-        delayInMs = ctx.propsValue.delayFor * 24 * 60 * 60 * 1000;
-        break;
-    }
+    const delayInMs = calculateDelayInMs(ctx.propsValue.delayFor, unit);
     if (ctx.executionType == ExecutionType.RESUME) {
       return {
         delayForInMs: delayInMs,
@@ -97,4 +83,30 @@ export const delayForAction = createAction({
       };
     }
   },
+  async test(ctx) {
+    const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;
+    return {
+      delayForInMs: calculateDelayInMs(ctx.propsValue.delayFor, unit),
+      success: true,
+    };
+  }
 });
+
+function calculateDelayInMs(amount: number, unit: TimeUnit): number {
+  let delayInMs: number;
+  switch (unit) {
+    case TimeUnit.SECONDS:
+      delayInMs = amount * 1000;
+      break;
+    case TimeUnit.MINUTES:
+      delayInMs = amount * 60 * 1000;
+      break;
+    case TimeUnit.HOURS:
+      delayInMs = amount * 60 * 60 * 1000;
+      break;
+    case TimeUnit.DAYS:
+      delayInMs = amount * 24 * 60 * 60 * 1000;
+      break;
+  }
+  return delayInMs;
+}

@@ -1,8 +1,7 @@
-import { Metadata, NotificationStatus, Nullable, PiecesFilterType, SAFE_STRING_PATTERN } from '@activepieces/shared'
+import { Metadata, Nullable, PiecesFilterType, SAFE_STRING_PATTERN } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const UpdateProjectPlatformRequest = Type.Object({
-    notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
     releasesEnabled: Type.Optional(Type.Boolean()),
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
@@ -25,6 +24,7 @@ export const CreatePlatformProjectRequest = Type.Object({
     }),
     externalId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
+    maxConcurrentJobs: Nullable(Type.Number()),
 })
 
 export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>
