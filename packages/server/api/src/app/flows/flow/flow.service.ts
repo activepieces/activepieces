@@ -21,7 +21,7 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UserId,
+    SeekPage, TelemetryEventName, UncategorizedFolderId, UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -105,7 +105,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const queryWhere: Record<string, unknown> = { projectId }
 
         if (folderId !== undefined) {
-            queryWhere.folderId = folderId === 'NULL' ? IsNull() : folderId
+            queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
         }
 
         if (status !== undefined) {
@@ -516,7 +516,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         return flowRepo().countBy({
-            folderId: folderId !== 'NULL' ? folderId : IsNull(),
+            folderId: folderId !== UncategorizedFolderId ? folderId : IsNull(),
             projectId,
             status,
         })

@@ -109,7 +109,7 @@ async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffR
 
 async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     const { diffs, errors } = params
-    const { flows, connections, tables, agents } = diffs
+    const { flows, connections, tables } = diffs
     const responsePlans: FlowProjectOperation[] = flows.map((operation) => {
         switch (operation.type) {
             case FlowProjectOperationType.DELETE_FLOW:
@@ -147,7 +147,6 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
         flows: responsePlans,
         connections,
         tables,
-        agents,
     }
 }
 async function getStateFromCreateRequest(projectId: string, ownerId: ApId, request: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectState> {

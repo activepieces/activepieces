@@ -1,7 +1,7 @@
 import { ApEdition, isNil, PlatformPlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Not } from 'typeorm'
-import { distributedStore } from '../../../helper/key-value'
+import { distributedStore } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformPlanRepo } from './platform-plan.service'
 
