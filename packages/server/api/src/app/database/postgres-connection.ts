@@ -482,7 +482,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeprecateCopilot1761221158764,
         RemoveProjectNotifyStatus1761056570728,
         AddMaximumConcurrentJobsPerProject1761245180906,
-        RemoveTasksAndTasksLimit1761570485475
+        RemoveTasksAndTasksLimit1761570485475,
     ]
 
     const edition = system.getEdition()

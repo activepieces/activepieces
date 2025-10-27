@@ -13,7 +13,6 @@ import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
-const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = (log: FastifyBaseLogger) => ({

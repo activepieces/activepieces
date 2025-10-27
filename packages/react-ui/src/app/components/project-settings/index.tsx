@@ -23,7 +23,7 @@ interface ProjectSettingsDialogProps {
   onClose: () => void;
   projectId?: string;
   initialValues?: {
-    projectName?: string; 
+    projectName?: string;
     aiCredits?: string;
     externalId?: string;
   };

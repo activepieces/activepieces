@@ -1,10 +1,5 @@
 import { t } from 'i18next';
-import {
-  Database,
-  LayoutGrid,
-  Users,
-  Workflow,
-} from 'lucide-react';
+import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
@@ -44,7 +39,6 @@ export const UsageCards = ({
         '2xl:grid-cols-7': isFree,
       })}
     >
-
       {(isFree || isTrial || isEnterprise) && (
         <UsageCard
           icon={<Workflow className="w-4 h-4" />}

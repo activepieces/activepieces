@@ -88,10 +88,7 @@ export const platformHooks = {
     });
   },
   useCheckResourceIsLocked: (
-    resource: Exclude<
-      PlatformUsageMetric,
-      PlatformUsageMetric.AI_CREDITS
-    >,
+    resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS>,
   ): boolean => {
     const { platform } = platformHooks.useCurrentPlatform();
 

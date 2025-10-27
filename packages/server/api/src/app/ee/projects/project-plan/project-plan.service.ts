@@ -1,5 +1,5 @@
 import { ProjectPlanLimits, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AiOverageState,

@@ -165,37 +165,35 @@ export function EditProjectDialog({
             />
 
             {platform.plan.manageProjectsEnabled && (
-              <>
-                <FormField
-                  name="aiCredits"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="number"
-                          id="aiCredits"
-                          placeholder={t('AI Credits')}
-                          className="rounded-sm pr-16"
-                        />
-                        {!field.disabled && (
-                          <Button
-                            variant="link"
-                            type="button"
-                            tabIndex={-1}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                            onClick={() => form.setValue('aiCredits', '')}
-                          >
-                            {t('Clear')}
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
+              <FormField
+                name="aiCredits"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type="number"
+                        id="aiCredits"
+                        placeholder={t('AI Credits')}
+                        className="rounded-sm pr-16"
+                      />
+                      {!field.disabled && (
+                        <Button
+                          variant="link"
+                          type="button"
+                          tabIndex={-1}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                          onClick={() => form.setValue('aiCredits', '')}
+                        >
+                          {t('Clear')}
+                        </Button>
+                      )}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             {platform.plan.embeddingEnabled &&
