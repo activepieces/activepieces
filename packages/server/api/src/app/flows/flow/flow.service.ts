@@ -160,10 +160,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
-    async exists(id: FlowId | null | undefined): Promise<boolean> {
-        if (isNil(id)) {
-            return false
-        }
+    async exists(id: FlowId): Promise<boolean> {
         return flowRepo().existsBy({
             id,
         })
