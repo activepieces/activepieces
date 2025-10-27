@@ -1,4 +1,3 @@
-import { PlanName } from '@activepieces/ee-shared'
 import {
     FilteredPieceBehavior,
     PlatformRole,
@@ -12,12 +11,11 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { checkIfSolutionExistsInDb, createMockSolutionAndSave, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
@@ -186,7 +184,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(21)
+            expect(Object.keys(responseBody).length).toBe(20)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -229,72 +227,6 @@ describe('Platform API', () => {
             expect(responseBody?.message).toBe(
                 'userPlatformId and paramId should be equal',
             )
-        })
-    }),
-    describe('delete platform endpoint', () => {
-        it('deletes a platform by id', async () => {
-            // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
-                plan: {
-                    plan: PlanName.FREE,
-                },
-            })
-            const secondAccount = await mockAndSaveBasicSetup(
-                {
-                    plan: {
-                        plan: PlanName.FREE,
-                    },
-                },
-            )
-          
-            const ownerSolution = await createMockSolutionAndSave({ projectId: mockProject.id, platformId: mockPlatform.id, userId: mockOwner.id })
-          
-            const secondSolution = await createMockSolutionAndSave({ projectId: mockProject.id, platformId: mockPlatform.id, userId: secondAccount.mockOwner.id })
-          
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            // act
-            const response = await app?.inject({
-                method: 'DELETE',
-                url: `/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const secondSolutionExists = await checkIfSolutionExistsInDb(secondSolution)
-            expect(secondSolutionExists).toBe(false)
-            const ownerSolutionExists = await checkIfSolutionExistsInDb(ownerSolution)
-            expect(ownerSolutionExists).toBe(true)
-        }),
-        it('fails if platform is not eligible for deletion', async () => {
-            // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
-                plan: {
-                    plan: PlanName.ENTERPRISE,
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            // act
-            const response = await app?.inject({
-                method: 'DELETE',
-                url: `/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.UNPROCESSABLE_ENTITY)
         })
     })
 })

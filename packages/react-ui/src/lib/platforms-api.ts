@@ -7,11 +7,6 @@ import { api } from './api';
 import { authenticationSession } from './authentication-session';
 
 export const platformApi = {
-  deleteAccount() {
-    return api.delete<void>(
-      `/v1/platforms/${authenticationSession.getPlatformId()}`,
-    );
-  },
   getCurrentPlatform() {
     const platformId = authenticationSession.getPlatformId();
     if (!platformId) {
