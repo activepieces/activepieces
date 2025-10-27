@@ -156,7 +156,7 @@ type ConfigureParams = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.8.0";
+  readonly _sdkVersion = "0.8.1";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -406,7 +406,7 @@ class ActivepiecesEmbedded {
     const event: ActivepiecesVendorRouteChanged = {
       type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
       data: {
-        vendorRoute: route,
+        vendorRoute: this._prependForwardSlashToRoute(route),
       },
     };
     this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
