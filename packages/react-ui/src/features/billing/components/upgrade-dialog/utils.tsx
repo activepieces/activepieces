@@ -4,10 +4,9 @@ import { ChevronRight } from 'lucide-react';
 import {
   ApSubscriptionStatus,
   BillingCycle,
-  PlanName,
   StripePlanName,
 } from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation, PlanName } from '@activepieces/shared';
 
 import {
   ADDON_PRICES,
