@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
 import { folkApiCall } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const getPerson = createAction({
   auth: folkAuth,
@@ -17,6 +18,11 @@ export const getPerson = createAction({
   },
   async run(context) {
     const { personId } = context.propsValue;
+
+    // Validate inputs
+    await propsValidation.validateZod(context.propsValue, {
+      personId: z.string().min(1, 'Person ID is required'),
+    });
 
     // Make the API call
     const response = await folkApiCall({

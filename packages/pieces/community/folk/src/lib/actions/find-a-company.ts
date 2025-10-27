@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
 import { folkApiCall } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const findCompanies = createAction({
   auth: folkAuth,
@@ -40,6 +41,11 @@ export const findCompanies = createAction({
   },
   async run(context) {
     const { limit, cursor, combinator, filter } = context.propsValue;
+
+    // Validate inputs
+    await propsValidation.validateZod(context.propsValue, {
+      limit: z.number().min(1, 'Limit must be at least 1').max(100, 'Limit must not exceed 100').optional(),
+    });
 
     // Build query parameters
     const queryParams: Record<string, string> = {};

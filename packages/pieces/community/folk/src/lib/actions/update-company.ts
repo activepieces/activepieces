@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
 import { folkApiCall } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const updateCompany = createAction({
   auth: folkAuth,
@@ -94,6 +95,44 @@ export const updateCompany = createAction({
   },
   async run(context) {
     const { companyId, name, description, fundingRaised, lastFundingDate, industry, foundationYear, employeeRange, groups, addresses, emails, phones, urls, customFieldValues } = context.propsValue;
+
+    // Validate inputs
+    await propsValidation.validateZod(context.propsValue, {
+      companyId: z.string().min(1, 'Company ID is required'),
+      fundingRaised: z.number().min(0, 'Funding raised must be a positive number').optional(),
+      lastFundingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Last funding date must be in YYYY-MM-DD format').optional(),
+      foundationYear: z.string().regex(/^\d{4}$/, 'Foundation year must be in YYYY format').optional(),
+      emails: z.array(
+        z.union([
+          z.string().email('Each email must be a valid email address'),
+          z.object({
+            email: z.string().email('Email must be valid'),
+            type: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+          })
+        ])
+      ).optional(),
+      phones: z.array(
+        z.union([
+          z.string().min(1, 'Phone number cannot be empty'),
+          z.object({
+            phone: z.string().min(1, 'Phone number is required'),
+            type: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+          })
+        ])
+      ).optional(),
+      urls: z.array(
+        z.union([
+          z.string().url('Each URL must be a valid URL'),
+          z.object({
+            url: z.string().url('URL must be valid'),
+            type: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+          })
+        ])
+      ).optional(),
+    });
 
     // Build the request body with only provided fields
     const body: Record<string, any> = {};

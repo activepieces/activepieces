@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
 import { folkApiCall } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const createPerson = createAction({
   auth: folkAuth,
@@ -77,6 +78,41 @@ export const createPerson = createAction({
   },
   async run(context) {
     const { firstName, lastName, fullName, description, birthday, jobTitle, groups, companies, addresses, emails, phones, urls, customFieldValues } = context.propsValue;
+
+    // Validate inputs
+    await propsValidation.validateZod(context.propsValue, {
+      birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Birthday must be in YYYY-MM-DD format').optional(),
+      emails: z.array(
+        z.union([
+          z.string().email('Each email must be a valid email address'),
+          z.object({
+            email: z.string().email('Email must be valid'),
+            type: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+          })
+        ])
+      ).optional(),
+      phones: z.array(
+        z.union([
+          z.string().min(1, 'Phone number cannot be empty'),
+          z.object({
+            phone: z.string().min(1, 'Phone number is required'),
+            type: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+          })
+        ])
+      ).optional(),
+      urls: z.array(
+        z.union([
+          z.string().url('Each URL must be a valid URL'),
+          z.object({
+            url: z.string().url('URL must be valid'),
+            type: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+          })
+        ])
+      ).optional(),
+    });
 
     // Build the request body
     const body: Record<string, any> = {};
