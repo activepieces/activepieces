@@ -9,6 +9,7 @@ import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
 import { EngineProcessOptions } from './factory/engine-factory-types'
 import { engineProcessFactory } from './factory/index'
+import { workerSocketHandlers } from './worker-socket-handlers'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -161,7 +162,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 stdError += stderr.message
             }
 
-            engineSocketServer.subscribe(workerId, onResult, onStdout, onStderr)
+            engineSocketServer.subscribe({
+                workerId,
+                onResult,
+                onStdout,
+                onStderr,
+                onUpdateRunProgress: workerSocketHandlers.updateRunProgress,
+            })
 
             worker.on('error', (error) => {
                 log.info({

@@ -42,7 +42,6 @@ export const runsMetadataQueueFactory = ({
         },
 
         async add(params: RunsMetadataUpsertData): Promise<void> {
-            console.warn('params in runsMetadataQueueFactory', params)
             if (!queueInstance) {
                 throw new Error('Runs metadata queue not initialized')
             }

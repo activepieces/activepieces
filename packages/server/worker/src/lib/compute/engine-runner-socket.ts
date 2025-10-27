@@ -1,5 +1,5 @@
 import { IncomingMessage } from 'http'
-import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil, UpdateRunProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { WebSocket, WebSocketServer } from 'ws'
 
@@ -38,22 +38,6 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                     ws.on('error', (error) => {
                         log.error({ error, workerId }, 'Socket error occurred')
                         this.cleanupSocket(workerId)
-                    })
-
-                    ws.on('message', (data: string) => {
-                        try {
-                            const message = JSON.parse(data)
-                            if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
-                                // Forward the operation to the worker
-                                ws.send(JSON.stringify({
-                                    type: EngineSocketEvent.ENGINE_OPERATION,
-                                    data: message.data,
-                                }))
-                            }
-                        }
-                        catch (error) {
-                            log.error({ error }, 'Error parsing message')
-                        }
                     })
                 })
 
@@ -121,12 +105,19 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             }))
         },
 
-        subscribe(
-            workerId: string,
-            onResult: (result: EngineResponse<unknown>) => void,
-            onStdout: (stdout: EngineStdout) => void,
-            onStderr: (stderr: EngineStderr) => void,
-        ): void {
+        subscribe({
+            workerId,
+            onResult,
+            onStdout,
+            onStderr,
+            onUpdateRunProgress,
+        }: {
+            workerId: string
+            onResult: (result: EngineResponse<unknown>) => void
+            onStdout: (stdout: EngineStdout) => void
+            onStderr: (stderr: EngineStderr) => void
+            onUpdateRunProgress: (updateRunProgress: UpdateRunProgressRequest, log: FastifyBaseLogger) => void
+        }): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'sockets[workerId]')
 
@@ -145,6 +136,9 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                             break
                         case EngineSocketEvent.ENGINE_STDERR:
                             onStderr(message.data)
+                            break
+                        case EngineSocketEvent.UPDATE_RUN_PROGRESS:
+                            onUpdateRunProgress(message.data, log)
                             break
                     }
                 }

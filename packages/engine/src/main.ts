@@ -22,6 +22,10 @@ const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
 process.title = `engine-${WORKER_ID}`
 let socket: WebSocket | undefined
 
+export function sendToWorker(type: EngineSocketEvent, data: unknown): void {
+    socket?.send(JSON.stringify({ type, data }))
+}
+
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))

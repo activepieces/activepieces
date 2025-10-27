@@ -103,3 +103,5 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         }
     },
 })
+
+export type DistributedStore = ReturnType<typeof distributedStoreFactory>
