@@ -2057,6 +2057,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "im-soohyun",
+      "name": "Kim SooHyun",
+      "avatar_url": "https://avatars.githubusercontent.com/u/127273427?v=4",
+      "profile": "https://github.com/im-soohyun",
+      "contributions": [
+        "security"
+      ]
     }
   ],
   "commitType": "docs"
