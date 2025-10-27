@@ -160,7 +160,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
-
+    async exists(id: FlowId | null | undefined): Promise<boolean> {
+        if (isNil(id)) {
+            return false
+        }
+        return flowRepo().existsBy({
+            id,
+        })
+    },
     async getOneById(id: string): Promise<Flow | null> {
         const flow = await flowRepo().findOneBy({
             id,
@@ -455,11 +462,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     id,
                     projectId,
                 })
-    
+
                 rejectedPromiseHandler(flowSideEffects(log).preDelete({
                     flowToDelete,
                 }), log)
-    
+
                 await flowRepo().delete({ id })
                 await flowExecutionCache(log).delete(id)
             },
