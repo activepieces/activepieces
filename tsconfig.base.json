@@ -991,7 +991,7 @@
       "@activepieces/piece-simpliroute": [
         "packages/pieces/community/simpliroute/src/index.ts"
       ],
-      "@activepieces/piece-simplybookme":[
+      "@activepieces/piece-simplybookme": [
         "packages/pieces/community/simplybookme/src/index.ts"
       ],
       "@activepieces/piece-sitespeakai": [
@@ -1155,6 +1155,9 @@
       ],
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
+      ],
+      "@activepieces/piece-uscreen": [
+        "packages/pieces/community/uscreen/src/index.ts"
       ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
