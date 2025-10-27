@@ -91,7 +91,6 @@ export type ApErrorParams =
     | SubflowFailedParams
     | MachineNotAvailableParams
     | MachineNotConnectedParams
-    | DoesNotMeetBusinessRequirementsParams
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -488,9 +487,6 @@ export type MachineNotAvailableParams = BaseErrorParams<ErrorCode.MACHINE_NOT_AV
 export type MachineNotConnectedParams = BaseErrorParams<ErrorCode.MACHINE_NOT_CONNECTED, {
     message: string
 }>
-export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS, {
-    message: string
-}>
 
 export enum ErrorCode {
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -560,5 +556,4 @@ export enum ErrorCode {
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
-    DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
 }
