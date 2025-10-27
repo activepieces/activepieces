@@ -8,10 +8,41 @@ export const updatePerson = createAction({
   displayName: 'Update Person (Client)',
   description: 'Updates an existing individual client (person) in MyCase',
   props: {
-    client_id: Property.Number({
-      displayName: 'Client ID',
-      description: 'The ID of the client to update',
+    client_id: Property.Dropdown({
+      displayName: 'Client',
+      description: 'Select the client to update',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/clients', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((client: any) => ({
+              label: `${client.first_name} ${client.last_name}${client.email ? ` (${client.email})` : ''} - ID: ${client.id}`,
+              value: client.id,
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load clients',
+        };
+      },
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',

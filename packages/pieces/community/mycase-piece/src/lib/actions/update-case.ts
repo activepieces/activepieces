@@ -8,10 +8,41 @@ export const updateCase = createAction({
   displayName: 'Update Case',
   description: 'Updates an existing case in MyCase',
   props: {
-    case_id: Property.Number({
-      displayName: 'Case ID',
-      description: 'The ID of the case to update',
+    case_id: Property.Dropdown({
+      displayName: 'Case',
+      description: 'Select the case to update',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/cases', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((caseItem: any) => ({
+              label: `${caseItem.name}${caseItem.case_number ? ` (${caseItem.case_number})` : ''} - ID: ${caseItem.id}`,
+              value: caseItem.id,
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load cases',
+        };
+      },
     }),
     name: Property.ShortText({
       displayName: 'Case Name',
