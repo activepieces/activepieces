@@ -1,14 +1,14 @@
-import { PrincipalType } from '@activepieces/shared'
+import { FlowStatus, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-const NOT_FOUND_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa1'
+const MOCK_FLOW_ID = '8hfKOpm3kY1yAi1ApYOa1'
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
@@ -30,11 +30,39 @@ describe('Webhook Service', () => {
 
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/webhooks/${NOT_FOUND_FLOW_ID}`,
+            url: `/v1/webhooks/${MOCK_FLOW_ID}`,
             headers: {
                 authorization: `Bearer ${mockToken}`,
             },
         })
         expect(response?.statusCode).toBe(StatusCodes.GONE)
+    }),
+    it('should return NOT FOUND if the flow is disabled', async () => {
+        const { mockProject } = await mockAndSaveBasicSetup()
+    
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+            status: FlowStatus.DISABLED,
+        })
+        await databaseConnection().getRepository('flow').save([mockFlow])
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+        })
+        await databaseConnection().getRepository('flow_version').save([mockFlowVersion])
+        await databaseConnection().getRepository('flow').update(mockFlow.id, {
+            publishedVersionId: mockFlowVersion.id,
+        })
+        const mockToken = await generateMockToken({
+            type: PrincipalType.USER,
+            projectId: mockProject.id,
+        })
+        const response = await app?.inject({
+            method: 'GET',
+            url: `/v1/webhooks/${mockFlow.id}`,
+            headers: {
+                authorization: `Bearer ${mockToken}`,
+            },
+        })
+        expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 })
