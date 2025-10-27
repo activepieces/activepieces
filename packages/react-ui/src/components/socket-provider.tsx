@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useEffectOnce } from 'react-use';
 import { io } from 'socket.io-client';
 
 import { API_BASE_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+
 import { Alert, AlertDescription } from './ui/alert';
 import { LoadingSpinner } from './ui/spinner';
 
@@ -45,7 +46,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       {socket.disconnected && (
         <Alert className="fixed bottom-10 right-10 w-96 z-50 bg-background items-center" variant="destructive" >
           <LoadingSpinner />
-          <AlertDescription>Websocket Disconnected, reconnecting...</AlertDescription>
+          <AlertDescription>
+            Websocket Disconnected, reconnecting...
+          </AlertDescription>
         </Alert>
       )}
       {children}
