@@ -1,15 +1,13 @@
 import { AIUsage, AIUsageMetadata } from '@activepieces/common-ai'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { apDayjs, AppSystemProp } from '@activepieces/server-shared'
 import { AiOverageState, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In, IsNull } from 'typeorm'
-import { agentRepo } from '../../agents/agents-service'
+import { In } from 'typeorm'
 import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
 import { repoFactory } from '../../core/db/repo-factory'
-import { redisConnections } from '../../database/redis'
+import { redisConnections } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
-import { apDayjs } from '../../helper/dayjs-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
@@ -48,7 +46,6 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             projects,
             seats,
             tables,
-            agents,
         ] = await Promise.all([
             this.getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate }),
             this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }),
@@ -57,10 +54,9 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
             getProjectsCount(platformId),
             getActiveUsers(platformId),
             getTables(platformId),
-            getAgentsCount(platformId),
         ])
 
-        return { tasks: platformTasksUsage, aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables, agents }
+        return { tasks: platformTasksUsage, aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables }
     },
 
     async increaseTasksUsage(projectId: string, incrementBy: number): Promise<{ projectTasksUsage: number, platformTasksUsage: number }> {
@@ -294,20 +290,9 @@ async function getMCPsCount(platformId: string): Promise<number> {
     const mcpIds = await mcpRepo().count({
         where: {
             projectId: In(projectIds),
-            agentId: IsNull(),
         },
     })
     return mcpIds
-}
-
-async function getAgentsCount(platformId: string): Promise<number> {
-    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-    const agents = await agentRepo().count({
-        where: {
-            projectId: In(projectIds),
-        },
-    })
-    return agents
 }
 
 async function getActiveUsers(platformId: string): Promise<number> {

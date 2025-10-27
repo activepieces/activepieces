@@ -9,8 +9,6 @@ import {
     Raw,
     SelectQueryBuilder,
 } from 'typeorm'
-import { AgentEntity } from '../agents/agent-entity'
-import { AgentRunEntity } from '../agents/agent-runs/agent-run.entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -59,7 +57,6 @@ import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
-import { TriggerRunEntity } from '../trigger/trigger-run/trigger-run.entity'
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
@@ -103,14 +100,11 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         TodoEntity,
         McpEntity,
-        AgentEntity,
         TodoActivityEntity,
         McpToolEntity,
         McpRunEntity,
         AIUsageEntity,
-        AgentRunEntity,
         TriggerSourceEntity,
-        TriggerRunEntity,
     ]
 
     switch (edition) {

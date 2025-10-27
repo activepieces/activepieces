@@ -1,37 +1,18 @@
-import { apAxios, GetRunForWorkerRequest } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, CreateTriggerRunRequestBody, EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, SendFlowResponseRequest, UpdateLogsBehavior, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+
+import { EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isFlowRunStateTerminal, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { triggerRunService } from '../trigger/trigger-run/trigger-run.service'
-import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from './engine-response-watcher'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-
-    app.get('/runs/:runId', {
-        config: {
-            allowedPrincipals: [PrincipalType.ENGINE],
-        },
-        schema: {
-            params: GetRunForWorkerRequest,
-        },
-    }, async (request) => {
-        const { runId } = request.params
-        return flowRunService(request.log).getOnePopulatedOrThrow({
-            id: runId,
-            projectId: request.principal.projectId,
-        })
-    })
 
     app.get('/populated-flows', GetAllFlowsByProjectParams, async (request) => {
         return flowService(request.log).list({
@@ -49,8 +30,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, testSingleStepMode } = request.body
-        const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
+        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName, stepNameToTest, logsFileId } = request.body
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
@@ -61,7 +41,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             )
         }
 
-        const runWithoutSteps = await flowRunService(request.log).updateRun({
+        await flowRunService(request.log).updateRun({
             flowRunId: runId,
             status: runDetails.status,
             tasks: runDetails.tasks,
@@ -69,47 +49,26 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
             failedStepName,
-        })
-        await handleUpdateLogsBehavior({
-            log: request.log,
-            updateLogsBehavior: request.body.updateLogsBehavior,
-            executionStateContentLength: request.body.executionStateContentLength,
-            logsFileId: request.body.logsFileId,
-            executionStateBuffer: request.body.executionStateBuffer,
-            projectId: request.principal.projectId,
-            runId,
+            logsFileId,
         })
 
-        if (runDetails.status === FlowRunStatus.PAUSED) {
-            await flowRunService(request.log).pause({
-                flowRunId: runId,
-                pauseMetadata: {
-                    progressUpdateType,
-                    handlerId: workerHandlerId ?? undefined,
-                    ...(runDetails.pauseMetadata!),
-                },
-            })
-        }
-        const shouldMarkParentAsFailed = runWithoutSteps.failParentOnFailure && !isNil(runWithoutSteps.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(runWithoutSteps.status)
-        if (shouldMarkParentAsFailed) {
-            await markParentRunAsFailed({
-                parentRunId: runWithoutSteps.parentRunId!,
-                childRunId: runWithoutSteps.id,
-                projectId: request.principal.projectId,
-                platformId: request.principal.platform.id,
-                log: request.log,
-            })
-        }
-        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
-            runId,
-        })
-
-        if (testSingleStepMode) {
+        if (!isNil(stepNameToTest)) {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
+                logsFileId: logsFileId ?? '',
+                projectId: request.principal.projectId,
+                status: runDetails.status,
                 runId,
+                stepNameToTest,
             })
+            
             if (!isNil(response)) {
-                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+                const isTerminalOutput = isFlowRunStateTerminal({
+                    status: runDetails.status,
+                    ignoreInternalError: false,
+                })
+
+                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRESS
+                app.io.to(request.principal.projectId).emit(wsEvent, response)
             }
         }
         return reply.status(StatusCodes.NO_CONTENT).send()
@@ -117,7 +76,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/update-flow-response', UpdateFlowResponseParams, async (request) => {
         const { workerHandlerId, httpRequestId, runResponse } = request.body
-
         await engineResponseWatcher(request.log).publish(
             httpRequestId,
             workerHandlerId,
@@ -126,38 +84,16 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
-    app.post('/create-trigger-run', CreateTriggerRunParams, async (request) => {
-        const { status, payload, flowId, simulate, jobId } = request.body
-        const { projectId } = request.principal
-        const trigger = await triggerSourceService(request.log).getByFlowId({
-            flowId,
-            projectId,
-            simulate,
-        })
-        if (!isNil(trigger)) {
-            await triggerRunService(request.log).create({
-                status,
-                payload,
-                triggerSourceId: trigger.id,
-                projectId,
-                pieceName: trigger.pieceName,
-                pieceVersion: trigger.pieceVersion,
-                jobId,
-            })
-        }
-
-    })
-
-
     app.get('/flows', GetLockedVersionRequest, async (request) => {
-        const populatedFlow = await getFlow(request.principal.projectId, request.query, request.log)
-        return {
-            ...populatedFlow,
-            version: await flowVersionService(request.log).lockPieceVersions({
-                flowVersion: populatedFlow.version,
-                projectId: request.principal.projectId,
-            }),
-        }
+        const flowVersion = await flowVersionService(request.log).getOneOrThrow(request.query.versionId)
+        await flowService(request.log).getOneOrThrow({
+            id: flowVersion.flowId,
+            projectId: request.principal.projectId,
+        })
+        return flowVersionService(request.log).lockPieceVersions({
+            flowVersion,
+            projectId: request.principal.projectId,
+        })
     })
 
     app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
@@ -171,50 +107,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             .status(StatusCodes.OK)
             .send(data)
     })
-
-
-
 }
 
-async function handleUpdateLogsBehavior(request: HandleUpdateLogsBehaviorParams): Promise<void> {
-    const { updateLogsBehavior, executionStateContentLength, logsFileId, executionStateBuffer, projectId } = request
-    switch (updateLogsBehavior) {
-        case UpdateLogsBehavior.UPDATE_LOGS: {
-            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-            await flowRunService(request.log).updateLogs({
-                flowRunId: request.runId,
-                logsFileId,
-                projectId,
-                executionStateString: executionStateBuffer,
-                executionStateContentLength,
-            })
-            break
-        }
-        case UpdateLogsBehavior.UPDATE_LOGS_SIZE: {
-            assertNotNullOrUndefined(executionStateContentLength, 'executionStateContentLength is required')
-            assertNotNullOrUndefined(logsFileId, 'logsFileId is required')
-            await flowRunService(request.log).updateLogsSizeAndAttachLogsFile({
-                flowRunId: request.runId,
-                logsFileId,
-                executionStateContentLength,
-            })
-            break
-        }
-        case UpdateLogsBehavior.NONE: {
-            break
-        }
-    }   
-}
-
-type HandleUpdateLogsBehaviorParams = {
-    log: FastifyBaseLogger
-    updateLogsBehavior: UpdateLogsBehavior
-    executionStateContentLength: number | null
-    logsFileId: string | undefined
-    executionStateBuffer: string | undefined
-    projectId: string
-    runId: string
-}
 
 async function getFlowResponse(
     result: FlowRunResponse,
@@ -257,50 +151,6 @@ async function getFlowResponse(
     }
 }
 
-async function getFlow(projectId: string, request: GetFlowVersionForWorkerRequest, log: FastifyBaseLogger): Promise<PopulatedFlow> {
-    // TODO this can be optimized by getting the flow version directly
-    const flowVersion = await flowVersionService(log).getOneOrThrow(request.versionId)
-    return flowService(log).getOnePopulatedOrThrow({
-        id: flowVersion.flowId,
-        projectId,
-        versionId: request.versionId,
-    })
-}
-
-
-async function markParentRunAsFailed({
-    parentRunId,
-    childRunId,
-    projectId,
-    platformId,
-    log,
-}: MarkParentRunAsFailedParams): Promise<void> {
-    const flowRun = await flowRunService(log).getOneOrThrow({
-        id: parentRunId,
-        projectId,
-    })
-
-    const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
-    assertNotNullOrUndefined(requestId, 'Parent run has no request id')
-
-    const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
-    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
-    await apAxios.post(callbackUrl, {
-        status: 'error',
-        data: {
-            message: 'Subflow execution failed',
-            link: childRunUrl,
-        },
-    })
-}
-
-type MarkParentRunAsFailedParams = {
-    parentRunId: string
-    childRunId: string
-    projectId: string
-    platformId: string
-    log: FastifyBaseLogger
-}
 
 const GetAllFlowsByProjectParams = {
     config: {
@@ -339,20 +189,11 @@ const GetLockedVersionRequest = {
     schema: {
         querystring: GetFlowVersionForWorkerRequest,
         response: {
-            [StatusCodes.OK]: PopulatedFlow,
+            [StatusCodes.OK]: FlowVersion,
         },
     },
 }
 
-const CreateTriggerRunParams = {
-
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
-    },
-    schema: {
-        body: CreateTriggerRunRequestBody,
-    },
-}
 
 const UpdateFlowResponseParams = {
     config: {

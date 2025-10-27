@@ -177,13 +177,7 @@ export default function ProjectsPage() {
     onSuccess: () => {
       refetch();
     },
-    onError: (error) => {
-      toast({
-        title: t('Error'),
-        description: errorToastMessage(error),
-        duration: 3000,
-      });
-    },
+    onError: () => {},
   });
 
   const columnsWithCheckbox: ColumnDef<

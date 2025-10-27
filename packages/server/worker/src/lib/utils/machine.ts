@@ -3,13 +3,13 @@ import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
 import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineProcessManager } from '../runner/process/engine-process-manager'
+import { engineProcessManager } from '../compute/process/engine-process-manager'
 
 const execAsync = promisify(exec)
 
-let settings: WorkerMachineHealthcheckResponse | undefined
+let settings: WorkerSettingsResponse | undefined
 
 const workerId = apId()
 
@@ -25,7 +25,7 @@ export const workerMachine = {
         }, 0) / cpus.length * 100
 
         const ip = (await networkUtils.getPublicIp()).ip
-        const diskInfo = await getDiskInfo()        
+        const diskInfo = await getDiskInfo()
 
         return {
             diskInfo,
@@ -49,6 +49,7 @@ export const workerMachine = {
                 ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
+                ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', settings?.PLATFORM_ID_FOR_DEDICATED_WORKER),
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
@@ -56,10 +57,14 @@ export const workerMachine = {
             freeSandboxes: engineProcessManager.getFreeSandboxes(),
         }
     },
-    init: async (_settings: WorkerMachineHealthcheckResponse, log: FastifyBaseLogger) => {
+    isDedicatedWorker: () => {
+        return !isNil(workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER)
+    },
+    init: async (_settings: WorkerSettingsResponse, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
             ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
+            ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)),
         }
 
         const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
@@ -81,6 +86,10 @@ export const workerMachine = {
     getSettings: () => {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
+    },
+    getSettingOrThrow: (prop: keyof WorkerSettingsResponse) => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings[prop]
     },
     getInternalApiUrl: (): string => {
         if (environmentVariables.hasAppModules()) {
@@ -104,6 +113,9 @@ export const workerMachine = {
     },
     getPublicApiUrl: (): string => {
         return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
+    },
+    getPlatformIdForDedicatedWorker: (): string | undefined => {
+        return environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
 }
 

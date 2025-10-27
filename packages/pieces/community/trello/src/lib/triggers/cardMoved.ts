@@ -2,7 +2,7 @@ import { trelloAuth } from '../..';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { getCardDetail, getCardsInList, trelloCommon } from '../common';
 import { TrelloCardMoved } from '../common/props/card';
-import { isNil } from '@activepieces/shared';
+import { isNil, WebhookHandshakeStrategy } from '@activepieces/shared';
 
 export const cardMovedTrigger = createTrigger({
 	auth: trelloAuth,
@@ -14,6 +14,15 @@ export const cardMovedTrigger = createTrigger({
 		list_id: trelloCommon.list_id,
 	},
 	type: TriggerStrategy.WEBHOOK,
+	handshakeConfiguration:{
+		strategy:WebhookHandshakeStrategy.NONE
+	},
+	async onHandshake(context)
+	{
+		return{
+			status:200
+		}
+	},
 	async onEnable(context) {
 		const element_id = context.propsValue.list_id;
 		const webhooks = await trelloCommon.list_webhooks(context.auth);

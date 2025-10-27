@@ -474,6 +474,9 @@
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
       ],
+      "@activepieces/piece-google-cloud-storage": [
+        "packages/pieces/community/google-cloud-storage/src/index.ts"
+      ],
       "@activepieces/piece-google-contacts": [
         "packages/pieces/community/google-contacts/src/index.ts"
       ],
@@ -692,6 +695,9 @@
       "@activepieces/piece-microsoft-365-people": [
         "packages/pieces/community/microsoft-365-people/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-365-planner": [
+        "packages/pieces/community/microsoft-365-planner/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
@@ -776,6 +782,9 @@
       "@activepieces/piece-odoo": [
         "packages/pieces/community/odoo/src/index.ts"
       ],
+      "@activepieces/piece-okta": [
+        "packages/pieces/community/okta/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
@@ -787,6 +796,9 @@
       ],
       "@activepieces/piece-openai": [
         "packages/pieces/community/openai/src/index.ts"
+      ],
+      "@activepieces/piece-oracle-database": [
+        "packages/pieces/community/oracle-database/src/index.ts"
       ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
@@ -969,6 +981,9 @@
       ],
       "@activepieces/piece-serpstat": [
         "packages/pieces/community/serpstat/src/index.ts"
+      ],
+      "@activepieces/piece-service-now": [
+        "packages/pieces/community/service-now/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"

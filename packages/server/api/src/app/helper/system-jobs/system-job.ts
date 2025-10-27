@@ -1,8 +1,8 @@
-import { isNil, spreadIfDefined } from '@activepieces/shared'
+import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis'
-import { apDayjs, apDayjsDuration } from '../dayjs-helper'
+import { redisConnections } from '../../database/redis-connections'
 import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
 
@@ -18,7 +18,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         systemJobsQueue = new Queue(
             SYSTEM_JOB_QUEUE,
             {
-                connection: await redisConnections.createNew(),
+                connection: await redisConnections.create(),
                 defaultJobOptions: {
                     attempts: 10,
                     backoff: {
@@ -42,7 +42,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                 await jobHandler(job.data)
             },
             {
-                connection: await redisConnections.createNew(),
+                connection: await redisConnections.create(),
                 concurrency: 1,
             },
         )
@@ -84,7 +84,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
     },
 })
 
-async function removeDeprecatedJobs() {
+async function removeDeprecatedJobs(): Promise<void> {
     const deprecatedJobs = [
         'trigger-data-cleaner',
         'logs-cleanup-trigger',
@@ -96,6 +96,16 @@ async function removeDeprecatedJobs() {
     const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.key) || deprecatedJobs.some(d => f.key.startsWith(d))))
     for (const job of deprecatedJobsFromQueue) {
         await systemJobsQueue.removeJobScheduler(job.id ?? job.key)
+    }
+    const onetimeDeprecatedJobs = [
+        'hard-delete-project',
+        'issues-reminder',
+    ]
+    const oneTimeJobs = await systemJobsQueue.getJobs()
+    const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && (onetimeDeprecatedJobs.includes(f.name) || onetimeDeprecatedJobs.some(d => f.name.startsWith(d))))
+    for (const job of oneTimeJobsFromQueue) {
+        assertNotNullOrUndefined(job.id, 'Job id is required')
+        await systemJobsQueue.remove(job.id)
     }
 }
 
