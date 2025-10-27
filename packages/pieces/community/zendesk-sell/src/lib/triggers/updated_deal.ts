@@ -21,11 +21,9 @@ interface ZendeskDeal {
     updated_at: string;
 }
 
-interface TriggerPropsValue {}
-
-const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, TriggerPropsValue> = {
+const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, lastFetchEpochMS }) {
 		const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
 			HttpMethod.GET,
 			'v2/deals',

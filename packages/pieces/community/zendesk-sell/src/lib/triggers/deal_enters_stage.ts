@@ -1,7 +1,6 @@
 import {
     createTrigger,
     TriggerStrategy,
-    Property,
     PiecePropValueSchema
 } from '@activepieces/pieces-framework';
 import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
@@ -23,17 +22,17 @@ interface ZendeskDeal {
 }
 
 
-interface TriggerPropsValue {
-    stage_id: number;
-    pipeline_id: number;
-}
+type TriggerPropsValue = {
+    stage_id: number | undefined;
+    pipeline_id: number | undefined;
+};
 
 
 type PreviousDealStagesMap = Record<string, number>;
 
-const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, {}> = {
+const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, TriggerPropsValue> = {
 	strategy: DedupeStrategy.TIMEBASED,
-	async items({ auth, propsValue, lastFetchEpochMS }) {
+	async items({ auth, lastFetchEpochMS }) {
 		const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
 			HttpMethod.GET,
 			'v2/deals',
@@ -104,8 +103,12 @@ export const dealEntersStage = createTrigger({
 
     async run(context) {
         const { propsValue, store } = context;
-        const targetStageId = propsValue.stage_id!;
+        const targetStageId = propsValue.stage_id;
         const previousDealStages = await store.get<PreviousDealStagesMap>(PREVIOUS_DEAL_STAGES_STORE_KEY) ?? {};
+
+        if (!targetStageId) {
+            throw new Error('Stage ID is required for deal enters stage trigger');
+        }
 
         console.log(`Polling deals for stage transitions to stage ${targetStageId}`);
 
