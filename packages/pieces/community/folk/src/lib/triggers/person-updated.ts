@@ -83,44 +83,46 @@ const polling: Polling<
   },
 };
 
+const sampleData = {
+  id: 'per_1234567890abcdef1234567890abcdef1234',
+  firstName: 'Jane',
+  lastName: 'Smith-Johnson',
+  name: 'Jane Smith-Johnson',
+  email: 'jane.smithjohnson@example.com',
+  phone: '+1-555-0199',
+  url: 'https://janesmith.com',
+  company: 'Acme Corporation',
+  jobTitle: 'Senior Marketing Director',
+  createdAt: '2024-01-15T11:20:00Z',
+  updatedAt: '2024-01-22T14:30:00Z',
+  tags: ['lead', 'decision-maker', 'key-contact'],
+  groups: ['Sales Pipeline', 'Q1 2024 Prospects', 'Priority Contacts'],
+  customFields: {
+    source: 'Website',
+    leadScore: 92,
+    region: 'North America',
+    interests: ['Product Demo', 'Pricing', 'Enterprise Features']
+  },
+  socialProfiles: {
+    linkedin: 'https://linkedin.com/in/janesmith',
+    twitter: '@janesmithjohnson'
+  },
+  previousValues: {
+    lastName: 'Smith',
+    name: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    phone: '+1-555-0123',
+    jobTitle: 'Marketing Director'
+  }
+};
+
 export const personUpdated = createTrigger({
   auth: folkAuth,
   name: 'person-updated',
   displayName: 'Person Updated',
   description: "Triggers when a person's basic field (e.g., name, job title, email, or URL) in a group is updated.",
   props: {},
-  sampleData: {
-    id: '67890',
-    firstName: 'Jane',
-    lastName: 'Smith-Johnson',
-    name: 'Jane Smith-Johnson',
-    email: 'jane.smithjohnson@example.com',
-    phone: '+1-555-0199',
-    url: 'https://janesmith.com',
-    company: 'Acme Corporation',
-    jobTitle: 'Senior Marketing Director',
-    createdAt: '2024-01-15T11:20:00Z',
-    updatedAt: '2024-01-22T14:30:00Z',
-    tags: ['lead', 'decision-maker', 'key-contact'],
-    groups: ['Sales Pipeline', 'Q1 2024 Prospects', 'Priority Contacts'],
-    customFields: {
-      source: 'Website',
-      leadScore: 92,
-      region: 'North America',
-      interests: ['Product Demo', 'Pricing', 'Enterprise Features']
-    },
-    socialProfiles: {
-      linkedin: 'https://linkedin.com/in/janesmith',
-      twitter: '@janesmithjohnson'
-    },
-    previousValues: {
-      lastName: 'Smith',
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      phone: '+1-555-0123',
-      jobTitle: 'Marketing Director'
-    }
-  },
+  sampleData,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
@@ -145,11 +147,18 @@ export const personUpdated = createTrigger({
     });
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
+    const items = await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: context.propsValue,
       files: context.files,
     });
+    
+    // If no real data found, return sample data for demo purposes
+    if (!items || items.length === 0) {
+      return [sampleData];
+    }
+    
+    return items;
   },
 });

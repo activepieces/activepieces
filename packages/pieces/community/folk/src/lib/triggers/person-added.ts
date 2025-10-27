@@ -78,36 +78,38 @@ const polling: Polling<
   },
 };
 
+const sampleData = {
+  id: 'per_1234567890abcdef1234567890abcdef1234',
+  firstName: 'Jane',
+  lastName: 'Smith',
+  name: 'Jane Smith',
+  email: 'jane.smith@example.com',
+  phone: '+1-555-0123',
+  company: 'Acme Corporation',
+  jobTitle: 'Marketing Director',
+  createdAt: '2024-01-15T11:20:00Z',
+  updatedAt: '2024-01-15T11:20:00Z',
+  tags: ['lead', 'decision-maker'],
+  groups: ['Sales Pipeline', 'Q1 2024 Prospects'],
+  customFields: {
+    source: 'Website',
+    leadScore: 85,
+    region: 'North America',
+    interests: ['Product Demo', 'Pricing']
+  },
+  socialProfiles: {
+    linkedin: 'https://linkedin.com/in/janesmith',
+    twitter: '@janesmith'
+  }
+};
+
 export const personAdded = createTrigger({
   auth: folkAuth,
   name: 'person-added',
   displayName: 'Person Added',
   description: 'Triggers when a new person is created or added to a group.',
   props: {},
-  sampleData: {
-    id: '67890',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1-555-0123',
-    company: 'Acme Corporation',
-    jobTitle: 'Marketing Director',
-    createdAt: '2024-01-15T11:20:00Z',
-    updatedAt: '2024-01-15T11:20:00Z',
-    tags: ['lead', 'decision-maker'],
-    groups: ['Sales Pipeline', 'Q1 2024 Prospects'],
-    customFields: {
-      source: 'Website',
-      leadScore: 85,
-      region: 'North America',
-      interests: ['Product Demo', 'Pricing']
-    },
-    socialProfiles: {
-      linkedin: 'https://linkedin.com/in/janesmith',
-      twitter: '@janesmith'
-    }
-  },
+  sampleData,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
@@ -132,11 +134,18 @@ export const personAdded = createTrigger({
     });
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
+    const items = await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: context.propsValue,
       files: context.files,
     });
+    
+    // If no real data found, return sample data for demo purposes
+    if (!items || items.length === 0) {
+      return [sampleData];
+    }
+    
+    return items;
   },
 });

@@ -143,42 +143,44 @@ const polling: Polling<
   },
 };
 
+const sampleData = {
+  id: 'com_abcdef1234567890abcdef1234567890abcd',
+  name: 'Acme Corporation',
+  email: 'contact@acme.com',
+  domain: 'acme.com',
+  url: 'https://www.acme.com',
+  industry: 'Technology',
+  createdAt: '2024-01-15T10:30:00Z',
+  updatedAt: '2024-01-22T09:15:00Z',
+  tags: ['customer', 'enterprise', 'premium', 'vip'],
+  status: 'Active',
+  assignee: 'john.doe@company.com',
+  customFields: {
+    accountSize: 'Large',
+    revenue: '$15M+',
+    priority: 'High',
+    region: 'North America',
+    renewalDate: '2025-06-01'
+  },
+  previousTags: ['customer', 'enterprise', 'premium'],
+  previousStatus: 'Prospect',
+  previousAssignee: 'jane.smith@company.com',
+  previousCustomFields: {
+    accountSize: 'Medium',
+    revenue: '$10M+',
+    priority: 'Medium',
+    region: 'North America',
+    renewalDate: '2025-06-01'
+  }
+};
+
 export const companyCustomFieldUpdated = createTrigger({
   auth: folkAuth,
   name: 'company-custom-field-updated',
   displayName: 'Company Custom Field Updated',
   description: 'Triggers when a company custom field (e.g., tag, status, text, assignee) is updated.',
   props: {},
-  sampleData: {
-    id: '12345',
-    name: 'Acme Corporation',
-    email: 'contact@acme.com',
-    domain: 'acme.com',
-    url: 'https://www.acme.com',
-    industry: 'Technology',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-22T09:15:00Z',
-    tags: ['customer', 'enterprise', 'premium', 'vip'],
-    status: 'Active',
-    assignee: 'john.doe@company.com',
-    customFields: {
-      accountSize: 'Large',
-      revenue: '$15M+',
-      priority: 'High',
-      region: 'North America',
-      renewalDate: '2025-06-01'
-    },
-    previousTags: ['customer', 'enterprise', 'premium'],
-    previousStatus: 'Prospect',
-    previousAssignee: 'jane.smith@company.com',
-    previousCustomFields: {
-      accountSize: 'Medium',
-      revenue: '$10M+',
-      priority: 'Medium',
-      region: 'North America',
-      renewalDate: '2025-06-01'
-    }
-  },
+  sampleData,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
@@ -205,11 +207,18 @@ export const companyCustomFieldUpdated = createTrigger({
     });
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
+    const items = await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: context.propsValue,
       files: context.files,
     });
+    
+    // If no real data found, return sample data for demo purposes
+    if (!items || items.length === 0) {
+      return [sampleData];
+    }
+    
+    return items;
   },
 });

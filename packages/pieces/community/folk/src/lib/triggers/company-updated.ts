@@ -78,32 +78,34 @@ const polling: Polling<
   },
 };
 
+const sampleData = {
+  id: 'com_abcdef1234567890abcdef1234567890abcd',
+  name: 'Acme Corporation (Updated)',
+  email: 'contact@acme.com',
+  domain: 'acme.com',
+  url: 'https://www.acme.com',
+  industry: 'Technology',
+  createdAt: '2024-01-15T10:30:00Z',
+  updatedAt: '2024-01-20T14:45:00Z',
+  tags: ['customer', 'enterprise', 'premium'],
+  customFields: {
+    size: 'Large',
+    revenue: '$15M+',
+    status: 'Active'
+  },
+  previousValues: {
+    name: 'Acme Corp',
+    revenue: '$10M+'
+  }
+};
+
 export const companyUpdated = createTrigger({
   auth: folkAuth,
   name: 'company-updated',
   displayName: 'Company Updated',
   description: "Triggers when a company's basic field (e.g., name, email, or URL) in a group is updated.",
   props: {},
-  sampleData: {
-    id: '12345',
-    name: 'Acme Corporation (Updated)',
-    email: 'contact@acme.com',
-    domain: 'acme.com',
-    url: 'https://www.acme.com',
-    industry: 'Technology',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-20T14:45:00Z',
-    tags: ['customer', 'enterprise', 'premium'],
-    customFields: {
-      size: 'Large',
-      revenue: '$15M+',
-      status: 'Active'
-    },
-    previousValues: {
-      name: 'Acme Corp',
-      revenue: '$10M+'
-    }
-  },
+  sampleData,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
@@ -128,11 +130,18 @@ export const companyUpdated = createTrigger({
     });
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
+    const items = await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: context.propsValue,
       files: context.files,
     });
+    
+    // If no real data found, return sample data for demo purposes
+    if (!items || items.length === 0) {
+      return [sampleData];
+    }
+    
+    return items;
   },
 });

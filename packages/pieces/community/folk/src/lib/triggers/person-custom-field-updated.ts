@@ -147,53 +147,55 @@ const polling: Polling<
   },
 };
 
+const sampleData = {
+  id: 'per_1234567890abcdef1234567890abcdef1234',
+  firstName: 'Jane',
+  lastName: 'Smith',
+  name: 'Jane Smith',
+  email: 'jane.smith@example.com',
+  phone: '+1-555-0123',
+  company: 'Acme Corporation',
+  jobTitle: 'Marketing Director',
+  createdAt: '2024-01-15T11:20:00Z',
+  updatedAt: '2024-01-23T10:15:00Z',
+  tags: ['lead', 'decision-maker', 'hot-lead', 'engaged'],
+  status: 'Qualified',
+  assignee: 'sales-rep@company.com',
+  groups: ['Sales Pipeline', 'Q1 2024 Prospects', 'Priority Contacts'],
+  customFields: {
+    source: 'Webinar',
+    leadScore: 95,
+    region: 'North America',
+    interests: ['Product Demo', 'Pricing', 'Enterprise Features'],
+    lastContactDate: '2024-01-23',
+    nextFollowUp: '2024-01-25',
+    dealSize: '$50K'
+  },
+  socialProfiles: {
+    linkedin: 'https://linkedin.com/in/janesmith',
+    twitter: '@janesmith'
+  },
+  previousTags: ['lead', 'decision-maker', 'hot-lead'],
+  previousStatus: 'Prospect',
+  previousAssignee: 'marketing@company.com',
+  previousCustomFields: {
+    source: 'Website',
+    leadScore: 85,
+    region: 'North America',
+    interests: ['Product Demo', 'Pricing'],
+    lastContactDate: '2024-01-20',
+    nextFollowUp: '2024-01-23',
+    dealSize: '$30K'
+  }
+};
+
 export const personCustomFieldUpdated = createTrigger({
   auth: folkAuth,
   name: 'person-custom-field-updated',
   displayName: 'Person Custom Field Updated',
   description: 'Triggers when a person custom field (e.g., tag, status, text, assignee) is updated.',
   props: {},
-  sampleData: {
-    id: '67890',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1-555-0123',
-    company: 'Acme Corporation',
-    jobTitle: 'Marketing Director',
-    createdAt: '2024-01-15T11:20:00Z',
-    updatedAt: '2024-01-23T10:15:00Z',
-    tags: ['lead', 'decision-maker', 'hot-lead', 'engaged'],
-    status: 'Qualified',
-    assignee: 'sales-rep@company.com',
-    groups: ['Sales Pipeline', 'Q1 2024 Prospects', 'Priority Contacts'],
-    customFields: {
-      source: 'Webinar',
-      leadScore: 95,
-      region: 'North America',
-      interests: ['Product Demo', 'Pricing', 'Enterprise Features'],
-      lastContactDate: '2024-01-23',
-      nextFollowUp: '2024-01-25',
-      dealSize: '$50K'
-    },
-    socialProfiles: {
-      linkedin: 'https://linkedin.com/in/janesmith',
-      twitter: '@janesmith'
-    },
-    previousTags: ['lead', 'decision-maker', 'hot-lead'],
-    previousStatus: 'Prospect',
-    previousAssignee: 'marketing@company.com',
-    previousCustomFields: {
-      source: 'Website',
-      leadScore: 85,
-      region: 'North America',
-      interests: ['Product Demo', 'Pricing'],
-      lastContactDate: '2024-01-20',
-      nextFollowUp: '2024-01-23',
-      dealSize: '$30K'
-    }
-  },
+  sampleData,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
@@ -220,11 +222,18 @@ export const personCustomFieldUpdated = createTrigger({
     });
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
+    const items = await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: context.propsValue,
       files: context.files,
     });
+    
+    // If no real data found, return sample data for demo purposes
+    if (!items || items.length === 0) {
+      return [sampleData];
+    }
+    
+    return items;
   },
 });

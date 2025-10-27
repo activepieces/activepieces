@@ -75,32 +75,34 @@ const polling: Polling<
   },
 };
 
+const sampleData = {
+  id: 'per_1234567890abcdef1234567890abcdef1234',
+  firstName: 'Jane',
+  lastName: 'Smith',
+  name: 'Jane Smith',
+  email: 'jane.smith@example.com',
+  phone: '+1-555-0123',
+  company: 'Acme Corporation',
+  jobTitle: 'Marketing Director',
+  deletedAt: '2024-01-20T16:45:00Z',
+  tags: ['lead', 'decision-maker'],
+  groups: ['Sales Pipeline'],
+  customFields: {
+    source: 'Website',
+    leadScore: 85,
+    region: 'North America'
+  },
+  reason: 'Removed from group',
+  removedBy: 'user@company.com'
+};
+
 export const personRemoved = createTrigger({
   auth: folkAuth,
   name: 'person-removed',
   displayName: 'Person Removed',
   description: 'Triggers when a person is deleted from the workspace or removed from a group.',
   props: {},
-  sampleData: {
-    id: '67890',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1-555-0123',
-    company: 'Acme Corporation',
-    jobTitle: 'Marketing Director',
-    deletedAt: '2024-01-20T16:45:00Z',
-    tags: ['lead', 'decision-maker'],
-    groups: ['Sales Pipeline'],
-    customFields: {
-      source: 'Website',
-      leadScore: 85,
-      region: 'North America'
-    },
-    reason: 'Removed from group',
-    removedBy: 'user@company.com'
-  },
+  sampleData,
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
@@ -125,11 +127,18 @@ export const personRemoved = createTrigger({
     });
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
+    const items = await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: context.propsValue,
       files: context.files,
     });
+    
+    // If no real data found, return sample data for demo purposes
+    if (!items || items.length === 0) {
+      return [sampleData];
+    }
+    
+    return items;
   },
 });
