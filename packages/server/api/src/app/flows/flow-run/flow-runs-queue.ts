@@ -9,6 +9,7 @@ import { distributedLock, distributedStore, redisConnections } from '../../datab
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
+import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
@@ -66,6 +67,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
+                            const flowExists = await flowService(log).exists(runMetadata.flowId)
+                            if (!flowExists) {
+                                log.info({
+                                    jobId: job.id,
+                                    runId: job.data.runId,
+                                }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
+                                return
+                            }
+
                             const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
                             if (runExists) {

@@ -50,6 +50,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             tags: runDetails.tags ?? [],
             failedStepName,
             logsFileId,
+            pauseMetadata: 'pauseMetadata' in runDetails ? runDetails.pauseMetadata : undefined,
         })
 
         if (!isNil(stepNameToTest)) {
