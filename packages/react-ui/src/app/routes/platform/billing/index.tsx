@@ -47,7 +47,6 @@ export default function Billing() {
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
   const isPlus = platformPlanInfo?.plan.plan === PlanName.PLUS;
-  const isTrial = status === ApSubscriptionStatus.TRIALING;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
@@ -109,11 +108,11 @@ export default function Billing() {
 
         <UsageCards platformSubscription={platformPlanInfo} />
 
-        {(isBusinessPlan || isPlus) && !isTrial && (
+        {(isBusinessPlan || isPlus) && (
           <ActiveFlowAddon platformSubscription={platformPlanInfo} />
         )}
 
-        {isBusinessPlan && !isTrial && (
+        {isBusinessPlan && (
           <div className="grid grid-cols-2 gap-6">
             <ProjectAddon platformSubscription={platformPlanInfo} />
             <UserSeatAddon platformSubscription={platformPlanInfo} />
