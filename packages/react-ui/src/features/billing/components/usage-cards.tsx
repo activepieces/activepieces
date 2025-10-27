@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import {
-  ClipboardCheck,
   Database,
   LayoutGrid,
   Users,
@@ -45,12 +44,6 @@ export const UsageCards = ({
         '2xl:grid-cols-7': isFree,
       })}
     >
-      <UsageCard
-        icon={<ClipboardCheck className="w-5 h-5" />}
-        title={t('Tasks')}
-        used={usage.tasks}
-        total={plan.tasksLimit}
-      />
 
       {(isFree || isTrial || isEnterprise) && (
         <UsageCard

@@ -13,42 +13,36 @@ const appsumoRepo = repoFactory(AppSumoEntity)
 const appSumoPlans: Record<string, PlatformPlanWithOnlyLimits> = {
     activepieces_tier1: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier1',
-        tasksLimit: 10000,
         userSeatsLimit: 1,
         tablesLimit: 5,
         mcpLimit: 5,
     }),
     activepieces_tier2: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier2',
-        tasksLimit: 50000,
         userSeatsLimit: 1,
         tablesLimit: 5,
         mcpLimit: 5,
     }),
     activepieces_tier3: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier3',
-        tasksLimit: 200000,
         userSeatsLimit: 5,
         tablesLimit: 5,
         mcpLimit: 5,
     }),
     activepieces_tier4: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier4',
-        tasksLimit: 500000,
         userSeatsLimit: 5,
         tablesLimit: 10,
         mcpLimit: 10,
     }),
     activepieces_tier5: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier5',
-        tasksLimit: 1000000,
         userSeatsLimit: 5,
         tablesLimit: 20,
         mcpLimit: 20,
     }),
     activepieces_tier6: APPSUMO_PLAN({
         planName: 'appsumo_activepieces_tier6',
-        tasksLimit: 10000000,
         userSeatsLimit: 5,
         tablesLimit: 50,
         mcpLimit: 50,

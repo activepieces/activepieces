@@ -21,7 +21,6 @@ export const SMTPInformation = Type.Object({
 export type SMTPInformation = Static<typeof SMTPInformation>
 
 export enum PlatformUsageMetric {
-    TASKS = 'tasks',
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
@@ -31,7 +30,6 @@ export enum PlatformUsageMetric {
 }
 
 export const PlatformUsage = Type.Object({
-    tasks: Type.Number(),
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
     tables: Type.Number(),
@@ -52,7 +50,6 @@ export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    tasksLimit: Type.Optional(Type.Number()),
     includedAiCredits: Type.Number(),
     aiCreditsOverageLimit: Type.Optional(Type.Number()),
     aiCreditsOverageState: Type.Optional(Type.String()),

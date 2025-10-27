@@ -99,7 +99,6 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             executionState: {
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
-            tasks: flowExecutorContext.tasks,
         })
         assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
         const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
