@@ -1,5 +1,5 @@
 import { ProjectPlanLimits, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AiOverageState,
@@ -76,6 +76,10 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
         if (edition === ApEdition.COMMUNITY) {
             return false
         }
+        const skipProjectLimitsCheck = system.getBoolean(AppSystemProp.SKIP_PROJECT_LIMITS_CHECK)
+        if (skipProjectLimitsCheck) {
+            return false
+        }
 
         const projectPlan = await this.ensureProjectUnlockedAndGetPlatformPlan(projectId)
 
@@ -143,7 +147,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 
         return projectPlan
     },
-    
+
 })
 
 async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): Promise<boolean> {

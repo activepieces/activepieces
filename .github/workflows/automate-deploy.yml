@@ -59,13 +59,13 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
-      - name: Deploy React
+      - name: Deploy App
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/react.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/app.yml --skip-push; exit"'
 
       - name: Deploy Workers
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/workers.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/worker.yml --skip-push; exit"'
 
   Deploy-Checkly:
     name: Deploy E2E Tests Checkly
