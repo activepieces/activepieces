@@ -147,6 +147,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bigcommerce": [
+        "packages/pieces/community/bigcommerce/src/index.ts"
+      ],
       "@activepieces/piece-bigin-by-zoho": [
         "packages/pieces/community/bigin-by-zoho/src/index.ts"
       ],
