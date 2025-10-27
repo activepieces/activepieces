@@ -112,7 +112,6 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                     await platformPlanService(log).update({
                         platformId: project.platformId,
                         ...appSumoPlan,
-                        eligibleForTrial: undefined,
                     })
 
                 }
