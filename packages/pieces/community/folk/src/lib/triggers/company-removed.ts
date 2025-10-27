@@ -1,20 +1,119 @@
+import { 
+  createTrigger, 
+  TriggerStrategy, 
+  PiecePropValueSchema 
+} from '@activepieces/pieces-framework';
+import { 
+  DedupeStrategy, 
+  Polling, 
+  pollingHelper 
+} from '@activepieces/pieces-common';
+import { folkAuth } from '../common';
+import { folkApiCall } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-export const company-removed = createTrigger({
-    // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-    name: 'company-removed',
-    displayName: 'company-removed',
-    description: '',
-    props: {},
-    sampleData: {},
-    type: TriggerStrategy.WEBHOOK,
-    async onEnable(context){
-        // implement webhook creation logic
-    },
-    async onDisable(context){
-        // implement webhook deletion logic
-    },
-    async run(context){
-        return [context.payload.body]
+interface FolkDeletedCompany {
+  id: string;
+  name: string;
+  deletedAt: string;
+  [key: string]: any;
+}
+
+interface FolkDeletedCompaniesResponse {
+  deletedCompanies: FolkDeletedCompany[];
+  hasMore?: boolean;
+  nextCursor?: string;
+}
+
+const polling: Polling<
+  PiecePropValueSchema<typeof folkAuth>,
+  Record<string, never>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, lastFetchEpochMS }) => {
+    const apiKey = auth as string;
+    
+    try {
+      // Fetch deleted companies from Folk API
+      // Note: This endpoint may vary depending on Folk's API implementation
+      const response = await folkApiCall<FolkDeletedCompaniesResponse>({
+        apiKey,
+        method: HttpMethod.GET,
+        endpoint: '/companies/deleted',
+        queryParams: {
+          // Sort by deletion date to get newest first
+          sort: 'deletedAt',
+          order: 'desc',
+          limit: '100'
+        },
+      });
+
+      const deletedCompanies = response.deletedCompanies || [];
+      
+      // Filter and map companies deleted after the last fetch
+      const items = deletedCompanies
+        .filter((company: FolkDeletedCompany) => {
+          const deletedAtMs = new Date(company.deletedAt).getTime();
+          return deletedAtMs > lastFetchEpochMS;
+        })
+        .map((company: FolkDeletedCompany) => ({
+          epochMilliSeconds: new Date(company.deletedAt).getTime(),
+          data: company,
+        }));
+
+      return items;
+    } catch (error: any) {
+      console.error('Error fetching deleted companies from Folk:', error);
+      // Return empty array if API call fails to avoid breaking the trigger
+      return [];
     }
-})
+  },
+};
+
+export const companyRemoved = createTrigger({
+  auth: folkAuth,
+  name: 'company-removed',
+  displayName: 'Company Removed',
+  description: 'Triggers when a company is deleted or removed from a group.',
+  props: {},
+  sampleData: {
+    id: '12345',
+    name: 'Acme Corporation',
+    deletedAt: '2024-01-15T14:30:00Z',
+    domain: 'acme.com',
+    industry: 'Technology',
+    tags: ['customer', 'enterprise'],
+    reason: 'Archived'
+  },
+  type: TriggerStrategy.POLLING,
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, {
+      store: context.store,
+      auth: context.auth,
+      propsValue: context.propsValue,
+    });
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, {
+      store: context.store,
+      auth: context.auth,
+      propsValue: context.propsValue,
+    });
+  },
+  async run(context) {
+    return await pollingHelper.poll(polling, {
+      store: context.store,
+      auth: context.auth,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
+  },
+  async test(context) {
+    return await pollingHelper.test(polling, {
+      store: context.store,
+      auth: context.auth,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
+  },
+});
