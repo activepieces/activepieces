@@ -67,16 +67,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
-                            if (!isNil(runMetadata.flowId)) {
-                                const flow = await flowService(log).getOneById(runMetadata.flowId)
-                                if (isNil(flow)) {
-                                    log.info({
-                                        jobId: job.id,
-                                        runId: job.data.runId,
-                                    }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
-                                    return
-                                }
+                            const flowExists = await flowService(log).exists(runMetadata.flowId)
+                            if (!flowExists) {
+                                log.info({
+                                    jobId: job.id,
+                                    runId: job.data.runId,
+                                }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
+                                return
                             }
+
                             const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
                             if (runExists) {
