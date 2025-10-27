@@ -31,7 +31,6 @@ import { ProjectDashboardLayout } from '../components/project-dashboard-layout';
 import ProjectSettingsLayout from '../components/project-settings-layout';
 import { BuilderNavigationSidebar } from '../components/sidebar/builder';
 import NotFoundPage from '../routes/404-page';
-import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
@@ -44,7 +43,6 @@ import McpServersPage from '../routes/mcp-servers';
 import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
-import SettingsJobsPage from '../routes/platform/infra/jobs';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -135,16 +133,6 @@ const routes = [
       </PageTitle>
     ),
   },
-  ...ProjectRouterWrapper({
-    path: '/agents',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Agents">
-          <AgentsPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
   {
     path: '/chats/:flowId',
     element: (
@@ -509,16 +497,6 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="Workers">
           <SettingsWorkersPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/jobs',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Jobs">
-          <SettingsJobsPage />
         </PageTitle>
       </PlatformLayout>
     ),

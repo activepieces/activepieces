@@ -72,10 +72,13 @@ export const fileService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async updateSize(params: UpdateSizeParams): Promise<void> {
-        await fileRepo().update(params.fileId, {
-            size: params.size,
+    async exists(params: GetOneParams): Promise<boolean> {
+        const file = await fileRepo().findOneBy({
+            projectId: params.projectId,
+            id: params.fileId,
+            type: params.type,
         })
+        return !isNil(file)
     },
     async getFile({ projectId, fileId, type }: GetOneParams): Promise<File | null> {
         const file = await fileRepo().findOneBy({
@@ -174,11 +177,6 @@ type GetDataResponse = {
     metadata?: Record<string, string>
     data: Buffer
     fileName?: string
-}
-
-type UpdateSizeParams = {
-    fileId: FileId
-    size: number
 }
 
 function getLocationForFile(type: FileType) {

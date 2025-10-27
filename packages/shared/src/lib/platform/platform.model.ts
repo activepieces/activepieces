@@ -20,47 +20,12 @@ export const SMTPInformation = Type.Object({
 })
 export type SMTPInformation = Static<typeof SMTPInformation>
 
-export enum CopilotProviderType {
-    OPENAI = 'openai',
-    AZURE_OPENAI = 'azureOpenai',
-}
-  
-export const OpenAiProvider = Type.Object({
-    baseUrl: Type.String(),
-    apiKey: Type.String(),
-})
-export type OpenAiProvider = Static<typeof OpenAiProvider>
-
-export const AzureOpenAiProvider = Type.Object({
-    resourceName: Type.String(),
-    deploymentName: Type.String(),
-    apiKey: Type.String(),
-})
-export type AzureOpenAiProvider = Static<typeof AzureOpenAiProvider>
-
-export const CopilotSettings = Type.Object({
-    providers: Type.Object({
-        [CopilotProviderType.OPENAI]: Type.Optional(OpenAiProvider),
-        [CopilotProviderType.AZURE_OPENAI]: Type.Optional(AzureOpenAiProvider),
-    }),
-})
-export type CopilotSettings = Static<typeof CopilotSettings>
-
-export const CopilotSettingsWithoutSensitiveData = Type.Object({
-    providers: Type.Object({
-        [CopilotProviderType.OPENAI]: Type.Optional(Type.Object({})),
-        [CopilotProviderType.AZURE_OPENAI]: Type.Optional(Type.Object({})),
-    }),
-})
-export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
-
 export enum PlatformUsageMetric {
     TASKS = 'tasks',
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
-    AGENTS = 'agents',
     TABLES = 'tables',
     MCPS = 'mcps',
 }
@@ -73,7 +38,6 @@ export const PlatformUsage = Type.Object({
     mcps: Type.Number(),
     seats: Type.Number(),
     projects: Type.Number(),
-    agents: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
@@ -129,7 +93,10 @@ export const PlatformPlan = Type.Object({
     tablesLimit: Nullable(Type.Number()),
     mcpLimit: Nullable(Type.Number()),
     activeFlowsLimit: Nullable(Type.Number()),
-    agentsLimit: Nullable(Type.Number()),
+
+    dedicatedWorkers: Nullable(Type.Object({
+        trustedEnvironment: Type.Boolean(),
+    })),
 })
 export type PlatformPlan = Static<typeof PlatformPlan>
 
@@ -160,13 +127,11 @@ export const Platform = Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: Type.Boolean(),
     pinnedPieces: Type.Array(Type.String()),
-    copilotSettings: Type.Optional(CopilotSettings),
 })
 export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
-    copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
     usage: Type.Optional(PlatformUsage),

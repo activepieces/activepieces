@@ -115,6 +115,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             name: 'idx_run_parent_run_id',
             columns: ['parentRunId'],
         },
+        {
+            name: 'idx_run_flow_version_id',
+            columns: ['flowVersionId'],
+        },
     ],
     relations: {
         project: {

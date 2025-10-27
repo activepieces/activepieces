@@ -19,12 +19,6 @@ export enum PiecesFilterType {
     ALLOWED = 'ALLOWED',
 }
 
-export enum NotificationStatus {
-    NEVER = 'NEVER',
-    ALWAYS = 'ALWAYS',
-    NEW_ISSUE = 'NEW_ISSUE',
-}
-
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     aiCredits: Type.Number(),
@@ -59,8 +53,8 @@ export const Project = Type.Object({
     deleted: Nullable(Type.String()),
     ownerId: Type.String(),
     displayName: Type.String(),
-    notifyStatus: Type.Enum(NotificationStatus),
     platformId: ApId,
+    maxConcurrentJobs: Nullable(Type.Number()),
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
     metadata: Nullable(Metadata),
@@ -87,7 +81,6 @@ export const ProjectWithLimits = Type.Composite([
 ])
 
 export const UpdateProjectRequestInCommunity = Type.Object({
-    notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),
