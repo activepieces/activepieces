@@ -36,6 +36,11 @@ import { findOrCreateLocation } from './lib/actions/find-or-create-location';
 import { findOrCreatePerson } from './lib/actions/find-or-create-person';
 import { findOrCreatePracticeArea } from './lib/actions/find-or-create-practice-area';
 import { findOrCreateReferralSource } from './lib/actions/find-or-create-referral-source';
+import { caseAddedOrUpdated } from './lib/triggers/case-added-or-updated';
+import { eventAddedOrUpdated } from './lib/triggers/event-added-or-updated';
+import { personAddedOrUpdated } from './lib/triggers/person-added-or-updated';
+import { companyAddedOrUpdated } from './lib/triggers/company-added-or-updated';
+import { leadAddedOrUpdated } from './lib/triggers/lead-added-or-updated';
 
 export const mycaseAuth = PieceAuth.OAuth2({
   description: 'MyCase OAuth 2.0 Authentication',
@@ -52,5 +57,5 @@ export const mycasePiece = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mycase-piece.png',
   authors: [],
   actions: [createCase, createCaseStage, createCompany, createCustomField, createDocument, createEvent, createExpense, createLead, createLocation, createNote, createPerson, createPracticeArea, createReferralSource, createTask, createTimeEntry, createCall, updateCase, updateCompany, updatePerson, makeRequest, findCase, findCall, findCaseStage, findCompany, findLocation, findPeopleGroup, findPerson, findPracticeArea, findReferralSource, findStaff, findOrCreateCase, findOrCreateCaseStage, findOrCreateCompany, findOrCreateLocation, findOrCreatePerson, findOrCreatePracticeArea, findOrCreateReferralSource],
-  triggers: []
+  triggers: [caseAddedOrUpdated, eventAddedOrUpdated, personAddedOrUpdated, companyAddedOrUpdated, leadAddedOrUpdated]
 });
