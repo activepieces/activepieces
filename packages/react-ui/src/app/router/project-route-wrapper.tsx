@@ -78,7 +78,6 @@ const RedirectToCurrentProjectRoute: React.FC<
   const pathWithParamsAndSearchParams = `${pathWithParams}${
     searchParamsString ? `?${searchParamsString}` : ''
   }`;
-
   return (
     <Navigate
       to={`/projects/${currentProjectId}${pathWithParamsAndSearchParams}`}
