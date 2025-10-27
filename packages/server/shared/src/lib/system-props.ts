@@ -161,7 +161,7 @@ export const environmentVariables = {
 export const apVersionUtil = {
     async getCurrentRelease(): Promise<string> {
         // eslint-disable-next-line @nx/enforce-module-boundaries
-        const packageJson = await import('package.json')
+        const packageJson = require('package.json')
         return packageJson.version
     },
     async getLatestRelease(): Promise<string> {
