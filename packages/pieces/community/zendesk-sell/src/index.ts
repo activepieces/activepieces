@@ -36,7 +36,7 @@ export const zendeskSell = createPiece({
   auth: zendeskSellAuth,
   minimumSupportedRelease: '0.3.61',
   logoUrl: "https://cdn.activepieces.com/pieces/zendesk-sell.png",
-  authors: ['Pranith124'], 
+  authors: ['Pranith124', 'onyedikachi-david'], 
   categories: [PieceCategory.SALES_AND_CRM], 
   actions: [
     createContact,
