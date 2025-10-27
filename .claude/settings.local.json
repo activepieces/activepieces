@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(nx reset:*)",
+      "Bash(npm run serve:backend:*)",
+      "Bash(rm:*)",
+      "Bash(npm install)"
+    ],
+    "deny": []
+  }
+}

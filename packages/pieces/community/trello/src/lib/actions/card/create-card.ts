@@ -4,9 +4,9 @@ import {
   HttpRequest,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { trelloCommon } from '../common';
-import { TrelloCard } from '../common/props/card';
-import { trelloAuth } from '../..';
+import { trelloCommon } from '../../common';
+import { TrelloCard } from '../../common/props/card';
+import { trelloAuth } from '../../..';
 
 export const createCard = createAction({
   auth: trelloAuth,
