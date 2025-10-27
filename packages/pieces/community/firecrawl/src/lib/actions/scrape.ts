@@ -1,71 +1,7 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
-import Ajv from 'ajv';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot } from '../common/common';
-
-function forJsonOutputFormat(jsonExtractionConfig: any): any {
-
-  if (!jsonExtractionConfig['schema']){
-    throw new Error('schema is required.')
-  }
-
-  // follow logic from utility ai- extract structured data
-  let schemaDefinition: any;
-
-  if (jsonExtractionConfig['mode'] === 'advanced'){
-    const ajv = new Ajv();
-    let schema = jsonExtractionConfig['schema']['fields'];
-    const isValidSchema = ajv.validateSchema(schema);
-
-    if (!isValidSchema) {
-      throw new Error(
-        JSON.stringify({
-          message: 'Invalid JSON schema',
-          errors: ajv.errors,
-        }),
-      );
-    }
-
-    schemaDefinition = schema;
-  } else {
-    const fields = jsonExtractionConfig['schema']['fields'] as Array<{
-      name: string,
-      description?: string;
-      type: string;
-      isRequired: boolean;
-    }>;
-
-    const properties: Record<string, unknown> = {};
-    const required: string[] =[];
-
-    fields.forEach((field) => {
-      if (!/^[a-zA-Z0-9_.-]+$/.test(field.name)) {
-        throw new Error(`Invalid field name: ${field.name}. Field names can only contain letters, numbers, underscores, dots and hyphens.`);
-      }
-
-      properties[field.name] = {
-        type: field.type,
-        description: field.description,
-      };
-
-      if (field.isRequired) {
-        required.push(field.name);
-      }
-    });
-
-    schemaDefinition = {
-      type: 'object' as const,
-      properties,
-      required,
-    };
-  }
-
-  return {
-    prompt: jsonExtractionConfig['prompt'],
-    schema: schemaDefinition,
-  }
-}
+import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat } from '../common/common';
 
 // screenshot always included in output so that user can pass it into a google drive and keep track of what is being scraped
 function forDefaultScreenshot(): any {

@@ -2,6 +2,7 @@ import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { scrape } from './lib/actions/scrape';
+import { extract } from './lib/actions/extract';
 import { startCrawl } from './lib/actions/start-crawl';
 import { crawlResults } from './lib/actions/crawl-results';
 import { map } from './lib/actions/map';
@@ -57,6 +58,7 @@ export const firecrawl = createPiece({
   auth: firecrawlAuth,
   actions: [
     scrape,
+    extract,
     startCrawl,
     crawlResults,
     map,
