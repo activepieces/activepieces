@@ -94,28 +94,6 @@ export const scrape = createAction({
       },
       defaultValue: 'markdown',
     }),
-    screenshotOptions: Property.DynamicProperties({
-      displayName: 'Screenshot Options',
-      description: 'Configure screenshot capture settings.',
-      required: false,
-      refreshers: ['formats'],
-      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
-        const format = propsValue['formats'] as unknown as string;
-
-        if (format !== 'screenshot') {
-          return {};
-        }
-
-        return {
-          fullPage: Property.Checkbox({
-            displayName: 'Full Page Screenshot',
-            description: 'Capture the entire page (true) or just the viewport (false).',
-            required: false,
-            defaultValue: true,
-          }),
-        };
-      },
-    }),
     extractPrompt: Property.DynamicProperties({
       displayName: 'Extraction Prompt',
       description: 'Prompt for extracting data.',
@@ -261,7 +239,7 @@ export const scrape = createAction({
 
     // user selection
     if (format === 'screenshot') {
-      const screenshotFormat = forScreenshotOutputFormat(propsValue.screenshotOptions);
+      const screenshotFormat = forScreenshotOutputFormat();
       formatsArray.push(screenshotFormat);
     } else if (format !== 'json') {
       const simpleFormat = forSimpleOutputFormat(format);

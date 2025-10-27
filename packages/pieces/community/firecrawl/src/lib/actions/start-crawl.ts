@@ -1,6 +1,36 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots } from '../common/common';
+
+function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
+  if (!useWebhook || !webhookProperties) {
+    return null;
+  }
+
+  const webhookUrl = webhookProperties['webhookUrl'];
+  if (!webhookUrl) {
+    return null;
+  }
+
+  const webhook: Record<string, any> = {
+    url: webhookUrl,
+  };
+
+  if (webhookProperties['webhookHeaders']) {
+    webhook['headers'] = webhookProperties['webhookHeaders'];
+  }
+
+  if (webhookProperties['webhookMetadata']) {
+    webhook['metadata'] = webhookProperties['webhookMetadata'];
+  }
+
+  if (webhookProperties['webhookEvents'] && Array.isArray(webhookProperties['webhookEvents']) && webhookProperties['webhookEvents'].length > 0) {
+    webhook['events'] = webhookProperties['webhookEvents'];
+  }
+
+  return webhook;
+}
 
 export const startCrawl = createAction({
   auth: firecrawlAuth,
@@ -13,59 +43,152 @@ export const startCrawl = createAction({
       description: 'The base URL to start crawling from.',
       required: true,
     }),
-    excludePaths: Property.Array({
-      displayName: 'Exclude Paths',
-      description: 'URL pathname regex patterns that exclude matching URLs from the crawl. For example, if you set "excludePaths": ["blog/.*"] for the base URL firecrawl.dev, any results matching that pattern will be excluded, such as https://www.firecrawl.dev/blog/firecrawl-launch-week-1-recap.',
+    prompt: Property.LongText({
+      displayName: 'Prompt',
+      description: 'Describe what information you want to extract.',
       required: false,
-      defaultValue: [],
-    }),
-    includePaths: Property.Array({
-      displayName: 'Include Paths',
-      description: 'URL pathname regex patterns that include matching URLs in the crawl. Only the paths that match the specified patterns will be included in the response. For example, if you set "includePaths": ["blog/.*"] for the base URL firecrawl.dev, only results matching that pattern will be included, such as https://www.firecrawl.dev/blog/firecrawl-launch-week-1-recap.',
-      required: false,
-      defaultValue: [],
-    }),
-    maxDepth: Property.Number({
-      displayName: 'Maximum Path Depth',
-      description: 'Maximum depth to crawl relative to the base URL. Basically, the max number of slashes the pathname of a scraped URL may contain.',
-      required: false,
-      defaultValue: 10,
-    }),
-    maxDiscoveryDepth: Property.Number({
-      displayName: 'Maximum Discovery Depth',
-      description: 'Maximum depth to crawl based on discovery order. The root site and sitemapped pages has a discovery depth of 0. For example, if you set it to 1, and you set ignoreSitemap, you will only crawl the entered URL and all URLs that are linked on that page.',
-      required: false,
-      defaultValue: 10,
-    }),
-    ignoreSitemap: Property.Checkbox({
-      displayName: 'Ignore Sitemap',
-      description: 'Ignore the website sitemap when crawling',
-      required: false,
-      defaultValue: false,
-    }),
-    ignoreQueryParameters: Property.Checkbox({
-      displayName: 'Ignore Query Parameters',
-      description: 'Do not re-scrape the same path with different (or none) query parameters',
-      required: false,
-      defaultValue: false,
+      defaultValue: 'Get me all of the blog pages on the website, probably localed in /blog'
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of pages to crawl. Default limit is 10000.',
+      description: 'Maximum number of pages to crawl. Default limit is 10.',
       required: false,
-      defaultValue: 10000,
+      defaultValue: 10,
     }),
-    allowBackwardLinks: Property.Checkbox({
-      displayName: 'Allow Backward Links',
-      description: 'Enables the crawler to navigate from a specific URL to previously linked pages.',
+    formats: Property.Dropdown({
+      displayName: 'Output Format',
+      description: 'Choose what format you want your output in.',
+      required: true,
+      refreshers: [],
+      options: async () => {
+        return {
+          options: [
+            { label: 'Markdown', value: 'markdown' },
+            { label: 'Summary', value: 'summary' },
+            { label: 'Links', value: 'links' },
+            { label: 'HTML', value: 'html' },
+            { label: 'Screenshot', value: 'screenshot' },
+            { label: 'JSON', value: 'json' },
+          ]
+        };
+      },
+      defaultValue: 'markdown',
+    }),
+    onlyMainContent: Property.Checkbox({
+      displayName: 'Only Main Content',
+      description: 'Only return the main content of the page, excluding headers, navs, footers, etc.',
       required: false,
       defaultValue: false,
     }),
-    allowExternalLinks: Property.Checkbox({
-      displayName: 'Allow External Links',
-      description: 'Allows the crawler to follow links to external websites.',
+    extractMode: Property.DynamicProperties({
+      displayName: 'Schema Mode',
+      description: 'Data schema type.',
       required: false,
-      defaultValue: false,
+      refreshers: ['formats'],
+      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+        const format = propsValue['formats'] as unknown as string;
+
+        if (format !== 'json') {
+          return {};
+        }
+
+        return {
+          mode: Property.StaticDropdown<'simple' | 'advanced'>({
+            displayName: 'Data Schema Type',
+            description: 'For complex schema, you can use advanced mode.',
+            required: true,
+            defaultValue: 'simple',
+            options: {
+              disabled: false,
+              options: [
+                { label: 'Simple', value: 'simple' },
+                { label: 'Advanced', value: 'advanced' },
+              ],
+            },
+          }),
+        };
+      },
+    }),
+    extractSchema: Property.DynamicProperties({
+      displayName: 'Data Definition',
+      required: false,
+      refreshers: ['formats', 'extractMode'],
+      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+        const mode = propsValue['extractMode']?.['mode'] as unknown as 'simple' | 'advanced';
+        const format = propsValue['formats'] as unknown as string;
+
+        if (format !== 'json') {
+          return {};
+        }
+
+        if (mode === 'advanced') {
+          return {
+            fields: Property.Json({
+              displayName: 'JSON Schema',
+              description:
+                'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
+              required: true,
+              defaultValue: {
+                type: 'object',
+                properties: {
+                  name: {
+                    type: 'string',
+                  },
+                  age: {
+                    type: 'number',
+                  },
+                },
+                required: ['name'],
+              },
+            }),
+          };
+        }
+        return {
+          fields: Property.Array({
+            displayName: 'Data Definition',
+            required: true,
+            properties: {
+              name: Property.ShortText({
+                displayName: 'Name',
+                description:
+                  'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+                required: true,
+              }),
+              description: Property.LongText({
+                displayName: 'Description',
+                description:
+                  'Brief description of the data, this hints for the AI on what to look for',
+                required: false,
+              }),
+              type: Property.StaticDropdown({
+                displayName: 'Data Type',
+                description: 'Type of parameter.',
+                required: true,
+                defaultValue: 'string',
+                options: {
+                  disabled: false,
+                  options: [
+                    { label: 'Text', value: 'string' },
+                    { label: 'Number', value: 'number' },
+                    { label: 'Boolean', value: 'boolean' },
+                  ],
+                },
+              }),
+              isRequired: Property.Checkbox({
+                displayName: 'Fail if Not present?',
+                required: true,
+                defaultValue: false,
+              }),
+            },
+          }),
+        };
+      },
+    }),
+    timeout: Property.Number({
+      displayName: 'Timeout (seconds)',
+      description: 'Timeout in seconds after which the task will be cancelled',
+      required: false,
+      defaultValue: 300,
     }),
     useWebhook: Property.Checkbox({
       displayName: 'Deliver Results to Webhook',
@@ -113,72 +236,68 @@ export const startCrawl = createAction({
       },
     }),
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
+    const { auth, propsValue } = context;
     const body: Record<string, any> = {
       url: propsValue.url,
+      sitemap: "include",
+      crawlEntireDomain: false,
+      maxDiscoveryDepth: 10,
     };
-
-    if (propsValue.excludePaths && Array.isArray(propsValue.excludePaths) && propsValue.excludePaths.length > 0) {
-      body['excludePaths'] = propsValue.excludePaths;
-    }
-
-    if (propsValue.includePaths && Array.isArray(propsValue.includePaths) && propsValue.includePaths.length > 0) {
-      body['includePaths'] = propsValue.includePaths;
-    }
-
-    if (propsValue.maxDepth !== undefined) {
-      body['maxDepth'] = propsValue.maxDepth;
-    }
-
-    if (propsValue.maxDiscoveryDepth !== undefined) {
-      body['maxDiscoveryDepth'] = propsValue.maxDiscoveryDepth;
-    }
-
-    if (propsValue.ignoreSitemap !== undefined) {
-      body['ignoreSitemap'] = propsValue.ignoreSitemap;
-    }
-
-    if (propsValue.ignoreQueryParameters !== undefined) {
-      body['ignoreQueryParameters'] = propsValue.ignoreQueryParameters;
-    }
 
     if (propsValue.limit !== undefined) {
       body['limit'] = propsValue.limit;
     }
 
-    if (propsValue.allowBackwardLinks !== undefined) {
-      body['allowBackwardLinks'] = propsValue.allowBackwardLinks;
+    // beta feature as of oct 27
+    if (propsValue.prompt !== undefined) {
+      body['prompt'] = propsValue.prompt
     }
 
-    if (propsValue.allowExternalLinks !== undefined) {
-      body['allowExternalLinks'] = propsValue.allowExternalLinks;
-    }
+    // set up scrape options
+    const scrapeOptions: Record<string, any> = {};
 
-    // Add webhook configuration if enabled
-    if (propsValue.useWebhook && propsValue.webhookProperties) {
-      const webhookUrl = propsValue.webhookProperties['webhookUrl'];
-      if (webhookUrl) {
-        body['webhook'] = {
-          url: webhookUrl,
+    if (propsValue.formats) {
+      const format = propsValue.formats as string;
+
+      if (format === 'screenshot') {
+        scrapeOptions['formats'] = [forScreenshotOutputFormat()];
+      } else if (format === 'json') {
+        const extractConfig = {
+          mode: propsValue.extractMode?.['mode'],
+          schema: propsValue.extractSchema
         };
 
-        if (propsValue.webhookProperties['webhookHeaders']) {
-          body['webhook']['headers'] = propsValue.webhookProperties['webhookHeaders'];
-        }
-
-        if (propsValue.webhookProperties['webhookMetadata']) {
-          body['webhook']['metadata'] = propsValue.webhookProperties['webhookMetadata'];
-        }
-
-        if (propsValue.webhookProperties['webhookEvents'] && Array.isArray(propsValue.webhookProperties['webhookEvents']) && propsValue.webhookProperties['webhookEvents'].length > 0) {
-          body['webhook']['events'] = propsValue.webhookProperties['webhookEvents'];
-        }
+        const jsonFormat = forJsonOutputFormat(extractConfig);
+        scrapeOptions['formats'] = [{
+          type: 'json',
+          schema: jsonFormat.schema
+        }];
+      } else {
+        scrapeOptions['formats'] = [forSimpleOutputFormat(format)];
       }
+    }
+
+    if (propsValue.onlyMainContent !== undefined) {
+      scrapeOptions['onlyMainContent'] = propsValue.onlyMainContent;
+    }
+
+    scrapeOptions['maxAge'] = 172800000;
+
+    // Only add scrapeOptions if it has properties
+    if (Object.keys(scrapeOptions).length > 0) {
+      body['scrapeOptions'] = scrapeOptions;
+    }
+
+    // add webhook configuration if enabled
+    const webhook = webhookConfig(propsValue.useWebhook || false, propsValue.webhookProperties);
+    if (webhook) {
+      body['webhook'] = webhook;
     }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.firecrawl.dev/v1/crawl',
+      url: 'https://api.firecrawl.dev/v2/crawl',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${auth}`,
@@ -186,6 +305,16 @@ export const startCrawl = createAction({
       body: body,
     });
 
-    return response.body;
+    const jobId = response.body.id;
+
+    // polling
+    const timeoutSeconds = propsValue.timeout || 300;
+    const result = await polling(jobId, auth, timeoutSeconds, 'crawl');
+
+    if (propsValue.formats === 'screenshot') {
+      await downloadAndSaveCrawlScreenshots(result, context);
+    }
+
+    return result;
   },
 }); 

@@ -6,16 +6,10 @@ import {
 import Ajv from 'ajv';
 
 
-export const forScreenshotOutputFormat = (screenshotOptions: any): any => {
-  let fullPage = true;
-
-  if (screenshotOptions['fullPage'] === false) {
-    fullPage = false;
-  }
-
+export const forScreenshotOutputFormat = (): any => {
   return {
     type: 'screenshot',
-    fullPage: fullPage,
+    fullPage: true
   };
 }
 
@@ -23,27 +17,50 @@ export const forSimpleOutputFormat = (format: string): string => {
   return format;
 }
 
-export async function downloadAndSaveScreenshot(result: any, context: any): Promise<void> {
-  const screenshotUrl = result.data.screenshot;
-
+// helper function to download and save a single screenshot
+async function downloadSingleScreenshot(screenshotUrl: string, context: any): Promise<{ fileName: string; fileUrl: string }> {
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
     url: screenshotUrl,
     responseType: 'arraybuffer'
   });
 
-  const fileName = `screenshot-${Date.now()}.png`;
+  const fileName = `screenshot-${Date.now()}-${Math.random().toString(36).substring(7)}.png`;
 
   const fileUrl = await context.files.write({
     fileName: fileName,
     data: Buffer.from(response.body),
   });
 
-  // replace the screenshot url with the saved file info
-  result.data.screenshot = {
+  return {
     fileName: fileName,
     fileUrl: fileUrl,
   };
+}
+
+export async function downloadAndSaveScreenshot(result: any, context: any): Promise<void> {
+  const screenshotUrl = result.data.screenshot;
+  const screenshotInfo = await downloadSingleScreenshot(screenshotUrl, context);
+  result.data.screenshot = screenshotInfo;
+}
+
+export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<void> {
+
+  if (!crawlResult.data || !Array.isArray(crawlResult.data)) {
+    return;
+  }
+
+  for (const pageData of crawlResult.data) {
+    if (pageData.screenshot) {
+      try {
+        const screenshotUrl = pageData.screenshot;
+        const screenshotInfo = await downloadSingleScreenshot(screenshotUrl, context);
+        pageData.screenshot = screenshotInfo;
+      } catch (error) {
+        console.error(`Failed to download screenshot for page: ${error}`);
+      }
+    }
+  }
 }
 
 export function forJsonOutputFormat(jsonExtractionConfig: any): any {
@@ -103,27 +120,36 @@ export function forJsonOutputFormat(jsonExtractionConfig: any): any {
     };
   }
 
-  return {
-    prompt: jsonExtractionConfig['prompt'],
+  const result: any = {
     schema: schemaDefinition,
+  };
+
+  // include prompt if it's provided (applicable for scrape/extract, not for crawl)
+  if (jsonExtractionConfig['prompt']) {
+    result.prompt = jsonExtractionConfig['prompt'];
   }
+
+  return result;
 }
+
+
 
 export async function polling(
   jobId: string,
   auth: string,
-  timeoutSeconds: number
+  timeoutSeconds: number,
+  actionType: 'extract' | 'crawl'
 ): Promise<any> {
   const maxAttempts = timeoutSeconds / 5;
 
   for (let attempt = 1; attempt <= maxAttempts ; attempt++) {
-    // wait 5 seconds before checking 
+    // wait 5 seconds before checking
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     // check status
     const statusResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.firecrawl.dev/v2/extract/${jobId}`,
+      url: `https://api.firecrawl.dev/v2/${actionType}/${jobId}`,
       headers: {
         'Authorization': `Bearer ${auth}`,
       },
@@ -133,10 +159,10 @@ export async function polling(
     if (jobStatus === 'completed') {
       return statusResponse.body;
     } else if (jobStatus === 'failed') {
-        throw new Error(`Extract job failed: ${JSON.stringify(statusResponse.body)}`);
+        throw new Error(`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} job failed: ${JSON.stringify(statusResponse.body)}`);
     }
   }
 
   // exit loop. time out
-  throw new Error(`Extract job timed out after ${timeoutSeconds} second(s)`);
+  throw new Error(`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} job timed out after ${timeoutSeconds} second(s)`);
 }

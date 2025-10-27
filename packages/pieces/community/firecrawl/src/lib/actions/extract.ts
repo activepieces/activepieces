@@ -160,7 +160,7 @@ export const extract = createAction({
 
     // polling
     const timeoutSeconds = propsValue.timeout || 300;
-    const result = await polling(jobId, auth, timeoutSeconds)
+    const result = await polling(jobId, auth, timeoutSeconds, 'extract')
     return result;
   },
 });
