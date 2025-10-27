@@ -7,6 +7,8 @@ import Ajv from 'ajv';
 
 
 export const forScreenshotOutputFormat = (): any => {
+  // initially i gave the user the option to choose viewport or full page, 
+  // i decided to just set it as fullpage because fullpage will have more context and info of the website
   return {
     type: 'screenshot',
     fullPage: true
@@ -50,19 +52,16 @@ export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context:
     return;
   }
 
-  for (const pageData of crawlResult.data) {
-    if (pageData.screenshot) {
-      try {
-        const screenshotUrl = pageData.screenshot;
-        const screenshotInfo = await downloadSingleScreenshot(screenshotUrl, context);
-        pageData.screenshot = screenshotInfo;
-      } catch (error) {
-        console.error(`Failed to download screenshot for page: ${error}`);
-      }
+  for (const data of crawlResult.data) {
+    if (data.screenshot) {
+      const screenshotUrl = data.screenshot;
+      const screenshotInfo = await downloadSingleScreenshot(screenshotUrl, context);
+      data.screenshot = screenshotInfo;
     }
   }
 }
 
+// scrape, extract and crawl uses this function
 export function forJsonOutputFormat(jsonExtractionConfig: any): any {
 
   if (!jsonExtractionConfig['schema']){
@@ -132,8 +131,7 @@ export function forJsonOutputFormat(jsonExtractionConfig: any): any {
   return result;
 }
 
-
-
+// extract and scrape uses this function
 export async function polling(
   jobId: string,
   auth: string,
@@ -159,10 +157,10 @@ export async function polling(
     if (jobStatus === 'completed') {
       return statusResponse.body;
     } else if (jobStatus === 'failed') {
-        throw new Error(`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} job failed: ${JSON.stringify(statusResponse.body)}`);
+        throw new Error(`${actionType.charAt(0).toUpperCase()}. job failed: ${JSON.stringify(statusResponse.body)}`);
     }
   }
 
   // exit loop. time out
-  throw new Error(`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} job timed out after ${timeoutSeconds} second(s)`);
+  throw new Error(`${actionType.charAt(0).toUpperCase()}. job timed out after ${timeoutSeconds} second(s)`);
 }

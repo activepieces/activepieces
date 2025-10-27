@@ -4,6 +4,7 @@ import { firecrawlAuth } from '../../index';
 import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat } from '../common/common';
 
 // screenshot always included in output so that user can pass it into a google drive and keep track of what is being scraped
+// only for scrape
 function forDefaultScreenshot(): any {
   return {
     type: 'screenshot',
@@ -73,6 +74,7 @@ export const scrape = createAction({
         };
       },
     }),
+    // i want to restrict the user to only 1 -> better for non technical users
     formats: Property.Dropdown({
       displayName: 'Output Format',
       description: 'Choose what format you want your output in.',
@@ -116,6 +118,7 @@ export const scrape = createAction({
         };
       },
     }),
+    // followed extract structured data
     extractMode: Property.DynamicProperties({
       displayName: 'Schema Mode',
       description: 'Data schema type.',
@@ -235,13 +238,26 @@ export const scrape = createAction({
     
     // prep to pass into firecrawl
     const format = propsValue.formats as string;
-    const formatsArray: any[] = [];
+    // should have 2 items in the array -> (1) default screenshot , (2) user selected format
+    const formatsArray: any[] = []; 
 
     // user selection
     if (format === 'screenshot') {
       const screenshotFormat = forScreenshotOutputFormat();
       formatsArray.push(screenshotFormat);
-    } else if (format !== 'json') {
+    } else if (format === 'json') {
+      const extractConfig = {
+        prompt: propsValue.extractPrompt?.['prompt'],
+        mode: propsValue.extractMode?.['mode'],
+        schema: propsValue.extractSchema
+      };
+      const jsonFormat = forJsonOutputFormat(extractConfig);
+      formatsArray.push({
+        type: 'json',
+        prompt: jsonFormat.prompt,
+        schema: jsonFormat.schema
+      });
+    } else {
       const simpleFormat = forSimpleOutputFormat(format);
       formatsArray.push(simpleFormat);
     }
@@ -250,26 +266,8 @@ export const scrape = createAction({
       const defaultScreenshot = forDefaultScreenshot();
       formatsArray.push(defaultScreenshot);
     }
-
-    // Add JSON format if selected
-    if (format === 'json') {
-      const extractConfig = {
-        prompt: propsValue.extractPrompt?.['prompt'],
-        mode: propsValue.extractMode?.['mode'],
-        schema: propsValue.extractSchema
-      };
-
-      const jsonFormat = forJsonOutputFormat(extractConfig);
-      formatsArray.push({
-        type: 'json',
-        prompt: jsonFormat.prompt,
-        schema: jsonFormat.schema
-      });
-    }
-
     body['formats'] = formatsArray;
 
-    // All formats use /scrape endpoint
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.firecrawl.dev/v2/scrape',
@@ -281,7 +279,6 @@ export const scrape = createAction({
     });
 
     const result = response.body;
-
     await downloadAndSaveScreenshot(result, context);
 
     // reorder the data object to put screenshot first, then user's selected format only

@@ -240,7 +240,7 @@ export const startCrawl = createAction({
     const { auth, propsValue } = context;
     const body: Record<string, any> = {
       url: propsValue.url,
-      sitemap: "include",
+      sitemap: "include", 
       crawlEntireDomain: false,
       maxDiscoveryDepth: 10,
     };
@@ -256,35 +256,31 @@ export const startCrawl = createAction({
 
     // set up scrape options
     const scrapeOptions: Record<string, any> = {};
+    const format = propsValue.formats as string;
 
-    if (propsValue.formats) {
-      const format = propsValue.formats as string;
+    if (format === 'screenshot') {
+      scrapeOptions['formats'] = [forScreenshotOutputFormat()];
+    } else if (format === 'json') {
+      const extractConfig = {
+        mode: propsValue.extractMode?.['mode'],
+        schema: propsValue.extractSchema
+      };
 
-      if (format === 'screenshot') {
-        scrapeOptions['formats'] = [forScreenshotOutputFormat()];
-      } else if (format === 'json') {
-        const extractConfig = {
-          mode: propsValue.extractMode?.['mode'],
-          schema: propsValue.extractSchema
-        };
-
-        const jsonFormat = forJsonOutputFormat(extractConfig);
-        scrapeOptions['formats'] = [{
-          type: 'json',
-          schema: jsonFormat.schema
-        }];
-      } else {
-        scrapeOptions['formats'] = [forSimpleOutputFormat(format)];
-      }
+      const jsonFormat = forJsonOutputFormat(extractConfig);
+      scrapeOptions['formats'] = [{
+        type: 'json',
+        schema: jsonFormat.schema
+      }];
+    } else {
+      scrapeOptions['formats'] = [forSimpleOutputFormat(format)];
     }
 
     if (propsValue.onlyMainContent !== undefined) {
       scrapeOptions['onlyMainContent'] = propsValue.onlyMainContent;
     }
-
     scrapeOptions['maxAge'] = 172800000;
 
-    // Only add scrapeOptions if it has properties
+    // only add scrapeOptions if it has properties
     if (Object.keys(scrapeOptions).length > 0) {
       body['scrapeOptions'] = scrapeOptions;
     }

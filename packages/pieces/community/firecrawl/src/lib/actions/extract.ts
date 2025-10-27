@@ -123,9 +123,10 @@ export const extract = createAction({
     }),
   },
 
-  async run(context) {
+  async run( context ) {
     const { auth, propsValue } = context;
-    const urlsArray = (propsValue.urls as Array<{ url: string }>).map(item => item.url);
+    const urlObjects = propsValue.urls as Array<{ url: string }>;
+    const urlsArray = urlObjects.map(item => item.url);
 
     const extractConfig = {
       prompt: propsValue.prompt,
@@ -135,7 +136,7 @@ export const extract = createAction({
 
     const jsonFormat = forJsonOutputFormat(extractConfig);
 
-    const extractBody: Record<string, any> = {
+    const body: Record<string, any> = {
       urls: urlsArray,
       prompt: jsonFormat.prompt,
       schema: jsonFormat.schema,
@@ -143,7 +144,7 @@ export const extract = createAction({
 
     // if user select web search
     if (propsValue.enableWebSearch) {
-      extractBody['enableWebSearch'] = true;
+      body['enableWebSearch'] = true;
     }
 
     const response = await httpClient.sendRequest({
@@ -153,7 +154,7 @@ export const extract = createAction({
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${auth}`,
       },
-      body: extractBody,
+      body: body,
     });
 
     const jobId = response.body.id;
