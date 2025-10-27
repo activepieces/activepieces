@@ -38,9 +38,9 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         
         return 1
             `,
-            1,
-            setKey,
-            jobId,
+        1,
+        setKey,
+        jobId,
         )
     },
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{

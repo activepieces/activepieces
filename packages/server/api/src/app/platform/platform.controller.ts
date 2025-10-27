@@ -84,9 +84,16 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                     id: user.id,
                     platformId: req.params.id,
                 })
-                await userIdentityRepository(entityManager).delete({
-                    id: user.identityId,
+                const usersUsingIdentity = await userRepo(entityManager).find({
+                    where: {
+                        identityId: user.identityId,
+                    },
                 })
+                if (usersUsingIdentity.length === 0) {
+                    await userIdentityRepository(entityManager).delete({
+                        id: user.identityId,
+                    })
+                }
             })
         
             return res.status(StatusCodes.NO_CONTENT).send()
