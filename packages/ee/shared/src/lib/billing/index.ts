@@ -91,11 +91,6 @@ export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
 })
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
 
-export const StartTrialParamsSchema = Type.Object({
-    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
-})
-export type StartTrialParams = Static<typeof StartTrialParamsSchema>
-
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.FREE), Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
     addons: Addons,
