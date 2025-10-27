@@ -1,0 +1,29 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { shippoAuth } from '../common/auth';
+import { shippoCommon } from '../common/client';
+
+export const findOrder = createAction({
+    name: 'find_order',
+    displayName: 'Find Order',
+    description: 'Searches for an order by its ID',
+    auth: shippoAuth,
+    props: {
+        order_id: Property.ShortText({
+            displayName: 'Order ID',
+            description: 'The ID of the order to find',
+            required: true,
+        }),
+    },
+    async run(context) {
+        const { order_id } = context.propsValue;
+
+        const response = await shippoCommon.apiCall({
+            auth: context.auth,
+            method: HttpMethod.GET,
+            resourceUri: `/orders/${order_id}`,
+        });
+
+        return response.body;
+    },
+});
