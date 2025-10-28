@@ -1,4 +1,4 @@
-import { PlanName } from '@activepieces/ee-shared'
+import { PlanName } from '@activepieces/shared'
 import {
     FilteredPieceBehavior,
     PlatformRole,
