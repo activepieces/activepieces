@@ -1,6 +1,6 @@
-import {  BillingCycle, CreateSubscriptionParams, PlanName } from '@activepieces/ee-shared'
+import {  BillingCycle, CreateSubscriptionParams } from '@activepieces/ee-shared'
 import { apDayjs, AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, PlanName, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'

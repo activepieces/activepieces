@@ -281,8 +281,8 @@ import { AddDedicatedWorkersToPlatformPlanPostgres1760998784106 } from './migrat
 import { RemoveProjectNotifyStatus1761056570728 } from './migration/postgres/1761056570728-RemoveProjectNotifyStatus'
 import { DeprecateCopilot1761221158764 } from './migration/postgres/1761221158764-DeprecateCopilot'
 import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/postgres/1761245180906-AddMaximumConcurrentJobsPerProject'
-import { RemoveEligibleForTrial1761588441492 } from './migration/postgres/1761588441492-remove-eligible-for-trial'
 import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
+import { RemoveEligibleForTrial1761588441492 } from './migration/postgres/1761588441492-remove-eligible-for-trial'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -585,7 +585,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 EligibileForTrial1754852385518,
                 RemoveAgentLimitFromPlatfromPlanEntity1760607967671,
                 AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
-                RemoveEligibleForTrial1761588441492
+                RemoveEligibleForTrial1761588441492,
             )
             break
         case ApEdition.COMMUNITY:

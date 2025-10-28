@@ -6,7 +6,6 @@ import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { PlanName } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
@@ -37,13 +36,6 @@ export const UsageCards = ({
         '2xl:grid-cols-7': isFree,
       })}
     >
-      <UsageCard
-        icon={<ClipboardCheck className="w-5 h-5" />}
-        title={t('Tasks')}
-        used={usage.tasks}
-        total={plan.tasksLimit}
-      />
-
       {(isFree || isEnterprise) && (
         <UsageCard
           icon={<Workflow className="w-4 h-4" />}

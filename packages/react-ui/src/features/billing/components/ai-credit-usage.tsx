@@ -14,7 +14,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
 import {
   AiOverageState,
   PlatformBillingInformation,
