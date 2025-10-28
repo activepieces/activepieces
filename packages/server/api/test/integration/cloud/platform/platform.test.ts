@@ -1,6 +1,5 @@
-import { PlanName } from '@activepieces/shared'
-import {
-    FilteredPieceBehavior,
+import { FilteredPieceBehavior,
+    PlanName,
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
