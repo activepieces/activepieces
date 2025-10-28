@@ -19,10 +19,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        tasksLimit: {
-            type: Number,
-            nullable: true,
-        },
         includedAiCredits: {
             type: Number,
         },

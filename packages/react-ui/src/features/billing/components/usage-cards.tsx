@@ -1,11 +1,5 @@
 import { t } from 'i18next';
-import {
-  ClipboardCheck,
-  Database,
-  LayoutGrid,
-  Users,
-  Workflow,
-} from 'lucide-react';
+import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
@@ -18,6 +12,7 @@ import {
   ApFlagId,
   isNil,
   PlatformBillingInformation,
+  PlanName,
 } from '@activepieces/shared';
 
 export const UsageCards = ({

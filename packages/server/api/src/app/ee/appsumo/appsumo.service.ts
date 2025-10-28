@@ -1,5 +1,5 @@
 import { APPSUMO_PLAN, FREE_CLOUD_PLAN } from '@activepieces/ee-shared'
-import { isNil, PlatformPlanWithOnlyLimits, PlatformRole } from '@activepieces/shared'
+import { isNil, PlanName, PlatformPlanWithOnlyLimits, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -12,43 +12,37 @@ const appsumoRepo = repoFactory(AppSumoEntity)
 
 const appSumoPlans: Record<string, PlatformPlanWithOnlyLimits> = {
     activepieces_tier1: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier1',
-        tasksLimit: 10000,
+        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER1,
         userSeatsLimit: 1,
         tablesLimit: 5,
         mcpLimit: 5,
     }),
     activepieces_tier2: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier2',
-        tasksLimit: 50000,
+        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER2,
         userSeatsLimit: 1,
         tablesLimit: 5,
         mcpLimit: 5,
     }),
     activepieces_tier3: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier3',
-        tasksLimit: 200000,
+        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER3,
         userSeatsLimit: 5,
         tablesLimit: 5,
         mcpLimit: 5,
     }),
     activepieces_tier4: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier4',
-        tasksLimit: 500000,
+        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER4,
         userSeatsLimit: 5,
         tablesLimit: 10,
         mcpLimit: 10,
     }),
     activepieces_tier5: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier5',
-        tasksLimit: 1000000,
+        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER5,
         userSeatsLimit: 5,
         tablesLimit: 20,
         mcpLimit: 20,
     }),
     activepieces_tier6: APPSUMO_PLAN({
-        planName: 'appsumo_activepieces_tier6',
-        tasksLimit: 10000000,
+        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER6,
         userSeatsLimit: 5,
         tablesLimit: 50,
         mcpLimit: 50,

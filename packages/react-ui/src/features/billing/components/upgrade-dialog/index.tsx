@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 import {
   ApSubscriptionStatus,
   BillingCycle,
-  PlanName,
   StripePlanName,
 } from '@activepieces/ee-shared';
 import {
@@ -22,6 +21,7 @@ import {
   ApFlagId,
   isNil,
   PlatformUsageMetric,
+  PlanName,
 } from '@activepieces/shared';
 
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';
