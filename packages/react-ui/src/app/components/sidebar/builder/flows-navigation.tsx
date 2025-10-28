@@ -30,7 +30,11 @@ import { FolderActions } from '@/features/folders/component/folder-actions';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto, PopulatedFlow } from '@activepieces/shared';
+import {
+  FolderDto,
+  PopulatedFlow,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 
 import FlowActionMenu from '../../flow-actions-menu';
 
@@ -234,7 +238,7 @@ function DefaultFolder({
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
               <CreateFlowDropdown
-                folderId="NULL"
+                folderId={UncategorizedFolderId}
                 variant="small"
                 className="opacity-0 group-hover/item:opacity-100"
                 refetch={refetch}

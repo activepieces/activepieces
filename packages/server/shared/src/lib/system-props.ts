@@ -12,7 +12,6 @@ export type SystemProp = AppSystemProp | WorkerSystemProp
 let cachedVersion: string | undefined
 
 export enum AppSystemProp {
-    AGENT_TIMEOUT_SECONDS = 'AGENT_TIMEOUT_SECONDS',
     API_KEY = 'API_KEY',
     API_RATE_LIMIT_AUTHN_ENABLED = 'API_RATE_LIMIT_AUTHN_ENABLED',
     API_RATE_LIMIT_AUTHN_MAX = 'API_RATE_LIMIT_AUTHN_MAX',
