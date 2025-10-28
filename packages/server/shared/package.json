@@ -14,7 +14,6 @@
     "axios-retry": "4.4.1",
     "dayjs": "1.11.9",
     "@sentry/node": "7.120.0",
-    "chokidar": "4.0.3",
     "fastify": "5.4.0",
     "@sinclair/typebox": "0.34.11",
     "pino-loki": "2.1.3",
