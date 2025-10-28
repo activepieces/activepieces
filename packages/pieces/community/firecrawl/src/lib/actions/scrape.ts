@@ -279,7 +279,7 @@ export const scrape = createAction({
     });
 
     const result = response.body;
-    await downloadAndSaveScreenshot(result, context);
+    await downloadAndSaveScreenshot(result.data, context);
 
     // reorder the data object to put screenshot first, then user's selected format only
     result.data = {

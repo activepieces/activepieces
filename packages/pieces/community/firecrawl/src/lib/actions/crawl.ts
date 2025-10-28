@@ -32,11 +32,11 @@ function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
   return webhook;
 }
 
-export const startCrawl = createAction({
+export const crawl = createAction({
   auth: firecrawlAuth,
-  name: 'startCrawl',
-  displayName: 'Start Crawl',
-  description: 'Start crawling multiple pages from a website based on specified rules and patterns.',
+  name: 'crawl',
+  displayName: 'Crawl',
+  description: 'Crawl multiple pages from a website based on specified rules and patterns.',
   props: {
     url: Property.ShortText({
       displayName: 'URL',

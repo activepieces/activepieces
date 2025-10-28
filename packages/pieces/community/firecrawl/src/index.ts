@@ -3,7 +3,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { scrape } from './lib/actions/scrape';
 import { extract } from './lib/actions/extract';
-import { startCrawl } from './lib/actions/start-crawl';
+import { crawl } from './lib/actions/crawl';
 import { crawlResults } from './lib/actions/crawl-results';
 import { map } from './lib/actions/map';
 import { firecrawl_api_base_url } from './lib/common/common';
@@ -60,7 +60,7 @@ export const firecrawl = createPiece({
   actions: [
     scrape,
     extract,
-    startCrawl,
+    crawl,
     crawlResults,
     map,
 

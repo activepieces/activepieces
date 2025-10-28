@@ -20,8 +20,9 @@ export const forSimpleOutputFormat = (format: string): string => {
   return format;
 }
 
-// helper function to download and save a single screenshot
-async function downloadSingleScreenshot(screenshotUrl: string, context: any): Promise<{ fileName: string; fileUrl: string }> {
+// Download and save screenshot(s) - works for both single scrape and crawl results
+export async function downloadAndSaveScreenshot(screenshotTarget: any, context: any): Promise<void> {
+  const screenshotUrl = screenshotTarget.screenshot;
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
     url: screenshotUrl,
@@ -35,16 +36,10 @@ async function downloadSingleScreenshot(screenshotUrl: string, context: any): Pr
     data: Buffer.from(response.body),
   });
 
-  return {
+  screenshotTarget.screenshot = {
     fileName: fileName,
     fileUrl: fileUrl,
   };
-}
-
-export async function downloadAndSaveScreenshot(result: any, context: any): Promise<void> {
-  const screenshotUrl = result.data.screenshot;
-  const screenshotInfo = await downloadSingleScreenshot(screenshotUrl, context);
-  result.data.screenshot = screenshotInfo;
 }
 
 export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<void> {
@@ -55,9 +50,11 @@ export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context:
 
   for (const data of crawlResult.data) {
     if (data.screenshot) {
-      const screenshotUrl = data.screenshot;
-      const screenshotInfo = await downloadSingleScreenshot(screenshotUrl, context);
-      data.screenshot = screenshotInfo;
+      try {
+        await downloadAndSaveScreenshot(data, context);
+      } catch (error) {
+        console.error(`Failed to download screenshot for page: ${error}`);
+      }
     }
   }
 }
