@@ -27,14 +27,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socket.connect();
 
         socket.on('connect', () => {
-          console.log("connected to socket")
-        })
+          console.log('connected to socket');
+        });
 
         socket.on('disconnect', (reason) => {
           if (reason === 'io server disconnect') {
             socket.connect();
           }
-        })
+        });
       }
     } else {
       socket.disconnect();
@@ -44,7 +44,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SocketContext.Provider value={socket}>
       {socket.disconnected && (
-        <Alert className="fixed bottom-10 right-10 w-96 z-50 bg-background items-center" variant="destructive" >
+        <Alert
+          className="fixed bottom-10 right-10 w-96 z-50 bg-background items-center"
+          variant="destructive"
+        >
           <LoadingSpinner />
           <AlertDescription>
             Websocket Disconnected, reconnecting...
