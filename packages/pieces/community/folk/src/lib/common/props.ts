@@ -3,41 +3,11 @@ import { FolkAuthType } from './auth';
 import { folkClient } from './client';
 
 export const folkProps = {
-  group_id: (required = false, displayName = 'Group') =>
-    Property.Dropdown({
+  group_id: (required = false, displayName = 'Group ID') =>
+    Property.ShortText({
       displayName,
-      description: 'Select a group from your Folk workspace. Groups help you organize your contacts.',
+      description: 'Enter a Folk group ID (e.g., grp_abc123). Groups help you organize your contacts.',
       required,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account to see groups.',
-            options: [],
-          };
-        }
-
-        try {
-          const response = await folkClient.getGroups({ apiKey: auth as FolkAuthType });
-          const groups = response.groups || [];
-          
-          return {
-            disabled: false,
-            placeholder: groups.length === 0 ? 'No groups found in your workspace' : 'Select a group',
-            options: groups.map((group: any) => ({
-              label: group.name || `Group ${group.id}`,
-              value: group.id,
-            })),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error loading groups. Check your API key.',
-            options: [],
-          };
-        }
-      },
     }),
 
   company_id: (required = false) =>
@@ -57,9 +27,8 @@ export const folkProps = {
 
         try {
           const limit = 100;
-          const offset = 0;
-          const response = await folkClient.getCompanies({ apiKey: auth as FolkAuthType, limit, offset });
-          const companies = response.companies || [];
+          const response = await folkClient.getCompaniesWithFilters({ apiKey: auth as FolkAuthType, limit });
+          const companies = response.data?.items || [];
           
           return {
             disabled: false,
@@ -100,9 +69,8 @@ export const folkProps = {
 
         try {
           const limit = 100;
-          const offset = 0;
-          const response = await folkClient.getPeople({ apiKey: auth as FolkAuthType, limit, offset });
-          const people = response.people || [];
+          const response = await folkClient.getPeopleWithFilters({ apiKey: auth as FolkAuthType, limit });
+          const people = response.data?.items || [];
           
           return {
             disabled: false,

@@ -1,35 +1,9 @@
 import {
     createTrigger,
     TriggerStrategy,
-    PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { folkAuth } from '../common/auth';
 import { folkClient } from '../common/client';
-
-interface FolkCompany {
-    id: string;
-    updatedAt: string;
-    [key: string]: any;
-}
-
-const polling: Polling<PiecePropValueSchema<typeof folkAuth>, Record<string, never>> = {
-    strategy: DedupeStrategy.TIMEBASED,
-    async items({ auth, lastFetchEpochMS }) {
-        const response = await folkClient.getCompanies({
-            apiKey: auth as string,
-            limit: 100,
-        });
-
-        const companies = response.companies || [];
-        
-        return companies
-            .map((company: FolkCompany) => ({
-                epochMilliSeconds: new Date(company.updatedAt).getTime(),
-                data: company,
-            }));
-    },
-};
 
 export const companyUpdated = createTrigger({
     auth: folkAuth,
@@ -38,36 +12,55 @@ export const companyUpdated = createTrigger({
     description: 'Fires when a company is updated in your Folk workspace.',
     props: {},
     sampleData: {
-        id: 'cmp_12345',
-        name: 'Example Company',
-        updatedAt: '2024-01-01T00:00:00Z',
-        emails: ['contact@example.com'],
-        links: ['https://example.com'],
+        eventType: 'company.updated',
+        eventId: 'evt_123e4567-e89b-12d3-a456-426614174000',
+        timestamp: '2025-10-28T12:00:00.000Z',
+        data: {
+            id: 'com_92346499-30bf-4278-ae8e-4aa3ae2ace2c',
+            name: 'Tech Corp',
+            description: 'A technology company',
+            updatedAt: '2024-01-01T00:00:00Z',
+            emails: ['contact@techcorp.com'],
+            urls: ['https://techcorp.com'],
+            addresses: ['123 Tech Street, San Francisco, CA'],
+            phones: ['+1-555-0123'],
+        }
     },
-    type: TriggerStrategy.POLLING,
+    type: TriggerStrategy.WEBHOOK,
 
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
+        const subscribedEvents = [{
+            eventType: 'company.updated',
+        }];
+
+        const webhook = await folkClient.createWebhook({
+            apiKey: context.auth,
+            name: `Activepieces Company Updated - ${Date.now()}`,
+            targetUrl: context.webhookUrl,
+            subscribedEvents,
         });
+
+        await context.store?.put('_webhookId', webhook.data.id);
+        await context.store?.put('_signingSecret', webhook.data.signingSecret);
     },
 
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
-    },
-
-    async test(context) {
-        return await pollingHelper.test(polling, context);
+        const webhookId = await context.store?.get('_webhookId') as string;
+        if (webhookId) {
+            try {
+                await folkClient.deleteWebhook({
+                    apiKey: context.auth,
+                    webhookId,
+                });
+            } catch (error) {
+                console.warn('Failed to delete webhook:', error);
+            }
+        }
     },
 
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        const payloadBody = context.payload.body as any;
+        return [payloadBody];
     },
 });
 

@@ -1,30 +1,9 @@
 import {
     createTrigger,
     TriggerStrategy,
-    PiecePropValueSchema
 } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { folkAuth } from '../common/auth';
 import { folkClient } from '../common/client';
-
-const polling: Polling<PiecePropValueSchema<typeof folkAuth>, Record<string, never>> = {
-    strategy: DedupeStrategy.LAST_ITEM,
-    async items({ auth }) {
-        const response = await folkClient.getCompanies({
-            apiKey: auth as string,
-            limit: 100,
-        });
-
-        const companies = response.companies || [];
-        
-        return companies
-            .filter((company: any) => company.deletedAt)
-            .map((company: any) => ({
-                id: company.id,
-                data: company,
-            }));
-    },
-};
 
 export const companyRemoved = createTrigger({
     auth: folkAuth,
@@ -33,34 +12,50 @@ export const companyRemoved = createTrigger({
     description: 'Fires when a company is removed from your Folk workspace.',
     props: {},
     sampleData: {
-        id: 'cmp_12345',
-        name: 'Example Company',
-        deletedAt: '2024-01-01T00:00:00Z',
+        eventType: 'company.deleted',
+        eventId: 'evt_123e4567-e89b-12d3-a456-426614174000',
+        timestamp: '2025-10-28T12:00:00.000Z',
+        data: {
+            id: 'com_92346499-30bf-4278-ae8e-4aa3ae2ace2c',
+            name: 'Tech Corp',
+            deletedAt: '2025-10-28T12:00:00.000Z',
+        }
     },
-    type: TriggerStrategy.POLLING,
+    type: TriggerStrategy.WEBHOOK,
 
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
+        const subscribedEvents = [{
+            eventType: 'company.deleted',
+        }];
+
+        const webhook = await folkClient.createWebhook({
+            apiKey: context.auth,
+            name: `Activepieces Company Removed - ${Date.now()}`,
+            targetUrl: context.webhookUrl,
+            subscribedEvents,
         });
+
+        await context.store?.put('_webhookId', webhook.data.id);
+        await context.store?.put('_signingSecret', webhook.data.signingSecret);
     },
 
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
-    },
-
-    async test(context) {
-        return await pollingHelper.test(polling, context);
+        const webhookId = await context.store?.get('_webhookId') as string;
+        if (webhookId) {
+            try {
+                await folkClient.deleteWebhook({
+                    apiKey: context.auth,
+                    webhookId,
+                });
+            } catch (error) {
+                console.warn('Failed to delete webhook:', error);
+            }
+        }
     },
 
     async run(context) {
-        return await pollingHelper.poll(polling, context);
+        const payloadBody = context.payload.body as any;
+        return [payloadBody];
     },
 });
 

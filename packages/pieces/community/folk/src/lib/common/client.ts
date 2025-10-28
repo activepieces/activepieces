@@ -79,14 +79,17 @@ export const folkClient = {
 
     if (limit) params.append('limit', limit.toString());
     if (cursor) params.append('cursor', cursor);
-    if (combinator) params.append('combinator', combinator);
-
-    // Add filters using the deep object format
-    if (nameFilter) {
-      params.append('filter[fullName][contains]', nameFilter);
-    }
-    if (emailFilter) {
-      params.append('filter[emails][contains]', emailFilter);
+    
+    // Only add combinator and filters if we actually have filters
+    const hasFilters = nameFilter || emailFilter;
+    if (hasFilters) {
+      if (combinator) params.append('combinator', combinator);
+      if (nameFilter) {
+        params.append('filter[fullName][like]', nameFilter);
+      }
+      if (emailFilter) {
+        params.append('filter[emails][like]', emailFilter);
+      }
     }
 
     const queryString = params.toString();
@@ -168,6 +171,45 @@ export const folkClient = {
     });
   },
 
+  async getCompaniesWithFilters({ 
+    apiKey, 
+    limit = 20, 
+    cursor, 
+    combinator = 'and',
+    nameFilter 
+  }: { 
+    apiKey: string; 
+    limit?: number; 
+    cursor?: string;
+    combinator?: 'and' | 'or';
+    nameFilter?: string;
+  }) {
+    const params = new URLSearchParams();
+    
+    if (limit) params.append('limit', limit.toString());
+    if (cursor) params.append('cursor', cursor);
+    
+    // Only add combinator and filters if we actually have filters
+    if (nameFilter) {
+      if (combinator) params.append('combinator', combinator);
+      params.append('filter[name][like]', nameFilter);
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `/v1/companies?${queryString}` : '/v1/companies';
+
+    return this.makeRequest<{ 
+      data: { 
+        items: any[]; 
+        pagination: { nextLink?: string } 
+      } 
+    }>({
+      method: HttpMethod.GET,
+      url,
+      apiKey,
+    });
+  },
+
   async getCompany({
     apiKey,
     companyId,
@@ -187,7 +229,7 @@ export const folkClient = {
       data: { items: any[]; pagination: { nextLink: string } };
     }>({
       method: HttpMethod.GET,
-      url: `/v1/companies?limit=100&filter[name][contains]=${encodeURIComponent(
+      url: `/v1/companies?limit=100&filter[name][like]=${encodeURIComponent(
         query
       )}`,
       apiKey,
@@ -220,10 +262,56 @@ export const folkClient = {
     });
   },
 
-  async getGroups({ apiKey }: { apiKey: string }) {
-    return this.makeRequest<{ groups: any[] }>({
-      method: HttpMethod.GET,
-      url: '/v1/groups/list',
+
+
+  async createWebhook({
+    apiKey,
+    name,
+    targetUrl,
+    subscribedEvents,
+  }: {
+    apiKey: string;
+    name: string;
+    targetUrl: string;
+    subscribedEvents: Array<{
+      eventType: string;
+      filter?: {
+        groupId?: string;
+        objectType?: string;
+        path?: string[];
+        value?: string;
+      };
+    }>;
+  }) {
+    return this.makeRequest<{
+      data: {
+        id: string;
+        name: string;
+        targetUrl: string;
+        subscribedEvents: Array<{
+          eventType: string;
+          filter: Record<string, any>;
+        }>;
+        signingSecret: string;
+        status: string;
+        createdAt: string;
+      };
+    }>({
+      method: HttpMethod.POST,
+      url: '/v1/webhooks',
+      apiKey,
+      body: {
+        name,
+        targetUrl,
+        subscribedEvents,
+      },
+    });
+  },
+
+  async deleteWebhook({ apiKey, webhookId }: { apiKey: string; webhookId: string }) {
+    return this.makeRequest<void>({
+      method: HttpMethod.DELETE,
+      url: `/v1/webhooks/${webhookId}`,
       apiKey,
     });
   },
