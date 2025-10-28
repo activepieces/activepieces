@@ -101,6 +101,7 @@ export * from './lib/mcp'
 export * from './lib/botx'
 export * from './lib/project-member'
 export * from './lib/email'
+export * from './lib/prompt-to-workflow'
 TypeSystemPolicy.ExactOptionalPropertyTypes = false
 export * from './lib/issues/index'
 export * from './lib/issues/issues-requests'

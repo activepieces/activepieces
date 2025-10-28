@@ -1,5 +1,4 @@
-import fs from 'node:fs'
-import { PrincipalType } from '@activepieces/shared'
+import { BuilderMessage, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { builderService } from './builder.service'
@@ -10,10 +9,15 @@ export const builderModule: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const builderController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/', BuilderRequestParams, async () => {
-        const filePath  = 'packages/server/api/src/app/builder/builder.html'
-        const stream = fs.createReadStream(filePath, 'utf8')
-        return stream
+    app.get('/flow/:id', GetBuilderFlowRequestParams, async (request, reply) => {
+        const projectId = request.principal.projectId
+        const flowId = request.params.id
+        const messages = await builderService(app.log).fetchMessages({
+            projectId,
+            flowId,
+        })
+        const jsonContentMessages = messages.map((m) => ({ ...m, content: JSON.stringify(m.content) }))
+        return reply.send(jsonContentMessages)
     })
 
     app.post('/flow/:id', UpdateBuilderFlowRequestParams, async (request) => {
@@ -21,24 +25,36 @@ const builderController: FastifyPluginAsyncTypebox = async (app) => {
         const projectId = request.principal.projectId
         const userId = request.principal.id
         const { messages } = request.body
-        request.log.info({ messages }, 'messages')
-        const result = await builderService(request.log).runAndUpdate({
+        const text = await builderService(request.log).runAndUpdate({
             userId,
             projectId,
             platformId,
             flowId: request.params.id,
             messages,
         })
-        // request.log.info({ steps: result.steps }, 'execution steps')
-        return result.text
+        return text
     })
+}
+
+const GetBuilderFlowRequestParams = {
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Array(BuilderMessage),
+        },
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
 }
 
 const UpdateBuilderFlowRequest = Type.Object({
     messages: Type.Array(Type.Object({
         role: Type.Union([Type.Literal('assistant'), Type.Literal('user')]),
         content: Type.String(),
-    }))
+    })),
 })
 
 const UpdateBuilderFlowRequestParams = {
@@ -48,16 +64,10 @@ const UpdateBuilderFlowRequestParams = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.CREATED]: Type.Any(),
+            [StatusCodes.CREATED]: Type.String(),
         },
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],
-    },
-}
-
-const BuilderRequestParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.UNKNOWN],
     },
 }

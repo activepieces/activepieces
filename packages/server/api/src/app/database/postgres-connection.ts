@@ -85,6 +85,7 @@ import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1
 import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
 import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
+import { AddBuilderMessageEntity1758704404389 } from './migration/postgres/1758704404389-add-builder-message-entity'
 import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759772332795-RemoveFlowRunDisplayName'
 import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
 import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
@@ -103,6 +104,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddBuilderMessageEntity1758704404389,
         RestrictOnDeleteProjectForFlow1760376319952,
         AddProfilePicture1760504093297,
         AddRunFlowVersionIdForForeignKeyPostgres1760346454506,

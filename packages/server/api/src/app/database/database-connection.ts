@@ -32,6 +32,7 @@ import { UserIdentityEntity } from '../authentication/user-identity/user-identit
 // import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 // import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 // import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+import { BuilderMessageEntity } from '../builder/message.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -77,6 +78,7 @@ function getEntities(): EntitySchema<unknown>[] {
     const edition = system.getEdition()
 
     const entities: EntitySchema[] = [
+        BuilderMessageEntity,
         TriggerEventEntity,
         AppEventRoutingEntity,
         FileEntity,
