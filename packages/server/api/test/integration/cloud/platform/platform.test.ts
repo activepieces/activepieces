@@ -12,7 +12,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { checkIfSolutionExistsInDb, createMockSolutionAndSave, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { checkIfSolutionExistsInDb, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -186,7 +186,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(21)
+            expect(Object.keys(responseBody).length).toBe(20)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -223,18 +223,13 @@ describe('Platform API', () => {
                 },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
-            const responseBody = response?.json()
-
-            expect(responseBody?.message).toBe(
-                'userPlatformId and paramId should be equal',
-            )
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     }),
     describe('delete platform endpoint', () => {
         it('deletes a platform by id', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
+            const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
                     plan: PlanName.FREE,
                 },
@@ -247,19 +242,19 @@ describe('Platform API', () => {
                 },
             )
           
-            const ownerSolution = await createMockSolutionAndSave({ projectId: mockProject.id, platformId: mockPlatform.id, userId: mockOwner.id })
+            const ownerSolution = await createMockSolutionAndSave({ projectId: firstAccount.mockProject.id, platformId: firstAccount.mockPlatform.id, userId: firstAccount.mockOwner.id })
           
-            const secondSolution = await createMockSolutionAndSave({ projectId: mockProject.id, platformId: mockPlatform.id, userId: secondAccount.mockOwner.id })
+            const secondSolution = await createMockSolutionAndSave({ projectId: secondAccount.mockProject.id, platformId: secondAccount.mockPlatform.id, userId: secondAccount.mockOwner.id })
           
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
+                id: firstAccount.mockOwner.id,
+                platform: { id: firstAccount.mockPlatform.id },
             })
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/platforms/${mockPlatform.id}`,
+                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -268,9 +263,9 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             const secondSolutionExists = await checkIfSolutionExistsInDb(secondSolution)
-            expect(secondSolutionExists).toBe(false)
+            expect(secondSolutionExists).toBe(true)
             const ownerSolutionExists = await checkIfSolutionExistsInDb(ownerSolution)
-            expect(ownerSolutionExists).toBe(true)
+            expect(ownerSolutionExists).toBe(false)
         }),
         it('fails if platform is not eligible for deletion', async () => {
             // arrange
@@ -295,6 +290,74 @@ describe('Platform API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.UNPROCESSABLE_ENTITY)
+        }),
+        it('fails if user is not owner', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const secondAccount = await mockAndSaveBasicSetup(
+                {
+                    plan: {
+                        plan: PlanName.FREE,
+                    },
+                },
+            )
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/platforms/${secondAccount.mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        }),
+        it('doesn\'t delete user identity if it has other users', async () => {
+            // arrange
+            const firstAccount = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const secondPlatform = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const secondUser = createMockUser({
+                platformId: secondPlatform.mockPlatform.id,
+                platformRole: PlatformRole.ADMIN,
+                identityId: firstAccount.mockUserIdentity.id,
+            })
+            await databaseConnection().getRepository('user').save(secondUser)
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: firstAccount.mockOwner.id,
+                platform: { id: firstAccount.mockPlatform.id },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const userIdentityExists = await databaseConnection().getRepository('user_identity').findOneBy({ id: firstAccount.mockUserIdentity.id })
+            expect(userIdentityExists).not.toBeNull()
         })
     })
 })

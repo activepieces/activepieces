@@ -617,7 +617,7 @@ export const createMockSolutionAndSave = async ({ projectId, platformId, userId 
     await databaseConnection().getRepository('field').save([field])
     await databaseConnection().getRepository('record').save([record])
     await databaseConnection().getRepository('cell').save([cell])
-    await databaseConnection().getRepository('connection').save([connection])
+    await databaseConnection().getRepository('app_connection').save([connection])
     await databaseConnection().getRepository('flow').save([flow])
     await databaseConnection().getRepository('flow_version').save([flowVersion])
     await databaseConnection().getRepository('flow_run').save([flowRun])
@@ -626,7 +626,7 @@ export const createMockSolutionAndSave = async ({ projectId, platformId, userId 
 
 export const checkIfSolutionExistsInDb = async (solution: Solution): Promise<boolean> => {
     const table = await databaseConnection().getRepository('table').findOneBy({ id: solution.table.id })
-    const connection = await databaseConnection().getRepository('connection').findOneBy({ id: solution.connection.id })
+    const connection = await databaseConnection().getRepository('app_connection').findOneBy({ id: solution.connection.id })
     const flow = await databaseConnection().getRepository('flow').findOneBy({ id: solution.flow.id })
     const flowRun = await databaseConnection().getRepository('flow_run').findOneBy({ id: solution.flowRun.id })
     const flowVersion = await databaseConnection().getRepository('flow_version').findOneBy({ id: solution.flowVersion.id })
@@ -666,7 +666,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
-        filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+        filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
     
     await databaseConnection().getRepository('platform').save(mockPlatform)

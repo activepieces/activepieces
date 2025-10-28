@@ -667,7 +667,7 @@ describe('Authentication API', () => {
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
 
-            const { mockUser, mockUserIdentity } = await mockBasicUser({
+            const { mockUser } = await mockBasicUser({
                 user: {
                     status: UserStatus.INACTIVE,
                     platformRole: PlatformRole.ADMIN,
@@ -716,10 +716,10 @@ describe('Authentication API', () => {
 
             const responseBody = response?.json()
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
 
-            expect(responseBody?.code).toBe('USER_IS_INACTIVE')
-            expect(responseBody?.params?.email).toBe(mockUserIdentity.email)
+            expect(responseBody?.code).toBe('AUTHENTICATION')
+            expect(responseBody?.params.message).toBe('No platform found for identity')
         })
 
     })

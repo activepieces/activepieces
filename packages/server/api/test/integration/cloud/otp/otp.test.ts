@@ -28,6 +28,7 @@ beforeEach(() => {
         sendWellcomeToTrialEmail: jest.fn(),
         sendSevenDaysInTrialEmail: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
+        sendIssuesSummary: jest.fn(),
     }))
 
 })
