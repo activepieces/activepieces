@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 import { io } from 'socket.io-client';
 
@@ -18,9 +18,8 @@ const SocketContext = React.createContext<typeof socket>(socket);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const token = authenticationSession.getToken();
-  const [reconnecting, setReconnecting] = useState(false);
   const { dismiss, toast } = useToast();
-  const [toastId, setToastId] = useState<string | null>(null);
+  const toastIdRef = useRef<string | null>(null);
 
   useEffectOnce(() => {
     if (token) {
@@ -29,12 +28,24 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         socket.connect();
 
         socket.on('connect', () => {
-          setReconnecting(false);
+          if (toastIdRef.current) {
+            dismiss(toastIdRef.current);
+            toastIdRef.current = null;
+          }
           console.log('connected to socket');
         });
 
         socket.on('disconnect', (reason) => {
-          setReconnecting(true);
+          if (!toastIdRef.current) {
+            const { id } = toast({
+              itemID: 'websocket-disconnected',
+              title: 'Websocket Disconnected',
+              description: 'Reconnecting...',
+              duration: Infinity,
+              variant: 'destructive',
+            });
+            toastIdRef.current = id;
+          }
           if (reason === 'io server disconnect') {
             socket.connect();
           }
@@ -44,22 +55,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket.disconnect();
     }
   });
-
-  useEffect(() => {
-    if (toastId) {
-      dismiss(toastId);
-      setToastId(null);
-    } else if (reconnecting) {
-      const { id } = toast({
-        itemID: 'websocket-disconnected',
-        title: 'Websocket Disconnected',
-        description: 'Reconnecting...',
-        duration: Infinity,
-        variant: 'destructive',
-      });
-      setToastId(id);
-    }
-  }, [reconnecting]);
 
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
