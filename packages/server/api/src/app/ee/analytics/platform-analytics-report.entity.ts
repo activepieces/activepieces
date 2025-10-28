@@ -47,6 +47,10 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
+        runsUsage: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
+        },
     },    
     relations: {
         platform: {

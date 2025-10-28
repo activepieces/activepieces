@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Metrics } from '@/features/platform-admin/components/metrics';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/components/refresh-analytics-provider';
 import { Reports } from '@/features/platform-admin/components/reports';
+import { RunsAnalytics } from '@/features/platform-admin/components/runs-analytics';
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -69,6 +70,9 @@ export default function AnalyticsPage() {
           )}
         </DashboardPageHeader>
         <Metrics report={isLoading ? undefined : data} />
+        <Separator />
+        <RunsAnalytics report={isLoading ? undefined : data} />
+        <Separator />
         <Separator />
         <Reports report={isLoading ? undefined : data} />
       </div>
