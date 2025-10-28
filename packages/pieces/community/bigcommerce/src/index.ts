@@ -34,7 +34,7 @@ export const bigcommerce = createPiece({
   auth: bigcommerceAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/bigcommerce.png',
-  authors: [],
+  authors: ["owuzo"],
   categories: [PieceCategory.COMMERCE],
   actions: [
     createCustomer,

@@ -1,85 +1,105 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { sendBigCommerceRequest } from '../common/client';
+import { sendBigCommerceRequest, handleBigCommerceError } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const cartCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'cart_created',
   displayName: 'Cart Created',
-  description: 'Triggers when a new cart is created',
-  type: TriggerStrategy.POLLING,
-  props: {
-    pollingInterval: Property.Number({
-      displayName: 'Polling Interval (minutes)',
-      description: 'How often to check for new carts (minimum: 5 minutes)',
-      required: false,
-      defaultValue: 15,
-    }),
-  },
+  description: 'Triggers when a new cart is created via BigCommerce webhook',
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
   sampleData: {
-    id: 'abc123',
-    customer_id: 456,
-    email: 'customer@example.com',
-    cart_amount: 99.99,
-    currency: { code: 'USD' },
-    created_time: '2024-01-01T12:00:00Z',
-    line_items: {
-      physical_items: [
-        {
-          id: 'item123',
-          product_id: 789,
-          name: 'Sample Product',
-          quantity: 1,
-          list_price: 99.99,
-        },
-      ],
+    scope: 'store/cart/created',
+    store_id: '1025646',
+    data: {
+      type: 'cart',
+      id: 'abc123',
+      cartId: 'abc123',
     },
+    hash: 'a8b4e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3',
+    created_at: 1561479335,
+    producer: 'stores/abcde',
   },
   async onEnable(context) {
-    const lastCheckTime = new Date().toISOString();
-    await context.store?.put('lastCheckTime', lastCheckTime);
+    const webhookUrl = context.webhookUrl;
+    
+    try {
+      // Create webhook for cart created events
+      const webhook = await sendBigCommerceRequest({
+        auth: context.auth,
+        url: '/hooks',
+        method: HttpMethod.POST,
+        body: {
+          scope: 'store/cart/created',
+          destination: webhookUrl,
+          is_active: true,
+          headers: {},
+        },
+      });
+
+      const webhookData = (webhook.body as { data: any }).data;
+      await context.store?.put('webhookId', webhookData.id.toString());
+      
+      console.log(`BigCommerce webhook created with ID: ${webhookData.id}`);
+    } catch (error) {
+      console.error('Failed to create BigCommerce webhook:', error);
+      throw handleBigCommerceError(error, 'Failed to create webhook for cart created events');
+    }
   },
+  
   async onDisable(context) {
-    await context.store?.delete('lastCheckTime');
+    const webhookId = await context.store?.get('webhookId');
+    
+    if (webhookId) {
+      try {
+        await sendBigCommerceRequest({
+          auth: context.auth,
+          url: `/hooks/${webhookId}`,
+          method: HttpMethod.DELETE,
+        });
+        
+        await context.store?.delete('webhookId');
+        console.log(`BigCommerce webhook ${webhookId} deleted`);
+      } catch (error) {
+        console.error('Failed to delete BigCommerce webhook:', error);
+      }
+    }
   },
+  
   async run(context) {
-    const { pollingInterval } = context.propsValue;
-    const finalPollingInterval = Math.max(pollingInterval || 15, 5);
+    const payload = context.payload.body as any;
+    
+    // Validate webhook payload
+    if (!payload || payload.scope !== 'store/cart/created') {
+      return [];
+    }
 
     try {
-      const lastCheckTime = await context.store?.get('lastCheckTime') as string;
-      const now = new Date();
+      // Fetch the full cart details using the cart ID from webhook
+      const cartId = payload.data?.id || payload.data?.cartId;
       
-      const checkFromTime = lastCheckTime
-        ? new Date(new Date(lastCheckTime).getTime() - (finalPollingInterval * 60 * 1000))
-        : new Date(now.getTime() - (finalPollingInterval * 60 * 1000));
+      if (!cartId) {
+        console.error('No cart ID found in webhook payload');
+        return [];
+      }
 
       const response = await sendBigCommerceRequest({
         auth: context.auth,
-        url: '/carts',
+        url: `/carts/${cartId}`,
         method: HttpMethod.GET,
-        queryParams: {
-          limit: '50',
-        },
       });
 
-      const carts = (response.body as { data: any[] }).data || [];
+      const cart = (response.body as { data: any }).data;
 
-      const newCarts = carts.filter((cart: any) => {
-        if (!cart.created_time) return false;
-        const createdTime = new Date(cart.created_time);
-        return createdTime > checkFromTime;
-      });
-
-      await context.store?.put('lastCheckTime', now.toISOString());
-
-      return newCarts.map(cart => ({
+      return [{
         ...cart,
-        detectedAt: now.toISOString(),
-      }));
+        webhook_payload: payload,
+        triggered_at: new Date().toISOString(),
+      }];
     } catch (error) {
-      console.error('Error polling for new carts:', error);
+      console.error('Error fetching cart details:', error);
       return [];
     }
   },

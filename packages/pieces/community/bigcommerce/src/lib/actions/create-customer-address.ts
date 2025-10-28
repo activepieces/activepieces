@@ -46,10 +46,40 @@ const getAddressFields = (): DynamicPropsValue => {
       description: 'Postal/ZIP code',
       required: true,
     }),
-    country_code: Property.ShortText({
-      displayName: 'Country Code',
-      description: 'Two-letter country code (e.g., US, CA, GB)',
+    country_code: Property.StaticDropdown({
+      displayName: 'Country',
+      description: 'Select country',
       required: true,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'United States', value: 'US' },
+          { label: 'Canada', value: 'CA' },
+          { label: 'United Kingdom', value: 'GB' },
+          { label: 'Australia', value: 'AU' },
+          { label: 'Germany', value: 'DE' },
+          { label: 'France', value: 'FR' },
+          { label: 'Italy', value: 'IT' },
+          { label: 'Spain', value: 'ES' },
+          { label: 'Netherlands', value: 'NL' },
+          { label: 'Belgium', value: 'BE' },
+          { label: 'Switzerland', value: 'CH' },
+          { label: 'Austria', value: 'AT' },
+          { label: 'Sweden', value: 'SE' },
+          { label: 'Norway', value: 'NO' },
+          { label: 'Denmark', value: 'DK' },
+          { label: 'Finland', value: 'FI' },
+          { label: 'Japan', value: 'JP' },
+          { label: 'South Korea', value: 'KR' },
+          { label: 'Singapore', value: 'SG' },
+          { label: 'Hong Kong', value: 'HK' },
+          { label: 'New Zealand', value: 'NZ' },
+          { label: 'Brazil', value: 'BR' },
+          { label: 'Mexico', value: 'MX' },
+          { label: 'India', value: 'IN' },
+          { label: 'China', value: 'CN' },
+        ],
+      },
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
@@ -67,6 +97,11 @@ const getAddressFields = (): DynamicPropsValue => {
           { label: 'Commercial', value: 'commercial' },
         ],
       },
+    }),
+    form_fields: Property.LongText({
+      displayName: 'Form Fields',
+      description: 'JSON string of additional form fields (optional)',
+      required: false,
     }),
   };
 };
@@ -95,20 +130,58 @@ export const createCustomerAddress = createAction({
       throw new Error('Customer ID and address fields are required');
     }
 
-    const { address1, city, state_or_province, postal_code, country_code } = addressFields as any;
+    const { address1, city, state_or_province, postal_code, country_code, form_fields } = addressFields as any;
 
-    if (!address1 || !city || !state_or_province || !postal_code || !country_code) {
-      throw new Error('Address line 1, city, state/province, postal code, and country code are required');
+    // Validate required fields according to BigCommerce API
+    if (!address1 || typeof address1 !== 'string' || address1.trim().length === 0) {
+      throw new Error('Address line 1 is required and cannot be empty');
+    }
+
+    if (!city || typeof city !== 'string' || city.trim().length === 0) {
+      throw new Error('City is required and cannot be empty');
+    }
+
+    if (!state_or_province || typeof state_or_province !== 'string' || state_or_province.trim().length === 0) {
+      throw new Error('State/Province is required and cannot be empty');
+    }
+
+    if (!postal_code || typeof postal_code !== 'string' || postal_code.trim().length === 0) {
+      throw new Error('Postal code is required and cannot be empty');
+    }
+
+    if (!country_code || typeof country_code !== 'string' || country_code.trim().length === 0) {
+      throw new Error('Country code is required and cannot be empty');
     }
 
     try {
-      const addressData: any = {};
+      const addressData: any = {
+        address1: address1.trim(),
+        city: city.trim(),
+        state_or_province: state_or_province.trim(),
+        postal_code: postal_code.trim(),
+        country_code: country_code.trim().toUpperCase(),
+      };
       
-      Object.entries(addressFields).forEach(([key, value]) => {
+      // Add optional fields if provided
+      const optionalFields = [
+        'first_name', 'last_name', 'company', 'address2', 'phone', 'address_type'
+      ];
+
+      optionalFields.forEach(field => {
+        const value = (addressFields as any)[field];
         if (value !== undefined && value !== null && value !== '') {
-          addressData[key] = value;
+          addressData[field] = field === 'country_code' ? value.toUpperCase() : value;
         }
       });
+
+      // Handle form_fields as JSON
+      if (form_fields && typeof form_fields === 'string') {
+        try {
+          addressData.form_fields = JSON.parse(form_fields);
+        } catch (error) {
+          throw new Error('Form fields must be valid JSON');
+        }
+      }
 
       const response = await sendBigCommerceRequest({
         auth: context.auth,

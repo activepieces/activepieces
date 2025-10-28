@@ -41,14 +41,61 @@ const getAddressFields = (): DynamicPropsValue => {
       description: 'Postal/ZIP code',
       required: true,
     }),
-    country_code: Property.ShortText({
-      displayName: 'Country Code',
-      description: 'Two-letter country code (e.g., US, CA, GB)',
+    country_code: Property.StaticDropdown({
+      displayName: 'Country',
+      description: 'Select country',
       required: true,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'United States', value: 'US' },
+          { label: 'Canada', value: 'CA' },
+          { label: 'United Kingdom', value: 'GB' },
+          { label: 'Australia', value: 'AU' },
+          { label: 'Germany', value: 'DE' },
+          { label: 'France', value: 'FR' },
+          { label: 'Italy', value: 'IT' },
+          { label: 'Spain', value: 'ES' },
+          { label: 'Netherlands', value: 'NL' },
+          { label: 'Belgium', value: 'BE' },
+          { label: 'Switzerland', value: 'CH' },
+          { label: 'Austria', value: 'AT' },
+          { label: 'Sweden', value: 'SE' },
+          { label: 'Norway', value: 'NO' },
+          { label: 'Denmark', value: 'DK' },
+          { label: 'Finland', value: 'FI' },
+          { label: 'Japan', value: 'JP' },
+          { label: 'South Korea', value: 'KR' },
+          { label: 'Singapore', value: 'SG' },
+          { label: 'Hong Kong', value: 'HK' },
+          { label: 'New Zealand', value: 'NZ' },
+          { label: 'Brazil', value: 'BR' },
+          { label: 'Mexico', value: 'MX' },
+          { label: 'India', value: 'IN' },
+          { label: 'China', value: 'CN' },
+        ],
+      },
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
       description: 'Phone number',
+      required: false,
+    }),
+    address_type: Property.StaticDropdown({
+      displayName: 'Address Type',
+      description: 'Type of address',
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Residential', value: 'residential' },
+          { label: 'Commercial', value: 'commercial' },
+        ],
+      },
+    }),
+    form_fields: Property.LongText({
+      displayName: 'Form Fields',
+      description: 'JSON string of additional form fields (optional)',
       required: false,
     }),
   };
@@ -83,10 +130,23 @@ export const findOrCreateCustomerAddress = createAction({
       throw new Error('Customer ID, address line 1, and address fields are required');
     }
 
-    const { city, state_or_province, postal_code, country_code } = addressFields as any;
+    const { city, state_or_province, postal_code, country_code, form_fields } = addressFields as any;
 
-    if (!city || !state_or_province || !postal_code || !country_code) {
-      throw new Error('City, state/province, postal code, and country code are required for address creation');
+    // Validate required fields for address creation
+    if (!city || typeof city !== 'string' || city.trim().length === 0) {
+      throw new Error('City is required for address creation and cannot be empty');
+    }
+
+    if (!state_or_province || typeof state_or_province !== 'string' || state_or_province.trim().length === 0) {
+      throw new Error('State/Province is required for address creation and cannot be empty');
+    }
+
+    if (!postal_code || typeof postal_code !== 'string' || postal_code.trim().length === 0) {
+      throw new Error('Postal code is required for address creation and cannot be empty');
+    }
+
+    if (!country_code || typeof country_code !== 'string' || country_code.trim().length === 0) {
+      throw new Error('Country code is required for address creation and cannot be empty');
     }
 
     try {
@@ -97,8 +157,8 @@ export const findOrCreateCustomerAddress = createAction({
       });
 
       const existingAddresses = (searchResponse.body as { data: any[] }).data || [];
-      const foundAddress = existingAddresses.find((addr: any) => 
-        addr.address1 && addr.address1.toLowerCase() === address1.toLowerCase()
+      const foundAddress = existingAddresses.find((addr: any) =>
+        addr.address1 && addr.address1.toLowerCase().trim() === address1.toLowerCase().trim()
       );
 
       if (foundAddress) {
@@ -110,13 +170,34 @@ export const findOrCreateCustomerAddress = createAction({
         };
       }
 
-      const addressData: any = { address1 };
-      
-      Object.entries(addressFields).forEach(([key, value]) => {
+      const addressData: any = {
+        address1: address1.trim(),
+        city: city.trim(),
+        state_or_province: state_or_province.trim(),
+        postal_code: postal_code.trim(),
+        country_code: country_code.trim().toUpperCase(),
+      };
+
+      // Add optional fields if provided
+      const optionalFields = [
+        'first_name', 'last_name', 'company', 'address2', 'phone', 'address_type'
+      ];
+
+      optionalFields.forEach(field => {
+        const value = (addressFields as any)[field];
         if (value !== undefined && value !== null && value !== '') {
-          addressData[key] = value;
+          addressData[field] = value;
         }
       });
+
+      // Handle form_fields as JSON
+      if (form_fields && typeof form_fields === 'string') {
+        try {
+          addressData.form_fields = JSON.parse(form_fields);
+        } catch (error) {
+          throw new Error('Form fields must be valid JSON');
+        }
+      }
 
       const createResponse = await sendBigCommerceRequest({
         auth: context.auth,

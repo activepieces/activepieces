@@ -9,8 +9,9 @@ import {
 import { BigCommerceAuth } from './auth';
 
 export function getBaseUrl(auth: BigCommerceAuth): string {
-  const apiPath = auth.apiPath || '/stores/{store_hash}/v3';
-  return `https://api.bigcommerce.com${apiPath.replace('{store_hash}', auth.storeHash)}`;
+  // Clean store hash - remove any "store-" prefix if present
+  const cleanStoreHash = auth.storeHash.replace(/^store-/, '');
+  return `https://api.bigcommerce.com/stores/${cleanStoreHash}/v3`;
 }
 
 export function sendBigCommerceRequest(data: {
@@ -20,8 +21,20 @@ export function sendBigCommerceRequest(data: {
   queryParams?: QueryParams;
   auth: BigCommerceAuth;
 }): Promise<HttpResponse<HttpMessageBody>> {
+  const baseUrl = getBaseUrl(data.auth);
+  const fullUrl = `${baseUrl}${data.url}`;
+
+  // Debug logging for troubleshooting
+  console.log('BigCommerce API Request:', {
+    url: fullUrl,
+    method: data.method,
+    storeHash: data.auth.storeHash,
+    hasToken: !!data.auth.accessToken,
+    tokenLength: data.auth.accessToken?.length || 0,
+  });
+
   return httpClient.sendRequest({
-    url: `${getBaseUrl(data.auth)}${data.url}`,
+    url: fullUrl,
     method: data.method,
     body: data.body,
     queryParams: data.queryParams,
@@ -29,6 +42,7 @@ export function sendBigCommerceRequest(data: {
       'X-Auth-Token': data.auth.accessToken,
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'User-Agent': 'Activepieces BigCommerce Integration',
     },
   });
 }
@@ -36,14 +50,50 @@ export function sendBigCommerceRequest(data: {
 export function handleBigCommerceError(error: unknown, defaultMessage?: string): Error {
   if (error instanceof HttpError) {
     const errorBody = error.response.body as any;
-    
+
+    console.error('BigCommerce API Error:', {
+      status: error.response.status,
+      body: errorBody,
+    });
+
+    // Handle detailed validation errors (422)
+    if (error.response.status === 422 && errorBody) {
+      if (errorBody.errors && Array.isArray(errorBody.errors)) {
+        const detailedErrors = errorBody.errors.map((err: any) => {
+          if (typeof err === 'object' && err.field && err.message) {
+            return `${err.field}: ${err.message}`;
+          }
+          return err.message || err.toString();
+        }).join('; ');
+        return new Error(`Validation failed: ${detailedErrors}`);
+      }
+
+      if (errorBody.title && errorBody.detail) {
+        return new Error(`Validation failed: ${errorBody.title} - ${errorBody.detail}`);
+      }
+
+      if (errorBody.message) {
+        return new Error(`Validation failed: ${errorBody.message}`);
+      }
+    }
+
+    // Handle other detailed errors
     if (errorBody?.title && errorBody?.detail) {
       return new Error(`BigCommerce Error: ${errorBody.title} - ${errorBody.detail}`);
     }
 
     if (errorBody?.errors && Array.isArray(errorBody.errors)) {
-      const errorMessages = errorBody.errors.map((err: any) => err.message || err).join(', ');
+      const errorMessages = errorBody.errors.map((err: any) => {
+        if (typeof err === 'object') {
+          return err.message || err.field || JSON.stringify(err);
+        }
+        return err.toString();
+      }).join(', ');
       return new Error(`BigCommerce Error: ${errorMessages}`);
+    }
+
+    if (errorBody?.message) {
+      return new Error(`BigCommerce Error: ${errorBody.message}`);
     }
 
     const statusMessages: Record<number, string> = {

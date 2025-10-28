@@ -20,9 +20,15 @@ export const searchProduct = createAction({
           { label: 'Name', value: 'name' },
           { label: 'SKU', value: 'sku' },
           { label: 'UPC', value: 'upc' },
+          { label: 'MPN', value: 'mpn' },
+          { label: 'GTIN', value: 'gtin' },
           { label: 'Keyword', value: 'keyword' },
           { label: 'Brand ID', value: 'brand_id' },
           { label: 'Category ID', value: 'categories' },
+          { label: 'Product ID', value: 'id' },
+          { label: 'Type', value: 'type' },
+          { label: 'Availability', value: 'availability' },
+          { label: 'Condition', value: 'condition' },
         ],
       },
     }),
@@ -66,6 +72,12 @@ export const searchProduct = createAction({
         case 'upc':
           queryParams['upc'] = searchValue;
           break;
+        case 'mpn':
+          queryParams['mpn'] = searchValue;
+          break;
+        case 'gtin':
+          queryParams['gtin'] = searchValue;
+          break;
         case 'keyword':
           queryParams['keyword'] = searchValue;
           break;
@@ -74,6 +86,18 @@ export const searchProduct = createAction({
           break;
         case 'categories':
           queryParams['categories:in'] = searchValue;
+          break;
+        case 'id':
+          queryParams['id:in'] = searchValue;
+          break;
+        case 'type':
+          queryParams['type'] = searchValue;
+          break;
+        case 'availability':
+          queryParams['availability'] = searchValue;
+          break;
+        case 'condition':
+          queryParams['condition'] = searchValue;
           break;
         default:
           queryParams[searchType] = searchValue;

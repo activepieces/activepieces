@@ -22,7 +22,11 @@ export const customerIdDropdown = Property.Dropdown({
         auth: auth as BigCommerceAuth,
         url: '/customers',
         method: HttpMethod.GET,
-        queryParams: { limit: '50' },
+        queryParams: { 
+          limit: '100',
+          sort: 'date_created:desc',
+          include_fields: 'id,first_name,last_name,email,company'
+        },
       });
 
       const customers = (response.body as { data: any[] }).data || [];
@@ -37,10 +41,13 @@ export const customerIdDropdown = Property.Dropdown({
 
       return {
         disabled: false,
-        options: customers.map((customer: any) => ({
-          label: `${customer.first_name} ${customer.last_name} (${customer.email})`,
-          value: customer.id.toString(),
-        })),
+        options: customers.map((customer: any) => {
+          const company = customer.company ? ` - ${customer.company}` : '';
+          return {
+            label: `${customer.first_name} ${customer.last_name} (${customer.email})${company}`,
+            value: customer.id.toString(),
+          };
+        }),
       };
     } catch (error) {
       return {

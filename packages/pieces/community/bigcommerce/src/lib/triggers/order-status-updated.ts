@@ -1,21 +1,15 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { sendBigCommerceRequest } from '../common/client';
+import { sendBigCommerceRequest, handleBigCommerceError } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const orderStatusUpdated = createTrigger({
   auth: bigcommerceAuth,
   name: 'order_status_updated',
   displayName: 'Order Status Updated',
-  description: 'Triggers when an order status has changed',
-  type: TriggerStrategy.POLLING,
+  description: 'Triggers when an order status has changed via BigCommerce webhook',
+  type: TriggerStrategy.WEBHOOK,
   props: {
-    pollingInterval: Property.Number({
-      displayName: 'Polling Interval (minutes)',
-      description: 'How often to check for order status changes (minimum: 5 minutes)',
-      required: false,
-      defaultValue: 15,
-    }),
     statusFilter: Property.StaticDropdown({
       displayName: 'Status Filter',
       description: 'Only trigger for specific status changes (optional)',
@@ -40,75 +34,107 @@ export const orderStatusUpdated = createTrigger({
     }),
   },
   sampleData: {
-    id: 123,
-    customer_id: 456,
-    date_created: '2024-01-01T12:00:00Z',
-    date_modified: '2024-01-02T12:00:00Z',
-    status: 'Shipped',
-    previous_status: 'Awaiting Shipment',
-    total_inc_tax: '99.99',
-    currency_code: 'USD',
-    billing_address: {
-      first_name: 'John',
-      last_name: 'Doe',
-      email: 'john@example.com',
+    scope: 'store/order/statusUpdated',
+    store_id: '1025646',
+    data: {
+      type: 'order',
+      id: 250,
+      orderId: 250,
+      status: {
+        previous_status_id: 7,
+        new_status_id: 10,
+      },
     },
+    hash: 'a8b4e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3',
+    created_at: 1561479335,
+    producer: 'stores/abcde',
   },
   async onEnable(context) {
-    const lastCheckTime = new Date().toISOString();
-    await context.store?.put('lastCheckTime', lastCheckTime);
-    await context.store?.put('orderStatuses', JSON.stringify({}));
-  },
-  async onDisable(context) {
-    await context.store?.delete('lastCheckTime');
-    await context.store?.delete('orderStatuses');
-  },
-  async run(context) {
-    const { pollingInterval, statusFilter } = context.propsValue;
-    const finalPollingInterval = Math.max(pollingInterval || 15, 5);
-
+    const webhookUrl = context.webhookUrl;
+    
     try {
-      const orderStatusesStr = await context.store?.get('orderStatuses') as string;
-      const previousStatuses = orderStatusesStr ? JSON.parse(orderStatusesStr) : {};
-
-      const response = await sendBigCommerceRequest({
+      // Create webhook for order status updated events
+      const webhook = await sendBigCommerceRequest({
         auth: context.auth,
-        url: '/orders',
-        method: HttpMethod.GET,
-        queryParams: {
-          limit: '100',
-          sort: 'date_modified:desc',
+        url: '/hooks',
+        method: HttpMethod.POST,
+        body: {
+          scope: 'store/order/statusUpdated',
+          destination: webhookUrl,
+          is_active: true,
+          headers: {},
         },
       });
 
-      const orders = (response.body as { data: any[] }).data || [];
-      const statusChangedOrders: any[] = [];
-      const currentStatuses: Record<string, string> = {};
+      const webhookData = (webhook.body as { data: any }).data;
+      await context.store?.put('webhookId', webhookData.id.toString());
+      
+      console.log(`BigCommerce webhook created with ID: ${webhookData.id}`);
+    } catch (error) {
+      console.error('Failed to create BigCommerce webhook:', error);
+      throw handleBigCommerceError(error, 'Failed to create webhook for order status updated events');
+    }
+  },
+  
+  async onDisable(context) {
+    const webhookId = await context.store?.get('webhookId');
+    
+    if (webhookId) {
+      try {
+        await sendBigCommerceRequest({
+          auth: context.auth,
+          url: `/hooks/${webhookId}`,
+          method: HttpMethod.DELETE,
+        });
+        
+        await context.store?.delete('webhookId');
+        console.log(`BigCommerce webhook ${webhookId} deleted`);
+      } catch (error) {
+        console.error('Failed to delete BigCommerce webhook:', error);
+      }
+    }
+  },
+  
+  async run(context) {
+    const payload = context.payload.body as any;
+    const { statusFilter } = context.propsValue;
+    
+    // Validate webhook payload
+    if (!payload || payload.scope !== 'store/order/statusUpdated') {
+      return [];
+    }
 
-      for (const order of orders) {
-        const orderId = order.id.toString();
-        const currentStatus = order.status;
-        const previousStatus = previousStatuses[orderId];
-
-        currentStatuses[orderId] = currentStatus;
-
-        if (previousStatus && previousStatus !== currentStatus) {
-          if (!statusFilter || statusFilter === 'all' || currentStatus === statusFilter) {
-            statusChangedOrders.push({
-              ...order,
-              previous_status: previousStatus,
-              detectedAt: new Date().toISOString(),
-            });
-          }
-        }
+    try {
+      // Fetch the full order details using the order ID from webhook
+      const orderId = payload.data?.id || payload.data?.orderId;
+      
+      if (!orderId) {
+        console.error('No order ID found in webhook payload');
+        return [];
       }
 
-      await context.store?.put('orderStatuses', JSON.stringify(currentStatuses));
-      await context.store?.put('lastCheckTime', new Date().toISOString());
+      const response = await sendBigCommerceRequest({
+        auth: context.auth,
+        url: `/orders/${orderId}`,
+        method: HttpMethod.GET,
+      });
 
-      return statusChangedOrders;
+      const order = (response.body as { data: any }).data;
+
+      // Apply status filter if specified
+      if (statusFilter && statusFilter !== 'all' && order.status !== statusFilter) {
+        return [];
+      }
+
+      return [{
+        ...order,
+        webhook_payload: payload,
+        previous_status_id: payload.data?.status?.previous_status_id,
+        new_status_id: payload.data?.status?.new_status_id,
+        triggered_at: new Date().toISOString(),
+      }];
     } catch (error) {
-      console.error('Error polling for order status changes:', error);
+      console.error('Error fetching order details:', error);
       return [];
     }
   },

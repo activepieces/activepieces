@@ -1,90 +1,106 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { sendBigCommerceRequest } from '../common/client';
+import { sendBigCommerceRequest, handleBigCommerceError } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const abandonedCart = createTrigger({
   auth: bigcommerceAuth,
   name: 'abandoned_cart',
   displayName: 'Abandoned Cart',
-  description: 'Triggers when a cart is abandoned (no activity for specified time)',
-  type: TriggerStrategy.POLLING,
-  props: {
-    pollingInterval: Property.Number({
-      displayName: 'Polling Interval (minutes)',
-      description: 'How often to check for abandoned carts (minimum: 15 minutes)',
-      required: false,
-      defaultValue: 60,
-    }),
-    abandonedThreshold: Property.Number({
-      displayName: 'Abandoned Threshold (hours)',
-      description: 'Hours of inactivity before cart is considered abandoned',
-      required: false,
-      defaultValue: 24,
-    }),
-  },
+  description: 'Triggers when a cart is abandoned via BigCommerce webhook',
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
   sampleData: {
-    id: 'abc123',
-    customer_id: 456,
-    email: 'customer@example.com',
-    cart_amount: 99.99,
-    currency: { code: 'USD' },
-    created_time: '2024-01-01T12:00:00Z',
-    updated_time: '2024-01-01T12:00:00Z',
-    line_items: {
-      physical_items: [
-        {
-          id: 'item123',
-          product_id: 789,
-          name: 'Sample Product',
-          quantity: 1,
-          list_price: 99.99,
-        },
-      ],
+    scope: 'store/cart/abandoned',
+    store_id: '1025646',
+    data: {
+      type: 'cart',
+      id: 'abc123',
+      cartId: 'abc123',
     },
+    hash: 'a8b4e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3',
+    created_at: 1561479335,
+    producer: 'stores/abcde',
   },
   async onEnable(context) {
-    const lastCheckTime = new Date().toISOString();
-    await context.store?.put('lastCheckTime', lastCheckTime);
+    const webhookUrl = context.webhookUrl;
+    
+    try {
+      // Create webhook for cart abandoned events
+      const webhook = await sendBigCommerceRequest({
+        auth: context.auth,
+        url: '/hooks',
+        method: HttpMethod.POST,
+        body: {
+          scope: 'store/cart/abandoned',
+          destination: webhookUrl,
+          is_active: true,
+          headers: {},
+        },
+      });
+
+      const webhookData = (webhook.body as { data: any }).data;
+      await context.store?.put('webhookId', webhookData.id.toString());
+      
+      console.log(`BigCommerce webhook created with ID: ${webhookData.id}`);
+    } catch (error) {
+      console.error('Failed to create BigCommerce webhook:', error);
+      throw handleBigCommerceError(error, 'Failed to create webhook for cart abandoned events');
+    }
   },
+  
   async onDisable(context) {
-    await context.store?.delete('lastCheckTime');
+    const webhookId = await context.store?.get('webhookId');
+    
+    if (webhookId) {
+      try {
+        await sendBigCommerceRequest({
+          auth: context.auth,
+          url: `/hooks/${webhookId}`,
+          method: HttpMethod.DELETE,
+        });
+        
+        await context.store?.delete('webhookId');
+        console.log(`BigCommerce webhook ${webhookId} deleted`);
+      } catch (error) {
+        console.error('Failed to delete BigCommerce webhook:', error);
+      }
+    }
   },
+  
   async run(context) {
-    const { pollingInterval, abandonedThreshold } = context.propsValue;
-    const finalPollingInterval = Math.max(pollingInterval || 60, 15);
-    const finalAbandonedThreshold = abandonedThreshold || 24;
+    const payload = context.payload.body as any;
+    
+    // Validate webhook payload
+    if (!payload || payload.scope !== 'store/cart/abandoned') {
+      return [];
+    }
 
     try {
-      const now = new Date();
-      const abandonedTime = new Date(now.getTime() - (finalAbandonedThreshold * 60 * 60 * 1000));
+      // Fetch the full cart details using the cart ID from webhook
+      const cartId = payload.data?.id || payload.data?.cartId;
+      
+      if (!cartId) {
+        console.error('No cart ID found in webhook payload');
+        return [];
+      }
 
       const response = await sendBigCommerceRequest({
         auth: context.auth,
-        url: '/carts',
+        url: `/carts/${cartId}`,
         method: HttpMethod.GET,
-        queryParams: {
-          limit: '50',
-        },
       });
 
-      const carts = (response.body as { data: any[] }).data || [];
+      const cart = (response.body as { data: any }).data;
 
-      const abandonedCarts = carts.filter((cart: any) => {
-        if (!cart.updated_time) return false;
-        const lastUpdate = new Date(cart.updated_time);
-        return lastUpdate < abandonedTime;
-      });
-
-      await context.store?.put('lastCheckTime', now.toISOString());
-
-      return abandonedCarts.map(cart => ({
+      return [{
         ...cart,
-        detectedAt: now.toISOString(),
-        abandonedFor: Math.floor((now.getTime() - new Date(cart.updated_time).getTime()) / (1000 * 60 * 60)),
-      }));
+        webhook_payload: payload,
+        triggered_at: new Date().toISOString(),
+        abandoned_at: new Date(payload.created_at * 1000).toISOString(),
+      }];
     } catch (error) {
-      console.error('Error polling for abandoned carts:', error);
+      console.error('Error fetching cart details:', error);
       return [];
     }
   },

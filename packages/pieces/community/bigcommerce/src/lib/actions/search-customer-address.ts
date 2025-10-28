@@ -19,10 +19,15 @@ export const searchCustomerAddress = createAction({
         disabled: false,
         options: [
           { label: 'All Addresses', value: 'all' },
+          { label: 'Address Line 1', value: 'address1' },
+          { label: 'Address Line 2', value: 'address2' },
           { label: 'City', value: 'city' },
           { label: 'State/Province', value: 'state_or_province' },
           { label: 'Country Code', value: 'country_code' },
           { label: 'Postal Code', value: 'postal_code' },
+          { label: 'Company', value: 'company' },
+          { label: 'Phone', value: 'phone' },
+          { label: 'Address Type', value: 'address_type' },
         ],
       },
     }),
@@ -31,23 +36,36 @@ export const searchCustomerAddress = createAction({
       description: 'Value to search for (leave empty to get all addresses)',
       required: false,
     }),
+    includeFields: Property.ShortText({
+      displayName: 'Include Fields',
+      description: 'Comma-separated list of fields to include (e.g., id,address1,city,country_code)',
+      required: false,
+    }),
   },
   async run(context) {
-    const { customerId, searchType, searchValue } = context.propsValue;
+    const { customerId, searchType, searchValue, includeFields } = context.propsValue;
 
     if (!customerId) {
       throw new Error('Customer ID is required');
     }
 
     try {
+      const queryParams: Record<string, string> = {};
+
+      if (includeFields) {
+        queryParams['include_fields'] = includeFields;
+      }
+
       const response = await sendBigCommerceRequest({
         auth: context.auth,
         url: `/customers/${customerId}/addresses`,
         method: HttpMethod.GET,
+        queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined,
       });
 
       let addresses = (response.body as { data: any[] }).data || [];
 
+      // Filter addresses based on search criteria
       if (searchType && searchType !== 'all' && searchValue) {
         addresses = addresses.filter((address: any) => {
           const fieldValue = address[searchType];

@@ -1,98 +1,136 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { sendBigCommerceRequest } from '../common/client';
+import { sendBigCommerceRequest, handleBigCommerceError } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const customerAddressCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'customer_address_created',
   displayName: 'Customer Address Created',
-  description: 'Triggers when a new customer address is created',
-  type: TriggerStrategy.POLLING,
-  props: {
-    pollingInterval: Property.Number({
-      displayName: 'Polling Interval (minutes)',
-      description: 'How often to check for new customer addresses (minimum: 10 minutes)',
-      required: false,
-      defaultValue: 30,
-    }),
-  },
+  description: 'Triggers when a new customer address is created via BigCommerce webhook (monitors customer updates)',
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
   sampleData: {
-    id: 123,
-    customer_id: 456,
-    first_name: 'John',
-    last_name: 'Doe',
-    company: 'Example Corp',
-    address1: '123 Main St',
-    address2: 'Apt 4B',
-    city: 'New York',
-    state_or_province: 'NY',
-    postal_code: '10001',
-    country_code: 'US',
-    phone: '+1234567890',
-    address_type: 'residential',
+    scope: 'store/customer/updated',
+    store_id: '1025646',
+    data: {
+      type: 'customer',
+      id: 60,
+      customerId: 60,
+    },
+    hash: 'a8b4e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3',
+    created_at: 1561479335,
+    producer: 'stores/abcde',
+    address_data: {
+      id: 123,
+      customer_id: 60,
+      address1: '123 Main St',
+      city: 'New York',
+    },
   },
   async onEnable(context) {
-    const lastCheckTime = new Date().toISOString();
-    await context.store?.put('lastCheckTime', lastCheckTime);
-    await context.store?.put('knownAddresses', JSON.stringify([]));
+    const webhookUrl = context.webhookUrl;
+    
+    try {
+      // Create webhook for customer updated events (to detect new addresses)
+      const webhook = await sendBigCommerceRequest({
+        auth: context.auth,
+        url: '/hooks',
+        method: HttpMethod.POST,
+        body: {
+          scope: 'store/customer/updated',
+          destination: webhookUrl,
+          is_active: true,
+          headers: {},
+        },
+      });
+
+      const webhookData = (webhook.body as { data: any }).data;
+      await context.store?.put('webhookId', webhookData.id.toString());
+      await context.store?.put('knownAddresses', JSON.stringify([]));
+      
+      console.log(`BigCommerce webhook created with ID: ${webhookData.id}`);
+    } catch (error) {
+      console.error('Failed to create BigCommerce webhook:', error);
+      throw handleBigCommerceError(error, 'Failed to create webhook for customer address detection');
+    }
   },
+  
   async onDisable(context) {
-    await context.store?.delete('lastCheckTime');
-    await context.store?.delete('knownAddresses');
+    const webhookId = await context.store?.get('webhookId');
+    
+    if (webhookId) {
+      try {
+        await sendBigCommerceRequest({
+          auth: context.auth,
+          url: `/hooks/${webhookId}`,
+          method: HttpMethod.DELETE,
+        });
+        
+        await context.store?.delete('webhookId');
+        await context.store?.delete('knownAddresses');
+        console.log(`BigCommerce webhook ${webhookId} deleted`);
+      } catch (error) {
+        console.error('Failed to delete BigCommerce webhook:', error);
+      }
+    }
   },
+  
   async run(context) {
-    const { pollingInterval } = context.propsValue;
-    const finalPollingInterval = Math.max(pollingInterval || 30, 10);
+    const payload = context.payload.body as any;
+    
+    // Validate webhook payload
+    if (!payload || payload.scope !== 'store/customer/updated') {
+      return [];
+    }
 
     try {
+      const customerId = payload.data?.id || payload.data?.customerId;
+      
+      if (!customerId) {
+        console.error('No customer ID found in webhook payload');
+        return [];
+      }
+
+      // Check for new addresses on this customer
+      const addressesResponse = await sendBigCommerceRequest({
+        auth: context.auth,
+        url: `/customers/${customerId}/addresses`,
+        method: HttpMethod.GET,
+      });
+
+      const addresses = (addressesResponse.body as { data: any[] }).data || [];
+      
+      if (addresses.length === 0) {
+        return [];
+      }
+
+      // Get known addresses from storage
       const knownAddressesStr = await context.store?.get('knownAddresses') as string;
       const knownAddresses = knownAddressesStr ? JSON.parse(knownAddressesStr) : [];
       const knownAddressIds = new Set(knownAddresses.map((addr: any) => `${addr.customer_id}-${addr.id}`));
 
-      const customersResponse = await sendBigCommerceRequest({
-        auth: context.auth,
-        url: '/customers',
-        method: HttpMethod.GET,
-        queryParams: { limit: '50' },
-      });
+      // Find new addresses
+      const newAddresses = addresses.filter(address => 
+        !knownAddressIds.has(`${customerId}-${address.id}`)
+      );
 
-      const customers = (customersResponse.body as { data: any[] }).data || [];
-      const newAddresses: any[] = [];
+      if (newAddresses.length > 0) {
+        // Update known addresses
+        const addressesWithCustomerId = newAddresses.map(addr => ({ ...addr, customer_id: customerId }));
+        const allKnownAddresses = [...knownAddresses, ...addressesWithCustomerId];
+        await context.store?.put('knownAddresses', JSON.stringify(allKnownAddresses.slice(-1000)));
 
-      for (const customer of customers.slice(0, 10)) {
-        try {
-          const addressesResponse = await sendBigCommerceRequest({
-            auth: context.auth,
-            url: `/customers/${customer.id}/addresses`,
-            method: HttpMethod.GET,
-          });
-
-          const addresses = (addressesResponse.body as { data: any[] }).data || [];
-          
-          for (const address of addresses) {
-            const addressKey = `${customer.id}-${address.id}`;
-            if (!knownAddressIds.has(addressKey)) {
-              newAddresses.push({
-                ...address,
-                customer_id: customer.id,
-                detectedAt: new Date().toISOString(),
-              });
-              knownAddressIds.add(addressKey);
-            }
-          }
-        } catch (error) {
-          console.error(`Error fetching addresses for customer ${customer.id}:`, error);
-        }
+        return addressesWithCustomerId.map(address => ({
+          ...address,
+          webhook_payload: payload,
+          triggered_at: new Date().toISOString(),
+        }));
       }
 
-      const allKnownAddresses = [...knownAddresses, ...newAddresses];
-      await context.store?.put('knownAddresses', JSON.stringify(allKnownAddresses.slice(-1000)));
-      await context.store?.put('lastCheckTime', new Date().toISOString());
-
-      return newAddresses;
+      return [];
     } catch (error) {
-      console.error('Error polling for new customer addresses:', error);
+      console.error('Error processing customer address webhook:', error);
       return [];
     }
   },

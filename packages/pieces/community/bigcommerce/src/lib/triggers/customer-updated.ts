@@ -1,85 +1,105 @@
-import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { bigcommerceAuth } from '../common/auth';
-import { sendBigCommerceRequest } from '../common/client';
+import { sendBigCommerceRequest, handleBigCommerceError } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const customerUpdated = createTrigger({
   auth: bigcommerceAuth,
   name: 'customer_updated',
   displayName: 'Customer Updated',
-  description: 'Triggers when a customer is updated',
-  type: TriggerStrategy.POLLING,
-  props: {
-    pollingInterval: Property.Number({
-      displayName: 'Polling Interval (minutes)',
-      description: 'How often to check for updated customers (minimum: 5 minutes)',
-      required: false,
-      defaultValue: 15,
-    }),
-  },
+  description: 'Triggers when a customer is updated via BigCommerce webhook',
+  type: TriggerStrategy.WEBHOOK,
+  props: {},
   sampleData: {
-    id: 123,
-    first_name: 'John',
-    last_name: 'Doe',
-    email: 'john@example.com',
-    company: 'Example Corp',
-    phone: '+1234567890',
-    date_created: '2024-01-01T12:00:00Z',
-    date_modified: '2024-01-02T12:00:00Z',
-    customer_group_id: 0,
+    scope: 'store/customer/updated',
+    store_id: '1025646',
+    data: {
+      type: 'customer',
+      id: 60,
+      customerId: 60,
+    },
+    hash: 'a8b4e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3',
+    created_at: 1561479335,
+    producer: 'stores/abcde',
   },
   async onEnable(context) {
-    const lastCheckTime = new Date().toISOString();
-    await context.store?.put('lastCheckTime', lastCheckTime);
+    const webhookUrl = context.webhookUrl;
+    
+    try {
+      // Create webhook for customer updated events
+      const webhook = await sendBigCommerceRequest({
+        auth: context.auth,
+        url: '/hooks',
+        method: HttpMethod.POST,
+        body: {
+          scope: 'store/customer/updated',
+          destination: webhookUrl,
+          is_active: true,
+          headers: {},
+        },
+      });
+
+      const webhookData = (webhook.body as { data: any }).data;
+      await context.store?.put('webhookId', webhookData.id.toString());
+      
+      console.log(`BigCommerce webhook created with ID: ${webhookData.id}`);
+    } catch (error) {
+      console.error('Failed to create BigCommerce webhook:', error);
+      throw handleBigCommerceError(error, 'Failed to create webhook for customer updated events');
+    }
   },
+  
   async onDisable(context) {
-    await context.store?.delete('lastCheckTime');
+    const webhookId = await context.store?.get('webhookId');
+    
+    if (webhookId) {
+      try {
+        await sendBigCommerceRequest({
+          auth: context.auth,
+          url: `/hooks/${webhookId}`,
+          method: HttpMethod.DELETE,
+        });
+        
+        await context.store?.delete('webhookId');
+        console.log(`BigCommerce webhook ${webhookId} deleted`);
+      } catch (error) {
+        console.error('Failed to delete BigCommerce webhook:', error);
+      }
+    }
   },
+  
   async run(context) {
-    const { pollingInterval } = context.propsValue;
-    const finalPollingInterval = Math.max(pollingInterval || 15, 5);
+    const payload = context.payload.body as any;
+    
+    // Validate webhook payload
+    if (!payload || payload.scope !== 'store/customer/updated') {
+      return [];
+    }
 
     try {
-      const lastCheckTime = await context.store?.get('lastCheckTime') as string;
-      const now = new Date();
+      // Fetch the full customer details using the customer ID from webhook
+      const customerId = payload.data?.id || payload.data?.customerId;
       
-      const checkFromTime = lastCheckTime
-        ? new Date(new Date(lastCheckTime).getTime() - (finalPollingInterval * 60 * 1000))
-        : new Date(now.getTime() - (finalPollingInterval * 60 * 1000));
-
-      const queryParams: Record<string, string> = {
-        limit: '50',
-        sort: 'date_modified:desc',
-      };
-
-      if (lastCheckTime) {
-        queryParams['date_modified:min'] = checkFromTime.toISOString().split('.')[0] + 'Z';
+      if (!customerId) {
+        console.error('No customer ID found in webhook payload');
+        return [];
       }
 
       const response = await sendBigCommerceRequest({
         auth: context.auth,
-        url: '/customers',
+        url: `/customers/${customerId}`,
         method: HttpMethod.GET,
-        queryParams,
       });
 
-      const customers = (response.body as { data: any[] }).data || [];
+      const customer = (response.body as { data: any }).data;
 
-      const updatedCustomers = customers.filter((customer: any) => {
-        if (!customer.date_modified || !customer.date_created) return false;
-        const modifiedTime = new Date(customer.date_modified);
-        const createdTime = new Date(customer.date_created);
-        return modifiedTime > createdTime && modifiedTime > checkFromTime;
-      });
-
-      await context.store?.put('lastCheckTime', now.toISOString());
-
-      return updatedCustomers.map(customer => ({
+      return [{
         ...customer,
-        detectedAt: now.toISOString(),
-      }));
+        webhook_payload: payload,
+        triggered_at: new Date().toISOString(),
+      }];
     } catch (error) {
-      console.error('Error polling for updated customers:', error);
+      console.error('Error fetching customer details:', error);
       return [];
     }
   },
