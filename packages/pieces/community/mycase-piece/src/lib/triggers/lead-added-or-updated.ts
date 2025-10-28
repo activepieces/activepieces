@@ -1,48 +1,36 @@
 import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
   TriggerStrategy,
   createTrigger,
+  Property,
 } from '@activepieces/pieces-framework';
 import { mycaseAuth } from '../../index';
 import { createMyCaseApi } from '../common/mycase-api';
-import dayjs from 'dayjs';
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const api = createMyCaseApi(auth);
-
-    const lastFetchDate = dayjs(lastFetchEpochMS).toISOString();
-
-    const queryParams: Record<string, string> = {
-      'filter[updated_after]': lastFetchDate,
-      page_size: '1000',
-    };
-
-    const response = await api.get('/leads', queryParams);
-
-    if (response.success && Array.isArray(response.data)) {
-      return response.data.map((lead: any) => ({
-        epochMilliSeconds: dayjs(lead.created_at).valueOf(),
-        data: lead,
-      }));
-    }
-
-    return [];
-  },
-};
+interface WebhookSubscription {
+  id: string;
+  hmac_key: string;
+}
 
 export const leadAddedOrUpdated = createTrigger({
   auth: mycaseAuth,
   name: 'lead_added_or_updated',
   displayName: 'Lead Added or Updated',
-  description: 'Triggers when a lead has been added or updated',
-  props: {},
+  description: 'Triggers when a lead has been added or updated via webhook',
+  props: {
+    actions: Property.StaticMultiSelectDropdown({
+      displayName: 'Actions',
+      description: 'Select which actions to trigger on',
+      required: true,
+      options: {
+        options: [
+          { label: 'Created', value: 'created' },
+          { label: 'Updated', value: 'updated' },
+          { label: 'Deleted', value: 'deleted' },
+        ],
+      },
+      defaultValue: ['created', 'updated'],
+    }),
+  },
   sampleData: {
     id: 12345,
     email: 'lead@example.com',
@@ -76,30 +64,43 @@ export const leadAddedOrUpdated = createTrigger({
     created_at: '2024-01-01T10:00:00Z',
     updated_at: '2024-01-15T14:30:00Z',
   },
-  type: TriggerStrategy.POLLING,
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    const api = createMyCaseApi(ctx.auth);
+
+    const requestBody = {
+      model: 'lead',
+      url: ctx.webhookUrl,
+      actions: ctx.propsValue.actions,
+    };
+
+    const response = await api.post('/webhooks/subscriptions', requestBody);
+
+    if (response.success && response.data) {
+      await ctx.store.put<WebhookSubscription>('_webhook_subscription', {
+        id: response.data.id,
+        hmac_key: response.data.hmac_key,
+      });
+    } else {
+      throw new Error(
+        `Failed to create webhook subscription: ${response.error}`
+      );
+    }
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    const subscription =
+      await ctx.store.get<WebhookSubscription>('_webhook_subscription');
+
+    if (subscription) {
+      const api = createMyCaseApi(ctx.auth);
+      await api.delete(`/webhooks/subscriptions/${subscription.id}`);
+      await ctx.store.delete('_webhook_subscription');
+    }
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, ctx);
+    return [ctx.payload.body];
   },
   async test(ctx) {
-    return await pollingHelper.test(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-      files: ctx.files,
-    });
+    return [ctx.propsValue];
   },
 });
