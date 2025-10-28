@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { makeFolkRequest, FolkPerson, FolkWebhook, folkAuth } from '../common/common';
+import { folkAuth } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const personUpdatedTrigger = createTrigger({

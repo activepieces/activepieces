@@ -18,34 +18,34 @@ export const updateCompanyAction = createAction({
       description: 'Name of the company',
       required: false,
     }),
-    email: Property.ShortText({
-      displayName: 'Email',
-      description: 'Company email address',
+    description: Property.ShortText({
+      displayName: 'Description',
+      description: 'A short description of the company.',
       required: false,
     }),
-    phone: Property.ShortText({
-      displayName: 'Phone',
-      description: 'Company phone number',
+    fundingRaised: Property.Number({
+      displayName: 'Funding Raised',
+      description: 'The amount of funding raised by the company in USD, as a number.',
       required: false,
     }),
-    website: Property.ShortText({
-      displayName: 'Website',
-      description: 'Company website URL',
+    lastFundingDate: Property.ShortText({
+      displayName: 'Last Funding Date',
+      description: 'The date of the last funding round for the company, in YYYY-MM-DD format.',
       required: false,
     }),
-    linkedin: Property.ShortText({
-      displayName: 'LinkedIn URL',
-      description: 'Company LinkedIn URL',
+    foundationYear: Property.ShortText({
+      displayName: 'Foundation Year',
+      description: 'The foundation year of the company, in YYYY format as string.',
       required: false,
     }),
     industry: Property.ShortText({
       displayName: 'Industry',
-      description: 'Company industry',
+      description: 'The industry the company operates in.',
       required: false,
     }),
-    customFields: Property.Json({
-      displayName: 'Custom Fields',
-      description: 'Custom field values as JSON object (e.g., {"status": "active"})',
+    employeeRange: Property.ShortText({
+      displayName: 'Employee Range',
+      description: 'The employee range of the company.',
       required: false,
     }),
   },
@@ -55,16 +55,12 @@ export const updateCompanyAction = createAction({
     };
 
     if (context.propsValue.name) updateData.name = context.propsValue.name;
-    if (context.propsValue.email) updateData.email = context.propsValue.email;
-    if (context.propsValue.phone) updateData.phone = context.propsValue.phone;
-    if (context.propsValue.website) updateData.website = context.propsValue.website;
-    if (context.propsValue.linkedin) updateData.linkedin = context.propsValue.linkedin;
+    if (context.propsValue.description) updateData.phone = context.propsValue.description;
+    if (context.propsValue.lastFundingDate) updateData.website = context.propsValue.lastFundingDate;
+    if (context.propsValue.employeeRange) updateData.linkedin = context.propsValue.employeeRange;
     if (context.propsValue.industry) updateData.industry = context.propsValue.industry;
-    
-    // Add custom fields directly to the root object
-    if (context.propsValue.customFields) {
-      Object.assign(updateData, context.propsValue.customFields);
-    }
+    if (context.propsValue.fundingRaised) updateData.fundingRaised = context.propsValue.fundingRaised;
+    if (context.propsValue.foundationYear) updateData.fundingRaised = context.propsValue.foundationYear;
 
     try {
       const response = await makeFolkRequest<FolkCompany>(

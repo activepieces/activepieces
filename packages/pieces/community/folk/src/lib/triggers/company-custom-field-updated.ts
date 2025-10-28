@@ -1,79 +1,59 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { makeFolkRequest, folkAuth, FolkCompany } from '../common/common';
+import { WebhookResponse, folkAuth, folkApiCall } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const companyCustomFieldUpdatedTrigger = createTrigger({
   auth: folkAuth,
   name: 'company_custom_field_updated',
   displayName: 'Company Custom Field Updated',
-  description: 'Triggers when a company custom field (tag, status, text, assignee) is updated',
+  description: 'Triggers when a company custom field (e.g., tag, status, text, assignee) is updated',
+  props: {},
   type: TriggerStrategy.WEBHOOK,
-  props: {
-    fieldKey: Property.ShortText({
-      displayName: 'Field Key',
-      description: 'Only emit when this specific custom field is updated (optional)',
-      required: false,
-    }),
-    instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
-
-1. Copy the webhook URL below
-2. Go to Folk Settings → Webhooks
-3. Enable webhooks and paste the URL
-4. Select event: **Company Updated**
-5. Save the webhook configuration
-      `,
-    }),
-  },
   sampleData: {
-    event: 'company.updated',
-    companyId: 'com_123',
-    changes: {
-      customFields: {
-        status: { old: 'Prospect', new: 'Customer' },
-      },
-    },
+    id: 'cmp_8c18c158-d49e-4ad4-90d4-2b197688bac7',
+    name: 'Acme Corporation',
+    updatedField: 'status',
+    oldValue: 'prospect',
+    newValue: 'customer',
+    updatedAt: '2024-10-28T09:00:00.000Z',
   },
   async onEnable(context) {
-    await context.store.put('webhookUrl', context.webhookUrl);
+    const webhookResponse = await folkApiCall<WebhookResponse>({
+      apiKey: context.auth,
+      method: HttpMethod.POST,
+      endpoint: '/webhooks',
+      body: {
+        name: `Activepieces - Company Custom Field Updated (${context.webhookUrl})`,
+        targetUrl: context.webhookUrl,
+        subscribedEvents: [
+          {
+            eventType: 'company.updated',
+            filter: {}
+          }
+        ]
+      }
+    });
+
+    await context.store.put('_company_custom_field_updated_webhook_id', {
+      webhookId: webhookResponse.data.id
+    });
   },
   async onDisable(context) {
-    await context.store.delete('webhookUrl');
+    const webhookData = await context.store.get<{ webhookId: string }>('_company_custom_field_updated_webhook_id');
+
+    if (webhookData?.webhookId) {
+      try {
+        await folkApiCall({
+          apiKey: context.auth,
+          method: HttpMethod.DELETE,
+          endpoint: `/webhooks/${webhookData.webhookId}`
+        });
+      } catch (error) {
+        console.error('Error deleting webhook:', error);
+      }
+    }
   },
   async run(context) {
-    const payload: any = context.payload?.body;
-    if (!payload) return [];
-
-    const eventType = payload?.type || payload?.event;
-    if (eventType !== 'company.updated') return [];
-
-    const data = payload?.data || payload;
-    const changes = data?.changes || {};
-    
-    if (!changes.customFields && !changes.fields) return [];
-
-    const wantedField = context.propsValue?.fieldKey?.trim();
-    if (wantedField) {
-      const customFieldChanges = changes.customFields || changes.fields || {};
-      if (!customFieldChanges[wantedField]) return [];
-    }
-
-    let companyFull: any;
-
-    return [{
-      event: eventType,
-      companyId: data?.id,
-      companyUrl: data?.url,
-      changes: changes,
-      company: companyFull || data,
-    }];
-  },
-  async test(context) {
-    return [{
-      event: 'company.updated',
-      companyId: 'com_test123',
-      changes: { customFields: { status: { old: 'Prospect', new: 'Customer' } } },
-    }];
+    return [context.payload.body];
   },
 });

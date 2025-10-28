@@ -13,24 +13,34 @@ export const updatePersonAction = createAction({
       description: 'ID of the person to update',
       required: true,
     }),
+    firstName: Property.ShortText({
+      displayName: 'First Name',
+      description: 'First name of the person',
+      required: false,
+    }),
+    lastName: Property.ShortText({
+      displayName: 'Last Name',
+      description: 'Last name of the person',
+      required: true,
+    }),
     fullName: Property.ShortText({
       displayName: 'Full Name',
       description: 'Full name of the person',
       required: false,
     }),
-    email: Property.ShortText({
+    emails: Property.Array({
       displayName: 'Email',
-      description: 'Primary email address',
+      description: 'A list of email addresses associated with the person. The first email address in the list will be the persons primary email address.',
       required: false,
     }),
-    phone: Property.ShortText({
+    phones: Property.Array({
       displayName: 'Phone',
-      description: 'Primary phone number',
+      description: 'A list of phone numbers associated with the person. The first phone number in the list will be the persons primary phone number.',
       required: false,
     }),
-    linkedin: Property.ShortText({
-      displayName: 'LinkedIn URL',
-      description: 'LinkedIn profile URL',
+    birthday: Property.DateTime({
+      displayName: 'Birthday',
+      description: 'The birthday of the person, in ISO format.',
       required: false,
     }),
     jobTitle: Property.ShortText({
@@ -38,9 +48,9 @@ export const updatePersonAction = createAction({
       description: 'Job title or position',
       required: false,
     }),
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'Associated company contact ID',
+    companies: Property.Array({
+      displayName: 'Companies',
+      description: 'The companies associated with the person. You can either provide a name or an id. If you provide a name, the company will be created if it does not already exist. The first company in the list will be the persons primary company.',
       required: false,
     }),
     customFields: Property.Json({
@@ -53,11 +63,12 @@ export const updatePersonAction = createAction({
     const updateData: any = {};
 
     if (context.propsValue.fullName) updateData.fullName = context.propsValue.fullName;
-    if (context.propsValue.email) updateData.email = context.propsValue.email;
-    if (context.propsValue.phone) updateData.phone = context.propsValue.phone;
-    if (context.propsValue.linkedin) updateData.linkedin = context.propsValue.linkedin;
+    if (context.propsValue.emails) updateData.emails = context.propsValue.emails;
+    if (context.propsValue.phones) updateData.phones = context.propsValue.phones;
+    if (context.propsValue.birthday) updateData.birthday = context.propsValue.birthday;
     if (context.propsValue.jobTitle) updateData['job title'] = context.propsValue.jobTitle;
-    if (context.propsValue.companyId) updateData.company = context.propsValue.companyId;
+    if (context.propsValue.companies) updateData.companies = context.propsValue.companies;
+    if (context.propsValue.lastName) updateData.lastName = context.propsValue.lastName;
     if (context.propsValue.customFields) {
       Object.assign(updateData, context.propsValue.customFields);
     }

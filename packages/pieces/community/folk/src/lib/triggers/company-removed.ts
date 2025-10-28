@@ -1,74 +1,57 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { makeFolkRequest, FolkCompany } from '../common/common';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { folkAuth } from '../common/common';
+import { folkApiCall, WebhookResponse } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const companyRemovedTrigger = createTrigger({
   auth: folkAuth,
   name: 'company_removed',
   displayName: 'Company Removed',
   description: 'Triggers when a company is deleted from the workspace or removed from a group',
+  props: {},
   type: TriggerStrategy.WEBHOOK,
-  props: {
-    groupId: Property.ShortText({
-      displayName: 'Group ID',
-      description: 'Only emit if the company was removed from this group (optional)',
-      required: false,
-    }),
-    instructions: Property.MarkDown({
-      value: `
-## Setup Instructions
-
-1. Copy the webhook URL below
-2. Go to Folk Settings → Webhooks
-3. Enable webhooks and paste the URL
-4. Select event: **Company Deleted** or **Company Groups Updated**
-5. Save the webhook configuration
-      `,
-    }),
-  },
   sampleData: {
-    event: 'company.deleted',
-    companyId: 'com_123',
-    deletedAt: new Date().toISOString(),
+    id: 'cmp_8c18c158-d49e-4ad4-90d4-2b197688bac7',
+    name: 'Acme Corporation',
+    deletedAt: '2024-10-28T09:00:00.000Z',
   },
   async onEnable(context) {
-    await context.store.put('webhookUrl', context.webhookUrl);
+    const webhookResponse = await folkApiCall<WebhookResponse>({
+      apiKey: context.auth,
+      method: HttpMethod.POST,
+      endpoint: '/webhooks',
+      body: {
+        name: `Activepieces - Company Removed (${context.webhookUrl})`,
+        targetUrl: context.webhookUrl,
+        subscribedEvents: [
+          {
+            eventType: 'company.deleted',
+            filter: {}
+          }
+        ]
+      }
+    });
+
+    await context.store.put('_company_removed_webhook_id', {
+      webhookId: webhookResponse.data.id
+    });
   },
   async onDisable(context) {
-    await context.store.delete('webhookUrl');
+    const webhookData = await context.store.get<{ webhookId: string }>('_company_removed_webhook_id');
+
+    if (webhookData?.webhookId) {
+      try {
+        await folkApiCall({
+          apiKey: context.auth,
+          method: HttpMethod.DELETE,
+          endpoint: `/webhooks/${webhookData.webhookId}`
+        });
+      } catch (error) {
+        console.error('Error deleting webhook:', error);
+      }
+    }
   },
   async run(context) {
-    const payload: any = context.payload?.body;
-    if (!payload) return [];
-
-    const eventType = payload?.type || payload?.event;
-    const allowedEvents = ['company.deleted', 'company.groups_updated'];
-    
-    if (!eventType || !allowedEvents.includes(eventType)) return [];
-
-    const data = payload?.data || payload;
-
-    if (eventType === 'company.groups_updated') {
-      const removedGroups = data?.changes?.groups?.removed || [];
-      const wantedGroup = context.propsValue?.groupId?.trim();
-      
-      if (wantedGroup && !removedGroups.includes(wantedGroup)) return [];
-    }
-
-    return [{
-      event: eventType,
-      companyId: data?.id,
-      companyUrl: data?.url,
-      changes: data?.changes,
-      deletedAt: new Date().toISOString(),
-    }];
-  },
-  async test(context) {
-    return [{
-      event: 'company.deleted',
-      companyId: 'com_test123',
-      deletedAt: new Date().toISOString(),
-    }];
+    return [context.payload.body];
   },
 });

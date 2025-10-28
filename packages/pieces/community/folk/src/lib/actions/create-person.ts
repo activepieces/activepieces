@@ -24,19 +24,19 @@ export const createPersonAction = createAction({
       description: 'ID of the group to add the person to',
       required: true,
     }),
-    email: Property.ShortText({
+    description: Property.ShortText({
+      displayName: 'Description',
+      description: 'A short description of the person.',
+      required: false,
+    }),
+    birthday: Property.DateTime({
+      displayName: 'Birthday',
+      description: 'The birthday of the person, in ISO format.',
+      required: false,
+    }),
+    emails: Property.Array({
       displayName: 'Email',
-      description: 'Primary email address',
-      required: false,
-    }),
-    phone: Property.ShortText({
-      displayName: 'Phone',
-      description: 'Primary phone number',
-      required: false,
-    }),
-    linkedin: Property.ShortText({
-      displayName: 'LinkedIn URL',
-      description: 'LinkedIn profile URL',
+      description: 'A list of email addresses associated with the person. The first email address in the list will be the persons primary email address.',
       required: false,
     }),
     jobTitle: Property.ShortText({
@@ -47,6 +47,11 @@ export const createPersonAction = createAction({
     companyId: Property.ShortText({
       displayName: 'Company ID',
       description: 'Associated company contact ID',
+      required: false,
+    }),
+    phones: Property.Array({
+      displayName: 'Phones',
+      description: 'A list of phone numbers associated with the person. The first phone number in the list will be the persons primary phone number.',
       required: false,
     }),
     customFields: Property.Json({
@@ -80,24 +85,28 @@ export const createPersonAction = createAction({
       groups: [{ id: context.propsValue.groupId.trim() }],
     };
 
-    if (context.propsValue.email && context.propsValue.email.trim()) {
-      personData.email = context.propsValue.email.trim();
+    if (context.propsValue.emails) {
+      personData.emails = context.propsValue.emails;
     }
     
-    if (context.propsValue.phone && context.propsValue.phone.trim()) {
-      personData.phone = context.propsValue.phone.trim();
+    if (context.propsValue.birthday) {
+      personData.phone = context.propsValue.birthday;
     }
     
-    if (context.propsValue.linkedin && context.propsValue.linkedin.trim()) {
-      personData.linkedin = context.propsValue.linkedin.trim();
+    if (context.propsValue.description) {
+      personData.description = context.propsValue.description;
     }
     
-    if (context.propsValue.jobTitle && context.propsValue.jobTitle.trim()) {
+    if (context.propsValue.jobTitle) {
       personData.jobTitle = context.propsValue.jobTitle.trim();
     }
     
-    if (context.propsValue.companyId && context.propsValue.companyId.trim()) {
-      personData.company = context.propsValue.companyId.trim();
+    if (context.propsValue.companyId) {
+      personData.companyId = context.propsValue.companyId;
+    }
+
+     if (context.propsValue.phones) {
+      personData.phones = context.propsValue.phones;
     }
     
     if (context.propsValue.customFields && typeof context.propsValue.customFields === 'object') {
