@@ -3,12 +3,11 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/pdf/src",
   "projectType": "library",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/pdf",
         "tsConfig": "packages/pieces/community/pdf/tsconfig.lib.json",
@@ -24,7 +23,6 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-        
       },
       "dependsOn": ["prebuild", "^build"]
     },
@@ -55,9 +53,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "executor": "@nx/jest:jest",
@@ -66,6 +62,5 @@
         "jestConfig": "packages/pieces/community/pdf/jest.config.ts"
       }
     }
-  },
-  "tags": []
+  }
 }

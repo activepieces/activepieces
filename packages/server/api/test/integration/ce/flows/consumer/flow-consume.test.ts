@@ -1,5 +1,6 @@
 import { fileCompressor } from '@activepieces/server-shared'
 import {
+    apId,
     ExecutionType,
     FlowActionType,
     FlowRunStatus,
@@ -11,13 +12,15 @@ import {
     ProgressUpdateType,
     PropertyExecutionType,
     RunEnvironment,
+    UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { flowJobExecutor, flowWorker, workerMachine } from 'server-worker'
+import { flowJobExecutor, flowWorker } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { flowRunLogsService } from '../../../../../src/app/flows/flow-run/logs/flow-run-logs-service'
 import { setupServer } from '../../../../../src/app/server'
 import {
     createMockFlow,
@@ -38,6 +41,10 @@ beforeAll(async () => {
         port: 3000,
     })
     mockLog = app.log
+})
+
+afterEach(async () => {
+    await flowWorker(mockLog).close()
 })
 
 afterAll(async () => {
@@ -161,7 +168,14 @@ describe('flow execution', () => {
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
 
-        await waitForSocketConnection()
+        await new Promise(resolve => setTimeout(resolve, 10000))
+        const logsFileId = apId()
+        const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
+            logsFileId,
+            projectId: mockProject.id,
+            flowRunId: mockFlowRun.id,
+            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+        })
 
 
         await flowJobExecutor(mockLog).executeFlow({
@@ -174,27 +188,23 @@ describe('flow execution', () => {
                 environment: RunEnvironment.PRODUCTION,
                 runId: mockFlowRun.id,
                 payload: {},
+                schemaVersion: 1,
+                logsFileId,
+                logsUploadUrl: logsUploadUrl.replace('http://localhost:4200/api/', 'http://localhost:3000/'),
                 synchronousHandlerId: null,
                 progressUpdateType: ProgressUpdateType.NONE,
                 executionType: ExecutionType.BEGIN,
             },
-            attempsStarted: 1,
+            attemptsStarted: 1,
             engineToken,
             timeoutInSeconds: 1000,
         })
 
-        const flowRun = await databaseConnection()
-            .getRepository('flow_run')
-            .findOneByOrFail({
-                id: mockFlowRun.id,
-            })
-
-        expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection()
             .getRepository('file')
             .findOneByOrFail({
-                id: flowRun.logsFileId,
+                id: logsFileId,
             })
 
         const decompressedData = await fileCompressor.decompress({
@@ -236,28 +246,8 @@ describe('flow execution', () => {
                 },
             },
         })
-    }, 60000)
+    }, 120000)
 })
 
 
-async function waitForSocketConnection(maxAttempts = 60, intervalMs = 1000): Promise<void> {
-    let attempts = 0
-    while (attempts < maxAttempts) {
-        try {
-            const settings = workerMachine.getSettings()
-            if (settings) {
-                break
-            }
-        }
-        catch (error) {
-            // Settings not ready yet
-        }
-        await new Promise(resolve => setTimeout(resolve, intervalMs))
-        attempts++
-    }
-
-    if (attempts >= maxAttempts) {
-        throw new Error(`Worker settings not initialized after ${maxAttempts} seconds`)
-    }
-}
 

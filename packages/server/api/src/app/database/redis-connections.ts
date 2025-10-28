@@ -1,7 +1,7 @@
 import {
     AppSystemProp,
     distributedLockFactory,
-    QueueMode,
+    distributedStoreFactory,
     redisConnectionFactory,
     RedisType,
 } from '@activepieces/server-shared'
@@ -9,7 +9,7 @@ import { system } from '../helper/system/system'
 
 export const redisConnections = redisConnectionFactory(() => {
     return {
-        REDIS_TYPE: getRedisType(),
+        REDIS_TYPE: system.getOrThrow<RedisType>(AppSystemProp.REDIS_TYPE),
         REDIS_SSL_CA_FILE: system.get(AppSystemProp.REDIS_SSL_CA_FILE),
         REDIS_DB: system.getNumber(AppSystemProp.REDIS_DB) ?? undefined,
         REDIS_HOST: system.get(AppSystemProp.REDIS_HOST),
@@ -25,12 +25,4 @@ export const redisConnections = redisConnectionFactory(() => {
 })
 
 export const distributedLock = distributedLockFactory(redisConnections.create)
-
-function getRedisType() {
-    const checkIfUserHasDeprecatedQueueMode =
-    system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE) === QueueMode.MEMORY
-    if (checkIfUserHasDeprecatedQueueMode) {
-        return RedisType.MEMORY
-    }
-    return system.getOrThrow<RedisType>(AppSystemProp.REDIS_TYPE)
-}
+export const distributedStore = distributedStoreFactory(redisConnections.useExisting)

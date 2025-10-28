@@ -65,9 +65,12 @@ export function ProjectDashboardLayout({
             {children}
           </SidebarInset>
         </SidebarProvider>
-
-        {showBilling && <WelcomeTrialDialog />}
-        <UpgradeDialog />
+        {showBilling && (
+          <>
+            <WelcomeTrialDialog />
+            <UpgradeDialog />
+          </>
+        )}
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );
