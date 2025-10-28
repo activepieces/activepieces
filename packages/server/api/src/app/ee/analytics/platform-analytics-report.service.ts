@@ -1,11 +1,12 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, apId, flowPieceUtil, FlowStatus, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
+import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, flowPieceUtil, FlowStatus, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, ProjectId, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, MoreThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
@@ -58,6 +59,7 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
     const { uniquePiecesUsed, topPieces } = await analyzePieces(log, flows, platformId)
     const activeFlowsWithAI = await numberOfFlowsWithAI(log, flows, platformId)
     const { topProjects, activeProjects } = await analyzeProjects(flows)
+    const runsUsage = await analyzeRuns(platformId)
     return {
         totalUsers,
         activeUsers,
@@ -69,6 +71,7 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
         topProjects,
         activeProjects,
         topPieces,
+        runsUsage,
         platformId,
         created: dayjs().toISOString(),
         updated: dayjs().toISOString(),
@@ -256,4 +259,25 @@ function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
         return flows.filter(flow => flow.status === status).length
     }
     return flows.length
+}
+
+async function analyzeRuns(platformId: PlatformId): Promise<AnalyticsRunsUsageItem[]> {
+    const threeMonthsAgo = dayjs().subtract(3, 'months').toDate()
+    
+    const runsData = await flowRunRepo()
+        .createQueryBuilder('flow_run')
+        .select('DATE(flow_run.created)', 'day')
+        .addSelect('COUNT(*)', 'totalRuns')
+        .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
+        .where('project."platformId" = :platformId', { platformId })
+        .andWhere('flow_run.created >= :threeMonthsAgo', { threeMonthsAgo })
+        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .groupBy('DATE(flow_run.created)')
+        .orderBy('DATE(flow_run.created)', 'ASC')
+        .getRawMany()
+
+    return runsData.map((row) => ({
+        day: row.day,
+        totalRuns: row.totalRuns,
+    }))
 }
