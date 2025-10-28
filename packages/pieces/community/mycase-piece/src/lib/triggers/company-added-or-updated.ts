@@ -1,7 +1,6 @@
 import {
   TriggerStrategy,
   createTrigger,
-  Property,
 } from '@activepieces/pieces-framework';
 import { mycaseAuth } from '../../index';
 import { createMyCaseApi } from '../common/mycase-api';
@@ -15,22 +14,8 @@ export const companyAddedOrUpdated = createTrigger({
   auth: mycaseAuth,
   name: 'company_added_or_updated',
   displayName: 'Company Added or Updated',
-  description: 'Triggers when a company has been added or updated via webhook',
-  props: {
-    actions: Property.StaticMultiSelectDropdown({
-      displayName: 'Actions',
-      description: 'Select which actions to trigger on',
-      required: true,
-      options: {
-        options: [
-          { label: 'Created', value: 'created' },
-          { label: 'Updated', value: 'updated' },
-          { label: 'Deleted', value: 'deleted' },
-        ],
-      },
-      defaultValue: ['created', 'updated'],
-    }),
-  },
+  description: 'Triggers when a company has been added or updated',
+  props: {},
   sampleData: {
     id: 12345,
     name: 'Acme Corporation',
@@ -69,7 +54,7 @@ export const companyAddedOrUpdated = createTrigger({
     const requestBody = {
       model: 'company',
       url: ctx.webhookUrl,
-      actions: ctx.propsValue.actions,
+      actions: ['created', 'updated'],
     };
 
     const response = await api.post('/webhooks/subscriptions', requestBody);
