@@ -15,10 +15,109 @@ import dayjs from 'dayjs';
 import { quickbaseAuth, QuickbaseAuth } from '../../lib/common/auth';
 
 const props = {
-  tableId: Property.ShortText({
-    displayName: 'Table ID',
-    description: 'The ID of the Quickbase table to monitor for new records',
+  app: Property.Dropdown({
+    displayName: 'Application',
+    description: 'Select your Quickbase application',
     required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      try {
+        // Try to list all apps the user has access to
+        const response = await httpClient.sendRequest<Array<{
+          id: string;
+          name: string;
+          created: string;
+          updated: string;
+        }>>({
+          method: HttpMethod.GET,
+          url: `https://api.quickbase.com/v1/apps`,
+          headers: {
+            'QB-Realm-Hostname': (auth as QuickbaseAuth).realm,
+            Authorization: `QB-USER-TOKEN ${(auth as QuickbaseAuth).userToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const apps = Array.isArray(response.body) ? response.body : [];
+        if (apps.length === 0) {
+          return {
+            disabled: true,
+            placeholder: 'No applications found',
+            options: [],
+          };
+        }
+
+        return {
+          options: apps.map((app) => ({
+            label: app.name,
+            value: app.id,
+          })),
+        };
+      } catch (error: any) {
+        // If the endpoint doesn't work, provide manual entry instructions
+        console.error('Failed to fetch apps:', error);
+        return {
+          disabled: true,
+          placeholder: 'Unable to fetch apps automatically. Please enter App ID manually in the description.',
+          options: [],
+        };
+      }
+    },
+  }),
+  tableId: Property.Dropdown({
+    displayName: 'Table',
+    description: 'Select the table to monitor for new records',
+    required: true,
+    refreshers: ['app'],
+    options: async ({ auth, app }) => {
+      if (!app) {
+        return {
+          disabled: true,
+          placeholder: 'Select an application first',
+          options: [],
+        };
+      }
+
+      try {
+        const response = await httpClient.sendRequest<{
+          name: string;
+          tables: Array<{
+            name: string;
+            id: string;
+          }>;
+        }>({
+          method: HttpMethod.GET,
+          url: `https://api.quickbase.com/v1/apps/${app}`,
+          headers: {
+            'QB-Realm-Hostname': (auth as QuickbaseAuth).realm,
+            Authorization: `QB-USER-TOKEN ${(auth as QuickbaseAuth).userToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const tables = response.body.tables || [];
+        if (tables.length === 0) {
+          return {
+            disabled: true,
+            placeholder: 'No tables found in this application',
+            options: [],
+          };
+        }
+
+        return {
+          options: tables.map((table) => ({
+            label: table.name,
+            value: table.id,
+          })),
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          placeholder: 'Failed to fetch tables. Check your application selection.',
+          options: [],
+        };
+      }
+    },
   }),
   dateCreatedFieldId: Property.Number({
     displayName: 'Date Created Field ID',
