@@ -1,5 +1,5 @@
 
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -8,37 +8,42 @@ import {
     ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
+    FlowStatus,
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
+    FlowTrigger,
+    FlowVersionState,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
+    PlatformUsageMetric,
     PopulatedFlow,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    Trigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
+import { preValidationHookHandler, RawReplyDefaultExpression, RawRequestDefaultExpression, RawServerBase, RouteGenericInterface } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
+import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
+import { flowMigrations } from '../flow-version/migrations'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.principal.projectId,
@@ -63,6 +68,16 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
+
+        const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
+        const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
+        if (turnOnFlow || publishDisabledFlow) {
+            await PlatformPlanHelper.checkQuotaOrThrow({
+                platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
+                metric: PlatformUsageMetric.ACTIVE_FLOWS,
+            })
+        }
         await assertThatFlowIsNotBeingUsed(flow, userId)
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_UPDATED,
@@ -78,6 +93,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             operation: cleanOperation(request.body),
         })
+
         return updatedFlow
     })
 
@@ -89,6 +105,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
             name: request.query.name,
+            versionState: request.query.versionState,
+            externalIds: request.query.externalIds,
+            connectionExternalIds: request.query.connectionExternalIds,
+            agentExternalIds: request.query.agentExternalIds,
         })
     })
 
@@ -127,10 +147,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 flowVersion: flow.version,
             },
         })
-        await gitRepoService(request.log).onFlowDeleted({
-            flowId: request.params.id,
+        await gitRepoService(request.log).onDeleted({
+            type: GitPushOperationType.DELETE_FLOW,
+            externalId: flow.externalId,
             userId: request.principal.id,
             projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
             log: request.log,
         })
         await flowService(request.log).delete({
@@ -143,8 +165,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
     if (operation.type === FlowOperationType.IMPORT_FLOW) {
-        const clearInputUiInfo = {
-            currentSelectedData: undefined,
+        const clearSampleData = {
             sampleDataFileId: undefined,
             sampleDataInputFileId: undefined,
             lastTestDate: undefined,
@@ -154,13 +175,13 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                 ...step,
                 settings: {
                     ...step.settings,
-                    inputUiInfo: {
-                        ...step.settings.inputUiInfo,
-                        ...clearInputUiInfo,
+                    sampleData: {
+                        ...step.settings.sampleData,
+                        ...clearSampleData,
                     },
                 },
             }
-        }) as Trigger
+        }) as FlowTrigger
         return {
             ...operation,
             request: {
@@ -169,9 +190,9 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                     ...trigger,
                     settings: {
                         ...trigger.settings,
-                        inputUiInfo: {
-                            ...trigger.settings.inputUiInfo,
-                            ...clearInputUiInfo,
+                        sampleData: {
+                            ...trigger.settings.sampleData,
+                            ...clearSampleData,
                         },
                     },
                 },
@@ -188,15 +209,15 @@ async function assertThatFlowIsNotBeingUsed(
     const currentTime = dayjs()
     if (
         !isNil(flow.version.updatedBy) &&
-    flow.version.updatedBy !== userId &&
-    currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+        flow.version.updatedBy !== userId &&
+        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
     ) {
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_IN_USE,
             params: {
                 flowVersionId: flow.version.id,
                 message:
-          'Flow is being used by another user in the last minute. Please try again later.',
+                    'Flow is being used by another user in the last minute. Please try again later.',
             },
         })
     }
@@ -218,6 +239,39 @@ const CreateFlowRequestOptions = {
     },
 }
 
+const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDefaultExpression, RawReplyDefaultExpression, FlowOperationRouteGeneric> = (request, _, done) => {
+
+    if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
+        flowMigrations.apply({
+            agentIds: [],
+            connectionIds: [],
+            created: new Date().toISOString(),
+            displayName: '',
+            flowId: '',
+            id: '',
+            updated: new Date().toISOString(),
+            updatedBy: '',
+            valid: false,
+            trigger: request.body.request.trigger,
+            state: FlowVersionState.DRAFT,
+            schemaVersion: request.body.request.schemaVersion,
+        }).then((migratedFlowVersion) => {
+            request.body.request = {
+                ...request.body.request,
+                trigger: migratedFlowVersion.trigger,
+                schemaVersion: migratedFlowVersion.schemaVersion,
+            }
+            done()
+        }).catch((error) => {
+            request.log.error(error)
+       
+        })
+    }
+    else {
+        done()
+    }
+}
+
 const UpdateFlowRequestOptions = {
     config: {
         permission: Permission.UPDATE_FLOW_STATUS,
@@ -231,6 +285,7 @@ const UpdateFlowRequestOptions = {
             id: ApId,
         }),
     },
+    preValidation: migrateTemplatesHook,
 }
 
 const ListFlowsRequestOptions = {
@@ -310,3 +365,9 @@ const DeleteFlowRequestOptions = {
         },
     },
 }
+
+
+
+type FlowOperationRouteGeneric = {
+    Body: FlowOperationRequest
+} & RouteGenericInterface

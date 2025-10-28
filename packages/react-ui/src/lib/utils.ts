@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -27,9 +28,8 @@ export const formatUtils = {
       .join(' ');
   },
   formatNumber(number: number) {
-    return new Intl.NumberFormat('en-US').format(number);
+    return new Intl.NumberFormat(i18next.language).format(number);
   },
-
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);
@@ -38,7 +38,7 @@ export const formatUtils = {
     }
   },
   formatDateOnly(date: Date) {
-    return Intl.DateTimeFormat('en-US', {
+    return Intl.DateTimeFormat(i18next.language, {
       month: 'numeric',
       day: 'numeric',
       year: 'numeric',
@@ -47,29 +47,28 @@ export const formatUtils = {
   formatDate(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);
-
     const isToday = inputDate.isSame(now, 'day');
     const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
 
-    const timeFormat = new Intl.DateTimeFormat('en-US', {
+    const timeFormat = new Intl.DateTimeFormat(i18next.language, {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
     });
 
     if (isToday) {
-      return `Today at ${timeFormat.format(date)}`;
+      return `${t('Today')}, ${timeFormat.format(date)}`;
     } else if (isYesterday) {
-      return `Yesterday at ${timeFormat.format(date)}`;
-    } else {
-      return Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true,
-      }).format(date);
+      return `${t('Yesterday')}, ${timeFormat.format(date)}`;
     }
+    return Intl.DateTimeFormat(i18next.language, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();
@@ -153,20 +152,15 @@ export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
 }
 
 export const localesMap = {
-  [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
-  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.ENGLISH]: 'English',
   [LocalesEnum.SPANISH]: 'Español',
   [LocalesEnum.FRENCH]: 'Français',
-  [LocalesEnum.ITALIAN]: 'Italiano',
   [LocalesEnum.JAPANESE]: '日本語',
-  [LocalesEnum.HUNGARIAN]: 'Magyar',
   [LocalesEnum.DUTCH]: 'Nederlands',
-  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
-  [LocalesEnum.UKRAINIAN]: 'Українська',
-  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+  [LocalesEnum.PORTUGUESE]: 'Português',
+  [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
 };
 
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
@@ -246,10 +240,10 @@ export const determineDefaultRoute = (
   }
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
-
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
-export const parentWindow = window.opener ?? window.parent;
+export const NEW_MCP_QUERY_PARAM = 'newMcp';
+export const parentWindow: Window = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {
   return url.startsWith('/') ? url.slice(1) : url;
 };
@@ -301,7 +295,8 @@ export const downloadFile = async ({
   const blob =
     extension === 'zip'
       ? await obj.generateAsync({ type: 'blob' })
-      : new Blob([obj], {
+      : //utf-8 with bom
+        new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), obj], {
           type: getBlobType(extension),
         });
   const url = URL.createObjectURL(blob);
@@ -312,4 +307,37 @@ export const downloadFile = async ({
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+export const wait = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+export const scrollToElementAndClickIt = (elementId: string) => {
+  const element = document.getElementById(elementId);
+  element?.scrollIntoView({
+    behavior: 'instant',
+    block: 'start',
+  });
+  element?.click();
+};
+
+export const routesThatRequireProjectId = {
+  runs: '/runs',
+  singleRun: '/runs/:runId',
+  flows: '/flows',
+  singleFlow: '/flows/:flowId',
+  connections: '/connections',
+  singleConnection: '/connections/:connectionId',
+  issues: '/issues',
+  singleIssue: '/issues/:issueId',
+  tables: '/tables',
+  singleTable: '/tables/:tableId',
+  todos: '/todos',
+  singleTodo: '/todos/:todoId',
+  settings: '/settings',
+  mcps: '/mcps',
+  singleMcp: '/mcps/:mcpId',
+  releases: '/releases',
+  singleRelease: '/releases/:releaseId',
 };

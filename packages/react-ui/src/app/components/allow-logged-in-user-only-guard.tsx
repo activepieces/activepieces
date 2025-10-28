@@ -16,14 +16,7 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
 }: AllowOnlyLoggedInUserOnlyGuardProps) => {
   const { reset } = useTelemetry();
   const location = useLocation();
-
   if (!authenticationSession.isLoggedIn()) {
-    const searchParams = new URLSearchParams();
-    searchParams.set('from', location.pathname + location.search);
-    return <Navigate to={`/sign-in?${searchParams.toString()}`} replace />;
-  }
-  const token = authenticationSession.getToken();
-  if (!token || authenticationSession.isJwtExpired(token)) {
     authenticationSession.logOut();
     reset();
     const searchParams = new URLSearchParams();

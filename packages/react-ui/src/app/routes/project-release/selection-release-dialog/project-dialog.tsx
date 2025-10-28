@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { projectHooks } from '@/hooks/project-hooks';
 import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
@@ -54,7 +54,10 @@ export function ProjectSelectionDialog({
     mutationFn: (request: DiffReleaseRequest) =>
       projectReleaseApi.diff(request),
     onSuccess: (plan) => {
-      if (!plan.operations || plan.operations.length === 0) {
+      if (
+        (!plan.flows || plan.flows.length === 0) &&
+        (!plan.tables || plan.tables.length === 0)
+      ) {
         toast({
           title: t('No Changes Found'),
           description: t('There are no differences to apply'),
@@ -65,9 +68,6 @@ export function ProjectSelectionDialog({
       setSyncPlan(plan);
       setOpen(false);
       setIsCreateReleaseDialogOpen(true);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

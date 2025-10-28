@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { Metadata } from '../common/metadata'
 
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
@@ -18,17 +19,10 @@ export enum PiecesFilterType {
     ALLOWED = 'ALLOWED',
 }
 
-export enum NotificationStatus {
-    NEVER = 'NEVER',
-    ALWAYS = 'ALWAYS',
-    NEW_ISSUE = 'NEW_ISSUE',
-}
-
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
-    teamMembers: Type.Number(),
-    aiTokens: Type.Number(),
-    nextLimitResetDate: Type.String(),
+    aiCredits: Type.Number(),
+    nextLimitResetDate: Type.Number(),
 })
 
 export const SwitchProjectResponse = Type.Object({
@@ -44,11 +38,12 @@ export type ProjectPlanId = string
 export const ProjectPlan = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
+    locked: Type.Boolean({ default: false }),
     name: Type.String(),
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
     tasks: Nullable(Type.Number()),
-    aiTokens: Nullable(Type.Number()),
+    aiCredits: Nullable(Type.Number()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>
@@ -58,10 +53,11 @@ export const Project = Type.Object({
     deleted: Nullable(Type.String()),
     ownerId: Type.String(),
     displayName: Type.String(),
-    notifyStatus: Type.Enum(NotificationStatus),
     platformId: ApId,
+    maxConcurrentJobs: Nullable(Type.Number()),
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
+    metadata: Nullable(Metadata),
 })
 
 const projectAnalytics = Type.Object(
@@ -85,10 +81,10 @@ export const ProjectWithLimits = Type.Composite([
 ])
 
 export const UpdateProjectRequestInCommunity = Type.Object({
-    notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),
+    metadata: Type.Optional(Metadata),
 })
 
 export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>

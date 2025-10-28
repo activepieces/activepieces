@@ -8,6 +8,10 @@ import { readFile } from './lib/actions/read-file';
 import { amazons3UploadFile } from './lib/actions/upload-file';
 import { createS3 } from './lib/common';
 import { newFile } from './lib/triggers/new-file';
+import { generateSignedUrl } from './lib/actions/generate-signed-url';
+import { moveFile } from './lib/actions/move-file';
+import { deleteFile } from './lib/actions/delete-file';
+import { listFiles } from './lib/actions/list-files';
 
 const description = `
 This piece allows you to upload files to Amazon S3 or other S3 compatible services.
@@ -191,9 +195,9 @@ export const amazonS3 = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-s3.png',
   minimumSupportedRelease: '0.30.0',
-  authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud", "Kevinyu-alan"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3Auth,
-  actions: [amazons3UploadFile, readFile],
+  actions: [amazons3UploadFile, readFile, generateSignedUrl, moveFile, deleteFile, listFiles],
   triggers: [newFile],
 });

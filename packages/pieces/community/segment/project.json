@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/segment/package.json",
         "main": "packages/pieces/community/segment/src/index.ts",
         "assets": [
-          "packages/pieces/community/segment/*.md"
+          "packages/pieces/community/segment/*.md",
+          {
+            "input": "packages/pieces/community/segment/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

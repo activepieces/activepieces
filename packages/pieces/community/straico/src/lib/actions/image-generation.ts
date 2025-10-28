@@ -6,7 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-import { baseUrl } from '../common/common';
+import { baseUrlv0, baseUrlv1 } from '../common/common';
 
 export const imageGeneration = createAction({
   auth: straicoAuth,
@@ -30,12 +30,66 @@ export const imageGeneration = createAction({
         ],
       },
     }),
+    model: Property.Dropdown({
+      displayName: 'Model',
+      required: true,
+      description: 'Select the image generation model.',
+      defaultValue: 'openai/dall-e-3',
+      refreshers: ['auth'],
+      refreshOnSearch: true,
+      options: async ({ auth }, { searchValue }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+          };
+        }
+        try {
+          const response = await httpClient.sendRequest<{
+            data: { image?: { name?: string; model: string }[] };
+            success: boolean;
+          }>({
+            url: `${baseUrlv1}/models`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: auth as string,
+            },
+          });
+
+          const models = response.body?.data?.image ?? [];
+          const filtered = searchValue
+            ? models.filter((m) => {
+                const term = String(searchValue).toLowerCase();
+                return (
+                  (m.name ?? '').toLowerCase().includes(term) ||
+                  m.model.toLowerCase().includes(term)
+                );
+              })
+            : models;
+
+          return {
+            disabled: false,
+            options: filtered.map((m) => ({
+              label: m.name ?? m.model,
+              value: m.model,
+            })),
+          };
+        } catch (e) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Failed to load models. Check API key and try again.',
+          };
+        }
+      },
+    }),
     size: Property.StaticDropdown({
       displayName: 'Image Dimensions',
       required: true,
       description:
         'The desired image dimensions.',
-      defaultValue: 1,
+      defaultValue: 'square',
       options: {
         disabled: false,
         options: [
@@ -54,25 +108,34 @@ export const imageGeneration = createAction({
   },
   async run({ auth, propsValue }) {
     const response = await httpClient.sendRequest<{
-      data: { 
-        images: Array<string>[],
-        zip: string
-    };
+      data: {
+        zip: string;
+        images: string[];
+        price: {
+          price_per_image: number;
+          quantity_images: number;
+          total: number;
+        };
+      };
+      success: boolean;
     }>({
-      url: `${baseUrl}/image/generation`,
+      url: `${baseUrlv0}/image/generation`,
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth as string,
       },
       body: {
-        model: 'openai/dall-e-3',
+        model: propsValue.model,
         description: propsValue.description,
         size: propsValue.size,
-        variations: propsValue.variations,
+        variations: propsValue.variations
       },
     });
 
-    return response.body.data;
+    return {
+    images: response.body.data.images,
+    zip: response.body.data.zip,
+  };
   },
 });

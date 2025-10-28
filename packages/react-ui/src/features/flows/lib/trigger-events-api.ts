@@ -1,15 +1,16 @@
 import { api } from '@/lib/api';
 import {
   ListTriggerEventsRequest,
+  SaveTriggerEventRequest,
   SeekPage,
-  TestPollingTriggerRequest,
+  TestTriggerRequestBody,
   TriggerEventWithPayload,
 } from '@activepieces/shared';
 
 export const triggerEventsApi = {
-  pollTrigger(request: TestPollingTriggerRequest) {
-    return api.get<SeekPage<TriggerEventWithPayload>>(
-      '/v1/trigger-events/poll',
+  test(request: TestTriggerRequestBody) {
+    return api.post<SeekPage<TriggerEventWithPayload>>(
+      '/v1/test-trigger',
       request,
     );
   },
@@ -21,20 +22,10 @@ export const triggerEventsApi = {
       request,
     );
   },
-  startWebhookSimulation(flowId: string) {
-    return api.post<void>('/v1/webhook-simulation', {
-      flowId,
+  saveTriggerMockdata(request: SaveTriggerEventRequest) {
+    return api.post<TriggerEventWithPayload>(`/v1/trigger-events`, {
+      flowId: request.flowId,
+      mockData: request.mockData,
     });
-  },
-  deleteWebhookSimulation(flowId: string) {
-    return api.delete<void>('/v1/webhook-simulation', {
-      flowId,
-    });
-  },
-  saveTriggerMockdata(flowId: string, mockData: unknown) {
-    return api.post<TriggerEventWithPayload>(
-      `/v1/trigger-events?flowId=${flowId}`,
-      mockData,
-    );
   },
 };

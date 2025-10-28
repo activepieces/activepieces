@@ -1,37 +1,34 @@
-import { AiProviderConfig, Platform } from '@activepieces/shared'
+import { AIProvider } from '@activepieces/common-ai'
+import { Platform } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart, JSON_COLUMN_TYPE } from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, JSON_COLUMN_TYPE } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
-const AiProviderConfigEncrypted = Type.Composite([Type.Omit(AiProviderConfig, ['config']), Type.Object({
+const AIProviderEncrypted = Type.Composite([Type.Omit(AIProvider, ['config']), Type.Object({
     config: EncryptedObject,
 })])
 
-type AiProviderConfigEncrypted = Static<typeof AiProviderConfigEncrypted>
+type AIProviderEncrypted = Static<typeof AIProviderEncrypted>
 
-export type AiProviderSchema = AiProviderConfigEncrypted & {
+export type AIProviderSchema = AIProviderEncrypted & {
     platform: Platform
 }
 
-export const AiProviderEntity = new EntitySchema<AiProviderSchema>({
+export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
     name: 'ai_provider',
     columns: {
         ...BaseColumnSchemaPart,
-        platformId: {
-            type: String,
-            nullable: false,
-        },
         config: {
             type: JSON_COLUMN_TYPE,
             nullable: false,
         },
-        baseUrl: {
+        provider: {
             type: String,
             nullable: false,
         },
-        provider: {
-            type: String,
+        platformId: {
+            ...ApIdSchema,
             nullable: false,
         },
     },

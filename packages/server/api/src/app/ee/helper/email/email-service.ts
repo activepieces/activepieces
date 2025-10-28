@@ -8,14 +8,12 @@ import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
-import { projectRoleService } from '../../project-role/project-role.service'
+import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
-
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
-
 const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = (log: FastifyBaseLogger) => ({
@@ -64,10 +62,13 @@ export const emailService = (log: FastifyBaseLogger) => ({
             createdAt,
         })
 
-        // TODO remove the hardcoded limit
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
+
+        if (emails.length === 0) {
+            return
+        }
+
         await emailSender(log).send({
             emails,
             platformId,
@@ -90,14 +91,17 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
 
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled || platform.embeddingEnabled) {
+        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+        if (platform.plan.embeddingEnabled) {
             return
         }
 
-        // TODO remove the hardcoded limit
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+
+        if (emails.length === 0) {
+            return
+        }
 
         await emailSender(log).send({
             emails,
@@ -120,12 +124,12 @@ export const emailService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        log.info('Sending OTP email', {
+        log.info({
             email: userIdentity.email,
             otp,
             identityId: userIdentity.id,
             type,
-        })
+        }, 'Sending OTP email')
 
         const frontendPath = {
             [OtpType.EMAIL_VERIFICATION]: 'verify-email',
@@ -158,8 +162,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: otpToTemplate[type],
         })
     },
-    
-    async sendReminderJobHandler(job: {
+
+    async sendIssuesSummary(job: {
         projectId: string
         platformId: string
         projectName: string
@@ -171,23 +175,27 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
+
+        if (emails.length === 0) {
+            return
+        }
+
         const issuesUrl = await domainHelper.getPublicUrl({
             platformId: job.platformId,
             path: 'runs?limit=10#Issues',
         })
 
-        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
-            ...issue, 
+        const issuesWithFormattedDate = issues.data.map((issue) => ({
+            ...issue,
             created: dayjs(issue.created).format('MMM D, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
+            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'),
         }))
 
         await emailSender(log).send({
             emails,
             platformId: job.platformId,
             templateData: {
-                name: 'issues-reminder',
+                name: 'issues-summary',
                 vars: {
                     issuesUrl,
                     issuesCount: issues.data.length.toString(),
@@ -198,11 +206,30 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendTrialReminder({ platformId, firstName, customerEmail, templateName }: SendTrialReminderArgs): Promise<void> {
+        await emailSender(log).send({
+            emails: [customerEmail],
+            platformId,
+            templateData: {
+                name: templateName,
+                vars: {
+                    year: new Date().getFullYear().toString(),
+                    firstName: firstName ?? 'Automator',
+                },
+            },
+        })
+
+    },
+
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         const project = await projectService.getOneOrThrow(projectId)
-        
+
+        if (emails.length === 0) {
+            return
+        }
+
         await emailSender(log).send({
             emails,
             platformId: project.platformId,
@@ -263,6 +290,13 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
+}
+
+type SendTrialReminderArgs = {
+    platformId: string
+    firstName: string | undefined
+    customerEmail: string
+    templateName: '3-days-left-on-trial' | '7-days-in-trial' | '1-day-left-on-trial' | 'welcome-to-trial'
 }
 
 type IssueCreatedArgs = {

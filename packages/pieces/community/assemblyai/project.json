@@ -5,10 +5,9 @@
   "projectType": "library",
   "release": {
     "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/{projectRoot}",
-        "currentVersionResolver": "git-tag"
-      }
+      "currentVersionResolver": "git-tag",
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": ["dist/{projectRoot}"]
     }
   },
   "tags": [],
@@ -21,7 +20,14 @@
         "tsConfig": "packages/pieces/community/assemblyai/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/assemblyai/package.json",
         "main": "packages/pieces/community/assemblyai/src/index.ts",
-        "assets": ["packages/pieces/community/assemblyai/*.md"],
+        "assets": [
+          "packages/pieces/community/assemblyai/*.md",
+          {
+            "input": "packages/pieces/community/assemblyai/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }

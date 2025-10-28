@@ -19,7 +19,7 @@ const polling: Polling<
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
@@ -68,7 +68,7 @@ export const newOrUpdatedContactTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-contact',
 	displayName: 'Contact Recently Created or Updated',
-	description: 'Triggers when a contact recenty created or updated.',
+	description: 'Triggers when a contact recently created or updated.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,

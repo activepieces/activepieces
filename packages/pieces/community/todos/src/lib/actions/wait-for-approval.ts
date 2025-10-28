@@ -37,6 +37,7 @@ export const waitForApproval = createAction({
     const response = await httpClient.sendRequest(request);
     return {
       status: response.body.status.name,
+      message: 'Test message',
     };
   },
   async run(ctx) {
@@ -52,6 +53,7 @@ export const waitForApproval = createAction({
     } else {
       return {
         status: ctx.resumePayload.queryParams['status'],
+        message: ctx.resumePayload.queryParams['message'],
       };
     }
   },

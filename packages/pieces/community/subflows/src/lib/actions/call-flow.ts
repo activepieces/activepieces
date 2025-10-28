@@ -4,36 +4,31 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ExecutionType, FlowStatus, isNil, PauseType, TriggerType } from '@activepieces/shared';
-import { CallableFlowRequest, CallableFlowResponse } from '../common';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, isNil, PauseType, PARENT_RUN_ID_HEADER } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse, findFlowByExternalIdOrThrow, listEnabledFlowsWithSubflowTrigger } from '../common';
 
 type FlowValue = {
-  id: string;
+  externalId: string;
   exampleData: unknown;
 };
 
 export const callFlow = createAction({
   name: 'callFlow',
   displayName: 'Call Flow',
-  description: 'Call another sub flow',
+  description: 'Call a flow that has "Callable Flow" trigger',
   props: {
     flow: Property.Dropdown<FlowValue>({
       displayName: 'Flow',
       description: 'The flow to execute',
       required: true,
       options: async (_, context) => {
-        const allFlows = (await context.flows.list()).data;
-        const flows = allFlows.filter(
-          (flow) =>
-            flow.status === FlowStatus.ENABLED &&
-            flow.version.trigger.type === TriggerType.PIECE &&
-            flow.version.trigger.settings.pieceName ==
-            '@activepieces/piece-subflows'
-        );
+        const flows = await listEnabledFlowsWithSubflowTrigger({
+          flowsContext: context.flows,
+        });
         return {
           options: flows.map((flow) => ({
             value: {
-              id: flow.id,
+              externalId: flow.externalId ?? flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
             label: flow.version.displayName,
@@ -98,63 +93,38 @@ export const callFlow = createAction({
       required: false,
       defaultValue: false,
     }),
-    testingProps: Property.DynamicProperties({
-      description: '',
-      displayName: '',
-      required: true,
-      refreshers: ['waitForResponse', 'mode'],
-      props: async (propsValue) => {
-        const fields: DynamicPropsValue = {};
-        if (!propsValue['waitForResponse']) {
-          return fields;
-        }
-
-        const mode = propsValue['mode'] as unknown as string;
-
-        if (mode === 'simple') {
-            fields['data'] = Property.Object({
-            displayName: 'Example Response (For Testing)',
-            required: true,
-            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
-            defaultValue: {},
-          });
-        } else {
-          fields['data'] = Property.Json({
-            displayName: 'Example Response (For Testing)',
-            required: true,
-            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
-            defaultValue: {},
-          });
-        }
-
-        return fields;
-      }
-    })
-  },
-  async test(context) {
-    return {
-      data: context.propsValue?.testingProps?.['data'] ?? {}
-    };
   },
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
+      const shouldFailParentRun = response.status === 'error' && context.propsValue.waitForResponse
+      if (shouldFailParentRun) {
+        throw new Error(JSON.stringify(response.data, null, 2))
+      }
       return {
+        status: response.status,
         data: response.data
       }
     }
     const payload = context.propsValue.flowProps['payload'];
+    const flow = await findFlowByExternalIdOrThrow({
+      flowsContext: context.flows,
+      externalId: context.propsValue.flow?.externalId,
+    });
+
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}`,
+      url: `${context.serverUrl}v1/webhooks/${flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
+        [PARENT_RUN_ID_HEADER]: context.run.id,
+        [FAIL_PARENT_ON_FAILURE_HEADER]: context.propsValue.waitForResponse ? 'true' : 'false',
       },
       body: {
         data: payload,
-        callbackUrl: context.generateResumeUrl({
+        callbackUrl: context.propsValue.waitForResponse ?  context.generateResumeUrl({
           queryParams: {}
-        }),
+        }) : undefined,
       },
     });
     if (context.propsValue.waitForResponse) {
@@ -167,4 +137,14 @@ export const callFlow = createAction({
     }
     return response.body;
   },
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue:false,
+      hide:false,
+    },
+    retryOnFailure: {
+      defaultValue:false,
+      hide:false,
+    }
+  }
 });

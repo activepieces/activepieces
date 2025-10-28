@@ -59,10 +59,7 @@ export function ThemeProvider({
       '--primary',
       colorsUtils.hexToHslString(branding.colors.primary.default),
     );
-    document.documentElement.style.setProperty(
-      '--ring',
-      colorsUtils.hexToHslString(branding.colors.primary.default),
-    );
+
     setFavicon(branding.logos.favIconUrl);
     switch (resolvedTheme) {
       case 'light': {

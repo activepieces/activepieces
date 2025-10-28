@@ -1,0 +1,444 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "activepieces.fullname" . }}
+  labels:
+    {{- include "activepieces.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "activepieces.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "activepieces.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "activepieces.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.port }}
+              protocol: TCP
+          env:
+            # Core Activepieces configuration
+            {{- if .Values.activepieces.frontendUrl }}
+            - name: AP_FRONTEND_URL
+              value: {{ .Values.activepieces.frontendUrl | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.apiKey }}
+            - name: AP_API_KEY
+              value: {{ .Values.activepieces.apiKey | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.clientRealIpHeader }}
+            - name: AP_CLIENT_REAL_IP_HEADER
+              value: {{ .Values.activepieces.clientRealIpHeader | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.configPath }}
+            - name: AP_CONFIG_PATH
+              value: {{ .Values.activepieces.configPath | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.devPieces }}
+            - name: AP_DEV_PIECES
+              value: {{ .Values.activepieces.devPieces | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.internalUrl }}
+            - name: AP_INTERNAL_URL
+              value: {{ .Values.activepieces.internalUrl | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.maxConcurrentJobsPerProject }}
+            - name: AP_MAX_CONCURRENT_JOBS_PER_PROJECT
+              value: {{ .Values.activepieces.maxConcurrentJobsPerProject | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.perplexityBaseUrl }}
+            - name: AP_PERPLEXITY_BASE_URL
+              value: {{ .Values.activepieces.perplexityBaseUrl | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.piecesSyncMode }}
+            - name: AP_PIECES_SYNC_MODE
+              value: {{ .Values.activepieces.piecesSyncMode | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.featurebaseApiKey }}
+            - name: AP_FEATUREBASE_API_KEY
+              value: {{ .Values.activepieces.featurebaseApiKey | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.showChangelog }}
+            - name: AP_SHOW_CHANGELOG
+              value: {{ .Values.activepieces.showChangelog | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.enableFlowOnPublish }}
+            - name: AP_ENABLE_FLOW_ON_PUBLISH
+              value: {{ .Values.activepieces.enableFlowOnPublish | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.issueArchiveDays }}
+            - name: AP_ISSUE_ARCHIVE_DAYS
+              value: {{ .Values.activepieces.issueArchiveDays | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.pausedFlowTimeoutDays }}
+            - name: AP_PAUSED_FLOW_TIMEOUT_DAYS
+              value: {{ .Values.activepieces.pausedFlowTimeoutDays | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.logLevel }}
+            - name: AP_LOG_LEVEL
+              value: {{ .Values.activepieces.logLevel | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.logPretty }}
+            - name: AP_LOG_PRETTY
+              value: {{ .Values.activepieces.logPretty | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.appWebhookSecrets }}
+            - name: AP_APP_WEBHOOK_SECRETS
+              value: {{ .Values.activepieces.appWebhookSecrets | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.maxFileSizeMb }}
+            - name: AP_MAX_FILE_SIZE_MB
+              value: {{ .Values.activepieces.maxFileSizeMb | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.sandboxMemoryLimit }}
+            - name: AP_SANDBOX_MEMORY_LIMIT
+              value: {{ .Values.activepieces.sandboxMemoryLimit | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.sandboxPropagatedEnvVars }}
+            - name: AP_SANDBOX_PROPAGATED_ENV_VARS
+              value: {{ .Values.activepieces.sandboxPropagatedEnvVars | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.piecesSource }}
+            - name: AP_PIECES_SOURCE
+              value: {{ .Values.activepieces.piecesSource | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.apiRateLimiting.authn.enabled }}
+            - name: AP_API_RATE_LIMIT_AUTHN_ENABLED
+              value: {{ .Values.activepieces.apiRateLimiting.authn.enabled | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.apiRateLimiting.authn.max }}
+            - name: AP_API_RATE_LIMIT_AUTHN_MAX
+              value: {{ .Values.activepieces.apiRateLimiting.authn.max | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.apiRateLimiting.authn.window }}
+            - name: AP_API_RATE_LIMIT_AUTHN_WINDOW
+              value: {{ .Values.activepieces.apiRateLimiting.authn.window | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.projectRateLimiter.enabled }}
+            - name: AP_PROJECT_RATE_LIMITER_ENABLED
+              value: {{ .Values.activepieces.projectRateLimiter.enabled | quote }}
+            {{- end }}
+            - name: AP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "activepieces.fullname" . }}-secrets
+                  key: encryption-key
+            - name: AP_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "activepieces.fullname" . }}-jwt-secret
+                  key: jwt-secret
+            {{- if .Values.activepieces.environment }}
+            - name: AP_ENVIRONMENT
+              value: {{ .Values.activepieces.environment | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.executionMode }}
+            - name: AP_EXECUTION_MODE
+              value: {{ .Values.activepieces.executionMode | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.telemetryEnabled }}
+            - name: AP_TELEMETRY_ENABLED
+              value: {{ .Values.activepieces.telemetryEnabled | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.templatesSourceUrl }}
+            - name: AP_TEMPLATES_SOURCE_URL
+              value: {{ .Values.activepieces.templatesSourceUrl | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.flowWorkerConcurrency }}
+            - name: AP_FLOW_WORKER_CONCURRENCY
+              value: {{ .Values.activepieces.flowWorkerConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.scheduledWorkerConcurrency }}
+            - name: AP_SCHEDULED_WORKER_CONCURRENCY
+              value: {{ .Values.activepieces.scheduledWorkerConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.triggerDefaultPollInterval }}
+            - name: AP_TRIGGER_DEFAULT_POLL_INTERVAL
+              value: {{ .Values.activepieces.triggerDefaultPollInterval | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.triggerTimeoutSeconds }}
+            - name: AP_TRIGGER_TIMEOUT_SECONDS
+              value: {{ .Values.activepieces.triggerTimeoutSeconds | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.flowTimeoutSeconds }}
+            - name: AP_FLOW_TIMEOUT_SECONDS
+              value: {{ .Values.activepieces.flowTimeoutSeconds | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.webhookTimeoutSeconds }}
+            - name: AP_WEBHOOK_TIMEOUT_SECONDS
+              value: {{ .Values.activepieces.webhookTimeoutSeconds | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.executionDataRetentionDays }}
+            - name: AP_EXECUTION_DATA_RETENTION_DAYS
+              value: {{ .Values.activepieces.executionDataRetentionDays | quote }}
+            {{- end }}
+            {{- if .Values.postgresql.enabled }}
+            # PostgreSQL configuration
+            - name: AP_DB_TYPE
+              value: "POSTGRES"
+            {{- if .Values.postgresql.auth.database }}
+            - name: AP_POSTGRES_DATABASE
+              value: {{ .Values.postgresql.auth.database | quote }}
+            {{- end }}
+            {{- if .Values.postgresql.host | default (printf "%s-postgresql" (include "activepieces.fullname" .)) }}
+            - name: AP_POSTGRES_HOST
+              value: {{ .Values.postgresql.host | default (printf "%s-postgresql" (include "activepieces.fullname" .)) | quote }}
+            {{- end }}
+            {{- if .Values.postgresql.port }}
+            - name: AP_POSTGRES_PORT
+              value: {{ .Values.postgresql.port | quote }}
+            {{- end }}
+            {{- if .Values.postgresql.auth.username }}
+            - name: AP_POSTGRES_USERNAME
+              value: {{ .Values.postgresql.auth.username | quote }}
+            {{- end }}
+            - name: AP_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "activepieces.fullname" . }}-postgresql
+                  key: postgres-password
+            {{- if .Values.postgresql.useSSL }}
+            - name: AP_POSTGRES_USE_SSL
+              value: {{ .Values.postgresql.useSSL | quote }}
+            {{- end }}
+            {{- if .Values.postgresql.sslCa }}
+            - name: AP_POSTGRES_SSL_CA
+              value: {{ .Values.postgresql.sslCa | quote }}
+            {{- end }}
+            {{- if .Values.postgresql.url }}
+            - name: AP_POSTGRES_URL
+              value: {{ .Values.postgresql.url | quote }}
+            {{- end }}
+            {{- else }}
+            # SQLite configuration (fallback)
+            - name: AP_DB_TYPE
+              value: "SQLITE3"
+            {{- end }}
+            {{- if .Values.redis.enabled }}
+            # Redis configuration
+            - name: AP_QUEUE_MODE
+              value: "REDIS"
+            {{- if .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) }}
+            - name: AP_REDIS_HOST
+              value: {{ .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) | quote }}
+            {{- end }}
+            {{- if .Values.redis.port }}
+            - name: AP_REDIS_PORT
+              value: {{ .Values.redis.port | quote }}
+            {{- end }}
+            {{- if .Values.redis.useSSL }}
+            - name: AP_REDIS_USE_SSL
+              value: {{ .Values.redis.useSSL | quote }}
+            {{- end }}
+            {{- if .Values.redis.sslCaFile }}
+            - name: AP_REDIS_SSL_CA_FILE
+              value: {{ .Values.redis.sslCaFile | quote }}
+            {{- end }}
+            {{- if .Values.redis.db }}
+            - name: AP_REDIS_DB
+              value: {{ .Values.redis.db | quote }}
+            {{- end }}
+            {{- if .Values.redis.user }}
+            - name: AP_REDIS_USER
+              value: {{ .Values.redis.user | quote }}
+            {{- end }}
+            {{- if .Values.redis.url }}
+            - name: AP_REDIS_URL
+              value: {{ .Values.redis.url | quote }}
+            {{- end }}
+            {{- if eq .Values.redis.type "standalone" }}
+            - name: AP_REDIS_TYPE
+              value: "DEFAULT"
+            {{- else if eq .Values.redis.type "sentinel" }}
+            - name: AP_REDIS_TYPE
+              value: "SENTINEL"
+            {{- end }}
+            {{- if .Values.redis.sentinel.role }}
+            - name: AP_REDIS_SENTINEL_ROLE
+              value: {{ .Values.redis.sentinel.role | quote }}
+            {{- end }}
+            {{- if .Values.redis.sentinel.hosts }}
+            - name: AP_REDIS_SENTINEL_HOSTS
+              value: {{ .Values.redis.sentinel.hosts | quote }}
+            {{- end }}
+            {{- if .Values.redis.sentinel.name }}
+            - name: AP_REDIS_SENTINEL_NAME
+              value: {{ .Values.redis.sentinel.name | quote }}
+            {{- end }}
+            {{- if .Values.redis.failedJob.retentionDays }}
+            - name: AP_REDIS_FAILED_JOB_RETENTION_DAYS
+              value: {{ .Values.redis.failedJob.retentionDays | quote }}
+            {{- end }}
+            {{- if .Values.redis.failedJob.retentionMaxCount }}
+            - name: AP_REDIS_FAILED_JOB_RETENTION_MAX_COUNT
+              value: {{ .Values.redis.failedJob.retentionMaxCount | quote }}
+            {{- end }}
+            {{- if .Values.redis.auth.enabled }}
+            - name: AP_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-redis
+                  key: redis-password
+            {{- end }}
+            {{- else }}
+            # Memory queue (fallback)
+            - name: AP_QUEUE_MODE
+              value: "MEMORY"
+            {{- end }}
+            {{- if .Values.smtp.enabled }}
+            # SMTP configuration
+            {{- if .Values.smtp.host }}
+            - name: AP_SMTP_HOST
+              value: {{ .Values.smtp.host | quote }}
+            {{- end }}
+            {{- if .Values.smtp.port }}
+            - name: AP_SMTP_PORT
+              value: {{ .Values.smtp.port | quote }}
+            {{- end }}
+            {{- if .Values.smtp.username }}
+            - name: AP_SMTP_USERNAME
+              value: {{ .Values.smtp.username | quote }}
+            {{- end }}
+            {{- if .Values.smtp.password }}
+            - name: AP_SMTP_PASSWORD
+              value: {{ .Values.smtp.password | quote }}
+            {{- end }}
+            {{- if .Values.smtp.senderEmail }}
+            - name: AP_SMTP_SENDER_EMAIL
+              value: {{ .Values.smtp.senderEmail | quote }}
+            {{- end }}
+            {{- if .Values.smtp.senderName }}
+            - name: AP_SMTP_SENDER_NAME
+              value: {{ .Values.smtp.senderName | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.s3.enabled }}
+            # S3 configuration
+            {{- if .Values.s3.accessKeyId }}
+            - name: AP_S3_ACCESS_KEY_ID
+              value: {{ .Values.s3.accessKeyId | quote }}
+            {{- end }}
+            {{- if .Values.s3.secretAccessKey }}
+            - name: AP_S3_SECRET_ACCESS_KEY
+              value: {{ .Values.s3.secretAccessKey | quote }}
+            {{- end }}
+            {{- if .Values.s3.bucket }}
+            - name: AP_S3_BUCKET
+              value: {{ .Values.s3.bucket | quote }}
+            {{- end }}
+            {{- if .Values.s3.endpoint }}
+            - name: AP_S3_ENDPOINT
+              value: {{ .Values.s3.endpoint | quote }}
+            {{- end }}
+            {{- if .Values.s3.region }}
+            - name: AP_S3_REGION
+              value: {{ .Values.s3.region | quote }}
+            {{- end }}
+            {{- if .Values.s3.useSignedUrls }}
+            - name: AP_S3_USE_SIGNED_URLS
+              value: {{ .Values.s3.useSignedUrls | quote }}
+            {{- end }}
+            {{- if .Values.s3.useIrsa }}
+            - name: AP_S3_USE_IRSA
+              value: {{ .Values.s3.useIrsa | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.queueUi.enabled }}
+            # Queue UI configuration
+            - name: AP_QUEUE_UI_ENABLED
+              value: {{ .Values.queueUi.enabled | quote }}
+            {{- if .Values.queueUi.username }}
+            - name: AP_QUEUE_UI_USERNAME
+              value: {{ .Values.queueUi.username | quote }}
+            {{- end }}
+            {{- if .Values.queueUi.password }}
+            - name: AP_QUEUE_UI_PASSWORD
+              value: {{ .Values.queueUi.password | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.activepieces.engineExecutablePath }}
+            - name: AP_ENGINE_EXECUTABLE_PATH
+              value: {{ .Values.activepieces.engineExecutablePath | quote }}
+            {{- end }}
+            # OpenTelemetry configuration
+            {{- if .Values.activepieces.otel.enabled }}
+            - name: AP_OTEL_ENABLED
+              value: {{ .Values.activepieces.otel.enabled | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpEndpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.activepieces.otel.exporterOtlpEndpoint | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpHeaders }}
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: {{ .Values.activepieces.otel.exporterOtlpHeaders | quote }}
+            {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: cache
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+            {{- end }}
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: cache
+          persistentVolumeClaim:
+            claimName: {{ include "activepieces.fullname" . }}-cache
+        {{- end }}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

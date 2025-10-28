@@ -1,9 +1,11 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../common'
+import { Metadata } from '../../common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
-import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
+import { SaveSampleDataRequest } from '../sample-data'
+import { EmptyTrigger, FlowTrigger, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -13,8 +15,8 @@ import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
-import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
+import { _moveBranch } from './move-branch'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
@@ -39,6 +41,9 @@ export enum FlowOperationType {
     ADD_BRANCH = 'ADD_BRANCH',
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
+    UPDATE_METADATA = 'UPDATE_METADATA',
+    MOVE_BRANCH = 'MOVE_BRANCH',
+    SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -51,6 +56,12 @@ export const AddBranchRequest = Type.Object({
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
     branchName: Type.String(),
 })
+export const MoveBranchRequest = Type.Object({
+    sourceBranchIndex: Type.Number(),
+    targetBranchIndex: Type.Number(),
+    stepName: Type.String(),
+})
+export type MoveBranchRequest = Static<typeof MoveBranchRequest>
 
 export const SkipActionRequest = Type.Object({
     names: Type.Array(Type.String()),
@@ -84,7 +95,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: Trigger,
+    trigger: FlowTrigger,
     schemaVersion: Nullable(Type.String()),
 })
 
@@ -152,10 +163,17 @@ export const UpdateFlowStatusRequest = Type.Object({
 })
 export type UpdateFlowStatusRequest = Static<typeof UpdateFlowStatusRequest>
 
-export const ChangePublishedVersionIdRequest = Type.Object({})
+export const ChangePublishedVersionIdRequest = Type.Object({
+    status: Type.Optional(Type.Enum(FlowStatus)),
+})
 export type ChangePublishedVersionIdRequest = Static<
     typeof ChangePublishedVersionIdRequest
 >
+
+export const UpdateMetadataRequest = Type.Object({
+    metadata: Nullable(Metadata),
+})
+export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
 
 export const FlowOperationRequest = Type.Union([
     Type.Object(
@@ -311,6 +329,27 @@ export const FlowOperationRequest = Type.Union([
             title: 'Skip Action',
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_METADATA),
+            request: UpdateMetadataRequest,
+        },
+        {
+            title: 'Update Metadata',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.MOVE_BRANCH),
+            request: MoveBranchRequest,
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.SAVE_SAMPLE_DATA),
+            request: SaveSampleDataRequest,
+        },
+    ),
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
@@ -380,13 +419,7 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
-                const migratedFlow = flowMigrations.apply({
-                    ...clonedVersion,
-                    trigger: operation.request.trigger,
-                    displayName: operation.request.displayName,
-                    schemaVersion: operation.request.schemaVersion,
-                })
-                const operations = _importFlow(clonedVersion, migratedFlow)
+                const operations = _importFlow(clonedVersion, operation.request)
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
@@ -394,6 +427,11 @@ export const flowOperations = {
             }
             case FlowOperationType.SET_SKIP_ACTION: {
                 clonedVersion = _skipAction(clonedVersion, operation.request)
+                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
+                break
+            }
+            case FlowOperationType.MOVE_BRANCH: {
+                clonedVersion = _moveBranch(clonedVersion, operation.request)
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }

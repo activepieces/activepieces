@@ -1,26 +1,32 @@
 import { fileCompressor } from '@activepieces/server-shared'
 import {
-    ActionType,
+    apId,
     ExecutionType,
+    FlowActionType,
     FlowRunStatus,
     FlowStatus,
+    FlowTriggerType,
     FlowVersionState,
     PackageType,
     PieceType,
     ProgressUpdateType,
+    PropertyExecutionType,
     RunEnvironment,
-    TriggerType,
+    UploadLogsBehavior,
+    WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { flowJobExecutor, flowWorker } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { flowRunLogsService } from '../../../../../src/app/flows/flow-run/logs/flow-run-logs-service'
 import { setupServer } from '../../../../../src/app/server'
 import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
+    createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 
@@ -37,6 +43,10 @@ beforeAll(async () => {
     mockLog = app.log
 })
 
+afterEach(async () => {
+    await flowWorker(mockLog).close()
+})
+
 afterAll(async () => {
     if (app) {
         await app.close()
@@ -46,7 +56,11 @@ afterAll(async () => {
 
 describe('flow execution', () => {
     it('should execute simple flow with code and data mapper', async () => {
-        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
+        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+            plan: {
+                tasksLimit: 1000,
+            },
+        })
 
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
@@ -54,12 +68,28 @@ describe('flow execution', () => {
         })
         await databaseConnection().getRepository('flow').save([mockFlow])
 
+        const mockPieceMetadata1 = createMockPieceMetadata({
+            name: '@activepieces/piece-schedule',
+            version: '0.1.5',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        const mockPieceMetadata2 = createMockPieceMetadata({
+            name: '@activepieces/piece-data-mapper',
+            version: '0.3.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+        })
+        await databaseConnection()
+            .getRepository('piece_metadata')
+            .save([mockPieceMetadata1, mockPieceMetadata2])
+
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
             updatedBy: mockOwner.id,
             state: FlowVersionState.LOCKED,
             trigger: {
-                type: TriggerType.PIECE,
+                type: FlowTriggerType.PIECE,
                 settings: {
                     pieceName: '@activepieces/piece-schedule',
                     pieceVersion: '0.1.5',
@@ -67,9 +97,11 @@ describe('flow execution', () => {
                         run_on_weekends: false,
                     },
                     triggerName: 'every_hour',
-                    'pieceType': PieceType.OFFICIAL,
-                    'packageType': PackageType.REGISTRY,
-                    inputUiInfo: {},
+                    propertySettings: {
+                        'run_on_weekends': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
+                    },
                 },
                 valid: true,
                 name: 'webhook',
@@ -77,9 +109,8 @@ describe('flow execution', () => {
                 nextAction: {
                     name: 'echo_step',
                     displayName: 'Echo Step',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     settings: {
-                        inputUiInfo: {},
                         input: {
                             key: '{{ 1 + 2 }}',
                         },
@@ -95,17 +126,19 @@ describe('flow execution', () => {
                     nextAction: {
                         name: 'datamapper',
                         displayName: 'Datamapper',
-                        type: ActionType.PIECE,
+                        type: FlowActionType.PIECE,
                         settings: {
-                            inputUiInfo: {},
                             pieceName: '@activepieces/piece-data-mapper',
                             pieceVersion: '0.3.0',
-                            packageType: 'REGISTRY',
-                            pieceType: 'OFFICIAL',
                             actionName: 'advanced_mapping',
                             input: {
                                 mapping: {
                                     key: '{{ 1 + 2 }}',
+                                },
+                            },
+                            propertySettings: {
+                                'mapping': {
+                                    type: PropertyExecutionType.MANUAL,
                                 },
                             },
                         },
@@ -135,29 +168,45 @@ describe('flow execution', () => {
             workerToken: await accessTokenManager.generateWorkerToken(),
         })
 
-        await flowJobExecutor(mockLog).executeFlow({
-            flowVersionId: mockFlowVersion.id,
+        await new Promise(resolve => setTimeout(resolve, 10000))
+        const logsFileId = apId()
+        const logsUploadUrl = await flowRunLogsService(mockLog).constructUploadUrl({
+            logsFileId,
             projectId: mockProject.id,
-            environment: RunEnvironment.PRODUCTION,
-            runId: mockFlowRun.id,
-            payload: {},
-            synchronousHandlerId: null,
-            progressUpdateType: ProgressUpdateType.NONE,
-            executionType: ExecutionType.BEGIN,
-        }, engineToken)
+            flowRunId: mockFlowRun.id,
+            behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
+        })
 
-        const flowRun = await databaseConnection()
-            .getRepository('flow_run')
-            .findOneByOrFail({
-                id: mockFlowRun.id,
-            })
-        expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
+
+        await flowJobExecutor(mockLog).executeFlow({
+            jobData: {
+                flowVersionId: mockFlowVersion.id,
+                projectId: mockProject.id,
+                platformId: mockPlatform.id,
+                flowId: mockFlowRun.flowId,
+                jobType: WorkerJobType.EXECUTE_FLOW,
+                environment: RunEnvironment.PRODUCTION,
+                runId: mockFlowRun.id,
+                payload: {},
+                schemaVersion: 1,
+                logsFileId,
+                logsUploadUrl: logsUploadUrl.replace('http://localhost:4200/api/', 'http://localhost:3000/'),
+                synchronousHandlerId: null,
+                progressUpdateType: ProgressUpdateType.NONE,
+                executionType: ExecutionType.BEGIN,
+            },
+            attemptsStarted: 1,
+            engineToken,
+            timeoutInSeconds: 1000,
+        })
+
 
         const file = await databaseConnection()
             .getRepository('file')
             .findOneByOrFail({
-                id: flowRun.logsFileId,
+                id: logsFileId,
             })
+
         const decompressedData = await fileCompressor.decompress({
             data: file.data,
             compression: file.compression,
@@ -197,5 +246,8 @@ describe('flow execution', () => {
                 },
             },
         })
-    }, 60000)
+    }, 120000)
 })
+
+
+

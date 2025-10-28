@@ -446,6 +446,26 @@ export async function createPropertyDefinition(
 				options: { disabled: false, options: priorityOptions },
 			});
 		}
+		case 'component': {
+			const componentOptions = field.allowedValues
+				? field.allowedValues.map((option) => ({
+						label: option.name,
+						value: option.id,
+				  }))
+				: [];
+
+			return isArray
+				? Property.StaticMultiSelectDropdown({
+						displayName: field.name,
+						required: isRequired,
+						options: { disabled: false, options: componentOptions },
+				  })
+				: Property.StaticDropdown({
+						displayName: field.name,
+						required: isRequired,
+						options: { disabled: false, options: componentOptions },
+				  });
+		}
 		case 'option': {
 			const options = field.allowedValues
 				? field.allowedValues.map((option) => ({
@@ -568,6 +588,7 @@ export function formatIssueFields(
 			case 'option':
 			case 'priority':
 			case 'issuetype':
+			case 'component':
 				fieldsOutput[key] = { id: fieldInputValue };
 				break;
 

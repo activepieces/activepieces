@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 const pieceIconVariants = cva('flex items-center justify-center   ', {
   variants: {
     circle: {
-      true: 'rounded-full bg-accent/35 p-2',
+      true: 'rounded-full  p-2',
       false: 'dark:rounded-[2px]',
     },
     size: {
@@ -22,6 +22,7 @@ const pieceIconVariants = cva('flex items-center justify-center   ', {
       lg: 'size-[40px]',
       md: 'size-[36px]',
       sm: 'size-[25px]',
+      xs: 'size-[18px]',
     },
     border: {
       true: 'border border-solid',
@@ -48,12 +49,7 @@ const PieceIcon = React.memo(
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={cn(
-              pieceIconVariants({ border, size, circle }),
-              'dark:bg-accent-foreground/25',
-            )}
-          >
+          <div className={cn(pieceIconVariants({ border, size, circle }))}>
             {logoUrl ? (
               <ImageWithFallback
                 src={logoUrl}

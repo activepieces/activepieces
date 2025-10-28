@@ -1,4 +1,4 @@
-import { ApEdition, isNil, Platform } from '@activepieces/shared'
+import { ApEdition, isNil, PlatformWithoutSensitiveData } from '@activepieces/shared'
 import { defaultTheme, generateTheme } from '../../flags/theme'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
@@ -7,7 +7,7 @@ const getPlatformByIdOrFallback = async (platformId: string | null) => {
     if (isNil(platformId)) {
         return defaultTheme
     }
-    const platform = await platformService.getOneOrThrow(platformId)
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
     
     return enterpriseThemeChecker(platform)
 }
@@ -18,7 +18,7 @@ export const appearanceHelper = {
     },
 }
 
-const enterpriseThemeChecker = async (platform: Platform) => {
+const enterpriseThemeChecker = async (platform: PlatformWithoutSensitiveData) => {
     const edition = system.getEdition()
     switch (edition) {
         case ApEdition.COMMUNITY:
@@ -32,7 +32,7 @@ const enterpriseThemeChecker = async (platform: Platform) => {
                 primaryColor: platform.primaryColor,
             })
         case ApEdition.ENTERPRISE:
-            if (platform.customAppearanceEnabled) {
+            if (platform.plan.customAppearanceEnabled) {
                 return generateTheme({
                     websiteName: platform.name,
                     fullLogoUrl: platform.fullLogoUrl,

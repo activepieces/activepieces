@@ -5,7 +5,6 @@ import {
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
-    ApIdSchema,
     ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
     isPostgres,
@@ -16,7 +15,6 @@ import { EncryptedObject } from '../helper/encryption'
 export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
     value: EncryptedObject
     owner: User
-    mcpId?: string
 }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
@@ -47,10 +45,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: String,
             nullable: true,
         },
-        mcpId: {
-            ...ApIdSchema,
-            nullable: true,
-        },
         projectIds: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
@@ -62,24 +56,21 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         value: {
             type: JSONB_COLUMN_TYPE,
         },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
     },
     indices: [
         {
-            name: 'idx_app_connection_project_ids_and_external_id',
-            columns: ['projectIds', 'externalId'],
-        },
-        {
-            name: 'idx_app_connection_platform_id',
-            columns: ['platformId'],
+            name: 'idx_app_connection_platform_id_and_external_id',
+            columns: ['platformId', 'externalId'],
         },
         {
             name: 'idx_app_connection_owner_id',
             columns: ['ownerId'],
         },
-        {
-            name: 'idx_app_connection_mcp_id',
-            columns: ['mcpId'],
-        },
+
     ],
     relations: {
         owner: {

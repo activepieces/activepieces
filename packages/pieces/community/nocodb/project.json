@@ -15,7 +15,12 @@
         "packageJson": "packages/pieces/community/nocodb/package.json",
         "main": "packages/pieces/community/nocodb/src/index.ts",
         "assets": [
-          "packages/pieces/community/nocodb/*.md"
+          "packages/pieces/community/nocodb/*.md",
+          {
+            "input": "packages/pieces/community/nocodb/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

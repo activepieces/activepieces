@@ -23,6 +23,7 @@ export const createChatCompletionAction = createAction({
     model: Property.StaticDropdown({
       displayName: 'Model',
       required: true,
+      defaultValue:'sonar-pro',
       options: {
         disabled: false,
         options: [

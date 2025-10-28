@@ -1,26 +1,14 @@
-import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isNil } from '@activepieces/shared'
+import { pinoLogging } from '@activepieces/server-shared'
+import { apId, EngineHttpResponse, EventPayload, FlowRun, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { usageService } from '../ee/platform-billing/usage/usage-service'
-import { flowService } from '../flows/flow/flow.service'
-import { system } from '../helper/system/system'
-import { projectService } from '../project/project-service'
+import { flowExecutionCache } from '../flows/flow/flow-execution-cache'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
-import { jobQueue } from '../workers/queue'
-import { getJobPriority } from '../workers/queue/queue-manager'
+import { handshakeHandler } from './handshake-handler'
+import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
 
-const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
-
-type HandleWebhookParams = {
-    flowId: string
-    async: boolean
-    saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
-    data: (projectId: string) => Promise<EventPayload>
-    logger: FastifyBaseLogger
-}
-
+const tracer = trace.getTracer('webhook-service')
 
 export const webhookService = {
     async handleWebhook({
@@ -30,99 +18,147 @@ export const webhookService = {
         async,
         saveSampleData,
         flowVersionToRun,
+        payload,
+        execute,
+        onRunCreated,
+        parentRunId,
+        failParentOnFailure,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
-        const webhookHeader = 'x-webhook-id'
-        const webhookRequestId = apId()
-        const pinoLoger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-        const flow = await flowService(pinoLoger).getOneById(flowId)
-        if (isNil(flow)) {
-            pinoLoger.info('Flow not found, returning GONE')
-            return {
-                status: StatusCodes.GONE,
-                body: {},
-                headers: {},
-            }
-        }
-        const projectExists = await projectService.exists(flow.projectId)
-        if (!projectExists) {
-            pinoLoger.info('Project is soft deleted, returning GONE')
-            return {
-                status: StatusCodes.GONE,
-                body: {},
-                headers: {},
-            }
-        }
-
-        await assertExceedsLimit(flow, pinoLoger)
-        if (
-            flow.status !== FlowStatus.ENABLED &&
-            !saveSampleData &&
-            flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
-        ) {
-            return {
-                status: StatusCodes.NOT_FOUND,
-                body: {},
-                headers: {
-                    [webhookHeader]: webhookRequestId,
-                },
-            }
-        }
-
-        pinoLoger.info('Adding webhook job to queue')
-
-        const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLoger).getServerId()
-        await jobQueue(logger).add({
-            id: webhookRequestId,
-            type: JobType.WEBHOOK,
-            data: {
-                projectId: flow.projectId,
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                requestId: webhookRequestId,
-                synchronousHandlerId,
-                payload: await data(flow.projectId),
-                flowId: flow.id,
-                saveSampleData,
-                flowVersionToRun,
+        return tracer.startActiveSpan('webhook.service.handle', {
+            attributes: {
+                'webhook.flowId': flowId,
+                'webhook.async': async,
+                'webhook.saveSampleData': saveSampleData,
+                'webhook.execute': execute,
             },
-            priority: await getJobPriority(synchronousHandlerId),
-        })
+        }, async (span) => {
+            try {
+                const webhookHeader = 'x-webhook-id'
+                const webhookRequestId = apId()
+                span.setAttribute('webhook.requestId', webhookRequestId)
+                const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
 
-        if (async) {
-            pinoLoger.info('Async webhook request completed')
-            return {
-                status: StatusCodes.OK,
-                body: {},
-                headers: {
-                    [webhookHeader]: webhookRequestId,
-                },
+                const flowExecutionResult = await flowExecutionCache(pinoLogger).get({
+                    flowId,
+                    simulate: saveSampleData,
+                })
+                
+                if (!flowExecutionResult.exists) {
+                    pinoLogger.info('Flow not found, returning GONE')
+                    span.setAttribute('webhook.flowFound', false)
+                    return {
+                        status: StatusCodes.GONE,
+                        body: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
+                    }
+                }
+                const { flow } = flowExecutionResult
+                if (flow.status === FlowStatus.DISABLED && !saveSampleData) {
+                    pinoLogger.info('trigger source not found, returning NOT FOUND')
+                    span.setAttribute('webhook.triggerSourceFound', false)
+                    return {
+                        status: StatusCodes.NOT_FOUND,
+                        body: {},
+                        headers: {
+                            [webhookHeader]: webhookRequestId,
+                        },
+                    }
+                }
+
+                span.setAttribute('webhook.flowFound', true)
+                span.setAttribute('webhook.projectId', flow.projectId)
+                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
+                span.setAttribute('webhook.flowVersionId', flowVersionIdToRun)
+
+                const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
+                    payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
+                    handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null, 
+                    flowId: flow.id,
+                    flowVersionId: flowVersionIdToRun,
+                    projectId: flow.projectId,
+                })
+                if (!isNil(response)) {
+                    logger.info({
+                        message: 'Handshake request completed',
+                        flowId: flow.id,
+                        flowVersionId: flowVersionIdToRun,
+                        webhookRequestId,
+                    }, 'Handshake request completed')
+                    span.setAttribute('webhook.handshake', true)
+                    return {
+                        status: response.status,
+                        body: response.body,
+                        headers: response.headers ?? {},
+                    }
+                }
+
+                pinoLogger.info('Adding webhook job to queue')
+
+
+                if (async) {
+                    span.setAttribute('webhook.mode', 'async')
+                    return await webhookHandler.handleAsync({
+                        flow,
+                        saveSampleData,
+                        platformId: flowExecutionResult.platformId,
+                        flowVersionIdToRun,
+                        payload: payload ?? await data(flow.projectId),
+                        logger: pinoLogger,
+                        webhookRequestId,
+                        runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
+                        webhookHeader,
+                        execute: flow.status === FlowStatus.ENABLED && execute,
+                        parentRunId,
+                        failParentOnFailure,
+                    })
+                }
+
+
+                span.setAttribute('webhook.mode', 'sync')
+                const flowHttpResponse = await webhookHandler.handleSync({
+                    payload: payload ?? await data(flow.projectId),
+                    projectId: flow.projectId,
+                    flow,
+                    platformId: flowExecutionResult.platformId,
+                    runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
+                    logger: pinoLogger,
+                    webhookRequestId,
+                    synchronousHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
+                    flowVersionIdToRun,
+                    saveSampleData,
+                    flowVersionToRun,
+                    onRunCreated,
+                    parentRunId,
+                    failParentOnFailure,
+                })
+                return {
+                    status: flowHttpResponse.status,
+                    body: flowHttpResponse.body,
+                    headers: {
+                        ...flowHttpResponse.headers,
+                        [webhookHeader]: webhookRequestId,
+                    },
+                }
             }
-        }
-        const flowHttpResponse = await engineResponseWatcher(pinoLoger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
-            status: StatusCodes.NO_CONTENT,
-            body: {},
-            headers: {},
+            finally {
+                span.end()
+            }
         })
-        return {
-            status: flowHttpResponse.status,
-            body: flowHttpResponse.body,
-            headers: {
-                ...flowHttpResponse.headers,
-                [webhookHeader]: webhookRequestId,
-            },
-        }
     },
 }
 
-async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
-    const exceededLimit = await usageService(log).tasksExceededLimit(flow.projectId)
-    if (!exceededLimit) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.QUOTA_EXCEEDED,
-        params: {
-            metric: 'tasks',
-        },
-    })
+type HandleWebhookParams = {
+    flowId: string
+    async: boolean
+    saveSampleData: boolean
+    flowVersionToRun: WebhookFlowVersionToRun
+    data: (projectId: string) => Promise<EventPayload>
+    logger: FastifyBaseLogger
+    payload?: Record<string, unknown>
+    execute: boolean
+    onRunCreated?: (run: FlowRun) => void
+    parentRunId?: string
+    failParentOnFailure: boolean
 }
-

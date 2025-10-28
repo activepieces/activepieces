@@ -1,4 +1,4 @@
-import { CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { ActivepiecesError, CodeAction, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
 import { ExecutionError, ExecutionErrorType } from './execution-errors'
@@ -16,7 +16,7 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
         executionFailedWithRetryableError(resultExecutionState) &&
         attemptCount < constants.retryConstants.maxAttempts &&
         retryEnabled &&
-        !constants.testSingleStepMode
+        isNil(constants.stepNameToTest)
     ) {
         const backoffTime = Math.pow(constants.retryConstants.retryExponential, attemptCount) * constants.retryConstants.retryInterval
         await new Promise(resolve => setTimeout(resolve, backoffTime))
@@ -36,7 +36,7 @@ export async function continueIfFailureHandler(
     if (
         executionState.verdict === ExecutionVerdict.FAILED &&
         continueOnFailure &&
-        !constants.testSingleStepMode
+        isNil(constants.stepNameToTest)
     ) {
         return executionState
             .setVerdict(ExecutionVerdict.RUNNING, undefined)
@@ -47,10 +47,11 @@ export async function continueIfFailureHandler(
 }
 
 export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
-    console.log(error)
     const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
+    const isActivepiecesError = error instanceof ActivepiecesError
+    const errorMessage = isActivepiecesError ? JSON.stringify(error?.error?.params, null, 2) : JSON.stringify(error, null, 2)
     return {
-        message: error instanceof Error ? error.message : JSON.stringify(error),
+        message: error instanceof Error ? error.message : errorMessage,
         verdictResponse: isEngineError ? {
             reason: FlowRunStatus.INTERNAL_ERROR,
         } : undefined,

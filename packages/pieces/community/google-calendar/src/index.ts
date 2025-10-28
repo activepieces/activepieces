@@ -13,6 +13,14 @@ import { updateEventAction } from './lib/actions/update-event.action';
 import { googleCalendarCommon } from './lib/common';
 import { calendarEventChanged } from './lib/triggers/calendar-event';
 import { addAttendeesToEventAction } from './lib/actions/add-attendees.action';
+import { findFreeBusy } from './lib/actions/find-busy-free-periods';
+import { getEventById } from './lib/actions/get-event-by-id';
+import { newEvent } from './lib/triggers/new-event';
+import { eventEnds } from './lib/triggers/event-ends';
+import { eventStartTimeBefore } from './lib/triggers/event-start-time-before';
+import { newEventMatchingSearch } from './lib/triggers/new-event-matching-search';
+import { eventCancelled } from './lib/triggers/event-cancelled';
+import { newCalendar } from './lib/triggers/new-calendar';
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
   description: '',
@@ -23,6 +31,8 @@ export const googleCalendarAuth = PieceAuth.OAuth2({
   scope: [
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/calendar.readonly',
+    // TODO: Add the scope after Google App Verification
+    // 'https://www.googleapis.com/auth/calendar.calendarlist'
   ],
 });
 
@@ -43,6 +53,8 @@ export const googleCalendar = createPiece({
     'khaledmashaly',
     'abuaboud',
     'ikus060',
+    'Cloudieunnie',
+    'sanket-a11y'
   ],
   auth: googleCalendarAuth,
   actions: [
@@ -52,6 +64,10 @@ export const googleCalendar = createPiece({
     getEvents,
     updateEventAction,
     deleteEventAction,
+    findFreeBusy,
+    getEventById,
+    // TODO: add action after calendarList scope is verified
+    // addCalendarToCalendarlist,
     createCustomApiCallAction({
       auth: googleCalendarAuth,
       baseUrl() {
@@ -64,5 +80,12 @@ export const googleCalendar = createPiece({
       },
     }),
   ],
-  triggers: [calendarEventChanged],
+  triggers: [calendarEventChanged,
+    newEvent,
+    eventEnds,
+    eventStartTimeBefore,
+    newEventMatchingSearch,
+    eventCancelled,
+    newCalendar
+  ],
 });

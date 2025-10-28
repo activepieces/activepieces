@@ -1,13 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common';
+import { LanguageModelV2 } from '@ai-sdk/provider';
+import { generateText } from 'ai';
+import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
+import { aiProps } from '@activepieces/common-ai';
 
 export const classifyText = createAction({
   name: 'classifyText',
   displayName: 'Classify Text',
   description: 'Classify your text into one of your provided categories.',
   props: {
-    provider: aiProps('text').provider,
-    model: aiProps('text').model,
+    provider: aiProps({ modelType: 'language' }).provider,
+    model: aiProps({ modelType: 'language' }).model,
     text: Property.LongText({
       displayName: 'Text to Classify',
       required: true,
@@ -21,26 +24,34 @@ export const classifyText = createAction({
   async run(context) {
     const categories = (context.propsValue.categories as string[]) ?? [];
 
-    const ai = AI({
-      provider: context.propsValue.provider,
-      server: context.server,
+    const providerName = context.propsValue.provider as string;
+    const modelInstance = context.propsValue.model as LanguageModelV2;
+
+    const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
+    if (!providerConfig) {
+      throw new Error(`Provider ${providerName} not found`);
+    }
+
+    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+    const engineToken = context.server.token;
+    const model = createAIModel({
+      providerName,
+      modelInstance,
+      engineToken,
+      baseURL,
+      metadata: {
+        feature: AIUsageFeature.UTILITY_AI,
+      },
     });
 
-    const response = await ai.chat.text({
-      model: context.propsValue.model,
-      maxTokens: 2000,
-      messages: [
-        {
-          role: AIChatRole.USER,
-          content: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
-            ', '
-          )}. Please respond with only the selected category as a single word, and nothing else.
-          Text to classify: "${context.propsValue.text}"`,
-        },
-      ],
+    const response = await generateText({
+      model,
+      prompt: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
+        ', '
+      )}. Please respond with only the selected category as a single word, and nothing else.
+      Text to classify: "${context.propsValue.text}"`,
     });
-
-    const result = response.choices[0].content.trim();
+    const result = response.text.trim();
 
     if (!categories.includes(result)) {
       throw new Error(

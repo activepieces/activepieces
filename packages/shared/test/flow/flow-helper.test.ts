@@ -1,16 +1,18 @@
 import {
-    Action,
-    ActionType,
+    BranchExecutionType,
+    BranchOperator,
+    FlowAction,
+    FlowActionType,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
+    FlowTrigger,
+    FlowTriggerType,
     FlowVersion,
     FlowVersionState,
-    PackageType,
-    PieceType,
+    PropertyExecutionType,
+    RouterExecutionType,
     StepLocationRelativeToParent,
-    Trigger,
-    TriggerType,
 } from '../../src'
 import { _getImportOperations } from '../../src/lib/flows/operations/import-flow'
 
@@ -21,102 +23,118 @@ const flowVersionWithBranching: FlowVersion = {
     flowId: 'lod6JEdKyPlvrnErdnrGa',
     updatedBy: '',
     displayName: 'Standup Reminder',
+    agentIds: [],
     trigger: {
         name: 'trigger',
-        type: TriggerType.PIECE,
+        type: FlowTriggerType.PIECE,
         valid: true,
         settings: {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
-            inputUiInfo: {},
+            propertySettings: {
+                'cronExpression': {
+                    type: PropertyExecutionType.MANUAL,
+                },
+            },
             triggerName: 'cron_expression',
         },
         nextAction: {
             name: 'step_1',
-            type: 'ROUTER',
+            type: FlowActionType.ROUTER,
             valid: true,
             settings: {
-                conditions: [
-                    [
-                        {
-                            operator: 'TEXT_CONTAINS',
-                            firstValue: '1',
-                            secondValue: '1',
-                            caseSensitive: true,
-                        },
-                    ],
+                branches: [
+                    {
+                        conditions: [
+                            [
+                                {
+                                    operator: BranchOperator.TEXT_CONTAINS,
+                                    firstValue: '1',
+                                    secondValue: '1',
+                                    caseSensitive: true,
+                                },
+                            ],
+                        ],
+                        branchType: BranchExecutionType.CONDITION,
+                        branchName: 'step_4',
+                    },
                 ],
+                executionType: RouterExecutionType.EXECUTE_ALL_MATCH,
             },
             nextAction: {
                 name: 'step_4',
-                type: 'PIECE',
+                type: FlowActionType.PIECE,
                 valid: true,
                 settings: {
                     input: {
                         key: '1',
                     },
-                    packageType: PackageType.REGISTRY,
-                    pieceType: PieceType.OFFICIAL,
                     pieceName: 'store',
                     pieceVersion: '~0.2.6',
                     actionName: 'get',
-                    inputUiInfo: {
-                        customizedInputs: {},
+                    propertySettings: {
+                        'key': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
                     },
                 },
                 displayName: 'Get',
             },
             displayName: 'Router',
-            onFailureAction: {
-                name: 'step_3',
-                type: 'CODE',
-                valid: true,
-                settings: {
-                    input: {},
-                    sourceCode: {
-                        code: 'test',
-                        packageJson: '{}',
+            children: [
+                {
+                    name: 'step_3',
+                    type: FlowActionType.CODE,
+                    valid: true,
+                    settings: {
+                        input: {},
+                        sourceCode: {
+                            code: 'test',
+                            packageJson: '{}',
+                        },
                     },
+                    displayName: 'Code',
                 },
-                displayName: 'Code',
-            },
-            onSuccessAction: {
-                name: 'step_2',
-                type: 'PIECE',
-                valid: true,
-                settings: {
-                    input: {
-                        content: 'MESSAGE',
-                        webhook_url: 'WEBHOOK_URL',
+                {
+                    name: 'step_2',
+                    type: FlowActionType.PIECE,
+                    valid: true,
+                    settings: {
+                        input: {
+                            content: 'MESSAGE',
+                            webhook_url: 'WEBHOOK_URL',
+                        },
+                        pieceName: 'discord',
+                        pieceVersion: '0.2.1',
+                        actionName: 'send_message_webhook',
+                        propertySettings: {
+                            'content': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
+                            'webhook_url': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
+                        },
                     },
-                    packageType: PackageType.REGISTRY,
-                    pieceType: PieceType.OFFICIAL,
-                    pieceName: 'discord',
-                    pieceVersion: '0.2.1',
-                    actionName: 'send_message_webhook',
-                    inputUiInfo: {
-                        customizedInputs: {},
-                    },
+                    displayName: 'Send Message Webhook',
                 },
-                displayName: 'Send Message Webhook',
-            },
+            ],
         },
         displayName: 'Cron Expression',
     },
+    connectionIds: [],
     valid: true,
     state: FlowVersionState.DRAFT,
 }
 
-function createCodeAction(name: string): Action {
+function createCodeAction(name: string): FlowAction {
     return {
         name,
         displayName: 'Code',
-        type: ActionType.CODE,
+        type: FlowActionType.CODE,
         valid: true,
         settings: {
             sourceCode: {
@@ -134,25 +152,29 @@ const emptyScheduleFlowVersion: FlowVersion = {
     flowId: 'lod6JEdKyPlvrnErdnrGa',
     displayName: 'Standup Reminder',
     updatedBy: '',
+    agentIds: [],
     trigger: {
         name: 'trigger',
-        type: TriggerType.PIECE,
+        type: FlowTriggerType.PIECE,
         valid: true,
         settings: {
             input: {
                 cronExpression: '25 10 * * 0,1,2,3,4',
             },
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: 'schedule',
             pieceVersion: '0.0.2',
-            inputUiInfo: {},
+            propertySettings: {
+                'cronExpression': {
+                    type: PropertyExecutionType.MANUAL,
+                },
+            },
             triggerName: 'cron_expression',
         },
         displayName: 'Cron Expression',
     },
     valid: true,
     state: FlowVersionState.DRAFT,
+    connectionIds: [],
 }
 
 describe('Flow Helper', () => {
@@ -171,7 +193,7 @@ describe('Flow Helper', () => {
         const operation: FlowOperationRequest = {
             type: FlowOperationType.DELETE_ACTION,
             request: {
-                names: [flowVersionWithBranching.trigger.nextAction.name],
+                names: [flowVersionWithBranching.trigger.nextAction!.name],
             },
         }
         const result = flowOperations.apply(flowVersionWithBranching, operation)
@@ -182,37 +204,40 @@ describe('Flow Helper', () => {
             updated: '2023-05-24T00:16:41.353Z',
             flowId: 'lod6JEdKyPlvrnErdnrGa',
             displayName: 'Standup Reminder',
+            agentIds: [],
             trigger: {
                 name: 'trigger',
-                type: TriggerType.PIECE,
+                type: FlowTriggerType.PIECE,
                 valid: true,
                 settings: {
                     input: {
                         cronExpression: '25 10 * * 0,1,2,3,4',
                     },
-                    packageType: PackageType.REGISTRY,
-                    pieceType: PieceType.OFFICIAL,
                     pieceName: 'schedule',
                     pieceVersion: '~0.0.2',
-                    inputUiInfo: {},
+                    propertySettings: {
+                        'cronExpression': {
+                            type: PropertyExecutionType.MANUAL,
+                        },
+                    },
                     triggerName: 'cron_expression',
                 },
                 displayName: 'Cron Expression',
                 nextAction: {
                     name: 'step_4',
-                    type: 'PIECE',
+                    type: FlowActionType.PIECE,
                     valid: true,
                     settings: {
                         input: {
                             key: '1',
                         },
-                        packageType: PackageType.REGISTRY,
-                        pieceType: PieceType.OFFICIAL,
                         pieceName: 'store',
                         pieceVersion: '~0.2.6',
                         actionName: 'get',
-                        inputUiInfo: {
-                            customizedInputs: {},
+                        propertySettings: {
+                            'key': {
+                                type: PropertyExecutionType.MANUAL,
+                            },
                         },
                     },
                     displayName: 'Get',
@@ -220,6 +245,7 @@ describe('Flow Helper', () => {
             },
             valid: true,
             state: FlowVersionState.DRAFT,
+            connectionIds: [],
         }
         expect(result).toEqual(expectedFlowVersion)
     })
@@ -232,12 +258,11 @@ describe('Flow Helper', () => {
                 parentStep: 'trigger',
                 action: {
                     name: 'step_1',
-                    type: ActionType.LOOP_ON_ITEMS,
+                    type: FlowActionType.LOOP_ON_ITEMS,
                     displayName: 'Loop',
                     valid: true,
                     settings: {
                         items: 'items',
-                        inputUiInfo: {},
                     },
                 },
             },
@@ -263,19 +288,21 @@ describe('Flow Helper', () => {
         resultFlow = flowOperations.apply(resultFlow, addCodeActionInside)
         resultFlow = flowOperations.apply(resultFlow, addCodeActionOnAfter)
 
-        const expectedTrigger: Trigger = {
+        const expectedTrigger: FlowTrigger = {
             name: 'trigger',
-            type: TriggerType.PIECE,
+            type: FlowTriggerType.PIECE,
             valid: true,
             settings: {
                 input: {
                     cronExpression: '25 10 * * 0,1,2,3,4',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'schedule',
                 pieceVersion: '~0.0.2',
-                inputUiInfo: {},
+                propertySettings: {
+                    'cronExpression': {
+                        type: PropertyExecutionType.MANUAL,
+                    },
+                },
                 triggerName: 'cron_expression',
             },
             displayName: 'Cron Expression',
@@ -283,16 +310,15 @@ describe('Flow Helper', () => {
                 displayName: 'Loop',
                 name: 'step_1',
                 valid: true,
-                type: 'LOOP_ON_ITEMS',
+                type: FlowActionType.LOOP_ON_ITEMS,
                 settings: {
                     items: 'items',
-                    inputUiInfo: {},
                 },
                 firstLoopAction: {
                     displayName: 'Code',
                     name: 'step_3',
                     valid: true,
-                    type: 'CODE',
+                    type: FlowActionType.CODE,
                     settings: {
                         input: {},
                         sourceCode: {
@@ -305,7 +331,7 @@ describe('Flow Helper', () => {
                     displayName: 'Code',
                     name: 'step_4',
                     valid: true,
-                    type: 'CODE',
+                    type: FlowActionType.CODE,
                     settings: {
                         input: {},
                         sourceCode: {
@@ -328,9 +354,10 @@ test('Duplicate Flow With Loops using Import', () => {
         flowId: 'YGPIPQDfLcPdJ0aJ9AKGb',
         updatedBy: '',
         displayName: 'Flow 1',
+        agentIds: [],
         trigger: {
             name: 'trigger',
-            type: TriggerType.PIECE,
+            type: FlowTriggerType.PIECE,
             valid: true,
             settings: {
                 input: {
@@ -340,24 +367,28 @@ test('Duplicate Flow With Loops using Import', () => {
                     },
                     authentication: '{{connections.github}}',
                 },
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
                 pieceName: 'github',
                 pieceVersion: '0.1.3',
-                inputUiInfo: {},
+                propertySettings: {
+                    'repository': {
+                        type: PropertyExecutionType.MANUAL,
+                    },
+                    'authentication': {
+                        type: PropertyExecutionType.MANUAL,
+                    },
+                },
                 triggerName: 'trigger_star',
             },
             nextAction: {
                 name: 'step_1',
-                type: 'LOOP_ON_ITEMS',
+                type: FlowActionType.LOOP_ON_ITEMS,
                 valid: false,
                 settings: {
                     items: '',
-                    inputUiInfo: {},
                 },
                 nextAction: {
                     name: 'step_3',
-                    type: 'CODE',
+                    type: FlowActionType.CODE,
                     valid: true,
                     settings: {
                         input: {},
@@ -371,7 +402,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 displayName: 'Loop on Items',
                 firstLoopAction: {
                     name: 'step_2',
-                    type: 'CODE',
+                    type: FlowActionType.CODE,
                     valid: true,
                     settings: {
                         input: {},
@@ -387,6 +418,7 @@ test('Duplicate Flow With Loops using Import', () => {
         },
         valid: false,
         state: FlowVersionState.DRAFT,
+        connectionIds: [],
     }
     const expectedResult: FlowOperationRequest[] = [
         {
@@ -396,11 +428,10 @@ test('Duplicate Flow With Loops using Import', () => {
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                 action: {
                     name: 'step_1',
-                    type: ActionType.LOOP_ON_ITEMS,
+                    type: FlowActionType.LOOP_ON_ITEMS,
                     valid: false,
                     settings: {
                         items: '',
-                        inputUiInfo: {},
                     },
                     displayName: 'Loop on Items',
                 },
@@ -413,7 +444,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                 action: {
                     name: 'step_3',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     valid: true,
                     settings: {
                         input: {},
@@ -433,7 +464,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
                 action: {
                     name: 'step_2',
-                    type: ActionType.CODE,
+                    type: FlowActionType.CODE,
                     valid: true,
                     settings: {
                         input: {},

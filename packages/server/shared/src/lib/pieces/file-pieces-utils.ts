@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
@@ -17,15 +17,13 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         const paths = []
         const files = await readdir(folderPath)
 
+        const ignoredFiles = ['node_modules', 'dist', 'framework', 'common', 'common-ai']
         for (const file of files) {
             const filePath = join(folderPath, file)
             const fileStats = await stat(filePath)
             if (
                 fileStats.isDirectory() &&
-                file !== 'node_modules' &&
-                file !== 'dist' &&
-                file !== 'framework' &&
-                file !== 'common'
+                !ignoredFiles.includes(file)
             ) {
                 paths.push(...(await findAllPiecesFolder(filePath)))
             }
@@ -39,6 +37,10 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
     async function getPackageNameFromFolderPath(folderPath: string): Promise<string> {
         const packageJson = await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
         return packageJson.name
+    }
+
+    async function getProjectJsonFromFolderPath(folderPath: string): Promise<string> {
+        return join(folderPath, 'project.json')
     }
 
     async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
@@ -99,8 +101,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 return pieceCache[folderPath]
             }
 
-            const lockKey = `piece_cache_${folderPath}`
-            lock = await memoryLock.acquire(lockKey)
+            lock = await memoryLock.acquire(`piece_cache_${folderPath}`, 60000)
             if (folderPath in pieceCache && pieceCache[folderPath]) {
                 return pieceCache[folderPath]
             }
@@ -120,12 +121,15 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 pieceName,
                 pieceVersion,
             })
-            const metadata = {
-                ...piece.metadata(),
+            const originalMetadata = piece.metadata()
+            const i18n = await pieceTranslation.initializeI18n(folderPath)
+            const metadata: PieceMetadata = {
+                ...originalMetadata,
                 name: pieceName,
                 version: pieceVersion,
                 authors: piece.authors,
                 directoryPath: folderPath,
+                i18n,
             }
 
             pieceCache[folderPath] = metadata
@@ -157,5 +161,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         findAllPieces,
         clearPieceCache,
         getPackageNameFromFolderPath,
+        getProjectJsonFromFolderPath,
     }
 }

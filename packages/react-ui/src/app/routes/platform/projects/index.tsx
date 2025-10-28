@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,13 +24,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
+import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { ProjectWithLimits } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../components/ui/table-title';
+import { isNil, ProjectWithLimits } from '@activepieces/shared';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -40,7 +40,14 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.displayName}</div>;
+      const locked = row.original.plan.locked;
+
+      return (
+        <div className="text-left flex items-center justify-start ">
+          {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
+          {row.original.displayName}
+        </div>
+      );
     },
   },
   {
@@ -52,7 +59,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       return (
         <div className="text-left">
           {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-          {row.original.plan.tasks
+          {!isNil(row.original.plan.tasks)
             ? formatUtils.formatNumber(row.original.plan.tasks)
             : t('Unlimited')}
         </div>
@@ -67,9 +74,9 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-          {row.original.plan.aiTokens
-            ? formatUtils.formatNumber(row.original.plan.aiTokens)
+          {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
+          {!isNil(row.original.plan.aiCredits)
+            ? formatUtils.formatNumber(row.original.plan.aiCredits)
             : '-'}
         </div>
       );
@@ -116,14 +123,17 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       );
     },
   },
-
   {
     accessorKey: 'externalId',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('External ID')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.externalId}</div>;
+      const displayValue =
+        isNil(row.original.externalId) || row.original.externalId?.length === 0
+          ? '-'
+          : row.original.externalId;
+      return <div className="text-left">{displayValue}</div>;
     },
   },
 ];
@@ -134,7 +144,7 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
-  const isEnabled = platform.manageProjectsEnabled;
+  const isEnabled = platform.plan.manageProjectsEnabled;
   const { data: currentProject } = projectHooks.useCurrentProject();
 
   const [searchParams] = useSearchParams();
@@ -155,6 +165,10 @@ export default function ProjectsPage() {
   });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDialogInitialValues, setEditDialogInitialValues] =
+    useState<any>(null);
+  const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -163,13 +177,7 @@ export default function ProjectsPage() {
     onSuccess: () => {
       refetch();
     },
-    onError: (error) => {
-      toast({
-        title: t('Error'),
-        description: errorToastMessage(error),
-        duration: 3000,
-      });
-    },
+    onError: () => {},
   });
 
   const columnsWithCheckbox: ColumnDef<
@@ -320,21 +328,6 @@ export default function ProjectsPage() {
           );
         },
       },
-      {
-        render: () => {
-          return (
-            <NewProjectDialog onCreate={() => refetch()}>
-              <Button
-                size="sm"
-                className="flex items-center justify-center gap-2"
-              >
-                <Plus className="size-4" />
-                {t('New Project')}
-              </Button>
-            </NewProjectDialog>
-          );
-        },
-      },
     ],
     [selectedRows, currentProject, bulkDeleteMutation],
   );
@@ -354,6 +347,37 @@ export default function ProjectsPage() {
     }
   };
 
+  const actions = [
+    (row: ProjectWithLimits) => {
+      return (
+        <div className="flex items-end justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="size-8 p-0"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setEditDialogInitialValues({
+                    projectName: row.displayName,
+                    tasks: row.plan?.tasks?.toString() ?? '',
+                    aiCredits: row.plan?.aiCredits?.toString() ?? '',
+                  });
+                  setEditDialogProjectId(row.id);
+                  setEditDialogOpen(true);
+                }}
+              >
+                <Pencil className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Edit project')}</TooltipContent>
+          </Tooltip>
+        </div>
+      );
+    },
+  ];
+
   return (
     <LockedFeatureGuard
       featureKey="PROJECTS"
@@ -365,11 +389,20 @@ export default function ProjectsPage() {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
     >
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row">
-          <TableTitle description={t('Manage your automation projects')}>
-            {t('Projects')}
-          </TableTitle>
-        </div>
+        <DashboardPageHeader
+          title={t('Projects')}
+          description={t('Manage your automation projects')}
+        >
+          <NewProjectDialog onCreate={() => refetch()}>
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              <Plus className="size-4" />
+              {t('New Project')}
+            </Button>
+          </NewProjectDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No projects found')}
           emptyStateTextDescription={t(
@@ -385,7 +418,6 @@ export default function ProjectsPage() {
               type: 'input',
               title: t('Name'),
               accessorKey: 'displayName',
-              options: [],
               icon: CheckIcon,
             },
           ]}
@@ -393,33 +425,16 @@ export default function ProjectsPage() {
           page={data}
           isLoading={isLoading}
           bulkActions={bulkActions}
-          actions={[
-            (row) => {
-              return (
-                <div className="flex items-end justify-end">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="size-8 p-0"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          await setCurrentProject(queryClient, row);
-                          navigate('/settings/general');
-                        }}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {t('Edit project')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              );
-            },
-          ]}
+          actions={actions}
+        />
+        <EditProjectDialog
+          open={editDialogOpen}
+          onClose={() => {
+            setEditDialogOpen(false);
+            refetch();
+          }}
+          initialValues={editDialogInitialValues}
+          projectId={editDialogProjectId}
         />
       </div>
     </LockedFeatureGuard>

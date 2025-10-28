@@ -37,6 +37,7 @@ export type MultiSelectDropdownProperty<
   R extends boolean
 > = BasePropertySchema & {
   refreshers: string[];
+  refreshOnSearch?: boolean;
   options: DynamicDropdownOptions<T>;
 } & TPropertyValue<
   T[],

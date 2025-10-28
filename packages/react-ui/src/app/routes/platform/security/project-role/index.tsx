@@ -3,14 +3,14 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -22,13 +22,13 @@ const ProjectRolePage = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
-    enabled: platform.projectRolesEnabled,
+    enabled: platform.plan.projectRolesEnabled,
   });
 
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
-      locked={!platform.projectRolesEnabled}
+      locked={!platform.plan.projectRolesEnabled}
       lockTitle={t('Project Role Management')}
       lockDescription={t(
         'Define custom roles and permissions to control what your team members can access and modify',
@@ -36,16 +36,13 @@ const ProjectRolePage = () => {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
       <div className="flex-col w-full">
-        <div className="flex items-center justify-between mb-4">
-          <TableTitle
-            description={t(
-              'Define custom roles and permissions that can be assigned to your team members',
-            )}
-          >
-            {t('Project Role Management')}
-          </TableTitle>
-
-          {!platform.customRolesEnabled && (
+        <DashboardPageHeader
+          title={t('Project Role Management')}
+          description={t(
+            'Define custom roles and permissions that can be assigned to your team members',
+          )}
+        >
+          {!platform.plan.customRolesEnabled && (
             <Tooltip>
               <TooltipTrigger>
                 <Button size="sm" className="flex items-center gap-2" disabled>
@@ -58,7 +55,7 @@ const ProjectRolePage = () => {
               </TooltipContent>
             </Tooltip>
           )}
-          {platform.customRolesEnabled && (
+          {platform.plan.customRolesEnabled && (
             <ProjectRoleDialog
               mode="create"
               onSave={() => refetch()}
@@ -70,7 +67,7 @@ const ProjectRolePage = () => {
               </Button>
             </ProjectRoleDialog>
           )}
-        </div>
+        </DashboardPageHeader>
 
         <ProjectRolesTable
           projectRoles={data}

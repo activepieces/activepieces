@@ -1,68 +1,69 @@
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
     assertNotNullOrUndefined,
     Cursor,
+    EngineHttpResponse,
     ErrorCode,
     ExecutionType,
-    ExecutioOutputFile,
-    FileCompression,
-    FileType,
     FlowId,
     FlowRetryStrategy,
     FlowRun,
     FlowRunId,
     FlowRunStatus,
     FlowVersionId,
+    isFlowRunStateTerminal,
     isNil,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
     PauseType,
+    PlatformId,
     ProgressUpdateType,
     ProjectId,
     RunEnvironment,
+    SampleDataFileType,
     SeekPage,
     spreadIfDefined,
+    UploadLogsBehavior,
+    WorkerJobType,
 } from '@activepieces/shared'
+import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
-import { In, Not } from 'typeorm'
+import { StatusCodes } from 'http-status-codes'
+import { In, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
 } from '../../database/database-connection'
-import { fileService } from '../../file/file.service'
-import { s3Helper } from '../../file/s3-helper'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { getJobPriority } from '../../workers/queue/queue-manager'
-import { flowService } from '../flow/flow.service'
+import { jobQueue } from '../../workers/queue/job-queue'
+import { JobType } from '../../workers/queue/queue-manager'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { runsMetadataQueue } from './flow-runs-queue'
+import { flowRunLogsService } from './logs/flow-run-logs-service'
 
+
+const tracer = trace.getTracer('flow-run-service')
+export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
-const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
-    async list({
-        projectId,
-        flowId,
-        status,
-        cursor,
-        limit,
-        tags,
-        createdAfter,
-        createdBefore,
-    }: ListParams): Promise<SeekPage<FlowRun>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor)
+    async list(params: ListParams): Promise<SeekPage<FlowRun>> {
+        const decodedCursor = paginationHelper.decodeCursor(params.cursor)
         const paginator = buildPaginator<FlowRun>({
             entity: FlowRunEntity,
             query: {
-                limit,
+                limit: params.limit,
                 order: Order.DESC,
                 orderBy: 'created',
                 afterCursor: decodedCursor.nextCursor,
@@ -70,92 +71,115 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            projectId,
+
+        let query = queryBuilderForFlowRun(flowRunRepo()).where({
+            projectId: params.projectId,
             environment: RunEnvironment.PRODUCTION,
         })
-        if (flowId) {
+
+        if (params.flowId) {
             query = query.andWhere({
-                flowId: In(flowId),
+                flowId: In(params.flowId),
             })
         }
-        if (status) {
+        if (params.status) {
             query = query.andWhere({
-                status: In(status),
+                status: In(params.status),
             })
         }
-        if (createdAfter) {
+        if (params.createdAfter) {
             query = query.andWhere('flow_run.created >= :createdAfter', {
-                createdAfter,
+                createdAfter: params.createdAfter,
             })
         }
-        if (createdBefore) {
+        if (params.createdBefore) {
             query = query.andWhere('flow_run.created <= :createdBefore', {
-                createdBefore,
+                createdBefore: params.createdBefore,
             })
         }
-        if (tags) {
-            query = query.andWhere(APArrayContains('tags', tags))
+        if (params.tags) {
+            query = query.andWhere(APArrayContains('tags', params.tags))
         }
+
+        if (!isNil(params.failedStepName)) {
+            query = query.andWhere({
+                failedStepName: params.failedStepName,
+            })
+        }
+        if (params.flowRunIds) {
+            query = query.andWhere({
+                id: In(params.flowRunIds),
+            })
+        }
+
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
-        const oldFlowRun = await flowRunService(log).getOneOrThrow({
+        const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
         })
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
-                return flowRunService(log).addToQueue({
+                await flowRunRepo().update({
+                    id: oldFlowRun.id,
+                    projectId: oldFlowRun.projectId,
+                }, {
+                    status: FlowRunStatus.QUEUED,
+                })
+                return flowRunService(log).resume({
                     flowRunId: oldFlowRun.id,
                     executionType: ExecutionType.RESUME,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const newFlowRun = {
-                    ...oldFlowRun,
-                    id: apId(),
-                    status: FlowRunStatus.RUNNING,
-                    startTime: new Date().toISOString(),
-                    created: new Date().toISOString(),
-                }
-                await flowRunRepo().save(newFlowRun)
-
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id, log)
-                return flowRunService(log).addToQueue({
+                const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
+                    oldFlowRun.flowId,
+                )
+                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                return this.start({
+                    flowId: oldFlowRun.flowId,
                     payload,
-                    flowRunId: newFlowRun.id,
+                    platformId: await projectService.getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
-                    checkRequestId: false,
+                    synchronousHandlerId: undefined,
+                    httpRequestId: undefined,
+                    executeTrigger: false,
+                    environment: oldFlowRun.environment,
+                    flowVersionId: latestFlowVersion.id,
+                    projectId: oldFlowRun.projectId,
+                    failParentOnFailure: oldFlowRun.failParentOnFailure,
+                    parentRunId: oldFlowRun.id,
                 })
             }
         }
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds }: BulkRetryParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds)
+    async existsBy(runId: FlowRunId): Promise<boolean> {
+        return flowRunRepo().existsBy({ id: runId })
+    },
+    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkRetryParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName)
         return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
-    async addToQueue({
+    async resume({
         flowRunId,
         payload,
         requestId,
         progressUpdateType,
         executionType,
         checkRequestId,
-    }: AddToQueueParams): Promise<FlowRun | null> {
+    }: ResumeWebhookParams): Promise<FlowRun | null> {
         log.info({
-            flowRunId,
+            runId: flowRunId,
         }, '[FlowRunService#resume] adding flow run to queue')
 
-        const flowRunToResume = await flowRunRepo().findOneBy({
-            id: flowRunId,
-        })
+        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
 
-        if (isNil(flowRunToResume)) {
+        if (isNil(flowRun)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_RUN_NOT_FOUND,
                 params: {
@@ -163,138 +187,164 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const pauseMetadata = flowRunToResume.pauseMetadata
+
+
+        const pauseMetadata = flowRun.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
+        const platformId = await projectService.getPlatformId(flowRun.projectId)
         if (matchRequestId || !checkRequestId) {
-            return flowRunService(log).start({
+            return addToQueue({
                 payload,
-                flowRunId: flowRunToResume.id,
-                projectId: flowRunToResume.projectId,
-                flowVersionId: flowRunToResume.flowVersionId,
+                flowRun,
+                platformId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
-                httpRequestId: requestId,
+                httpRequestId: flowRun.pauseMetadata?.requestIdToReply ?? undefined,
                 progressUpdateType,
+                executeTrigger: false,
                 executionType,
-                environment: RunEnvironment.PRODUCTION,
-            })
+            }, log)
         }
-        return null
+        await flowRunSideEffects(log).onResume(flowRun)
+        return flowRun
     },
-    async updateStatus({
+    async updateRun({
         flowRunId,
         status,
         tasks,
         projectId,
         tags,
         duration,
-    }: FinishParams): Promise<FlowRun> {
-
-        await flowRunRepo().update({
-            id: flowRunId,
-            projectId,
-        }, {
+        failedStepName,
+        pauseMetadata,
+        logsFileId,
+    }: UpdateRunParams): Promise<void> {
+        log.info({
+            runId: flowRunId,
             status,
+            tasks,
+            duration,
+            failedStepName,
+        }, '[FlowRunService#updateRun]')
+
+        await runsMetadataQueue(log).add({
+            id: flowRunId,
+            status,
+            failedStepName,
+            logsFileId,
+            projectId,
+            tags,
             ...spreadIfDefined('tasks', tasks),
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
-            terminationReason: undefined,
-            tags,
-            finishTime: new Date().toISOString(),
+            ...spreadIfDefined('pauseMetadata', pauseMetadata),
+            finishTime: isFlowRunStateTerminal({
+                status,
+                ignoreInternalError: true,
+            }) ? new Date().toISOString() : undefined,
         })
-
-
-        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
-        await flowRunSideEffects(log).finish(flowRun)
-        return flowRun
     },
 
     async start({
-        projectId,
-        flowVersionId,
-        flowRunId,
+        flowId,
         payload,
-        environment,
+        executeTrigger,
         executionType,
         synchronousHandlerId,
         progressUpdateType,
         httpRequestId,
+        projectId,
+        flowVersionId,
+        parentRunId,
+        failParentOnFailure,
+        platformId,
+        stepNameToTest,
+        environment,
     }: StartParams): Promise<FlowRun> {
-        const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
+        return tracer.startActiveSpan('flowRun.start', {
+            attributes: {
+                'flowRun.flowVersionId': flowVersionId,
+                'flowRun.projectId': projectId,
+                'flowRun.environment': environment,
+                'flowRun.executionType': executionType,
+                'flowRun.progressUpdateType': progressUpdateType,
+                'flowRun.executeTrigger': executeTrigger,
+                'flowRun.httpRequestId': httpRequestId ?? 'none',
+            },
+        }, async (span) => {
+            try {
+                span.setAttribute('flowRun.flowId', flowId)
 
-        const flow = await flowService(log).getOneOrThrow({
-            id: flowVersion.flowId,
-            projectId,
+                const newFlowRun = await queueOrCreateInstantly({
+                    projectId,
+                    flowVersionId,
+                    parentRunId,
+                    flowId,
+                    failParentOnFailure,
+                    stepNameToTest,
+                    environment,
+                }, log)
+                span.setAttribute('flowRun.id', newFlowRun.id)
+
+                await addToQueue({
+                    flowRun: newFlowRun,
+                    platformId,
+                    payload,
+                    executeTrigger,
+                    executionType,
+                    synchronousHandlerId,
+                    httpRequestId,
+                    progressUpdateType,
+                }, log)
+
+                span.setAttribute('flowRun.queued', true)
+                await flowRunSideEffects(log).onStart(newFlowRun)
+                return newFlowRun
+            }
+            finally {
+                span.end()
+            }
         })
-
-        const flowRun = await getFlowRunOrCreate({
-            id: flowRunId,
-            projectId: flow.projectId,
-            flowId: flowVersion.flowId,
-            flowVersionId: flowVersion.id,
-            environment,
-            flowDisplayName: flowVersion.displayName,
-        }, log)
-
-        flowRun.status = FlowRunStatus.RUNNING
-
-        const savedFlowRun = await flowRunRepo().save(flowRun)
-        const priority = await getJobPriority(synchronousHandlerId)
-        await flowRunSideEffects(log).start({
-            flowRun: savedFlowRun,
-            httpRequestId,
-            payload,
-            priority,
-            synchronousHandlerId,
-            executionType,
-            progressUpdateType,
-        })
-
-        return savedFlowRun
     },
 
-    async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
+    async test({ projectId, flowVersionId, parentRunId, stepNameToTest }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
-        const sampleData = await sampleDataService(log).getOrReturnEmpty({
+        const triggerPayload = await sampleDataService(log).getOrReturnEmpty({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
-            fileType: FileType.SAMPLE_DATA,
+            type: SampleDataFileType.OUTPUT,
         })
-        return this.start({
+        const flowRun = await queueOrCreateInstantly({
             projectId,
-            flowVersionId,
-            payload: sampleData,
+            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion.id,
             environment: RunEnvironment.TESTING,
+            parentRunId,
+            failParentOnFailure: undefined,
+            stepNameToTest,
+        }, log)
+        return addToQueue({
+            flowRun,
+            payload: triggerPayload,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: engineResponseWatcher(log).getServerId(),
+            synchronousHandlerId: undefined,
             httpRequestId: undefined,
+            platformId: await projectService.getPlatformId(projectId),
+            executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
-        })
+            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
+        }, log)
     },
-
-    async pause(params: PauseParams): Promise<void> {
-        log.info({
-            flowRunId: params.flowRunId,
-            pauseType: params.pauseMetadata.type,
-        }, '[FlowRunService] pausing flow run')
-
-        const { flowRunId, pauseMetadata } = params
-        await flowRunRepo().update(flowRunId, {
-            status: FlowRunStatus.PAUSED,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pauseMetadata: pauseMetadata as any,
-        })
-
-        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
-
-        await flowRunSideEffects(log).pause({ flowRun })
-    },
-
-    async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
-        const flowRun = await flowRunRepo().findOneBy({
-            projectId: params.projectId,
+    async getOne(params: GetOneParams): Promise<FlowRun | null> {
+        const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({
             id: params.id,
-        })
+            ...(params.projectId ? { projectId: params.projectId } : {}),
+        }).getOne()
+
+        return flowRun
+    },
+    async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
+        const flowRun = await this.getOne(params)
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
@@ -311,50 +361,56 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
         if (!isNil(flowRun.logsFileId)) {
-            const { data } = await fileService(log).getDataOrThrow({
-                fileId: flowRun.logsFileId,
+            const stateFile = await flowRunLogsService(log).getLogs({
+                logsFileId: flowRun.logsFileId,
                 projectId: flowRun.projectId,
             })
-
-            const serializedExecutionOutput = data.toString('utf-8')
-            const executionOutput: ExecutioOutputFile = JSON.parse(
-                serializedExecutionOutput,
-            )
-            steps = executionOutput.executionState.steps
+            if (!isNil(stateFile)) {
+                steps = stateFile.executionState.steps
+            }
         }
         return {
             ...flowRun,
             steps,
         }
     },
-    async updateLogsAndReturnUploadUrl({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<string | undefined> {
-        const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
-        if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
-            const errors = new Error(
-                'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
-            )
-            exceptionHandler.handle(errors, log)
-            throw errors
-        }
-        const newLogsFileId = logsFileId ?? apId()
-        const file = await fileService(log).save({
-            fileId: newLogsFileId,
-            projectId,
-            data: executionState ?? null,
-            size: executionStateContentLength,
-            type: FileType.FLOW_RUN_LOG,
-            compression: FileCompression.NONE,
-            metadata: {
-                flowRunId,
-                projectId,
-            },
+    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }) {
+        const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
+            id: runId,
+            projectId: undefined,
         })
-        if (isNil(logsFileId)) {
-            await flowRunRepo().update(flowRunId, {
-                logsFileId: newLogsFileId,
-            })
+        const synchronousHandlerId = engineResponseWatcher(log).getServerId()
+        const matchRequestId = isNil(flowRun.pauseMetadata) || (flowRun.pauseMetadata.type === PauseType.WEBHOOK && requestId === flowRun.pauseMetadata.requestId)
+        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request is required')
+        if (!matchRequestId) {
+            return {
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {},
+            }
         }
-        return getUploadUrl(file.s3Key, executionState, executionStateContentLength, log)
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
+            return {
+                status: StatusCodes.CONFLICT,
+                body: { 'message': 'Flow run is not paused', 'flowRunStatus': flowRun.status },
+                headers: {},
+            }
+        }
+        await addToQueue({
+            payload,
+            flowRun,
+            platformId: await projectService.getPlatformId(flowRun.projectId),
+            synchronousHandlerId,
+            httpRequestId: requestId,
+            executeTrigger: false,
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
+            executionType: ExecutionType.RESUME,
+        }, log)
+        return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
+            status: StatusCodes.NO_CONTENT,
+            body: {},
+            headers: {},
+        })
     },
 })
 
@@ -366,6 +422,7 @@ async function filterFlowRunsAndApplyFilters(
     createdAfter?: string,
     createdBefore?: string,
     excludeFlowRunIds?: FlowRunId[],
+    failedStepName?: string,
 ): Promise<FlowRunId[]> {
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId,
@@ -403,60 +460,16 @@ async function filterFlowRunsAndApplyFilters(
         })
     }
 
+    if (failedStepName) {
+        query = query.andWhere('flow_run.failedStepName = :failedStepName', {
+            failedStepName,
+        })
+    }
+
     const flowRuns = await query.getMany()
     return flowRuns.map(flowRun => flowRun.id)
 }
 
-
-const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, contentLength: number, log: FastifyBaseLogger): Promise<string | undefined> => {
-    if (!isNil(executionDate)) {
-        return undefined
-    }
-    assertNotNullOrUndefined(s3Key, 's3Key')
-    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
-}
-
-const getFlowRunOrCreate = async (
-    params: GetOrCreateParams,
-    log: FastifyBaseLogger,
-): Promise<Partial<FlowRun>> => {
-    const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } =
-        params
-
-    if (id) {
-        return flowRunService(log).getOneOrThrow({
-            id,
-            projectId,
-        })
-    }
-
-    return {
-        id: apId(),
-        projectId,
-        flowId,
-        flowVersionId,
-        environment,
-        flowDisplayName,
-        startTime: new Date().toISOString(),
-    }
-}
-
-async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
-    flowRunId: FlowRunId,
-    log: FastifyBaseLogger,
-): Promise<unknown> {
-    const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
-        id: flowRunId,
-        projectId: undefined,
-    })
-    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
-        flowRun.flowId,
-    )
-    await flowRunRepo().update(flowRunId, {
-        flowVersionId: flowVersion.id,
-    })
-    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
-}
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
     const handlerId = engineResponseWatcher(log).getServerId()
@@ -472,29 +485,100 @@ function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: st
     }
 }
 
-type UpdateLogs = {
-    flowRunId: FlowRunId
-    logsFileId: string | undefined
-    projectId: ProjectId
-    executionStateString: string | undefined
-    executionStateContentLength: number
+
+async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Promise<FlowRun> {
+    const logsFileId = params.flowRun.logsFileId ?? apId()
+    const logsUploadUrl = await flowRunLogsService(log).constructUploadUrl({
+        logsFileId,
+        projectId: params.flowRun.projectId,
+        flowRunId: params.flowRun.id,
+        behavior: USE_SIGNED_URL ? UploadLogsBehavior.REDIRECT_TO_S3 : UploadLogsBehavior.UPLOAD_DIRECTLY,
+    })
+
+    const traceContext: Record<string, string> = {}
+    propagation.inject(context.active(), traceContext)
+
+    await jobQueue(log).add({
+        id: params.flowRun.id,
+        type: JobType.ONE_TIME,
+        data: {
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            synchronousHandlerId: params.synchronousHandlerId ?? null,
+            projectId: params.flowRun.projectId,
+            platformId: params.platformId,
+            environment: params.flowRun.environment,
+            flowId: params.flowRun.flowId,
+            runId: params.flowRun.id,
+            jobType: WorkerJobType.EXECUTE_FLOW,
+            flowVersionId: params.flowRun.flowVersionId,
+            payload: params.payload,
+            executeTrigger: params.executeTrigger,
+            httpRequestId: params.httpRequestId,
+            executionType: params.executionType,
+            progressUpdateType: params.progressUpdateType,
+            stepNameToTest: params.flowRun.stepNameToTest,
+            sampleData: params.sampleData,
+            logsUploadUrl,
+            logsFileId,
+            traceContext,
+        },
+    })
+    return params.flowRun
 }
 
-type FinishParams = {
+function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
+    return repo.createQueryBuilder('flow_run')
+        .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
+        .addSelect(['"flowVersion"."displayName"'])
+}
+
+async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
+    const now = new Date().toISOString()
+    const flowRun: FlowRun = {
+        id: apId(),
+        projectId: params.projectId,
+        flowId: params.flowId,
+        flowVersionId: params.flowVersionId,
+        environment: params.environment,
+        startTime: now,
+        parentRunId: params.parentRunId,
+        failParentOnFailure: params.failParentOnFailure ?? true,
+        status: FlowRunStatus.QUEUED,
+        stepNameToTest: params.stepNameToTest,
+        created: now,
+        updated: now,
+        steps: {},
+    }
+    switch (params.environment) {
+        case RunEnvironment.TESTING:
+            return flowRunRepo().save(flowRun)
+        case RunEnvironment.PRODUCTION:
+            await runsMetadataQueue(log).add(flowRun)
+            return flowRun
+    }
+}
+
+
+type UpdateRunParams = {
     flowRunId: FlowRunId
     projectId: string
     status: FlowRunStatus
     tasks: number | undefined
     duration: number | undefined
+    pauseMetadata?: PauseMetadata
     tags: string[]
+    failedStepName?: string | undefined
+    logsFileId: string | undefined
 }
 
-type GetOrCreateParams = {
-    id?: FlowRunId
+
+type CreateParams = {
     projectId: ProjectId
-    flowId: FlowId
     flowVersionId: FlowVersionId
-    flowDisplayName: string
+    parentRunId?: FlowRunId
+    failParentOnFailure: boolean | undefined
+    stepNameToTest?: string
+    flowId: FlowId
     environment: RunEnvironment
 }
 
@@ -507,6 +591,8 @@ type ListParams = {
     limit: number
     createdAfter?: string
     createdBefore?: string
+    failedStepName?: string
+    flowRunIds?: FlowRunId[]
 }
 
 type GetOneParams = {
@@ -514,26 +600,43 @@ type GetOneParams = {
     projectId: ProjectId | undefined
 }
 
-type StartParams = {
-    projectId: ProjectId
-    flowVersionId: FlowVersionId
-    flowRunId?: FlowRunId
-    environment: RunEnvironment
+type AddToQueueParams = {
+    flowRun: FlowRun
+    platformId: PlatformId
     payload: unknown
+    executeTrigger: boolean
+    executionType: ExecutionType
     synchronousHandlerId: string | undefined
     httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
-    executionType: ExecutionType
+    sampleData?: Record<string, unknown>
 }
+
+type StartParams = {
+    flowId: FlowId
+    payload: unknown
+    platformId: PlatformId
+    environment: RunEnvironment
+    flowVersionId: FlowVersionId
+    projectId: ProjectId
+    parentRunId?: FlowRunId
+    failParentOnFailure: boolean | undefined
+    stepNameToTest?: string
+    executeTrigger: boolean
+    executionType: ExecutionType
+    synchronousHandlerId: string | undefined
+    httpRequestId: string | undefined
+    progressUpdateType: ProgressUpdateType
+    sampleData?: Record<string, unknown>
+}
+
+
 
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-}
-
-type PauseParams = {
-    flowRunId: FlowRunId
-    pauseMetadata: PauseMetadata
+    parentRunId?: FlowRunId
+    stepNameToTest?: string
 }
 
 type RetryParams = {
@@ -551,8 +654,9 @@ type BulkRetryParams = {
     createdAfter?: string
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
+    failedStepName?: string
 }
-type AddToQueueParams = {
+type ResumeWebhookParams = {
     flowRunId: FlowRunId
     requestId?: string
     progressUpdateType: ProgressUpdateType

@@ -15,7 +15,7 @@ export const eventsById = createAction({
       displayName: 'Event ID list',
       required: true,
       description:
-        "Comma seperated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.",
+        "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.",
     }),
     calendarId: Property.Dropdown<string>({
       displayName: 'Calendar',

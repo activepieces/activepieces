@@ -1,8 +1,10 @@
+import './instrumentation'
 
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
-import { initializeLock } from './app/helper/lock'
+import { distributedLock } from './app/database/redis-connections'
 import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
@@ -56,17 +58,20 @@ function setupTimeZone(): void {
 const main = async (): Promise<void> => {
     setupTimeZone()
     if (system.isApp()) {
-        await initializeDatabase({ runMigrations: true })
-        initializeLock()
+        await distributedLock(system.globalLogger()).runExclusive({
+            key: 'database-migration-lock',
+            timeoutInSeconds: dayjs.duration(10, 'minutes').asSeconds(),
+            fn: async () => initializeDatabase({ runMigrations: true }),
+        })
     }
     const app = await setupServer()
 
-    process.on('SIGINT', () => {
-        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+    process.on('SIGINT', async () => {
+        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
-    process.on('SIGTERM', () => {
-        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+    process.on('SIGTERM', async () => {
+        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
     await start(app)

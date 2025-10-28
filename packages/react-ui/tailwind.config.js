@@ -1,6 +1,5 @@
 const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
 const { join } = require('path');
-const { fontFamily } = require('tailwindcss/defaultTheme');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -85,14 +84,6 @@ module.exports = {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
       },
       borderRadius: {
         lg: `var(--radius)`,
@@ -102,7 +93,7 @@ module.exports = {
         xss: 'calc(var(--radius) - 10px)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', ...fontFamily.sans],
+        inter: ['Inter', 'sans-serif'],
       },
       fontSize: {
         'xss': '0.65rem',
@@ -110,6 +101,10 @@ module.exports = {
         '4xl': '2rem',
       },
       keyframes: {
+       'primary-color-pulse': {
+           from: { color: 'hsl(var(--primary))' },
+           to: { color: 'hsl(var(--primary)/0.7)' },
+        },
         'accordion-down': {
           from: { height: '0' },
           to: { height: 'var(--radix-accordion-content-height)' },
@@ -124,6 +119,14 @@ module.exports = {
           },
           '100%': {
             opacity: 1,
+          },
+        },
+        highlight: {
+          '0%': {
+            backgroundColor: 'hsl(var(--primary-100))',
+          },
+          '100%': {
+            backgroundColor: 'hsl(var(--secondary))',
           },
         },
         typing: {
@@ -145,15 +148,26 @@ module.exports = {
           '100%': {
             backgroundPosition: '0%'
           }
+        },
+        'slide-in-from-bottom': {
+          '0%': {
+            transform: 'translateY(100%)'
+          },
+          '100%': {
+            transform: 'translateY(0%)'
+          }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         fade: 'fade 0.2s ease-out',
+        highlight: 'highlight 1s ease-out',
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
-        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'
+        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite',
+        'slide-in-from-bottom': 'slide-in-from-bottom 0.2s ease-out forwards',
+        'primary-color-pulse': 'primary-color-pulse 1s ease-in-out infinite alternate'
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',
@@ -161,5 +175,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'),require('tailwind-scrollbar')],
 };

@@ -2,17 +2,21 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { engineProcessManager } from '../compute/process/engine-process-manager'
 
 const execAsync = promisify(exec)
 
-let settings: WorkerMachineHealthcheckResponse | undefined
+let settings: WorkerSettingsResponse | undefined
+
+const workerId = apId()
 
 export const workerMachine = {
+    getWorkerId: () => workerId,
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
-
         const cpus = os.cpus()
         const cpuUsage = cpus.reduce((acc, cpu) => {
             const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
@@ -33,8 +37,7 @@ export const workerMachine = {
                 ...spreadIfDefined('SANDBOX_PROPAGATED_ENV_VARS', settings?.SANDBOX_PROPAGATED_ENV_VARS?.join(',')),
                 ...spreadIfDefined('EXECUTION_MODE', settings?.EXECUTION_MODE),
                 ...spreadIfDefined('FILE_STORAGE_LOCATION', settings?.FILE_STORAGE_LOCATION),
-                ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', settings?.FLOW_WORKER_CONCURRENCY?.toString()),
-                ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', settings?.SCHEDULED_WORKER_CONCURRENCY?.toString()),
+                ...spreadIfDefined('WORKER_CONCURRENCY', settings?.WORKER_CONCURRENCY?.toString()),
                 ...spreadIfDefined('TRIGGER_TIMEOUT_SECONDS', settings?.TRIGGER_TIMEOUT_SECONDS?.toString()),
                 ...spreadIfDefined('PAUSED_FLOW_TIMEOUT_DAYS', settings?.PAUSED_FLOW_TIMEOUT_DAYS?.toString()),
                 ...spreadIfDefined('FLOW_TIMEOUT_SECONDS', settings?.FLOW_TIMEOUT_SECONDS?.toString()),
@@ -46,23 +49,47 @@ export const workerMachine = {
                 ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
+                ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', settings?.PLATFORM_ID_FOR_DEDICATED_WORKER),
                 version: await apVersionUtil.getCurrentRelease(),
             },
+            workerId,
+            totalSandboxes: engineProcessManager.getTotalSandboxes(),
+            freeSandboxes: engineProcessManager.getFreeSandboxes(),
         }
     },
-    init: async (_settings: WorkerMachineHealthcheckResponse) => {
+    isDedicatedWorker: () => {
+        return !isNil(workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER)
+    },
+    init: async (_settings: WorkerSettingsResponse, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
-            ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.FLOW_WORKER_CONCURRENCY)),
-            ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY)),
+            ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
+            ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)),
         }
 
+        const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
+        engineProcessManager.init(settings.WORKER_CONCURRENCY, {
+            env: getEnvironmentVariables(),
+            resourceLimits: {
+                maxOldGenerationSizeMb: memoryLimit,
+                maxYoungGenerationSizeMb: memoryLimit,
+                stackSizeMb: memoryLimit,
+            },
+            execArgv: [],
+        }, log)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)
+    },
+    hasSettings: () => {
+        return !isNil(settings)
     },
     getSettings: () => {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
+    },
+    getSettingOrThrow: (prop: keyof WorkerSettingsResponse) => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings[prop]
     },
     getInternalApiUrl: (): string => {
         if (environmentVariables.hasAppModules()) {
@@ -71,8 +98,24 @@ export const workerMachine = {
         const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
         return appendSlashAndApi(replaceLocalhost(url))
     },
+    getSocketUrlAndPath: (): { url: string, path: string } => {
+        if (environmentVariables.hasAppModules()) {
+            return {
+                url: 'http://127.0.0.1:3000/',
+                path: '/socket.io',
+            }
+        }
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return {
+            url: removeTrailingSlash(replaceLocalhost(url)),
+            path: '/api/socket.io',
+        }
+    },
     getPublicApiUrl: (): string => {
         return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
+    },
+    getPlatformIdForDedicatedWorker: (): string | undefined => {
+        return environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
 }
 
@@ -92,6 +135,10 @@ function replaceLocalhost(urlString: string): string {
     return url.toString()
 }
 
+function removeTrailingSlash(url: string): string {
+    return url.replace(/\/$/, '')
+}
+
 function appendSlashAndApi(url: string): string {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
@@ -101,8 +148,8 @@ async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
 
-    const memLimitExists = await fileExists(memLimitPath)
-    const memUsageExists = await fileExists(memUsagePath)
+    const memLimitExists = await fileSystemUtils.fileExists(memLimitPath)
+    const memUsageExists = await fileSystemUtils.fileExists(memUsagePath)
 
     const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
     const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.totalmem() - os.freemem()
@@ -161,5 +208,21 @@ async function getDiskInfo(): Promise<MachineInformation['diskInfo']> {
             used: 0,
             percentage: 0,
         }
+    }
+}
+
+
+function getEnvironmentVariables(): Record<string, string | undefined> {
+    const allowedEnvVariables = workerMachine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
+    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
+    return {
+        ...propagatedEnvVars,
+        NODE_OPTIONS: '--enable-source-maps',
+        AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
+        AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
+        AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,
+        AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
+        AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
+        AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
     }
 }

@@ -6,6 +6,7 @@ import {
   createAction,
   StaticPropsValue,
   InputPropertyMap,
+  FilesService,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -15,7 +16,9 @@ import {
   QueryParams,
   httpClient,
 } from '../http';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
+import fs from 'fs';
+import mime from 'mime-types';
 
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
@@ -28,27 +31,38 @@ export const getAccessTokenOrThrow = (
 
   return accessToken;
 };
-const joinBaseUrlWithRelativePath = ({ baseUrl, relativePath }: { baseUrl: string, relativePath: string }) => {
-  const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-  const relativePathWithoutSlash = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
-  return `${baseUrlWithSlash}${relativePathWithoutSlash}`
- }
- 
+const joinBaseUrlWithRelativePath = ({
+  baseUrl,
+  relativePath,
+}: {
+  baseUrl: string;
+  relativePath: string;
+}) => {
+  const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const relativePathWithoutSlash = relativePath.startsWith('/')
+    ? relativePath.slice(1)
+    : relativePath;
+  return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
+};
 
-const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string,auth?: unknown) => {
-  const exampleBaseUrl = `https://api.example.com`
+const getBaseUrlForDescription = (
+  baseUrl: (auth?: unknown) => string,
+  auth?: unknown
+) => {
+  const exampleBaseUrl = `https://api.example.com`;
   try {
     const baseUrlValue = auth ? baseUrl(auth) : undefined;
-    const baseUrlValueWithoutTrailingSlash = baseUrlValue?.endsWith('/') ? baseUrlValue.slice(0, -1) : baseUrlValue
-    return baseUrlValueWithoutTrailingSlash ?? exampleBaseUrl
+    const baseUrlValueWithoutTrailingSlash = baseUrlValue?.endsWith('/')
+      ? baseUrlValue.slice(0, -1)
+      : baseUrlValue;
+    return baseUrlValueWithoutTrailingSlash ?? exampleBaseUrl;
+  } catch (error) {
+    //If baseUrl fails we stil want to return a valid baseUrl for description
+    {
+      return exampleBaseUrl;
+    }
   }
-  //If baseUrl fails we stil want to return a valid baseUrl for description
-  catch (error) {
-  {
-    return exampleBaseUrl
-  }
-}
-}
+};
 export function createCustomApiCallAction({
   auth,
   baseUrl,
@@ -58,13 +72,14 @@ export function createCustomApiCallAction({
   name,
   props,
   extraProps,
+  authLocation = 'headers',
 }: {
   auth?: PieceAuthProperty;
   baseUrl: (auth?: unknown) => string;
   authMapping?: (
     auth: unknown,
     propsValue: StaticPropsValue<any>
-  ) => Promise<HttpHeaders>;
+  ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
   description?: string | null;
   displayName?: string | null;
@@ -79,8 +94,8 @@ export function createCustomApiCallAction({
     timeout?: Partial<ReturnType<typeof Property.Number>>;
   };
   extraProps?: InputPropertyMap;
+  authLocation?: 'headers' | 'queryParams';
 }) {
- 
   return createAction({
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
@@ -98,8 +113,8 @@ export function createCustomApiCallAction({
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: `You can either use the full URL or the relative path to the base URL 
-i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
+              description: `You can either use the full URL or the relative path to the base URL
+i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               required: true,
               defaultValue: baseUrl(auth),
               ...(props?.url ?? {}),
@@ -137,6 +152,13 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
         required: false,
         ...(props?.body ?? {}),
       }),
+      response_is_binary: Property.Checkbox({
+        displayName: 'Response is Binary ?',
+        description:
+          'Enable for files like PDFs, images, etc..',
+        required: false,
+        defaultValue: false,
+      }),
       failsafe: Property.Checkbox({
         displayName: 'No Error on Failure',
         required: false,
@@ -151,39 +173,66 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
     },
 
     run: async (context) => {
-      const { method, url, headers, queryParams, body, failsafe, timeout } =
-        context.propsValue;
+      const {
+        method,
+        url,
+        headers,
+        queryParams,
+        body,
+        failsafe,
+        timeout,
+        response_is_binary,
+      } = context.propsValue;
 
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
 
-      let headersValue = headers as HttpHeaders;
-      if (authMapping) {
-        const headers = await authMapping(context.auth, context.propsValue);
-        if (headers) {
-          headersValue = {
-            ...headersValue,
-            ...headers,
-          };
-        }
-      }
+      const authValue = !isNil(authMapping)
+        ? await authMapping(context.auth, context.propsValue)
+        : {};
+
       const urlValue = url['url'] as string;
-      const fullUrl = urlValue.startsWith('http://') || urlValue.startsWith('https://') ? urlValue :
-                     joinBaseUrlWithRelativePath({ baseUrl: baseUrl(context.auth), relativePath: urlValue})
+      const fullUrl =
+        urlValue.startsWith('http://') || urlValue.startsWith('https://')
+          ? urlValue
+          : joinBaseUrlWithRelativePath({
+              baseUrl: baseUrl(context.auth),
+              relativePath: urlValue,
+            });
       const request: HttpRequest<Record<string, unknown>> = {
         method,
         url: fullUrl,
-        headers: headersValue,
-        queryParams: queryParams as QueryParams,
+        headers: {
+          ...((headers ?? {}) as HttpHeaders),
+          ...(authLocation === 'headers' || !isNil(authLocation)
+            ? authValue
+            : {}),
+        },
+        queryParams: {
+          ...(authLocation === 'queryParams' ? (authValue as QueryParams) : {}),
+          ...((queryParams as QueryParams) ?? {}),
+        },
         timeout: timeout ? timeout * 1000 : 0,
       };
+
+      // Set response type to arraybuffer if binary response is expected
+      if (response_is_binary) {
+        request.responseType = 'arraybuffer';
+      }
 
       if (body) {
         request.body = body;
       }
 
       try {
-        return await httpClient.sendRequest(request);
+        const response = await httpClient.sendRequest(request);
+        return await handleBinaryResponse(
+          context.files,
+          response.body,
+          response.status,
+          response.headers,
+          response_is_binary
+        );
       } catch (error) {
         if (failsafe) {
           return (error as HttpError).errorMessage();
@@ -193,3 +242,39 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
     },
   });
 }
+
+export function is_chromium_installed(): boolean {
+  const chromiumPath = '/usr/bin/chromium';
+  return fs.existsSync(chromiumPath);
+}
+
+const handleBinaryResponse = async (
+  files: FilesService,
+  bodyContent: string | ArrayBuffer | Buffer,
+  status: number,
+  headers?: HttpHeaders,
+  isBinary?: boolean
+) => {
+  let body;
+
+  if (isBinary && isBinaryBody(bodyContent)) {
+    const contentTypeValue = Array.isArray(headers?.['content-type'])
+      ? headers['content-type'][0]
+      : headers?.['content-type'];
+    const fileExtension: string =
+      mime.extension(contentTypeValue ?? '') || 'txt';
+    body = await files.write({
+      fileName: `output.${fileExtension}`,
+      data: Buffer.from(bodyContent),
+    });
+  } else {
+    body = bodyContent;
+  }
+
+  return { status, headers, body };
+};
+
+const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
+  return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};
+

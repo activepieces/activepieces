@@ -29,14 +29,14 @@ const DataTableInputPopover = ({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button variant="outline" className="border-dashed">
           <SearchIcon className="mr-2 size-4" />
           {title}
           {filterValue.length > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
-                variant="secondary"
+                variant="accent"
                 className="rounded-sm px-1 font-normal max-w-40 truncate"
               >
                 {filterValue}

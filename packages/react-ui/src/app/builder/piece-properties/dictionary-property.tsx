@@ -91,10 +91,9 @@ export const DictionaryProperty = ({
 
   const updateValue = (items: DictionaryInputItem[]) => {
     onChange(
-      items.reduce(
-        (acc, current) => ({ ...acc, [current.key]: current.value }),
-        {},
-      ),
+      items.reduce((acc, current) => {
+        return { ...acc, [current.key]: current.value };
+      }, {}),
     );
   };
   return (
@@ -107,7 +106,7 @@ export const DictionaryProperty = ({
           <Input
             value={key}
             disabled={disabled}
-            className="basis-[50%] h-full max-w-[50%]"
+            className="basis-[50%] h-full max-w-[50%] h-[38px]"
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
           <div className="basis-[50%] max-w-[50%]">
@@ -121,6 +120,7 @@ export const DictionaryProperty = ({
               <Input
                 value={value}
                 disabled={disabled}
+                className="h-full"
                 onChange={(e) =>
                   onChangeValue(index, e.target.value, undefined)
                 }

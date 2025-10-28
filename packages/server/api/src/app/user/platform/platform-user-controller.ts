@@ -2,8 +2,10 @@ import {
     ApId,
     assertNotNullOrUndefined,
     EndpointScope,
+    ListUsersRequestBody,
     PrincipalType,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpdateUserRequestBody,
     UserWithMetaInformation,
 } from '@activepieces/shared'
@@ -22,6 +24,9 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 
         return userService.list({
             platformId,
+            externalId: req.query.externalId,
+            cursorRequest: req.query.cursor ?? null,
+            limit: req.query.limit ?? 10,
         })
     })
 
@@ -35,6 +40,7 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
             platformRole: req.body.platformRole,
             status: req.body.status,
             externalId: req.body.externalId,
+            lastChangelogDismissed: req.body.lastChangelogDismissed,
         })
     })
 
@@ -53,9 +59,13 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 
 const ListUsersRequest = {
     schema: {
+        querystring: ListUsersRequestBody,
         response: {
             [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
         },
+        tags: ['users'],
+        description: 'List users',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     response: {
         [StatusCodes.OK]: SeekPage(UserWithMetaInformation),

@@ -15,11 +15,11 @@ export const updateRecord = createAction({
       displayName: 'Values',
       description: 'The values to update. Leave empty to keep current value.',
       required: true,
-      refreshers: ['table_id', 'record_id'],
-      props: async ({ table_id, record_id }, context) => {
-        const tableId = table_id as unknown as string;
-        const recordId = record_id as unknown as string;
-        if ((tableId ?? '').toString().length === 0 || (recordId ?? '').toString().length === 0) {
+      refreshers: ['table_id'],
+      props: async ({ table_id }, context) => {
+        const tableExternalId = table_id as unknown as string;
+        const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
+        if ((tableId ?? '').toString().length === 0) {
           return {};
         }
 
@@ -28,7 +28,8 @@ export const updateRecord = createAction({
     }),
   },
   async run(context) {
-    const { table_id: tableId, record_id, values } = context.propsValue;
+    const { table_id: tableExternalId, record_id, values } = context.propsValue;
+    const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
     const tableFields = await tablesCommon.getTableFields({ tableId, context });
     const fieldValidations = tablesCommon.createFieldValidations(tableFields);
@@ -36,10 +37,10 @@ export const updateRecord = createAction({
 
     const cells: UpdateRecordRequest['cells'] = Object.entries(values)
       .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-      .map(([fieldId, value]) => ({
-        fieldId,
+      .map(([fieldExternalId, value]) => ({
+        fieldId: tableFields.find((field) => field.externalId === fieldExternalId)?.id ?? '',
         value,
-      }));
+      })).filter((cell) => cell.fieldId !== '');
 
     const request: UpdateRecordRequest = {
       cells,
@@ -54,6 +55,7 @@ export const updateRecord = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
+      retries: 5,
     });
 
     return tablesCommon.formatRecord(response.body as PopulatedRecord);

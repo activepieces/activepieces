@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
-import { PackageType, PieceCategory, PieceType } from '../piece'
+import { PackageType, PieceCategory } from '../piece'
 
 export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
 export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
@@ -54,6 +54,7 @@ export const ListPiecesRequestQuery = Type.Object({
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
     categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
     suggestionType: Type.Optional(Type.Enum(SuggestionType)),
+    locale: Type.Optional(Type.String()),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
@@ -69,6 +70,7 @@ export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
     projectId: Type.Optional(Type.String()),
+    locale: Type.Optional(Type.String()),
 })
 
 export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))
@@ -77,8 +79,6 @@ export type ListVersionsResponse = Static<typeof ListVersionsResponse>
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>
 
 export const PieceOptionRequest = Type.Object({
-    packageType: Type.Enum(PackageType),
-    pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionOrTriggerName: Type.String({}),

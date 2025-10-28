@@ -22,6 +22,7 @@ export const folderModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+
     fastify.post('/', CreateFolderParams, async (request) => {
         const createdFolder = await folderService(request.log).upsert({
             projectId: request.principal.projectId,

@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { FullLogo } from '@/components/ui/full-logo';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 
@@ -19,6 +20,7 @@ const VerifyEmail = () => {
   const otp = searchParams.get('otpcode');
   const identityId = searchParams.get('identityId');
   const hasMutated = useRef(false);
+  const { reportSignup } = usePartnerStack();
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -27,8 +29,9 @@ const VerifyEmail = () => {
         identityId: identityId!,
       });
     },
-    onSuccess: () => {
-      setTimeout(() => navigate('/sign-in'), 3000);
+    onSuccess: ({ email, firstName }) => {
+      reportSignup(email, firstName);
+      setTimeout(() => navigate('/sign-in'), 5000);
     },
     onError: (error) => {
       if (
@@ -36,11 +39,11 @@ const VerifyEmail = () => {
         error.response?.status === HttpStatusCode.Gone
       ) {
         setIsExpired(true);
-        setTimeout(() => navigate('/sign-in'), 3000);
+        setTimeout(() => navigate('/sign-in'), 5000);
       } else {
         console.error(error);
         toast(INTERNAL_ERROR_TOAST);
-        setTimeout(() => navigate('/sign-in'), 3000);
+        setTimeout(() => navigate('/sign-in'), 5000);
       }
     },
   });
@@ -67,14 +70,14 @@ const VerifyEmail = () => {
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
                   {t(
-                    'email has been verified. You will be redirected to sign in...',
+                    'Email has been verified. You will be redirected to sign in...',
                   )}
                 </span>
               </>
             )}
             {isPending && !isExpired && (
               <>
-                <LoadingSpinner className="w-16 h-16" />
+                <LoadingSpinner className="size-6" />
                 <span className="text-left w-fit">
                   {t('Verifying email...')}
                 </span>
@@ -84,9 +87,14 @@ const VerifyEmail = () => {
             {isExpired && (
               <>
                 <MailX className="w-16 h-16" />
-                <span className="text-left w-fit">
-                  {t('invitation has expired, redirecting to sign in...')}
-                </span>
+                <div className="text-left w-fit">
+                  <div>
+                    {t(
+                      'invitation has expired, once you sign in again you will be able to resend the verification email.',
+                    )}
+                  </div>
+                  <div>{t('Redirecting to sign in...')}</div>
+                </div>
               </>
             )}
           </div>
@@ -96,4 +104,5 @@ const VerifyEmail = () => {
   );
 };
 VerifyEmail.displayName = 'VerifyEmail';
+
 export { VerifyEmail };

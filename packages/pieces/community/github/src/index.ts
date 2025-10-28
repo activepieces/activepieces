@@ -12,6 +12,17 @@ import { githubGetIssueInformation } from './lib/actions/get-issue-information';
 import { githubCreateCommentOnAIssue } from './lib/actions/create-comment-on-a-issue';
 import { githubLockIssueAction } from './lib/actions/lock-issue';
 import { githubRawGraphqlQuery } from './lib/actions/raw-graphql-query';
+import { githubCreatePullRequestReviewCommentAction } from './lib/actions/create-pull-request-review-comment';
+import { githubCreateCommitCommentAction } from './lib/actions/create-commit-comment';
+import { githubCreateDiscussionCommentAction } from './lib/actions/create-discussion-comment';
+import { githubAddLabelsToIssueAction } from './lib/actions/add-labels-to-issue';
+import { githubCreateBranchAction } from './lib/actions/create-branch';
+import { githubDeleteBranchAction } from './lib/actions/delete-branch';
+import { githubUpdateIssueAction } from './lib/actions/update-issue';
+
+import { githubFindBranchAction } from './lib/actions/find-branch';
+import { githubFindIssueAction } from './lib/actions/find-issue';
+import { githubFindUserAction } from './lib/actions/find-user';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
@@ -36,6 +47,16 @@ export const github = createPiece({
     githubLockIssueAction,
     githubUnlockIssueAction,
     githubRawGraphqlQuery,
+    githubCreatePullRequestReviewCommentAction,
+    githubCreateCommitCommentAction,
+    githubCreateDiscussionCommentAction,
+    githubAddLabelsToIssueAction,
+    githubCreateBranchAction,
+    githubDeleteBranchAction,
+    githubUpdateIssueAction,
+    githubFindBranchAction,
+    githubFindIssueAction,
+    githubFindUserAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,

@@ -149,7 +149,7 @@ const ViewRelease = () => {
           <Skeleton className="h-24 w-full" />
         ) : (
           <div className="flex flex-col items-start gap-2">
-            <pre className="font-sans whitespace-pre-wrap">
+            <pre className="whitespace-pre-wrap">
               {release?.description || t('No description provided')}
             </pre>
           </div>

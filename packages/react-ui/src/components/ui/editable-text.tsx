@@ -26,9 +26,9 @@ const EditableText = ({
   setIsEditing,
 }: EditableTextProps) => {
   const [value, setValue] = useState(initialValue);
-  const isEditingPreviousRef = useRef(isEditing);
+  const isEditingPreviousRef = useRef(false);
   const valueOnEditingStartedRef = useRef(initialValue);
-  //detect change coming from outside
+
   if (value !== initialValue) {
     setValue(initialValue);
   }
@@ -46,7 +46,7 @@ const EditableText = ({
   }, [onValueChange, valueOnEditingStartedRef.current]);
 
   const setSelectionToValue = () => {
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       if (
         editableTextRef.current &&
         window.getSelection &&
@@ -58,10 +58,12 @@ const EditableText = ({
         sel?.removeAllRanges();
         sel?.addRange(range);
       }
-    }, 1);
+    });
   };
+
   if (isEditing && !isEditingPreviousRef.current) {
     valueOnEditingStartedRef.current = value ? value.trim() : '';
+
     setSelectionToValue();
   }
   isEditingPreviousRef.current = isEditing;
@@ -98,9 +100,11 @@ const EditableText = ({
           {value}
         </div>
       </TooltipTrigger>
-      <TooltipContent className="font-normal z-50" side="bottom">
-        {tooltipContent}
-      </TooltipContent>
+      {tooltipContent && (
+        <TooltipContent className="font-normal z-50" side="bottom">
+          {tooltipContent}
+        </TooltipContent>
+      )}
     </Tooltip>
   ) : (
     <div

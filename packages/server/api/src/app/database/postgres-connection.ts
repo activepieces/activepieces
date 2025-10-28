@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -21,6 +21,7 @@ import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
+import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -38,6 +39,14 @@ import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
 import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { SwitchToRouter1731019013340 } from './migration/common/1731019013340-switch-to-router'
+import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
+import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
+import { DeprecateApproval1748648340742 } from './migration/common/1748648340742-DeprecateApproval'
+import { RemoveProjectIdFromIndex1750712746125 } from './migration/common/1750712746125-RemoveProjectIdFromIndex'
+import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1752004202722-SplitUpPieceMetadataIntoTools'
+import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
+import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
+import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -189,6 +198,89 @@ import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/17424
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
+import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
+import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
+import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
+import { AddMcpPiece1744822233873 } from './migration/postgres/1744822233873-AddMcpPiece'
+import { RenameTodoPostiveVariantName1745272231418 } from './migration/postgres/1745272231418-RenameTodoPostiveVariantName'
+import { AddConnectionIdsToFlowVersion1745530653784 } from './migration/postgres/1745530653784-AddConnectionIdsToFlowVersion'
+import { AddExternalIdForTablesAndFields1746356907629 } from './migration/postgres/1746356907629-AddExternalIdForTablesAndFields'
+import { MakeExternalIdNotNullable1746531094548 } from './migration/postgres/1746531094548-MakeExternalIdNotNullable'
+import { ChangeMcpPieceForeignKey1746543299109 } from './migration/postgres/1746543299109-ChangeMcpPieceForeignKey'
+import { AddI18nColumnToPieceMetadata1746714836833 } from './migration/postgres/1746714836833-AddI18nColumnToPieceMetadata'
+import { AddHandshakeConfigurationToFlow1746848208563 } from './migration/postgres/1746848208563-AddHandshakeConfigurationToFlow'
+import { AddOrderToFolder1747095861746 } from './migration/postgres/1747095861746-AddOrderToFolder'
+import { RenameProjectBillingToPlatformPLan1747819919988 } from './migration/postgres/1747819919988-RenameProjectBillingToPlatformPLan'
+import { AddLimitsOnPlatformPlan1747921788059 } from './migration/postgres/1747921788059-AddLimitsOnPlatformPlan'
+import { AddMcpToolEntity1748352614033 } from './migration/postgres/1748352614033-AddMcpToolEntity'
+import { AddMcpRunEntity1748358415599 } from './migration/postgres/1748358415599-AddMcpRunEntity'
+import { AddAgentsModule1748456786940 } from './migration/postgres/1748456786940-AddAgentsModule'
+import { AddTodoActivity1748525529096 } from './migration/postgres/1748525529096-AddTodoActivity'
+import { AddPlanNameOnPlatformPlan1748549003744 } from './migration/postgres/1748549003744-AddPlanNameOnPlatformPlan'
+import { AddCreatedByUserIdInTodo1748565250553 } from './migration/postgres/1748565250553-AddCreatedByUserIdInTodo'
+import { AddTodoEnvironment1748573003639 } from './migration/postgres/1748573003639-AddTodoEnvironment'
+import { AIProviderRedactorPostgres1748871900624 } from './migration/postgres/1748871900624-AIProviderRedactorPostgres.ts'
+import { MigrateMcpFlowsToBeTools1748996336492 } from './migration/postgres/1748996336492-MigrateMcpFlowsToBeTools'
+import { AddMcpToolFlowCascadeDelete1749128866314 } from './migration/postgres/1749128866314-AddMcpToolFlowCascadeDelete'
+import { AddAgents1749405724276 } from './migration/postgres/1749405724276-AddAgents'
+import { RemoveDefaultLocaleFromPlatform1749733527371 } from './migration/postgres/1749733527371-removeDefaultLocaleFromPlatform'
+import { AddAgentOutput1749859119064 } from './migration/postgres/1749859119064-AddAgentOutput'
+import { AddAgentsLimitToPlatformPlan1749917984363 } from './migration/postgres/1749917984363-AddAgentsLimitToPlatformPlan'
+import { AddStepToIssuesTable1750017637712 } from './migration/postgres/1750017637712-AddStepToIssuesTable'
+import { MakeStepNameOptional1750025401754 } from './migration/postgres/1750025401754-MakeStepNameOptional'
+import { AIUsagePostgres1750090291551 } from './migration/postgres/1750090291551-AIUsagePostgres'
+import { RemoveUniqueOnFlow1750093037011 } from './migration/postgres/1750093037011-RemoveUniqueOnFlow'
+import { ChangeTodoActivityContentFormat1750354589729 } from './migration/postgres/1750354589729-ChangeTodoActivityContentFormat'
+import { RevertDescriptionTodoNaming1750389164014 } from './migration/postgres/1750389164014-RevertDescriptionTodoNaming'
+import { RegenerateIssuesTable1750392148590 } from './migration/postgres/1750392148590-RegenerateIssuesTable'
+import { AddPlatformIdToAiUsage1750526457504 } from './migration/postgres/1750526457504-AddPlatformIdToAiUsage'
+import { AddBillingCycleDates1750704192423 } from './migration/postgres/1750704192423-addBillingCycleDates'
+import { ReplaceTasksLimitWithIncludedTasks1750720173459 } from './migration/postgres/1750720173459-replaceTasksLimitWithIncludedTasks'
+import { RenameIncludedTasksToTasksLimit1750722071472 } from './migration/postgres/1750722071472-renameIncludedTasksToTasksLimit'
+import { AddPaymentMethodToPlatformPlan1751021111433 } from './migration/postgres/1751021111433-addPaymentMethodToPlatformPlan'
+import { RevertTodoActivties1751217652277 } from './migration/postgres/1751217652277-RevertTodoActivties'
+import { AddAgentsEnabledToPlatformPlan1751309258332 } from './migration/postgres/1751309258332-AddAgentsEnabledToPlatformPlan'
+import { AddTrialFlagInPlatform1751394161203 } from './migration/postgres/1751394161203-AddTrialFlagInPlatform'
+import { UpdateAiCredits1751404517528 } from './migration/postgres/1751404517528-update-ai-credits'
+import { AddAiOverageState1751466404493 } from './migration/postgres/1751466404493-add-ai-overage-state'
+import { RemoveTerminationReason1751728035816 } from './migration/postgres/1751728035816-RemoveTerminationReason'
+import { AddLockedColumnToProjectPlan1751878623268 } from './migration/postgres/1751878623268-AddLockedColumnToProjectPlan'
+import { AddFlowVersionToIssue1751927222122 } from './migration/postgres/1751927222122-AddFlowVersionToIssue'
+import { AddMcpsEnabled1751989232042 } from './migration/postgres/1751989232042-AddMcpsEnabled'
+import { AddIndexForSchemaVersionInFlowVersion1752151941009 } from './migration/postgres/1752151941009-AddIndexForSchemaVersionInFlowVersion'
+import { AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 } from './migration/postgres/1752511716028-AddCreatedToFlowVersionFlowIdIdxPostgres'
+import { AddAgentRunsEntityPostgres1752583341290 } from './migration/postgres/1752583341290-AddAgentRunsEntityPostgres'
+import { AddPlatformAnalyticsReportEntity1753091760355 } from './migration/postgres/1753091760355-AddPlatformAnalyticsReportEntity'
+import { AddAgentIdToTable1753315220453 } from './migration/postgres/1753315220453-AddAgentIdToTable'
+import { MakeTriggerNullable1753366163403 } from './migration/postgres/1753366163403-MakeTriggerNullable'
+import { AddIndexForAgentTable1753400133786 } from './migration/postgres/1753400133786-AddIndexForAgentTable'
+import { AddAIUsageMetadatapostgres1753624069238 } from './migration/postgres/1753624069238-AddAIUsageMetadatapostgres'
+import { AddExternalIdToAgentId1753641361099 } from './migration/postgres/1753641361099-AddExternalIdToAgentId'
+import { AddParentRunIdToFlowRun1753699877817 } from './migration/postgres/1753699877817-AddParentRunIdToFlowRun'
+import { AddCascadeOnAgents1753727379513 } from './migration/postgres/1753727379513-AddCascadeOnAgents'
+import { AddExternalIdToMCPPostgres1753787093467 } from './migration/postgres/1753787093467-AddExternalIdToMCPPostgres'
+import { AddExternalidToMCPToolPostgres1754214833292 } from './migration/postgres/1754214833292-AddExternalidToMCPToolPostgres'
+import { AddStepNameToTestInFlowRunEntity1754330492027 } from './migration/postgres/1754330492027-AddStepNameToTestInFlowRunEntity'
+import { AddTriggerSource1754478770608 } from './migration/postgres/1754478770608-AddTriggerSource'
+import { AddJobIdToTriggerRun1754510611628 } from './migration/postgres/1754510611628-AddJobIdToTriggerRun'
+import { AddBillingCycle1754559781173 } from './migration/postgres/1754559781173-addBillingCycle'
+import { EligibileForTrial1754852385518 } from './migration/postgres/1754852385518-EligibileForTrial'
+import { RemoveAgentTestPrompt1754863565929 } from './migration/postgres/1754863565929-RemoveAgentTestPrompt'
+import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1755954192258-RemoveAgentRelationToTables'
+import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
+import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
+import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
+import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759772332795-RemoveFlowRunDisplayName'
+import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
+import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
+import { RestrictOnDeleteProjectForFlow1760376319952 } from './migration/postgres/1760376319952-RestrictOnDeleteProjectForFlow'
+import { RemoveAgentidFromMcpEntity1760452015041 } from './migration/postgres/1760452015041-remove-agentid-from-mcp-entity'
+import { RemoveAgentLimitFromPlatfromPlanEntity1760607967671 } from './migration/postgres/1760607967671-remove-agent-limit-from-platfrom-plan-entity'
+import { RemoveTriggerRunEntity1760993216501 } from './migration/postgres/1760993216501-RemoveTriggerRunEntity'
+import { AddDedicatedWorkersToPlatformPlanPostgres1760998784106 } from './migration/postgres/1760998784106-AddDedicatedWorkersToPlatformPlanPostgres'
+import { RemoveProjectNotifyStatus1761056570728 } from './migration/postgres/1761056570728-RemoveProjectNotifyStatus'
+import { DeprecateCopilot1761221158764 } from './migration/postgres/1761221158764-DeprecateCopilot'
+import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/postgres/1761245180906-AddMaximumConcurrentJobsPerProject'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -316,6 +408,79 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeManualTasksToTodo1742432827826,
         AddMCP1743128816786,
         RenameApprovalUrlToResolveUrl1742991137557,
+        AddMetadataFields1743780156664,
+        AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994,
+        AddLastChangelogDismissed1744053592923,
+        AddMcpPiece1744822233873,
+        RenameTodoPostiveVariantName1745272231418,
+        AddConnectionIdsToFlowVersion1745530653784,
+        MakeExternalIdNotNullable1746531094548,
+        AddExternalIdForTablesAndFields1746356907629,
+        ChangeMcpPieceForeignKey1746543299109,
+        AddHandshakeConfigurationToFlow1746848208563,
+        AddOrderToFolder1747095861746,
+        AddI18nColumnToPieceMetadata1746714836833,
+        ChangeExternalIdsForTables1747346473001,
+        RenameProjectBillingToPlatformPLan1747819919988,
+        UpgradePieceVersionsToLatest1748253670449,
+        AddAgentsModule1748456786940,
+        ChangeManualTasksCommentsToTodoComments1742433144687,
+        AddTodoActivity1748525529096,
+        AddCreatedByUserIdInTodo1748565250553,
+        AddTodoEnvironment1748573003639,
+        DeprecateApproval1748648340742,
+        AddMcpToolEntity1748352614033,
+        AddMcpRunEntity1748358415599,
+        AIProviderRedactorPostgres1748871900624,
+        MigrateMcpFlowsToBeTools1748996336492,
+        AddMcpToolFlowCascadeDelete1749128866314,
+        AIUsagePostgres1750090291551,
+        AddAgents1749405724276,
+        AddAgentOutput1749859119064,
+        RemoveDefaultLocaleFromPlatform1749733527371,
+        AddStepToIssuesTable1750017637712,
+        MakeStepNameOptional1750025401754,
+        RemoveUniqueOnFlow1750093037011,
+        ChangeTodoActivityContentFormat1750354589729,
+        RevertDescriptionTodoNaming1750389164014,
+        RegenerateIssuesTable1750392148590,
+        RemoveProjectIdFromIndex1750712746125,
+        RevertTodoActivties1751217652277,
+        RemoveTerminationReason1751728035816,
+        AddFlowVersionToIssue1751927222122,
+        SplitUpPieceMetadataIntoTools1752004202722,
+        AddIndexForSchemaVersionInFlowVersion1752151941009,
+        AddAgentRunsEntityPostgres1752583341290,
+        AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028,
+        AddAgentIdToTable1753315220453,
+        MakeTriggerNullable1753366163403,
+        AddIndexForAgentTable1753400133786,
+        AddAIUsageMetadatapostgres1753624069238,
+        AddExternalIdToAgentId1753641361099,
+        AddParentRunIdToFlowRun1753699877817,
+        AddCascadeOnAgents1753727379513,
+        AddExternalIdToMCPPostgres1753787093467,
+        AddExternalidToMCPToolPostgres1754214833292,
+        AddTriggerSource1754478770608,
+        AddStepNameToTestInFlowRunEntity1754330492027,
+        AddJobIdToTriggerRun1754510611628,
+        RemoveAgentTestPrompt1754863565929,
+        RemoveAgentRelationToTables1755954192258,
+        AddIndexToIssues1756775080449,
+        AddTriggerNameToTriggerSource1757018269905,
+        AddFlowIndexToTriggerSource1757555419075,
+        AddIndexOnTriggerRun1757557714045,
+        DeleteHandshakeFromTriggerSource1758108135968,
+        RemoveAgentidFromMcpEntity1760452015041,
+        AddIndexForAppEvents1759392852559,
+        RemoveFlowRunDisplayName1759772332795,
+        AddFlowVersionBackupFile1759964470862,
+        AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
+        RestrictOnDeleteProjectForFlow1760376319952,
+        RemoveTriggerRunEntity1760993216501,
+        DeprecateCopilot1761221158764,
+        RemoveProjectNotifyStatus1761056570728,
+        AddMaximumConcurrentJobsPerProject1761245180906,
     ]
 
     const edition = system.getEdition()
@@ -371,7 +536,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
-                
+
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
@@ -397,7 +562,26 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectIdNullableInTemplate1741357285896,
                 UpdateNotifyStatusOnEmbedding1741963410825,
                 AddManualTaskCommentTable1742305104390,
-                ChangeManualTasksCommentsToTodoComments1742433144687,
+                AddMetadataFieldToFlowTemplates1744780800000,
+                AddLimitsOnPlatformPlan1747921788059,
+                AddPlanNameOnPlatformPlan1748549003744,
+                AddPlatformIdToAiUsage1750526457504,
+                AddBillingCycleDates1750704192423,
+                ReplaceTasksLimitWithIncludedTasks1750720173459,
+                RenameIncludedTasksToTasksLimit1750722071472,
+                AddPaymentMethodToPlatformPlan1751021111433,
+                AddAgentsLimitToPlatformPlan1749917984363,
+                AddAgentsEnabledToPlatformPlan1751309258332,
+                AddTrialFlagInPlatform1751394161203,
+                UpdateAiCredits1751404517528,
+                AddAiOverageState1751466404493,
+                AddLockedColumnToProjectPlan1751878623268,
+                AddMcpsEnabled1751989232042,
+                AddPlatformAnalyticsReportEntity1753091760355,
+                AddBillingCycle1754559781173,
+                EligibileForTrial1754852385518,
+                RemoveAgentLimitFromPlatfromPlanEntity1760607967671,
+                AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
             )
             break
         case ApEdition.COMMUNITY:
@@ -408,25 +592,19 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
             break
     }
 
+
     return commonMigration
 }
 
-const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.TESTING) {
-        return {}
-    }
-
-    return {
+export const createPostgresDataSource = (): DataSource => {
+    const migrationConfig: MigrationConfig =  {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
+        synchronize: false,
     }
-}
 
-export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig = getMigrationConfig()
     const url = system.get(AppSystemProp.POSTGRES_URL)
 
     if (!isNil(url)) {
@@ -434,6 +612,7 @@ export const createPostgresDataSource = (): DataSource => {
             type: 'postgres',
             url,
             ssl: getSslConfig(),
+            ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
         })
@@ -444,6 +623,7 @@ export const createPostgresDataSource = (): DataSource => {
     const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
     const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
+    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
     const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
@@ -454,8 +634,12 @@ export const createPostgresDataSource = (): DataSource => {
         password,
         database,
         ssl: getSslConfig(),
-        ...migrationConfig,
+        ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...commonProperties,
+        ...migrationConfig,
+        extra: {
+            idleTimeoutMillis,
+        },
     })
 }
 
@@ -463,4 +647,5 @@ type MigrationConfig = {
     migrationsRun?: boolean
     migrationsTransactionMode?: 'all' | 'none' | 'each'
     migrations?: (new () => MigrationInterface)[]
+    synchronize: false
 }

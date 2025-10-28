@@ -1,8 +1,9 @@
 import {
+    Flow,
+    FlowVersion,
     Issue,
-    IssueStatus,
-} from '@activepieces/ee-shared'
-import { Flow, Project } from '@activepieces/shared'
+    Project,
+} from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -13,6 +14,7 @@ import {
 
 type IssueSchema = Issue & {
     project: Project
+    flowVersion: FlowVersion
     flow: Flow
 }
 
@@ -28,30 +30,31 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
         },
         status: {
             type: String,
-            enum: IssueStatus,
-        },
-        count: {
-            type: Number,
         },
         lastOccurrence: {
             type: TIMESTAMP_COLUMN_TYPE,
         },
+        flowVersionId: {
+            ...ApIdSchema,
+        },
+        stepName: {
+            type: String,
+        },
     },
     indices: [
         {
-            name: 'idx_issue_flow_id',
+            name: 'idx_issue_flowId_stepName',
+            columns: ['flowId', 'stepName'],
             unique: true,
-            columns: ['flowId'],
         },
         {
-            name: 'idx_issue_project_id_flow_id',
-            unique: false,
-            columns: ['projectId', 'flowId'],
+            name: 'idx_issue_projectId_status_updated',
+            columns: ['projectId', 'status', 'updated'],
         },
     ],
     relations: {
         flow: {
-            type: 'one-to-one',
+            type: 'many-to-one',
             target: 'flow',
             cascade: true,
             onDelete: 'CASCADE',
@@ -60,6 +63,12 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
                 referencedColumnName: 'id',
                 foreignKeyConstraintName: 'fk_issue_flow_id',
             },
+        },
+        flowVersion: {
+            type: 'many-to-one',
+            target: 'flow_version',
+            cascade: true,
+            onDelete: 'CASCADE',
         },
         project: {
             type: 'many-to-one',

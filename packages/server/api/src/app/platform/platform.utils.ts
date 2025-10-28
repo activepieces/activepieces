@@ -1,6 +1,4 @@
-
-
-import { ApEdition, isNil, Platform, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
+import { ApEdition, isNil, PlatformId, PlatformWithoutSensitiveData, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
@@ -21,13 +19,12 @@ export const platformUtils = {
         const oldestPlatform = await platformService.getOldestPlatform()
         return oldestPlatform?.id ?? null
     },
-    // TODO (@amrabuaza) this is a temporary function to check if the platform is an enterprise customer on cloud
-    isEnterpriseCustomerOnCloud(platform: Platform | PlatformWithoutSensitiveData): boolean {
+    isCustomerOnDedicatedDomain(platform: PlatformWithoutSensitiveData): boolean {
         const edition = system.getEdition()
         if (edition !== ApEdition.CLOUD) {
             return false
         }
-        return platform.ssoEnabled || platform.embeddingEnabled
+        return platform.plan.customDomainsEnabled
     },
 }
 

@@ -5,7 +5,6 @@ import {
 import {
     apId,
     FlowStatus,
-    NotificationStatus,
     Platform,
     PlatformRole,
     PrincipalType,
@@ -17,7 +16,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/platform-billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/platform/platform-plan/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -58,11 +57,13 @@ describe('Project API', () => {
             })
 
             const displayName = faker.animal.bird()
+            const metadata = { foo: 'bar' }
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
                 body: {
                     displayName,
+                    metadata,
                 },
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -76,6 +77,7 @@ describe('Project API', () => {
             expect(responseBody.displayName).toBe(displayName)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.platformId).toBe(mockPlatform.id)
+            expect(responseBody.metadata).toEqual(metadata)
         })
 
         it('it should create project by api key', async () => {
@@ -188,7 +190,6 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
                 },
@@ -209,7 +210,6 @@ describe('Project API', () => {
 
             expect(responseBody.id).toBe(mockProject.id)
             expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.notifyStatus).toBe(request.notifyStatus)
         })
 
         it('it should update project as platform owner with api key', async () => {
@@ -218,7 +218,6 @@ describe('Project API', () => {
             const tasks = faker.number.int({ min: 1, max: 100000 })
             const request = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
                 },
@@ -255,7 +254,6 @@ describe('Project API', () => {
             const tasks = faker.number.int({ min: 1, max: 100000 })
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
                 },
@@ -274,7 +272,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
             expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.notifyStatus).toBe(request.notifyStatus)
             expect(responseBody.plan.tasks).toEqual(tasks)
         })
 
@@ -309,7 +306,6 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
             }
             const response = await app?.inject({
                 method: 'POST',
@@ -341,7 +337,6 @@ describe('Project API', () => {
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
-                notifyStatus: NotificationStatus.NEVER,
             }
 
             // act
@@ -360,6 +355,54 @@ describe('Project API', () => {
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityId).toBe(mockProject.id)
             expect(responseBody?.params?.entityType).toBe('project')
+        })
+
+        it('it should update project with metadata', async () => {
+            const { mockOwner: mockUser, mockPlatform } = await mockAndSaveBasicSetup()
+
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await databaseConnection().getRepository('user').save(mockUser)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection().getRepository('project').save([mockProject])
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                projectId: mockProject.id,
+            })
+
+            const tasks = faker.number.int({ min: 1, max: 100000 })
+            const metadata = { foo: 'bar' }
+
+            const request: UpdateProjectPlatformRequest = {
+                displayName: faker.animal.bird(),
+                metadata,
+                plan: {
+                    tasks,
+                },
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/projects/' + mockProject.id,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.id).toBe(mockProject.id)
+            expect(responseBody.displayName).toBe(request.displayName)
+            expect(responseBody.metadata).toEqual(metadata)
         })
     })
 
@@ -556,6 +599,134 @@ describe('Project API', () => {
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityId).toBe(alreadyDeletedProject.id)
             expect(responseBody?.params?.entityType).toBe('project')
+        })
+    })
+
+    describe('Platform Operator Access', () => {
+        it('Platform operator can access all projects in their platform', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            
+            // Create a platform operator user
+            const { mockUser: operatorUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.OPERATOR,
+                },
+            })
+            
+            // Create multiple projects owned by different users
+            const project1 = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                displayName: 'Project 1',
+            })
+            const project2 = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                displayName: 'Project 2',
+            })
+            
+            await databaseConnection().getRepository('project').save([project1, project2])
+            
+            const operatorToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: operatorUser.id,
+                platform: { id: mockPlatform.id },
+            })
+            
+            // act - list projects
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/users/projects',
+                headers: {
+                    authorization: `Bearer ${operatorToken}`,
+                },
+            })
+            
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            // Platform operator should see all projects including the default one
+            expect(responseBody.data.length).toBeGreaterThanOrEqual(2)
+            const projectNames = responseBody.data.map((p: Project) => p.displayName)
+            expect(projectNames).toContain('Project 1')
+            expect(projectNames).toContain('Project 2')
+        })
+
+        it('Platform operator cannot update platform settings', async () => {
+            // arrange
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            
+            const { mockUser: operatorUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.OPERATOR,
+                },
+            })
+            
+            const operatorToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: operatorUser.id,
+                platform: { id: mockPlatform.id },
+            })
+            
+            // act - try to update platform
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${operatorToken}`,
+                },
+                body: {
+                    name: 'Should not be allowed',
+                },
+            })
+            
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Platform member cannot access projects they are not member of', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            
+            // Create a regular platform member
+            const { mockUser: memberUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+            
+            // Create a project the member is NOT part of
+            const project = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                displayName: 'Restricted Project',
+            })
+            
+            await databaseConnection().getRepository('project').save(project)
+            
+            const memberToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: memberUser.id,
+                platform: { id: mockPlatform.id },
+            })
+            
+            // act - list projects
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/users/projects',
+                headers: {
+                    authorization: `Bearer ${memberToken}`,
+                },
+            })
+            
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            expect(responseBody.data).toHaveLength(0) // Should not see any projects
         })
     })
 

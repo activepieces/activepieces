@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 
@@ -43,9 +43,6 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
         duration: 3000,
       });
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
   });
 
   const { mutate: togglePin, isPending: isPinPending } = useMutation({
@@ -68,9 +65,6 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
         description: t('Your changes have been saved.'),
         duration: 3000,
       });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

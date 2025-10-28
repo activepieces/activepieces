@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Metadata } from '../../common/metadata'
 
 export const CreateFlowRequest = Type.Object({
     displayName: Type.String({}),
@@ -6,6 +7,7 @@ export const CreateFlowRequest = Type.Object({
     folderId: Type.Optional(Type.String({})),
     folderName: Type.Optional(Type.String({})),
     projectId: Type.String({}),
+    metadata: Type.Optional(Metadata),
 })
 
 export type CreateFlowRequest = Static<typeof CreateFlowRequest>

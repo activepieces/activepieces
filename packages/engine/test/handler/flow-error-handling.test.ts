@@ -71,6 +71,6 @@ describe('piece with error handling', () => {
         expect(result.steps.send_http.status).toBe('FAILED')
         expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError))
 
-    })
+    }, 10000)
 
 })

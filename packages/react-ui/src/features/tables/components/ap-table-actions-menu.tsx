@@ -1,12 +1,8 @@
-import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Download,
-  EllipsisVertical,
-  PencilIcon,
-  TrashIcon,
-} from 'lucide-react';
+import { Download, PencilIcon, TrashIcon, UploadCloud } from 'lucide-react';
+import React from 'react';
 
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
@@ -14,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, Table } from '@activepieces/shared';
 
@@ -26,22 +22,23 @@ import RenameTableDialog from './rename-table-dialog';
 const ApTableActionsMenu = ({
   table,
   refetch,
-  deleteMutation,
+  onDelete,
+  children,
 }: {
   table: Table;
   refetch: (() => void) | null;
-  deleteMutation: UseMutationResult<void, Error, string[], unknown>;
+  onDelete?: () => void;
+  children: React.ReactNode;
 }) => {
   const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
+  const userHasPermissionToPushToGit = useAuthorization().checkAccess(
+    Permission.WRITE_PROJECT_RELEASE,
+  );
   return (
     <DropdownMenu modal={true}>
-      <DropdownMenuTrigger asChild>
-        <div className="rounded-full p-2 hover:bg-muted cursor-pointer">
-          <EllipsisVertical className="h-6 w-6" />
-        </div>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent>
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
           <RenameTableDialog
@@ -54,6 +51,7 @@ const ApTableActionsMenu = ({
             <DropdownMenuItem
               disabled={!userHasPermissionToUpdateTable}
               onSelect={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
             >
               <PermissionNeededTooltip
                 hasPermission={userHasPermissionToUpdateTable}
@@ -68,11 +66,11 @@ const ApTableActionsMenu = ({
         </PermissionNeededTooltip>
 
         <DropdownMenuItem
+          onSelect={(e) => e.preventDefault()}
           onClick={async (e) => {
             const exportedTable = await tablesApi.export(table.id);
             tablesUtils.exportTables([exportedTable]);
             e.stopPropagation();
-            e.preventDefault();
           }}
         >
           <div className="flex gap-2 items-center">
@@ -81,10 +79,26 @@ const ApTableActionsMenu = ({
           </div>
         </DropdownMenuItem>
 
+        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+          <PushToGitDialog type="table" tables={[table]}>
+            <DropdownMenuItem
+              disabled={!userHasPermissionToPushToGit}
+              onSelect={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex cursor-pointer flex-row gap-2 items-center">
+                <UploadCloud className="h-4 w-4" />
+                <span>{t('Push to Git')}</span>
+              </div>
+            </DropdownMenuItem>
+          </PushToGitDialog>
+        </PermissionNeededTooltip>
+
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
           <DropdownMenuItem
             disabled={!userHasPermissionToUpdateTable}
             onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.stopPropagation()}
           >
             <ConfirmationDeleteDialog
               title={`${t('Delete')} ${table.name}`}
@@ -93,7 +107,8 @@ const ApTableActionsMenu = ({
               )}
               entityName={table.name}
               mutationFn={async () => {
-                await deleteMutation.mutateAsync([table.id]);
+                await tablesApi.delete(table.id);
+                onDelete?.();
                 refetch?.();
               }}
             >

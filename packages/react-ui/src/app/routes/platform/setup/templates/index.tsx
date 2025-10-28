@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,14 +21,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { FlowTemplate } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../../components/ui/table-title';
 
 import { UpsertTemplateDialog } from './upsert-template-dialog';
 
@@ -58,9 +57,6 @@ export default function TemplatesPage() {
         description: t('Templates deleted successfully'),
         duration: 3000,
       });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
@@ -177,24 +173,11 @@ export default function TemplatesPage() {
           </div>
         ),
       },
-      {
-        render: () => (
-          <UpsertTemplateDialog onDone={() => refetch()}>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
-              {t('New Template')}
-            </Button>
-          </UpsertTemplateDialog>
-        ),
-      },
     ],
     [selectedRows, bulkDeleteMutation],
   );
 
-  const isEnabled = platform.manageTemplatesEnabled;
+  const isEnabled = platform.plan.manageTemplatesEnabled;
   return (
     <LockedFeatureGuard
       featureKey="TEMPLATES"
@@ -206,15 +189,22 @@ export default function TemplatesPage() {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
     >
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row">
-          <TableTitle
-            description={t(
-              'Convert the most common automations into reusable templates',
-            )}
-          >
-            {t('Templates')}
-          </TableTitle>
-        </div>
+        <DashboardPageHeader
+          description={t(
+            'Convert the most common automations into reusable templates',
+          )}
+          title={t('Templates')}
+        >
+          <UpsertTemplateDialog onDone={() => refetch()}>
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              <Plus className="size-4" />
+              {t('New Template')}
+            </Button>
+          </UpsertTemplateDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No templates found')}
           emptyStateTextDescription={t(

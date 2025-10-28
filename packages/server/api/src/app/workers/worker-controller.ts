@@ -1,37 +1,18 @@
-import { JobData, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { ExecutionType, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { trace } from '@opentelemetry/api'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
-import { dedupeService } from '../flows/trigger/dedupe'
-import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
-import { projectService } from '../project/project-service'
-import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
-import { flowConsumer } from './consumer'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { dedupeService } from '../trigger/dedupe-service'
+import { triggerEventService } from '../trigger/trigger-events/trigger-event.service'
+import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from './engine-response-watcher'
+import { jobMigrations } from './queue/jobs-migrations'
+
+const tracer = trace.getTracer('worker-controller')
 
 export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
-
-    app.get('/poll', {
-        config: {
-            allowedPrincipals: [PrincipalType.WORKER],
-        },
-        logLevel: 'silent',
-        schema: {
-            querystring: PollJobRequest,
-        },
-    }, async (request) => {
-        
-        const token = apId()
-        const { queueName } = request.query
-        const job = await flowConsumer(request.log).poll(queueName, {
-            token,
-        })
-        if (!job) {
-            return null
-        }
-        return enrichEngineToken(token, queueName, job)
-    })
 
 
     app.post('/send-engine-update', {
@@ -42,11 +23,23 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             body: SendEngineUpdateRequest,
         },
     }, async (request) => {
-        const { workerServerId, requestId, response } = request.body
-        await engineResponseWatcher(request.log).publish(requestId, workerServerId, response)
-        return {}
+        return tracer.startActiveSpan('worker.sendEngineUpdate', {
+            attributes: {
+                'worker.requestId': request.body.requestId,
+                'worker.workerServerId': request.body.workerServerId,
+            },
+        }, async (span) => {
+            try {
+                const { workerServerId, requestId, response } = request.body
+                await engineResponseWatcher(request.log).publish(requestId, workerServerId, response)
+                span.setAttribute('worker.published', true)
+                return {}
+            }
+            finally {
+                span.end()
+            }
+        })
     })
-
     app.post('/save-payloads', {
         config: {
             allowedPrincipals: [PrincipalType.WORKER],
@@ -65,10 +58,29 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             }), request.log),
         )
         rejectedPromiseHandler(Promise.all(savePayloads), request.log)
-        await webhookSimulationService(request.log).delete({ flowId, projectId })
+        const hasValidPayloads = payloads.length > 0
+        if (hasValidPayloads) {
+            await triggerSourceService(request.log).disable({
+                flowId,
+                projectId,
+                simulate: true,
+                ignoreError: true,
+            })
+        }
         return {}
     })
 
+    app.post('/migrate-job', {
+        config: {
+            allowedPrincipals: [PrincipalType.WORKER],
+        },
+        schema: {
+            body: MigrateJobsRequest,
+        },
+    }, async (request) => {
+        return jobMigrations.apply(request.body.jobData)
+    })
+    
     app.post('/submit-payloads', {
         config: {
             allowedPrincipals: [PrincipalType.WORKER],
@@ -77,96 +89,58 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             body: SubmitPayloadsRequest,
         },
     }, async (request) => {
-        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment } = request.body
+        return tracer.startActiveSpan('worker.submitPayloads', {
+            attributes: {
+                'worker.flowVersionId': request.body.flowVersionId,
+                'worker.projectId': request.body.projectId,
+                'worker.payloadsCount': request.body.payloads.length,
+                'worker.environment': request.body.environment,
+                'worker.httpRequestId': request.body.httpRequestId ?? 'none',
+            },
+        }, async (span) => {
+            try {
+                const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment, parentRunId, failParentOnFailure, platformId } = request.body
 
-        const filterPayloads = await dedupeService.filterUniquePayloads(
-            flowVersionId,
-            payloads,
-        )
-        const createFlowRuns = filterPayloads.map((payload) =>
-            flowRunService(request.log).start({
-                environment,
-                flowVersionId,
-                payload,
-                synchronousHandlerId,
-                projectId,
-                httpRequestId,
-                executionType: ExecutionType.BEGIN,
-                progressUpdateType,
-            }),
-        )
-        return Promise.all(createFlowRuns)
-    })
+                const flowVersionExists = await flowVersionService(request.log).getOne(flowVersionId)
+                if (!flowVersionExists) {
+                    span.setAttribute('worker.flowVersionExists', false)
+                    return []
+                }
 
-    app.post('/resume-run', {
-        config: {
-            allowedPrincipals: [PrincipalType.WORKER],
-        },
-        schema: {
-            body: ResumeRunRequest,
-        },
-    }, async (request) => {
-        const data = request.body
-        await flowRunService(request.log).start({
-            payload: null,
-            flowRunId: data.runId,
-            synchronousHandlerId: data.synchronousHandlerId ?? undefined,
-            projectId: data.projectId,
-            flowVersionId: data.flowVersionId,
-            executionType: ExecutionType.RESUME,
-            httpRequestId: data.httpRequestId,
-            environment: RunEnvironment.PRODUCTION,
-            progressUpdateType: data.progressUpdateType ?? ProgressUpdateType.NONE,
+                span.setAttribute('worker.flowVersionExists', true)
+                const filterPayloads = await dedupeService.filterUniquePayloads(
+                    flowVersionId,
+                    payloads,
+                )
+
+                span.setAttribute('worker.filteredPayloadsCount', filterPayloads.length)
+                const createFlowRuns = filterPayloads.map((payload) => {
+                    return flowRunService(request.log).start({
+                        flowId: flowVersionExists.flowId,
+                        environment,
+                        flowVersionId,
+                        payload,
+                        synchronousHandlerId,
+                        projectId,
+                        httpRequestId,
+                        executionType: ExecutionType.BEGIN,
+                        progressUpdateType,
+                        executeTrigger: false,
+                        parentRunId,
+                        failParentOnFailure,
+                        platformId,
+                    })
+                })
+                const flowRuns = await Promise.all(createFlowRuns)
+                span.setAttribute('worker.flowRunsCreated', flowRuns.length)
+                return flowRuns
+            }
+            finally {
+                span.end()
+            }
         })
     })
 
+
 }
 
-
-async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData }) {
-    const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, job.data)
-    const engineToken = await accessTokenManager.generateEngineToken({
-        jobId: job.id,
-        queueToken: token,
-        projectId,
-        platformId,
-    })
-    return {
-        data: job.data,
-        id: job.id,
-        engineToken,
-    }
-}
-
-async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Promise<{
-    projectId: string
-    platformId: string
-}> {
-    switch (queueName) {
-        case QueueName.ONE_TIME:
-        case QueueName.WEBHOOK: 
-        case QueueName.SCHEDULED:{ 
-            const castedJob = job as OneTimeJobData | WebhookJobData | ScheduledJobData
-            return {
-                projectId: castedJob.projectId,
-                platformId: await projectService.getPlatformId(castedJob.projectId),
-            }
-        }
-        case QueueName.USERS_INTERACTION:{
-            const userInteractionJob = job as UserInteractionJobData
-            switch (userInteractionJob.jobType) {
-                case UserInteractionJobType.EXECUTE_VALIDATION:
-                case UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-                    return {
-                        projectId: userInteractionJob.projectId!,
-                        platformId: userInteractionJob.platformId,
-                    }
-                default:
-                    return {
-                        projectId: userInteractionJob.projectId,
-                        platformId: await projectService.getPlatformId(userInteractionJob.projectId),
-                    }
-            }
-        }
-    }
-}

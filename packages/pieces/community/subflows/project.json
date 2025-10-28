@@ -5,10 +5,9 @@
   "projectType": "library",
   "release": {
     "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/{projectRoot}",
-        "currentVersionResolver": "git-tag"
-      }
+      "currentVersionResolver": "git-tag",
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": ["dist/{projectRoot}"]
     }
   },
   "tags": [],
@@ -21,7 +20,14 @@
         "tsConfig": "packages/pieces/community/subflows/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/subflows/package.json",
         "main": "packages/pieces/community/subflows/src/index.ts",
-        "assets": ["packages/pieces/community/subflows/*.md"],
+        "assets": [
+          "packages/pieces/community/subflows/*.md",
+          {
+            "input": "packages/pieces/community/subflows/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }

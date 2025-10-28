@@ -7,9 +7,9 @@ import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../core/db/repo-factory'
 import { parseAndVerify } from '../helper/json-validator'
 import { system } from '../helper/system/system'
-import { systemJobsSchedule } from '../helper/system-jobs'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 
@@ -79,7 +79,7 @@ async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
         }
     }
     catch (error) {
-        log.error({ error }, 'Error syncing piece, please upgrade the activepieces to latest version')
+        log.error(error, 'Error syncing piece, please upgrade the activepieces to latest version')
     }
 
 }

@@ -11,6 +11,7 @@ export const googleTasksAddNewTaskAction = createAction({
     tasks_list: googleTasksCommon.tasksList,
     title: googleTasksCommon.title,
     notes: googleTasksCommon.notes,
+    due: googleTasksCommon.due,
     completed: googleTasksCommon.completed,
   },
   async run({ auth, propsValue }) {
@@ -22,6 +23,9 @@ export const googleTasksAddNewTaskAction = createAction({
       title: propsValue.title,
       completed: propsValue.completed ? new Date().toISOString() : '',
       notes: propsValue.notes,
+      due: propsValue.due
+        ? `${new Date(propsValue.due).toISOString().split('T')[0]}T00:00:00Z`
+        : undefined,
     };
 
     return createTask(auth, propsValue.tasks_list!, task);

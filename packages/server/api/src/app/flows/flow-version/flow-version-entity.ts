@@ -2,11 +2,13 @@ import { Flow, FlowVersion, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
+    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
+    isPostgres,
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
-type FlowVersionSchema = {
+export type FlowVersionSchema = {
     flow: Flow
     updatedByUser: User
 } & FlowVersion
@@ -27,6 +29,16 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
+        connectionIds: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
+        agentIds: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
         updatedBy: {
             type: String,
             nullable: true,
@@ -37,11 +49,20 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         state: {
             type: String,
         },
+        backupFiles: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
     },
     indices: [
         {
-            name: 'idx_flow_version_flow_id',
-            columns: ['flowId'],
+            name: 'idx_flow_version_flow_id_created_desc',
+            columns: ['flowId', 'created'],
+            unique: false,
+        },
+        {
+            name: 'idx_flow_version_schema_version',
+            columns: ['schemaVersion'],
             unique: false,
         },
     ],

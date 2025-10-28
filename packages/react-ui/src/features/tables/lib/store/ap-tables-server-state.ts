@@ -4,10 +4,12 @@ import {
   Field,
   PopulatedRecord,
   Table,
+  UpdateTableRequest,
 } from '@activepieces/shared';
 
 import { fieldsApi } from '../fields-api';
 import { recordsApi } from '../records-api';
+import { tablesApi } from '../tables-api';
 
 import { ClientRecordData } from './ap-tables-client-state';
 
@@ -30,7 +32,6 @@ export const createServerState = (
       updateSavingStatus(queue.size() === 1);
     });
   }
-
   return {
     deleteField: (fieldIndex: number) => {
       addPromiseToQueue(async () => {
@@ -64,9 +65,11 @@ export const createServerState = (
             })),
           ],
         });
+
         if (createdRecords.length > 0) {
           clonedRecords.push(...createdRecords);
         }
+
         updateSavingStatus(queue.size() === 1);
       });
     },
@@ -115,5 +118,16 @@ export const createServerState = (
         });
       });
     },
+    update: async (request: UpdateTableRequest) => {
+      addPromiseToQueue(async () => {
+        const updatedTable = await tablesApi.update(clonedTable.id, request);
+        clonedTable.status = updatedTable.status;
+      });
+    },
+    setRecords: (records: PopulatedRecord[]) => {
+      clonedRecords = JSON.parse(JSON.stringify(records));
+    },
+    fields: clonedFields,
+    records: clonedRecords,
   };
 };

@@ -1,7 +1,7 @@
 import { isNil } from '../../common'
-import { Action, ActionType } from '../actions/action'
+import { FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
-import { Trigger, TriggerType } from '../triggers/trigger'
+import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { FlowOperationRequest, FlowOperationType, ImportFlowRequest, StepLocationRelativeToParent } from './index'
 
@@ -12,7 +12,7 @@ function createDeleteActionOperation(actionName: string): FlowOperationRequest {
     }
 }
 
-function createUpdateTriggerOperation(trigger: Trigger): FlowOperationRequest {
+function createUpdateTriggerOperation(trigger: FlowTrigger): FlowOperationRequest {
     return {
         type: FlowOperationType.UPDATE_TRIGGER,
         request: trigger,
@@ -26,7 +26,7 @@ function createChangeNameOperation(displayName: string): FlowOperationRequest {
     }
 }
 
-function _getImportOperations(step: Action | Trigger | undefined): FlowOperationRequest[] {
+function _getImportOperations(step: FlowAction | FlowTrigger | undefined): FlowOperationRequest[] {
     const steps: FlowOperationRequest[] = []
     while (step) {
         if (step.nextAction) {
@@ -40,7 +40,7 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
             })
         }
         switch (step.type) {
-            case ActionType.LOOP_ON_ITEMS: {
+            case FlowActionType.LOOP_ON_ITEMS: {
                 if (step.firstLoopAction) {
                     steps.push({
                         type: FlowOperationType.ADD_ACTION,
@@ -54,7 +54,7 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
                 }
                 break
             }
-            case ActionType.ROUTER: {
+            case FlowActionType.ROUTER: {
                 if (step.children) {
                     for (const [index, child] of step.children.entries()) {
                         if (!isNil(child)) {
@@ -73,10 +73,10 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
                 }
                 break
             }
-            case ActionType.CODE:
-            case ActionType.PIECE:
-            case TriggerType.PIECE:
-            case TriggerType.EMPTY: {
+            case FlowActionType.CODE:
+            case FlowActionType.PIECE:
+            case FlowTriggerType.PIECE:
+            case FlowTriggerType.EMPTY: {
                 break
             }
         }
@@ -86,11 +86,11 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
     return steps
 }
 
-function removeAnySubsequentAction(action: Action): Action {
-    const clonedAction: Action = JSON.parse(JSON.stringify(action))
+function removeAnySubsequentAction(action: FlowAction): FlowAction {
+    const clonedAction: FlowAction = JSON.parse(JSON.stringify(action))
     switch (clonedAction.type) {
-        case ActionType.ROUTER: {
-            clonedAction.children = clonedAction.children.map((child: Action | null) => {
+        case FlowActionType.ROUTER: {
+            clonedAction.children = clonedAction.children.map((child: FlowAction | null) => {
                 if (isNil(child)) {
                     return null
                 }
@@ -98,12 +98,12 @@ function removeAnySubsequentAction(action: Action): Action {
             })
             break
         }
-        case ActionType.LOOP_ON_ITEMS: {
+        case FlowActionType.LOOP_ON_ITEMS: {
             delete clonedAction.firstLoopAction
             break
         }
-        case ActionType.PIECE:
-        case ActionType.CODE:
+        case FlowActionType.PIECE:
+        case FlowActionType.CODE:
             break
     }
     delete clonedAction.nextAction

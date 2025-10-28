@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -14,7 +14,6 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<RouterActionSettings>({
             unresolvedInput: {
                 ...action.settings,
-                inputUiInfo: undefined,
             },
             executionState,
         })
@@ -38,6 +37,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     resolvedInput: RouterActionSettings
     routerExecutionType: RouterExecutionType
 }): Promise<FlowExecutorContext> {
+    const stepStartTime = performance.now()
 
     const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
         return branch.branchType === BranchExecutionType.FALLBACK ? true : evaluateConditions(branch.conditions)
@@ -51,6 +51,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return fallback
     })
 
+    const stepEndTime = performance.now()
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
@@ -59,23 +60,28 @@ async function handleRouterExecution({ action, executionState, constants, censor
             branchIndex: index + 1,
             evaluation: evaluatedConditions[index],
         })),
-    })
+    }).setDuration(stepEndTime - stepStartTime)
     executionState = executionState.upsertStep(action.name, routerOutput)
 
     try {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
-            if (constants.testSingleStepMode) {
+            if (!isNil(constants.stepNameToTest)) {
                 break
             }
-            if (evaluatedConditions[i]) {
-                executionState = (await flowExecutor.execute({
-                    action: action.children[i],
-                    executionState,
-                    constants,
-                }))
-                if (routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH) {
-                    break
-                }
+            const condition = routerOutput.output?.branches[i].evaluation
+            if (!condition) {
+                continue
+            }
+
+            executionState = await flowExecutor.execute({
+                action: action.children[i],
+                executionState,
+                constants,
+            })
+
+            const shouldBreakExecution = executionState.verdict !== ExecutionVerdict.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
+            if (shouldBreakExecution) {
+                break
             }
         }
         return executionState
@@ -86,7 +92,6 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return executionState.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
     }
 }
-
 
 export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     let orOperator = false

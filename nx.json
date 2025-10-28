@@ -11,12 +11,7 @@
       "cache": true
     },
     "test": {
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js",
-        "{workspaceRoot}/karma.conf.js"
-      ],
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
       "cache": true
     },
     "@nx/jest:jest": {
@@ -36,15 +31,13 @@
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
       "cache": true
     },
-    "@nx/angular:ng-packagr-lite": {
-      "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
-    },
     "@nx/js:tsc": {
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
+    },
+    "e2e": {
+      "cache": true
     }
   },
   "namedInputs": {
@@ -56,7 +49,6 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/jest.config.[jt]s",
       "!{projectRoot}/**/*.spec.[jt]s",
-      "!{projectRoot}/karma.conf.js",
       "!{projectRoot}/src/test-setup.[jt]s"
     ],
     "sharedGlobals": []
@@ -66,19 +58,6 @@
     "libsDir": "packages"
   },
   "generators": {
-    "@nx/angular:application": {
-      "style": "scss",
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "e2eTestRunner": "none"
-    },
-    "@nx/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "jest"
-    },
-    "@nx/angular:component": {
-      "style": "scss"
-    },
     "@nx/workspace:move": {
       "projectNameAndRootFormat": "as-provided"
     },
@@ -98,7 +77,6 @@
       }
     }
   },
-  "nxCloudAccessToken": "Y2Y3YzhhNjYtZWI4OC00M2Y0LWIwY2ItMWJhNTBjYzA3ZDA0fHJlYWQtb25seQ==",
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
@@ -115,12 +93,18 @@
         "previewTargetName": "preview",
         "serveStaticTargetName": "serve-static"
       }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      }
     }
   ],
   "tasksRunnerOptions": {
     "default": {
       "options": {
-        "useDaemonProcess": false
+        "runtimeCacheInputs": ["node -v"]
       }
     }
   },
@@ -129,5 +113,8 @@
       "preVersionCommand": "npx nx run-many -t build"
     }
   },
-  "useLegacyCache": true
+  "useDaemonProcess": false,
+  "parallel": 3,
+  "cacheDirectory": ".nx/cache",
+  "nxCloudId": "642638e2fe2ac16f0fb09003"
 }

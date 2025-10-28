@@ -8,7 +8,7 @@ export const getRecordAction = createAction({
   auth: businessCentralAuth,
   name: 'get-record',
   displayName: 'Get Record',
-  description: `Retrives the details of a record by it's ID.`,
+  description: `Retrieves the details of a record by it's ID.`,
   props: {
     company_id: commonProps.company_id,
     record_type: Property.StaticDropdown({

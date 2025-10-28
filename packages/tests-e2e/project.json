@@ -4,20 +4,27 @@
   "sourceRoot": "packages/tests-e2e",
   "projectType": "application",
   "targets": {
-    "test-local": {
+    "test-e2e": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "export $(cat packages/tests-e2e/.env.e2e | xargs) && npm start",
-          "sleep 60 && curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/v1/flags | grep -q \"2[0-9][0-9]\" && npx nx run tests-e2e:test-scenarios"
+          "npx playwright test --config=packages/tests-e2e/playwright.config.ts"
         ]
       }
     },
-    "test-scenarios": {
+    "test-checkly": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "npx playwright test packages/tests-e2e/tests/*.spec.ts"
+          "npx checkly test --config=packages/tests-e2e/checkly.config.ts --reporter=github --record"
+        ]
+      }
+    },
+    "deploy-checkly": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx checkly deploy"
         ]
       }
     },

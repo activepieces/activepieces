@@ -53,16 +53,17 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 return saveFileToDb(baseFile, params.data)
             }
             case FileLocation.S3: {
-                try {                    
-                    const s3Key = s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                try {
+                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
-                    return (await fileRepo().save({
+                    const savedFile = await fileRepo().save({
                         ...baseFile,
                         location: FileLocation.S3,
                         s3Key,
-                    }))
+                    })
+                    return savedFile
                 }
                 catch (error) {
                     exceptionHandler.handle(error, log)
@@ -70,6 +71,14 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
+    },
+    async exists(params: GetOneParams): Promise<boolean> {
+        const file = await fileRepo().findOneBy({
+            projectId: params.projectId,
+            id: params.fileId,
+            type: params.type,
+        })
+        return !isNil(file)
     },
     async getFile({ projectId, fileId, type }: GetOneParams): Promise<File | null> {
         const file = await fileRepo().findOneBy({
@@ -122,6 +131,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             compression: file.compression,
         })
         return {
+            metadata: file.metadata,
             data,
             fileName: file.fileName,
         }
@@ -164,9 +174,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
 })
 
 type GetDataResponse = {
+    metadata?: Record<string, string>
     data: Buffer
     fileName?: string
 }
+
 function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
     if (isExecutionDataFileThatExpires(type)) {
@@ -179,12 +191,14 @@ function isExecutionDataFileThatExpires(type: FileType) {
     switch (type) {
         case FileType.FLOW_RUN_LOG:
         case FileType.FLOW_STEP_FILE:
+        case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
             return true
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
+        case FileType.FLOW_VERSION_BACKUP:
             return false
         default:
             throw new Error(`File type ${type} is not supported`)

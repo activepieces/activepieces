@@ -1,5 +1,4 @@
-
-import { OAuth2GrantType } from '@activepieces/shared';
+import { BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE, OAuth2GrantType } from '@activepieces/shared';
 import { Type } from '@sinclair/typebox';
 import { ShortTextProperty } from '../input/text-property';
 import { SecretTextProperty } from './secret-text-property';
@@ -40,10 +39,12 @@ const OAuth2ExtraProps = Type.Object({
   authUrl: Type.String(),
   tokenUrl: Type.String(),
   scope: Type.Array(Type.String()),
+  prompt: Type.Optional(Type.Union([Type.Literal('none'), Type.Literal('consent'), Type.Literal('login'), Type.Literal('omit')])),
   pkce: Type.Optional(Type.Boolean()),
+  pkceMethod: Type.Optional(Type.Union([Type.Literal('plain'), Type.Literal('S256')])),
   authorizationMethod: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
-  grantType: Type.Optional(Type.Enum(OAuth2GrantType)),
-  extra: Type.Optional(Type.Record(Type.String(), Type.String()))
+  grantType: Type.Optional(Type.Union([Type.Enum(OAuth2GrantType), Type.Literal(BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)])),
+  extra: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 
 type OAuth2ExtraProps = {
@@ -51,10 +52,12 @@ type OAuth2ExtraProps = {
   authUrl: string
   tokenUrl: string
   scope: string[]
+  prompt?: 'none' |  'consent' | 'login' | 'omit' 
   pkce?: boolean
+  pkceMethod?: 'plain' | 'S256'
   authorizationMethod?: OAuth2AuthorizationMethod
-  grantType?: OAuth2GrantType
-  extra?: Record<string, string>
+  grantType?: OAuth2GrantType | typeof BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
+  extra?: Record<string, string>,
 }
 
 export const OAuth2PropertyValue = Type.Object({

@@ -50,6 +50,7 @@ export const googleDrive = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
+    'geekyme'
   ],
   triggers: [newFile, newFolder],
   actions: [

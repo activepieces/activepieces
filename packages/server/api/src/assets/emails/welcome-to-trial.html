@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Welcome to Activepieces</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Fira Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9fc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      background: #ffffff;
+      padding: 32px;
+      max-width: 600px;
+      margin: 40px auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border-radius: 8px;
+      text-align: left;
+    }
+    .logo {
+      display: block;
+      margin-bottom: 24px;
+    }
+    h2 {
+      color: #1f1f1f;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+    p {
+      color: #333333;
+      font-size: 16px;
+      line-height: 24px;
+      margin-bottom: 24px;
+    }
+    .highlight {
+      color: #6e41e2;
+      font-weight: 600;
+    }
+    .resources {
+      background-color: #f8f7fc;
+      padding: 20px;
+      border-radius: 6px;
+      margin: 24px 0;
+    }
+    .resources h3 {
+      color: #1f1f1f;
+      font-size: 18px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .resource-link {
+      display: block;
+      margin-bottom: 8px;
+    }
+    .resource-link a {
+      color: #6e41e2;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    .resource-link a:hover {
+      color: #5936c4;
+    }
+    .button-container {
+      text-align: left;
+      margin: 24px 0;
+    }
+    .button {
+      display: inline-block;
+      padding: 14px 24px;
+      background-color: #6e41e2;
+      color: #ffffff;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .button:hover {
+      background-color: #5936c4;
+    }
+    .signature {
+      margin-top: 32px;
+      font-style: italic;
+      color: #666666;
+    }
+    .footer {
+      margin-top: 32px;
+      font-size: 14px;
+      color: #999999 !important;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img
+      class="logo"
+      src="http://cdn.mcauto-images-production.sendgrid.net/515abc4911512d94/8915d91a-9ecd-4dd9-9cea-21b061e1a97f/427x66.png"
+      alt="Activepieces Logo"
+      width="160"
+    />
+    <h2>Welcome to Activepieces!</h2>
+    <p>
+      Hey {{firstName}},<br /><br />
+      Thanks for joining Activepieces! We're excited you're here.
+    </p>
+    <p>
+      <strong>Spoiler alert:</strong> Your life’s about to get way easier—AI is on chore duty!
+    </p>
+
+    <div class="resources">
+      <h3>To help you get started, check these out:</h3>
+      <div class="resource-link">
+        <a href="https://www.youtube.com/playlist?list=PLczrB0CK7kLKRlt_VSM2p5VaVSO1FSPG-">📺 Activepieces 101 (YouTube)</a>
+      </div>
+      <div class="resource-link">
+        <a href="https://www.youtube.com/playlist?list=PLczrB0CK7kLJnsP3nF3PSbS1tAOlPbnQy">📺 Vibe Coder Tutorials (YouTube)</a>
+      </div>
+      <div class="resource-link">
+        <a href="https://community.activepieces.com/">🌐 Web Community</a>
+      </div>
+      <div class="resource-link">
+        <a href="https://discord.com/invite/2jUXBKDdP8">💬 Discord Community</a>
+      </div>
+    </div>
+
+    <p>
+      You're on a <span class="highlight">14-day trial of our Plus Plan</span>, giving you unlimited tasks, AI agents, unlimited tables, and much more!
+    </p>
+
+    <div class="button-container">
+      <a href="https://www.activepieces.com/pricing" class="button">
+        <span style="color: #ffffff">Explore Plus Features</span>
+      </a>
+    </div>
+
+    <p class="signature">
+      See you later, Automator!
+    </p>
+
+    <div class="footer">
+      Need help getting started? <a href="https://www.activepieces.com/contact" style="color: #6e41e2;">Contact us</a><br />
+      &copy; {{year}} Activepieces. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

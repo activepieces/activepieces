@@ -1,5 +1,5 @@
 ---
-title: "Create Connections"
+title: "Create/Update Connections"
 description: ""
 icon: "cards"
 ---
@@ -9,6 +9,7 @@ icon: "cards"
 * Activepieces version 0.34.5 or higher
 * SDK version 0.3.2 or higher
 </Info>
+<Snippet file="replace-oauth2-apps.mdx" />
 
 <Info>
    "connectionName" is the externalId of the connection (you can get it by hovering the connection name in the connections table).  <br />
@@ -16,10 +17,10 @@ icon: "cards"
 </Info>
 
 <Warning>
-**Breaking Change**: <br/> If your Activepieces instance version is < 0.45.0 and (you are using the connect method from the embed sdk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
+**Breaking Change:** <br/><br/> If your Activepieces instance version is < 0.45.0 and (you are using the connect method from the embed sdk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
 </Warning>
 
-You can use the embedded SDK to create connections.
+- You can use the embedded SDK in your SaaS to allow your users to create connections and store them in Activepieces.
 
 <Steps>
     <Step title="Initialize the SDK">

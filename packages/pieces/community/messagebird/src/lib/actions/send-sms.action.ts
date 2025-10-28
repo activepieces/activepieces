@@ -27,9 +27,14 @@ export const sendSMSAction = createAction({
       description: 'Your own identifier for the message (optional)',
       required: false,
     }),
+    scheduledFor: Property.DateTime({
+      displayName: 'Scheduled For (UTC timestamp)',
+      description: 'Message to be sent at a specific datetime eg. 2025-04-27T15:08:18.613Z. If not set, the message will be sent immediately.',
+      required: false,
+    }),
   },
   async run(context) {
-    const { recipient, message, reference } = context.propsValue;
+    const { recipient, message, reference, scheduledFor } = context.propsValue;
     const auth = context.auth as { apiKey: string; workspaceId: string; channelId: string };
     
     // Format request for Bird Channels API
@@ -55,6 +60,7 @@ export const sendSMSAction = createAction({
           }
         },
         ...(reference && { reference }),
+        ...(scheduledFor && { scheduledFor }),
       },
     };
 

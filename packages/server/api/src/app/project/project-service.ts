@@ -1,12 +1,14 @@
+import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    apId,
     ApId,
+    apId,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
-    NotificationStatus,
+    Metadata,
     PlatformRole,
+    PlatformUsageMetric,
     Project,
     ProjectId,
     spreadIfDefined,
@@ -14,30 +16,41 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { projectMemberService } from '../ee/project-members/project-member.service'
+import { distributedStore } from '../database/redis-connections'
+import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
+import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
+
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
+
+        await PlatformPlanHelper.checkQuotaOrThrow({
+            platformId: params.platformId,
+            metric: PlatformUsageMetric.PROJECTS,
+        })
+
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
+            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
+        if (!isNil(params.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        }
         return savedProject
     },
     async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {
         return projectRepo().findOneBy({
             ownerId: params.ownerId,
             platformId: params.platformId,
-            deleted: IsNull(),
         })
     },
 
@@ -48,8 +61,20 @@ export const projectService = {
 
         return projectRepo().findOneBy({
             id: projectId,
-            deleted: IsNull(),
         })
+    },
+
+    async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
+        const projects = await projectRepo().find({
+            select: {
+                id: true,
+            },
+            where: {
+                platformId,
+            },
+        })
+
+        return projects.map((project) => project.id)
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
@@ -59,13 +84,13 @@ export const projectService = {
         await projectRepo().update(
             {
                 id: projectId,
-                deleted: IsNull(),
             },
             {
                 ...spreadIfDefined('externalId', externalId),
                 ...spreadIfDefined('displayName', request.displayName),
-                ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+                ...spreadIfDefined('metadata', request.metadata),
+                ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -96,11 +121,15 @@ export const projectService = {
 
         return project
     },
-    async exists(projectId: ProjectId): Promise<boolean> {
-        return projectRepo().existsBy({
-            id: projectId,
-            deleted: IsNull(),
+    async exists({ projectId, isSoftDeleted }: ExistsParams): Promise<boolean> {
+        const project = await projectRepo().findOne({
+            where: {
+                id: projectId,
+                deleted: isSoftDeleted ? Not(IsNull()) : IsNull(),
+            },
+            withDeleted: true,
         })
+        return !isNil(project)
     },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
         const user = await userService.getOneOrFail({ id: userId })
@@ -114,7 +143,7 @@ export const projectService = {
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: userId,
-                    entityType: 'project',
+                    entityType: 'user',
                 },
             })
         }
@@ -133,7 +162,6 @@ export const projectService = {
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
             id: projectId,
-            deleted: IsNull(),
         }
 
         const update = {
@@ -150,43 +178,42 @@ export const projectService = {
         return projectRepo().findOneBy({
             platformId,
             externalId,
-            deleted: IsNull(),
         })
     },
 }
 
 
 async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
-    const [projectIds, user] = await Promise.all([
-        projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        }),
-        userService.getOneOrFail({ id: params.userId }),
-    ])
-
-    const adminFilter = user.platformRole === PlatformRole.ADMIN
-        ? [{
-            deleted: IsNull(),
-            platformId: params.platformId,
-        }]
-        : []
+    const user = await userService.getOneOrFail({ id: params.userId })
+    const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-    const memberFilter = {
-        deleted: IsNull(),
+    
+    if (isPrivilegedUser) {
+        // Platform admins and operators can see all projects in their platform
+        return [{
+            platformId: params.platformId,
+            ...displayNameFilter,
+        }]
+    }
+    
+    // Only fetch project memberships for non-privileged users
+    const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+        platformId: params.platformId,
+        userId: params.userId,
+    })
+    
+    // Regular members can only see projects they're members of
+    return [{
         platformId: params.platformId,
         id: In(projectIds),
         ...displayNameFilter,
-    }
-
-    return [...adminFilter, memberFilter]
+    }]
 }
 async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {
         const externalIdAlreadyExists = await projectRepo().existsBy({
             id: Not(projectId),
             externalId,
-            deleted: IsNull(),
         })
 
         if (externalIdAlreadyExists) {
@@ -211,12 +238,18 @@ type GetOneByOwnerAndPlatformParams = {
     platformId: string
 }
 
+type ExistsParams = {
+    projectId: ProjectId
+    isSoftDeleted?: boolean
+}
+
 
 type UpdateParams = {
     displayName?: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
+    metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type CreateParams = {
@@ -224,7 +257,8 @@ type CreateParams = {
     displayName: string
     platformId: string
     externalId?: string
-    notifyStatus?: NotificationStatus
+    metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type GetByPlatformIdAndExternalIdParams = {

@@ -8,8 +8,8 @@ import {
   ResumePayload,
   SeekPage,
   TriggerPayload,
+  TriggerStrategy,
 } from '@activepieces/shared';
-import { TriggerStrategy } from './trigger/trigger';
 import {
   InputPropertyMap,
   PiecePropValueSchema,
@@ -23,6 +23,7 @@ type BaseContext<
   Props extends InputPropertyMap
 > = {
   flows: FlowsContext;
+  step: StepContext;
   auth: PiecePropValueSchema<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
   store: Store;
@@ -30,6 +31,7 @@ type BaseContext<
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
   };
+  connections: ConnectionsManager;
 };
 
 type AppWebhookTriggerHookContext<
@@ -102,11 +104,11 @@ export type PauseHookParams = {
 };
 
 export type PauseHook = (params: {
-  pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
+  pauseMetadata: Omit<DelayPauseMetadata, 'requestIdToReply'> | Omit<WebhookPauseMetadata, 'requestId' | 'requestIdToReply'>
 }) => void;
 
 export type FlowsContext = {
-  list(): Promise<SeekPage<PopulatedFlow>>
+  list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>>
   current: {
     id: string;
     version: {
@@ -115,6 +117,13 @@ export type FlowsContext = {
   };
 }
 
+export type StepContext = {
+  name: string;
+}
+
+export type ListFlowsContextParams = {
+  externalIds?: string[]
+}
 
 
 export type PropertyContext = {
@@ -125,6 +134,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: FlowsContext;
+  connections: ConnectionsManager;
 };
 
 export type ServerContext = {
@@ -148,20 +158,30 @@ export type OnStartContext<
    payload: unknown;
 }
 
+
+export type OutputContext = {
+  update: (params: {
+    data: {
+      [key: string]: unknown;
+    };
+  }) => Promise<void>;
+}
+
 export type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
   ActionProps extends InputPropertyMap
 > = BaseContext<PieceAuth, ActionProps> & {
   executionType: ET;
-  connections: ConnectionsManager;
   tags: TagsManager;
   server: ServerContext;
   files: FilesService;
+  output: OutputContext;
   serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    sync?: boolean
   }) => string;
 };
 

@@ -99,8 +99,8 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
 
 async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: FastifyBaseLogger): Promise<void> {
     const platformId = info.platformId
-    const platform = await platformService.getOneOrThrow(platformId)
-    if (!platform.auditLogEnabled) {
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    if (!platform.plan.auditLogEnabled) {
         return
     }
     const user = info.userId ? await userService.getOneOrFail({
