@@ -110,4 +110,16 @@ export class UscreenClient {
             return [];
         }
     }
+
+    async getCustomers() {
+        try {
+            return await this.makeRequest<{ id: number; email: string }[]>(
+                HttpMethod.GET,
+                '/customers'
+            );
+        } catch (e) {
+            console.error("Failed to fetch Uscreen customers", e);
+            return [];
+        }
+    }
 }

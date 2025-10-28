@@ -1,7 +1,6 @@
-
-
-import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 import { uscreenAuth } from "../common/auth";
+import { uscreenProps } from "../common/props";
 
 
 const sampleData = {
@@ -17,8 +16,10 @@ export const beganToPlayVideo = createTrigger({
     auth: uscreenAuth,
     name: 'began_to_play_video',
     displayName: 'Began to Play Video',
-    description: 'Fires when a user plays a video for the first time. You must manually add the webhook URL from ActivePieces into your Uscreen settings: Settings > Webhooks > New Webhook and select the "Began to Play Video" event.',
-    props: {},
+    description: 'Fires when a user plays a video for the first time.',
+    props: {
+        setupInstructions: uscreenProps.webhookInstructions(),
+    },
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
     

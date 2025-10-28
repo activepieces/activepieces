@@ -2,6 +2,7 @@
 
 import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
 import { uscreenAuth } from "../common/auth";
+import { uscreenProps } from "../common/props";
 
 const sampleData = {
   "event": "subscription_canceled",
@@ -21,7 +22,7 @@ export const canceledSubscription = createTrigger({
     name: 'canceled_subscription',
     displayName: 'Canceled Subscription',
     description: 'Fires when a subscription is canceled for a user. You must manually add the webhook URL from ActivePieces into your Uscreen settings: Settings > Webhooks > New Webhook and select the "Canceled Subscription" event.',
-    props: {},
+    props: { setupInstructions: uscreenProps.webhookInstructions(),},
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
     
@@ -33,20 +34,20 @@ export const canceledSubscription = createTrigger({
         return;
     },
 
-    // 'run' is called when Uscreen sends a payload to the webhook URL
+    
     async run(context) {
         const payload = context.payload as unknown as (typeof sampleData);
         
-        // We only care about the 'subscription_canceled' event
+     
         if (payload.event !== "subscription_canceled") {
             return [];
         }
         
-        // Return the payload in an array
+       
         return [payload];
     },
 
-    // 'test' just returns the sample data for the UI
+    
     async test(context) {
         return [sampleData];
     }

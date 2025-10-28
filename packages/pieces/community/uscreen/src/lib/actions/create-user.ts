@@ -3,7 +3,7 @@
 import { createAction, Property, DynamicPropsValue, PieceAuth } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { uscreenAuth } from "../common/auth";
-import { uscreenApiUrl } from "../common/client"; 
+import { uscreenApiUrl, UscreenClient } from "../common/client"; 
 
 
 interface CreateUserProps {
@@ -11,7 +11,7 @@ interface CreateUserProps {
     first_name: string;
     last_name: string;
     password?: string;
-    send_invite_email?: boolean;
+    opted_in_for_news_and_updates?: boolean;
     custom_fields?: DynamicPropsValue;
 }
 
@@ -42,11 +42,11 @@ export const createUser = createAction({
             description: "The new user's password. Leave blank if sending an invite email.",
             required: false,
         }),
-        send_invite_email: Property.Checkbox({
-            displayName: 'Send Invite Email',
-            description: 'If set to true, the new user will receive a welcome email automatically.',
+        opted_in_for_news_and_updates: Property.Checkbox({
+            displayName: 'Opted in for News and Updates',
+            description: 'If set to true, the new user will receive news and updates.',
             required: false,
-            defaultValue: false,
+            defaultValue: true,
         }),
         custom_fields: Property.DynamicProperties({
             displayName: 'Custom Fields',
@@ -71,36 +71,30 @@ export const createUser = createAction({
             first_name, 
             last_name, 
             password, 
-            send_invite_email, 
+            opted_in_for_news_and_updates, 
             custom_fields 
         } = context.propsValue as CreateUserProps;
-
+        const client = new UscreenClient(context.auth);
         const body: Record<string, unknown> = { ...custom_fields };
         
         delete body['add_field_helper'];
 
         body['email'] = email;
-        body['first_name'] = first_name;
-        body['last_name'] = last_name;
-
+        body['name'] = first_name + ' ' + last_name;
+        
         if (password) {
             body['password'] = password;
         }
-        if (send_invite_email) {
-            body['send_invite_email'] = send_invite_email;
+        if (opted_in_for_news_and_updates) {
+            body['opted_in_for_news_and_updates'] = opted_in_for_news_and_updates;
         }
 
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: `${uscreenApiUrl}/customer`,
-            body: body,
-            headers: {
-                'X-Store-Token': context.auth as string,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await client.makeRequest(
+            HttpMethod.POST,
+            `/customers`,
+            body
+        );
 
-        return response.body;
+        return response;
     },
 });

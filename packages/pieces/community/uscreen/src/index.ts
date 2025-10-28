@@ -13,7 +13,7 @@ import { paidOrder } from "./lib/triggers/paid-order";
 import { newUser } from "./lib/triggers/new-user";
 import { beganToPlayVideo } from "./lib/triggers/began-to-play-video";
 import { canceledSubscription } from "./lib/triggers/canceled-subscription";
-import { userUpdated } from "./lib/triggers/user-updated"; // <-- Import new trigger
+import { userUpdated } from "./lib/triggers/user-updated"; 
 
 export const uscreen = createPiece({
     displayName: "Uscreen",

@@ -1,5 +1,3 @@
-
-
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { uscreenAuth } from "../common/auth";
 import { uscreenProps } from "../common/props";
@@ -38,12 +36,10 @@ export const assignUserAccess = createAction({
             product_type: productType,
         };
 
-        if (perform_action_at) {
-            body['perform_action_at'] = perform_action_at;
-        }
-
         if (productType === 'offer' && with_manual_billing) {
             body['with_manual_billing'] = true;
+        } else if (perform_action_at) {
+            body['perform_action_at'] = perform_action_at;
         }
  
         return await client.makeRequest(

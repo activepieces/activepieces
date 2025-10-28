@@ -1,6 +1,7 @@
 
 import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
 import { uscreenAuth } from "../common/auth";
+import { uscreenProps } from "../common/props";
 
 
 const sampleData = {
@@ -23,7 +24,7 @@ export const newUser = createTrigger({
     name: 'new_user',
     displayName: 'New User',
     description: 'Fires when a new user is added to your storefront. You must manually add the webhook URL from ActivePieces into your Uscreen settings: Settings > Webhooks > New Webhook and select the "New User" event.',
-    props: {},
+    props: { setupInstructions: uscreenProps.webhookInstructions(),},
     sampleData: sampleData.data,
     type: TriggerStrategy.WEBHOOK,
     
@@ -39,7 +40,7 @@ export const newUser = createTrigger({
         
         const payload = context.payload as unknown as (typeof sampleData);
         
-        if (payload.event !== "user.created") {
+        if (payload.event !== "user_created") {
             return [];
         }
         

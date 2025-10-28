@@ -5,10 +5,10 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { uscreenPublisherApiUrl } from './client';
 
 export const uscreenAuth = PieceAuth.SecretText({
-    displayName: 'API Key (X-Store-Token)',
+    displayName: 'API Key',
     description: `
     To get your API key:
-    1. Log in to your Uscreen account (this is for UscreenPlus customers).
+    1. Log in to your Uscreen account
     2. Contact your Customer Success Manager to have an API key (X-Store-Token) issued.
     `,
     required: true,
