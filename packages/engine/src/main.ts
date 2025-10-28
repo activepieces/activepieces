@@ -11,36 +11,67 @@ import {
     ERROR_MESSAGES_TO_REDACT,
     isNil,
 } from '@activepieces/shared'
-import WebSocket from 'ws'
+import { io, type Socket } from 'socket.io-client'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
 
 const WORKER_ID = process.env.WORKER_ID
-const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
+const WS_URL = 'http://127.0.0.1:12345'
 
 
 process.title = `engine-${WORKER_ID}`
-let socket: WebSocket | undefined
+let socket: Socket | undefined
 
 export function sendToWorker(type: EngineSocketEvent, data: unknown): void {
-    socket?.send(JSON.stringify({ type, data }))
+    socket?.emit(type, data)
+}
+
+export const sendToWorkerWithAck = async (
+    type: EngineSocketEvent,
+    data: unknown,
+    options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number },
+): Promise<void> => {
+    const timeoutMs = options?.timeoutMs ?? 5000
+    const retries = options?.retries ?? 3
+    const retryDelayMs = options?.retryDelayMs ?? 2000
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            if (!socket || !socket.connected) {
+                throw new Error('Socket not connected')
+            }
+            await socket.timeout(timeoutMs).emitWithAck(type, data)
+            return
+        }
+        catch (error) {
+            if (attempt < retries) {
+                await new Promise(resolve => setTimeout(resolve, retryDelayMs))
+            }
+            else {
+                console.error({
+                    message: 'Failed to emit event',
+                    event: type,
+                    data,
+                    error,
+                })
+            }
+        }
+    }
 }
 
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
-    socket?.send(JSON.stringify({
-        type: EngineSocketEvent.ENGINE_RESPONSE,
-        data: resultParsed,
-    }))
+    socket?.emit(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
 }
 
 function setupSocket() {
     assertNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
 
-    socket = new WebSocket(WS_URL, {
-        headers: {
-            'worker-id': WORKER_ID,
+    socket = io(WS_URL, {
+        path: '/worker/ws',
+        auth: {
+            workerId: WORKER_ID,
         },
     })
 
@@ -50,10 +81,7 @@ function setupSocket() {
         const engineStdout: EngineStdout = {
             message: args.join(' ') + '\n',
         }
-        socket?.send(JSON.stringify({
-            type: EngineSocketEvent.ENGINE_STDOUT,
-            data: engineStdout,
-        }))
+        socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
         originalLog.apply(console, args)
     }
 
@@ -66,34 +94,23 @@ function setupSocket() {
         const engineStderr: EngineStderr = {
             message: sanitizedArgs.join(' ') + '\n',
         }
-        socket?.send(JSON.stringify({
-            type: EngineSocketEvent.ENGINE_STDERR,
-            data: engineStderr,
-        }))
+        socket?.emit(EngineSocketEvent.ENGINE_STDERR, engineStderr)
        
         originalError.apply(console, sanitizedArgs)
     }
 
-    socket.on('message', (data: string) => {
-        try {
-            const message = JSON.parse(data)
-            if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
-                executeFromSocket(message.data.operation, message.data.operationType).catch(e => {
-                    const engineError: EngineResponse = {
-                        response: undefined,
-                        status: EngineResponseStatus.INTERNAL_ERROR,
-                        error: utils.formatError(e),
-                    }
-                    socket?.send(JSON.stringify(engineError))
-                })
+    socket.on(EngineSocketEvent.ENGINE_OPERATION, (data: { operation: EngineOperation, operationType: EngineOperationType }) => {
+        executeFromSocket(data.operation, data.operationType).catch(e => {
+            const engineError: EngineResponse = {
+                response: undefined,
+                status: EngineResponseStatus.INTERNAL_ERROR,
+                error: utils.formatError(e),
             }
-        }
-        catch (error) {
-            console.error('Error handling operation:', error)
-        }
+            socket?.emit(EngineSocketEvent.ENGINE_RESPONSE, engineError)
+        })
     })
 
-    socket.on('close', () => {
+    socket.on('disconnect', () => {
         console.log('Socket disconnected, exiting process')
         process.exit(0)
     })
@@ -108,14 +125,11 @@ process.on('uncaughtException', (error) => sendToErrorSocket(error))
 process.on('unhandledRejection', (reason) => sendToErrorSocket(reason))
 
 function sendToErrorSocket(error: unknown) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
+    if (socket && socket.connected) {
         const engineStderr: EngineStderr = {
             message: inspect(error),
         }
-        socket.send(JSON.stringify({
-            type: EngineSocketEvent.ENGINE_STDERR,
-            data: engineStderr,
-        }))
+        socket.emit(EngineSocketEvent.ENGINE_STDERR, engineStderr)
     }
     setTimeout(() => {
         process.exit(1)

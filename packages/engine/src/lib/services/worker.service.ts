@@ -1,8 +1,8 @@
 import { EngineSocketEvent, UpdateRunProgressRequest } from '@activepieces/shared'
-import { sendToWorker } from '../../main'
+import { sendToWorkerWithAck } from '../../main'
 
 export const workerService = {
-    updateRunProgress(request: UpdateRunProgressRequest): void {
-        sendToWorker(EngineSocketEvent.UPDATE_RUN_PROGRESS, request)
+    async updateRunProgress(request: UpdateRunProgressRequest): Promise<void> {
+        await sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, request)
     },
 }

@@ -132,7 +132,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
 
 const sendProgressUpdate = async (request: UpdateRunProgressRequest): Promise<void> => {
     try {
-        workerService.updateRunProgress(request)
+        await workerService.updateRunProgress(request)
     }
     catch (error) {
         throw new ProgressUpdateError('Failed to send progress update', error)
