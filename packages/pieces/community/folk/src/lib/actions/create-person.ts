@@ -56,7 +56,6 @@ export const createPersonAction = createAction({
     }),
   },
   async run(context) {
-    // Validate required fields
     if (!context.propsValue.groupId || context.propsValue.groupId.trim() === '') {
       return {
         success: false,
@@ -81,7 +80,6 @@ export const createPersonAction = createAction({
       groups: [{ id: context.propsValue.groupId.trim() }],
     };
 
-    // Add optional fields only if they have values
     if (context.propsValue.email && context.propsValue.email.trim()) {
       personData.email = context.propsValue.email.trim();
     }
@@ -102,7 +100,6 @@ export const createPersonAction = createAction({
       personData.company = context.propsValue.companyId.trim();
     }
     
-    // Add custom fields directly to the root object
     if (context.propsValue.customFields && typeof context.propsValue.customFields === 'object') {
       Object.assign(personData, context.propsValue.customFields);
     }

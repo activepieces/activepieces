@@ -1,95 +1,79 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { makeFolkRequest, FolkWebhook, folkAuth } from '../common/common';
+import { makeFolkRequest, FolkPerson, folkAuth } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const personCustomFieldUpdatedTrigger = createTrigger({
   auth: folkAuth,
   name: 'person_custom_field_updated',
   displayName: 'Person Custom Field Updated',
-  description: 'Triggers when a person custom field (e.g., tag, status, text, assignee) is updated',
+  description: 'Triggers when a person custom field (tag, status, text, assignee) is updated',
+  type: TriggerStrategy.WEBHOOK,
   props: {
     fieldKey: Property.ShortText({
       displayName: 'Field Key',
-      description: 'Specific custom field key to monitor (leave empty to monitor all custom fields)',
+      description: 'Only emit when this specific custom field is updated (optional)',
       required: false,
     }),
-    groupId: Property.ShortText({
-      displayName: 'Group ID',
-      description: 'Specific group ID to monitor',
-      required: false,
+    instructions: Property.MarkDown({
+      value: `
+## Setup Instructions
+
+1. Copy the webhook URL below
+2. Go to Folk Settings → Webhooks
+3. Enable webhooks and paste the URL
+4. Select event: **Person Updated**
+5. Save the webhook configuration
+      `,
     }),
   },
-  type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    id: 'person_123456',
-    type: 'person',
-    name: 'John Doe',
-    custom_field_key: 'status',
-    old_value: 'Lead',
-    new_value: 'Customer',
-    updated_at: '2025-01-02T00:00:00Z',
+    event: 'person.updated',
+    personId: 'per_123',
+    changes: {
+      customFields: {
+        status: { old: 'Lead', new: 'Contact' },
+      },
+    },
   },
   async onEnable(context) {
-    const webhookUrl = context.webhookUrl;
-    
-    const webhookData = {
-      url: webhookUrl,
-      events: ['person.custom_field_updated'],
-      active: true,
-    };
-
-    const response = await makeFolkRequest<{ webhook: FolkWebhook }>(
-      context.auth,
-      HttpMethod.POST,
-      '/webhooks',
-      webhookData
-    );
-
-    await context.store.put('webhookId', response.webhook.id);
+    await context.store.put('webhookUrl', context.webhookUrl);
   },
   async onDisable(context) {
-    const webhookId = await context.store.get<string>('webhookId');
-    
-    if (webhookId) {
-      await makeFolkRequest(
-        context.auth,
-        HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
-      );
-      await context.store.delete('webhookId');
-    }
+    await context.store.delete('webhookUrl');
   },
   async run(context) {
-    const payload = context.payload.body as any;
+    const payload: any = context.payload?.body;
+    if (!payload) return [];
+
+    const eventType = payload?.type || payload?.event;
+    if (eventType !== 'person.updated') return [];
+
+    const data = payload?.data || payload;
+    const changes = data?.changes || {};
     
-    if (payload.type === 'person' && payload.event === 'custom_field_updated') {
-      // Filter by field key if specified
-      if (context.propsValue.fieldKey) {
-        if (payload.field_key !== context.propsValue.fieldKey) {
-          return [];
-        }
-      }
-      
-      // Filter by group if specified
-      if (context.propsValue.groupId) {
-        if (!payload.data.groups?.includes(context.propsValue.groupId)) {
-          return [];
-        }
-      }
-      
-      return [
-        {
-          data: {
-            person: payload.data,
-            field_key: payload.field_key,
-            old_value: payload.old_value,
-            new_value: payload.new_value,
-            updated_at: payload.updated_at,
-          },
-        },
-      ];
+    if (!changes.customFields && !changes.fields) return [];
+
+    const wantedField = context.propsValue?.fieldKey?.trim();
+    if (wantedField) {
+      const customFieldChanges = changes.customFields || changes.fields || {};
+      if (!customFieldChanges[wantedField]) return [];
     }
 
-    return [];
+    let personFull: any;
+
+    return [{
+      event: eventType,
+      personId: data?.id,
+      personUrl: data?.url,
+      changes: changes,
+      person: personFull || data,
+    }];
+  },
+  async test(context) {
+    return [{
+      event: 'person.updated',
+      personId: 'per_test123',
+      changes: { customFields: { status: { old: 'Lead', new: 'Contact' } } },
+    }];
   },
 });

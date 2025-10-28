@@ -55,7 +55,6 @@ export const createCompanyAction = createAction({
       groups: [{ id: context.propsValue.groupId }],
     };
 
-    // Only add fields if they have values
     if (context.propsValue.email) {
       companyData.email = context.propsValue.email;
     }

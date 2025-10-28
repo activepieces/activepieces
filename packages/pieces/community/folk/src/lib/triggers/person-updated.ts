@@ -6,80 +6,64 @@ export const personUpdatedTrigger = createTrigger({
   auth: folkAuth,
   name: 'person_updated',
   displayName: 'Person Updated',
-  description: 'Triggers when a person\'s basic field (e.g., name, job title, email, or URL) in a group is updated',
+  description: 'Triggers when a person\'s basic field (name, job title, email, URL) is updated',
+  type: TriggerStrategy.WEBHOOK,
   props: {
-    groupId: Property.ShortText({
-      displayName: 'Group ID',
-      description: 'Specific group ID to monitor',
-      required: false,
+    instructions: Property.MarkDown({
+      value: `
+## Setup Instructions
+
+1. Copy the webhook URL below
+2. Go to Folk Settings → Webhooks
+3. Enable webhooks and paste the URL
+4. Select event: **Person Updated**
+5. Save the webhook configuration
+      `,
     }),
   },
-  type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    id: 'person_123456',
-    type: 'person',
-    name: 'John Doe',
-    first_name: 'John',
-    last_name: 'Doe',
-    emails: ['john.doe@example.com'],
-    job_title: 'CEO',
-    updated_fields: ['job_title', 'emails'],
-    updated_at: '2025-01-02T00:00:00Z',
+    event: 'person.updated',
+    personId: 'per_123',
+    changes: {
+      name: { old: 'John Doe', new: 'Jane Doe' },
+    },
   },
   async onEnable(context) {
-    const webhookUrl = context.webhookUrl;
-    
-    const webhookData = {
-      url: webhookUrl,
-      events: ['person.updated'],
-      active: true,
-    };
-
-    const response = await makeFolkRequest<{ webhook: FolkWebhook }>(
-      context.auth,
-      HttpMethod.POST,
-      '/webhooks',
-      webhookData
-    );
-
-    await context.store.put('webhookId', response.webhook.id);
+    await context.store.put('webhookUrl', context.webhookUrl);
   },
   async onDisable(context) {
-    const webhookId = await context.store.get<string>('webhookId');
-    
-    if (webhookId) {
-      await makeFolkRequest(
-        context.auth,
-        HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
-      );
-      await context.store.delete('webhookId');
-    }
+    await context.store.delete('webhookUrl');
   },
   async run(context) {
-    const payload = context.payload.body as any;
-    
-    if (payload.type === 'person' && payload.event === 'updated') {
-      const person = payload.data as FolkPerson;
-      
-      // Filter by group if specified
-      if (context.propsValue.groupId) {
-        if (!person.groups?.includes(context.propsValue.groupId)) {
-          return [];
-        }
-      }
-      
-      return [
-        {
-          data: {
-            person,
-            updated_fields: payload.updated_fields,
-            updated_at: payload.updated_at,
-          },
-        },
-      ];
-    }
+    const payload: any = context.payload?.body;
+    if (!payload) return [];
 
-    return [];
+    const eventType = payload?.type || payload?.event;
+    if (eventType !== 'person.updated') return [];
+
+    const data = payload?.data || payload;
+    const changes = data?.changes || {};
+
+    const basicFields = ['name', 'email', 'jobTitle', 'url', 'phone', 'description'];
+    const hasBasicFieldChange = basicFields.some(field => changes[field]);
+
+    if (!hasBasicFieldChange) return [];
+
+    let personFull: any;
+
+    return [{
+      event: eventType,
+      personId: data?.id,
+      personUrl: data?.url,
+      changes: changes,
+      person: personFull || data,
+    }];
+  },
+  async test(context) {
+    return [{
+      event: 'person.updated',
+      personId: 'per_test123',
+      changes: { name: { old: 'John Doe', new: 'Jane Doe' } },
+    }];
   },
 });

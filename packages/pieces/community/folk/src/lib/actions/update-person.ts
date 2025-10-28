@@ -58,8 +58,6 @@ export const updatePersonAction = createAction({
     if (context.propsValue.linkedin) updateData.linkedin = context.propsValue.linkedin;
     if (context.propsValue.jobTitle) updateData['job title'] = context.propsValue.jobTitle;
     if (context.propsValue.companyId) updateData.company = context.propsValue.companyId;
-    
-    // Add custom fields directly to the root object
     if (context.propsValue.customFields) {
       Object.assign(updateData, context.propsValue.customFields);
     }

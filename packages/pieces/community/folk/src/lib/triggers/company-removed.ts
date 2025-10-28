@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { makeFolkRequest, FolkWebhook } from '../common/common';
+import { makeFolkRequest, FolkCompany } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { folkAuth } from '../common/common';
 

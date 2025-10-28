@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { makeFolkRequest, folkAuth, FolkWebhook } from '../common/common';
+import { makeFolkRequest, folkAuth, FolkCompany } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const companyCustomFieldUpdatedTrigger = createTrigger({
@@ -51,7 +51,6 @@ export const companyCustomFieldUpdatedTrigger = createTrigger({
     const data = payload?.data || payload;
     const changes = data?.changes || {};
     
-    // Check if custom fields were updated
     if (!changes.customFields && !changes.fields) return [];
 
     const wantedField = context.propsValue?.fieldKey?.trim();
