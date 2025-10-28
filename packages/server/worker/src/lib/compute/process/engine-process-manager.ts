@@ -87,6 +87,7 @@ export const engineProcessManager = {
                     customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
                     flowVersionId: getFlowVersionId(operation, operationType),
                     options,
+                    reusable: isWorkerReusable(),
                 })
                 const connection = await engineSocketServer.waitForConnect(workerId)
                 if (!connection) {

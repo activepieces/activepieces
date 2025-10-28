@@ -118,10 +118,12 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             logsFileId: engineConstants.logsFileId,
             stepNameToTest: engineConstants.stepNameToTest,
         }
-        const requestHash = crypto.createHash('sha256').update(JSON.stringify(request)).digest('hex')
+
+        const requestHash = crypto.createHash('sha256').update(JSON.stringify(runDetails)).digest('hex')
         if (requestHash === lastRequestHash) {
             return
         }
+
         lastRequestHash = requestHash
         const response = await sendProgressUpdate(params.engineConstants, request)
         if (!response.ok) {
@@ -139,7 +141,7 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
 const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
     const response = await fetchWithRetry(uploadUrl, {
         method: 'PUT',
-        body: executionState,
+        body: new Uint8Array(executionState),
         headers: {
             'Content-Type': 'application/octet-stream',
         },
