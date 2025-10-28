@@ -13,6 +13,7 @@
     "axios": "1.8.3",
     "axios-retry": "4.4.1",
     "dayjs": "1.11.9",
+    "chokidar": "4.0.3",
     "@sentry/node": "7.120.0",
     "fastify": "5.4.0",
     "@sinclair/typebox": "0.34.11",
