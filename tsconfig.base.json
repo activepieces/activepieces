@@ -752,6 +752,9 @@
       "@activepieces/piece-murf-api": [
         "packages/pieces/community/murf-api/src/index.ts"
       ],
+      "@activepieces/piece-mycase": [
+        "packages/pieces/community/mycase/src/index.ts"
+      ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
       ],
