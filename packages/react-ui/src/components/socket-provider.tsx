@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useEffectOnce } from 'react-use';
 import { io } from 'socket.io-client';
 
