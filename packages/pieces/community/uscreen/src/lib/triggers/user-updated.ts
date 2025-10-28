@@ -34,7 +34,7 @@ export const userUpdated = createTrigger({
   name: 'user_updated',
   displayName: 'User Updated',
   description:
-    'Fires when a user’s profile or information is updated. You must manually add the webhook URL from ActivePieces into your Uscreen settings: Settings > Webhooks > New Webhook and select the "User Updated" event.',
+    'Triggers when a user’s profile or information is updated.',
   props: { setupInstructions: uscreenProps.webhookInstructions() },
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,

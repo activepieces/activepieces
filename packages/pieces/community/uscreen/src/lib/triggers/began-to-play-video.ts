@@ -19,7 +19,7 @@ export const beganToPlayVideo = createTrigger({
   auth: uscreenAuth,
   name: 'began_to_play_video',
   displayName: 'Began to Play Video',
-  description: 'Fires when a user plays a video for the first time.',
+  description: 'Triggers when a user plays a video for the first time.',
   props: {
     setupInstructions: uscreenProps.webhookInstructions(),
   },

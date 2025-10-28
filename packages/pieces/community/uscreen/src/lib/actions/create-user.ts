@@ -19,7 +19,7 @@ export const createUser = createAction({
     auth: uscreenAuth,
     name: 'create_user',
     displayName: 'Create User',
-    description: "Creates a new user and optionally sends them a welcome email.",
+    description: "Creates a new user and optionally sends them a welcome email to your storefront.",
 
     props: {
         email: Property.ShortText({

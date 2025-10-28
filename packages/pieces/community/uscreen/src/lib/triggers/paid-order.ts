@@ -28,7 +28,7 @@ export const paidOrder = createTrigger({
   name: 'paid_order',
   displayName: 'Paid Order',
   description:
-    'Fires when a payment is processed for subscriptions, bundles, or content.',
+    'Triggers when a payment is processed for subscriptions, bundles, or content.',
   props: {},
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,

@@ -22,7 +22,7 @@ export const newUser = createTrigger({
   name: 'new_user',
   displayName: 'New User',
   description:
-    'Fires when a new user is added to your storefront. You must manually add the webhook URL from ActivePieces into your Uscreen settings: Settings > Webhooks > New Webhook and select the "New User" event.',
+    'Triggers when a new user is added to your storefront.',
   props: { setupInstructions: uscreenProps.webhookInstructions() },
   sampleData: sampleData.data,
   type: TriggerStrategy.WEBHOOK,

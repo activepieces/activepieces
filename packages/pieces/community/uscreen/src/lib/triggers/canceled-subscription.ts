@@ -20,7 +20,7 @@ export const canceledSubscription = createTrigger({
   name: 'canceled_subscription',
   displayName: 'Canceled Subscription',
   description:
-    'Fires when a subscription is canceled for a user. You must manually add the webhook URL from ActivePieces into your Uscreen settings: Settings > Webhooks > New Webhook and select the "Canceled Subscription" event.',
+    'Triggers when a subscription is canceled for a user.',
   props: { setupInstructions: uscreenProps.webhookInstructions() },
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,
