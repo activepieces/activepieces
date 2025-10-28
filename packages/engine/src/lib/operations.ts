@@ -72,7 +72,7 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
         })
     }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty().increaseTask(input.tasks)),
+        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty()),
         constants,
         input,
     })

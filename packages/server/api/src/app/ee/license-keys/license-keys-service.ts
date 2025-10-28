@@ -141,7 +141,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             plan: {
                 plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
-                tasksLimit: undefined,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,

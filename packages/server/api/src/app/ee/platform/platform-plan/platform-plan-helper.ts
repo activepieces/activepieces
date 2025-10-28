@@ -317,12 +317,12 @@ type HandleResourceLockingParams = {
 type QuotaCheckParams = {
     projectId?: string
     platformId: string
-    metric: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS>
+    metric: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS>
 }
 
 type CheckResourceLockedParams = {
     platformId: string
-    resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS | PlatformUsageMetric.USER_SEATS | PlatformUsageMetric.ACTIVE_FLOWS>
+    resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.USER_SEATS | PlatformUsageMetric.ACTIVE_FLOWS>
 }
 
 type CheckLegitSubscriptionUpdateOrThrowParams = {

@@ -65,15 +65,6 @@ export const planData = {
 
   features: [
     {
-      key: 'tasks',
-      label: t('Tasks'),
-      values: {
-        free: '1,000/mo',
-        plus: 'Unlimited',
-        business: 'Unlimited',
-      },
-    },
-    {
       key: 'activeFlows',
       label: t('Active Flows'),
       values: {

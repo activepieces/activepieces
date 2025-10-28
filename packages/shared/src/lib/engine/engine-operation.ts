@@ -95,7 +95,6 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
     executionType: T
-    tasks: number
     runEnvironment: RunEnvironment
     executionState: ExecutionState
     serverHandlerId: string | null

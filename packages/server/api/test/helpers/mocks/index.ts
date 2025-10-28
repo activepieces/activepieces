@@ -147,7 +147,6 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
-        tasks: plan?.tasks ?? 0,
     }
 }
 
@@ -210,7 +209,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
-        tasksLimit: platformPlan?.tasksLimit ?? 0,
         aiCreditsOverageLimit: platformPlan?.aiCreditsOverageLimit ?? 0,
         aiCreditsOverageState: platformPlan?.aiCreditsOverageState ?? AiOverageState.ALLOWED_BUT_OFF,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
@@ -464,7 +462,6 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         flowVersionId: flowRun?.flowVersionId ?? apId(),
         flowVersion: flowRun?.flowVersion,
         logsFileId: flowRun?.logsFileId ?? null,
-        tasks: flowRun?.tasks,
         status: flowRun?.status ?? faker.helpers.enumValue(FlowRunStatus),
         startTime: flowRun?.startTime ?? faker.date.recent().toISOString(),
         finishTime: flowRun?.finishTime ?? faker.date.recent().toISOString(),

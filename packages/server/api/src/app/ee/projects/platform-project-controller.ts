@@ -44,7 +44,6 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         })
         await projectLimitsService(request.log).upsert({
             nickname: 'platform',
-            tasks: null,
             pieces: [],
             aiCredits: null,
             piecesFilterType: PiecesFilterType.NONE,
