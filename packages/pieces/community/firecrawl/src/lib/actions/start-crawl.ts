@@ -1,7 +1,7 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots, firecrawl_api_base_url } from '../common/common';
 
 function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
   if (!useWebhook || !webhookProperties) {
@@ -293,7 +293,7 @@ export const startCrawl = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.firecrawl.dev/v2/crawl',
+      url: `${firecrawl_api_base_url}/crawl`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${auth}`,

@@ -6,6 +6,7 @@ import { extract } from './lib/actions/extract';
 import { startCrawl } from './lib/actions/start-crawl';
 import { crawlResults } from './lib/actions/crawl-results';
 import { map } from './lib/actions/map';
+import { firecrawl_api_base_url } from './lib/common/common';
 
 const markdownDescription = `
 Follow these steps to obtain your Firecrawl API Key:
@@ -23,7 +24,7 @@ export const firecrawlAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://api.firecrawl.dev/v1/scrape',
+        url: 'https://api.firecrawl.dev/v2/scrape',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${auth}`,
@@ -64,7 +65,7 @@ export const firecrawl = createPiece({
     map,
 
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.firecrawl.dev/v2',
+      baseUrl: () => firecrawl_api_base_url,
       auth: firecrawlAuth,
       authMapping: async (auth) => ({
         'Authorization': `Bearer ${auth}`,

@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import Ajv from 'ajv';
 
+export const firecrawl_api_base_url = 'https://api.firecrawl.dev/v2';
 
 export const forScreenshotOutputFormat = (): any => {
   // initially i gave the user the option to choose viewport or full page, 
@@ -147,7 +148,7 @@ export async function polling(
     // check status
     const statusResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.firecrawl.dev/v2/${actionType}/${jobId}`,
+      url: `${firecrawl_api_base_url}/${actionType}/${jobId}`,
       headers: {
         'Authorization': `Bearer ${auth}`,
       },
