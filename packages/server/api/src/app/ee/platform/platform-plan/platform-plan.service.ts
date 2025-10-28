@@ -21,14 +21,14 @@ const edition = system.getEdition()
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
-        const platformPlan = await findAndStorePlatformPlan(platformId)
+        const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(platformPlan)) return platformPlan
 
         return distributedLock(log).runExclusive({
             key: `platform_plan_${platformId}`,
             timeoutInSeconds: 60,
             fn: async () => {
-                const platformPlan = await findAndStorePlatformPlan(platformId)
+                const platformPlan = await platformPlanRepo().findOneBy({ platformId })
                 if (!isNil(platformPlan)) return platformPlan
 
                 return createInitialBilling(platformId, log)
@@ -132,7 +132,12 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeBillingCycle: BillingCycle.MONTHLY,
         ...plan,
     }
-    return platformPlanRepo().save(platformPlan)
+    const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
+    if (!isNil(savedPlatformPlan.plan)) {
+        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan)
+    }
+
+    return savedPlatformPlan
 }
 
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
@@ -155,15 +160,6 @@ async function createInitialCustomer(user: UserWithMetaInformation, platformId: 
         platformId,
     )
     return stripeCustomerId
-}
-
-async function findAndStorePlatformPlan(platformId: string): Promise<PlatformPlan | null> {
-    const platformPlan = await platformPlanRepo().findOneBy({ platformId })
-    if (isNil(platformPlan)) {
-        return null
-    }
-    await distributedStore.put(getPlatformPlanNameKey(platformId), platformPlan.plan)
-    return platformPlan
 }
 
 type UpdateByCustomerId = {

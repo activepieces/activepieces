@@ -133,6 +133,36 @@ const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
     [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 15,
     [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 20,
     [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
+    [PlanName.ENTERPRISE]: 30,
+}
+
+function concurrentJobsFromProject({ projectId, storedValues }: GetConcurrentJobsFromProjectParams): number | null {
+    if (isNil(projectId)) {
+        return null
+    }
+    const maxConcurrentJobsKey = getProjectMaxConcurrentJobsKey(projectId)
+    const storedValue = storedValues[maxConcurrentJobsKey]
+    
+    if (isNil(storedValue)) {
+        return null
+    }
+    
+    return Number(storedValue)
+}
+
+function concurrentJobsFromPlan({ platformId, storedValues }: GetConcurrentJobsFromPlanParams): number | null {
+    if (workerMachine.getSettings().EDITION !== ApEdition.CLOUD) {
+        return null
+    }
+    
+    const planNameKey = getPlatformPlanNameKey(platformId)
+    const platformPlanName = storedValues[planNameKey]
+    
+    if (isNil(platformPlanName)) {
+        return null
+    }
+    
+    return PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName] ?? null
 }
 
 async function getMaxConcurrentJobsPerProject({ projectId, platformId }: GetMaximumConcurrentJovsPerProjectParams): Promise<number> {
@@ -141,21 +171,28 @@ async function getMaxConcurrentJobsPerProject({ projectId, platformId }: GetMaxi
         keys.push(getProjectMaxConcurrentJobsKey(projectId))
     }
     const storedValues = await workerDistributedStore.getAll<string>(keys)
-
-    if (!isNil(projectId) && !isNil(storedValues[getProjectMaxConcurrentJobsKey(projectId)])) {
-        return Number(storedValues[getProjectMaxConcurrentJobsKey(projectId)])
+    
+    const concurrentJobsFromProjectValue = concurrentJobsFromProject({ projectId, storedValues })
+    if (!isNil(concurrentJobsFromProjectValue)) {
+        return concurrentJobsFromProjectValue
     }
-
-    const platformPlanName = storedValues[getPlatformPlanNameKey(platformId)]
-    if (isNil(platformPlanName)) {
-        return workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
+    
+    const concurrentJobsFromPlanValue = concurrentJobsFromPlan({ platformId, storedValues })
+    if (!isNil(concurrentJobsFromPlanValue)) {
+        return concurrentJobsFromPlanValue
     }
+    
+    return workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
+}
 
-    if (workerMachine.getSettings().EDITION === ApEdition.CLOUD && platformPlanName === PlanName.ENTERPRISE) {
-        return 30
-    }
+type GetConcurrentJobsFromProjectParams = {
+    projectId: ProjectId | undefined
+    storedValues: Record<string, string | null>
+}
 
-    return PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName] ?? workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
+type GetConcurrentJobsFromPlanParams = {
+    platformId: PlatformId
+    storedValues: Record<string, string | null>
 }
 
 type GetMaximumConcurrentJovsPerProjectParams = {
