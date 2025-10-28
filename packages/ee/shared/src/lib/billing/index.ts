@@ -1,4 +1,4 @@
-import { AiOverageState, isNil, PiecesFilterType, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiOverageState, PiecesFilterType, PlanName, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export enum BillingCycle {
@@ -36,12 +36,7 @@ export enum ApSubscriptionStatus {
     TRIALING = 'trialing',
 }
 
-export enum PlanName {
-    FREE = 'free',
-    PLUS = 'plus',
-    BUSINESS = 'business',
-    ENTERPRISE = 'enterprise',
-}
+
 
 export type StripePlanName = PlanName.PLUS | PlanName.BUSINESS
 
@@ -129,6 +124,12 @@ export const PLAN_HIERARCHY = {
     [PlanName.PLUS]: 1,
     [PlanName.BUSINESS]: 2,
     [PlanName.ENTERPRISE]: 3,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 0,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 0,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 1,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 2,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 3,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 4,
 } as const
 
 export const BILLING_CYCLE_HIERARCHY = {
@@ -369,11 +370,4 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
-}
-
-export const isCloudPlanButNotEnterprise = (plan: string | undefined): boolean => {
-    if (isNil(plan)) {
-        return false
-    }
-    return plan === PlanName.PLUS || plan === PlanName.BUSINESS || plan === PlanName.FREE
 }

@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 
-import { BillingCycle, PlanName } from '@activepieces/ee-shared';
+import { BillingCycle } from '@activepieces/ee-shared';
+import { PlanName } from '@activepieces/shared';
 
 export const ANNUAL_DISCOUNT_PERCENTAGE = 0.24;
 export const MAX_SEATS = 20;

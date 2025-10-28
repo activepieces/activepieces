@@ -6,12 +6,13 @@ import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
   isNil,
   PlatformBillingInformation,
+  PlanName,
 } from '@activepieces/shared';
 
 export const UsageCards = ({
