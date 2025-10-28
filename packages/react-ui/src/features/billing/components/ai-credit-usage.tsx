@@ -14,10 +14,11 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   AiOverageState,
   PlatformBillingInformation,
+  PlanName,
 } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
