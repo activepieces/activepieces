@@ -43,17 +43,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SocketContext.Provider value={socket}>
-      {socket.disconnected && (
-        <Alert
-          className="fixed bottom-10 right-10 w-96 z-50 bg-background items-center"
-          variant="destructive"
-        >
-          <LoadingSpinner />
-          <AlertDescription>
-            Websocket Disconnected, reconnecting...
-          </AlertDescription>
-        </Alert>
-      )}
       {children}
     </SocketContext.Provider>
   );
