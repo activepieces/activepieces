@@ -1,6 +1,5 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, TelemetryEventName } from '@activepieces/shared'
-import { PlanName } from '@ee/shared/src/lib/billing'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -142,7 +141,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             plan: {
                 plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
-                tasksLimit: undefined,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,
@@ -154,7 +152,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customRolesEnabled: key.customRolesEnabled,
                 manageProjectsEnabled: key.manageProjectsEnabled,
                 managePiecesEnabled: key.managePiecesEnabled,
-                agentsLimit: undefined,
                 mcpsEnabled: key.mcpsEnabled,
                 todosEnabled: key.todosEnabled,
                 tablesEnabled: key.tablesEnabled,

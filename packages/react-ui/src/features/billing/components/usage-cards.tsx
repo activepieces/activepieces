@@ -1,24 +1,18 @@
 import { t } from 'i18next';
-import {
-  Bot,
-  ClipboardCheck,
-  Database,
-  LayoutGrid,
-  Users,
-  Workflow,
-} from 'lucide-react';
+import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
   isNil,
   PlatformBillingInformation,
+  PlanName,
 } from '@activepieces/shared';
 
 export const UsageCards = ({
@@ -41,19 +35,11 @@ export const UsageCards = ({
   return (
     <div
       className={cn('grid gap-6', {
-        'grid-cols-3': true,
-        'grid-cols-4': isBusinessPlan,
+        'grid-cols-4': true,
         '2xl:grid-cols-3': plan.plan === PlanName.PLUS,
         '2xl:grid-cols-7': isFree,
       })}
     >
-      <UsageCard
-        icon={<ClipboardCheck className="w-5 h-5" />}
-        title={t('Tasks')}
-        used={usage.tasks}
-        total={plan.tasksLimit}
-      />
-
       {(isFree || isTrial || isEnterprise) && (
         <UsageCard
           icon={<Workflow className="w-4 h-4" />}
@@ -93,13 +79,6 @@ export const UsageCards = ({
         title={t('Tables')}
         used={usage.tables}
         total={plan.tablesLimit}
-      />
-
-      <UsageCard
-        icon={<Bot className="w-4 h-4" />}
-        title={t('Agents')}
-        used={usage.agents}
-        total={plan.agentsLimit}
       />
     </div>
   );

@@ -44,12 +44,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         await flowRunService(request.log).updateRun({
             flowRunId: runId,
             status: runDetails.status,
-            tasks: runDetails.tasks,
             duration: runDetails.duration,
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
             failedStepName,
             logsFileId,
+            pauseMetadata: 'pauseMetadata' in runDetails ? runDetails.pauseMetadata : undefined,
         })
 
         if (!isNil(stepNameToTest)) {
@@ -67,7 +67,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                     ignoreInternalError: false,
                 })
 
-                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRES
+                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRESS
                 app.io.to(request.principal.projectId).emit(wsEvent, response)
             }
         }

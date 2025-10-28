@@ -6,7 +6,6 @@ import { In, MoreThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
-import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
@@ -56,7 +55,6 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
     const totalFlows = countFlows(flows, undefined)
     const totalProjects = await countProjects(platformId)
     const { totalUsers, activeUsers } = await analyzeUsers(platformId)
-    const tasksUsage = await tasksReport(platformId)
     const { uniquePiecesUsed, topPieces } = await analyzePieces(log, flows, platformId)
     const activeFlowsWithAI = await numberOfFlowsWithAI(log, flows, platformId)
     const { topProjects, activeProjects } = await analyzeProjects(flows)
@@ -70,7 +68,6 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
         activeFlowsWithAI,
         topProjects,
         activeProjects,
-        tasksUsage,
         topPieces,
         platformId,
         created: dayjs().toISOString(),
@@ -186,17 +183,6 @@ async function analyzeUsers(platformId: PlatformId) {
 }
 
 
-
-async function tasksReport(platformId: PlatformId) {
-    const tasks = await flowRunRepo().createQueryBuilder('flow_run')
-        .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
-        .where('project."platformId" = :platformId', { platformId })
-        .select(['DATE(flow_run.created) as day', 'SUM(COALESCE(flow_run.tasks, 0)) as total_tasks'])
-        .groupBy('day')
-        .getRawMany()
-
-    return tasks.map(({ day, total_tasks }) => ({ day, totalTasks: total_tasks }))
-}
 
 async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, projectId: ProjectId | undefined): Promise<PopulatedFlow[]> {
     const queryBuilder = flowRepo().createQueryBuilder('flow')

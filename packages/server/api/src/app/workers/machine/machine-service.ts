@@ -39,7 +39,6 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: executionMode,
                 TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
-                AGENT_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.AGENT_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
                 LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
@@ -75,6 +74,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 REDIS_SENTINEL_ROLE: system.get(AppSystemProp.REDIS_SENTINEL_ROLE),
                 REDIS_SENTINEL_HOSTS: system.get(AppSystemProp.REDIS_SENTINEL_HOSTS),
                 REDIS_SENTINEL_NAME: system.get(AppSystemProp.REDIS_SENTINEL_NAME),
+                EDITION: system.getOrThrow(AppSystemProp.EDITION),
             }
         },
         async onHeartbeat({

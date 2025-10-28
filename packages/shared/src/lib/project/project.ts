@@ -20,7 +20,6 @@ export enum PiecesFilterType {
 }
 
 export const ProjectUsage = Type.Object({
-    tasks: Type.Number(),
     aiCredits: Type.Number(),
     nextLimitResetDate: Type.Number(),
 })
@@ -42,7 +41,6 @@ export const ProjectPlan = Type.Object({
     name: Type.String(),
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
-    tasks: Nullable(Type.Number()),
     aiCredits: Nullable(Type.Number()),
 })
 
@@ -54,6 +52,7 @@ export const Project = Type.Object({
     ownerId: Type.String(),
     displayName: Type.String(),
     platformId: ApId,
+    maxConcurrentJobs: Nullable(Type.Number()),
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
     metadata: Nullable(Metadata),
