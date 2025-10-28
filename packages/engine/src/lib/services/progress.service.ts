@@ -125,17 +125,18 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         }
 
         lastRequestHash = requestHash
-        const response = await sendProgressUpdate(params.engineConstants, request)
-        if (!response.ok) {
-            throw new ProgressUpdateError('Failed to send progress update', response)
-        }
+        await sendProgressUpdate(request)
 
     })
 }
 
-const sendProgressUpdate = async (engineConstants: EngineConstants, request: UpdateRunProgressRequest): Promise<Response> => {
-    workerService.updateRunProgress(request)
-    return new Response('OK')
+const sendProgressUpdate = async (request: UpdateRunProgressRequest): Promise<void> => {
+    try {
+        workerService.updateRunProgress(request)
+    }
+    catch (error) {
+        throw new ProgressUpdateError('Failed to send progress update', error)
+    }
 }
 
 const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
