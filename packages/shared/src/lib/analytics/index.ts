@@ -35,10 +35,6 @@ export const PlatformAnalyticsReport = Type.Object({
     uniquePiecesUsed: Type.Number(),
     activeFlowsWithAI: Type.Number(),
     topPieces: AnalyticsPieceReport,
-    tasksUsage: Type.Array(Type.Object({
-        day: Type.String(),
-        totalTasks: Type.Number(),
-    })),
     topProjects: AnalyticsProjectReport,
     platformId: Type.String(),
 })

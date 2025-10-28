@@ -1,6 +1,6 @@
-import {  ApSubscriptionStatus, BillingCycle, CreateSubscriptionParams, PlanName, StripePlanName } from '@activepieces/ee-shared'
+import {  ApSubscriptionStatus, BillingCycle, CreateSubscriptionParams, StripePlanName } from '@activepieces/ee-shared'
 import { apDayjs, AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, PlatformRole, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, PlanName, PlatformRole, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'

@@ -281,6 +281,7 @@ import { AddDedicatedWorkersToPlatformPlanPostgres1760998784106 } from './migrat
 import { RemoveProjectNotifyStatus1761056570728 } from './migration/postgres/1761056570728-RemoveProjectNotifyStatus'
 import { DeprecateCopilot1761221158764 } from './migration/postgres/1761221158764-DeprecateCopilot'
 import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/postgres/1761245180906-AddMaximumConcurrentJobsPerProject'
+import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -481,6 +482,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeprecateCopilot1761221158764,
         RemoveProjectNotifyStatus1761056570728,
         AddMaximumConcurrentJobsPerProject1761245180906,
+        RemoveTasksAndTasksLimit1761570485475,
     ]
 
     const edition = system.getEdition()

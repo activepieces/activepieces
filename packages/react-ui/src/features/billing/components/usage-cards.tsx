@@ -1,23 +1,18 @@
 import { t } from 'i18next';
-import {
-  ClipboardCheck,
-  Database,
-  LayoutGrid,
-  Users,
-  Workflow,
-} from 'lucide-react';
+import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
   isNil,
   PlatformBillingInformation,
+  PlanName,
 } from '@activepieces/shared';
 
 export const UsageCards = ({
@@ -45,13 +40,6 @@ export const UsageCards = ({
         '2xl:grid-cols-7': isFree,
       })}
     >
-      <UsageCard
-        icon={<ClipboardCheck className="w-5 h-5" />}
-        title={t('Tasks')}
-        used={usage.tasks}
-        total={plan.tasksLimit}
-      />
-
       {(isFree || isTrial || isEnterprise) && (
         <UsageCard
           icon={<Workflow className="w-4 h-4" />}

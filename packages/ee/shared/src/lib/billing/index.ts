@@ -1,4 +1,4 @@
-import { AiOverageState, PiecesFilterType, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiOverageState, PiecesFilterType, PlanName, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export enum BillingCycle {
@@ -24,7 +24,6 @@ export const AI_CREDITS_USAGE_THRESHOLD = 15000
 
 export type ProjectPlanLimits = {
     nickname?: string
-    tasks?: number | null
     locked?: boolean
     pieces?: string[]
     aiCredits?: number | null
@@ -37,12 +36,7 @@ export enum ApSubscriptionStatus {
     TRIALING = 'trialing',
 }
 
-export enum PlanName {
-    FREE = 'free',
-    PLUS = 'plus',
-    BUSINESS = 'business',
-    ENTERPRISE = 'enterprise',
-}
+
 
 export type StripePlanName = PlanName.PLUS | PlanName.BUSINESS
 
@@ -130,6 +124,12 @@ export const PLAN_HIERARCHY = {
     [PlanName.PLUS]: 1,
     [PlanName.BUSINESS]: 2,
     [PlanName.ENTERPRISE]: 3,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 0,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 0,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 1,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 2,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 3,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 4,
 } as const
 
 export const BILLING_CYCLE_HIERARCHY = {
@@ -202,7 +202,6 @@ export const PRICE_ID_MAP = {
 
 export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
-    tasksLimit: 1000,
     includedAiCredits: 200,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
@@ -235,10 +234,9 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
 }
 
-export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, tablesLimit, mcpLimit }: { planName: string, tasksLimit: number, userSeatsLimit: number, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
+export const APPSUMO_PLAN = ({ planName: planname, userSeatsLimit, tablesLimit, mcpLimit }: { planName: string, userSeatsLimit: number, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
     return {
         plan: planname,
-        tasksLimit,
         userSeatsLimit,
         includedAiCredits: 200,
         aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
@@ -275,7 +273,6 @@ export const APPSUMO_PLAN = ({ planName: planname, tasksLimit, userSeatsLimit, t
 
 export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'plus',
-    tasksLimit: undefined,
     includedAiCredits: 500,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
@@ -310,7 +307,6 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 
 export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'business',
-    tasksLimit: undefined,
     includedAiCredits: 1000,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
@@ -350,7 +346,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
 
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
-    tasksLimit: undefined,
 
     mcpsEnabled: true,
     tablesEnabled: true,

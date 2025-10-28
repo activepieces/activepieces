@@ -186,12 +186,9 @@ describe('Project API', () => {
                 projectId: mockProject.id,
             })
 
-            const tasks = faker.number.int({ min: 1, max: 100000 })
-
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 plan: {
-                    tasks,
                 },
             }
             const response = await app?.inject({
@@ -215,11 +212,9 @@ describe('Project API', () => {
         it('it should update project as platform owner with api key', async () => {
             const { mockProject, mockApiKey } =
                 await createProjectAndPlatformAndApiKey()
-            const tasks = faker.number.int({ min: 1, max: 100000 })
             const request = {
                 displayName: faker.animal.bird(),
                 plan: {
-                    tasks,
                 },
             }
             const response = await app?.inject({
@@ -251,11 +246,9 @@ describe('Project API', () => {
                 platform: { id: mockPlatform.id },
             })
 
-            const tasks = faker.number.int({ min: 1, max: 100000 })
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 plan: {
-                    tasks,
                 },
             }
 
@@ -272,7 +265,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
             expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.plan.tasks).toEqual(tasks)
         })
 
         it('Fails if user is not platform owner', async () => {
@@ -377,14 +369,12 @@ describe('Project API', () => {
                 projectId: mockProject.id,
             })
 
-            const tasks = faker.number.int({ min: 1, max: 100000 })
             const metadata = { foo: 'bar' }
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 metadata,
                 plan: {
-                    tasks,
                 },
             }
             const response = await app?.inject({
