@@ -200,7 +200,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 200,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
-    activeFlowsLimit: 2,
+    activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
     tablesLimit: 1,
