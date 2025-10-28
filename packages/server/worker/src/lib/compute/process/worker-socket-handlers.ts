@@ -35,7 +35,7 @@ export const workerSocketHandlers = (log: FastifyBaseLogger) => ({
         })
 
         if (!isNil(stepNameToTest)) {
-            const response = await extractStepResponse({
+            const response = extractStepResponse({
                 steps: runDetails.steps as Record<string, StepOutput>,
                 projectId,
                 status: runDetails.status,
@@ -99,7 +99,7 @@ async function getFlowResponse(
     }
 }
 
-async function extractStepResponse(params: NotifyStepFinishedParams): Promise<StepRunResponse | null> {
+function extractStepResponse(params: NotifyStepFinishedParams): StepRunResponse | null {
     try {
         if (isNil(params.stepNameToTest)) {
             return null
