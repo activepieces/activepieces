@@ -33,7 +33,6 @@ export type ProjectPlanLimits = {
 export enum ApSubscriptionStatus {
     ACTIVE = 'active',
     CANCELED = 'canceled',
-    TRIALING = 'trialing',
 }
 
 
@@ -84,11 +83,6 @@ export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
     state: Type.Enum(AiOverageState),
 })
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
-
-export const StartTrialParamsSchema = Type.Object({
-    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
-})
-export type StartTrialParams = Static<typeof StartTrialParamsSchema>
 
 export const UpdateSubscriptionParamsSchema = Type.Object({
     plan: Type.Union([Type.Literal(PlanName.FREE), Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
@@ -205,8 +199,7 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 200,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
-    activeFlowsLimit: 2,
-    eligibleForTrial: PlanName.PLUS,
+    activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
     tablesLimit: 1,
@@ -245,7 +238,6 @@ export const APPSUMO_PLAN = ({ planName: planname, userSeatsLimit, tablesLimit, 
         projectsLimit: 1,
         mcpLimit,
         tablesLimit,
-        eligibleForTrial: undefined,
 
         agentsEnabled: true,
         tablesEnabled: true,
@@ -276,7 +268,6 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 500,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    eligibleForTrial: undefined,
     activeFlowsLimit: 10,
     userSeatsLimit: 1,
     projectsLimit: 1,
@@ -310,7 +301,6 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 1000,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    eligibleForTrial: undefined,
     activeFlowsLimit: 50,
     userSeatsLimit: 5,
     projectsLimit: 10,
@@ -341,7 +331,6 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
-    eligibleForTrial: undefined,
     embeddingEnabled: false,
 
     globalConnectionsEnabled: false,

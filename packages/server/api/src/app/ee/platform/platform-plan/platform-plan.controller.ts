@@ -1,7 +1,7 @@
 import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/common-ai'
-import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, PlanName, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlanName, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
@@ -220,27 +220,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         })
     })
 
-    fastify.post('/start-trial', StartTrialRequest, async (request) => {
-        const { plan } = request.body
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        
-        if (isNil(platformBilling.eligibleForTrial)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Platform is not eligible for trial',
-                },
-            })
-        }
-
-        const customerId = platformBilling.stripeCustomerId
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-
-        await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
-
-        return { success: true }
-    })
-
     fastify.get('/ai-credits-usage', ListAIUsageRequest, async (request) => {
         const { limit, cursor } = request.query
         const platformId = request.principal.platform.id
@@ -295,20 +274,6 @@ const EnableAiCreditsOverageRequest = {
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],
-    },
-}
-
-const StartTrialRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
-    },
-    schema: {
-        body: StartTrialParamsSchema,
-    },
-    response: {
-        [StatusCodes.OK]: Type.Object({
-            success: Type.Boolean(),
-        }),
     },
 }
 
