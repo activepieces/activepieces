@@ -1,7 +1,7 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, firecrawl_api_base_url } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
 
 // screenshot always included in output so that user can pass it into a google drive and keep track of what is being scraped
 // only for scrape
@@ -270,7 +270,7 @@ export const scrape = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${firecrawl_api_base_url}/scrape`,
+      url: `${FIRECRAWL_API_BASE_URL}/scrape`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${auth}`,

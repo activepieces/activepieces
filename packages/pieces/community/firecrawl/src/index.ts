@@ -6,7 +6,7 @@ import { extract } from './lib/actions/extract';
 import { crawl } from './lib/actions/crawl';
 import { crawlResults } from './lib/actions/crawl-results';
 import { map } from './lib/actions/map';
-import { firecrawl_api_base_url } from './lib/common/common';
+import { FIRECRAWL_API_BASE_URL } from './lib/common/common';
 
 const markdownDescription = `
 Follow these steps to obtain your Firecrawl API Key:
@@ -65,7 +65,7 @@ export const firecrawl = createPiece({
     map,
 
     createCustomApiCallAction({
-      baseUrl: () => firecrawl_api_base_url,
+      baseUrl: () => FIRECRAWL_API_BASE_URL,
       auth: firecrawlAuth,
       authMapping: async (auth) => ({
         'Authorization': `Bearer ${auth}`,

@@ -5,7 +5,8 @@ import {
 } from '@activepieces/pieces-common';
 import Ajv from 'ajv';
 
-export const firecrawl_api_base_url = 'https://api.firecrawl.dev/v2';
+export const FIRECRAWL_API_BASE_URL = 'https://api.firecrawl.dev/v2';
+export const POLLING_INTERVAL = 5000;
 
 export const forScreenshotOutputFormat = (): any => {
   // initially i gave the user the option to choose viewport or full page, 
@@ -140,12 +141,12 @@ export async function polling(
 
   for (let attempt = 1; attempt <= maxAttempts ; attempt++) {
     // wait 5 seconds before checking
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
 
     // check status
     const statusResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${firecrawl_api_base_url}/${actionType}/${jobId}`,
+      url: `${FIRECRAWL_API_BASE_URL}/${actionType}/${jobId}`,
       headers: {
         'Authorization': `Bearer ${auth}`,
       },
@@ -159,6 +160,6 @@ export async function polling(
     }
   }
 
-  // exit loop. time out
+  // exit loop time out
   throw new Error(`${actionType.charAt(0).toUpperCase()}. job timed out after ${timeoutSeconds} second(s)`);
 }

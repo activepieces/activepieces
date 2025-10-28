@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, pollingHelper } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
-import { forJsonOutputFormat, polling, firecrawl_api_base_url } from '../common/common';
+import { forJsonOutputFormat, polling, FIRECRAWL_API_BASE_URL } from '../common/common';
 
 export const extract = createAction({
   auth: firecrawlAuth,
@@ -149,7 +149,7 @@ export const extract = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${firecrawl_api_base_url}/extract`,
+      url: `${FIRECRAWL_API_BASE_URL}/extract`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${auth}`,

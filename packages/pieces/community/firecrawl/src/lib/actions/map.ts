@@ -1,7 +1,7 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
-import { firecrawl_api_base_url } from '../common/common';
+import { FIRECRAWL_API_BASE_URL } from '../common/common';
 
 export const map = createAction({
     auth: firecrawlAuth,
@@ -39,7 +39,7 @@ export const map = createAction({
       
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${firecrawl_api_base_url}/map`,
+        url: `${FIRECRAWL_API_BASE_URL}/map`,
         headers: {
           'Authorization': `Bearer ${auth}`,
           'Content-Type': 'application/json'
