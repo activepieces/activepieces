@@ -1,151 +1,126 @@
-import { 
-  createTrigger, 
-  TriggerStrategy, 
-  PiecePropValueSchema 
-} from '@activepieces/pieces-framework';
-import { 
-  DedupeStrategy, 
-  Polling, 
-  pollingHelper 
-} from '@activepieces/pieces-common';
-import { folkAuth } from '../common';
-import { folkApiCall } from '../common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { folkAuth } from '../common/auth';
+import { folkApiCall } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-interface FolkPerson {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  jobTitle?: string;
-  createdAt: string;
-  updatedAt: string;
-  [key: string]: any;
+interface WebhookResponse {
+  data: {
+    id: string;
+    name: string;
+    targetUrl: string;
+    subscribedEvents: Array<{
+      eventType: string;
+      filter: Record<string, unknown>;
+    }>;
+    status: string;
+    createdAt: string;
+  };
 }
-
-interface FolkPeopleResponse {
-  people: FolkPerson[];
-  contacts?: FolkPerson[]; // Alternative API response format
-  hasMore?: boolean;
-  nextCursor?: string;
-}
-
-const polling: Polling<
-  PiecePropValueSchema<typeof folkAuth>,
-  Record<string, never>
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const apiKey = auth as string;
-    
-    try {
-      // Fetch people from Folk API
-      const response = await folkApiCall<FolkPeopleResponse>({
-        apiKey,
-        method: HttpMethod.GET,
-        endpoint: '/people',
-        queryParams: {
-          // Sort by creation date to get newest first
-          sort: 'createdAt',
-          order: 'desc',
-          limit: '100'
-        },
-      });
-
-      // Handle both 'people' and 'contacts' response formats
-      const people = response.people || response.contacts || [];
-      
-      // Filter and map people created after the last fetch
-      const items = people
-        .filter((person: FolkPerson) => {
-          const createdAtMs = new Date(person.createdAt).getTime();
-          return createdAtMs > lastFetchEpochMS;
-        })
-        .map((person: FolkPerson) => ({
-          epochMilliSeconds: new Date(person.createdAt).getTime(),
-          data: person,
-        }));
-
-      return items;
-    } catch (error: any) {
-      console.error('Error fetching people from Folk:', error);
-      // Return empty array if API call fails to avoid breaking the trigger
-      return [];
-    }
-  },
-};
-
-const sampleData = {
-  id: 'per_1234567890abcdef1234567890abcdef1234',
-  firstName: 'Jane',
-  lastName: 'Smith',
-  name: 'Jane Smith',
-  email: 'jane.smith@example.com',
-  phone: '+1-555-0123',
-  company: 'Acme Corporation',
-  jobTitle: 'Marketing Director',
-  createdAt: '2024-01-15T11:20:00Z',
-  updatedAt: '2024-01-15T11:20:00Z',
-  tags: ['lead', 'decision-maker'],
-  groups: ['Sales Pipeline', 'Q1 2024 Prospects'],
-  customFields: {
-    source: 'Website',
-    leadScore: 85,
-    region: 'North America',
-    interests: ['Product Demo', 'Pricing']
-  },
-  socialProfiles: {
-    linkedin: 'https://linkedin.com/in/janesmith',
-    twitter: '@janesmith'
-  }
-};
 
 export const personAdded = createTrigger({
   auth: folkAuth,
   name: 'person-added',
   displayName: 'Person Added',
-  description: 'Triggers when a new person is created or added to a group.',
+  description: 'Triggers when a new person is created or added to a group',
   props: {},
-  sampleData,
-  type: TriggerStrategy.POLLING,
+  sampleData: {
+    id: 'per_8c18c158-d49e-4ad4-90d4-2b197688bac7',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    fullName: 'Jane Smith',
+    bio: 'Product Manager at Acme Corporation',
+    jobTitle: 'Product Manager',
+    createdAt: '2024-10-28T11:00:00.000Z',
+    updatedAt: '2024-10-28T11:00:00.000Z',
+    groups: [
+      {
+        id: 'grp_12345',
+        name: 'Prospects'
+      }
+    ],
+    emails: [
+      {
+        email: 'jane.smith@acme.com',
+        type: 'work',
+        isPrimary: true
+      },
+      {
+        email: 'jane@example.com',
+        type: 'personal',
+        isPrimary: false
+      }
+    ],
+    phones: [
+      {
+        phone: '+1-555-0456',
+        type: 'work',
+        isPrimary: true
+      }
+    ],
+    urls: [
+      {
+        url: 'https://linkedin.com/in/janesmith',
+        type: 'linkedin',
+        isPrimary: true
+      }
+    ],
+    addresses: [
+      {
+        street: '456 Business Ave',
+        city: 'New York',
+        state: 'NY',
+        zipCode: '10001',
+        country: 'US',
+        isPrimary: true
+      }
+    ],
+    companies: [
+      {
+        id: 'cmp_98765',
+        name: 'Acme Corporation',
+        role: 'Product Manager'
+      }
+    ]
+  },
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
+    const webhookResponse = await folkApiCall<WebhookResponse>({
+      apiKey: context.auth,
+      method: HttpMethod.POST,
+      endpoint: '/webhooks',
+      body: {
+        name: `Activepieces - Person Added (${context.webhookUrl})`,
+        targetUrl: context.webhookUrl,
+        subscribedEvents: [
+          {
+            eventType: 'person.created',
+            filter: {}
+          }
+        ]
+      }
+    });
+
+    await context.store.put('_person_added_webhook_id', {
+      webhookId: webhookResponse.data.id
     });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
-    });
+    const webhookData = await context.store.get<{ webhookId: string }>('_person_added_webhook_id');
+    
+    if (webhookData?.webhookId) {
+      try {
+        await folkApiCall({
+          apiKey: context.auth,
+          method: HttpMethod.DELETE,
+          endpoint: `/webhooks/${webhookData.webhookId}`
+        });
+      } catch (error) {
+        // Webhook might already be deleted, continue silently
+        console.error('Error deleting webhook:', error);
+      }
+    }
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
-  },
-  async test(context) {
-    const items = await pollingHelper.test(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
-    
-    // If no real data found, return sample data for demo purposes
-    if (!items || items.length === 0) {
-      return [sampleData];
-    }
-    
-    return items;
-  },
+    return [context.payload.body];
+  }
 });

@@ -1,147 +1,140 @@
-import { 
-  createTrigger, 
-  TriggerStrategy, 
-  PiecePropValueSchema 
-} from '@activepieces/pieces-framework';
-import { 
-  DedupeStrategy, 
-  Polling, 
-  pollingHelper 
-} from '@activepieces/pieces-common';
-import { folkAuth } from '../common';
-import { folkApiCall } from '../common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { folkAuth } from '../common/auth';
+import { folkApiCall } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-interface FolkCompany {
-  id: string;
-  name: string;
-  email?: string;
-  domain?: string;
-  url?: string;
-  industry?: string;
-  createdAt: string;
-  updatedAt: string;
-  [key: string]: any;
+interface WebhookResponse {
+  data: {
+    id: string;
+    name: string;
+    targetUrl: string;
+    subscribedEvents: Array<{
+      eventType: string;
+      filter: Record<string, unknown>;
+    }>;
+    status: string;
+    createdAt: string;
+  };
 }
-
-interface FolkCompaniesResponse {
-  companies: FolkCompany[];
-  hasMore?: boolean;
-  nextCursor?: string;
-}
-
-const polling: Polling<
-  PiecePropValueSchema<typeof folkAuth>,
-  Record<string, never>
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS }) => {
-    const apiKey = auth as string;
-    
-    try {
-      // Fetch companies from Folk API
-      const response = await folkApiCall<FolkCompaniesResponse>({
-        apiKey,
-        method: HttpMethod.GET,
-        endpoint: '/companies',
-        queryParams: {
-          // Sort by update date to get recently updated first
-          sort: 'updatedAt',
-          order: 'desc',
-          limit: '100'
-        },
-      });
-
-      const companies = response.companies || [];
-      
-      // Filter and map companies updated after the last fetch
-      // Also filter out companies where updatedAt equals createdAt (newly created, not updated)
-      const items = companies
-        .filter((company: FolkCompany) => {
-          const updatedAtMs = new Date(company.updatedAt).getTime();
-          const createdAtMs = new Date(company.createdAt).getTime();
-          
-          // Only include companies that were updated (not just created) after last fetch
-          return updatedAtMs > lastFetchEpochMS && updatedAtMs > createdAtMs;
-        })
-        .map((company: FolkCompany) => ({
-          epochMilliSeconds: new Date(company.updatedAt).getTime(),
-          data: company,
-        }));
-
-      return items;
-    } catch (error: any) {
-      console.error('Error fetching updated companies from Folk:', error);
-      // Return empty array if API call fails to avoid breaking the trigger
-      return [];
-    }
-  },
-};
-
-const sampleData = {
-  id: 'com_abcdef1234567890abcdef1234567890abcd',
-  name: 'Acme Corporation (Updated)',
-  email: 'contact@acme.com',
-  domain: 'acme.com',
-  url: 'https://www.acme.com',
-  industry: 'Technology',
-  createdAt: '2024-01-15T10:30:00Z',
-  updatedAt: '2024-01-20T14:45:00Z',
-  tags: ['customer', 'enterprise', 'premium'],
-  customFields: {
-    size: 'Large',
-    revenue: '$15M+',
-    status: 'Active'
-  },
-  previousValues: {
-    name: 'Acme Corp',
-    revenue: '$10M+'
-  }
-};
 
 export const companyUpdated = createTrigger({
   auth: folkAuth,
   name: 'company-updated',
   displayName: 'Company Updated',
-  description: "Triggers when a company's basic field (e.g., name, email, or URL) in a group is updated.",
+  description: "Triggers when a company's basic field (e.g., name, email, or URL) in a group is updated",
   props: {},
-  sampleData,
-  type: TriggerStrategy.POLLING,
+  sampleData: {
+    id: 'cmp_8c18c158-d49e-4ad4-90d4-2b197688bac7',
+    name: 'Acme Corporation',
+    updatedFields: {
+      name: {
+        oldValue: 'Acme Corp',
+        newValue: 'Acme Corporation'
+      },
+      emails: {
+        oldValue: [
+          {
+            email: 'info@acme.com',
+            type: 'work',
+            isPrimary: true
+          }
+        ],
+        newValue: [
+          {
+            email: 'contact@acme.com',
+            type: 'work',
+            isPrimary: true
+          }
+        ]
+      }
+    },
+    updatedAt: '2024-10-28T10:30:00.000Z',
+    updatedBy: {
+      id: 'usr_98765',
+      name: 'John Doe',
+      email: 'john@example.com'
+    },
+    company: {
+      id: 'cmp_8c18c158-d49e-4ad4-90d4-2b197688bac7',
+      name: 'Acme Corporation',
+      description: 'A leading technology company',
+      industry: 'Technology',
+      employeeRange: '51-200',
+      foundationYear: '2015',
+      fundingRaised: 5000000,
+      lastFundingDate: '2024-03-15',
+      emails: [
+        {
+          email: 'contact@acme.com',
+          type: 'work',
+          isPrimary: true
+        }
+      ],
+      phones: [
+        {
+          phone: '+1-555-0123',
+          type: 'work',
+          isPrimary: true
+        }
+      ],
+      urls: [
+        {
+          url: 'https://acme.com',
+          type: 'website',
+          isPrimary: true
+        }
+      ],
+      addresses: [
+        {
+          street: '123 Main Street',
+          city: 'San Francisco',
+          state: 'CA',
+          zipCode: '94105',
+          country: 'US',
+          isPrimary: true
+        }
+      ]
+    }
+  },
+  type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
+    const webhookResponse = await folkApiCall<WebhookResponse>({
+      apiKey: context.auth,
+      method: HttpMethod.POST,
+      endpoint: '/webhooks',
+      body: {
+        name: `Activepieces - Company Updated (${context.webhookUrl})`,
+        targetUrl: context.webhookUrl,
+        subscribedEvents: [
+          {
+            eventType: 'company.updated',
+            filter: {}
+          }
+        ]
+      }
+    });
+
+    await context.store.put('_company_updated_webhook_id', {
+      webhookId: webhookResponse.data.id
     });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
-    });
+    const webhookData = await context.store.get<{ webhookId: string }>('_company_updated_webhook_id');
+    
+    if (webhookData?.webhookId) {
+      try {
+        await folkApiCall({
+          apiKey: context.auth,
+          method: HttpMethod.DELETE,
+          endpoint: `/webhooks/${webhookData.webhookId}`
+        });
+      } catch (error) {
+        // Webhook might already be deleted, continue silently
+        console.error('Error deleting webhook:', error);
+      }
+    }
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
-  },
-  async test(context) {
-    const items = await pollingHelper.test(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
-    
-    // If no real data found, return sample data for demo purposes
-    if (!items || items.length === 0) {
-      return [sampleData];
-    }
-    
-    return items;
-  },
+    return [context.payload.body];
+  }
 });
