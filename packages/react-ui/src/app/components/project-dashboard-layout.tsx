@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
-import { TaskLimitAlert } from '@/features/billing/components/task-limit-alert';
 import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -58,7 +57,6 @@ export function ProjectDashboardLayout({
           <ProjectDashboardSidebar />
           <SidebarInset className={`relative overflow-auto px-4 pb-4`}>
             <div className="flex flex-col gap-2 mt-2">
-              <TaskLimitAlert />
               <AiCreditsLimitAlert />
             </div>
 

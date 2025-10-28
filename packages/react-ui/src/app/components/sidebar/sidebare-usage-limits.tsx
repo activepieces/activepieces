@@ -117,12 +117,6 @@ const SidebarUsageLimits = React.memo(() => {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <UsageProgress
-            name={t('Tasks')}
-            value={project.usage.tasks}
-            max={project.plan.tasks}
-            variant={'primary'}
-          />
-          <UsageProgress
             name={t('AI Credits')}
             value={project.usage.aiCredits}
             max={project.plan.aiCredits}

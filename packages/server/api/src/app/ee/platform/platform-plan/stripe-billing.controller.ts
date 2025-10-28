@@ -1,6 +1,6 @@
-import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, getPlanLimits, PlanName  } from '@activepieces/ee-shared'
+import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, getPlanLimits } from '@activepieces/ee-shared'
 import { apDayjs, AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
+import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil, PlanName } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

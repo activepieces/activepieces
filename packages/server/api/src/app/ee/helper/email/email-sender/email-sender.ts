@@ -31,10 +31,6 @@ type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
     setupLink: string
 }>
 
-type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
-    resetDate: string
-}>
-
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
     setupLink: string
 }>
@@ -84,7 +80,6 @@ type SevenDaysInTrialTemplateData = BaseEmailTemplateData<'7-days-in-trial', {
 
 export type EmailTemplateData =
   | InvitationEmailTemplateData
-  | QuotaEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData

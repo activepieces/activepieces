@@ -21,7 +21,6 @@ export const SMTPInformation = Type.Object({
 export type SMTPInformation = Static<typeof SMTPInformation>
 
 export enum PlatformUsageMetric {
-    TASKS = 'tasks',
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
     USER_SEATS = 'user-seats',
@@ -31,7 +30,6 @@ export enum PlatformUsageMetric {
 }
 
 export const PlatformUsage = Type.Object({
-    tasks: Type.Number(),
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
     tables: Type.Number(),
@@ -48,11 +46,24 @@ export enum AiOverageState {
     ALLOWED_AND_ON = 'allowed_an_on',
 }
 
+export enum PlanName {
+    FREE = 'free',
+    PLUS = 'plus',
+    BUSINESS = 'business',
+    ENTERPRISE = 'enterprise',
+    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
+    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
+    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
+    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
+    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
+    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
+}
+
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    // TODO: We have to use the enum when we finalize the plan names
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    tasksLimit: Type.Optional(Type.Number()),
     includedAiCredits: Type.Number(),
     aiCreditsOverageLimit: Type.Optional(Type.Number()),
     aiCreditsOverageState: Type.Optional(Type.String()),

@@ -1,4 +1,4 @@
-import { getPlatformQueueName,  QueueName } from '@activepieces/server-shared'
+import { getPlatformQueueName, QueueName } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     ConsumeJobResponseStatus,
