@@ -30,7 +30,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName, stepNameToTest, logsFileId } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, stepNameToTest, logsFileId } = request.body
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
@@ -48,7 +48,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             duration: runDetails.duration,
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
-            failedStepName,
             logsFileId,
         })
 
@@ -141,7 +140,7 @@ async function getFlowResponse(
             }
         case FlowRunStatus.QUOTA_EXCEEDED:
             return {
-                status: f.NO_CONTENT,
+                status: StatusCodes.NO_CONTENT,
                 body: {},
                 headers: {},
             }

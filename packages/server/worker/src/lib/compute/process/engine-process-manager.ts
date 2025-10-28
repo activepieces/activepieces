@@ -167,7 +167,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 onResult,
                 onStdout,
                 onStderr,
-                onUpdateRunProgress: workerSocketHandlers.updateRunProgress,
+                ...workerSocketHandlers(log),
             })
 
             worker.on('error', (error) => {

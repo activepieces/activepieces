@@ -21,4 +21,15 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
             socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, flowRun)
         }
     })
+    websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.EMIT_TEST_STEP_PROGRES, (socket) => {
+        return async (data: any) => {
+            socket.to(data.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRES, { projectId: data.projectId, ...data })
+        }
+    })
+    websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.EMIT_TEST_STEP_FINISHED, (socket) => {
+        return async (data: any) => {
+            socket.to(data.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, { projectId: data.projectId, ...data })
+        }
+    })
+
 }

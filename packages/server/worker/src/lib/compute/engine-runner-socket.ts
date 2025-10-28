@@ -110,13 +110,13 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             onResult,
             onStdout,
             onStderr,
-            onUpdateRunProgress,
+            updateRunProgress,
         }: {
             workerId: string
             onResult: (result: EngineResponse<unknown>) => void
             onStdout: (stdout: EngineStdout) => void
             onStderr: (stderr: EngineStderr) => void
-            onUpdateRunProgress: (updateRunProgress: UpdateRunProgressRequest, log: FastifyBaseLogger) => void
+            updateRunProgress: (updateRunProgress: UpdateRunProgressRequest, log: FastifyBaseLogger) => void
         }): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'sockets[workerId]')
@@ -138,7 +138,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                             onStderr(message.data)
                             break
                         case EngineSocketEvent.UPDATE_RUN_PROGRESS:
-                            onUpdateRunProgress(message.data, log)
+                            updateRunProgress(message.data, log)
                             break
                     }
                 }

@@ -1,11 +1,12 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, SendFlowResponseRequest, StepOutput, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { ProgressUpdateError } from '../helper/execution-errors'
+import { workerService } from './worker.service'
 
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
@@ -109,11 +110,11 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
 
         const request: UpdateRunProgressRequest = {
             runId: engineConstants.flowRunId,
+            projectId: engineConstants.projectId,
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
             progressUpdateType: engineConstants.progressUpdateType,
-            failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
             logsFileId: engineConstants.logsFileId,
             stepNameToTest: engineConstants.stepNameToTest,
         }
@@ -131,16 +132,8 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
 }
 
 const sendProgressUpdate = async (engineConstants: EngineConstants, request: UpdateRunProgressRequest): Promise<Response> => {
-    return fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-run`).toString(), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineConstants.engineToken}`,
-        },
-        retryDelay: 4000,
-        retries: 3,
-        body: JSON.stringify(request),
-    })
+    workerService.updateRunProgress(request)
+    return new Response('OK')
 }
 
 const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
@@ -169,23 +162,3 @@ type UpdateStepProgressParams = {
     updateImmediate?: boolean
 }
 
-export const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
-    if (!steps) {
-        return undefined
-    }
-
-    const failedStep = Object.entries(steps).find(([_, step]) => {
-        const stepOutput = step as StepOutput
-        if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
-            const loopOutput = stepOutput as LoopStepOutput
-            return loopOutput.output?.iterations.some(iteration =>
-                Object.values(iteration).some(iterationStep =>
-                    (iterationStep as StepOutput).status === StepOutputStatus.FAILED,
-                ),
-            )
-        }
-        return stepOutput.status === StepOutputStatus.FAILED
-    })
-
-    return failedStep?.[0]
-}

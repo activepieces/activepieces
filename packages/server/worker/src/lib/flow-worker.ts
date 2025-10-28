@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
+import { runsMetadataQueue } from './compute/flow-runs-queue'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerRedisConnections } from './utils/worker-redis'
@@ -13,7 +14,44 @@ let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
 let socket: Socket
 
-export const flowWorker = (log: FastifyBaseLogger) => ({
+export const workerSocket = (log: FastifyBaseLogger) => ({
+    emitWithAck: async (event: string, data: unknown, options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number }): Promise<void> => {
+        const timeoutMs = options?.timeoutMs ?? 10000
+        const retries = options?.retries ?? 3
+        const retryDelayMs = options?.retryDelayMs ?? 2000
+
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                if (!socket || !socket.connected) {
+                    throw new Error('Socket not connected')
+                }
+                await socket.timeout(timeoutMs).emitWithAck(event, data)
+                return
+            }
+            catch (error) {
+                if (attempt < retries) {
+                    await new Promise(resolve => setTimeout(resolve, retryDelayMs))
+                }
+                else {
+                    log.error({
+                        message: 'Failed to emit event',
+                        event,
+                        data,
+                        error,
+                    })
+                }
+            }
+        }
+    },
+    isConnected: (): boolean => {
+        return socket?.connected ?? false
+    },
+})
+
+export const flowWorker = (log: FastifyBaseLogger): {
+    init: (params: { workerToken: string }) => Promise<void>
+    close: () => Promise<void>
+} => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
         await engineRunnerSocket(log).init()
@@ -44,6 +82,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
             await workerMachine.init(response, log)
             await jobQueueWorker(log).start(workerToken)
+            await runsMetadataQueue(log).init()
         })
 
         socket.on('disconnect', async () => {
@@ -69,23 +108,25 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 
         socket.connect()
 
-        heartbeatInterval = setInterval(async () => {
-            if (!socket.connected) {
-                log.error({
-                    message: 'Not connected to server, retrying...',
-                })
-                return
-            }
-            try {
-                const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-                socket.emit(WebsocketServerEvent.WORKER_HEALTHCHECK, request)
-            }
-            catch (error) {
-                log.error({
-                    message: 'Failed to send heartbeat, retrying...',
-                    error,
-                })
-            }
+        heartbeatInterval = setInterval(() => {
+            rejectedPromiseHandler((async (): Promise<void> => {
+                if (!socket.connected) {
+                    log.error({
+                        message: 'Not connected to server, retrying...',
+                    })
+                    return
+                }
+                try {
+                    const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
+                    socket.emit(WebsocketServerEvent.WORKER_HEALTHCHECK, request)
+                }
+                catch (error) {
+                    log.error({
+                        message: 'Failed to send heartbeat, retrying...',
+                        error,
+                    })
+                }
+            })(), log)
         }, 15000)
     },
 

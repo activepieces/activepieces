@@ -6,12 +6,12 @@ import { ProgressUpdateType } from './engine-operation'
 
 
 export const UpdateRunProgressRequest = Type.Object({
-    runDetails: Type.Omit(FlowRunResponse, ['steps']),
+    runDetails: FlowRunResponse,
     runId: Type.String(),
+    projectId: Type.String(),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
     workerHandlerId: Nullable(Type.String()),
     httpRequestId: Nullable(Type.String()),
-    failedStepName: Type.Optional(Type.String()),
     logsFileId: Type.Optional(Type.String()),
     stepNameToTest: Type.Optional(Type.String()),
 })
