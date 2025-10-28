@@ -8,21 +8,21 @@ import { uscreenAuth } from '../common/auth';
 import { UscreenClient, UscreenInvoice } from '../common/client';
 
 const sampleData = {
-  "id": "789012",
-  "title": "Masterclass Bundle",
-  "total": "49.99 USD",
-  "amount": "39.99 USD",
-  "discount": "10.00 USD",
-  "offer_id": "98765",
-  "customer_name": "Jane Smith",
-  "customer_email": "customer@example.com",
-  "country_code": "US",
-  "transaction_id": "tr_1001abcd",
-  "ip_address": "192.168.1.101",
-  "origin": "Stripe",
-  "coupon": "WELCOME10",
-  "event": "order_paid"
-}
+  id: '789012',
+  title: 'Masterclass Bundle',
+  total: '49.99 USD',
+  amount: '39.99 USD',
+  discount: '10.00 USD',
+  offer_id: '98765',
+  customer_name: 'Jane Smith',
+  customer_email: 'customer@example.com',
+  country_code: 'US',
+  transaction_id: 'tr_1001abcd',
+  ip_address: '192.168.1.101',
+  origin: 'Stripe',
+  coupon: 'WELCOME10',
+  event: 'order_paid',
+};
 export const paidOrder = createTrigger({
   auth: uscreenAuth,
   name: 'paid_order',
@@ -34,15 +34,15 @@ export const paidOrder = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    return;
+    //Empty
   },
 
   async onDisable(context) {
-    return;
+    //Empty
   },
 
   async run(context) {
-    const payload = context.payload as unknown as (typeof sampleData);
+    const payload = context.payload as unknown as typeof sampleData;
 
     if (payload.event !== 'order_paid') {
       return [];
