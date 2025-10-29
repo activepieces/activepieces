@@ -44,9 +44,8 @@ export const updateDatabaseItem = createAction({
         !(Array.isArray(value) && value.length === 0)
       ) {
         const fieldType: string = properties[key].type;
-        notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-          value
-        );
+        notionFields[key] =
+          NotionFieldMapping[fieldType].buildNotionType(value);
       }
     });
     return await notion.pages.update({

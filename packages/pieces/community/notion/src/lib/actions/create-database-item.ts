@@ -25,8 +25,8 @@ export const createDatabaseItem = createAction({
     }),
   },
   async run(context) {
-    const database_id = context.propsValue.database_id!;
-    const databaseFields = context.propsValue.databaseFields!;
+    const database_id = context.propsValue.database_id;
+    const databaseFields = context.propsValue.databaseFields;
     const content = context.propsValue.content;
     const notionFields: DynamicPropsValue = {};
     const notion = new Client({
@@ -47,13 +47,13 @@ export const createDatabaseItem = createAction({
       ) {
         const fieldType: string = properties[key]?.type;
         if (fieldType) {
-          notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-            value
-          );
+          notionFields[key] =
+            NotionFieldMapping[fieldType].buildNotionType(value);
         }
       }
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const children: any[] = [];
     // Add content to page
     if (content)
@@ -75,7 +75,7 @@ export const createDatabaseItem = createAction({
     return await notion.pages.create({
       parent: {
         type: 'database_id',
-        database_id: database_id,
+        database_id: database_id as string,
       },
       properties: notionFields,
       children: children,
