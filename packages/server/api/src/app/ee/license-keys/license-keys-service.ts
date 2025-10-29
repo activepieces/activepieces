@@ -130,7 +130,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await PlatformPlanHelper.handleResourceLocking({
             platformId, 
             newLimits: {
-                userSeatsLimit: 0,
             },
         })
     },
@@ -158,7 +157,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 activeFlowsLimit: undefined,
                 mcpLimit: undefined,
                 projectsLimit: undefined,
-                userSeatsLimit: undefined,
                 stripeSubscriptionId: undefined,
                 stripeSubscriptionStatus: undefined,
                 tablesLimit: undefined,

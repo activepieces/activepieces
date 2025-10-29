@@ -27,12 +27,7 @@ import {
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';
 
 import { AddonsStep } from './addons-step';
-import {
-  planData,
-  DEFAULT_PROJECTS,
-  DEFAULT_SEATS,
-  DEFAULT_ACTIVE_FLOWS,
-} from './data';
+import { planData, DEFAULT_PROJECTS, DEFAULT_ACTIVE_FLOWS } from './data';
 import { PlanSelectionStep } from './plan-selection-step';
 import { useManagePlanDialogStore } from './store';
 import { SubscriptionSummary } from './summary';
@@ -48,7 +43,6 @@ export enum ActionType {
 export interface DialogState {
   selectedPlan: string;
   selectedCycle: BillingCycle;
-  selectedSeats: number[];
   selectedActiveFlows: number[];
   selectedProjects: number[];
   currentStep: number;
@@ -57,7 +51,6 @@ export interface DialogState {
 export interface CurrentPlanInfo {
   plan: PlanName;
   cycle: BillingCycle;
-  seats: number;
   activeFlows: number;
   projects: number;
   subscriptionStatus: ApSubscriptionStatus;
@@ -67,7 +60,6 @@ export interface PricingCalculation {
   basePlanPrice: number;
   totalAddonCost: number;
   addonCosts: {
-    seats: number;
     flows: number;
     projects: number;
   };
@@ -141,7 +133,6 @@ export const UpgradeDialog: FC = () => {
   const [dialogState, setDialogState] = useState<DialogState>({
     selectedPlan: currentPlanInfo.plan,
     selectedCycle: currentPlanInfo.cycle,
-    selectedSeats: [0],
     selectedActiveFlows: [0],
     selectedProjects: [0],
     currentStep: 1,
@@ -152,7 +143,6 @@ export const UpgradeDialog: FC = () => {
     setDialogState({
       selectedPlan: currentPlanInfo.plan,
       selectedCycle: currentPlanInfo.cycle,
-      selectedSeats: [samePlan ? currentPlanInfo.seats : DEFAULT_SEATS],
       selectedActiveFlows: [
         samePlan
           ? currentPlanInfo.activeFlows
@@ -170,7 +160,6 @@ export const UpgradeDialog: FC = () => {
       calculatePrice(
         dialogState.selectedPlan,
         dialogState.selectedCycle,
-        dialogState.selectedSeats,
         dialogState.selectedActiveFlows,
         dialogState.selectedProjects,
         planData.plans,
@@ -201,7 +190,6 @@ export const UpgradeDialog: FC = () => {
     updateDialogState({
       selectedActiveFlows: [0],
       selectedProjects: [0],
-      selectedSeats: [0],
     });
 
     updateDialogState({ selectedPlan: plan });
@@ -213,10 +201,6 @@ export const UpgradeDialog: FC = () => {
 
   const handleStepChange = (step: number) => {
     updateDialogState({ currentStep: step });
-  };
-
-  const handleSeatsChange = (seats: number[]) => {
-    updateDialogState({ selectedSeats: seats });
   };
 
   const handleActiveFlowsChange = (flows: number[]) => {
@@ -240,7 +224,6 @@ export const UpgradeDialog: FC = () => {
           plan: selectedPlanEnum as StripePlanName,
           cycle: dialogState.selectedCycle,
           addons: {
-            userSeats: dialogState.selectedSeats[0],
             activeFlows: dialogState.selectedActiveFlows[0],
             projects: dialogState.selectedProjects[0],
           },
@@ -252,7 +235,6 @@ export const UpgradeDialog: FC = () => {
           plan: selectedPlanEnum as StripePlanName,
           cycle: dialogState.selectedCycle,
           addons: {
-            userSeats: dialogState.selectedSeats[0],
             activeFlows: dialogState.selectedActiveFlows[0],
             projects: dialogState.selectedProjects[0],
           },
@@ -276,9 +258,6 @@ export const UpgradeDialog: FC = () => {
     ),
     [PlatformUsageMetric.TABLES]: t(
       'You have run out of tables. Upgrade to get more.',
-    ),
-    [PlatformUsageMetric.USER_SEATS]: t(
-      'You have run out of user seats. Upgrade to get more.',
     ),
   };
 
@@ -322,8 +301,6 @@ export const UpgradeDialog: FC = () => {
                 <AddonsStep
                   selectedPlan={dialogState.selectedPlan}
                   currentPlanInfo={currentPlanInfo}
-                  selectedSeats={dialogState.selectedSeats}
-                  onSeatsChange={handleSeatsChange}
                   selectedActiveFlows={dialogState.selectedActiveFlows}
                   onActiveFlowsChange={handleActiveFlowsChange}
                   selectedProjects={dialogState.selectedProjects}

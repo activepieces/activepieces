@@ -16,7 +16,6 @@ import { ProjectAddon } from '@/features/billing/components/project-addon';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
-import { UserSeatAddon } from '@/features/billing/components/user-seat-addon';
 import {
   billingMutations,
   billingQueries,
@@ -113,10 +112,7 @@ export default function Billing() {
         )}
 
         {isBusinessPlan && (
-          <div className="grid grid-cols-2 gap-6">
-            <ProjectAddon platformSubscription={platformPlanInfo} />
-            <UserSeatAddon platformSubscription={platformPlanInfo} />
-          </div>
+          <ProjectAddon platformSubscription={platformPlanInfo} />
         )}
 
         {!isEnterprise && (

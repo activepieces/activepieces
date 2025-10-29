@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Database, LayoutGrid, Users, Workflow } from 'lucide-react';
+import { Database, LayoutGrid, Workflow } from 'lucide-react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
@@ -42,15 +42,6 @@ export const UsageCards = ({
           title={t('Active flows')}
           used={usage.activeFlows}
           total={plan.activeFlowsLimit}
-        />
-      )}
-
-      {(isFree || isPlusPlan) && (
-        <UsageCard
-          icon={<Users className="w-4 h-4" />}
-          title={t('Users')}
-          used={usage.seats}
-          total={plan.userSeatsLimit}
         />
       )}
 

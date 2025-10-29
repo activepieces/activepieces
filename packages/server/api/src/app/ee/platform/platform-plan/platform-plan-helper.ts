@@ -1,11 +1,10 @@
 import { ApSubscriptionStatus, BILLING_CYCLE_HIERARCHY, BillingCycle, METRIC_TO_LIMIT_MAPPING, METRIC_TO_USAGE_MAPPING, PLAN_HIERARCHY, PRICE_ID_MAP, PRICE_NAMES, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlanName, PlatformPlanLimits, PlatformRole, PlatformUsageMetric, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, FlowStatus, isNil, PlanName, PlatformPlanLimits, PlatformUsageMetric }  from '@activepieces/shared'
 import Stripe from 'stripe'
 import { flowService } from '../../../flows/flow/flow.service'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
@@ -18,7 +17,6 @@ export const BUSINESS_PLAN_PRICE_ID = getPriceIdFor(PRICE_NAMES.BUSINESS_PLAN)
 export const AI_CREDIT_PRICE_ID = getPriceIdFor(PRICE_NAMES.AI_CREDITS)
 export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
 export const PROJECT_PRICE_ID = getPriceIdFor(PRICE_NAMES.PROJECT)
-export const USER_SEAT_PRICE_ID = getPriceIdFor(PRICE_NAMES.USER_SEAT)
 
 export const AI_CREDIT_PRICE_IDS = [
     AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL],
@@ -38,11 +36,6 @@ export const BUSINESS_PLAN_PRICE_IDS = [
 export const ACTIVE_FLOW_PRICE_IDS = [
     ACTIVE_FLOW_PRICE_ID[BillingCycle.ANNUAL],
     ACTIVE_FLOW_PRICE_ID[BillingCycle.MONTHLY],
-]
-
-export const USER_SEAT_PRICE_IDS = [
-    USER_SEAT_PRICE_ID[BillingCycle.ANNUAL],
-    USER_SEAT_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const PROJECT_PRICE_IDS = [
@@ -124,17 +117,16 @@ export const PlatformPlanHelper = {
         }
     },
     checkLegitSubscriptionUpdateOrThrow: async (params: CheckLegitSubscriptionUpdateOrThrowParams) => {
-        const { projectsAddon, userSeatsAddon, newPlan } = params
+        const { projectsAddon, newPlan } = params
 
         const isNotBusinessPlan = newPlan !== PlanName.BUSINESS
-        const requestUserSeatAddon = !isNil(userSeatsAddon) && userSeatsAddon > 0
         const requestProjectAddon = !isNil(projectsAddon) && projectsAddon > 0
 
-        if (isNotBusinessPlan && (requestUserSeatAddon || requestProjectAddon)) {
+        if (isNotBusinessPlan && requestProjectAddon) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Extra users and projects are only available for the Business plan',
+                    message: 'Extra projects are only available for the Business plan',
                 },
             })
         }
@@ -145,7 +137,6 @@ export const PlatformPlanHelper = {
 
         await handleProjects(projectIds, usage.projects, newLimits.projectsLimit)
         await handleActiveFlows(projectIds, usage.activeFlows, newLimits.activeFlowsLimit)
-        await handleUserSeats(projectIds, usage.seats, platformId, newLimits.userSeatsLimit)
     },
     isUpgradeExperience: (params: IsUpgradeEperienceParams): boolean => {
         const {
@@ -154,11 +145,9 @@ export const PlatformPlanHelper = {
             currentCycle,
             newCycle,
             currentProjectsLimit,
-            currentUserSeatsLimit,
             newActiveFlowsLimit,
             newPlan,
             newProjectsLimit,
-            newUserSeatsLimit,
         } = params
 
         const currentPlanTier = PLAN_HIERARCHY[currentPlan]
@@ -184,8 +173,7 @@ export const PlatformPlanHelper = {
 
         const isAddonUpgrade =
             (!isNil(newActiveFlowsLimit) && newActiveFlowsLimit > currentActiveFlowsLimit) ||
-            (!isNil(newProjectsLimit) && newProjectsLimit > currentProjectsLimit) ||
-            (!isNil(newUserSeatsLimit) && newUserSeatsLimit > currentUserSeatsLimit)
+            (!isNil(newProjectsLimit) && newProjectsLimit > currentProjectsLimit)
 
         return isAddonUpgrade
     },
@@ -277,34 +265,6 @@ async function handleActiveFlows(
     await Promise.all(disableFlows)
 }
 
-async function handleUserSeats(
-    projectIds: string[], 
-    currentUsage: number,
-    platformId: string,
-    newLimit?: number | null,
-): Promise<void> {
-    if (isNil(newLimit) || currentUsage <= newLimit) return
-
-    const activeUserUnfiltered = await Promise.all(projectIds.map(id => {
-        return userService.listProjectUsers({
-            projectId: id, 
-            platformId,
-        })
-    }))
-
-    const activeUsers = activeUserUnfiltered.flatMap(user => user).filter(user => user.platformRole !== PlatformRole.ADMIN)
-    const usersToDeactivate = activeUsers.slice(newLimit)
-
-    const deactivateUsers = usersToDeactivate.map(user => {
-        return userService.update({
-            id: user.id,
-            status: UserStatus.INACTIVE,
-            platformId,
-        })
-    })
-
-    await Promise.all(deactivateUsers)
-}
 
 type HandleResourceLockingParams = {
     platformId: string
@@ -319,13 +279,12 @@ type QuotaCheckParams = {
 
 type CheckResourceLockedParams = {
     platformId: string
-    resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.USER_SEATS | PlatformUsageMetric.ACTIVE_FLOWS>
+    resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.ACTIVE_FLOWS>
 }
 
 type CheckLegitSubscriptionUpdateOrThrowParams = {
     newPlan: PlanName
     projectsAddon?: number
-    userSeatsAddon?: number
 }
 
 type IsUpgradeEperienceParams = {
@@ -333,10 +292,8 @@ type IsUpgradeEperienceParams = {
     newPlan: PlanName
     currentCycle: BillingCycle
     newCycle: BillingCycle
-    newUserSeatsLimit?: number
     newProjectsLimit?: number
     newActiveFlowsLimit?: number
-    currentUserSeatsLimit: number
     currentProjectsLimit: number
     currentActiveFlowsLimit: number
 }
