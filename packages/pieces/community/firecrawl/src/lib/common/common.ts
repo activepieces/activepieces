@@ -4,6 +4,7 @@ import {
 	HttpMethod,
 } from '@activepieces/pieces-common';
 import Ajv from 'ajv';
+import { randomUUID } from 'crypto';
 
 export const FIRECRAWL_API_BASE_URL = 'https://api.firecrawl.dev/v2';
 export const POLLING_INTERVAL = 5000;
@@ -30,8 +31,7 @@ export async function downloadAndSaveScreenshot(screenshotTarget: any, context: 
     responseType: 'arraybuffer'
   });
 
-  const fileName = `screenshot-${Date.now()}-${Math.random().toString(36).substring(7)}.png`;
-
+  const fileName = `screenshot-${randomUUID()}.png`;
   const fileUrl = await context.files.write({
     fileName: fileName,
     data: Buffer.from(response.body),
