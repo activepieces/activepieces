@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import path, { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
@@ -9,8 +9,12 @@ import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
 import { exceptionHandler } from '../exception-handler'
 import { ApLock, memoryLock } from '../memory-lock'
+import { readFileSync, writeFileSync } from 'node:fs'
+import chalk from 'chalk'
+import { isDeepStrictEqual } from 'node:util'
 
 const pieceCache: Record<string, PieceMetadata | null> = {}
+const pieceDependenciesCacheFilePath = join(cwd(), "cache", "piece-dependencies.json")
 
 export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
     async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
@@ -41,6 +45,66 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
     async function getProjectJsonFromFolderPath(folderPath: string): Promise<string> {
         return join(folderPath, 'project.json')
+    }
+
+    async function getPieceDependencies(folerPath: string): Promise<Record<string, string> | null> {
+        try {
+            const packageJson = await readFile(join(folerPath, 'package.json'), 'utf-8').then(JSON.parse)
+            if (!packageJson.dependencies) {
+                return null
+            }
+            return packageJson.dependencies
+        }
+        catch (e) {
+            return null
+        }
+    }
+
+    async function cachePieceDependencies(pieceName: string, dependencies: Record<string, string>): Promise<void> {
+        let currentCache: Record<string, Record<string, string>> = {}
+        try {
+            currentCache = JSON.parse(readFileSync(pieceDependenciesCacheFilePath, 'utf-8'))
+        }
+        catch (e) {
+            currentCache = {}
+        }
+
+        writeFileSync(pieceDependenciesCacheFilePath, JSON.stringify({
+            ...currentCache,
+            [pieceName]: dependencies
+        }, null, 2), 'utf-8')
+    }
+
+    async function getCachedPieceDependencies(pieceName: string): Promise<Record<string, string> | null> {
+
+        let currentCache: Record<string, Record<string, string>> = {}
+        try {
+            currentCache = JSON.parse(readFileSync(pieceDependenciesCacheFilePath, 'utf-8'))
+        }
+        catch (e) {
+            return null
+        }
+        return currentCache[pieceName] ?? null
+    }
+
+    async function checkPieceDependenciesUpdated(folderPath: string, pieceName: string): Promise<boolean> {
+        const cachedDependencies = await getCachedPieceDependencies(pieceName)
+        const pieceDependencies = await getPieceDependencies(folderPath)
+        return !isDeepStrictEqual(cachedDependencies, pieceDependencies)
+    }
+
+    async function installPieceDependencies(folderPath: string, packageName: string, cmdRunner: (cmd: string) => Promise<void>): Promise<void> {
+        const pieceDependencies = await getPieceDependencies(folderPath)
+        const isDependenciesUpdated = await checkPieceDependenciesUpdated(folderPath, packageName)
+        if (pieceDependencies && isDependenciesUpdated) {
+            await cachePieceDependencies(packageName, pieceDependencies)
+            const dependeciesWithVersion = Object.keys(pieceDependencies).map((key) => `${key}@${pieceDependencies[key as keyof typeof pieceDependencies]}`)
+
+            if (dependeciesWithVersion.length > 0) {
+                log.info(chalk.yellow(`Installing Piece ${packageName} Dependencies: ${dependeciesWithVersion.join(' ')}`))
+                await cmdRunner(`npm install ${dependeciesWithVersion.join(' ')} --no-save`)
+            }
+        }
     }
 
     async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
@@ -162,5 +226,10 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         clearPieceCache,
         getPackageNameFromFolderPath,
         getProjectJsonFromFolderPath,
+        getPieceDependencies,
+        cachePieceDependencies,
+        getCachedPieceDependencies,
+        checkPieceDependenciesUpdated,
+        installPieceDependencies
     }
 }

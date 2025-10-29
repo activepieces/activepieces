@@ -3,5 +3,8 @@
   "version": "0.0.7",
   "devDependencies": {
     "@types/qrcode": "^1.5.5"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4"
   }
 }

@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-http",
-  "version": "0.9.4"
+  "version": "0.9.4",
+  "dependencies": {
+    "https-proxy-agent": "7.0.4"
+  }
 }
