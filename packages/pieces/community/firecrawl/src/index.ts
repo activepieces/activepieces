@@ -24,7 +24,7 @@ export const firecrawlAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://api.firecrawl.dev/v2/scrape',
+        url: `${FIRECRAWL_API_BASE_URL}/scrape`,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${auth}`,
