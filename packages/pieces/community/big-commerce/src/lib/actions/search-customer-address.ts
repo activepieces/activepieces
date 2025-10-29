@@ -96,23 +96,14 @@ export const searchCustomerAddress = createAction({
     } = context.propsValue;
 
     // Build query parameters
+    // Note: BigCommerce API has limited filter support for addresses
+    // Only customer_id:in and country_code are reliably supported
+    // We'll filter other fields in code after fetching
     const queryParams: Record<string, string> = {};
 
-    // Add search filters
+    // Add search filters - only use supported filters
     if (customer_id) {
       queryParams['customer_id:in'] = customer_id.toString();
-    }
-    if (company) {
-      queryParams['company:like'] = company;
-    }
-    if (city) {
-      queryParams['city:like'] = city;
-    }
-    if (state_or_province) {
-      queryParams['state_or_province:like'] = state_or_province;
-    }
-    if (postal_code) {
-      queryParams['postal_code:like'] = postal_code;
     }
     if (country_code) {
       queryParams['country_code'] = country_code;
@@ -156,10 +147,41 @@ export const searchCustomerAddress = createAction({
       queryParams,
     });
 
+    // Filter results in code for unsupported API filters
+    let filteredAddresses = response.body.data;
+
+    if (company) {
+      const companyLower = company.toLowerCase();
+      filteredAddresses = filteredAddresses.filter(addr => 
+        addr.company && addr.company.toLowerCase().includes(companyLower)
+      );
+    }
+
+    if (city) {
+      const cityLower = city.toLowerCase();
+      filteredAddresses = filteredAddresses.filter(addr => 
+        addr.city && addr.city.toLowerCase().includes(cityLower)
+      );
+    }
+
+    if (state_or_province) {
+      const stateLower = state_or_province.toLowerCase();
+      filteredAddresses = filteredAddresses.filter(addr => 
+        addr.state_or_province && addr.state_or_province.toLowerCase().includes(stateLower)
+      );
+    }
+
+    if (postal_code) {
+      const postalLower = postal_code.toLowerCase().replace(/\s/g, '');
+      filteredAddresses = filteredAddresses.filter(addr => 
+        addr.postal_code && addr.postal_code.toLowerCase().replace(/\s/g, '').includes(postalLower)
+      );
+    }
+
     return {
-      addresses: response.body.data,
-      total_found: response.body.meta.pagination.total,
-      count: response.body.data.length,
+      addresses: filteredAddresses,
+      total_found: filteredAddresses.length,
+      count: filteredAddresses.length,
       pagination: response.body.meta.pagination,
     };
   },

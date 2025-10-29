@@ -11,17 +11,12 @@ export const searchCustomer = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Search by email address (partial match supported)',
+      description: 'Search by email address (exact match only)',
       required: false,
     }),
-    first_name: Property.ShortText({
-      displayName: 'First Name',
-      description: 'Search by first name (partial match supported)',
-      required: false,
-    }),
-    last_name: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'Search by last name (partial match supported)',
+    name: Property.ShortText({
+      displayName: 'Name',
+      description: 'Search by customer name (partial match supported - searches first and last name)',
       required: false,
     }),
     company: Property.ShortText({
@@ -44,31 +39,27 @@ export const searchCustomer = createAction({
   async run(context) {
     const {
       email,
-      first_name,
-      last_name,
+      name,
       company,
       customer_group_id,
       limit,
     } = context.propsValue;
 
     // Build query parameters
+    // Note: BigCommerce Customers API has limited filter support
+    // Supported: email:in, customer_group_id:in
+    // NOT supported: name:like, company:like, first_name:like, last_name:like
     const queryParams: Record<string, string> = {};
 
-    // Add search filters (using :like for partial matches)
+    // Add search filters - only use supported filters
+    // email:in - exact match for email
     if (email) {
-      queryParams['email:like'] = email;
+      queryParams['email:in'] = email;
     }
-    if (first_name) {
-      queryParams['first_name:like'] = first_name;
-    }
-    if (last_name) {
-      queryParams['last_name:like'] = last_name;
-    }
-    if (company) {
-      queryParams['company:like'] = company;
-    }
+    
+    // customer_group_id - exact match
     if (customer_group_id !== undefined) {
-      queryParams['customer_group_id'] = customer_group_id.toString();
+      queryParams['customer_group_id:in'] = customer_group_id.toString();
     }
 
     // Add limit
@@ -109,10 +100,32 @@ export const searchCustomer = createAction({
       queryParams,
     });
 
+    // Filter results in code for unsupported API filters
+    let filteredCustomers = response.body.data;
+
+    // name - partial match for customer name (searches first and last name)
+    if (name) {
+      const nameLower = name.toLowerCase();
+      filteredCustomers = filteredCustomers.filter(customer => {
+        const fullName = `${customer.first_name} ${customer.last_name}`.toLowerCase();
+        return fullName.includes(nameLower) || 
+               customer.first_name.toLowerCase().includes(nameLower) ||
+               customer.last_name.toLowerCase().includes(nameLower);
+      });
+    }
+    
+    // company - partial match for company name
+    if (company) {
+      const companyLower = company.toLowerCase();
+      filteredCustomers = filteredCustomers.filter(customer => 
+        customer.company && customer.company.toLowerCase().includes(companyLower)
+      );
+    }
+
     return {
-      customers: response.body.data,
-      total_found: response.body.meta.pagination.total,
-      count: response.body.data.length,
+      customers: filteredCustomers,
+      total_found: filteredCustomers.length,
+      count: filteredCustomers.length,
       pagination: response.body.meta.pagination,
     };
   },

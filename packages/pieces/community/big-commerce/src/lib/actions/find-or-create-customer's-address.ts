@@ -70,7 +70,9 @@ export const findOrCreateCustomerAddress = createAction({
       address_type,
     } = context.propsValue;
 
-    // Step 1: Search for existing address by customer_id and address1
+    // Step 1: Search for existing addresses by customer_id only
+    // Note: BigCommerce API doesn't support address1:like filter
+    // We'll fetch all addresses for the customer and match in code
     const searchResponse = await sendBigCommerceRequest<{
       data: Array<{
         id: number;
@@ -98,18 +100,17 @@ export const findOrCreateCustomerAddress = createAction({
       url: '/customers/addresses',
       queryParams: {
         'customer_id:in': customer_id.toString(),
-        'address1:like': address1,
-        limit: '10',
+        limit: '50', // Get more addresses to check
       },
     });
 
     // Check if we found a matching address
+    // Match by address1, city, and postal_code for accuracy
     if (searchResponse.body.data && searchResponse.body.data.length > 0) {
-      // Look for an exact or close match
       const exactMatch = searchResponse.body.data.find(addr => 
-        addr.address1.toLowerCase() === address1.toLowerCase() &&
-        addr.city.toLowerCase() === city.toLowerCase() &&
-        addr.postal_code === postal_code
+        addr.address1.toLowerCase().trim() === address1.toLowerCase().trim() &&
+        addr.city.toLowerCase().trim() === city.toLowerCase().trim() &&
+        addr.postal_code.replace(/\s/g, '') === postal_code.replace(/\s/g, '')
       );
 
       if (exactMatch) {

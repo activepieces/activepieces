@@ -83,20 +83,20 @@ export const createCustomer = createAction({
     };
 
     // Add optional fields
-    if (company) customerData.company = company;
-    if (phone) customerData.phone = phone;
-    if (notes) customerData.notes = notes;
-    if (tax_exempt_category) customerData.tax_exempt_category = tax_exempt_category;
-    if (customer_group_id) customerData.customer_group_id = customer_group_id;
+    if (company) customerData['company'] = company;
+    if (phone) customerData['phone'] = phone;
+    if (notes) customerData['notes'] = notes;
+    if (tax_exempt_category) customerData['tax_exempt_category'] = tax_exempt_category;
+    if (customer_group_id) customerData['customer_group_id'] = customer_group_id;
 
     // Add authentication fields if password is provided
     if (new_password || force_password_reset) {
-      customerData.authentication = {};
+      customerData['authentication'] = {};
       if (new_password) {
-        customerData.authentication.new_password = new_password;
+        customerData['authentication']['new_password'] = new_password;
       }
       if (force_password_reset) {
-        customerData.authentication.force_password_reset = force_password_reset;
+        customerData['authentication']['force_password_reset'] = force_password_reset;
       }
     }
 
