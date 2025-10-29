@@ -1,12 +1,13 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import { FlowRunResponse } from '../flow-run/execution/flow-execution'
+import { StepRunResponse } from '../flows/sample-data'
 import { ProgressUpdateType } from './engine-operation'
 
 
 
 export const UpdateRunProgressRequest = Type.Object({
-    runDetails: FlowRunResponse,
+    runDetails: Type.Omit(FlowRunResponse, ['steps']),
     runId: Type.String(),
     projectId: Type.String(),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
@@ -14,6 +15,8 @@ export const UpdateRunProgressRequest = Type.Object({
     httpRequestId: Nullable(Type.String()),
     logsFileId: Type.Optional(Type.String()),
     stepNameToTest: Type.Optional(Type.String()),
+    failedStepName: Type.Optional(Type.String()),
+    stepResponse: Type.Optional(StepRunResponse),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
