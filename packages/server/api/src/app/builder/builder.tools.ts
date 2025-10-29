@@ -29,6 +29,7 @@ import {
     findBranchIndexFromNameInRouter,
     getDefaultPropertySettingsForActionOrTrigger,
     getInitalStepInputForActionOrTrigger,
+    isPieceNameValid,
     validatePieceNameOrThrow,
 } from './builder.utils'
 import { BuilderToolName } from './constants'
@@ -72,8 +73,7 @@ const findPieces =  async (params: GetAllBuilderPieceParams): Promise<PieceMetad
         edition: ApEdition.COMMUNITY,
         locale: LocalesEnum.ENGLISH,
     })
-    // Take first 5 matches
-    return pieces.slice(0, 5)
+    return pieces
 }
 
 type GetBuilderPieceParams = {
@@ -221,83 +221,116 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
             },
         }),
         [BuilderToolName.ADD_ACTION]: tool({
-            description: 'Create a flow action in the workflow',
+            description: 'Creates and inserts multiple flow action(s) in the workflow',
             inputSchema: z.object({
-                parentStepName: z.string({ description: 'Name of the parent step under which action is to be added' }),
-                stepName: z.string({ description: 'Unique name of the step (step_1, step_2 etc)' }),
-                branchName: z.optional(z.string({ description: 'Branch in which the step needs to be added (when parentStepName is a router name)' })),
-                pieceName: z.string(),
-                pieceVersion: z.string(),
-                pieceActionName: z.string(),
+                actions: z.array(z.object({
+                    parentStepName: z.string({ description: 'Name of the parent step under which action is to be added' }),
+                    stepName: z.string({ description: 'Unique name of the step (step_1, step_2 etc.)' }),
+                    branchName: z.optional(z.string({ description: 'Branch in which the step needs to be added (when parentStepName is a router name)' })),
+                    pieceName: z.string(),
+                    pieceVersion: z.string(),
+                    pieceActionName: z.string(),
+                })),
             }),
-            execute: async (params) => {
-                log.info(params, 'add-action params')
-                const { parentStepName, stepName, branchName, pieceName, pieceVersion, pieceActionName } = params
-                validatePieceNameOrThrow(pieceName)
+            execute: async ({ actions }) => {
+                log.info(actions, 'add-action params')
 
-                const metadata = await pieceMetadataService(log).getOrThrow({ name: pieceName, version: pieceVersion, platformId, projectId })
-                const pieceAction = metadata?.actions[pieceActionName]
+                const stepNameMap: Record<string, string> = { trigger: 'trigger' }
 
-                const input = getInitalStepInputForActionOrTrigger(pieceAction)
-                const propertySettings = getDefaultPropertySettingsForActionOrTrigger(pieceAction)
-                log.debug(input, 'piece action input')
-                log.debug(propertySettings, 'piece action propertySettings')
-
-                const flowVersion = await flowVersionService(log).getOne(flowVersionId)
-                if (isNil(flowVersion)) {
-                    return {
-                        status: ToolExecutionStatus.FAILURE,
-                        text: 'Unable to find flow with specified version',
-                    }
+                const summary: Record<'success' | 'failure', Record<string, string>> = {
+                    success: {},
+                    failure: {},
                 }
 
-                const parentStep = flowStructureUtil.getStep(parentStepName, flowVersion.trigger)
-                if (isNil(parentStep)) {
-                    return {
-                        status: ToolExecutionStatus.FAILURE,
-                        text: `Unable to find parent step ${parentStepName}`,
+                for (const param of actions) {
+                    const { parentStepName, stepName, branchName, pieceName, pieceVersion, pieceActionName } = param
+
+                    if (!isPieceNameValid(pieceName)) {
+                        summary.failure[stepName] = `Piece name ${pieceName} is invalid. Piece names must start with an '@'`
+                        return summary
                     }
-                }
 
-                const isParentARouter = parentStep.type === FlowActionType.ROUTER
-                const branchIndex = isParentARouter && branchName ? parentStep.settings.branches.findIndex(branch => branch.branchName === branchName) : undefined
+                    // Fetch metadata and piece action
+                    const metadata = await pieceMetadataService(log).getOrThrow({ name: pieceName, version: pieceVersion, platformId, projectId })
+                    const pieceAction = metadata?.actions[pieceActionName]
 
-                log.debug({ isParentARouter, branchIndex }, 'add-action extra params')
+                    // Fetch default input parameters to the piece step
+                    const input = getInitalStepInputForActionOrTrigger(pieceAction)
+                    const propertySettings = getDefaultPropertySettingsForActionOrTrigger(pieceAction)
 
-                const request: AddActionRequest = {
-                    parentStep: parentStepName,
-                    stepLocationRelativeToParent: isParentARouter ? StepLocationRelativeToParent.INSIDE_BRANCH : StepLocationRelativeToParent.AFTER,
-                    action: {
-                        valid: true,
-                        type: FlowActionType.PIECE,
-                        name: stepName,
-                        displayName: pieceAction.displayName,
-                        settings: {
-                            pieceName,
-                            pieceVersion,
-                            actionName: pieceActionName,
-                            input,
-                            propertySettings,
-                            errorHandlingOptions: {},
+                    // Fetch latest flow version state
+                    const flowVersion = await flowVersionService(log).getOne(flowVersionId)
+                    if (isNil(flowVersion)) {
+                        return {
+                            status: ToolExecutionStatus.FAILURE,
+                            text: 'Unable to find flow with specified version',
+                        }
+                    }
+
+                    // Resolve step names as sometimes the model provides name as "step_1_abc" etc
+                    // stepNameMap keeps record of names converted and seen so far
+                    const newParentStepName = stepNameMap[parentStepName] ?? parentStepName
+                    const newStepName = flowStructureUtil.findUnusedName(flowVersion.trigger)
+
+                    const parentStep = flowStructureUtil.getStep(newParentStepName, flowVersion.trigger)
+                    if (isNil(parentStep)) {
+                        return {
+                            status: ToolExecutionStatus.FAILURE,
+                            text: `Unable to find parent step ${newParentStepName}`,
+                        }
+                    }
+
+                    if (parentStep.nextAction) {
+                        summary.failure[stepName] = `Parent step ${newParentStepName} already has a next action named ${parentStep.nextAction.name}. Please delete that to add a new action beneath it`
+                        return summary
+                    }
+
+                    // Handle action in a branch logic
+                    const isParentARouter = parentStep.type === FlowActionType.ROUTER
+                    const branchIndex = isParentARouter && branchName ? parentStep.settings.branches.findIndex(branch => branch.branchName === branchName) : undefined
+
+                    log.debug({ isParentARouter, branchIndex }, 'add-action branch params')
+
+                    const request: AddActionRequest = {
+                        parentStep: newParentStepName,
+                        stepLocationRelativeToParent: isParentARouter ? StepLocationRelativeToParent.INSIDE_BRANCH : StepLocationRelativeToParent.AFTER,
+                        action: {
+                            valid: true,
+                            type: FlowActionType.PIECE,
+                            name: newStepName,
+                            displayName: pieceAction.displayName,
+                            settings: {
+                                pieceName,
+                                pieceVersion,
+                                actionName: pieceActionName,
+                                input,
+                                propertySettings,
+                                errorHandlingOptions: {},
+                            },
                         },
-                    },
-                    branchIndex,
-                }
-                const operation: FlowOperationRequest = {
-                    type: FlowOperationType.ADD_ACTION,
-                    request,
+                        branchIndex,
+                    }
+                    const operation: FlowOperationRequest = {
+                        type: FlowOperationType.ADD_ACTION,
+                        request,
+                    }
+
+                    await applyAndSaveFlowVersion({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowId,
+                        flowVersionId,
+                        operation,
+                    })
+
+                    // Record the names
+                    stepNameMap[stepName] = newStepName
+                    stepNameMap[parentStepName] = newParentStepName
+                    summary.success[stepName] = `Added as ${newStepName} under parent step ${newParentStepName}`
                 }
 
-                await applyAndSaveFlowVersion({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowId,
-                    flowVersionId,
-                    operation,
-                })
-
-                return { text: `Added a step ${stepName} with action ${pieceActionName}` }
+                return summary
             },
         }),
         [BuilderToolName.MOVE_ACTION]: tool({
@@ -405,10 +438,18 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
             description: 'Add a router step in the flow. Router consists of branches which are triggered based on some condition',
             inputSchema: z.object({
                 parentStepName: z.string({ description: 'Name of the parent step' }),
-                stepName: z.string({ description: 'Unique name of the step (step_1, step_2 etc' }),
             }),
-            execute: async ({ parentStepName, stepName }) => {
-                log.info({ parentStepName, stepName }, 'add-router params')
+            execute: async ({ parentStepName }) => {
+                log.info({ parentStepName }, 'add-router params')
+
+                const flowVersion = await flowVersionService(log).getOne(flowVersionId)
+                if (isNil(flowVersion)) {
+                    return {
+                        status: ToolExecutionStatus.FAILURE,
+                        text: 'Unable to find flow with specified version',
+                    }
+                }
+                const stepName = flowStructureUtil.findUnusedName(flowVersion.trigger)
                 const request: AddActionRequest = {
                     parentStep: parentStepName,
                     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,

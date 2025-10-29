@@ -18,6 +18,10 @@ export const validatePieceNameOrThrow = (pieceName: string): void => {
     }
 }
 
+export const isPieceNameValid = (pieceName: string): boolean => {
+    return pieceName.startsWith('@')
+}
+
 export const findBranchIndexFromNameInRouter = (router: Step, branchName: string): number | undefined => {
     for (let i = 0; i < router.settings.branches.length; i++) {
         if (router.settings.branches[i].branchName === branchName) {
