@@ -30,7 +30,8 @@ export const nocodbAuth = PieceAuth.CustomAuth({
 				options: [
 					{ label: 'Before v0.90.0', value: 1 },
 					{ label: 'v0.90.0 to v0.199.0', value: 2 },
-					{ label: 'v0.200.0 Onwards', value: 3 }
+					{ label: 'v0.200.0 Onwards', value: 3 },
+					{ label: 'v0.260.0 Onwards', value: 4 },
 				]
 			}
 		}),
