@@ -21,57 +21,14 @@ export const personAdded = createTrigger({
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   sampleData: {
-    eventType: 'person.created',
-    eventId: 'evt_123e4567-e89b-12d3-a456-426614174000',
-    timestamp: '2025-10-28T12:00:00.000Z',
+    id: 'evt_6004f2ef-dcc3-4c56-a704-9326730ad100',
+    type: 'person.created',
+    createdAt: '2025-09-30T09:55:52.715Z',
+    source:
+      'https://api.folk.app/v1/webhooks/wbk_2f15ec4f-0f70-4884-a43d-1f88ef7a6665',
     data: {
-      id: 'per_183ed5cc-3182-45de-84d1-d520f2604810',
-      firstName: 'John',
-      lastName: 'Doe',
-      fullName: 'John Doe',
-      description: 'John Doe is a software engineer at Tech Corp.',
-      birthday: '1980-06-15',
-      jobTitle: 'Software Engineer',
-      createdAt: '2021-01-01T00:00:00.000Z',
-      createdBy: {
-        id: 'usr_bc984b3f-0386-434d-82d7-a91eb6badd71',
-        fullName: 'John Doe',
-        email: 'john.doe@example.com',
-      },
-      groups: [
-        {
-          id: 'grp_5fa60242-0756-4e31-8cca-30c2c5ff1ac2',
-          name: 'Engineering',
-        },
-      ],
-      companies: [
-        {
-          id: 'com_92346499-30bf-4278-ae8e-4aa3ae2ace2c',
-          name: 'Tech Corp',
-        },
-      ],
-      addresses: ['123 Main St, Springfield, USA'],
-      emails: ['john@example.com'],
-      phones: ['+1234567890'],
-      urls: ['https://example.com'],
-      customFieldValues: {},
-      interactionMetadata: {
-        user: {
-          approximateCount: 21,
-          lastInteractedAt: '2025-05-01T00:00:00Z',
-        },
-        workspace: {
-          approximateCount: 21,
-          lastInteractedAt: '2025-05-01T00:00:00Z',
-          lastInteractedBy: [
-            {
-              id: 'usr_bc984b3f-0386-434d-82d7-a91eb6badd71',
-              fullName: 'John Doe',
-              email: 'john.doe@example.com',
-            },
-          ],
-        },
-      },
+      id: 'per_05837e2d-9bf7-4f17-8729-e95f1be4de67',
+      url: 'https://api.folk.app/v1/people/per_05837e2d-9bf7-4f17-8729-e95f1be4de67',
     },
   },
   type: TriggerStrategy.WEBHOOK,
@@ -118,10 +75,9 @@ export const personAdded = createTrigger({
   async run(context) {
     const payloadBody = context.payload.body as any;
 
-    // Verify webhook signature if needed (Folk uses signing secrets)
-    // const signingSecret = await context.store?.get('_signingSecret');
-
-    // Return the webhook payload
+    if (payloadBody.type !== 'person.created') {
+      return [];
+    }
     return [payloadBody];
   },
 });

@@ -16,18 +16,52 @@ export const companyUpdated = createTrigger({
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   sampleData: {
-    eventType: 'company.updated',
-    eventId: 'evt_123e4567-e89b-12d3-a456-426614174000',
-    timestamp: '2025-10-28T12:00:00.000Z',
+    id: 'evt_6004f2ef-dcc3-4c56-a704-9326730ad100',
+    type: 'company.updated',
+    createdAt: '2025-09-30T09:55:52.715Z',
+    source:
+      'https://api.folk.app/v1/webhooks/wbk_2f15ec4f-0f70-4884-a43d-1f88ef7a6665',
     data: {
-      id: 'com_92346499-30bf-4278-ae8e-4aa3ae2ace2c',
-      name: 'Tech Corp',
-      description: 'A technology company',
-      updatedAt: '2024-01-01T00:00:00Z',
-      emails: ['contact@techcorp.com'],
-      urls: ['https://techcorp.com'],
-      addresses: ['123 Tech Street, San Francisco, CA'],
-      phones: ['+1-555-0123'],
+      id: 'com_05837e2d-9bf7-4f17-8729-e95f1be4de67',
+      url: 'https://api.folk.app/v1/companies/com_05837e2d-9bf7-4f17-8729-e95f1be4de67',
+      changes: [
+        {
+          path: ['name'],
+          type: 'set',
+          value: 'ACME Inc.',
+        },
+        {
+          path: ['description'],
+          type: 'set',
+        },
+        {
+          path: [
+            'customFieldValues',
+            'grp_bc984b3f-0386-434d-82d7-a91eb6badd71',
+            'Status',
+          ],
+          type: 'set',
+          value: 'In Progress',
+        },
+        {
+          path: [
+            'customFieldValues',
+            'grp_bc984b3f-0386-434d-82d7-a91eb6badd71',
+            'Tags',
+          ],
+          type: 'remove',
+          value: ['VIP'],
+        },
+        {
+          path: [
+            'customFieldValues',
+            'grp_bc984b3f-0386-434d-82d7-a91eb6badd71',
+            'Assigned to',
+          ],
+          type: 'add',
+          value: [{ id: 'usr_3b7d7b65-4c2d-4b65-822a-6bc759e1e951' }],
+        },
+      ],
     },
   },
   type: TriggerStrategy.WEBHOOK,
@@ -53,7 +87,6 @@ export const companyUpdated = createTrigger({
     });
 
     await context.store?.put('_webhookId', webhook.data.id);
-    // await context.store?.put('_signingSecret', webhook.data.signingSecret);
   },
 
   async onDisable(context) {
@@ -72,6 +105,9 @@ export const companyUpdated = createTrigger({
 
   async run(context) {
     const payloadBody = context.payload.body as any;
+    if (payloadBody.type !== 'company.updated') {
+      return [];
+    }
     return [payloadBody];
   },
 });
