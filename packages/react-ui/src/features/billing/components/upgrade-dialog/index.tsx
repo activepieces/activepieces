@@ -61,7 +61,6 @@ export interface CurrentPlanInfo {
   activeFlows: number;
   projects: number;
   subscriptionStatus: ApSubscriptionStatus;
-  isTrial: boolean;
 }
 
 export interface PricingCalculation {

@@ -6,7 +6,6 @@ import { CardContent, Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
@@ -22,11 +21,8 @@ export const UsageCards = ({
 }) => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { usage, plan } = platformSubscription;
-  const isBusinessPlan = plan.plan === PlanName.BUSINESS;
   const isPlusPlan = plan.plan === PlanName.PLUS;
   const isFree = plan.plan === PlanName.FREE;
-  const isTrial =
-    plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
   const isEnterprise =
     !isNil(plan?.licenseKey) ||
     plan?.plan === PlanName.ENTERPRISE ||
@@ -40,7 +36,7 @@ export const UsageCards = ({
         '2xl:grid-cols-7': isFree,
       })}
     >
-      {(isFree || isTrial || isEnterprise) && (
+      {(isFree || isEnterprise) && (
         <UsageCard
           icon={<Workflow className="w-4 h-4" />}
           title={t('Active flows')}
@@ -49,7 +45,7 @@ export const UsageCards = ({
         />
       )}
 
-      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
+      {(isFree || isPlusPlan) && (
         <UsageCard
           icon={<Users className="w-4 h-4" />}
           title={t('Users')}
@@ -58,7 +54,7 @@ export const UsageCards = ({
         />
       )}
 
-      {(isFree || isPlusPlan || (isBusinessPlan && isTrial)) && (
+      {(isFree || isPlusPlan) && (
         <UsageCard
           icon={<LayoutGrid className="w-4 h-4" />}
           title={t('Projects')}

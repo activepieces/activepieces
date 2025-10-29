@@ -174,21 +174,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendTrialReminder({ platformId, firstName, customerEmail, templateName }: SendTrialReminderArgs): Promise<void> {
-        await emailSender(log).send({
-            emails: [customerEmail],
-            platformId,
-            templateData: {
-                name: templateName,
-                vars: {
-                    year: new Date().getFullYear().toString(),
-                    firstName: firstName ?? 'Automator',
-                },
-            },
-        })
-
-    },
-
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
@@ -252,13 +237,6 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
-}
-
-type SendTrialReminderArgs = {
-    platformId: string
-    firstName: string | undefined
-    customerEmail: string
-    templateName: '3-days-left-on-trial' | '7-days-in-trial' | '1-day-left-on-trial' | 'welcome-to-trial'
 }
 
 type IssueCreatedArgs = {
