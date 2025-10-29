@@ -46,7 +46,6 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                     externalFirstName: payload.firstName,
                     externalLastName: payload.lastName,
                     projectRole: projectRole.name,
-                    tasks: payload?.tasks,
                     aiCredits: extractAiCredits(payload),
                     pieces: {
                         filterType: piecesFilterType ?? PiecesFilterType.NONE,
@@ -136,7 +135,6 @@ function externalTokenPayload() {
     })
     const v2 = Type.Composite([v1,
         Type.Object({
-            tasks: Type.Optional(Type.Number()),
             role: Type.Optional(Type.Enum(DefaultProjectRole)),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
@@ -171,7 +169,6 @@ export type ExternalPrincipal = {
         tags: string[]
     }
     aiCredits?: number
-    tasks?: number
     projectDisplayName?: string
 }
 
