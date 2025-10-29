@@ -3,11 +3,9 @@ import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
-import { WelcomeTrialDialog } from '@/features/billing/components/trial-dialog';
 import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
@@ -35,11 +33,7 @@ export function ProjectDashboardLayout({
   children: React.ReactNode;
 }) {
   const [isAlertClosed, setIsAlertClosed] = useState(false);
-
   const currentProjectId = authenticationSession.getProjectId();
-  const { data: showBilling } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_BILLING,
-  );
 
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
@@ -63,12 +57,8 @@ export function ProjectDashboardLayout({
             {children}
           </SidebarInset>
         </SidebarProvider>
-        {showBilling && (
-          <>
-            <WelcomeTrialDialog />
-            <UpgradeDialog />
-          </>
-        )}
+
+        <UpgradeDialog />
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );

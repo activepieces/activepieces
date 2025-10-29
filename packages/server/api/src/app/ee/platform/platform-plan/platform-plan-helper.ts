@@ -189,14 +189,11 @@ export const PlatformPlanHelper = {
 
         return isAddonUpgrade
     },
-    checkIsTrialSubscription: (subscription: Stripe.Subscription): boolean => {
-        return isNil(subscription.metadata['trialSubscription']) ? false : subscription.metadata['trialSubscription'] === 'true'
-    },
     getPlanFromSubscription: (subscription: Stripe.Subscription): { plan: PlanName, cycle: BillingCycle } => {
         const isDev = stripeSecretKey?.startsWith('sk_test')
         const env = isDev ? 'dev' : 'prod'
 
-        if (![ApSubscriptionStatus.ACTIVE, ApSubscriptionStatus.TRIALING].includes(subscription.status as ApSubscriptionStatus)) {
+        if (![ApSubscriptionStatus.ACTIVE].includes(subscription.status as ApSubscriptionStatus)) {
             return { plan: PlanName.FREE, cycle: BillingCycle.MONTHLY }
         }
 

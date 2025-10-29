@@ -14,7 +14,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   AiOverageState,
   PlatformBillingInformation,
@@ -43,8 +42,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
     AiOverageState.NOT_ALLOWED;
 
   const isFreePlan = plan.plan === PlanName.FREE;
-  const isTrial =
-    plan.stripeSubscriptionStatus === ApSubscriptionStatus.TRIALING;
 
   const overageConfig = useMemo(() => {
     const isAllowed = aiOverrageState !== AiOverageState.NOT_ALLOWED;
@@ -52,9 +49,9 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
     return {
       allowed: isAllowed,
       enabled: isEnabled,
-      canToggle: !isFreePlan && !isTrial && isAllowed,
+      canToggle: !isFreePlan && isAllowed,
     };
-  }, [aiOverrageState, isFreePlan, isTrial]);
+  }, [aiOverrageState, isFreePlan]);
 
   const [usageBasedEnabled, setUsageBasedEnabled] = useState(
     overageConfig.enabled,
