@@ -1320,7 +1320,10 @@
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
+      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
+      "@activepieces/piece-quickbase": [
+        "packages/pieces/community/quickbase/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },
