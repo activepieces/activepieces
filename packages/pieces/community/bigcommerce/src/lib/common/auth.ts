@@ -1,4 +1,5 @@
-import { PieceAuth, Property } from "@activepieces/pieces-framework";
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { bigCommerceApiService } from './requests';
 
 export const bigcommerceAuth = PieceAuth.CustomAuth({
   description: 'Enter your BigCommerce API credentials',
@@ -15,4 +16,18 @@ export const bigcommerceAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
+  async validate(context) {
+    try {
+      await bigCommerceApiService.fetchProducts({
+        auth: context.auth,
+      });
+      return { valid: true };
+    } catch {
+      return {
+        valid: false,
+        error:
+          'Could not validate credentials. please check your credentials are correct.',
+      };
+    }
+  },
 });
