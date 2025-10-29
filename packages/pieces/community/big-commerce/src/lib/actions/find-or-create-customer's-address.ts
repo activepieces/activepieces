@@ -35,21 +35,13 @@ export const findOrCreateCustomerAddress = createAction({
       description: 'The city name',
       required: true,
     }),
-    state_or_province: Property.ShortText({
-      displayName: 'State or Province',
-      description: 'The state or province (e.g., TX, California, Ontario)',
-      required: true,
-    }),
+    state_or_province: bigCommerceCommon.state_or_province,
     postal_code: Property.ShortText({
       displayName: 'Postal Code',
       description: 'The postal or ZIP code',
       required: true,
     }),
-    country_code: Property.ShortText({
-      displayName: 'Country Code',
-      description: 'The two-letter ISO country code (e.g., US, CA, GB)',
-      required: true,
-    }),
+    country_code: bigCommerceCommon.country_code,
     phone: Property.ShortText({
       displayName: 'Phone',
       description: 'The phone number for this address',
@@ -60,17 +52,7 @@ export const findOrCreateCustomerAddress = createAction({
       description: 'The company name for this address',
       required: false,
     }),
-    address_type: Property.StaticDropdown({
-      displayName: 'Address Type',
-      description: 'The type of address (residential or commercial)',
-      required: false,
-      options: {
-        options: [
-          { label: 'Residential', value: 'residential' },
-          { label: 'Commercial', value: 'commercial' },
-        ],
-      },
-    }),
+    address_type: bigCommerceCommon.address_type,
   },
   async run(context) {
     const {

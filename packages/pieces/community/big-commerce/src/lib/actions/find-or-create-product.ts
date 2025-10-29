@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigCommerceAuth } from '../..';
-import { sendBigCommerceRequest, BigCommerceAuth } from '../common/auth';
+import { sendBigCommerceRequest, BigCommerceAuth, bigCommerceCommon } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findOrCreateProduct = createAction({
@@ -19,17 +19,7 @@ export const findOrCreateProduct = createAction({
       description: 'The name of the product (used when creating)',
       required: true,
     }),
-    type: Property.StaticDropdown({
-      displayName: 'Product Type',
-      description: 'The type of product (used when creating)',
-      required: true,
-      options: {
-        options: [
-          { label: 'Physical', value: 'physical' },
-          { label: 'Digital', value: 'digital' },
-        ],
-      },
-    }),
+    type: bigCommerceCommon.product_type,
     price: Property.Number({
       displayName: 'Price',
       description: 'The price of the product (used when creating)',
@@ -61,19 +51,7 @@ export const findOrCreateProduct = createAction({
       required: false,
       defaultValue: true,
     }),
-    inventory_tracking: Property.StaticDropdown({
-      displayName: 'Inventory Tracking',
-      description: 'How to track inventory (used when creating)',
-      required: false,
-      options: {
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Product', value: 'product' },
-          { label: 'Variant', value: 'variant' },
-        ],
-      },
-      defaultValue: 'none',
-    }),
+    inventory_tracking: bigCommerceCommon.inventory_tracking,
     inventory_level: Property.Number({
       displayName: 'Inventory Level',
       description: 'Current stock level (used when creating, only when inventory tracking is "product")',

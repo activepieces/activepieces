@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigCommerceAuth } from '../..';
-import { sendBigCommerceRequest, BigCommerceAuth } from '../common/auth';
+import { sendBigCommerceRequest, BigCommerceAuth, bigCommerceCommon } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createProduct = createAction({
@@ -14,17 +14,7 @@ export const createProduct = createAction({
       description: 'The name of the product (1-250 characters)',
       required: true,
     }),
-    type: Property.StaticDropdown({
-      displayName: 'Product Type',
-      description: 'The type of product',
-      required: true,
-      options: {
-        options: [
-          { label: 'Physical', value: 'physical' },
-          { label: 'Digital', value: 'digital' },
-        ],
-      },
-    }),
+    type: bigCommerceCommon.product_type,
     price: Property.Number({
       displayName: 'Price',
       description: 'The price of the product',
@@ -61,32 +51,8 @@ export const createProduct = createAction({
       required: false,
       defaultValue: true,
     }),
-    availability: Property.StaticDropdown({
-      displayName: 'Availability',
-      description: 'The availability status of the product',
-      required: false,
-      options: {
-        options: [
-          { label: 'Available', value: 'available' },
-          { label: 'Disabled', value: 'disabled' },
-          { label: 'Pre-order', value: 'preorder' },
-        ],
-      },
-      defaultValue: 'available',
-    }),
-    inventory_tracking: Property.StaticDropdown({
-      displayName: 'Inventory Tracking',
-      description: 'How to track inventory for this product',
-      required: false,
-      options: {
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Product', value: 'product' },
-          { label: 'Variant', value: 'variant' },
-        ],
-      },
-      defaultValue: 'none',
-    }),
+    availability: bigCommerceCommon.availability,
+    inventory_tracking: bigCommerceCommon.inventory_tracking,
     inventory_level: Property.Number({
       displayName: 'Inventory Level',
       description: 'Current stock level (only used when inventory tracking is set to "product")',
@@ -107,19 +73,7 @@ export const createProduct = createAction({
       description: 'The sale price of the product',
       required: false,
     }),
-    condition: Property.StaticDropdown({
-      displayName: 'Condition',
-      description: 'The condition of the product',
-      required: false,
-      options: {
-        options: [
-          { label: 'New', value: 'New' },
-          { label: 'Used', value: 'Used' },
-          { label: 'Refurbished', value: 'Refurbished' },
-        ],
-      },
-      defaultValue: 'New',
-    }),
+    condition: bigCommerceCommon.product_condition,
   },
   async run(context) {
     const {

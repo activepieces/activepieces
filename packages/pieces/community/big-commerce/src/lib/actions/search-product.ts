@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { bigCommerceAuth } from '../..';
-import { sendBigCommerceRequest, BigCommerceAuth } from '../common/auth';
+import { sendBigCommerceRequest, BigCommerceAuth, bigCommerceCommon } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const searchProduct = createAction({
@@ -19,17 +19,7 @@ export const searchProduct = createAction({
       description: 'Search by SKU (partial match supported)',
       required: false,
     }),
-    type: Property.StaticDropdown({
-      displayName: 'Product Type',
-      description: 'Filter by product type',
-      required: false,
-      options: {
-        options: [
-          { label: 'Physical', value: 'physical' },
-          { label: 'Digital', value: 'digital' },
-        ],
-      },
-    }),
+    type: bigCommerceCommon.product_type_optional,
     categories: Property.ShortText({
       displayName: 'Category ID',
       description: 'Filter by category ID (exact match)',
@@ -40,18 +30,7 @@ export const searchProduct = createAction({
       description: 'Filter by brand ID (exact match)',
       required: false,
     }),
-    availability: Property.StaticDropdown({
-      displayName: 'Availability',
-      description: 'Filter by availability status',
-      required: false,
-      options: {
-        options: [
-          { label: 'Available', value: 'available' },
-          { label: 'Disabled', value: 'disabled' },
-          { label: 'Pre-order', value: 'preorder' },
-        ],
-      },
-    }),
+    availability: bigCommerceCommon.availability_filter,
     is_visible: Property.Checkbox({
       displayName: 'Is Visible Only',
       description: 'Filter to show only visible products on storefront',
