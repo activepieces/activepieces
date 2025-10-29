@@ -1,13 +1,32 @@
+import { createPiece } from '@activepieces/pieces-framework';
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
+import { kissflowAuth, KissflowAuth } from './auth';
 
-    export const kissflow = createPiece({
-      displayName: "Kissflow",
-      auth: PieceAuth.None(),
-      minimumSupportedRelease: '0.36.1',
-      logoUrl: "https://cdn.activepieces.com/pieces/kissflow.png",
-      authors: [],
-      actions: [],
-      triggers: [],
-    });
-    
+export const kissflow = createPiece({
+  displayName: 'Kissflow',
+  description: 'Low-code no-code platform',
+  categories: [PieceCategory.PRODUCTIVITY],
+  auth: kissflowAuth,
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/kissflow.png',
+  authors: ['danielpoonwj'],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        const typedAuth = auth as KissflowAuth;
+        return `https://${typedAuth.accountName}.${typedAuth.domainName}/process/2/${typedAuth.accountId}/`;
+      },
+      auth: kissflowAuth,
+      authMapping: async (auth) => {
+        const typedAuth = auth as KissflowAuth;
+        return {
+          'X-Access-Key-Id': typedAuth.accessKeyId,
+          'X-Access-Key-Secret': typedAuth.accessKeySecret,
+        };
+      },
+    }),
+  ],
+  triggers: [],
+});
