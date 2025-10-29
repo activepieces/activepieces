@@ -45,7 +45,6 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id', GetPlatformRequest, async (req, res) => {
-        await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
         return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
     })
     if (edition === ApEdition.CLOUD) {
