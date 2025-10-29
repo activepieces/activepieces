@@ -34,7 +34,6 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
             logsFileId,
             projectId,
             tags: runDetails.tags ?? [],
-            ...spreadIfDefined('tasks', runDetails.tasks),
             ...spreadIfDefined('duration', runDetails.duration ? Math.floor(Number(runDetails.duration)) : undefined),
             finishTime: isFlowRunStateTerminal({
                 status: runDetails.status,
