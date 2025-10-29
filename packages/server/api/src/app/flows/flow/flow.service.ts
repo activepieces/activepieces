@@ -481,6 +481,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             versionId: flow.publishedVersionId ?? undefined,
         })))
     },
+    async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
+        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
+        const flows = await flowRepo().findBy({
+            projectId: In(projectIds),
+        })
+        await Promise.all(flows.map((flow) => this.delete({ id: flow.id, projectId: flow.projectId })))
+    },
 
     async getTemplate({
         flowId,

@@ -37,7 +37,6 @@ async function prepareInput(
                     steps,
                 },
                 sampleData: jobData.sampleData,
-                tasks: previousExecutionFile?.tasks ?? 0,
                 executeTrigger: jobData.executeTrigger ?? false,
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
@@ -55,7 +54,6 @@ async function prepareInput(
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
-                tasks: previousExecutionFile?.tasks ?? 0,
                 executionType: ExecutionType.RESUME,
                 executionState: {
                     steps,
@@ -81,7 +79,6 @@ async function handleMemoryIssueError(
         runDetails: {
             duration: 0,
             status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
-            tasks: 0,
             tags: [],
         },
         httpRequestId: jobData.httpRequestId,
@@ -119,7 +116,6 @@ async function handleInternalError(
         runDetails: {
             duration: 0,
             status: FlowRunStatus.INTERNAL_ERROR,
-            tasks: 0,
             tags: [],
         },
         httpRequestId: jobData.httpRequestId,

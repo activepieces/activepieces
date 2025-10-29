@@ -423,6 +423,9 @@
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
       ],
+      "@activepieces/piece-folk": [
+        "packages/pieces/community/folk/src/index.ts"
+      ],
       "@activepieces/piece-foreplay-co": [
         "packages/pieces/community/foreplay-co/src/index.ts"
       ],
@@ -1170,6 +1173,9 @@
       ],
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
+      ],
+      "@activepieces/piece-uscreen": [
+        "packages/pieces/community/uscreen/src/index.ts"
       ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"

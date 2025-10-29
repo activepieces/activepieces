@@ -21,7 +21,6 @@ export type VerdictResponse = {
 }
 
 export class FlowExecutorContext {
-    tasks: number
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
     pauseRequestId: string
@@ -37,7 +36,6 @@ export class FlowExecutorContext {
     duration: number
 
     constructor(copyFrom?: FlowExecutorContext) {
-        this.tasks = copyFrom?.tasks ?? 0
         this.tags = copyFrom?.tags ?? []
         this.steps = copyFrom?.steps ?? {}
         this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
@@ -106,13 +104,6 @@ export class FlowExecutorContext {
         })
     }
 
-    public increaseTask(tasks = 1): FlowExecutorContext {
-        return new FlowExecutorContext({
-            ...this,
-            tasks: this.tasks + tasks,
-        })
-    }
-
     public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
         const steps = {
             ...this.steps,
@@ -127,7 +118,6 @@ export class FlowExecutorContext {
 
         return new FlowExecutorContext({
             ...this,
-            tasks: this.tasks,
             ...spreadIfDefined('error', error),
             steps,
         })
@@ -165,7 +155,6 @@ export class FlowExecutorContext {
     public async toResponse(): Promise<FlowRunResponse> {
         const baseExecutionOutput = {
             duration: this.duration,
-            tasks: this.tasks,
             tags: [...this.tags],
             steps: await loggingUtils.trimExecution(this.steps),
         }

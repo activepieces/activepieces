@@ -21,6 +21,17 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return JSON.parse(value) as T
     },
 
+    async getAll<T>(keys: string[]): Promise<Record<string, T | null>> {
+        const redisClient = await getRedisClient()
+        const values = await redisClient.mget(keys)
+        return values.reduce<Record<string, T | null>>((result, value, index) => {
+            if (value) {
+                result[keys[index]] = JSON.parse(value)
+            }
+            return result
+        }, {})
+    },
+
     async delete(key: string): Promise<void> {
         const redisClient = await getRedisClient()
         await redisClient.del(key)
