@@ -249,12 +249,10 @@ export const crawl = createAction({
       body['limit'] = propsValue.limit;
     }
 
-    // beta feature as of oct 27
     if (propsValue.prompt !== undefined) {
       body['prompt'] = propsValue.prompt
     }
 
-    // set up scrape options
     const scrapeOptions: Record<string, any> = {};
     const format = propsValue.formats as string;
 
@@ -280,12 +278,10 @@ export const crawl = createAction({
     }
     scrapeOptions['maxAge'] = 172800000;
 
-    // only add scrapeOptions if it has properties
     if (Object.keys(scrapeOptions).length > 0) {
       body['scrapeOptions'] = scrapeOptions;
     }
 
-    // add webhook configuration if enabled
     const webhook = webhookConfig(propsValue.useWebhook || false, propsValue.webhookProperties);
     if (webhook) {
       body['webhook'] = webhook;

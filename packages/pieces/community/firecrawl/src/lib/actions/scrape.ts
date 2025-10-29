@@ -3,8 +3,6 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
 import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
 
-// screenshot always included in output so that user can pass it into a google drive and keep track of what is being scraped
-// only for scrape
 function forDefaultScreenshot(): any {
   return {
     type: 'screenshot',
@@ -74,7 +72,7 @@ export const scrape = createAction({
         };
       },
     }),
-    // i want to restrict the user to only 1 -> better for non technical users
+
     formats: Property.Dropdown({
       displayName: 'Output Format',
       description: 'Choose what format you want your output in.',
@@ -118,7 +116,7 @@ export const scrape = createAction({
         };
       },
     }),
-    // followed extract structured data
+
     extractMode: Property.DynamicProperties({
       displayName: 'Schema Mode',
       description: 'Data schema type.',
@@ -231,14 +229,11 @@ export const scrape = createAction({
       timeout: propsValue.timeout,
     };
     
-    // add actions to body object if user selected it
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
     
-    // prep to pass into firecrawl
     const format = propsValue.formats as string;
-    // should have 2 items in the array -> (1) default screenshot , (2) user selected format
     const formatsArray: any[] = []; 
 
     // user selection

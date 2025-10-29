@@ -142,7 +142,6 @@ export const extract = createAction({
       schema: jsonFormat.schema,
     };
 
-    // if user select web search
     if (propsValue.enableWebSearch) {
       body['enableWebSearch'] = true;
     }

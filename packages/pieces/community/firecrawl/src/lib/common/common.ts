@@ -1,4 +1,3 @@
-
 import {
 	httpClient,
 	HttpMethod,
@@ -10,8 +9,6 @@ export const FIRECRAWL_API_BASE_URL = 'https://api.firecrawl.dev/v2';
 export const POLLING_INTERVAL = 5000;
 
 export const forScreenshotOutputFormat = (): any => {
-  // initially i gave the user the option to choose viewport or full page, 
-  // i decided to just set it as fullpage because fullpage will have more context and info of the website
   return {
     type: 'screenshot',
     fullPage: true
@@ -140,10 +137,8 @@ export async function polling(
   const maxAttempts = timeoutSeconds / 5;
 
   for (let attempt = 1; attempt <= maxAttempts ; attempt++) {
-    // wait 5 seconds before checking
     await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
 
-    // check status
     const statusResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${FIRECRAWL_API_BASE_URL}/${actionType}/${jobId}`,
