@@ -29,11 +29,11 @@ import { platformRepo, platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/:id', UpdatePlatformRequest, async (req, res ) => {
+    app.post('/:id', UpdatePlatformRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
         await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
         const { smtp } = req.body
-        if (smtp) { 
+        if (smtp) {
             await smtpEmailSender(req.log).validateOrThrow(smtp)
         }
 
@@ -44,10 +44,18 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 
-    app.get('/:id', GetPlatformRequest, async (req, res) => {
-        await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
-        return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
+    app.get('/:id', GetPlatformRequest, async (req) => {
+        if (req.principal.platform.id !== req.params.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are not authorized to access this platform',
+                },
+            })
+        }
+        return platformService.getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
     })
+
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
             await platformMustBeOwnedByCurrentUser.call(app, req, res)
@@ -92,7 +100,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                     })
                 }
             })
-        
+
             return res.status(StatusCodes.NO_CONTENT).send()
         })
     }

@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -26,7 +26,7 @@ describe('Platform Project Service', () => {
             // arrange
             const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
 
-            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            const mockFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.ENABLED })
             await databaseConnection().getRepository('flow').save([mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })

@@ -423,6 +423,9 @@
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
       ],
+      "@activepieces/piece-folk": [
+        "packages/pieces/community/folk/src/index.ts"
+      ],
       "@activepieces/piece-foreplay-co": [
         "packages/pieces/community/foreplay-co/src/index.ts"
       ],
