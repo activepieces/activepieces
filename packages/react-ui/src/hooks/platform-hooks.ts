@@ -4,6 +4,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -22,6 +23,21 @@ import { platformApi } from '../lib/platforms-api';
 import { flagsHooks } from './flags-hooks';
 
 export const platformHooks = {
+  useDeleteAccount: () => {
+    const navigate = useNavigate();
+    return useMutation({
+      mutationFn: async () => {
+        await platformApi.deleteAccount();
+      },
+      onSuccess: () => {
+        toast({
+          title: t('Success'),
+          description: t('Account deleted successfully'),
+        });
+        navigate('/sign-in');
+      },
+    });
+  },
   useCurrentPlatform: () => {
     const currentPlatformId = authenticationSession.getPlatformId();
     const query = useSuspenseQuery({

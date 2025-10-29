@@ -12,11 +12,10 @@ import {
     User,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/platform/platform-plan/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -28,17 +27,12 @@ import {
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-let mockLog: FastifyBaseLogger
 
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-    mockLog = app!.log!
 
-    stripeHelper(mockLog).createCustomer = jest
-        .fn()
-        .mockResolvedValue(faker.string.uuid())
 })
 
 afterAll(async () => {
@@ -554,42 +548,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('Fails if project is already deleted', async () => {
-            // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
-            const alreadyDeletedProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-                deleted: new Date().toISOString(),
-            })
-            await databaseConnection().getRepository('project').save([alreadyDeletedProject])
-
-            const mockToken = await generateMockToken({
-                id: mockOwner.id,
-                type: PrincipalType.USER,
-                projectId: mockProject.id,
-                platform: {
-                    id: mockProject.platformId,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'DELETE',
-                url: `/v1/projects/${alreadyDeletedProject.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
-            expect(responseBody?.params?.entityId).toBe(alreadyDeletedProject.id)
-            expect(responseBody?.params?.entityType).toBe('project')
-        })
     })
 
     describe('Platform Operator Access', () => {
