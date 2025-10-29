@@ -52,14 +52,7 @@ export const findOrCreateCustomersAddress = createAction({
   },
   async run(context) {
     const params = new URLSearchParams();
-    params.append('customer_ids:in', context.propsValue.customer_id as string);
-    if (context.propsValue.first_name || context.propsValue.last_name)
-      params.append(
-        'name:in',
-        `${context.propsValue.first_name || ''} ${
-          context.propsValue.last_name || ''
-        }`.trim()
-      );
+    params.append('customer_id:in', context.propsValue.customer_id as string);
 
     const response = await bigCommerceApiService.fetchCustomerAddresses({
       auth: context.auth,

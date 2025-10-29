@@ -47,12 +47,6 @@ export const findOrCreateProduct = createAction({
   async run(context) {
     const params = new URLSearchParams();
     params.append('name', context.propsValue.name);
-    params.append('price', String(context.propsValue.price));
-    params.append('weight', String(context.propsValue.weight));
-    params.append('type', context.propsValue.type);
-    if (context.propsValue.sku) params.append('sku', context.propsValue.sku);
-    if (context.propsValue.brand_id)
-      params.append('brand_id', String(context.propsValue.brand_id));
 
     const response = await bigCommerceApiService.fetchProducts({
       auth: context.auth,

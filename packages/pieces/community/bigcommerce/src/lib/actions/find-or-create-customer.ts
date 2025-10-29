@@ -41,11 +41,9 @@ export const findOrCreateCustomer = createAction({
   },
   async run(context) {
     const params = new URLSearchParams();
-    params.append(
-      'name:in',
-      `${context.propsValue.first_name} ${context.propsValue.last_name}`
-    );
+
     params.append('email:in', context.propsValue.email);
+    
     if (context.propsValue.phone)
       params.append('phone:in', context.propsValue.phone);
 

@@ -18,14 +18,9 @@ export const searchCustomer = createAction({
       description: 'Phone Number to search for',
       required: false,
     }),
-    first_name: Property.ShortText({
-      displayName: 'First Name',
-      description: 'Customer first name to search for',
-      required: false,
-    }),
-    last_name: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'Customer last name to search for',
+    name: Property.ShortText({
+      displayName: 'Name',
+      description: 'Customer name to search for',
       required: false,
     }),
   },
@@ -33,13 +28,8 @@ export const searchCustomer = createAction({
     const params = new URLSearchParams();
     if (context.propsValue.email)
       params.append('email:in', context.propsValue.email);
-    if (context.propsValue.first_name || context.propsValue.last_name)
-      params.append(
-        'name:in',
-        `${context.propsValue.first_name || ''} ${
-          context.propsValue.last_name || ''
-        }`.trim()
-      );
+    if (context.propsValue.name)
+      params.append('name:in', `${context.propsValue.name}`);
     if (context.propsValue.phone)
       params.append('phone:in', context.propsValue.phone);
 

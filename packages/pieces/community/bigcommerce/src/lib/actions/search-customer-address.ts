@@ -12,14 +12,9 @@ export const searchCustomerAddress = createAction({
     customer_ids: multiCustomerDropdown({
       required: false,
     }),
-    first_name: Property.ShortText({
-      displayName: 'First Name',
-      description: 'Customer first name to search for',
-      required: false,
-    }),
-    last_name: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'Customer last name to search for',
+    name: Property.ShortText({
+      displayName: 'Name',
+      description: 'Customer name to search for',
       required: false,
     }),
   },
@@ -30,13 +25,8 @@ export const searchCustomerAddress = createAction({
         'customer_ids:in',
         (context.propsValue.customer_ids as string[]).join(',')
       );
-    if (context.propsValue.first_name || context.propsValue.last_name)
-      params.append(
-        'name:in',
-        `${context.propsValue.first_name || ''} ${
-          context.propsValue.last_name || ''
-        }`.trim()
-      );
+    if (context.propsValue.name)
+      params.append('name:in', `${context.propsValue.name}`);
 
     return await bigCommerceApiService.fetchCustomerAddresses({
       auth: context.auth,
