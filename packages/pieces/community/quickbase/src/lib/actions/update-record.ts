@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../common/auth';
-import { appIdProp, tableIdProp, recordIdProp, fieldsMapperProp } from '../common/props';
+import { quickbaseAuth } from '../../index';
+import { appIdProp, tableIdProp, recordIdDropdownProp, dynamicFieldsMapperProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseUpdateRecordResponse, QuickbaseField } from '../common/types';
 import { mapFieldsToRecord } from '../common/utils';
@@ -13,18 +13,26 @@ export const updateRecord = createAction({
   props: {
     appId: appIdProp,
     tableId: tableIdProp,
-    recordId: recordIdProp,
-    fields: fieldsMapperProp,
+    recordId: recordIdDropdownProp,
+    fields: dynamicFieldsMapperProp,
   },
   async run(context) {
     const { appId, tableId, recordId, fields } = context.propsValue;
     const client = new QuickbaseClient(context.auth);
 
     const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
-    const recordData = mapFieldsToRecord(fields, tableFields);
     
-    const keyField = tableFields.find(f => f.unique) || tableFields[0];
-    recordData[keyField.id.toString()] = { value: recordId };
+
+    const recordData: Record<string, { value: any }> = {
+      '3': { value: recordId },
+    };
+    
+    for (const [key, value] of Object.entries(fields)) {
+      if (key.startsWith('field_') && value) {
+        const fieldId = key.replace('field_', '');
+        recordData[fieldId] = { value };
+      }
+    }
 
     const response = await client.patch<QuickbaseUpdateRecordResponse>('/records', {
       to: tableId,

@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../common/auth';
-import { appIdProp, tableIdProp, recordIdProp } from '../common/props';
+import { quickbaseAuth } from '../../index';
+import { appIdProp, tableIdProp, recordIdDropdownProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseDeleteRecordResponse } from '../common/types';
 
@@ -12,7 +12,7 @@ export const deleteRecord = createAction({
   props: {
     appId: appIdProp,
     tableId: tableIdProp,
-    recordId: recordIdProp,
+    recordId: recordIdDropdownProp,
   },
   async run(context) {
     const { appId, tableId, recordId } = context.propsValue;

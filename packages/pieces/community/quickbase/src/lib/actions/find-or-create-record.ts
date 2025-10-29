@@ -1,9 +1,22 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../common/auth';
-import { appIdProp, tableIdProp, fieldsMapperProp, mergeFieldProp } from '../common/props';
+import { quickbaseAuth } from '../../index';
+import {
+  appIdProp,
+  tableIdProp,
+  fieldsMapperProp,
+  mergeFieldProp,
+} from '../common/props';
 import { QuickbaseClient } from '../common/client';
-import { QuickbaseRecordResponse, QuickbaseCreateRecordResponse, QuickbaseField } from '../common/types';
-import { mapFieldsToRecord, extractRecordValues, validateRequiredFields } from '../common/utils';
+import {
+  QuickbaseRecordResponse,
+  QuickbaseCreateRecordResponse,
+  QuickbaseField,
+} from '../common/types';
+import {
+  mapFieldsToRecord,
+  extractRecordValues,
+  validateRequiredFields,
+} from '../common/utils';
 
 export const findOrCreateRecord = createAction({
   name: 'find_or_create_record',
@@ -20,8 +33,14 @@ export const findOrCreateRecord = createAction({
     const { appId, tableId, mergeField, fields } = context.propsValue;
     const client = new QuickbaseClient(context.auth);
 
-    const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
-    const mergeValue = fields[mergeField] || fields[tableFields.find(f => f.id.toString() === mergeField)?.label || ''];
+    const tableFields = await client.get<QuickbaseField[]>(
+      `/fields?tableId=${tableId}`
+    );
+    const mergeValue =
+      fields[mergeField] ||
+      fields[
+        tableFields.find((f) => f.id.toString() === mergeField)?.label || ''
+      ];
 
     if (!mergeValue) {
       throw new Error(`Merge field value is required`);
@@ -29,14 +48,17 @@ export const findOrCreateRecord = createAction({
 
     const searchQuery = {
       from: tableId,
-      select: tableFields.map(f => f.id),
+      select: tableFields.map((f) => f.id),
       where: `{${mergeField}.EX.'${mergeValue}'}`,
       options: { top: 1 },
     };
 
     try {
-      const searchResponse = await client.post<QuickbaseRecordResponse>('/records/query', searchQuery);
-      
+      const searchResponse = await client.post<QuickbaseRecordResponse>(
+        '/records/query',
+        searchQuery
+      );
+
       if (searchResponse.data.length > 0) {
         const existingRecord = searchResponse.data[0];
         return {
@@ -47,20 +69,23 @@ export const findOrCreateRecord = createAction({
           success: true,
         };
       }
-    } catch (error) {
-      // Continue to create if search fails
-    }
+    } catch (error) {}
 
-    const requiredFields = tableFields.filter(f => f.required).map(f => f.id.toString());
+    const requiredFields = tableFields
+      .filter((f) => f.required)
+      .map((f) => f.id.toString());
     validateRequiredFields(fields, requiredFields);
 
     const recordData = mapFieldsToRecord(fields, tableFields);
 
-    const createResponse = await client.post<QuickbaseCreateRecordResponse>('/records', {
-      to: tableId,
-      data: [recordData],
-      fieldsToReturn: tableFields.map(f => f.id),
-    });
+    const createResponse = await client.post<QuickbaseCreateRecordResponse>(
+      '/records',
+      {
+        to: tableId,
+        data: [recordData],
+        fieldsToReturn: tableFields.map((f) => f.id),
+      }
+    );
 
     return {
       recordId: createResponse.metadata.createdRecordIds[0],

@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../common/auth';
+import { quickbaseAuth } from '../../index';
 import { appIdProp, tableIdProp, pollingIntervalProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseRecordResponse, QuickbaseField } from '../common/types';

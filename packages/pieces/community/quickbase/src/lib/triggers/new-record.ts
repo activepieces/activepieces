@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../common/auth';
+import { quickbaseAuth } from '../../index';
 import { appIdProp, tableIdProp, pollingIntervalProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseRecordResponse, QuickbaseField } from '../common/types';
@@ -17,7 +17,7 @@ export const newRecord = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    // Store the current timestamp to avoid triggering on existing records
+
     await context.store?.put('lastCheck', new Date().toISOString());
   },
   async onDisable(context) {

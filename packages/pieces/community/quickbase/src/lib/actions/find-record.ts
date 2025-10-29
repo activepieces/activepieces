@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../common/auth';
-import { appIdProp, tableIdProp, filtersProp, maxRecordsProp } from '../common/props';
+import { quickbaseAuth } from '../../index';
+import { appIdProp, tableIdProp, filtersProp, maxRecordsProp, sortFieldProp, sortOrderProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseRecordResponse, QuickbaseField } from '../common/types';
 import { buildWhereClause, extractRecordValues } from '../common/utils';
@@ -14,16 +14,18 @@ export const findRecord = createAction({
     appId: appIdProp,
     tableId: tableIdProp,
     filters: filtersProp,
+    sortField: sortFieldProp,
+    sortOrder: sortOrderProp,
     maxRecords: maxRecordsProp,
   },
   async run(context) {
-    const { appId, tableId, filters, maxRecords } = context.propsValue;
+    const { appId, tableId, filters, sortField, sortOrder, maxRecords } = context.propsValue;
     const client = new QuickbaseClient(context.auth);
 
     const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
     const whereClause = filters ? buildWhereClause(filters) : '';
 
-    const query = {
+    const query: any = {
       from: tableId,
       select: tableFields.map(f => f.id),
       where: whereClause,
@@ -31,6 +33,13 @@ export const findRecord = createAction({
         top: maxRecords || 100,
       },
     };
+
+    if (sortField) {
+      query.sortBy = [{
+        fieldId: parseInt(sortField),
+        order: sortOrder || 'ASC',
+      }];
+    }
 
     const response = await client.post<QuickbaseRecordResponse>('/records/query', query);
 

@@ -1,9 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../common/auth';
+import { quickbaseAuth } from '../../index';
 import { appIdProp, tableIdProp, mergeFieldProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseCreateRecordResponse, QuickbaseField } from '../common/types';
-import { mapFieldsToRecord, chunkArray, validateRequiredFields } from '../common/utils';
+import {
+  mapFieldsToRecord,
+  chunkArray,
+  validateRequiredFields,
+} from '../common/utils';
 
 export const createUpdateRecordsBulk = createAction({
   name: 'create_update_records_bulk',
@@ -21,34 +25,48 @@ export const createUpdateRecordsBulk = createAction({
     }),
     mergeFieldBehavior: Property.StaticDropdown({
       displayName: 'Merge Behavior',
-      description: 'How to handle existing records',
+      description: 'How to handle existing records when upserting',
       required: true,
       defaultValue: 'merge-overwrite',
       options: {
         options: [
-          { label: 'Merge and overwrite fields', value: 'merge-overwrite' },
-          { label: 'Merge and update only provided fields', value: 'merge-update' },
-          { label: 'Always create new records', value: 'always-create' },
+          {
+            label: 'Merge and overwrite all fields',
+            value: 'merge-overwrite',
+          },
+          {
+            label: 'Merge and update only provided fields',
+            value: 'merge-update',
+          },
+          {
+            label: 'Always create new records (no merge)',
+            value: 'always-create',
+          },
         ],
       },
     }),
   },
   async run(context) {
-    const { appId, tableId, mergeField, records, mergeFieldBehavior } = context.propsValue;
+    const { appId, tableId, mergeField, records, mergeFieldBehavior } =
+      context.propsValue;
     const client = new QuickbaseClient(context.auth);
 
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error('Records array is required and cannot be empty');
     }
 
-    const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
-    const requiredFields = tableFields.filter(f => f.required).map(f => f.id.toString());
+    const tableFields = await client.get<QuickbaseField[]>(
+      `/fields?tableId=${tableId}`
+    );
+    const requiredFields = tableFields
+      .filter((f) => f.required)
+      .map((f) => f.id.toString());
 
-    const processedRecords = records.map(record => {
+    const processedRecords = records.map((record) => {
       if (mergeFieldBehavior !== 'always-create') {
-        validateRequiredFields(record, requiredFields);
+        validateRequiredFields(record as Record<string, any>, requiredFields);
       }
-      return mapFieldsToRecord(record, tableFields);
+      return mapFieldsToRecord(record as Record<string, any>, tableFields);
     });
 
     const chunks = chunkArray(processedRecords, 1000);
@@ -64,15 +82,19 @@ export const createUpdateRecordsBulk = createAction({
       const requestData: any = {
         to: tableId,
         data: chunk,
-        fieldsToReturn: tableFields.map(f => f.id),
+        fieldsToReturn: tableFields.map((f) => f.id),
       };
 
       if (mergeFieldBehavior !== 'always-create') {
         requestData.mergeFieldId = parseInt(mergeField);
-        requestData.upsert = mergeFieldBehavior === 'merge-overwrite' ? 'true' : 'false';
+        requestData.upsert =
+          mergeFieldBehavior === 'merge-overwrite' ? 'true' : 'false';
       }
 
-      const response = await client.post<QuickbaseCreateRecordResponse>('/records', requestData);
+      const response = await client.post<QuickbaseCreateRecordResponse>(
+        '/records',
+        requestData
+      );
 
       results.createdRecords.push(...response.metadata.createdRecordIds);
       results.updatedRecords.push(...response.metadata.updatedRecordIds);
