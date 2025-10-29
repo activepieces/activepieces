@@ -4,8 +4,6 @@ import { BillingCycle } from '@activepieces/ee-shared';
 import { PlanName } from '@activepieces/shared';
 
 export const ANNUAL_DISCOUNT_PERCENTAGE = 0.24;
-export const MAX_SEATS = 20;
-export const DEFAULT_SEATS = 5;
 export const MAX_ACTIVE_FLOWS = {
   [PlanName.BUSINESS]: 100,
   [PlanName.PLUS]: 40,
@@ -18,10 +16,6 @@ export const MAX_PROJECTS = 30;
 export const DEFAULT_PROJECTS = 10;
 
 export const ADDON_PRICES = {
-  USER_SEAT: {
-    [BillingCycle.MONTHLY]: 15,
-    [BillingCycle.ANNUAL]: 11.4,
-  },
   ACTIVE_FLOWS: {
     [BillingCycle.MONTHLY]: 15,
     [BillingCycle.ANNUAL]: 11.4,
@@ -80,15 +74,6 @@ export const planData = {
         free: null,
         plus: 'Unlimited',
         business: 'Unlimited',
-      },
-    },
-    {
-      key: 'users',
-      label: t('Users'),
-      values: {
-        free: null,
-        plus: null,
-        business: '5+',
       },
     },
     {

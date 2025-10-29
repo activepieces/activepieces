@@ -13,10 +13,8 @@ import { PlanName } from '@activepieces/shared';
 import {
   DEFAULT_ACTIVE_FLOWS,
   DEFAULT_PROJECTS,
-  DEFAULT_SEATS,
   MAX_ACTIVE_FLOWS,
   MAX_PROJECTS,
-  MAX_SEATS,
 } from './data';
 
 import { CurrentPlanInfo } from '.';
@@ -86,8 +84,6 @@ const AddonSlider: FC<{
 export const AddonsStep: FC<{
   selectedPlan: string;
   currentPlanInfo: CurrentPlanInfo;
-  selectedSeats: number[];
-  onSeatsChange: (value: number[]) => void;
   selectedActiveFlows: number[];
   onActiveFlowsChange: (value: number[]) => void;
   selectedProjects: number[];
@@ -95,8 +91,6 @@ export const AddonsStep: FC<{
 }> = ({
   selectedPlan,
   currentPlanInfo,
-  selectedSeats,
-  onSeatsChange,
   selectedActiveFlows,
   onActiveFlowsChange,
   selectedProjects,
@@ -104,11 +98,8 @@ export const AddonsStep: FC<{
 }) => {
   const isBusinessPlan = selectedPlan === PlanName.BUSINESS;
   const isPlus = selectedPlan === PlanName.PLUS;
-  const {
-    activeFlows: currentActiveFlowLimit,
-    seats: currentUserLimit,
-    projects: currentProjectLimit,
-  } = currentPlanInfo;
+  const { activeFlows: currentActiveFlowLimit, projects: currentProjectLimit } =
+    currentPlanInfo;
 
   const maxActiveFlows =
     MAX_ACTIVE_FLOWS[selectedPlan as PlanName.PLUS | PlanName.BUSINESS];
@@ -132,31 +123,17 @@ export const AddonsStep: FC<{
       )}
 
       {isBusinessPlan && (
-        <>
-          <AddonSlider
-            title={t('User Seats')}
-            description={t('Add more team members to your workspace')}
-            value={selectedSeats}
-            onValueChange={onSeatsChange}
-            max={MAX_SEATS}
-            min={DEFAULT_SEATS}
-            step={1}
-            currentLimit={currentUserLimit}
-            unit="seat"
-          />
-
-          <AddonSlider
-            title={t('Projects')}
-            description={t('Organize your work with more projects')}
-            value={selectedProjects}
-            onValueChange={onProjectsChange}
-            max={MAX_PROJECTS}
-            min={DEFAULT_PROJECTS}
-            step={1}
-            currentLimit={currentProjectLimit}
-            unit="project"
-          />
-        </>
+        <AddonSlider
+          title={t('Projects')}
+          description={t('Organize your work with more projects')}
+          value={selectedProjects}
+          onValueChange={onProjectsChange}
+          max={MAX_PROJECTS}
+          min={DEFAULT_PROJECTS}
+          step={1}
+          currentLimit={currentProjectLimit}
+          unit="project"
+        />
       )}
     </div>
   );

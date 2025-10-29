@@ -6,15 +6,11 @@ export enum BillingCycle {
     ANNUAL = 'annual',
 }
 
-export const PRICE_PER_EXTRA_USER_MAP = {
-    [BillingCycle.ANNUAL]: 11.4,
-    [BillingCycle.MONTHLY]: 15,
-}
-
 export const PRICE_PER_EXTRA_PROJECT_MAP = {
     [BillingCycle.ANNUAL]: 7.6,
     [BillingCycle.MONTHLY]: 10,
 }
+
 export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP = {
     [BillingCycle.ANNUAL]: 11.4,
     [BillingCycle.MONTHLY]: 15,
@@ -35,13 +31,10 @@ export enum ApSubscriptionStatus {
     CANCELED = 'canceled',
 }
 
-
-
 export type StripePlanName = PlanName.PLUS | PlanName.BUSINESS
 
 export const METRIC_TO_LIMIT_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlowsLimit',
-    [PlatformUsageMetric.USER_SEATS]: 'userSeatsLimit',
     [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
     [PlatformUsageMetric.TABLES]: 'tablesLimit',
     [PlatformUsageMetric.MCPS]: 'mcpLimit',
@@ -49,7 +42,6 @@ export const METRIC_TO_LIMIT_MAPPING = {
 
 export const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
-    [PlatformUsageMetric.USER_SEATS]: 'seats',
     [PlatformUsageMetric.PROJECTS]: 'projects',
     [PlatformUsageMetric.TABLES]: 'tables',
     [PlatformUsageMetric.MCPS]: 'mcps',
@@ -62,7 +54,6 @@ export const RESOURCE_TO_MESSAGE_MAPPING = {
 }
 
 const Addons = Type.Object({
-    userSeats: Type.Optional(Type.Number()),
     activeFlows: Type.Optional(Type.Number()),
     projects: Type.Optional(Type.Number()),
 })
@@ -96,7 +87,6 @@ export enum PRICE_NAMES {
     BUSINESS_PLAN = 'business-plan',
     AI_CREDITS = 'ai-credit',
     ACTIVE_FLOWS = 'active-flow',
-    USER_SEAT = 'user-seat',
     PROJECT = 'project',
 }
 
@@ -172,16 +162,6 @@ export const PRICE_ID_MAP = {
             prod: 'price_1RtZvzKZ0dZRqLEKGHOXlfDP',
         },
     },
-    [PRICE_NAMES.USER_SEAT]: {
-        [BillingCycle.MONTHLY]: {
-            dev: 'price_1Rtzi4QN93Aoq4f8l2jMsk9W',
-            prod: 'price_1Rtzl2KZ0dZRqLEKdOr3G2YG',
-        },
-        [BillingCycle.ANNUAL]: {
-            dev: 'price_1RtzkCQN93Aoq4f8thLTUyNi',
-            prod: 'price_1RtzleKZ0dZRqLEKva8yji8k',
-        },
-    },
     [PRICE_NAMES.PROJECT]: {
         [BillingCycle.MONTHLY]: {
             dev: 'price_1RsoJ4QN93Aoq4f8JzLCO1BL',
@@ -200,7 +180,6 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
     activeFlowsLimit: 10,
-    userSeatsLimit: 1,
     projectsLimit: 1,
     tablesLimit: 1,
     mcpLimit: 1,
@@ -227,10 +206,9 @@ export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
 }
 
-export const APPSUMO_PLAN = ({ planName: planname, userSeatsLimit, tablesLimit, mcpLimit }: { planName: string, userSeatsLimit: number, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
+export const APPSUMO_PLAN = ({ planName: planname, tablesLimit, mcpLimit }: { planName: string, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
     return {
         plan: planname,
-        userSeatsLimit,
         includedAiCredits: 200,
         aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
         aiCreditsOverageLimit: undefined,
@@ -269,7 +247,6 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     activeFlowsLimit: 10,
-    userSeatsLimit: 1,
     projectsLimit: 1,
     mcpLimit: undefined,
     tablesLimit: undefined,
@@ -302,7 +279,6 @@ export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     activeFlowsLimit: 50,
-    userSeatsLimit: 5,
     projectsLimit: 10,
     mcpLimit: undefined,
     tablesLimit: undefined,

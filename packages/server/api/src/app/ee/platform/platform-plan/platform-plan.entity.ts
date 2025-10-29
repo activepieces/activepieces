@@ -116,10 +116,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         todosEnabled: {
             type: Boolean,
         },
-        userSeatsLimit: {
-            type: Number,
-            nullable: true,
-        },
         projectsLimit: {
             type: Number,
             nullable: true,

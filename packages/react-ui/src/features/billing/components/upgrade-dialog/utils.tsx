@@ -13,7 +13,6 @@ import {
   ANNUAL_DISCOUNT_PERCENTAGE,
   DEFAULT_ACTIVE_FLOWS,
   DEFAULT_PROJECTS,
-  DEFAULT_SEATS,
   planData,
 } from './data';
 
@@ -31,7 +30,6 @@ export const getCurrentPlanInfo = (
   return {
     plan: platformBillingInformation?.plan.plan as PlanName,
     cycle: platformBillingInformation?.plan.stripeBillingCycle as BillingCycle,
-    seats: platformBillingInformation?.plan.userSeatsLimit ?? DEFAULT_SEATS,
     activeFlows:
       platformBillingInformation?.plan.activeFlowsLimit ??
       DEFAULT_ACTIVE_FLOWS[
@@ -48,7 +46,6 @@ export const getCurrentPlanInfo = (
 export const calculatePrice = (
   selectedPlan: string,
   selectedCycle: BillingCycle,
-  selectedSeats: number[],
   selectedActiveFlows: number[],
   selectedProjects: number[],
   plans: (typeof planData.plans)[0][],
@@ -57,7 +54,7 @@ export const calculatePrice = (
     return {
       basePlanPrice: 0,
       totalAddonCost: 0,
-      addonCosts: { seats: 0, flows: 0, projects: 0 },
+      addonCosts: { flows: 0, projects: 0 },
       totalPrice: 0,
       annualSavings: 0,
     };
@@ -68,7 +65,7 @@ export const calculatePrice = (
     return {
       basePlanPrice: 0,
       totalAddonCost: 0,
-      addonCosts: { seats: 0, flows: 0, projects: 0 },
+      addonCosts: { flows: 0, projects: 0 },
       totalPrice: 0,
       annualSavings: 0,
     };
@@ -76,7 +73,6 @@ export const calculatePrice = (
 
   const basePlanPrice = plan.price[selectedCycle];
 
-  const extraSeats = Math.max(0, selectedSeats[0] - DEFAULT_SEATS);
   const extraFlows = Math.max(
     0,
     selectedActiveFlows[0] -
@@ -87,13 +83,11 @@ export const calculatePrice = (
   const extraProjects = Math.max(0, selectedProjects[0] - DEFAULT_PROJECTS);
 
   const addonCosts = {
-    seats: extraSeats * ADDON_PRICES.USER_SEAT[selectedCycle],
     flows: (extraFlows / 5) * ADDON_PRICES.ACTIVE_FLOWS[selectedCycle],
     projects: extraProjects * ADDON_PRICES.PROJECT[selectedCycle],
   };
 
-  const totalAddonCost =
-    addonCosts.seats + addonCosts.flows + addonCosts.projects;
+  const totalAddonCost = addonCosts.flows + addonCosts.projects;
 
   const monthlyPrice = basePlanPrice + totalAddonCost;
   const annualPrice = monthlyPrice * 12;
@@ -120,7 +114,6 @@ export const getActionConfig = (
 ): ActionConfig => {
   const {
     selectedPlan,
-    selectedSeats,
     selectedActiveFlows,
     selectedProjects,
     selectedCycle,
@@ -129,7 +122,6 @@ export const getActionConfig = (
   const {
     plan: currentPlan,
     cycle: currentCycle,
-    seats: currentSeats,
     activeFlows: currentActiveFlows,
     projects: currentProjects,
   } = currentPlanInfo;
@@ -143,7 +135,6 @@ export const getActionConfig = (
 
   const isCycleChanged = currentCycle !== selectedCycle;
   const areAddonsChanged =
-    currentSeats !== selectedSeats[0] ||
     currentActiveFlows !== selectedActiveFlows[0] ||
     currentProjects !== selectedProjects[0];
   const hasChanges = !isSamePlan || isCycleChanged || areAddonsChanged;

@@ -284,6 +284,7 @@ import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/pos
 import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
 import { RemoveEligibleForTrial1761588441492 } from './migration/postgres/1761588441492-remove-eligible-for-trial'
 import { AddRunUsageForPlatformAnalyticsReport1761668284685 } from './migration/postgres/1761668284685-AddRunUsageForPlatformAnalyticsReport'
+import { RemoveUserSeatsLimitColumn1761762177701 } from './migration/postgres/1761762177701-remove-user-seats-limit-column'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -588,6 +589,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
                 RemoveEligibleForTrial1761588441492,
                 AddRunUsageForPlatformAnalyticsReport1761668284685,
+                RemoveUserSeatsLimitColumn1761762177701,
             )
             break
         case ApEdition.COMMUNITY:

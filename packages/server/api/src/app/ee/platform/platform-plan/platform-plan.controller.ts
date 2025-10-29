@@ -146,15 +146,12 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { plan, cycle, addons } = request.body
 
         const baseLimits = getPlanLimits(plan as PlanName)
-        const baseUserSeatsLimit = baseLimits.userSeatsLimit ?? 0
         const baseProjectsLimit = baseLimits.projectsLimit ?? 0
         const baseActiveFlowsLimit = baseLimits.activeFlowsLimit ?? 0
 
         const newProjectsLimit = addons.projects ?? 0
         const newActiveFlowsLimit = addons.activeFlows ?? 0
-        const newUserSeatsLimit = addons.userSeats ?? 0
 
-        const extraUserSeats = Math.max(0, newUserSeatsLimit - baseUserSeatsLimit)
         const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
         const extraProjects = Math.max(0, newProjectsLimit - baseProjectsLimit)
 
@@ -162,7 +159,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
             platformPlan.platformId,
             customerId,
             { plan, cycle, addons: {
-                userSeats: extraUserSeats,
                 projects: extraProjects,
                 activeFlows: extraActiveFlows,
             } },
@@ -171,47 +167,40 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/update-subscription', UpgradeRequest, async (request) => {
-        const { plan: currentPlan, stripeSubscriptionId: subscriptionId, projectsLimit, activeFlowsLimit, userSeatsLimit, stripeBillingCycle } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        const { plan: currentPlan, stripeSubscriptionId: subscriptionId, projectsLimit, activeFlowsLimit, stripeBillingCycle } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(subscriptionId, 'Stripe subscription id is not set')
 
         const { plan: newPlan, addons, cycle } = request.body
 
         const baseLimits = getPlanLimits(currentPlan as PlanName)
-        const baseUserSeatsLimit = baseLimits.userSeatsLimit ?? 0
         const baseProjectsLimit = baseLimits.projectsLimit ?? 0
         const baseActiveFlowsLimit = baseLimits.activeFlowsLimit ?? 0
 
         const currentProjectsLimit = projectsLimit ?? 0
         const currentActiveFlowsLimit = activeFlowsLimit ?? 0
-        const currentUserSeatsLimit = userSeatsLimit ?? 0
 
         const newProjectsLimit = addons.projects ?? currentProjectsLimit
         const newActiveFlowsLimit = addons.activeFlows ?? currentActiveFlowsLimit
-        const newUserSeatsLimit = addons.userSeats ?? currentUserSeatsLimit
 
-        const extraUserSeats = Math.max(0, newUserSeatsLimit - baseUserSeatsLimit)
         const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
         const extraProjects = Math.max(0, newProjectsLimit - baseProjectsLimit)
 
         const isUpgrade = PlatformPlanHelper.isUpgradeExperience({
             currentActiveFlowsLimit,
             currentProjectsLimit,
-            currentUserSeatsLimit,
             newPlan,
             currentPlan: currentPlan as PlanName,
             newActiveFlowsLimit,
             newProjectsLimit,
-            newUserSeatsLimit,
             newCycle: cycle,
             currentCycle: stripeBillingCycle as BillingCycle,
         })
 
-        await PlatformPlanHelper.checkLegitSubscriptionUpdateOrThrow({ projectsAddon: extraProjects, userSeatsAddon: extraUserSeats, newPlan })
+        await PlatformPlanHelper.checkLegitSubscriptionUpdateOrThrow({ projectsAddon: extraProjects, newPlan })
 
         return stripeHelper(request.log).handleSubscriptionUpdate({
             extraActiveFlows,
             extraProjects,
-            extraUserSeats,
             isUpgrade,
             newPlan,
             subscriptionId,

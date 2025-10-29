@@ -10,12 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { BillingCycle } from '@activepieces/ee-shared';
 import { PlanName } from '@activepieces/shared';
 
-import {
-  planData,
-  DEFAULT_ACTIVE_FLOWS,
-  DEFAULT_PROJECTS,
-  DEFAULT_SEATS,
-} from './data';
+import { planData, DEFAULT_ACTIVE_FLOWS, DEFAULT_PROJECTS } from './data';
 
 import {
   ActionConfig,
@@ -52,7 +47,6 @@ export const SubscriptionSummary: FC<{
   const {
     selectedPlan,
     selectedCycle,
-    selectedSeats,
     selectedActiveFlows,
     selectedProjects,
     currentStep,
@@ -126,17 +120,6 @@ export const SubscriptionSummary: FC<{
                 <Separator />
                 <div className="space-y-4">
                   <div className="text-sm font-medium">Add-ons</div>
-
-                  {pricing.addonCosts.seats > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span>
-                        Extra User Seats ({selectedSeats[0] - DEFAULT_SEATS})
-                      </span>
-                      <span>
-                        {formatPrice(pricing.addonCosts.seats)} /month
-                      </span>
-                    </div>
-                  )}
 
                   {pricing.addonCosts.flows > 0 && (
                     <div className="flex justify-between text-xs">

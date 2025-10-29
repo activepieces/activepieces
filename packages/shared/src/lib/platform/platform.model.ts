@@ -23,7 +23,6 @@ export type SMTPInformation = Static<typeof SMTPInformation>
 export enum PlatformUsageMetric {
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
-    USER_SEATS = 'user-seats',
     PROJECTS = 'projects',
     TABLES = 'tables',
     MCPS = 'mcps',
@@ -34,7 +33,6 @@ export const PlatformUsage = Type.Object({
     activeFlows: Type.Number(),
     tables: Type.Number(),
     mcps: Type.Number(),
-    seats: Type.Number(),
     projects: Type.Number(),
 })
 
@@ -98,7 +96,6 @@ export const PlatformPlan = Type.Object({
     stripePaymentMethod: Type.Optional(Type.String()),
     stripeBillingCycle: Type.String(),
 
-    userSeatsLimit: Nullable(Type.Number()),
     projectsLimit: Nullable(Type.Number()),
     tablesLimit: Nullable(Type.Number()),
     mcpLimit: Nullable(Type.Number()),
