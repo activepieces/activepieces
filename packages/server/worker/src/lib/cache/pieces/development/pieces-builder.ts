@@ -103,8 +103,8 @@ export async function pieceBuilder(app: FastifyInstance, io: Server, packages: s
     if (!isFilePieces) return
 
     const watchers: FSWatcher[] = []
-
   
+    await filePiecesUtils(packages, app.log).installPiecesDependencies(packages, runCommandWithLiveOutput)
 
     for (const packageName of packages) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
@@ -120,8 +120,6 @@ export async function pieceBuilder(app: FastifyInstance, io: Server, packages: s
         const packageJsonName = await filePiecesUtils(packages, app.log).getPackageNameFromFolderPath(pieceDirectory)
         const nxProjectJson = await filePiecesUtils(packages, app.log).getProjectJsonFromFolderPath(pieceDirectory)
 
-        await filePiecesUtils(packages, app.log).installPieceDependencies(pieceDirectory, packageName, runCommandWithLiveOutput)
-        
         const debouncedHandleFileChange = debounce(() => {
             handleFileChange(packages, pieceProjectName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)
         }, 2000)
