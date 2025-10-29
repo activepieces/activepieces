@@ -17,6 +17,16 @@ import { orderUpdated } from './lib/triggers/order-updated';
 import { orderStatusUpdated } from './lib/triggers/order-status-updated';
 import { productCreated } from './lib/triggers/product-created';
 import { shipmentCreated } from './lib/triggers/shipment-created';
+import { createCustomer } from './lib/actions/create-customer';
+import { createCustomerAddress } from './lib/actions/create-customer-address';
+import { createProduct } from './lib/actions/create-a-product';
+import { createBlogPost } from './lib/actions/create-blog-post';
+import { searchCustomer } from './lib/actions/search-customer';
+import { findOrCreateCustomer } from './lib/actions/find-or-create-customer';
+import { searchCustomerAddress } from './lib/actions/search-customer-address';
+import { findOrCreateCustomerAddress } from "./lib/actions/find-or-create-customer's-address";
+import { searchProduct } from './lib/actions/search-product';
+import { findOrCreateProduct } from './lib/actions/find-or-create-product';
 
 const markdown = `
 **Store Hash**:
@@ -85,7 +95,18 @@ export const bigCommerce = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/big-commerce.png',
   categories: [PieceCategory.COMMERCE],
   authors: [],
-  actions: [],
+  actions: [
+    createCustomer,
+    createCustomerAddress,
+    createProduct,
+    createBlogPost,
+    searchCustomer,
+    findOrCreateCustomer,
+    searchCustomerAddress,
+    findOrCreateCustomerAddress,
+    searchProduct,
+    findOrCreateProduct,
+  ],
   triggers: [
     abandonedCart,
     cartCreated,

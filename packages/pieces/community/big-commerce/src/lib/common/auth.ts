@@ -11,8 +11,8 @@ export type BigCommerceAuth = {
   accessToken: string;
 };
 
-export function getBaseUrl(storeHash: string): string {
-  return `https://api.bigcommerce.com/stores/${storeHash}/v3`;
+export function getBaseUrl(storeHash: string, version: 'v2' | 'v3' = 'v3'): string {
+  return `https://api.bigcommerce.com/stores/${storeHash}/${version}`;
 }
 
 export function sendBigCommerceRequest<T = HttpMessageBody>(data: {
@@ -21,9 +21,10 @@ export function sendBigCommerceRequest<T = HttpMessageBody>(data: {
   body?: HttpMessageBody;
   queryParams?: QueryParams;
   auth: BigCommerceAuth;
+  version?: 'v2' | 'v3';
 }): Promise<HttpResponse<T>> {
   return httpClient.sendRequest<T>({
-    url: `${getBaseUrl(data.auth.storeHash)}${data.url}`,
+    url: `${getBaseUrl(data.auth.storeHash, data.version || 'v3')}${data.url}`,
     method: data.method,
     body: data.body,
     queryParams: data.queryParams,
