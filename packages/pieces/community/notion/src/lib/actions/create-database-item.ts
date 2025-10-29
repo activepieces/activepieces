@@ -53,7 +53,6 @@ export const createDatabaseItem = createAction({
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const children: any[] = [];
     // Add content to page
     if (content)
