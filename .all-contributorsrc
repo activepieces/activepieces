@@ -2066,6 +2066,15 @@
       "contributions": [
         "security"
       ]
+    },
+    {
+      "login": "srimalleswari205",
+      "name": "Sri malleswari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/235991945?v=4",
+      "profile": "https://github.com/srimalleswari205",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

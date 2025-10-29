@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-notion",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "dependencies": {
     "@notionhq/client": "2.2.11",
     "@tryfabric/martian": "1.2.0",

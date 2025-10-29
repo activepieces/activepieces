@@ -16,11 +16,11 @@ import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range'
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type TaskUsageProps = {
+type RunsAnalyticsProps = {
   report?: PlatformAnalyticsReport;
 };
 
-export function TaskUsage({ report }: TaskUsageProps) {
+export function RunsAnalytics({ report }: RunsAnalyticsProps) {
   const [selectedDateRange, setSelectedDateRange] = React.useState<
     DateRange | undefined
   >({
@@ -29,10 +29,10 @@ export function TaskUsage({ report }: TaskUsageProps) {
   });
 
   const chartData =
-    report?.tasksUsage
+    report?.runsUsage
       .map((data) => ({
         date: data.day,
-        tasks: data.totalTasks,
+        runs: data.totalRuns,
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
@@ -40,9 +40,9 @@ export function TaskUsage({ report }: TaskUsageProps) {
 
   const chartConfig = {
     views: {
-      label: 'Task Executions',
+      label: 'Runs',
     },
-    tasks: {
+    runs: {
       color: 'hsl(var(--chart-2))',
     },
   } satisfies ChartConfig;
@@ -59,8 +59,8 @@ export function TaskUsage({ report }: TaskUsageProps) {
     <>
       <div className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <div className="text-xl font-semibold ">{t('Executed Tasks')}</div>
-          <p>{t('Showing total executed tasks for specified time range')}</p>
+          <div className="text-xl font-semibold ">{t('Runs')}</div>
+          <p>{t('Showing total runs for specified time range')}</p>
         </div>
         <DateTimePickerWithRange
           onChange={setSelectedDateRange}
@@ -114,7 +114,7 @@ export function TaskUsage({ report }: TaskUsageProps) {
                   />
                 }
               />
-              <Bar dataKey={'tasks'} fill={`var(--color-tasks)`} />
+              <Bar dataKey={'runs'} fill={`var(--color-runs)`} />
             </BarChart>
           </ChartContainer>
         ) : (

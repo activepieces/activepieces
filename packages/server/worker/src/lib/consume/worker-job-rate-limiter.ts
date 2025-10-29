@@ -1,5 +1,5 @@
-import { apDayjsDuration, getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
-import { ExecuteFlowJobData, isNil, JobData, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import { apDayjsDuration, getPlatformPlanNameKey, getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
+import { ApEdition, ExecuteFlowJobData, isNil, JobData, PlanName, PlatformId, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../utils/machine'
 import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
@@ -38,9 +38,9 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         
         return 1
             `,
-            1,
-            setKey,
-            jobId,
+        1,
+        setKey,
+        jobId,
         )
     },
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
@@ -61,7 +61,10 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         }
 
 
-        const maxConcurrentJobsPerProject = await getMaxConcurrentJobsPerProject(data.projectId)
+        const maxConcurrentJobsPerProject = await getMaxConcurrentJobsPerProject({
+            projectId: data.projectId,
+            platformId: data.platformId,
+        })
         const setKey = projectSetKey(data.projectId)
         const currentTime = Date.now()
         const jobWithTimestamp = `${jobId}:${currentTime}`
@@ -122,10 +125,77 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
 
 })
 
-async function getMaxConcurrentJobsPerProject(projectId: ProjectId | undefined): Promise<number> {
-    const storedValue = !isNil(projectId) ? await workerDistributedStore.get(getProjectMaxConcurrentJobsKey(projectId)) : null
-    if (!isNil(storedValue)) {
-        return Number(storedValue)
+const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
+    [PlanName.FREE]: 5,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 5,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 5,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 10,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 15,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 20,
+    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
+    [PlanName.ENTERPRISE]: 30,
+}
+
+function concurrentJobsFromProject({ projectId, storedValues }: GetConcurrentJobsFromProjectParams): number | null {
+    if (isNil(projectId)) {
+        return null
     }
+    const maxConcurrentJobsKey = getProjectMaxConcurrentJobsKey(projectId)
+    const storedValue = storedValues[maxConcurrentJobsKey]
+    
+    if (isNil(storedValue)) {
+        return null
+    }
+    
+    return Number(storedValue)
+}
+
+function concurrentJobsFromPlan({ platformId, storedValues }: GetConcurrentJobsFromPlanParams): number | null {
+    if (workerMachine.getSettings().EDITION !== ApEdition.CLOUD) {
+        return null
+    }
+    
+    const planNameKey = getPlatformPlanNameKey(platformId)
+    const platformPlanName = storedValues[planNameKey]
+    
+    if (isNil(platformPlanName)) {
+        return null
+    }
+    
+    return PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName] ?? null
+}
+
+async function getMaxConcurrentJobsPerProject({ projectId, platformId }: GetMaximumConcurrentJovsPerProjectParams): Promise<number> {
+    const keys = [getPlatformPlanNameKey(platformId)]
+    if (!isNil(projectId)) {
+        keys.push(getProjectMaxConcurrentJobsKey(projectId))
+    }
+    const storedValues = await workerDistributedStore.getAll<string>(keys)
+    
+    const concurrentJobsFromProjectValue = concurrentJobsFromProject({ projectId, storedValues })
+    if (!isNil(concurrentJobsFromProjectValue)) {
+        return concurrentJobsFromProjectValue
+    }
+    
+    const concurrentJobsFromPlanValue = concurrentJobsFromPlan({ platformId, storedValues })
+    if (!isNil(concurrentJobsFromPlanValue)) {
+        return concurrentJobsFromPlanValue
+    }
+    
     return workerMachine.getSettings().MAX_CONCURRENT_JOBS_PER_PROJECT
+}
+
+type GetConcurrentJobsFromProjectParams = {
+    projectId: ProjectId | undefined
+    storedValues: Record<string, string | null>
+}
+
+type GetConcurrentJobsFromPlanParams = {
+    platformId: PlatformId
+    storedValues: Record<string, string | null>
+}
+
+type GetMaximumConcurrentJovsPerProjectParams = {
+    platformId: PlatformId
+    projectId: ProjectId | undefined
 }

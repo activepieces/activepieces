@@ -74,6 +74,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 REDIS_SENTINEL_ROLE: system.get(AppSystemProp.REDIS_SENTINEL_ROLE),
                 REDIS_SENTINEL_HOSTS: system.get(AppSystemProp.REDIS_SENTINEL_HOSTS),
                 REDIS_SENTINEL_NAME: system.get(AppSystemProp.REDIS_SENTINEL_NAME),
+                EDITION: system.getOrThrow(AppSystemProp.EDITION),
             }
         },
         async onHeartbeat({
