@@ -1,0 +1,56 @@
+{
+  "servicenow": {
+    "displayName": "ServiceNow",
+    "description": "IT service management, operations, HR, security, and custom business workflows",
+    "auth": {
+      "instanceUrl": {
+        "displayName": "Instance URL",
+        "description": "Your ServiceNow instance URL (e.g., https://your-instance.service-now.com)"
+      },
+      "username": {
+        "displayName": "Username",
+        "description": "Your ServiceNow username"
+      },
+      "password": {
+        "displayName": "Password",
+        "description": "Your ServiceNow password or API key"
+      }
+    },
+    "triggers": {
+      "newRecord": {
+        "displayName": "New Record",
+        "description": "Triggers when a new record is created in a specified ServiceNow table"
+      },
+      "updatedRecord": {
+        "displayName": "Updated Record",
+        "description": "Triggers when an existing record in a table is updated"
+      }
+    },
+    "actions": {
+      "createRecord": {
+        "displayName": "Create Record",
+        "description": "Create a record in a specified ServiceNow table with provided fields"
+      },
+      "updateRecord": {
+        "displayName": "Update Record",
+        "description": "Update an existing record's fields (by ID or filter)"
+      },
+      "getRecord": {
+        "displayName": "Get Record",
+        "description": "Gets specific table record by sys_id"
+      },
+      "attachFileToRecord": {
+        "displayName": "Attach File to Record",
+        "description": "Upload a file and attach it to a record in a table"
+      },
+      "findRecord": {
+        "displayName": "Find Record",
+        "description": "Lookup a record in a specific table using query parameters"
+      },
+      "findFile": {
+        "displayName": "Find File",
+        "description": "Find a file (attachment) by filename"
+      }
+    }
+  }
+}
