@@ -77,6 +77,7 @@ async function getTriggerPayloadsAndStatus(
             hookType: TriggerHookType.RUN,
             flowVersion,
             triggerPayload: payload,
+            platformId: params.platformId,
             webhookUrl: await webhookUtils(log).getWebhookUrl({
                 flowId: flowVersion.flowId,
                 simulate,
