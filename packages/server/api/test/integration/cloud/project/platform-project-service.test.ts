@@ -30,7 +30,7 @@ describe('Platform Project Service', () => {
             await databaseConnection().getRepository('flow').save([mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
-            const mockPublishedFlowVersion = createMockFlowVersion({ flowId: mockFlow.id})
+            const mockPublishedFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
             await databaseConnection().getRepository('flow_version').save([mockFlowVersion, mockPublishedFlowVersion])
 
             const mockFlowRun = createMockFlowRun({
