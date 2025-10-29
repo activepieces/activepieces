@@ -24,7 +24,6 @@ beforeEach(() => {
         sendQuotaAlert: jest.fn(),
         sendReminderJobHandler: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
-        sendIssuesSummary: jest.fn(),
     }))
 
 })

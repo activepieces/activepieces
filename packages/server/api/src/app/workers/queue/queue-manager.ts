@@ -1,6 +1,5 @@
 import { ApId, ExecuteFlowJobData, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData } from '@activepieces/shared'
 
-
 export enum JobType {
     REPEATING = 'repeating',
     ONE_TIME = 'one_time',
