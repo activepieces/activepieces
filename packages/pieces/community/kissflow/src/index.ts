@@ -3,6 +3,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { kissflowAuth, KissflowAuth } from './auth';
+import { downloadAttachmentFromFormField } from './lib/actions/download-attachment-from-form-field';
 
 export const kissflow = createPiece({
   displayName: 'Kissflow',
@@ -13,6 +14,7 @@ export const kissflow = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/kissflow.png',
   authors: ['danielpoonwj'],
   actions: [
+    downloadAttachmentFromFormField,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         const typedAuth = auth as KissflowAuth;
