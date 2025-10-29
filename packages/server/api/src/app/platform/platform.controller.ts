@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     ApEdition,
     ApId,
+    assertEqual,
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
@@ -44,8 +45,23 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 
-    app.get('/:id', GetPlatformRequest, async (req, res) => {
-        await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
+    app.get('/:id', GetPlatformRequest, async (req) => {
+        try {
+            assertEqual(
+                req.principal.platform.id,
+                req.params.id,
+                'userPlatformId',
+                'paramId',
+            )
+        } 
+        catch (error) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'User is not part of the platform',
+                },
+            })
+        }
         return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
     })
     if (edition === ApEdition.CLOUD) {
