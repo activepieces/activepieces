@@ -41,18 +41,7 @@ export const updatePerson = createAction({
       description: 'The job title of the person',
       required: false,
     }),
-    companyIds: Property.Array({
-      displayName: 'Company IDs',
-      description:
-        'The IDs of companies to associate with the person. The first company will be primary.',
-      required: false,
-      properties: {
-        value: Property.ShortText({
-          displayName: 'Company ID',
-          required: true,
-        }),
-      },
-    }),
+    companyIds: folkProps.companyIds(false),
     companyNames: Property.Array({
       displayName: 'Company Names',
       description:
@@ -141,8 +130,10 @@ export const updatePerson = createAction({
     if (jobTitle) personData.jobTitle = jobTitle;
 
     const companies: any[] = [];
-    if (companyIds && Array.isArray(companyIds)) {
-      companies.push(...companyIds.map((c: any) => ({ id: c.value || c })));
+    if (companyIds) {
+      for (const companyId of companyIds) {
+        companies.push({ id: companyId });
+      }
     }
     if (companyNames && Array.isArray(companyNames)) {
       companies.push(...companyNames.map((c: any) => ({ name: c.value || c })));

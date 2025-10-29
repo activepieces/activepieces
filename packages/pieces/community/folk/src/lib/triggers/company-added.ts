@@ -1,13 +1,20 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
 import { folkClient } from '../common/client';
+import { folkProps } from '../common/props';
 
 export const companyAdded = createTrigger({
   auth: folkAuth,
   name: 'company_added',
   displayName: 'Company Added',
   description: 'Fires when a new company is added to your Folk workspace.',
-  props: {},
+  props: {
+    groupId: folkProps.group_id(false, 'Group ID'),
+  },
   sampleData: {
     eventType: 'company.created',
     eventId: 'evt_123e4567-e89b-12d3-a456-426614174000',
@@ -26,11 +33,17 @@ export const companyAdded = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    const subscribedEvents = [
-      {
-        eventType: 'company.created',
-      },
-    ];
+    const eventConfig: any = {
+      eventType: 'company.created',
+    };
+
+    if (context.propsValue?.groupId) {
+      eventConfig.filter = {
+        groupId: context.propsValue.groupId,
+      };
+    }
+
+    const subscribedEvents = [eventConfig];
 
     const webhook = await folkClient.createWebhook({
       apiKey: context.auth,
@@ -40,7 +53,7 @@ export const companyAdded = createTrigger({
     });
 
     await context.store?.put('_webhookId', webhook.data.id);
-    await context.store?.put('_signingSecret', webhook.data.signingSecret);
+    // await context.store?.put('_signingSecret', webhook.data.signingSecret);
   },
 
   async onDisable(context) {

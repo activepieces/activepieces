@@ -7,7 +7,8 @@ export const createPerson = createAction({
   auth: folkAuth,
   name: 'createPerson',
   displayName: 'Create Person',
-  description: 'Create a new person in your Folk workspace. You can link them to a company, add contact details, and assign to a group.',
+  description:
+    'Create a new person in your Folk workspace. You can link them to a company, add contact details, and assign to a group.',
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',
@@ -39,20 +40,10 @@ export const createPerson = createAction({
       description: 'The job title of the person',
       required: false,
     }),
-    companyIds: Property.Array({
-      displayName: 'Company IDs',
-      description: 'The IDs of companies to associate with the person. The first company will be primary.',
-      required: false,
-      properties: {
-        value: Property.ShortText({
-          displayName: 'Company ID',
-          required: true,
-        }),
-      },
-    }),
     companyNames: Property.Array({
       displayName: 'Company Names',
-      description: 'Company names to create or associate with. Companies will be created if they don\'t exist.',
+      description:
+        'The names of companies to associate with the person. The first company will be primary.',
       required: false,
       properties: {
         value: Property.ShortText({
@@ -61,9 +52,11 @@ export const createPerson = createAction({
         }),
       },
     }),
+    companyIds: folkProps.companyIds(false),
     addresses: Property.Array({
       displayName: 'Addresses',
-      description: 'Physical addresses for the person. The first address is primary.',
+      description:
+        'Physical addresses for the person. The first address is primary.',
       required: false,
       properties: {
         value: Property.ShortText({
@@ -74,7 +67,8 @@ export const createPerson = createAction({
     }),
     emails: Property.Array({
       displayName: 'Emails',
-      description: 'Email addresses for the person. The first email is primary.',
+      description:
+        'Email addresses for the person. The first email is primary.',
       required: false,
       properties: {
         value: Property.ShortText({
@@ -108,7 +102,21 @@ export const createPerson = createAction({
     groupId: folkProps.group_id(false, 'Group ID'),
   },
   async run(context) {
-    const { firstName, lastName, fullName, description, birthday, jobTitle, companyIds, companyNames, addresses, emails, phones, urls, groupId } = context.propsValue;
+    const {
+      firstName,
+      lastName,
+      fullName,
+      description,
+      birthday,
+      jobTitle,
+      companyNames,
+      companyIds,
+      addresses,
+      emails,
+      phones,
+      urls,
+      groupId,
+    } = context.propsValue;
 
     const personData: any = {};
 
@@ -120,8 +128,10 @@ export const createPerson = createAction({
     if (jobTitle) personData.jobTitle = jobTitle;
 
     const companies: any[] = [];
-    if (companyIds && Array.isArray(companyIds)) {
-      companies.push(...companyIds.map((c: any) => ({ id: c.value || c })));
+    if (companyIds) {
+      for (const companyId of companyIds) {
+        companies.push({ id: companyId });
+      }
     }
     if (companyNames && Array.isArray(companyNames)) {
       companies.push(...companyNames.map((c: any) => ({ name: c.value || c })));
@@ -153,10 +163,6 @@ export const createPerson = createAction({
       data: personData,
     });
 
-    return {
-      person: response.data,
-      success: true,
-    };
+    return response.data;
   },
 });
-

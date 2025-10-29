@@ -52,7 +52,7 @@ export const companyCustomFieldUpdated = createTrigger({
         });
 
         await context.store?.put('_webhookId', webhook.data.id);
-        await context.store?.put('_signingSecret', webhook.data.signingSecret);
+        // await context.store?.put('_signingSecret', webhook.data.signingSecret);
     },
 
     async onDisable(context) {

@@ -262,7 +262,15 @@ export const folkClient = {
     });
   },
 
-
+  async getGroups({ apiKey }: { apiKey: string }) {
+    return this.makeRequest<{
+      data: { items: any[]; pagination: { nextLink?: string } };
+    }>({
+      method: HttpMethod.GET,
+      url: '/v1/groups',
+      apiKey,
+    });
+  },
 
   async createWebhook({
     apiKey,
@@ -313,6 +321,7 @@ export const folkClient = {
       method: HttpMethod.DELETE,
       url: `/v1/webhooks/${webhookId}`,
       apiKey,
+      body: {}
     });
   },
 };
