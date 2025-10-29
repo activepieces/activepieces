@@ -497,6 +497,7 @@ async function createBasicEnvironment({ platform }: { platform?: Partial<Platfor
         },
         plan: {
             projectRolesEnabled: true,
+            auditLogEnabled: false,
         },
     })
 
