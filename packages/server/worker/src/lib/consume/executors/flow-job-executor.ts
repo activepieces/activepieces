@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
-import { workerSocketHandlers } from '../../compute/process/worker-socket-handlers'
+import { engineSocketHandlers } from '../../compute/process/engine-socket-handlers'
 import { workerMachine } from '../../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
@@ -77,7 +77,7 @@ async function handleMemoryIssueError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await workerSocketHandlers(log).updateRunProgress({
+    await engineSocketHandlers(log).updateRunProgress({
         runDetails: {
             duration: 0,
             status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
@@ -98,7 +98,7 @@ async function handleTimeoutError(
 ): Promise<void> {
     const timeoutFlowInSeconds =
         workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
-    await workerSocketHandlers(log).updateRunProgress({
+    await engineSocketHandlers(log).updateRunProgress({
         runDetails: {
             duration: timeoutFlowInSeconds,
             status: FlowRunStatus.TIMEOUT,
@@ -115,7 +115,7 @@ async function handleInternalError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await workerSocketHandlers(log).updateRunProgress({
+    await engineSocketHandlers(log).updateRunProgress({
         runDetails: {
             duration: 0,
             status: FlowRunStatus.INTERNAL_ERROR,

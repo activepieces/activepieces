@@ -7,9 +7,9 @@ import treeKill from 'tree-kill'
 import { executionFiles } from '../../cache/execution-files'
 import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
+import { engineSocketHandlers } from './engine-socket-handlers'
 import { EngineProcessOptions } from './factory/engine-factory-types'
 import { engineProcessFactory } from './factory/index'
-import { workerSocketHandlers } from './worker-socket-handlers'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -168,7 +168,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 onResult,
                 onStdout,
                 onStderr,
-                ...workerSocketHandlers(log),
+                ...engineSocketHandlers(log),
             })
 
             worker.on('error', (error) => {

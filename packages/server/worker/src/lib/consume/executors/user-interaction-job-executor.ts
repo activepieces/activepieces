@@ -7,8 +7,7 @@ import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
-    // TODO: remove _workerToken
-    async execute(jobData: UserInteractionJobData, engineToken: string, _workerToken: string, timeoutInSeconds: number): Promise<void> {
+    async execute(jobData: UserInteractionJobData, engineToken: string, timeoutInSeconds: number): Promise<void> {
         let response: EngineHelperResponse<EngineHelperResult>
         switch (jobData.jobType) {
             case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:

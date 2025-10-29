@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, SendFlowResponseRequest, StepOutput, UpdateRunProgressRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, StepOutput, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -45,16 +45,6 @@ export const progressService = {
             }, DEBOUNCE_THRESHOLD)
         })
     },
-    sendFlowResponse: async (engineConstants: EngineConstants, request: SendFlowResponseRequest): Promise<void> => {
-        await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-flow-response`).toString(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${engineConstants.engineToken}`,
-            },
-            body: JSON.stringify(request),
-        })
-    },
     createOutputContext: (params: CreateOutputContextParams): OutputContext => {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
@@ -95,7 +85,6 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
         const runDetails = await flowExecutorContext.toResponse()
-        const runDetailsWithoutSteps = { ...runDetails, steps: undefined }
         const executionState = await logSerializer.serialize({
             executionState: {
                 steps: runDetails.steps as Record<string, StepOutput>,
@@ -113,7 +102,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             projectId: engineConstants.projectId,
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
-            runDetails: runDetailsWithoutSteps,
+            runDetails,
             progressUpdateType: engineConstants.progressUpdateType,
             logsFileId: engineConstants.logsFileId,
             stepNameToTest: engineConstants.stepNameToTest,

@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil, UpdateRunProgressRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil, SendFlowResponseRequest, UpdateRunProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { type Socket, Server as SocketIOServer } from 'socket.io'
 
@@ -13,10 +13,6 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             try {
                 io = new SocketIOServer({
                     path: '/worker/ws',
-                    cors: {
-                        origin: '*',
-                        methods: ['GET', 'POST'],
-                    },
                 })
 
                 io.listen(12345)
@@ -116,12 +112,14 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             onStdout,
             onStderr,
             updateRunProgress,
+            sendFlowResponse,
         }: {
             workerId: string
             onResult: (result: EngineResponse<unknown>) => void
             onStdout: (stdout: EngineStdout) => void
             onStderr: (stderr: EngineStderr) => void
             updateRunProgress: (updateRunProgress: UpdateRunProgressRequest, log: FastifyBaseLogger) => void
+            sendFlowResponse: (sendFlowResponse: SendFlowResponseRequest, log: FastifyBaseLogger) => void
         }): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'sockets[workerId]')
@@ -145,6 +143,11 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 callback?.()
                 updateRunProgress(data, log)
             })
+
+            socket.on(EngineSocketEvent.SEND_FLOW_RESPONSE, (data: SendFlowResponseRequest, callback: () => void) => {
+                callback?.()
+                sendFlowResponse(data, log)
+            })
         },
 
         unsubscribe(workerId: string): void {
@@ -154,6 +157,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 socket.removeAllListeners(EngineSocketEvent.ENGINE_STDOUT)
                 socket.removeAllListeners(EngineSocketEvent.ENGINE_STDERR)
                 socket.removeAllListeners(EngineSocketEvent.UPDATE_RUN_PROGRESS)
+                socket.removeAllListeners(EngineSocketEvent.SEND_FLOW_RESPONSE)
             }
         },
 

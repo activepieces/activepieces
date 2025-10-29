@@ -1,12 +1,20 @@
 import { exceptionHandler } from '@activepieces/server-shared'
-import { EngineHttpResponse, FlowActionType, FlowRunResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, LoopStepOutput, spreadIfDefined, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FlowActionType, FlowRunResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, LoopStepOutput, SendFlowResponseRequest, spreadIfDefined, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { workerSocket } from '../../flow-worker'
 import { engineResponsePublisher } from '../../utils/engine-response-publisher'
 import { runsMetadataQueue } from '../flow-runs-queue'
 
-export const workerSocketHandlers = (log: FastifyBaseLogger) => ({
+export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
+    sendFlowResponse: async (request: SendFlowResponseRequest): Promise<void> => {
+        const { workerHandlerId, httpRequestId, runResponse } = request
+        await engineResponsePublisher(log).publish(
+            httpRequestId,
+            workerHandlerId,
+            runResponse,
+        )
+    },
     updateRunProgress: async (request: UpdateRunProgressRequest): Promise<void> => {
         const { runId, projectId, workerHandlerId, runDetails, httpRequestId, stepNameToTest, logsFileId } = request
 
@@ -105,8 +113,7 @@ function extractStepResponse(params: NotifyStepFinishedParams): StepRunResponse 
             return null
         }
 
-        const stepOutput = params.steps[params.stepNameToTest]
-
+        const stepOutput = params?.steps?.[params.stepNameToTest]
         const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
         return {
             runId: params.runId,
@@ -147,7 +154,7 @@ const extractFailedStepName = (steps: Record<string, StepOutput>): string | unde
 
 
 type NotifyStepFinishedParams = {
-    steps: Record<string, StepOutput>
+    steps?: Record<string, StepOutput>
     projectId: string
     status: FlowRunStatus
     runId: string

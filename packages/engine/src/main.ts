@@ -54,6 +54,7 @@ export const sendToWorkerWithAck = async (
                     data,
                     error,
                 })
+                throw error
             }
         }
     }
