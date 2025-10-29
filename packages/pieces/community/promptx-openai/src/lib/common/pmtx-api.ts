@@ -195,6 +195,7 @@ export const getAiApiKey = async (
   access_token: string
 ) => {
   const response = await fetch(baseUrlMap[server]['getAIKeyUrl'], {
+    method: 'GET', // This is the default, so it's implicitly GET
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${access_token}`,
