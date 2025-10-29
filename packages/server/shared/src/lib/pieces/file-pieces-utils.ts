@@ -49,7 +49,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
     async function getPieceDependencies(folerPath: string): Promise<Record<string, string> | null> {
         try {
-            const packageJson = await readFile(join(folerPath, 'package.json'), 'utf-8').then(JSON.parse)
+            const packageJson = JSON.parse(readFileSync(join(folerPath, 'package.json'), 'utf-8'))
             if (!packageJson.dependencies) {
                 return null
             }
