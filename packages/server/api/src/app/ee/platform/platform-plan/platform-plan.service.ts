@@ -1,10 +1,10 @@
-import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlanName } from '@activepieces/ee-shared'
-import { apDayjs, AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
+import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlanName, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 import { repoFactory } from '../../../core/db/repo-factory'
-import { distributedLock } from '../../../database/redis-connections'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
@@ -58,6 +58,9 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         )
 
         const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
+        if (!isNil(updatedPlatformPlan.plan)) {
+            await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
+        }
         return updatedPlatformPlan
     },
 
@@ -129,7 +132,12 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeBillingCycle: BillingCycle.MONTHLY,
         ...plan,
     }
-    return platformPlanRepo().save(platformPlan)
+    const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
+    if (!isNil(savedPlatformPlan.plan)) {
+        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan)
+    }
+
+    return savedPlatformPlan
 }
 
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
