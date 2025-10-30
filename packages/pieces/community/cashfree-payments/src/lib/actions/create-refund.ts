@@ -1,32 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cashfreeAuth } from '../common/auth';
 
 export const createRefund = createAction({
   name: 'create-refund',
   displayName: 'Create Refund',
-  description: 'Initiate a refund for a Cashfree order. Refunds can only be initiated within six months of the original transaction.',
-  requireAuth: true,
+  description:
+    'Initiate a refund for a Cashfree order. Refunds can only be initiated within six months of the original transaction.',
+  auth: cashfreeAuth,
   props: {
-    environment: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Choose the environment for API calls',
-      required: true,
-      defaultValue: 'sandbox',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'Sandbox',
-            value: 'sandbox',
-          },
-          {
-            label: 'Production',
-            value: 'production',
-          },
-        ],
-      },
-    }),
-    
     // Required Fields
     orderId: Property.ShortText({
       displayName: 'Order ID',
@@ -35,15 +17,17 @@ export const createRefund = createAction({
     }),
     refundAmount: Property.Number({
       displayName: 'Refund Amount',
-      description: 'Amount to be refunded. Should be lesser than or equal to the transaction amount. (Decimals allowed)',
+      description:
+        'Amount to be refunded. Should be lesser than or equal to the transaction amount. (Decimals allowed)',
       required: true,
     }),
     refundId: Property.ShortText({
       displayName: 'Refund ID',
-      description: 'An unique ID to associate the refund with. Provide alphanumeric values (3-40 characters)',
+      description:
+        'An unique ID to associate the refund with. Provide alphanumeric values (3-40 characters)',
       required: true,
     }),
-    
+
     // Optional Fields
     refundNote: Property.ShortText({
       displayName: 'Refund Note',
@@ -69,63 +53,70 @@ export const createRefund = createAction({
         ],
       },
     }),
-    
+
     // Refund Splits
     refundSplits: Property.LongText({
       displayName: 'Refund Splits',
-      description: 'JSON array for vendor splits. Example: [{"vendor_id":"vendor1","amount":100},{"vendor_id":"vendor2","percentage":25}]',
+      description:
+        'JSON array for vendor splits. Example: [{"vendor_id":"vendor1","amount":100},{"vendor_id":"vendor2","percentage":25}]',
       required: false,
     }),
-    
+
     // Custom Tags
     tags: Property.LongText({
       displayName: 'Custom Tags',
-      description: 'Custom Tags in JSON format {"key":"value"}. Maximum 10 tags allowed. Example: {"refund_reason":"customer_request","processed_by":"admin"}',
+      description:
+        'Custom Tags in JSON format {"key":"value"}. Maximum 10 tags allowed. Example: {"refund_reason":"customer_request","processed_by":"admin"}',
       required: false,
     }),
-    
+
     // Request Headers
     requestId: Property.ShortText({
       displayName: 'Request ID',
-      description: 'Request ID for the API call. Can be used to resolve tech issues',
+      description:
+        'Request ID for the API call. Can be used to resolve tech issues',
       required: false,
     }),
     idempotencyKey: Property.ShortText({
       displayName: 'Idempotency Key',
-      description: 'UUID format idempotency key to avoid duplicate actions if request fails or times out',
+      description:
+        'UUID format idempotency key to avoid duplicate actions if request fails or times out',
       required: false,
     }),
   },
-  
+
   async run(context) {
-    // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret, bearerToken } = context.auth as {
+     // Get authentication values from piece-level auth
+    const { authType, clientId, environment, clientSecret, bearerToken } = context.auth as {
       authType: string;
+      environment: string;
       clientId?: string;
       clientSecret?: string;
       bearerToken?: string;
     };
-    
-    // Validate authentication based on type
+
+     // Validate authentication based on type
     if (authType === 'client_credentials' && (!clientId || !clientSecret)) {
       return {
         success: false,
-        error: 'Client ID and Client Secret are required when using client credentials authentication',
+        error:
+          'Client ID and Client Secret are required when using client credentials authentication',
         message: 'Please provide both Client ID and Client Secret',
       };
     }
-    
+
     if (authType === 'bearer_token' && !bearerToken) {
       return {
         success: false,
-        error: 'Bearer Token is required when using bearer token authentication',
+        error:
+          'Bearer Token is required when using bearer token authentication',
         message: 'Please provide a valid Bearer Token',
       };
     }
 
     // Get action-specific values from props
     const {
-      environment,
+      
       orderId,
       refundAmount,
       refundId,
@@ -165,16 +156,17 @@ export const createRefund = createAction({
     }
 
     // Determine the base URL based on environment
-    const baseUrl = environment === 'production' 
-      ? `https://api.cashfree.com/pg/orders/${orderId}/refunds`
-      : `https://sandbox.cashfree.com/pg/orders/${orderId}/refunds`;
+    const baseUrl =
+      environment === 'production'
+        ? `https://api.cashfree.com/pg/orders/${orderId}/refunds`
+        : `https://sandbox.cashfree.com/pg/orders/${orderId}/refunds`;
 
     // Parse refund splits if provided
     let parsedRefundSplits;
     if (refundSplits) {
       try {
         parsedRefundSplits = JSON.parse(refundSplits);
-        
+
         // Validate refund splits structure
         if (!Array.isArray(parsedRefundSplits)) {
           return {
@@ -183,7 +175,7 @@ export const createRefund = createAction({
             message: 'Refund splits must be a JSON array',
           };
         }
-        
+
         // Validate each split entry
         for (const split of parsedRefundSplits) {
           if (!split.vendor_id) {
@@ -193,12 +185,13 @@ export const createRefund = createAction({
               message: 'Each refund split must have a vendor_id',
             };
           }
-          
+
           if (!split.amount && !split.percentage) {
             return {
               success: false,
               error: 'Invalid refund split entry',
-              message: 'Each refund split must have either amount or percentage',
+              message:
+                'Each refund split must have either amount or percentage',
             };
           }
         }
@@ -206,7 +199,8 @@ export const createRefund = createAction({
         return {
           success: false,
           error: 'Invalid JSON format for refund splits',
-          message: 'Refund splits must be valid JSON array. Example: [{"vendor_id":"vendor1","amount":100}]',
+          message:
+            'Refund splits must be valid JSON array. Example: [{"vendor_id":"vendor1","amount":100}]',
         };
       }
     }
@@ -216,7 +210,7 @@ export const createRefund = createAction({
     if (tags) {
       try {
         parsedTags = JSON.parse(tags);
-        
+
         // Validate tags structure
         if (typeof parsedTags !== 'object' || Array.isArray(parsedTags)) {
           return {
@@ -225,7 +219,7 @@ export const createRefund = createAction({
             message: 'Tags must be a JSON object',
           };
         }
-        
+
         // Validate maximum 10 tags
         if (Object.keys(parsedTags).length > 10) {
           return {
@@ -238,7 +232,8 @@ export const createRefund = createAction({
         return {
           success: false,
           error: 'Invalid JSON format for tags',
-          message: 'Tags must be valid JSON format. Example: {"refund_reason":"customer_request","processed_by":"admin"}',
+          message:
+            'Tags must be valid JSON format. Example: {"refund_reason":"customer_request","processed_by":"admin"}',
         };
       }
     }
@@ -259,7 +254,7 @@ export const createRefund = createAction({
     const headers: any = {
       'x-api-version': '2025-01-01',
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
 
     if (authType === 'client_credentials') {
@@ -286,21 +281,6 @@ export const createRefund = createAction({
           success: true,
           data: response.body,
           message: 'Refund initiated successfully',
-          cf_refund_id: response.body?.cf_refund_id,
-          refund_id: response.body?.refund_id,
-          order_id: response.body?.order_id,
-          refund_status: response.body?.refund_status,
-          refund_amount: response.body?.refund_amount,
-          refund_note: response.body?.refund_note,
-          refund_speed: response.body?.refund_speed,
-          status_description: response.body?.status_description,
-          metadata: response.body?.metadata,
-          refund_splits: response.body?.refund_splits,
-          refund_arn: response.body?.refund_arn,
-          refund_charge: response.body?.refund_charge,
-          refund_mode: response.body?.refund_mode,
-          created_at: response.body?.created_at,
-          processed_at: response.body?.processed_at,
         };
       } else {
         return {

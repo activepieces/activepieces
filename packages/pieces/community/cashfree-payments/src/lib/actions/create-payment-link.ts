@@ -1,36 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cashfreeAuth } from '../common/auth';
 
 export const createPaymentLink = createAction({
   name: 'create-payment-link',
   displayName: 'Create Payment Link',
   description: 'Creates a payment link in Cashfree Payment Gateway',
-  requireAuth: true,
+  auth: cashfreeAuth,
   props: {
-    environment: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Choose the environment for API calls',
-      required: true,
-      defaultValue: 'sandbox',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'Sandbox',
-            value: 'sandbox',
-          },
-          {
-            label: 'Production',
-            value: 'production',
-          },
-        ],
-      },
-    }),
-    
     // Required Fields
     linkAmount: Property.Number({
       displayName: 'Link Amount',
-      description: 'Amount to be collected using this link. Provide up to two decimals for paise',
+      description:
+        'Amount to be collected using this link. Provide up to two decimals for paise',
       required: true,
     }),
     linkCurrency: Property.StaticDropdown({
@@ -50,7 +32,8 @@ export const createPaymentLink = createAction({
     }),
     linkPurpose: Property.ShortText({
       displayName: 'Link Purpose',
-      description: 'A brief description for which payment must be collected (max 500 characters)',
+      description:
+        'A brief description for which payment must be collected (max 500 characters)',
       required: true,
     }),
     customerPhone: Property.ShortText({
@@ -58,7 +41,7 @@ export const createPaymentLink = createAction({
       description: 'Customer phone number (required)',
       required: true,
     }),
-    
+
     // Optional Customer Details
     customerEmail: Property.ShortText({
       displayName: 'Customer Email',
@@ -111,11 +94,12 @@ export const createPaymentLink = createAction({
         ],
       },
     }),
-    
+
     // Link Configuration
     linkId: Property.ShortText({
       displayName: 'Link ID',
-      description: 'Unique identifier for the link. Alphanumeric, "-" and "_" only (max 50 characters). Auto-generated if not provided',
+      description:
+        'Unique identifier for the link. Alphanumeric, "-" and "_" only (max 50 characters). Auto-generated if not provided',
       required: false,
     }),
     linkPartialPayments: Property.Checkbox({
@@ -125,15 +109,17 @@ export const createPaymentLink = createAction({
     }),
     linkMinimumPartialAmount: Property.Number({
       displayName: 'Minimum Partial Amount',
-      description: 'Minimum amount in first installment (required if partial payments enabled)',
+      description:
+        'Minimum amount in first installment (required if partial payments enabled)',
       required: false,
     }),
     linkExpiryTime: Property.ShortText({
       displayName: 'Link Expiry Time',
-      description: 'ISO 8601 format. Example: 2021-07-02T10:20:12+05:30. Default is 30 days',
+      description:
+        'ISO 8601 format. Example: 2021-07-02T10:20:12+05:30. Default is 30 days',
       required: false,
     }),
-    
+
     // Notification Settings
     sendSms: Property.Checkbox({
       displayName: 'Send SMS Notification',
@@ -147,10 +133,11 @@ export const createPaymentLink = createAction({
     }),
     linkAutoReminders: Property.Checkbox({
       displayName: 'Auto Reminders',
-      description: 'Send automatic reminders to customers for payment collection',
+      description:
+        'Send automatic reminders to customers for payment collection',
       required: false,
     }),
-    
+
     // Link Meta
     notifyUrl: Property.ShortText({
       displayName: 'Notify URL',
@@ -159,7 +146,8 @@ export const createPaymentLink = createAction({
     }),
     returnUrl: Property.ShortText({
       displayName: 'Return URL',
-      description: 'URL to redirect user after payment completion (max 250 characters)',
+      description:
+        'URL to redirect user after payment completion (max 250 characters)',
       required: false,
     }),
     upiIntent: Property.Checkbox({
@@ -169,54 +157,59 @@ export const createPaymentLink = createAction({
     }),
     paymentMethods: Property.ShortText({
       displayName: 'Payment Methods',
-      description: 'Comma-separated values: cc,dc,ccc,ppc,nb,upi,paypal,app. Leave blank for all methods',
+      description:
+        'Comma-separated values: cc,dc,ccc,ppc,nb,upi,paypal,app. Leave blank for all methods',
       required: false,
     }),
-    
+
     // Additional Data
     linkNotes: Property.LongText({
       displayName: 'Link Notes',
-      description: 'Key-value pairs as JSON. Maximum 5 key-value pairs. Example: {"key_1":"value_1","key_2":"value_2"}',
+      description:
+        'Key-value pairs as JSON. Maximum 5 key-value pairs. Example: {"key_1":"value_1","key_2":"value_2"}',
       required: false,
     }),
-    
+
     // Order Splits
     orderSplits: Property.LongText({
       displayName: 'Order Splits',
-      description: 'JSON array for Easy Split. Example: [{"vendor_id":"vendor1","amount":100}]',
+      description:
+        'JSON array for Easy Split. Example: [{"vendor_id":"vendor1","amount":100}]',
       required: false,
     }),
   },
-  
+
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret, bearerToken } = context.auth as {
-      authType: string;
-      clientId?: string;
-      clientSecret?: string;
-      bearerToken?: string;
-    };
-    
+    const { authType, clientId, environment, clientSecret, bearerToken } =
+      context.auth as {
+        authType: string;
+        environment: string;
+        clientId?: string;
+        clientSecret?: string;
+        bearerToken?: string;
+      };
+
     // Validate authentication based on type
     if (authType === 'client_credentials' && (!clientId || !clientSecret)) {
       return {
         success: false,
-        error: 'Client ID and Client Secret are required when using client credentials authentication',
+        error:
+          'Client ID and Client Secret are required when using client credentials authentication',
         message: 'Please provide both Client ID and Client Secret',
       };
     }
-    
+
     if (authType === 'bearer_token' && !bearerToken) {
       return {
         success: false,
-        error: 'Bearer Token is required when using bearer token authentication',
+        error:
+          'Bearer Token is required when using bearer token authentication',
         message: 'Please provide a valid Bearer Token',
       };
     }
-
     // Get action-specific values from props
     const {
-      environment,
       linkAmount,
       linkCurrency,
       linkPurpose,
@@ -242,21 +235,24 @@ export const createPaymentLink = createAction({
     } = context.propsValue;
 
     // Determine the base URL based on environment
-    const baseUrl = environment === 'production' 
-      ? 'https://api.cashfree.com/pg/links'
-      : 'https://sandbox.cashfree.com/pg/links';
+    const baseUrl =
+      environment === 'production'
+        ? 'https://api.cashfree.com/pg/links'
+        : 'https://sandbox.cashfree.com/pg/links';
 
     // Generate link ID if not provided
-    const generatedLinkId = linkId || `link_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const generatedLinkId =
+      linkId || `link_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Build customer details object
     const customerDetails: any = {
       customer_phone: customerPhone,
     };
-    
+
     if (customerEmail) customerDetails.customer_email = customerEmail;
     if (customerName) customerDetails.customer_name = customerName;
-    if (customerBankAccountNumber) customerDetails.customer_bank_account_number = customerBankAccountNumber;
+    if (customerBankAccountNumber)
+      customerDetails.customer_bank_account_number = customerBankAccountNumber;
     if (customerBankIfsc) customerDetails.customer_bank_ifsc = customerBankIfsc;
     if (customerBankCode) customerDetails.customer_bank_code = customerBankCode;
 
@@ -281,7 +277,8 @@ export const createPaymentLink = createAction({
         return {
           success: false,
           error: 'Invalid JSON format for link notes',
-          message: 'Link notes must be valid JSON format. Example: {"key_1":"value_1","key_2":"value_2"}',
+          message:
+            'Link notes must be valid JSON format. Example: {"key_1":"value_1","key_2":"value_2"}',
         };
       }
     }
@@ -295,7 +292,8 @@ export const createPaymentLink = createAction({
         return {
           success: false,
           error: 'Invalid JSON format for order splits',
-          message: 'Order splits must be valid JSON array. Example: [{"vendor_id":"vendor1","amount":100}]',
+          message:
+            'Order splits must be valid JSON array. Example: [{"vendor_id":"vendor1","amount":100}]',
         };
       }
     }
@@ -310,11 +308,15 @@ export const createPaymentLink = createAction({
     };
 
     // Add optional fields
-    if (linkPartialPayments !== undefined) requestBody.link_partial_payments = linkPartialPayments;
-    if (linkMinimumPartialAmount) requestBody.link_minimum_partial_amount = linkMinimumPartialAmount;
+    if (linkPartialPayments !== undefined)
+      requestBody.link_partial_payments = linkPartialPayments;
+    if (linkMinimumPartialAmount)
+      requestBody.link_minimum_partial_amount = linkMinimumPartialAmount;
     if (linkExpiryTime) requestBody.link_expiry_time = linkExpiryTime;
-    if (Object.keys(linkNotify).length > 0) requestBody.link_notify = linkNotify;
-    if (linkAutoReminders !== undefined) requestBody.link_auto_reminders = linkAutoReminders;
+    if (Object.keys(linkNotify).length > 0)
+      requestBody.link_notify = linkNotify;
+    if (linkAutoReminders !== undefined)
+      requestBody.link_auto_reminders = linkAutoReminders;
     if (Object.keys(linkMeta).length > 0) requestBody.link_meta = linkMeta;
     if (parsedLinkNotes) requestBody.link_notes = parsedLinkNotes;
     if (parsedOrderSplits) requestBody.order_splits = parsedOrderSplits;
@@ -323,7 +325,7 @@ export const createPaymentLink = createAction({
     const headers: any = {
       'x-api-version': '2025-01-01',
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
 
     if (authType === 'client_credentials') {
@@ -346,9 +348,6 @@ export const createPaymentLink = createAction({
           success: true,
           data: response.body,
           message: 'Payment link created successfully',
-          link_url: response.body.link_url,
-          cf_link_id: response.body.cf_link_id,
-          link_id: response.body.link_id,
         };
       } else {
         return {

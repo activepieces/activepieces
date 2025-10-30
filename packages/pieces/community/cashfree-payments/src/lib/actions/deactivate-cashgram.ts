@@ -4,66 +4,51 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const deactivateCashgram = createAction({
   name: 'deactivate-cashgram',
   displayName: 'Deactivate Cashgram',
-  description: 'Deactivate a Cashgram to prevent further redemptions using Cashfree',
+  description:
+    'Deactivate a Cashgram to prevent further redemptions using Cashfree',
   requireAuth: true,
   props: {
-    environment: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Choose the environment for API calls',
-      required: true,
-      defaultValue: 'sandbox',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'Sandbox',
-            value: 'sandbox',
-          },
-          {
-            label: 'Production',
-            value: 'production',
-          },
-        ],
-      },
-    }),
-    
     // Required Fields
     cashgramId: Property.ShortText({
       displayName: 'Cashgram ID',
-      description: 'ID of the Cashgram to be deactivated. Alphanumeric and underscore (_) allowed (35 character limit)',
+      description:
+        'ID of the Cashgram to be deactivated. Alphanumeric and underscore (_) allowed (35 character limit)',
       required: true,
     }),
   },
-  
+
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, bearerToken } = context.auth as {
-      authType: string;
-      bearerToken?: string;
-    };
-    
-    // Validate that Bearer Token authentication is used
-    if (authType !== 'bearer_token') {
+    const { authType, clientId, environment, clientSecret, bearerToken } =
+      context.auth as {
+        authType: string;
+        environment: string;
+        clientId?: string;
+        clientSecret?: string;
+        bearerToken?: string;
+      };
+
+    // Validate authentication based on type
+    if (authType === 'client_credentials' && (!clientId || !clientSecret)) {
       return {
         success: false,
-        error: 'Invalid authentication type for Cashgram API',
-        message: 'Cashgram API only supports Bearer Token authentication. Please select Bearer Token in authentication settings.',
+        error:
+          'Client ID and Client Secret are required when using client credentials authentication',
+        message: 'Please provide both Client ID and Client Secret',
       };
     }
-    
-    if (!bearerToken) {
+
+    if (authType === 'bearer_token' && !bearerToken) {
       return {
         success: false,
-        error: 'Bearer Token is required for Cashgram API',
-        message: 'Please provide a valid Bearer Token for Cashgram authentication',
+        error:
+          'Bearer Token is required when using bearer token authentication',
+        message: 'Please provide a valid Bearer Token',
       };
     }
 
     // Get action-specific values from props
-    const {
-      environment,
-      cashgramId,
-    } = context.propsValue;
+    const { cashgramId } = context.propsValue;
 
     // Validate cashgram ID format
     if (!cashgramId || cashgramId.trim().length === 0) {
@@ -88,14 +73,16 @@ export const deactivateCashgram = createAction({
       return {
         success: false,
         error: 'Invalid Cashgram ID format',
-        message: 'Cashgram ID can only contain alphanumeric characters and underscore (_)',
+        message:
+          'Cashgram ID can only contain alphanumeric characters and underscore (_)',
       };
     }
 
     // Determine the base URL based on environment
-    const baseUrl = environment === 'production' 
-      ? 'https://payout-api.cashfree.com/payout/v1/deactivateCashgram'
-      : 'https://payout-gamma.cashfree.com/payout/v1/deactivateCashgram';
+    const baseUrl =
+      environment === 'production'
+        ? 'https://payout-api.cashfree.com/payout/v1/deactivateCashgram'
+        : 'https://payout-gamma.cashfree.com/payout/v1/deactivateCashgram';
 
     // Prepare the request body
     const requestBody = {
@@ -104,9 +91,9 @@ export const deactivateCashgram = createAction({
 
     // Build headers
     const headers: any = {
-      'Authorization': `Bearer ${bearerToken}`,
+      Authorization: `Bearer ${bearerToken}`,
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
 
     try {
@@ -123,15 +110,6 @@ export const deactivateCashgram = createAction({
           success: true,
           data: responseData,
           message: responseData?.message || 'Cashgram deactivated successfully',
-          
-          // Response details
-          status: responseData?.status,
-          subCode: responseData?.subCode,
-          
-          // Request details for reference
-          cashgramId: cashgramId,
-          deactivatedAt: new Date().toISOString(),
-          environment: environment,
         };
       } else {
         // Handle specific error cases
@@ -153,7 +131,8 @@ export const deactivateCashgram = createAction({
           return {
             success: false,
             error: response.body,
-            message: 'Forbidden - You do not have permission to deactivate Cashgrams',
+            message:
+              'Forbidden - You do not have permission to deactivate Cashgrams',
             status: response.status,
           };
         } else if (response.status === 404) {
@@ -167,7 +146,8 @@ export const deactivateCashgram = createAction({
           return {
             success: false,
             error: response.body,
-            message: 'Conflict - Cashgram may already be deactivated or cannot be deactivated',
+            message:
+              'Conflict - Cashgram may already be deactivated or cannot be deactivated',
             status: response.status,
           };
         } else {
