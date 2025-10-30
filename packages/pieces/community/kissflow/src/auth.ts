@@ -13,7 +13,7 @@ https://community.kissflow.com/t/35h4az8/api-authentication#access-keys
       required: true,
     }),
     accountId: Property.ShortText({
-      displayName: 'Account Id',
+      displayName: 'Account ID',
       required: true,
     }),
     domainName: Property.StaticDropdown({

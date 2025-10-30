@@ -30,7 +30,7 @@ function extractAttachmentNameFromHeaders(
 
 export const downloadAttachmentFromFormField = createAction({
   name: 'downloadAttachmentFromFormField',
-  displayName: 'Download attachment from form field',
+  displayName: 'Download Attachment from Form Field',
   description:
     'Downloads a specific attachment from a form field of your process.',
   auth: kissflowAuth,
