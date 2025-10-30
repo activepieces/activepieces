@@ -53,6 +53,12 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             })
         })
 
+        socket.io.on('reconnect_attempt', (attempt: number) => {
+            log.info({
+                message: 'Socket reconnect attempt',
+                attempt,
+            })
+        })
         socket.on('connect_error', (error) => {
             log.error({
                 message: 'Socket connection error',
