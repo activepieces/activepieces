@@ -127,8 +127,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
-            release: req.query.release ?? await apVersionUtil.getCurrentRelease(),
-            edition: req.query.edition ?? ApEdition.COMMUNITY,
+            release: req.query.release,
+            edition: req.query.edition,
             platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
         })
         return pieces
