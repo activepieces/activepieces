@@ -81,7 +81,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
                                     ...spreadIfDefined('duration', runMetadata.duration),
-                                    ...spreadIfDefined('tasks', runMetadata.tasks),
                                     ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
                                     ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),

@@ -167,7 +167,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict(ExecutionVerdict.SUCCEEDED, {
                 reason: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
-            }).increaseTask()
+            })
         }
         if (params.hookResponse.type === 'paused') {
             assertNotNullOrUndefined(params.hookResponse.response, 'pauseResponse')
@@ -177,7 +177,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
     catch (e) {
         const handledError = handleExecutionError(e)
@@ -190,7 +190,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         return executionState
             .upsertStep(action.name, failedStepOutput)
             .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
-            .increaseTask()
     }
 }
 

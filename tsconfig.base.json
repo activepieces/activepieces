@@ -147,6 +147,9 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bigcommerce": [
+        "packages/pieces/community/bigcommerce/src/index.ts"
+      ],
       "@activepieces/piece-bigin-by-zoho": [
         "packages/pieces/community/bigin-by-zoho/src/index.ts"
       ],
@@ -422,6 +425,9 @@
       ],
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
+      ],
+      "@activepieces/piece-folk": [
+        "packages/pieces/community/folk/src/index.ts"
       ],
       "@activepieces/piece-foreplay-co": [
         "packages/pieces/community/foreplay-co/src/index.ts"
@@ -1171,6 +1177,9 @@
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
+      "@activepieces/piece-uscreen": [
+        "packages/pieces/community/uscreen/src/index.ts"
+      ],
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
@@ -1317,7 +1326,10 @@
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
+      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
+      "@activepieces/piece-kissflow": [
+        "packages/pieces/community/kissflow/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },
