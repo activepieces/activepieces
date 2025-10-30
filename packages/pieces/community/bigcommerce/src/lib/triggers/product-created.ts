@@ -12,7 +12,17 @@ export const productCreated = createTrigger({
   displayName: 'Product Created',
   description: 'Triggers when a new product is created',
   props: {},
-  sampleData: {},
+  sampleData: {
+    producer: 'stores/xqcaklwsso',
+    hash: 'c6db17090e98d2c58c0cb1988b5e9ace48215e22',
+    created_at: 1761808831,
+    store_id: '1003425529',
+    scope: 'store/product/created',
+    data: {
+      type: 'product',
+      id: 113,
+    },
+  },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await bigCommerceApiService.createWebhook({

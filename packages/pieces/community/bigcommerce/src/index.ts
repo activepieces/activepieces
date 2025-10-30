@@ -26,10 +26,12 @@ import { findOrCreateCustomersAddress } from './lib/actions/find-or-create-custo
 
 export const bigcommerce = createPiece({
   displayName: 'Bigcommerce',
+  description:
+    'BigCommerce is a leading e-commerce platform that enables businesses to create and manage online stores.',
   auth: bigcommerceAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/bigcommerce.png',
-  authors: ['gs03-dev'],
+  authors: ['gs03-dev', 'sanket-a11y'],
   actions: [
     createCustomer,
     createAProduct,

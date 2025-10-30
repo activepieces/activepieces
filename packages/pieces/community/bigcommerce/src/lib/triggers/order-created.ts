@@ -12,7 +12,17 @@ export const orderCreated = createTrigger({
   displayName: 'Order Created',
   description: 'Triggers when a new order is created',
   props: {},
-  sampleData: {},
+  sampleData: {
+    producer: 'stores/xqcaklwsso',
+    hash: 'd7b899890f5e0e98a3e074f018b14b07d5d89360',
+    created_at: 1761808595,
+    store_id: '1003425529',
+    scope: 'store/order/created',
+    data: {
+      type: 'order',
+      id: 2,
+    },
+  },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await bigCommerceApiService.createWebhook({
