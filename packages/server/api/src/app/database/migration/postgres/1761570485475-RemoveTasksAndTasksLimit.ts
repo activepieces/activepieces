@@ -10,19 +10,32 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN "tasks"
         `)
-        await queryRunner.query(`
+        const hasProjectPlan = await queryRunner.hasTable('project_plan')
+        if (hasProjectPlan) {
+            await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "tasks"
         `)
-        await queryRunner.query(`
+
+        }
+
+        const hasPlatformAnalyticsReport = await queryRunner.hasTable('platform_analytics_report')
+        if (hasPlatformAnalyticsReport) {
+            await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "tasksUsage"
         `)
-        await queryRunner.query(`
+        }
+
+        const hasPlatformPlan = await queryRunner.hasTable('platform_plan')
+        if (hasPlatformPlan) {
+            await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "tasksLimit"
         `)
-        await queryRunner.query(`
+            await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ALTER COLUMN "stripeBillingCycle" DROP DEFAULT
         `)
+
+        }
         await queryRunner.query(`
             ALTER TABLE "flow"
             ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
@@ -33,23 +46,35 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
         await queryRunner.query(`
             ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
         `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_plan"
-            ALTER COLUMN "stripeBillingCycle"
-            SET DEFAULT 'monthly'
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_plan"
-            ADD "tasksLimit" integer
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_analytics_report"
-            ADD "tasksUsage" jsonb NOT NULL
-        `)
-        await queryRunner.query(`
+
+        const hasPlatformPlan = await queryRunner.hasTable('platform_plan')
+        if (hasPlatformPlan) {
+            await queryRunner.query(`
+                ALTER TABLE "platform_plan"
+                ALTER COLUMN "stripeBillingCycle"
+                SET DEFAULT 'monthly'
+            `)
+            await queryRunner.query(`
+                ALTER TABLE "platform_plan"
+                ADD "tasksLimit" integer
+            `)
+        }
+        const hasProjectPlan = await queryRunner.hasTable('project_plan')
+        if (hasProjectPlan) {
+
+            await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD "tasks" integer
         `)
+        }
+
+        const hasPlatformAnalyticsReport = await queryRunner.hasTable('platform_analytics_report')
+        if (hasPlatformAnalyticsReport) {
+            await queryRunner.query(`
+                ALTER TABLE "platform_analytics_report"
+                ADD "tasksUsage" jsonb NOT NULL
+            `)
+        }
         await queryRunner.query(`
             ALTER TABLE "flow_run"
             ADD "tasks" integer
