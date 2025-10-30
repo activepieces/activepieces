@@ -5,6 +5,7 @@ import {
   CornerUpLeft,
   Download,
   Import,
+  Link2,
   Pencil,
   Share2,
   Trash2,
@@ -24,6 +25,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
+import { SetWebhookIdDialog } from '@/features/flows/components/set-webhook-id-dialog';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
@@ -54,6 +56,7 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onWebhookIdUpdate?: () => void;
   insideBuilder: boolean;
 }
 
@@ -66,6 +69,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onMoveTo,
   onDuplicate,
   onDelete,
+  onWebhookIdUpdate,
   insideBuilder,
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -259,6 +263,23 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               <span>{isExportPending ? t('Exporting') : t('Export')}</span>
             </div>
           </DropdownMenuItem>
+        )}
+        {!readonly && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <SetWebhookIdDialog flow={flow} onUpdate={() => onWebhookIdUpdate?.()}>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                disabled={!userHasPermissionToUpdateFlow}
+              >
+                <div className="flex cursor-pointer flex-row gap-2 items-center">
+                  <Link2 className="h-4 w-4" />
+                  <span>{t('Set Webhook ID')}</span>
+                </div>
+              </DropdownMenuItem>
+            </SetWebhookIdDialog>
+          </PermissionNeededTooltip>
         )}
         {!embedState.isEmbedded && (
           <ShareTemplateDialog flowId={flow.id} flowVersionId={flowVersion.id}>

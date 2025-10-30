@@ -10,7 +10,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 displayName: flow.version.displayName,
                 projectId,
             },
-            externalId: flow.externalId,
+            externalId: flow.externalId ?? undefined,
         })
         return this.updateFlowInProject(createdFlow, flow, projectId)
     },

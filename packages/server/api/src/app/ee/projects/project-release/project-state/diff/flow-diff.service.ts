@@ -13,6 +13,7 @@ export const flowDiffService = {
 
 async function findFlowsToCreate({ newState, currentState }: DiffParams): Promise<ProjectOperation[]> {
     return newState.flows.filter((newFlow) => {
+        if (!newFlow.externalId) return true
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, newFlow.externalId)
         return isNil(flow)
     }).map((flowState) => ({
@@ -33,11 +34,13 @@ async function findFlowsToDelete({ newState, currentState }: DiffParams): Promis
 
 async function findFlowsToUpdate({ newState, currentState }: DiffParams): Promise<ProjectOperation[]> {
     const newStateFiles = newState.flows.filter((state) => {
+        if (!state.externalId) return false
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.externalId)
         return !isNil(flow)
     })
 
     const operations = await Promise.all(newStateFiles.map(async (flowFromNewState) => {
+        if (!flowFromNewState.externalId) return null
         const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.externalId)
         assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.externalId}`)
         const flowChanged = await isFlowChanged(os, flowFromNewState)

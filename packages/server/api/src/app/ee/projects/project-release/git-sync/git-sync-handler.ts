@@ -22,7 +22,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             
 
             for (const flow of flows) {
-                const flowName = flow.externalId
+                const flowName = flow.externalId || flow.id
                 await gitSyncHelper(log).upsertFlowToGit({
                     fileName: flowName,
                     flow,
@@ -145,7 +145,7 @@ function listFlowsByExternalIds(log: FastifyBaseLogger, projectId: string, exter
         name: undefined,
         connectionExternalIds: undefined,
         versionState: FlowVersionState.LOCKED,
-    }).then((page) => page.data.filter((flow) => externalIds.includes(flow.externalId)))
+    }).then((page) => page.data.filter((flow) => flow.externalId && externalIds.includes(flow.externalId)))
 }
 
 type FlowOperationParams = {

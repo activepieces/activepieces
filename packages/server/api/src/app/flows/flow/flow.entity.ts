@@ -45,7 +45,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         },
         externalId: {
             type: String,
-            nullable: false,
+            nullable: true,
         },
         publishedVersionId: {
             ...ApIdSchema,
@@ -66,6 +66,16 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         {
             name: 'idx_flow_folder_id',
             columns: ['folderId'],
+            unique: false,
+        },
+        {
+            name: 'idx_flow_external_id',
+            columns: ['externalId'],
+            unique: false,
+        },
+        {
+            name: 'idx_flow_external_id_project_id',
+            columns: ['externalId', 'projectId'],
             unique: false,
         },
     ],

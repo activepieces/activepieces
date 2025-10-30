@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
@@ -31,6 +32,7 @@ const removeAuthFromProps = (
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const { pieceModel } = useStepSettingsContext();
+  const flow = useBuilderStateContext((state) => state.flow);
 
   const actionName = (props.step.settings as PieceActionSettings).actionName;
   const selectedAction = actionName
@@ -61,8 +63,11 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   );
 
   const { data: frontendUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
+  const { data: environmentName } = flagsHooks.useFlag<string>(ApFlagId.ENVIRONMENT_NAME);
+
+  const webhookIdentifier = (flow as any)?.externalId || 'SET_EXTERNAL_ID_FOR_FLOW';
   const markdownVariables = {
-    webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
+    webhookUrl: `${webhookPrefixUrl}/${environmentName || 'default'}/${webhookIdentifier}`,
     formUrl: `${frontendUrl}forms/${props.flowId}`,
     chatUrl: `${frontendUrl}chats/${props.flowId}`,
     pausedFlowTimeoutDays: pausedFlowTimeoutDays?.toString() ?? '',

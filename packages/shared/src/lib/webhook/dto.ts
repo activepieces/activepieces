@@ -6,3 +6,10 @@ export const WebhookUrlParams = Type.Object({
 })
 
 export type WebhookUrlParams = Static<typeof WebhookUrlParams>
+
+export const WebhookUrlParamsWithEnvironment = Type.Object({
+    environment: Type.String(),
+    identifier: Type.String(),
+})
+
+export type WebhookUrlParamsWithEnvironment = Static<typeof WebhookUrlParamsWithEnvironment>
