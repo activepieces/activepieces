@@ -39,6 +39,7 @@ export const workerSocket = (log: FastifyBaseLogger) => ({
                         data,
                         error,
                     })
+                    throw error
                 }
             }
         }
