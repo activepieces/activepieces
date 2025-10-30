@@ -26,7 +26,7 @@ export const mergePdfs = createAction({
   },
   async run(context) {
     try {
-      let { pdfFiles, outputFileName } = context.propsValue;
+      const { pdfFiles, outputFileName } = context.propsValue;
       
       // pdfFiles is already an array from Property.Array
       
@@ -46,7 +46,7 @@ export const mergePdfs = createAction({
 
         // Handle PDF files only
         let fileData: Buffer;
-        let fileName = file.filename || file.name || `file-${i}.pdf`;
+        const fileName = file.filename || file.name || `file-${i}.pdf`;
 
         // Validate it's a PDF file
         if (fileName && !fileName.toLowerCase().endsWith('.pdf')) {
