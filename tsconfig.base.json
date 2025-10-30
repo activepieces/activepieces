@@ -682,6 +682,9 @@
       "@activepieces/piece-medullar": [
         "packages/pieces/community/medullar/src/index.ts"
       ],
+      "@activepieces/piece-meister-task": [
+        "packages/pieces/community/meister-task/src/index.ts"
+      ],
       "@activepieces/piece-mem": ["packages/pieces/community/mem/src/index.ts"],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
@@ -991,7 +994,7 @@
       "@activepieces/piece-simpliroute": [
         "packages/pieces/community/simpliroute/src/index.ts"
       ],
-      "@activepieces/piece-simplybookme":[
+      "@activepieces/piece-simplybookme": [
         "packages/pieces/community/simplybookme/src/index.ts"
       ],
       "@activepieces/piece-sitespeakai": [
