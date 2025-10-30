@@ -5,7 +5,7 @@ import { meisterTaskCommon } from '../common/common';
 const TRIGGER_NAME = 'new_person';
 const KEY = `${TRIGGER_NAME}_webhook_id`;
 
-export const newPersonTrigger = createTrigger({
+export const newPerson = createTrigger({
   auth: meistertaskAuth,
   name: 'new_person',
   displayName: 'New Person',

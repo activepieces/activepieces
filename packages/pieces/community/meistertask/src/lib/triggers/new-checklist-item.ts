@@ -5,7 +5,7 @@ import { meisterTaskCommon } from '../common/common';
 const TRIGGER_NAME = 'new_checklist_item';
 const KEY = `${TRIGGER_NAME}_webhook_id`;
 
-export const newChecklistItemTrigger = createTrigger({
+export const newChecklistItem = createTrigger({
   auth: meistertaskAuth,
   name: 'new_checklist_item',
   displayName: 'New Checklist Item',
