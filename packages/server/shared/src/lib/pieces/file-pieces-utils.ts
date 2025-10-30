@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
@@ -9,8 +9,11 @@ import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
 import { exceptionHandler } from '../exception-handler'
 import { ApLock, memoryLock } from '../memory-lock'
+import chalk from 'chalk'
+import { isDeepStrictEqual } from 'node:util'
 
 const pieceCache: Record<string, PieceMetadata | null> = {}
+const pieceDependenciesCacheFilePath = join(cwd(), "cache", "piece-dependencies.json")
 
 export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
     async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
@@ -41,6 +44,92 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
     async function getProjectJsonFromFolderPath(folderPath: string): Promise<string> {
         return join(folderPath, 'project.json')
+    }
+
+    async function getPieceDependencies(folderPath: string): Promise<Record<string, string> | null> {
+        try {
+            const packageJson =  await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
+            if (!packageJson.dependencies) {
+                return null
+            }
+            return packageJson.dependencies
+        }
+        catch (e) {
+            return null
+        }
+    }
+
+    async function cachePieceDependencies(pieceName: string, dependencies: Record<string, string>): Promise<void> {
+        let currentCache: Record<string, Record<string, string>> = {}
+        try {
+            currentCache = await readFile(pieceDependenciesCacheFilePath, 'utf-8').then(JSON.parse)
+        }
+        catch (e) {
+            const err = e as { code: string } 
+            if (!err.code || err.code !== 'ENOENT') { // json parse error
+                log.error({
+                    name: 'cachePieceDependencies',
+                    message: JSON.stringify(e),
+                }, 'Error getting cached piece dependencies')
+            }
+        }
+
+        await writeFile(pieceDependenciesCacheFilePath, JSON.stringify({
+            ...currentCache,
+            [pieceName]: dependencies
+        }), 'utf-8')
+    }
+
+    async function getCachedPieceDependencies(pieceName: string): Promise<Record<string, string> | null> {
+        let currentCache: Record<string, Record<string, string>> = {}
+        try {
+            currentCache = await readFile(pieceDependenciesCacheFilePath, 'utf-8').then(JSON.parse)
+        }
+        catch (e) {
+            log.error({
+                name: 'getCachedPieceDependencies',
+                message: JSON.stringify(e),
+            }, 'Error getting cached piece dependencies')
+            return null
+        }
+        return currentCache[pieceName] ?? null
+    }
+
+    async  function checkPieceDependenciesUpdated(folderPath: string, pieceName: string): Promise<boolean> {
+        const cachedDependencies = await getCachedPieceDependencies(pieceName)
+        const pieceDependencies = await getPieceDependencies(folderPath)
+        return !isDeepStrictEqual(cachedDependencies, pieceDependencies)
+    }
+
+    async function installPiecesDependencies(packageNames: string[], cmdRunner: (cmd: string) => Promise<void>): Promise<void> {
+        const deps = new Set<string>()
+        let shouldIntall = false // if there is at least one package with updated deps install should be called
+
+        for (const packageName of packageNames) {
+            const folderPath = await findPieceDirectoryByFolderName(packageName)
+            if (!folderPath) continue
+
+            const pieceDependencies = await getPieceDependencies(folderPath)
+            if (!pieceDependencies) continue
+
+            Object.keys(pieceDependencies).forEach((key) => deps.add(`${key}@${pieceDependencies[key as keyof typeof pieceDependencies]}`))
+
+            const isDependenciesUpdated = await checkPieceDependenciesUpdated(folderPath, packageName)
+            if (!isDependenciesUpdated) continue
+
+            await cachePieceDependencies(packageName, pieceDependencies)
+            shouldIntall = true
+        }
+
+        if (shouldIntall && deps.size > 0) {
+            log.info(chalk.yellow(`Installing Pieces Dependencies: ${Array.from(deps).join(' ')}`))
+            await cmdRunner(`npm install ${Array.from(deps).join(' ')} --no-save`)
+            return
+        }
+
+        if (deps.size > 0) {
+            log.info(chalk.yellow(`Skipped installation of Pieces Dependencies: ${Array.from(deps).join(' ')}`))
+        }
     }
 
     async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
@@ -162,5 +251,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         clearPieceCache,
         getPackageNameFromFolderPath,
         getProjectJsonFromFolderPath,
+        installPiecesDependencies
     }
 }
