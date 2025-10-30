@@ -6,6 +6,7 @@ import {
 	issueTypeIdProp,
 	createPropertyDefinition,
 	transformCustomFields,
+	getAdfFieldsProp,
 } from '../common/props';
 import { jiraApiCall, jiraPaginatedApiCall } from '../common';
 import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
@@ -59,9 +60,10 @@ export const createIssueAction = createAction({
 				return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
 			},
 		}),
+    adfFields: getAdfFieldsProp(),
 	},
 	async run(context) {
-		const { projectId, issueTypeId } = context.propsValue;
+		const { projectId, issueTypeId, adfFields } = context.propsValue;
 		const inputIssueFields = context.propsValue.issueFields ?? {};
 
 		if (isNil(projectId) || isNil(issueTypeId)) {
@@ -75,7 +77,8 @@ export const createIssueAction = createAction({
 			propertyName: 'fields',
 		});
 
-		const formattedFields = formatIssueFields(issueTypeFields, inputIssueFields);
+		const formattedAdfFields = adfFields || [];
+    const formattedFields = formatIssueFields(issueTypeFields, inputIssueFields, formattedAdfFields);
 
 		const response = await jiraApiCall<{ id: string; key: string }>({
 			auth: context.auth,

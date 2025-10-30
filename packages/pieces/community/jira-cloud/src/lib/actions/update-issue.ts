@@ -6,6 +6,7 @@ import {
 	issueIdOrKeyProp,
 	issueStatusIdProp,
 	transformCustomFields,
+	getAdfFieldsProp,
 } from '../common/props';
 import { jiraApiCall } from '../common';
 import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
@@ -73,9 +74,10 @@ export const updateIssueAction = createAction({
 				return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
 			},
 		}),
+		adfFields: getAdfFieldsProp(),
 	},
 	async run(context) {
-		const { issueId, statusId } = context.propsValue;
+		const { issueId, statusId, adfFields } = context.propsValue;
 		const inputIssueFields = context.propsValue.issueFields ?? {};
 
 		if (isNil(issueId)) {
@@ -103,7 +105,8 @@ export const updateIssueAction = createAction({
 
 		const flattenedFields = Object.values(issueTypeFields.fields);
 
-		const formattedFields = formatIssueFields(flattenedFields, inputIssueFields);
+		const formattedAdfFields = adfFields || [];
+		const formattedFields = formatIssueFields(flattenedFields, inputIssueFields, formattedAdfFields);
 
 		const response = await jiraApiCall({
 			auth: context.auth,

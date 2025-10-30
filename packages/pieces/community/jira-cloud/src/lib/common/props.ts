@@ -534,6 +534,27 @@ export async function createPropertyDefinition(
 	}
 }
 
+export function getAdfFieldsProp() {
+	return Property.MultiSelectDropdown({
+		displayName: 'Fields in JSON Atlassian Document Format',
+		description: 'https://developer.atlassian.com/cloud/jira/platform/apis/document/structure',
+		required: false,
+		refreshers: [],
+		options: async () => {
+			// TODO: support other fields dynamically
+			return {
+				disabled: false,
+				options: [
+					{
+						label: 'Description',
+						value: 'description',
+					}
+				],
+			};
+		},
+	});
+}
+
 function parseArray(value: Array<string> | string): Array<string> {
 	try {
 		if (Array.isArray(value)) {
@@ -557,6 +578,7 @@ function parseArray(value: Array<string> | string): Array<string> {
 export function formatIssueFields(
 	fieldsMetadata: IssueFieldMetaData[],
 	fieldsInput: Record<string, any>,
+  adfFields: string[],
 ) {
 	const fieldsOutput: Record<string, any> = {};
 
@@ -621,16 +643,20 @@ export function formatIssueFields(
 					field.schema.custom?.includes('textarea') || ['description', 'environment'].includes(key);
 
 				if (isCustomTextArea) {
-					fieldsOutput[key] = {
-						type: 'doc',
-						version: 1,
-						content: [
-							{
-								type: 'paragraph',
-								content: [{ text: fieldInputValue, type: 'text' }],
-							},
-						],
-					};
+          if (adfFields.includes(key)) {
+            fieldsOutput[key] = JSON.parse(fieldInputValue);
+          } else {
+            fieldsOutput[key] = {
+              type: 'doc',
+              version: 1,
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ text: fieldInputValue, type: 'text' }],
+                },
+              ],
+            };
+          }
 				} else {
 					fieldsOutput[key] = fieldInputValue;
 				}
