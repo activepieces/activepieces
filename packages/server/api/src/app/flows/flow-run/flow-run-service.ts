@@ -210,7 +210,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async updateRun({
         flowRunId,
         status,
-        tasks,
         projectId,
         tags,
         duration,
@@ -221,7 +220,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         log.info({
             runId: flowRunId,
             status,
-            tasks,
             duration,
             failedStepName,
         }, '[FlowRunService#updateRun]')
@@ -233,7 +231,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             logsFileId,
             projectId,
             tags,
-            ...spreadIfDefined('tasks', tasks),
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
             ...spreadIfDefined('pauseMetadata', pauseMetadata),
             finishTime: isFlowRunStateTerminal({
@@ -563,7 +560,6 @@ type UpdateRunParams = {
     flowRunId: FlowRunId
     projectId: string
     status: FlowRunStatus
-    tasks: number | undefined
     duration: number | undefined
     pauseMetadata?: PauseMetadata
     tags: string[]
