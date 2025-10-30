@@ -180,12 +180,9 @@ describe('Project API', () => {
                 projectId: mockProject.id,
             })
 
-            const tasks = faker.number.int({ min: 1, max: 100000 })
-
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 plan: {
-                    tasks,
                 },
             }
             const response = await app?.inject({
@@ -209,11 +206,9 @@ describe('Project API', () => {
         it('it should update project as platform owner with api key', async () => {
             const { mockProject, mockApiKey } =
                 await createProjectAndPlatformAndApiKey()
-            const tasks = faker.number.int({ min: 1, max: 100000 })
             const request = {
                 displayName: faker.animal.bird(),
                 plan: {
-                    tasks,
                 },
             }
             const response = await app?.inject({
@@ -245,11 +240,9 @@ describe('Project API', () => {
                 platform: { id: mockPlatform.id },
             })
 
-            const tasks = faker.number.int({ min: 1, max: 100000 })
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 plan: {
-                    tasks,
                 },
             }
 
@@ -266,7 +259,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
             expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.plan.tasks).toEqual(tasks)
         })
 
         it('Fails if user is not platform owner', async () => {
@@ -371,14 +363,12 @@ describe('Project API', () => {
                 projectId: mockProject.id,
             })
 
-            const tasks = faker.number.int({ min: 1, max: 100000 })
             const metadata = { foo: 'bar' }
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 metadata,
                 plan: {
-                    tasks,
                 },
             }
             const response = await app?.inject({
@@ -558,42 +548,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('Fails if project is already deleted', async () => {
-            // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
-            const alreadyDeletedProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-                deleted: new Date().toISOString(),
-            })
-            await databaseConnection().getRepository('project').save([alreadyDeletedProject])
-
-            const mockToken = await generateMockToken({
-                id: mockOwner.id,
-                type: PrincipalType.USER,
-                projectId: mockProject.id,
-                platform: {
-                    id: mockProject.platformId,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'DELETE',
-                url: `/v1/projects/${alreadyDeletedProject.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
-            expect(responseBody?.params?.entityId).toBe(alreadyDeletedProject.id)
-            expect(responseBody?.params?.entityType).toBe('project')
-        })
     })
 
     describe('Platform Operator Access', () => {

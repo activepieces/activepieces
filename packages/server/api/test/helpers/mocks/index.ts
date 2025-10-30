@@ -157,7 +157,6 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
-        tasks: plan?.tasks ?? 0,
     }
 }
 
@@ -207,7 +206,6 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 
 export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): PlatformPlan => {
     return {
-        eligibleForTrial: platformPlan?.eligibleForTrial ?? null,
         stripeBillingCycle: platformPlan?.stripeBillingCycle ?? BillingCycle.MONTHLY,
         id: platformPlan?.id ?? apId(),
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
@@ -220,7 +218,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
-        tasksLimit: platformPlan?.tasksLimit ?? 0,
         aiCreditsOverageLimit: platformPlan?.aiCreditsOverageLimit ?? 0,
         aiCreditsOverageState: platformPlan?.aiCreditsOverageState ?? AiOverageState.ALLOWED_BUT_OFF,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
@@ -475,7 +472,6 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         flowVersionId: flowRun?.flowVersionId ?? apId(),
         flowVersion: flowRun?.flowVersion,
         logsFileId: flowRun?.logsFileId ?? null,
-        tasks: flowRun?.tasks,
         status: flowRun?.status ?? faker.helpers.enumValue(FlowRunStatus),
         startTime: flowRun?.startTime ?? faker.date.recent().toISOString(),
         finishTime: flowRun?.finishTime ?? faker.date.recent().toISOString(),
@@ -617,7 +613,7 @@ export const createMockSolutionAndSave = async ({ projectId, platformId, userId 
     await databaseConnection().getRepository('field').save([field])
     await databaseConnection().getRepository('record').save([record])
     await databaseConnection().getRepository('cell').save([cell])
-    await databaseConnection().getRepository('connection').save([connection])
+    await databaseConnection().getRepository('app_connection').save([connection])
     await databaseConnection().getRepository('flow').save([flow])
     await databaseConnection().getRepository('flow_version').save([flowVersion])
     await databaseConnection().getRepository('flow_run').save([flowRun])
@@ -626,7 +622,7 @@ export const createMockSolutionAndSave = async ({ projectId, platformId, userId 
 
 export const checkIfSolutionExistsInDb = async (solution: Solution): Promise<boolean> => {
     const table = await databaseConnection().getRepository('table').findOneBy({ id: solution.table.id })
-    const connection = await databaseConnection().getRepository('connection').findOneBy({ id: solution.connection.id })
+    const connection = await databaseConnection().getRepository('app_connection').findOneBy({ id: solution.connection.id })
     const flow = await databaseConnection().getRepository('flow').findOneBy({ id: solution.flow.id })
     const flowRun = await databaseConnection().getRepository('flow_run').findOneBy({ id: solution.flowRun.id })
     const flowVersion = await databaseConnection().getRepository('flow_version').findOneBy({ id: solution.flowVersion.id })
@@ -666,7 +662,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
-        filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+        filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
     
     await databaseConnection().getRepository('platform').save(mockPlatform)

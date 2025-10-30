@@ -44,12 +44,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         await flowRunService(request.log).updateRun({
             flowRunId: runId,
             status: runDetails.status,
-            tasks: runDetails.tasks,
             duration: runDetails.duration,
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
             failedStepName,
             logsFileId,
+            pauseMetadata: 'pauseMetadata' in runDetails ? runDetails.pauseMetadata : undefined,
         })
 
         if (!isNil(stepNameToTest)) {

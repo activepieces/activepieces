@@ -2,7 +2,6 @@ import {
     ActivepiecesError,
     ApEdition,
     ApId,
-    assertEqual,
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
@@ -18,7 +17,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { transaction } from '../core/db/transaction'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
@@ -30,10 +29,11 @@ import { platformRepo, platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-    app.post('/:id', UpdatePlatformRequest, async (req ) => {
+    app.post('/:id', UpdatePlatformRequest, async (req, res) => {
+        await platformMustBeOwnedByCurrentUser.call(app, req, res)
+        await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
         const { smtp } = req.body
-        if (smtp) { 
+        if (smtp) {
             await smtpEmailSender(req.log).validateOrThrow(smtp)
         }
 
@@ -45,16 +45,21 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
-        assertEqual(
-            req.principal.platform.id,
-            req.params.id,
-            'userPlatformId',
-            'paramId',
-        )
-        return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
+        if (req.principal.platform.id !== req.params.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are not authorized to access this platform',
+                },
+            })
+        }
+        return platformService.getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
     })
+
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
+            await platformMustBeOwnedByCurrentUser.call(app, req, res)
+            await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
             assertNotNullOrUndefined(req.principal.platform.id, 'platformId')
             const isCloudNonEnterprisePlan = await platformPlanService(req.log).isCloudNonEnterprisePlan(req.params.id)
             if (!isCloudNonEnterprisePlan) {
@@ -84,11 +89,18 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                     id: user.id,
                     platformId: req.params.id,
                 })
-                await userIdentityRepository(entityManager).delete({
-                    id: user.identityId,
+                const usersUsingIdentity = await userRepo(entityManager).find({
+                    where: {
+                        identityId: user.identityId,
+                    },
                 })
+                if (usersUsingIdentity.length === 0) {
+                    await userIdentityRepository(entityManager).delete({
+                        id: user.identityId,
+                    })
+                }
             })
-        
+
             return res.status(StatusCodes.NO_CONTENT).send()
         })
     }

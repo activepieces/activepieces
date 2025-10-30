@@ -17,7 +17,7 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeFlow]')
-        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.projectId)
+        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.projectId, operation.platformId)
 
         const input: ExecuteFlowOperation = {
             ...operation,
@@ -41,6 +41,7 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
             flowVersion: operation.flowVersion,
         })
         const input: ExecuteTriggerOperation<TriggerHookType> = {
+            platformId: operation.platformId,
             projectId: operation.projectId,
             hookType: operation.hookType,
             webhookUrl: operation.webhookUrl,
@@ -146,7 +147,7 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, projectId: string): Promise<void> {
+async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, projectId: string, platformId: string): Promise<void> {
     const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
     const pieces = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE).map(async (step) => {
         const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
@@ -162,7 +163,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
     await executionFiles(log).provision({
         pieces: await Promise.all(pieces),
         codeSteps,
-        customPiecesPath: executionFiles(log).getCustomPiecesPath({ projectId }),
+        customPiecesPath: executionFiles(log).getCustomPiecesPath({ platformId }),
     })
 }
 
