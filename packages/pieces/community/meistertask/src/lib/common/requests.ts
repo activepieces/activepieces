@@ -18,7 +18,7 @@ async function fireHttpRequest({
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        Authorization: auth.access_token,
+        Authorization: `Bearer ${auth.access_token}`,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
@@ -191,6 +191,13 @@ export const meisterTaskApiService = {
     return await fireHttpRequest({
       method: HttpMethod.GET,
       path: `/api/persons/${personId}`,
+      auth,
+    });
+  },
+  async fetchMe({ auth }: { auth: OAuth2PropertyValue }) {
+    return await fireHttpRequest({
+      method: HttpMethod.GET,
+      path: '/api/persons/me',
       auth,
     });
   },
