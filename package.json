@@ -155,6 +155,7 @@
     "decompress": "4.2.1",
     "deep-equal": "2.2.2",
     "deepmerge-ts": "7.1.0",
+    "dotenv": "8.6.0",
     "drip-nodejs": "3.1.2",
     "embla-carousel-react": "8.1.8",
     "eventsource-parser": "3.0.2",
