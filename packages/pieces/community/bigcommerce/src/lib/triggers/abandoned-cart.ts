@@ -12,7 +12,17 @@ export const abandonedCart = createTrigger({
   displayName: 'Abandoned Cart',
   description: 'Triggers when a cart is abandoned',
   props: {},
-  sampleData: {},
+  sampleData:{
+    producer: 'stores/dxqdddcaklwsso',
+    hash: '3610addd127e330084ddddd7ddd09b78abfd1a85',
+    created_at: 1761809622,
+    store_id: '1003425529',
+    scope: 'store/cart/abandoned',
+    data: {
+      type: 'cart',
+      id: 'ss-598f-4c95-813b-0ess950562770d',
+    },
+  },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await bigCommerceApiService.createWebhook({

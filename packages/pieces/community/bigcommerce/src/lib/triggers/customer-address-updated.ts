@@ -12,7 +12,17 @@ export const customerAddressUpdated = createTrigger({
   displayName: 'Customer Address Updated',
   description: 'Triggers when a new customer address is updated',
   props: {},
-  sampleData: {},
+  sampleData:{
+    producer: 'stores/xqcaklwsso',
+    hash: 'd7b899890f5e0e98a3e074f018b14b07d5d89360',
+    created_at: 1761808595,
+    store_id: '1003425529',
+    scope: 'store/customer/address/updated',
+    data: {
+      type: 'customer',
+      id: 2,
+    },
+  },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await bigCommerceApiService.createWebhook({
