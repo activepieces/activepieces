@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.71.0",
+  "version": "0.71.0-rc.skip-piece-check",
   "rcVersion": "0.71.0-rc.skip-piece-check",
   "scripts": {
     "prepare": "husky install",
