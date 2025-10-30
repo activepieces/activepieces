@@ -1,4 +1,4 @@
-import { Principal, PrincipalType, StepRunResponse, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { EmitTestStepProgressRequest, Principal, PrincipalType, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../core/websockets.service'
 import { flowWorkerController } from '../workers/worker-controller'
@@ -22,19 +22,15 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
         }
     })
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS, (socket) => {
-        return async (data: StepRunResponse & { projectId: string }, principal: Principal, callback?: (data: unknown) => void): Promise<void> => {
+        return async (data: EmitTestStepProgressRequest, _principal: Principal, callback?: (data?: unknown) => void): Promise<void> => {
             socket.to(data.projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, data)
-            if (callback) {
-                callback({ success: true })
-            }
+            callback?.()
         }
     })
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.EMIT_TEST_STEP_FINISHED, (socket) => {
-        return async (data: StepRunResponse & { projectId: string }, principal: Principal, callback?: (data: unknown) => void): Promise<void> => {
+        return async (data: EmitTestStepProgressRequest, _principal: Principal, callback?: (data?: unknown) => void): Promise<void> => {
             socket.to(data.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, data)
-            if (callback) {
-                callback({ success: true })
-            }
+            callback?.()
         }
     })
 

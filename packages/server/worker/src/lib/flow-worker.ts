@@ -1,18 +1,22 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-shared'
 import { WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
-import { runsMetadataQueue } from './compute/flow-runs-queue'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
-import { workerDistributedLock, workerRedisConnections } from './utils/worker-redis'
+import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
 
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
 let socket: Socket
+
+export const runsMetadataQueue = runsMetadataQueueFactory({ 
+    createRedisConnection: workerRedisConnections.create,
+    distributedStore: workerDistributedStore,
+})
 
 export const workerSocket = (log: FastifyBaseLogger) => ({
     emitWithAck: async (event: string, data: unknown, options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number }): Promise<void> => {
@@ -83,7 +87,7 @@ export const flowWorker = (log: FastifyBaseLogger): {
             const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
             await workerMachine.init(response, log)
             await jobQueueWorker(log).start(workerToken)
-            await runsMetadataQueue(log).init()
+            await initRunsMetadataQueue(log)
         })
 
         socket.on('disconnect', async () => {
@@ -138,6 +142,10 @@ export const flowWorker = (log: FastifyBaseLogger): {
             socket.disconnect()
         }
 
+        if (runsMetadataQueue.get()) {
+            await runsMetadataQueue.get().close()
+        }
+
         await workerRedisConnections.destroy()
         await workerDistributedLock(log).destroy()
         clearTimeout(heartbeatInterval)
@@ -148,3 +156,15 @@ export const flowWorker = (log: FastifyBaseLogger): {
     },
 })
 
+async function initRunsMetadataQueue(log: FastifyBaseLogger): Promise<void> {
+    const settings = workerMachine.getSettings()
+    const config: RunsMetadataQueueConfig = {
+        isOtelEnabled: settings.OTEL_ENABLED ?? false,
+        redisFailedJobRetentionDays: settings.REDIS_FAILED_JOB_RETENTION_DAYS,
+        redisFailedJobRetentionMaxCount: settings.REDIS_FAILED_JOB_RETENTION_MAX_COUNT,
+    }
+    await runsMetadataQueue.init(config)
+    log.info({
+        message: 'Initialized runs metadata queue for worker',
+    }, '[flowWorker#init]')
+}

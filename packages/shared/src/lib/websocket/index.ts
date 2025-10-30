@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { StepRunResponse } from '../flows/sample-data'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -32,6 +33,8 @@ export const TodoActivityCreated = Type.Object({
 })
 
 export type TodoActivityCreated = Static<typeof TodoActivityCreated>
+
+export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
 
 export enum WebsocketServerEvent {
     TEST_FLOW_RUN = 'TEST_FLOW_RUN',

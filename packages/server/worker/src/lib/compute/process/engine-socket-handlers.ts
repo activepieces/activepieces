@@ -1,9 +1,8 @@
 import { EngineHttpResponse, FlowRunResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, spreadIfDefined, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { workerSocket } from '../../flow-worker'
+import { runsMetadataQueue, workerSocket } from '../../flow-worker'
 import { engineResponsePublisher } from '../../utils/engine-response-publisher'
-import { runsMetadataQueue } from '../flow-runs-queue'
 
 export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
     sendFlowResponse: async (request: SendFlowResponseRequest): Promise<void> => {
@@ -26,7 +25,7 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
             )
         }
 
-        await runsMetadataQueue(log).add({
+        await runsMetadataQueue.add({
             id: runId,
             status: runDetails.status,
             failedStepName,
