@@ -13,14 +13,15 @@ export const updateTask = createAction({
     props: {
         project_id: meisterTaskProps.projectId(true),
         task_id: meisterTaskProps.taskId(true),
+
         name: Property.ShortText({
             displayName: 'Task Name',
             description: 'The new name or title of the task.',
             required: false,
         }),
-        description: Property.LongText({
-            displayName: 'Description',
-            description: 'The new description or details of the task.',
+        notes: Property.LongText({
+            displayName: 'Notes (Description)',
+            description: 'The new notes or description for the task.',
             required: false,
         }),
         status: Property.StaticDropdown({
@@ -29,33 +30,31 @@ export const updateTask = createAction({
             required: false,
             options: {
                 options: [
-                    { label: 'Open', value: 'open' },
-                    { label: 'In Progress', value: 'in_progress' },
-                    { label: 'Completed', value: 'completed' },
-                    { label: 'Paused', value: 'paused' },
-                    { label: 'Archived', value: 'archived' },
-                    { label: 'Trashed', value: 'trashed' },
+                    { label: 'Open', value: 1 },
+                    { label: 'Completed', value: 2 },
+                    { label: 'Trashed', value: 8 },
+                    { label: 'Completed & Archived', value: 18 },
                 ]
             }
         }),
-        due_date: Property.ShortText({
+        due: Property.ShortText({
             displayName: 'Due Date (ISO 8601)',
             description: 'The new due date (e.g., "2025-11-15T17:00:00Z").',
             required: false,
         }),
-        assignee_id: meisterTaskProps.assigneeId(false),
+        assigned_to_id: meisterTaskProps.assigneeId(false),
     },
 
     async run(context) {
-        const { task_id, name, description, status, due_date, assignee_id } = context.propsValue;
+        const { task_id, name, notes, status, due, assigned_to_id } = context.propsValue;
         const client = new MeisterTaskClient(context.auth);
 
         const body: Record<string, unknown> = {};
         if (name) body['name'] = name;
-        if (description) body['description'] = description;
+        if (notes) body['notes'] = notes;
         if (status) body['status'] = status;
-        if (due_date) body['due_date'] = due_date;
-        if (assignee_id) body['assignee_id'] = assignee_id;
+        if (due) body['due'] = due;
+        if (assigned_to_id) body['assigned_to_id'] = assigned_to_id;
 
         return await client.makeRequest(
             HttpMethod.PUT,

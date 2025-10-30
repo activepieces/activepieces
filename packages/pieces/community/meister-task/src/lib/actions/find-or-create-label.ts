@@ -17,10 +17,25 @@ export const findOrCreateLabel = createAction({
             description: 'The name of the label to find or create (e.g., "Urgent").',
             required: true,
         }),
-        color: Property.ShortText({
-            displayName: 'Color (Hex)',
-            description: 'The hex color code (e.g., "#FF5533"). Only used if the label needs to be created.',
+        
+        color: Property.StaticDropdown({
+            displayName: 'Color (if creating)',
+            description: 'Select a predefined color for the label (only used if the label needs to be created).',
             required: true,
+            defaultValue: "d93651",
+            options: {
+                options: [
+                    { label: "Red", value: "d93651" },
+                    { label: "Orange", value: "ff9f1a" },
+                    { label: "Yellow", value: "ffd500" },
+                    { label: "Grass Green", value: "8acc47" },
+                    { label: "Moss Green", value: "47cc8a" },
+                    { label: "Turquoise", value: "30bfbf" },
+                    { label: "Blue", value: "00aaff" },
+                    { label: "Purple", value: "8f7ee6" },
+                    { label: "Grey", value: "98aab3" },
+                ]
+            }
         }),
     },
 

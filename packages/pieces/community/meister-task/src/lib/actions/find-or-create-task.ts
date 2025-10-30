@@ -52,7 +52,7 @@ export const findOrCreateTask = createAction({
             query
         );
 
-        const exactMatch = findResponse.find(task =>
+        const exactMatch = findResponse.find(task => 
             task.name.toLowerCase() === taskName.toLowerCase()
         );
 
@@ -65,6 +65,7 @@ export const findOrCreateTask = createAction({
 
         const createBody: Record<string, unknown> = {
             name: taskName,
+            project_id: project_id,
         };
 
         if (description) createBody['description'] = description;
@@ -74,7 +75,7 @@ export const findOrCreateTask = createAction({
 
         const createResponse = await client.makeRequest<MeisterTaskTask>(
             HttpMethod.POST,
-            `/projects/${project_id}/tasks`,
+            `/tasks`,
             createBody
         );
 
