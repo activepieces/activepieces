@@ -13,7 +13,6 @@ import {
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
-    Principal,
     PrincipalType,
     RegistryPiecesRequestQuery,
     SampleDataFileType,
@@ -22,7 +21,6 @@ import {
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
-import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { flowService } from '../flows/flow/flow.service'
 import { sampleDataService } from '../flows/step-run/sample-data.service'
@@ -58,7 +56,33 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
-        return listPieces(req.query, req.log, req.principal)
+        const latestRelease = await apVersionUtil.getCurrentRelease()
+        const query = req.query
+        const includeTags = query.includeTags ?? false
+        const release = query.release ?? latestRelease
+        const edition = query.edition ?? ApEdition.COMMUNITY
+        const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
+        const projectId = [PrincipalType.UNKNOWN, PrincipalType.SERVICE].includes(req.principal.type) ? undefined : req.principal.projectId
+        const pieceMetadataSummary = await pieceMetadataService(req.log).list({
+            release,
+            includeHidden: query.includeHidden ?? false,
+            projectId,
+            platformId,
+            edition,
+            includeTags,
+            categories: query.categories,
+            searchQuery: query.searchQuery,
+            sortBy: query.sortBy,
+            orderBy: query.orderBy,
+            suggestionType: query.suggestionType,
+            locale: query.locale as LocalesEnum | undefined,
+        })
+        return pieceMetadataSummary.map((piece) => {
+            return {
+                ...piece,
+                i18n: undefined,
+            }
+        })
     })
 
     app.get(
@@ -102,13 +126,12 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.get('/registry', RegistryPiecesRequest, async (req) => {
-        const pieces = await listPieces(req.query, req.log, req.principal)
-        return pieces.map((piece) => {
-            return {
-                name: piece.name,
-                version: piece.version,
-            }
+        const pieces = await pieceMetadataService(req.log).registry({
+            release: req.query.release ?? await apVersionUtil.getCurrentRelease(),
+            edition: req.query.edition ?? ApEdition.COMMUNITY,
+            platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
         })
+        return pieces
     })
 
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync())
@@ -140,35 +163,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-}
-
-async function listPieces(query: ListPiecesRequestQuery, log: FastifyBaseLogger, principal: Principal): Promise<PieceMetadataModelSummary[]> {
-    const latestRelease = await apVersionUtil.getCurrentRelease()
-    const includeTags = query.includeTags ?? false
-    const release = query.release ?? latestRelease
-    const edition = query.edition ?? ApEdition.COMMUNITY
-    const platformId = principal.type === PrincipalType.UNKNOWN ? undefined : principal.platform.id
-    const projectId = [PrincipalType.UNKNOWN, PrincipalType.SERVICE].includes(principal.type) ? undefined : principal.projectId
-    const pieceMetadataSummary = await pieceMetadataService(log).list({
-        release,
-        includeHidden: query.includeHidden ?? false,
-        projectId,
-        platformId,
-        edition,
-        includeTags,
-        categories: query.categories,
-        searchQuery: query.searchQuery,
-        sortBy: query.sortBy,
-        orderBy: query.orderBy,
-        suggestionType: query.suggestionType,
-        locale: query.locale as LocalesEnum | undefined,
-    })
-    return pieceMetadataSummary.map((piece) => {
-        return {
-            ...piece,
-            i18n: undefined,
-        }
-    })
 }
 
 const RegistryPiecesRequest = {
