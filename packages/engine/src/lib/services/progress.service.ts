@@ -1,11 +1,12 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { ProgressUpdateError } from '../helper/execution-errors'
+import { workerService } from './worker.service'
 
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
@@ -42,16 +43,6 @@ export const progressService = {
             lastScheduledUpdateId = setTimeout(async () => {
                 await sendUpdateRunRequest(params)
             }, DEBOUNCE_THRESHOLD)
-        })
-    },
-    sendFlowResponse: async (engineConstants: EngineConstants, request: SendFlowResponseRequest): Promise<void> => {
-        await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-flow-response`).toString(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${engineConstants.engineToken}`,
-            },
-            body: JSON.stringify(request),
         })
     },
     createOutputContext: (params: CreateOutputContextParams): OutputContext => {
@@ -94,7 +85,6 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
         const runDetails = await flowExecutorContext.toResponse()
-        const runDetailsWithoutSteps = { ...runDetails, steps: undefined }
         const executionState = await logSerializer.serialize({
             executionState: {
                 steps: runDetails.steps as Record<string, StepOutput>,
@@ -106,15 +96,25 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             throw new ProgressUpdateError('Failed to upload execution state', uploadLogResponse)
         }
 
+        const failedStepName = extractFailedStepName(runDetails.steps as Record<string, StepOutput>)
+        const stepResponse = extractStepResponse({
+            steps: runDetails.steps as Record<string, StepOutput>,
+            runId: engineConstants.flowRunId,
+            stepNameToTest: engineConstants.stepNameToTest,
+        })
+        const runDetailsWithoutSteps = { ...runDetails, steps: undefined }
+
         const request: UpdateRunProgressRequest = {
             runId: engineConstants.flowRunId,
+            projectId: engineConstants.projectId,
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
             progressUpdateType: engineConstants.progressUpdateType,
-            failedStepName: extractFailedStepName(runDetails.steps as Record<string, StepOutput>),
             logsFileId: engineConstants.logsFileId,
             stepNameToTest: engineConstants.stepNameToTest,
+            failedStepName,
+            stepResponse,
         }
 
         const requestHash = crypto.createHash('sha256').update(JSON.stringify(runDetails)).digest('hex')
@@ -123,25 +123,18 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         }
 
         lastRequestHash = requestHash
-        const response = await sendProgressUpdate(params.engineConstants, request)
-        if (!response.ok) {
-            throw new ProgressUpdateError('Failed to send progress update', response)
-        }
+        await sendProgressUpdate(request)
 
     })
 }
 
-const sendProgressUpdate = async (engineConstants: EngineConstants, request: UpdateRunProgressRequest): Promise<Response> => {
-    return fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-run`).toString(), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineConstants.engineToken}`,
-        },
-        retryDelay: 4000,
-        retries: 3,
-        body: JSON.stringify(request),
-    })
+const sendProgressUpdate = async (request: UpdateRunProgressRequest): Promise<void> => {
+    try {
+        await workerService.updateRunProgress(request)
+    }
+    catch (error) {
+        throw new ProgressUpdateError('Failed to send progress update', error)
+    }
 }
 
 const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, followRedirects = true): Promise<Response> => {
@@ -163,14 +156,7 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, f
     return response
 }
 
-
-type UpdateStepProgressParams = {
-    engineConstants: EngineConstants
-    flowExecutorContext: FlowExecutorContext
-    updateImmediate?: boolean
-}
-
-export const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
+const extractFailedStepName = (steps: Record<string, StepOutput>): string | undefined => {
     if (!steps) {
         return undefined
     }
@@ -189,4 +175,34 @@ export const extractFailedStepName = (steps: Record<string, StepOutput>): string
     })
 
     return failedStep?.[0]
+}
+
+const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | undefined => {
+    if (isNil(params.stepNameToTest)) {
+        return undefined
+    }
+
+    const stepOutput = params.steps?.[params.stepNameToTest]
+    const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
+    return {
+        runId: params.runId,
+        success: isSuccess,
+        input: stepOutput?.input,
+        output: stepOutput?.output,
+        standardError: isSuccess ? '' : (stepOutput?.errorMessage as string),
+        standardOutput: '',
+    }
+}
+
+
+type UpdateStepProgressParams = {
+    engineConstants: EngineConstants
+    flowExecutorContext: FlowExecutorContext
+    updateImmediate?: boolean
+}
+
+type ExtractStepResponse = {
+    steps: Record<string, StepOutput>
+    runId: string
+    stepNameToTest?: string
 }

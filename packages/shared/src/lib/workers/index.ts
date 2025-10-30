@@ -106,6 +106,8 @@ export const WorkerSettingsResponse = Type.Object({
     REDIS_SENTINEL_ROLE: Type.Optional(Type.String()),
     REDIS_SENTINEL_HOSTS: Type.Optional(Type.String()),
     REDIS_SENTINEL_NAME: Type.Optional(Type.String()),
+    REDIS_FAILED_JOB_RETENTION_DAYS: Type.Number(),
+    REDIS_FAILED_JOB_RETENTION_MAX_COUNT: Type.Number(),
     PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
     MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
     JWT_SECRET: Type.String(),
