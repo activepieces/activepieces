@@ -2,6 +2,6 @@
   "name": "@activepieces/piece-supabase",
   "version": "0.0.19",
   "dependencies": {
-    "@supabase/supabase-js": "2.49.9"
+    "@supabase/supabase-js": "2.50.0"
   }
 }
