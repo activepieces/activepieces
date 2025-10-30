@@ -28,7 +28,6 @@ let worker: Worker<JobData>
 export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     async start(workerToken: string): Promise<void> {
         if (!isNil(worker)) {
-            worker.resume()
             return
         }
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
@@ -106,6 +105,12 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         log.info({
             message: 'Job queue worker started',
         })
+    },
+    async resume(): Promise<void> {
+        if (isNil(worker)) {
+            return
+        }
+        await worker.resume()
     },
     async pause(): Promise<void> {
         if (isNil(worker)) {

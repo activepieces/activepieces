@@ -46,6 +46,14 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             await jobQueueWorker(log).start(workerToken)
         })
 
+        socket.on("reconnect", async (n) => {
+            log.info({
+                message: 'Reconnected to server',
+                attempt: n,
+            })
+            await jobQueueWorker(log).resume()
+        });
+
         socket.on('disconnect', async (reason) => {
             await jobQueueWorker(log).pause()
             log.info({
