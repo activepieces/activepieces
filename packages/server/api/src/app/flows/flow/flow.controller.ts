@@ -149,7 +149,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,
-            externalId: flow.externalId,
+            externalId: flow.externalId || flow.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
@@ -160,6 +160,34 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
+    app.get('/:id/metadata', GetFlowMetadataRequestOptions, async (request) => {
+        const flow = await flowService(request.log).getOneOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        return {
+            id: flow.id,
+            externalId: flow.externalId ?? null,
+            projectId: flow.projectId,
+        }
+    })
+
+    app.patch('/:id', UpdateFlowMetadataRequestOptions, async (request, reply) => {
+        const flow = await flowService(request.log).getOneOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        const updatedFlow = await flowService(request.log).updateExternalId({
+            id: flow.id,
+            projectId: request.principal.projectId,
+            externalId: request.body.externalId ?? null,
+        })
+        return reply.status(StatusCodes.OK).send({
+            id: updatedFlow.id,
+            externalId: updatedFlow.externalId ?? undefined,
+        })
     })
 }
 
@@ -371,3 +399,49 @@ const DeleteFlowRequestOptions = {
 type FlowOperationRouteGeneric = {
     Body: FlowOperationRequest
 } & RouteGenericInterface
+
+const GetFlowMetadataRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_FLOW,
+    },
+    schema: {
+        tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get lightweight flow metadata',
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Object({
+                id: Type.String(),
+                externalId: Type.Union([Type.String(), Type.Null()]),
+                projectId: Type.String(),
+            }),
+        },
+    },
+}
+
+const UpdateFlowMetadataRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_FLOW,
+    },
+    schema: {
+        tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update flow metadata (like externalId)',
+        params: Type.Object({
+            id: ApId,
+        }),
+        body: Type.Object({
+            externalId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Object({
+                id: Type.String(),
+                externalId: Type.Optional(Type.String()),
+            }),
+        },
+    },
+}

@@ -7,20 +7,186 @@ import {
     isMultipartFile,
     PARENT_RUN_ID_HEADER,
     WebhookUrlParams,
+    WebhookUrlParamsWithEnvironment,
     WebsocketClientEvent,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookService } from './webhook.service'
+import { flowService } from '../flows/flow/flow.service'
 
 const tracer = trace.getTracer('webhook-controller')
 
+async function resolveFlowIdentifier(identifier: string, log: FastifyBaseLogger): Promise<string | null> {
+    const flow = await flowService(log).getByExternalIdOrFlowId(identifier)
+    return flow ? flow.id : null
+}
+
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
+
+    // New environment-based routes
+    app.all(
+        '/:environment/:identifier/sync',
+        WEBHOOK_PARAMS_WITH_ENV,
+        async (request: FastifyRequest<{ Params: WebhookUrlParamsWithEnvironment }>, reply) => {
+            const flowId = await resolveFlowIdentifier(request.params.identifier, request.log)
+            if (!flowId) {
+                await reply.status(StatusCodes.NOT_FOUND).send({})
+                return
+            }
+            return tracer.startActiveSpan('webhook.receive.sync', {
+                attributes: {
+                    'webhook.flowId': flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'sync',
+                    'webhook.environment': request.params.environment,
+                },
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, flowId),
+                        logger: request.log,
+                        flowId,
+                        async: false,
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId,
+                            simulate: true,
+                        }),
+                        execute: true,
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
+            })
+        },
+    )
+
+    app.all(
+        '/:environment/:identifier',
+        WEBHOOK_PARAMS_WITH_ENV,
+        async (request: FastifyRequest<{ Params: WebhookUrlParamsWithEnvironment }>, reply) => {
+            const flowId = await resolveFlowIdentifier(request.params.identifier, request.log)
+            if (!flowId) {
+                await reply.status(StatusCodes.NOT_FOUND).send({})
+                return
+            }
+            return tracer.startActiveSpan('webhook.receive.async', {
+                attributes: {
+                    'webhook.flowId': flowId,
+                    'webhook.method': request.method,
+                    'webhook.type': 'async',
+                    'webhook.environment': request.params.environment,
+                },
+            }, async (span) => {
+                try {
+                    const response = await webhookService.handleWebhook({
+                        data: (projectId: string) => convertRequest(request, projectId, flowId),
+                        logger: request.log,
+                        flowId,
+                        async: true,
+                        saveSampleData: await triggerSourceService(request.log).existsByFlowId({
+                            flowId,
+                            simulate: true,
+                        }),
+                        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+                        execute: true,
+                        ...extractHeaderFromRequest(request),
+                    })
+                    span.setAttribute('webhook.response.status', response.status)
+                    await reply
+                        .status(response.status)
+                        .headers(response.headers)
+                        .send(response.body)
+                }
+                finally {
+                    span.end()
+                }
+            })
+        },
+    )
+
+    app.all('/:environment/:identifier/draft/sync', WEBHOOK_PARAMS_WITH_ENV, async (request: FastifyRequest<{ Params: WebhookUrlParamsWithEnvironment }>, reply) => {
+        const flowId = await resolveFlowIdentifier(request.params.identifier, request.log)
+        if (!flowId) {
+            await reply.status(StatusCodes.NOT_FOUND).send({})
+            return
+        }
+        const response = await webhookService.handleWebhook({
+            data: (projectId: string) => convertRequest(request, projectId, flowId),
+            logger: request.log,
+            flowId,
+            async: false,
+            saveSampleData: true,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: true,
+            onRunCreated: (run) => {
+                app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
+            },
+            ...extractHeaderFromRequest(request),
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/:environment/:identifier/draft', WEBHOOK_PARAMS_WITH_ENV, async (request: FastifyRequest<{ Params: WebhookUrlParamsWithEnvironment }>, reply) => {
+        const flowId = await resolveFlowIdentifier(request.params.identifier, request.log)
+        if (!flowId) {
+            await reply.status(StatusCodes.NOT_FOUND).send({})
+            return
+        }
+        const response = await webhookService.handleWebhook({
+            data: (projectId: string) => convertRequest(request, projectId, flowId),
+            logger: request.log,
+            flowId,
+            async: true,
+            saveSampleData: true,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: true,
+            ...extractHeaderFromRequest(request),
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/:environment/:identifier/test', WEBHOOK_PARAMS_WITH_ENV, async (request: FastifyRequest<{ Params: WebhookUrlParamsWithEnvironment }>, reply) => {
+        const flowId = await resolveFlowIdentifier(request.params.identifier, request.log)
+        if (!flowId) {
+            await reply.status(StatusCodes.NOT_FOUND).send({})
+            return
+        }
+        const response = await webhookService.handleWebhook({
+            data: (projectId: string) => convertRequest(request, projectId, flowId),
+            logger: request.log,
+            flowId,
+            async: true,
+            saveSampleData: true,
+            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+            execute: false,
+            ...extractHeaderFromRequest(request),
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
 
     app.all(
         '/:flowId/sync',
@@ -156,6 +322,17 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+
+const WEBHOOK_PARAMS_WITH_ENV = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        skipAuth: true,
+        rawBody: true,
+    },
+    schema: {
+        params: WebhookUrlParamsWithEnvironment,
+    },
+}
 
 const WEBHOOK_PARAMS = {
     config: {

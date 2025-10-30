@@ -133,7 +133,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     operations.push({
                         type: GitPushOperationType.PUSH_FLOW,
                         commitMessage: request.commitMessage ?? `chore: push all flows ${projectState.flows.map((flow) => flow.version.displayName).join(', ')}`,
-                        externalFlowIds: projectState.flows.map((flow) => flow.externalId),
+                        externalFlowIds: projectState.flows.map((flow) => flow.externalId).filter((id): id is string => id != null),
                     })
                 }
                 if (!isNil(projectState.tables)) {

@@ -28,6 +28,7 @@ export const FlowTemplate = Type.Object({
     template: FlowVersionTemplate,
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
+    externalId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
 })
 

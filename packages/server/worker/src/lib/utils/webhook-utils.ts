@@ -1,4 +1,6 @@
 import {
+    AppSystemProp,
+    environmentVariables,
     networkUtils,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
@@ -22,11 +24,32 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
     },
     async getWebhookUrl({
         flowId,
+        externalId,
+        environmentName,
         simulate,
         publicApiUrl,
+        workerToken,
     }: GetWebhookUrlParams): Promise<string> {
         const suffix: WebhookUrlSuffix = simulate ? '/test' : ''
-        return networkUtils.combineUrl(publicApiUrl, `v1/webhooks/${flowId}${suffix}`)
+
+        let identifier = externalId
+        if (!identifier) {
+            try {
+                if (workerToken) {
+                    const flow = await workerApiService(workerToken).getFlow(flowId)
+                    identifier = flow.externalId || flowId
+                } else {
+                    identifier = flowId
+                }
+            } catch (error) {
+                log.warn({ flowId, error }, 'Failed to fetch flow for externalId, using flowId')
+                identifier = flowId
+            }
+        }
+
+        const environment = environmentName || environmentVariables.getEnvironment(AppSystemProp.ENVIRONMENT_NAME) || 'default'
+
+        return networkUtils.combineUrl(publicApiUrl, `v1/webhooks/${environment}/${identifier}${suffix}`)
     },
     savePayloadsAsSampleData({
         flowVersion,
@@ -51,8 +74,11 @@ type WebhookUrlSuffix = '' | '/test'
 
 type GetWebhookUrlParams = {
     flowId: FlowId
+    externalId?: string | null
+    environmentName?: string
     simulate?: boolean
     publicApiUrl: string
+    workerToken?: string
 }
 
 

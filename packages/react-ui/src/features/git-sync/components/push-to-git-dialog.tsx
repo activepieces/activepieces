@@ -68,7 +68,11 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
           : GitPushOperationType.PUSH_TABLE,
       commitMessage: '',
       externalFlowIds:
-        props.type === 'flow' ? props.flows.map((item) => item.externalId) : [],
+        props.type === 'flow'
+          ? props.flows
+              .map((item) => item.externalId)
+              .filter((id): id is string => id != null)
+          : [],
       externalTableIds:
         props.type === 'table'
           ? props.tables.map((item) => item.externalId)
@@ -89,7 +93,9 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
           await gitSyncApi.push(gitSync.id, {
             type: GitPushOperationType.PUSH_FLOW,
             commitMessage: request.commitMessage,
-            externalFlowIds: props.flows.map((item) => item.externalId),
+            externalFlowIds: props.flows
+              .map((item) => item.externalId)
+              .filter((id): id is string => id != null),
           });
           break;
         case 'table':

@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, UpdateRunProgressRequest } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import fetchRetry from 'fetch-retry'
 import pLimit from 'p-limit'
@@ -102,6 +102,21 @@ export const workerApiService = (workerToken: string) => {
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
+        },
+        async getFlow(flowId: string): Promise<{ id: string; externalId: string | null }> {
+            try {
+                const flow = await client.get<{ id: string; externalId: string | null }>(`/v1/flows/${flowId}/metadata`, {})
+                return flow
+            }
+            catch (e) {
+                if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === 404) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.FLOW_NOT_FOUND,
+                        params: { id: flowId },
+                    })
+                }
+                throw e
+            }
         },
     }
 }

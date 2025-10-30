@@ -44,13 +44,14 @@ import { flowRepo } from './flow.repo'
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
+        const flowId = apId()
         const newFlow: NewFlow = {
-            id: apId(),
+            id: flowId,
             projectId,
             folderId,
             status: FlowStatus.DISABLED,
             publishedVersionId: null,
-            externalId: externalId ?? apId(),
+            externalId: externalId ?? request.externalId ?? flowId,
             metadata: request.metadata,
         }
         const savedFlow = await flowRepo().save(newFlow)
@@ -190,6 +191,32 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return flowRepo(entityManager).findOneBy({
             id,
             projectId,
+        })
+    },
+
+    async getByIdentifier({ identifier, projectId }: GetByIdentifierParams): Promise<Flow | null> {
+        const flowByExternalId = await flowRepo().findOneBy({
+            externalId: identifier,
+            projectId,
+        })
+        if (flowByExternalId) {
+            return flowByExternalId
+        }
+        return flowRepo().findOneBy({
+            id: identifier,
+            projectId,
+        })
+    },
+
+    async getByExternalIdOrFlowId(identifier: string): Promise<Flow | null> {
+        const flowByExternalId = await flowRepo().findOneBy({
+            externalId: identifier,
+        })
+        if (flowByExternalId) {
+            return flowByExternalId
+        }
+        return flowRepo().findOneBy({
+            id: identifier,
         })
     },
 
@@ -511,6 +538,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             created: Date.now().toString(),
             updated: Date.now().toString(),
             blogUrl: '',
+            externalId: flow.externalId,
         }
     },
 
@@ -563,6 +591,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         flow.updated = dayjs().toISOString()
         await flowRepo().save(flow)
+    },
+
+    async updateExternalId({ id, projectId, externalId }: UpdateExternalIdParams): Promise<Flow> {
+        const flowToUpdate = await this.getOneOrThrow({
+            id,
+            projectId,
+        })
+        await flowRepo().update(flowToUpdate.id, {
+            externalId: externalId ?? null,
+        })
+        const updatedFlow = await this.getOneOrThrow({
+            id,
+            projectId,
+        })
+        return updatedFlow
     },
 })
 
@@ -626,6 +669,11 @@ type CreateParams = {
     projectId: ProjectId
     request: CreateFlowRequest
     externalId?: string
+}
+
+type GetByIdentifierParams = {
+    identifier: string
+    projectId: ProjectId
 }
 
 type ListParams = {
@@ -713,4 +761,10 @@ type UpdateMetadataParams = {
     id: FlowId
     projectId: ProjectId
     metadata: Metadata | null | undefined
+}
+
+type UpdateExternalIdParams = {
+    id: FlowId
+    projectId: ProjectId
+    externalId?: string | null
 }

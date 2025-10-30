@@ -162,6 +162,9 @@ export const BuilderHeader = () => {
               }}
               onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
               onDuplicate={() => {}}
+              onWebhookIdUpdate={() => {
+                window.location.reload();
+              }}
             >
               <Button variant="ghost" size="icon">
                 <ChevronDown className="h-4 w-4" />

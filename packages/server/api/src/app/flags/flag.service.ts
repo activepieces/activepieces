@@ -32,6 +32,7 @@ export const flagService = {
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
+                ApFlagId.ENVIRONMENT_NAME,
                 ApFlagId.PUBLIC_URL,
                 ApFlagId.LATEST_VERSION,
                 ApFlagId.PRIVACY_POLICY_URL,
@@ -65,6 +66,12 @@ export const flagService = {
             {
                 id: ApFlagId.ENVIRONMENT,
                 value: system.get(AppSystemProp.ENVIRONMENT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.ENVIRONMENT_NAME,
+                value: system.get(AppSystemProp.ENVIRONMENT_NAME) ?? 'default',
                 created,
                 updated,
             },
