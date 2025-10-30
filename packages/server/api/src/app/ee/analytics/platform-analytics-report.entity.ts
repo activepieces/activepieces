@@ -43,11 +43,11 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
-        tasksUsage: {
+        topProjects: {
             type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
-        topProjects: {
+        runsUsage: {
             type: JSONB_COLUMN_TYPE,
             nullable: false,
         },

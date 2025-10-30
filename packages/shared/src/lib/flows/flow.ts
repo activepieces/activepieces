@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { Metadata } from '../common/metadata'
-import { TriggerSource } from '../trigger'
+import { TriggerSource, WebhookHandshakeConfiguration } from '../trigger'
 import { FlowVersion } from './flow-version'
 
 export type FlowId = ApId
@@ -11,7 +11,16 @@ export enum FlowStatus {
     DISABLED = 'DISABLED',
 }
 
+export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
 
+export type FlowExecutionState = {
+    exists: false
+} | {
+    exists: true
+    handshakeConfiguration: WebhookHandshakeConfiguration | undefined
+    flow: Flow
+    platformId: string
+}
 export const Flow = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
@@ -27,7 +36,7 @@ export const PopulatedFlow = Type.Composite([
     Flow,
     Type.Object({
         version: FlowVersion,
-        triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule', 'handshakeConfiguration'])),
+        triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule'])),
     }),
 ])
 

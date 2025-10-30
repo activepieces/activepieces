@@ -134,7 +134,7 @@ const CreateTodoRequest = {
         body: CreateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.ENGINE],
     },
 }
 
