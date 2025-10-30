@@ -33,31 +33,6 @@
       },
       "dependsOn": ["prebuild", "^build"]
     },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/pinecone",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-pinecone:prebuild",
-          "nx run pieces-pinecone:build",
-          "nx run pieces-pinecone:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/pinecone",
-        "command": "npm install"
-      }
-    },
     "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
