@@ -84,7 +84,7 @@
         "jestConfig": "packages/server/api/jest.config.ts",
         "passWithNoTests": false,
         "bail": true,
-        "testPathPatterns": ["packages/server/api/test/integration/cloud/ai"]
+        "testPathPatterns": ["packages/server/api/test/integration/cloud"]
       }
     },
     "test-ee-command": {
