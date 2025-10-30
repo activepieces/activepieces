@@ -16,6 +16,16 @@ import { findOrCreateAttachment } from "./lib/actions/find-or-create-attachment"
 import { findOrCreateTask } from "./lib/actions/find-or-create-task";
 import { findOrCreateLabel } from "./lib/actions/find-or-create-label";
 
+import { newAttachment } from "./lib/triggers/new-attachment";
+import { newPerson } from "./lib/triggers/new-person";
+import { newSection } from "./lib/triggers/new-section";
+import { newComment } from "./lib/triggers/new-comment";
+import { newTaskLabel } from "./lib/triggers/new-task-label";
+import { newChecklistItem } from "./lib/triggers/new-checklist-item";
+import { newProject } from "./lib/triggers/new-project";
+import { newLabel } from "./lib/triggers/new-label";
+import { newTask } from "./lib/triggers/new-task";
+
 export const meisterTask = createPiece({
     displayName: "MeisterTask",
     auth: meisterTaskAuth,
@@ -45,5 +55,15 @@ export const meisterTask = createPiece({
             },
         }),
     ],
-    triggers: [],
+    triggers: [
+      newAttachment,
+      newPerson,
+      newSection,
+      newComment,
+      newTaskLabel,
+      newChecklistItem,
+      newProject,
+      newLabel,
+      newTask
+    ],
 });

@@ -131,4 +131,33 @@ export const meisterTaskProps = {
             };
         },
     }),
+
+    webhookInstructions: (eventName: string) => Property.MarkDown({
+        value: `
+        ## Webhook Setup Instructions
+
+        To use this trigger, you must manually create a webhook in MeisterTask.
+
+        **1. Get Your Webhook URL:**
+        Copy the URL below. This is where MeisterTask will send data.
+        \`\`\`text
+        {{webhookUrl}}
+        \`\`\`
+
+        **2. Create the Webhook:**
+        You must send a \`POST\` request to the MeisterTask API to register this URL. You can use the **"API Request (Beta)"** action from this piece, or another tool like Postman.
+
+        * **Method:** \`POST\`
+        * **URL:** \`https://www.meistertask.com/api/webhooks\`
+        * **Body (JSON):**
+        \`\`\`json
+        {
+          "url": "{{webhookUrl}}",
+          "events": ["${eventName}"]
+        }
+        \`\`\`
+        
+        Your authentication token will be automatically included if you use the "API Request (Beta)" action inside an ActivePieces flow.
+        `
+    }),
 };
