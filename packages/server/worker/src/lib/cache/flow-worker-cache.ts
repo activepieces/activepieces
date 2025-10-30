@@ -21,6 +21,7 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
                     return parsedFlow.schemaVersion !== LATEST_SCHEMA_VERSION
                 },
                 installFn: async () => {
+                    const startTime = performance.now()
                     const flowVersion = await engineApiService(engineToken).getFlowVersion({
                         versionId: flowVersionId,
                     })
@@ -29,6 +30,7 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
                         flowVersionId,
                         state: flowVersion?.state,
                         found: !isNil(flowVersion),
+                        timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
                     })
                     return JSON.stringify(flowVersion)
                 },

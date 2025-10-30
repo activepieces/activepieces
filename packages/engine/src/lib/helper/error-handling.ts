@@ -40,7 +40,6 @@ export async function continueIfFailureHandler(
     ) {
         return executionState
             .setVerdict(ExecutionVerdict.RUNNING, undefined)
-            .increaseTask()
     }
 
     return executionState

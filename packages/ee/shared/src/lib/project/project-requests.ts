@@ -9,7 +9,6 @@ export const UpdateProjectPlatformRequest = Type.Object({
     externalId: Type.Optional(Type.String()),
     metadata: Type.Optional(Metadata),
     plan: Type.Optional(Type.Object({
-        tasks: Type.Optional(Type.Number({})),
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
         aiCredits: Type.Optional(Type.Number({})),
@@ -24,6 +23,7 @@ export const CreatePlatformProjectRequest = Type.Object({
     }),
     externalId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
+    maxConcurrentJobs: Nullable(Type.Number()),
 })
 
 export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>

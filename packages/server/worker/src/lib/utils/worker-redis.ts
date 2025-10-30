@@ -1,5 +1,6 @@
 import {
     distributedLockFactory,
+    distributedStoreFactory,
     redisConnectionFactory,
     RedisType,
 } from '@activepieces/server-shared'
@@ -38,6 +39,5 @@ export const workerRedisConnections = redisConnectionFactory(() => {
     }
 })
 
-export const workerDistributedLock = distributedLockFactory(
-    workerRedisConnections.create,
-)
+export const workerDistributedLock = distributedLockFactory(workerRedisConnections.create)
+export const workerDistributedStore = distributedStoreFactory(workerRedisConnections.useExisting)

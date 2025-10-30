@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { BillingCycle, PlanName } from '@activepieces/ee-shared';
+import { BillingCycle } from '@activepieces/ee-shared';
+import { PlanName } from '@activepieces/shared';
 
 import {
   planData,
