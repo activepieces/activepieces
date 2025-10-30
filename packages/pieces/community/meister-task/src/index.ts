@@ -1,13 +1,49 @@
+import { createPiece } from "@activepieces/pieces-framework";
+import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from "@activepieces/pieces-common";
+import { meisterTaskAuth } from "./lib/common/auth";
+import { meisterTaskApiUrl } from "./lib/common/client";
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createLabel } from "./lib/actions/create-label";
+import { addLabelToTask } from "./lib/actions/add-label-to-task";
+import { createAttachment } from "./lib/actions/create-attachment";
+import { createTask } from "./lib/actions/create-task";
+import { updateTask } from "./lib/actions/update-task";
+import { findAttachment } from "./lib/actions/find-attachment";
+import { findLabel } from "./lib/actions/find-label";
+import { findTask } from "./lib/actions/find-task";
+import { findOrCreateAttachment } from "./lib/actions/find-or-create-attachment";
+import { findOrCreateTask } from "./lib/actions/find-or-create-task";
+import { findOrCreateLabel } from "./lib/actions/find-or-create-label";
 
-    export const meisterTask = createPiece({
-      displayName: "Meister-task",
-      auth: PieceAuth.None(),
-      minimumSupportedRelease: '0.36.1',
-      logoUrl: "https://cdn.activepieces.com/pieces/meister-task.png",
-      authors: [],
-      actions: [],
-      triggers: [],
-    });
-    
+export const meisterTask = createPiece({
+    displayName: "MeisterTask",
+    auth: meisterTaskAuth,
+    minimumSupportedRelease: '0.36.1',
+    logoUrl: "https://cdn.activepieces.com/pieces/meister-task.png",
+    categories: [PieceCategory.PRODUCTIVITY],
+    authors: ['srimalleswari205'],
+    actions: [
+        createLabel,
+        addLabelToTask,
+        createAttachment,
+        createTask,
+        updateTask,
+        findAttachment,
+        findLabel,
+        findTask,
+        findOrCreateAttachment,
+        findOrCreateTask,
+        findOrCreateLabel,
+        createCustomApiCallAction({
+            auth: meisterTaskAuth,
+            baseUrl: () => meisterTaskApiUrl,
+            authMapping: async (auth) => {
+                return {
+                    'Authorization': `Bearer ${auth}`,
+                };
+            },
+        }),
+    ],
+    triggers: [],
+});
