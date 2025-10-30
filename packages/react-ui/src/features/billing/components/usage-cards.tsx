@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Database, LayoutGrid, Workflow } from 'lucide-react';
+import { Database, Workflow } from 'lucide-react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { CardContent, Card } from '@/components/ui/card';
@@ -21,7 +21,6 @@ export const UsageCards = ({
 }) => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { usage, plan } = platformSubscription;
-  const isPlusPlan = plan.plan === PlanName.PLUS;
   const isFree = plan.plan === PlanName.FREE;
   const isEnterprise =
     !isNil(plan?.licenseKey) ||
@@ -44,16 +43,6 @@ export const UsageCards = ({
           total={plan.activeFlowsLimit}
         />
       )}
-
-      {(isFree || isPlusPlan) && (
-        <UsageCard
-          icon={<LayoutGrid className="w-4 h-4" />}
-          title={t('Projects')}
-          used={usage.projects}
-          total={plan.projectsLimit}
-        />
-      )}
-
       <UsageCard
         icon={<McpSvg className="size-4" />}
         title={t('MCP Servers')}

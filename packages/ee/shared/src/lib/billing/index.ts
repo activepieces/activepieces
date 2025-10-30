@@ -6,11 +6,6 @@ export enum BillingCycle {
     ANNUAL = 'annual',
 }
 
-export const PRICE_PER_EXTRA_PROJECT_MAP = {
-    [BillingCycle.ANNUAL]: 7.6,
-    [BillingCycle.MONTHLY]: 10,
-}
-
 export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP = {
     [BillingCycle.ANNUAL]: 11.4,
     [BillingCycle.MONTHLY]: 15,
@@ -55,7 +50,6 @@ export const RESOURCE_TO_MESSAGE_MAPPING = {
 
 const Addons = Type.Object({
     activeFlows: Type.Optional(Type.Number()),
-    projects: Type.Optional(Type.Number()),
 })
 
 export const CreateSubscriptionParamsSchema = Type.Object({
@@ -87,7 +81,6 @@ export enum PRICE_NAMES {
     BUSINESS_PLAN = 'business-plan',
     AI_CREDITS = 'ai-credit',
     ACTIVE_FLOWS = 'active-flow',
-    PROJECT = 'project',
 }
 
 export const getPlanLimits = (planName: PlanName): Partial<PlatformPlanLimits> => {
@@ -160,16 +153,6 @@ export const PRICE_ID_MAP = {
         [BillingCycle.ANNUAL]: {
             dev: 'price_1RtZmHQN93Aoq4f8OqAfOl8R',
             prod: 'price_1RtZvzKZ0dZRqLEKGHOXlfDP',
-        },
-    },
-    [PRICE_NAMES.PROJECT]: {
-        [BillingCycle.MONTHLY]: {
-            dev: 'price_1RsoJ4QN93Aoq4f8JzLCO1BL',
-            prod: 'price_1RsoHsKZ0dZRqLEKIQGB6RPe',
-        },
-        [BillingCycle.ANNUAL]: {
-            dev: 'price_1RtPeZQN93Aoq4f8Mw8H9nGa',
-            prod: 'price_1RtZv4KZ0dZRqLEKxR6uO7WQ',
         },
     },
 }

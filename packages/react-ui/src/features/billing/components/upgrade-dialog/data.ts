@@ -12,17 +12,11 @@ export const DEFAULT_ACTIVE_FLOWS = {
   [PlanName.BUSINESS]: 50,
   [PlanName.PLUS]: 10,
 };
-export const MAX_PROJECTS = 30;
-export const DEFAULT_PROJECTS = 10;
 
 export const ADDON_PRICES = {
   ACTIVE_FLOWS: {
     [BillingCycle.MONTHLY]: 15,
     [BillingCycle.ANNUAL]: 11.4,
-  },
-  PROJECT: {
-    [BillingCycle.MONTHLY]: 10,
-    [BillingCycle.ANNUAL]: 7.6,
   },
 };
 
@@ -80,9 +74,9 @@ export const planData = {
       key: 'projects',
       label: t('Projects'),
       values: {
-        free: null,
-        plus: null,
-        business: '10',
+        free: '1',
+        plus: '1',
+        business: '1',
       },
     },
     {

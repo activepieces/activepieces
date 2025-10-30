@@ -10,14 +10,9 @@ import { Separator } from '@/components/ui/separator';
 import { BillingCycle } from '@activepieces/ee-shared';
 import { PlanName } from '@activepieces/shared';
 
-import { planData, DEFAULT_ACTIVE_FLOWS, DEFAULT_PROJECTS } from './data';
+import { planData, DEFAULT_ACTIVE_FLOWS } from './data';
 
-import {
-  ActionConfig,
-  CurrentPlanInfo,
-  DialogState,
-  PricingCalculation,
-} from '.';
+import { ActionConfig, DialogState, PricingCalculation } from '.';
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-US', {
@@ -27,7 +22,6 @@ const formatPrice = (price: number) =>
 
 export const SubscriptionSummary: FC<{
   dialogState: DialogState;
-  currentPlanInfo: CurrentPlanInfo;
   pricing: PricingCalculation;
   actionConfig: ActionConfig;
   isLoading: boolean;
@@ -36,7 +30,6 @@ export const SubscriptionSummary: FC<{
   onActionClick: () => void;
 }> = ({
   dialogState,
-  currentPlanInfo,
   pricing,
   actionConfig,
   isLoading,
@@ -44,13 +37,8 @@ export const SubscriptionSummary: FC<{
   onStepChange,
   onActionClick,
 }) => {
-  const {
-    selectedPlan,
-    selectedCycle,
-    selectedActiveFlows,
-    selectedProjects,
-    currentStep,
-  } = dialogState;
+  const { selectedPlan, selectedCycle, selectedActiveFlows, currentStep } =
+    dialogState;
 
   const plan = planData.plans.find(
     (p: (typeof planData.plans)[0]) => p.name === selectedPlan,
@@ -133,18 +121,6 @@ export const SubscriptionSummary: FC<{
                       </span>
                       <span>
                         {formatPrice(pricing.addonCosts.flows)} /month
-                      </span>
-                    </div>
-                  )}
-
-                  {pricing.addonCosts.projects > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span>
-                        Extra Projects ({selectedProjects[0] - DEFAULT_PROJECTS}
-                        )
-                      </span>
-                      <span>
-                        {formatPrice(pricing.addonCosts.projects)} /month
                       </span>
                     </div>
                   )}

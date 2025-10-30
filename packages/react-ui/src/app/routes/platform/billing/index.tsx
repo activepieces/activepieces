@@ -12,7 +12,6 @@ import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
-import { ProjectAddon } from '@/features/billing/components/project-addon';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
 import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { UsageCards } from '@/features/billing/components/usage-cards';
@@ -109,10 +108,6 @@ export default function Billing() {
 
         {(isBusinessPlan || isPlus) && (
           <ActiveFlowAddon platformSubscription={platformPlanInfo} />
-        )}
-
-        {isBusinessPlan && (
-          <ProjectAddon platformSubscription={platformPlanInfo} />
         )}
 
         {!isEnterprise && (

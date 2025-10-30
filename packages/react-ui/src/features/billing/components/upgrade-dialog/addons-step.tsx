@@ -10,12 +10,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PlanName } from '@activepieces/shared';
 
-import {
-  DEFAULT_ACTIVE_FLOWS,
-  DEFAULT_PROJECTS,
-  MAX_ACTIVE_FLOWS,
-  MAX_PROJECTS,
-} from './data';
+import { DEFAULT_ACTIVE_FLOWS, MAX_ACTIVE_FLOWS } from './data';
 
 import { CurrentPlanInfo } from '.';
 
@@ -86,20 +81,15 @@ export const AddonsStep: FC<{
   currentPlanInfo: CurrentPlanInfo;
   selectedActiveFlows: number[];
   onActiveFlowsChange: (value: number[]) => void;
-  selectedProjects: number[];
-  onProjectsChange: (value: number[]) => void;
 }> = ({
   selectedPlan,
   currentPlanInfo,
   selectedActiveFlows,
   onActiveFlowsChange,
-  selectedProjects,
-  onProjectsChange,
 }) => {
   const isBusinessPlan = selectedPlan === PlanName.BUSINESS;
   const isPlus = selectedPlan === PlanName.PLUS;
-  const { activeFlows: currentActiveFlowLimit, projects: currentProjectLimit } =
-    currentPlanInfo;
+  const { activeFlows: currentActiveFlowLimit } = currentPlanInfo;
 
   const maxActiveFlows =
     MAX_ACTIVE_FLOWS[selectedPlan as PlanName.PLUS | PlanName.BUSINESS];
@@ -119,20 +109,6 @@ export const AddonsStep: FC<{
           step={5}
           currentLimit={currentActiveFlowLimit}
           unit="flow"
-        />
-      )}
-
-      {isBusinessPlan && (
-        <AddonSlider
-          title={t('Projects')}
-          description={t('Organize your work with more projects')}
-          value={selectedProjects}
-          onValueChange={onProjectsChange}
-          max={MAX_PROJECTS}
-          min={DEFAULT_PROJECTS}
-          step={1}
-          currentLimit={currentProjectLimit}
-          unit="project"
         />
       )}
     </div>

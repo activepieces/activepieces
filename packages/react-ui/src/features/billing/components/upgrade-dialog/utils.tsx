@@ -12,7 +12,6 @@ import {
   ADDON_PRICES,
   ANNUAL_DISCOUNT_PERCENTAGE,
   DEFAULT_ACTIVE_FLOWS,
-  DEFAULT_PROJECTS,
   planData,
 } from './data';
 
@@ -36,8 +35,6 @@ export const getCurrentPlanInfo = (
         platformBillingInformation?.plan.plan as StripePlanName
       ] ??
       10,
-    projects:
-      platformBillingInformation?.plan.projectsLimit ?? DEFAULT_PROJECTS,
     subscriptionStatus: platformBillingInformation?.plan
       .stripeSubscriptionStatus as ApSubscriptionStatus,
   };
@@ -47,14 +44,13 @@ export const calculatePrice = (
   selectedPlan: string,
   selectedCycle: BillingCycle,
   selectedActiveFlows: number[],
-  selectedProjects: number[],
   plans: (typeof planData.plans)[0][],
 ): PricingCalculation => {
   if (selectedPlan === PlanName.FREE) {
     return {
       basePlanPrice: 0,
       totalAddonCost: 0,
-      addonCosts: { flows: 0, projects: 0 },
+      addonCosts: { flows: 0 },
       totalPrice: 0,
       annualSavings: 0,
     };
@@ -65,7 +61,7 @@ export const calculatePrice = (
     return {
       basePlanPrice: 0,
       totalAddonCost: 0,
-      addonCosts: { flows: 0, projects: 0 },
+      addonCosts: { flows: 0 },
       totalPrice: 0,
       annualSavings: 0,
     };
@@ -80,14 +76,12 @@ export const calculatePrice = (
         selectedPlan as PlanName.PLUS | PlanName.BUSINESS
       ] ?? 0),
   );
-  const extraProjects = Math.max(0, selectedProjects[0] - DEFAULT_PROJECTS);
 
   const addonCosts = {
     flows: (extraFlows / 5) * ADDON_PRICES.ACTIVE_FLOWS[selectedCycle],
-    projects: extraProjects * ADDON_PRICES.PROJECT[selectedCycle],
   };
 
-  const totalAddonCost = addonCosts.flows + addonCosts.projects;
+  const totalAddonCost = addonCosts.flows;
 
   const monthlyPrice = basePlanPrice + totalAddonCost;
   const annualPrice = monthlyPrice * 12;
@@ -112,18 +106,12 @@ export const getActionConfig = (
   currentPlanInfo: CurrentPlanInfo,
   canGoNext: boolean,
 ): ActionConfig => {
-  const {
-    selectedPlan,
-    selectedActiveFlows,
-    selectedProjects,
-    selectedCycle,
-    currentStep,
-  } = dialogState;
+  const { selectedPlan, selectedActiveFlows, selectedCycle, currentStep } =
+    dialogState;
   const {
     plan: currentPlan,
     cycle: currentCycle,
     activeFlows: currentActiveFlows,
-    projects: currentProjects,
   } = currentPlanInfo;
 
   const isFirstStep = currentStep === 1;
@@ -134,9 +122,7 @@ export const getActionConfig = (
     selectedPlanEnum === PlanName.FREE && currentPlan !== PlanName.FREE;
 
   const isCycleChanged = currentCycle !== selectedCycle;
-  const areAddonsChanged =
-    currentActiveFlows !== selectedActiveFlows[0] ||
-    currentProjects !== selectedProjects[0];
+  const areAddonsChanged = currentActiveFlows !== selectedActiveFlows[0];
   const hasChanges = !isSamePlan || isCycleChanged || areAddonsChanged;
 
   if (isFirstStep) {

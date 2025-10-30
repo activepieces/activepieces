@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
-import { ACTIVE_FLOW_PRICE_IDS, AI_CREDIT_PRICE_IDS, BUSINESS_PLAN_PRICE_IDS, PlatformPlanHelper, PLUS_PLAN_PRICE_IDS, PROJECT_PRICE_IDS } from './platform-plan-helper'
+import { ACTIVE_FLOW_PRICE_IDS, AI_CREDIT_PRICE_IDS, BUSINESS_PLAN_PRICE_IDS, PlatformPlanHelper, PLUS_PLAN_PRICE_IDS } from './platform-plan-helper'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
@@ -68,16 +68,14 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         })
 
                         const extraActiveFlows = subscription.items.data.find(item => ACTIVE_FLOW_PRICE_IDS.includes(item.price.id))?.quantity ?? 0
-                        const extraProjects = subscription.items.data.find(item => PROJECT_PRICE_IDS.includes(item.price.id))?.quantity ?? 0
 
                         const newLimits = getPlanLimits(newPlan)
                         const isFreePlan = newPlan === PlanName.FREE
-                        const isAddonUpgrade =  extraActiveFlows > 0 || extraProjects > 0
+                        const isAddonUpgrade =  extraActiveFlows > 0
                         const shouldResetPlatfromUsage = isFreePlan || !isAddonUpgrade
 
                         if (isAddonUpgrade) {
                             newLimits.activeFlowsLimit = (newLimits.activeFlowsLimit ?? 0) + extraActiveFlows
-                            newLimits.projectsLimit = (newLimits.projectsLimit ?? 0) + extraProjects
                         }
 
                         await PlatformPlanHelper.handleResourceLocking({ platformId, newLimits })
