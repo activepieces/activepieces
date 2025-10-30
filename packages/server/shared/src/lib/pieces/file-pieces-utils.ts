@@ -1,19 +1,19 @@
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
+import { isDeepStrictEqual } from 'node:util'
 import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
+import chalk from 'chalk'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
 import { exceptionHandler } from '../exception-handler'
 import { ApLock, memoryLock } from '../memory-lock'
-import chalk from 'chalk'
-import { isDeepStrictEqual } from 'node:util'
 
 const pieceCache: Record<string, PieceMetadata | null> = {}
-const pieceDependenciesCacheFilePath = join(cwd(), "cache", "piece-dependencies.json")
+const pieceDependenciesCacheFilePath = join(cwd(), 'cache', 'piece-dependencies.json')
 
 export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
     async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
@@ -76,7 +76,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
         await writeFile(pieceDependenciesCacheFilePath, JSON.stringify({
             ...currentCache,
-            [pieceName]: dependencies
+            [pieceName]: dependencies,
         }), 'utf-8')
     }
 
@@ -251,6 +251,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         clearPieceCache,
         getPackageNameFromFolderPath,
         getProjectJsonFromFolderPath,
-        installPiecesDependencies
+        installPiecesDependencies,
     }
 }
