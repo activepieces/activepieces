@@ -31,8 +31,7 @@ export const meisterTaskProps = {
         refreshers: ['project_id'],
         options: async (context) => {
             const auth = context['auth'] as string | undefined;
-            const propsValue = context['propsValue'] as Record<string, unknown>;
-            const projectId = propsValue['project_id'] as number | undefined;
+            const projectId = context['project_id'] as number | undefined;
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
@@ -58,8 +57,7 @@ export const meisterTaskProps = {
         refreshers: ['project_id'],
         options: async (context) => {
             const auth = context['auth'] as string | undefined;
-            const propsValue = context['propsValue'] as Record<string, unknown>;
-            const projectId = propsValue['project_id'] as number | undefined;
+            const projectId = context['project_id'] as number | undefined;
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
@@ -85,8 +83,7 @@ export const meisterTaskProps = {
         refreshers: ['project_id'],
         options: async (context) => {
             const auth = context['auth'] as string | undefined;
-            const propsValue = context['propsValue'] as Record<string, unknown>;
-            const projectId = propsValue['project_id'] as number | undefined;
+            const projectId = context['project_id'] as number | undefined;
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
@@ -112,8 +109,7 @@ export const meisterTaskProps = {
         refreshers: ['project_id'],
         options: async (context) => {
             const auth = context['auth'] as string | undefined;
-            const propsValue = context['propsValue'] as Record<string, unknown>;
-            const projectId = propsValue['project_id'] as number | undefined;
+            const projectId = context['project_id'] as number | undefined;
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }

@@ -17,7 +17,7 @@ export const meisterTaskAuth = PieceAuth.SecretText({
         try {
             await httpClient.sendRequest({
                 method: HttpMethod.GET,
-                url: `${meisterTaskApiUrl}/users/me`,
+                url: `${meisterTaskApiUrl}/projects`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: auth,
