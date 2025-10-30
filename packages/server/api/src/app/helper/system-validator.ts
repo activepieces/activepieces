@@ -1,10 +1,10 @@
-import { AppSystemProp, ContainerType, PiecesSource, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, PiecesSource, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
-import { DatabaseType, QueueMode, RedisType, system } from './system/system'
+import { DatabaseType, system } from './system/system'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -44,13 +44,13 @@ const systemPropValidators: {
 } = {
     // AppSystemProp
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
+    [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
     [AppSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
     [AppSystemProp.LOG_PRETTY]: booleanValidator,
     [AppSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
-    [AppSystemProp.AGENT_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
@@ -58,16 +58,17 @@ const systemPropValidators: {
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
     [AppSystemProp.SENTRY_DSN]: urlValidator,
-    
+    [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: numberValidator,
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
-    
-    [AppSystemProp.OTEL_ENABLED]: booleanValidator,    
+
+    [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
+    [WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER]: stringValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
@@ -92,8 +93,8 @@ const systemPropValidators: {
     [AppSystemProp.POSTGRES_USERNAME]: stringValidator,
     [AppSystemProp.POSTGRES_USE_SSL]: booleanValidator,
     [AppSystemProp.POSTGRES_POOL_SIZE]: numberValidator,
+    [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: numberValidator,
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: booleanValidator,
-    [AppSystemProp.QUEUE_MODE]: enumValidator(Object.values(QueueMode)),
     [AppSystemProp.QUEUE_UI_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,
     [AppSystemProp.QUEUE_UI_USERNAME]: stringValidator,
@@ -139,8 +140,6 @@ const systemPropValidators: {
     [AppSystemProp.PM2_ENABLED]: booleanValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
-    // Copilot
-    [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
     // AppSystemProp
     [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
@@ -254,9 +253,9 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const edition = system.getEdition()
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && environment === ApEnvironment.PRODUCTION) {
         const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode) ) {
+        if (![ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.SANDBOX_CODE_AND_PROCESS].includes(executionMode)) {
             throw new Error(JSON.stringify({
-                message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
+                message: `Execution mode ${executionMode} is no longer supported in this edition, check the documentation for recent changes`,
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
             }))
         }

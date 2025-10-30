@@ -52,7 +52,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             inputs: resolvedInput,
         })
 
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).increaseTask()
+        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime))
     }
     catch (e) {
         const handledError = handleExecutionError(e)

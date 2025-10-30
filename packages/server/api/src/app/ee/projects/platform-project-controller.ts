@@ -40,10 +40,10 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             platformId,
             externalId: request.body.externalId ?? undefined,
             metadata: request.body.metadata ?? undefined,
+            maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
         })
         await projectLimitsService(request.log).upsert({
             nickname: 'platform',
-            tasks: null,
             pieces: [],
             aiCredits: null,
             piecesFilterType: PiecesFilterType.NONE,
@@ -91,7 +91,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
         assertProjectToDeleteIsNotPrincipalProject(req.principal, req.params.id)
 
-        await platformProjectService(req.log).softDelete({
+        await platformProjectService(req.log).hardDelete({
             id: req.params.id,
             platformId: req.principal.platform.id,
         })

@@ -69,7 +69,6 @@ export type FlowError = Static<typeof FlowError>
 const BaseExecutionResponse = {
     steps: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
     duration: Type.Number(),
-    tasks: Type.Optional(Type.Number()),
     tags: Type.Optional(Type.Array(Type.String())),
     error: Type.Optional(FlowError),
     response: Type.Optional(Type.Union([RespondResponse, PauseMetadata])),
@@ -109,8 +108,9 @@ export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status
             return !ignoreInternalError
         case FlowRunStatus.QUEUED:
         case FlowRunStatus.RUNNING:
+            return false
         case FlowRunStatus.PAUSED:
-            return false  
+            return false
     }
 }
 

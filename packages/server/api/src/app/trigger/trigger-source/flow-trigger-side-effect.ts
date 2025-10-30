@@ -81,6 +81,9 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             }
         },
         async disable(params: DisableFlowTriggerParams): Promise<void> {
+            if (environment === ApEnvironment.TESTING) {
+                return 
+            }
             const { flowVersion, projectId, simulate, pieceTrigger } = params
             const platformId = await projectService.getPlatformId(projectId)
             const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
