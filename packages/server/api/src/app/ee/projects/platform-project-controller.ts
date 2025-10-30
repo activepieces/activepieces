@@ -40,10 +40,10 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             platformId,
             externalId: request.body.externalId ?? undefined,
             metadata: request.body.metadata ?? undefined,
+            maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
         })
         await projectLimitsService(request.log).upsert({
             nickname: 'platform',
-            tasks: null,
             pieces: [],
             aiCredits: null,
             piecesFilterType: PiecesFilterType.NONE,

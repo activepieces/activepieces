@@ -107,7 +107,6 @@ async function fileExists(filePath: string) {
 const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   const filePath = path.join(pieceOutputPath, 'src', 'i18n', `${locale}.json`);
   if (!(await fileExists(filePath))) {
-    console.log(`readLocaleFile: ${filePath} does not exist`)
     return null;
   }
 

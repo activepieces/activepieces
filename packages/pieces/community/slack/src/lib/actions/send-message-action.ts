@@ -45,7 +45,7 @@ export const slackSendMessageAction = createAction({
     const { text, channel, username, profilePicture, threadTs, file, blocks, replyBroadcast } =
       context.propsValue;
 
-    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+    const blockList = blocks && Array.isArray(blocks) ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
 
     return slackSendMessage({
       token,

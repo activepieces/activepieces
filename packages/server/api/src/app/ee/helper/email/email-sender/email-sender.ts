@@ -31,10 +31,6 @@ type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
     setupLink: string
 }>
 
-type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
-    resetDate: string
-}>
-
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
     setupLink: string
 }>
@@ -50,7 +46,7 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
-type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+type IssuesSummaryTemplateData = BaseEmailTemplateData<'issues-summary', {
     issuesUrl: string
     issues: string
     issuesCount: string
@@ -62,38 +58,13 @@ type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failur
     projectName: string
 }>
 
-type ThreeDaysLeftOnTrialTemplateData = BaseEmailTemplateData<'3-days-left-on-trial', {
-    year: string
-    firstName: string
-}>
-
-type OneDayLeftOnTrialTemplateData = BaseEmailTemplateData<'1-day-left-on-trial', {
-    year: string
-    firstName: string
-}>
-
-type WelcomeToTrialTemplateData = BaseEmailTemplateData<'welcome-to-trial', {
-    year: string
-    firstName: string
-}>
-
-type SevenDaysInTrialTemplateData = BaseEmailTemplateData<'7-days-in-trial', {
-    year: string
-    firstName: string
-}>
-
 export type EmailTemplateData =
   | InvitationEmailTemplateData
-  | QuotaEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | IssuesReminderTemplateData
+  | IssuesSummaryTemplateData
   | TriggerFailureThresholdTemplateData
-  | ThreeDaysLeftOnTrialTemplateData
-  | OneDayLeftOnTrialTemplateData
-  | WelcomeToTrialTemplateData
-  | SevenDaysInTrialTemplateData
 
 type SendArgs = {
     emails: string[]

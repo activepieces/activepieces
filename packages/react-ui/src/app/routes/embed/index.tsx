@@ -10,7 +10,11 @@ import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
-import { combinePaths, parentWindow } from '@/lib/utils';
+import {
+  combinePaths,
+  parentWindow,
+  routesThatRequireProjectId,
+} from '@/lib/utils';
 import {
   ActivepiecesClientAuthenticationFailed,
   ActivepiecesClientAuthenticationSuccess,
@@ -44,10 +48,9 @@ const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
       event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
     ) {
       const targetRoute = event.data.data.vendorRoute;
-      const targetRouteRequiresProjectId =
-        targetRoute.includes('/runs') ||
-        targetRoute.includes('/flows') ||
-        targetRoute.includes('/connections');
+      const targetRouteRequiresProjectId = Object.values(
+        routesThatRequireProjectId,
+      ).some((route) => targetRoute.includes(route));
       if (!targetRouteRequiresProjectId) {
         memoryRouter.navigate(targetRoute);
       } else {

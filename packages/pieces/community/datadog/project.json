@@ -5,9 +5,7 @@
   "projectType": "library",
   "release": {
     "version": {
-      "manifestRootsToUpdate": [
-        "dist/{projectRoot}"
-      ],
+      "manifestRootsToUpdate": ["dist/{projectRoot}"],
       "currentVersionResolver": "git-tag",
       "fallbackCurrentVersionResolver": "disk"
     }
@@ -16,9 +14,7 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/datadog",
         "tsConfig": "packages/pieces/community/datadog/tsconfig.lib.json",
@@ -35,35 +31,7 @@
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       },
-      "dependsOn": [
-        "prebuild",
-        "^build"
-      ]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/datadog",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-datadog:prebuild",
-          "nx run pieces-datadog:build",
-          "nx run pieces-datadog:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/datadog",
-        "command": "npm install"
-      }
+      "dependsOn": ["prebuild", "^build"]
     },
     "nx-release-publish": {
       "options": {
@@ -72,9 +40,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

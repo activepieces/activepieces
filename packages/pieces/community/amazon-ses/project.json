@@ -27,31 +27,6 @@
       },
       "dependsOn": ["prebuild", "^build"]
     },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/amazon-ses",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-amazon-ses:prebuild",
-          "nx run pieces-amazon-ses:build",
-          "nx run pieces-amazon-ses:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/amazon-ses",
-        "command": "npm install"
-      }
-    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": [
