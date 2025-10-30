@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.71.0",
-  "rcVersion": "0.70.4-rc.0",
+  "rcVersion": "0.71.0-rc.skip-piece-check",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
