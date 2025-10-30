@@ -8,12 +8,15 @@ export async function makeRequest(
   path: string,
   body?: unknown
 ) {
+  // Sanitize the API key to prevent header injection issues
+  const sanitizedApiKey = apiKey.trim().replace(/[\r\n]/g, '');
+
   try {
     const response = await httpClient.sendRequest({
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        'X-Api-Key': apiKey,
+        'X-Api-Key': sanitizedApiKey,
         'Content-Type': 'application/json',
       },
       body,

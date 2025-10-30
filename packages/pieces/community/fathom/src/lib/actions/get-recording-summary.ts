@@ -9,7 +9,7 @@ export const getRecordingSummary = createAction({
   displayName: 'Get Recording Summary',
   description: 'Retrieves the summary for a specific recording from Fathom',
   props: {
-    recordingId: Property.Number({
+    recordingId: Property.ShortText({
       displayName: 'Recording ID',
       description: 'The ID of the meeting recording to fetch the call summary for',
       required: true,
@@ -27,7 +27,7 @@ export const getRecordingSummary = createAction({
       throw new Error('Recording ID is required');
     }
 
-    // Build query parameters if destination URL is provided
+    // Build path according to Fathom API docs: GET /recordings/{recording_id}/summary
     const path = destinationUrl
       ? `/recordings/${recordingId}/summary?destination_url=${encodeURIComponent(destinationUrl)}`
       : `/recordings/${recordingId}/summary`;
@@ -38,6 +38,27 @@ export const getRecordingSummary = createAction({
       path
     );
 
-    return response;
+    // If destinationUrl was provided, return the destination info
+    if (destinationUrl) {
+      return response;
+    }
+
+    // Check if summary exists and is not null
+    if (!response || !response.summary) {
+      return {
+        error: 'No summary available',
+        message: 'The recording may not have been processed yet or no summary was generated. Wait a few minutes after the recording completes and try again.',
+        raw_response: response,
+      };
+    }
+
+    // Return the summary with both raw and formatted versions
+    return {
+      summary: response.summary,
+      markdown: response.summary.markdown_formatted || '',
+      template: response.summary.template_name || 'general',
+      // Include full response for debugging
+      _raw: response,
+    };
   },
 });

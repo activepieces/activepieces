@@ -56,7 +56,7 @@ export const newRecording = createTrigger({
     }),
   },
   sampleData: {
-    recording_id: 'rec_123456789',
+    recording_id: '123456789',
     title: 'Sample Meeting Recording',
     start_time: '2024-01-15T10:00:00Z',
     end_time: '2024-01-15T11:00:00Z',

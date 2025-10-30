@@ -23,10 +23,20 @@ export const fathomAuth = PieceAuth.SecretText({
       };
     }
 
+    // Sanitize the API key by trimming whitespace and removing any newlines
+    const sanitizedAuth = (auth as string).trim().replace(/[\r\n]/g, '');
+
+    if (!sanitizedAuth) {
+      return {
+        valid: false,
+        error: 'API Key cannot be empty after removing whitespace.',
+      };
+    }
+
     try {
       // Validate the API key by making a test request
-      // Using /recordings endpoint as it's a common endpoint for validation
-      await makeRequest(auth as string, HttpMethod.GET, '/recordings');
+      // Using /meetings endpoint for validation as it's available to all API users
+      await makeRequest(sanitizedAuth, HttpMethod.GET, '/meetings');
 
       return {
         valid: true,
@@ -34,6 +44,13 @@ export const fathomAuth = PieceAuth.SecretText({
       };
     } catch (error: any) {
       // Handle authentication errors
+      if (error.message.includes('Not Found') || error.message.includes('404')) {
+        return {
+          valid: false,
+          error: 'API endpoint not found. Please ensure you are using a valid Fathom API key.',
+        };
+      }
+
       if (error.message.includes('Unauthorized') || error.message.includes('401')) {
         return {
           valid: false,

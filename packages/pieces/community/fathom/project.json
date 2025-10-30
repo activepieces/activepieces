@@ -26,6 +26,7 @@
         "main": "packages/pieces/community/fathom/src/index.ts",
         "assets": [
           "packages/pieces/community/fathom/*.md",
+          "packages/pieces/community/fathom/*.json",
           {
             "input": "packages/pieces/community/fathom/src/i18n",
             "output": "./src/i18n",
