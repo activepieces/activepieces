@@ -2,7 +2,7 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, Changelog, ErrorCode, ListChangelogsResponse } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore } from '../helper/key-value'
+import { distributedStore } from '../database/redis-connections'
 import { system } from '../helper/system/system'
 
 const CHANGELOG_KEY = 'changelogs'
@@ -45,7 +45,9 @@ async function getChangelog(logger: FastifyBaseLogger): Promise<ListChangelogsRe
         }
     }
     catch (error) {
-        logger.error('Error fetching changelog', error)
+        logger.error({ 
+            error,
+        }, 'Error fetching changelog')
         return {
             data: [],
         }
