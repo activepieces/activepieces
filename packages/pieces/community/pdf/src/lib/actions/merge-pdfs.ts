@@ -4,7 +4,7 @@ import { PDFDocument } from 'pdf-lib';
 export const mergePdfs = createAction({
   name: 'mergePdfs',
   displayName: 'Merge PDFs',
-  description: 'Merge an array of PDF files into a single PDF document',
+  description: 'Merges multiple PDF files into a single PDF document.',
   props: {
     pdfFiles: Property.Array({
       displayName: 'PDF Files',
