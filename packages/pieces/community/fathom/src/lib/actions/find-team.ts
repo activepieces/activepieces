@@ -12,26 +12,39 @@ export const findTeam = createAction({
   props: {
     team_name: Property.ShortText({
       displayName: 'Team Name',
-      description: 'Name of the team to search for.',
+      description: 'Enter part or full name of the team to search for.',
       required: true,
     }),
-
   },
 
   async run({ auth, propsValue }) {
     const { team_name } = propsValue;
+    const allTeams: any[] = [];
+    let cursor: string | null = null;
 
-    const response = await makeRequest(auth, HttpMethod.GET, '/teams');
+    try {
 
-    const teams = response.items || [];
+      do {
+        const path = cursor ? `/teams?cursor=${cursor}` : '/teams';
+        const response = await makeRequest(auth, HttpMethod.GET, path);
 
-    const matchingTeams = teams.filter(
-      (team: any) =>
-        team.name?.toLowerCase().includes(team_name.toLowerCase())
-    );
+        if (response?.items) {
+          allTeams.push(...response.items);
+        }
 
-    return matchingTeams.length > 0
-      ? matchingTeams
-      : { message: `No team found with the name "${team_name}"` };
+        cursor = response.next_cursor || null;
+      } while (cursor);
+
+      const matchingTeams = allTeams.filter(
+        (team: any) =>
+          team.name?.toLowerCase().includes(team_name.toLowerCase())
+      );
+
+      return matchingTeams.length > 0
+        ? matchingTeams
+        : { message: `No team found with the name "${team_name}".` };
+    } catch (error: any) {
+      throw new Error(`Failed to fetch teams: ${error.message || error}`);
+    }
   },
 });

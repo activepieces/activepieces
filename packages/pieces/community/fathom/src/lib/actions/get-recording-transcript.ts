@@ -37,14 +37,10 @@ export const getRecordingTranscript = createAction({
 
     if (response.transcript) {
       return {
-        mode: "synchronous",
-        recordingId,
         transcript: response.transcript,
       };
     } else if (response.destination_url) {
       return {
-        mode: "asynchronous",
-        recordingId,
         message:
           "Transcript will be sent to your destination URL once ready.",
         destination_url: response.destination_url,

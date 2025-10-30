@@ -14,7 +14,7 @@ export const getRecordingSummary = createAction({
     destinationUrl: Property.ShortText({
       displayName: "Destination URL (Optional)",
       description:
-        "If provided, Fathom will POST the summary to this URL asynchronously. If left blank, the summary will be returned immediately.",
+        "If provided, Fathom will POST the summary to this URL asynchronously.",
       required: false,
     }),
   },
@@ -30,23 +30,19 @@ export const getRecordingSummary = createAction({
     const path = `/recordings/${recordingId}/summary${query}`;
 
     const response = await makeRequest(apiKey, HttpMethod.GET, path);
-
+       console.log("Fathom API response:", response);
     if (response.summary) {
       return {
-        mode: "synchronous",
-        recordingId,
         summary: response.summary,
       };
     } else if (response.destination_url) {
       return {
-        mode: "asynchronous",
-        recordingId,
         message:
           "Summary will be sent to your destination URL once ready.",
         destination_url: response.destination_url,
       };
     } else {
-      throw new Error("Unexpected API response from Fathom.");
+      throw new Error("Summary is null.");
     }
   },
 });

@@ -10,6 +10,12 @@ export const findTeamMember = createAction({
   description: 'Find a Fathom team member based on their email address.',
 
   props: {
+    team: Property.ShortText({
+      displayName: 'Team Name ',
+      description:
+        'Optionally filter members by team name before searching for the email.',
+      required: false,
+    }),
     email: Property.ShortText({
       displayName: 'Email Address',
       description: 'Email address of the team member to search for.',
@@ -19,17 +25,38 @@ export const findTeamMember = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { email } = propsValue;
-    const response = await makeRequest(auth, HttpMethod.GET, '/team_members');
-    const members = response.items || [];
+    const { email, team } = propsValue;
 
-    const matchingMembers = members.filter(
-      (member: any) =>
-        member.email?.toLowerCase() === email.toLowerCase()
-    );
+    const allMembers: any[] = [];
+    let cursor: string | null = null;
 
-    return matchingMembers.length > 0
-      ? matchingMembers
-      : { message: `No team member found with email "${email}"` };
+    try {
+      do {
+        const queryParams = new URLSearchParams();
+        if (cursor) queryParams.append('cursor', cursor);
+        if (team) queryParams.append('team', team);
+
+        const path = `/team_members${queryParams.toString() ? `?${queryParams}` : ''}`;
+        const response = await makeRequest(auth, HttpMethod.GET, path);
+
+        if (response?.items) {
+          allMembers.push(...response.items);
+        }
+
+        cursor = response.next_cursor || null;
+      } while (cursor);
+
+      const matchingMembers = allMembers.filter(
+        (member: any) =>
+          member.email?.toLowerCase() === email.toLowerCase()
+      );
+
+      return matchingMembers.length > 0
+        ? matchingMembers
+        : { message: `No team member found with email "${email}"${team ? ` in team "${team}"` : ''}.` };
+
+    } catch (error: any) {
+      throw new Error(`Failed to fetch team members: ${error.message || error}`);
+    }
   },
 });

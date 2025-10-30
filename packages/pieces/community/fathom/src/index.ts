@@ -6,10 +6,11 @@ import { getRecordingTranscript } from "./lib/actions/get-recording-transcript";
 import { listMeetings } from "./lib/actions/list-meetings";
 import { newRecording } from "./lib/triggers/new-recording";
 import { getRecordingSummary } from "./lib/actions/get-recording-summary";
+import { FathomAuth } from "./lib/common/auth";
 
     export const fathom = createPiece({
       displayName: "Fathom",
-      auth: PieceAuth.None(),
+      auth:FathomAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/fathom.png",
       authors: ["omey12"],

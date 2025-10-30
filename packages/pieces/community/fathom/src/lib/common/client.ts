@@ -29,7 +29,7 @@ export const recordingIdDropdown = Property.Dropdown({
     displayName: "Recording ID",
     description: "Select a recording from your Fathom meetings",
     required: true,
-    refreshers: [],
+    refreshers: [], 
     options: async ({ auth }) => {
         if (!auth) {
             return {
@@ -40,13 +40,23 @@ export const recordingIdDropdown = Property.Dropdown({
         }
 
         try {
+            const meetings = await makeRequest(auth as string, HttpMethod.GET, "/meetings?page_size=100");
 
-            const meetings = await makeRequest(auth as string, HttpMethod.GET, "/meetings");
+            const items = Array.isArray(meetings?.items) ? meetings.items : [];
 
-            const options = (meetings.items || []).map((meeting: any) => ({
-                label: meeting.title || `Meeting ${meeting.id}`,
-                value: meeting.id,
+            const options = items.map((meeting: any) => ({
+      
+                label: String(meeting.title || meeting.recording_id || `Meeting ${meeting.recording_id}`),
+                value: String(meeting.recording_id),
             }));
+
+            if (options.length === 0) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "No recordings available",
+                };
+            }
 
             return {
                 disabled: false,
