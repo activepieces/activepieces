@@ -153,6 +153,10 @@ export const BuilderHeader = () => {
               flowVersion={flowVersion}
               readonly={!isLatestVersion}
               onDelete={() => {
+                // todo(Rupal): Remove this when invalidateFlowsQuery is fixed
+                queryClient.invalidateQueries({
+                  queryKey: ['flow', flow.id],
+                });
                 flowsHooks.invalidateFlowsQuery(queryClient);
               }}
               onRename={() => {
