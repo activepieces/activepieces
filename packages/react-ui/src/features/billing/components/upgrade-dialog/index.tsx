@@ -27,7 +27,7 @@ import {
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';
 
 import { AddonsStep } from './addons-step';
-import { planData, DEFAULT_PROJECTS, DEFAULT_ACTIVE_FLOWS } from './data';
+import { planData, DEFAULT_ACTIVE_FLOWS } from './data';
 import { PlanSelectionStep } from './plan-selection-step';
 import { useManagePlanDialogStore } from './store';
 import { SubscriptionSummary } from './summary';
@@ -44,7 +44,6 @@ export interface DialogState {
   selectedPlan: string;
   selectedCycle: BillingCycle;
   selectedActiveFlows: number[];
-  selectedProjects: number[];
   currentStep: number;
 }
 
@@ -52,7 +51,6 @@ export interface CurrentPlanInfo {
   plan: PlanName;
   cycle: BillingCycle;
   activeFlows: number;
-  projects: number;
   subscriptionStatus: ApSubscriptionStatus;
 }
 
@@ -61,7 +59,6 @@ export interface PricingCalculation {
   totalAddonCost: number;
   addonCosts: {
     flows: number;
-    projects: number;
   };
   totalPrice: number;
   annualSavings: number;
@@ -134,7 +131,6 @@ export const UpgradeDialog: FC = () => {
     selectedPlan: currentPlanInfo.plan,
     selectedCycle: currentPlanInfo.cycle,
     selectedActiveFlows: [0],
-    selectedProjects: [0],
     currentStep: 1,
   });
 
@@ -148,9 +144,6 @@ export const UpgradeDialog: FC = () => {
           ? currentPlanInfo.activeFlows
           : DEFAULT_ACTIVE_FLOWS[PlanName.PLUS],
       ],
-      selectedProjects: [
-        samePlan ? currentPlanInfo.projects : DEFAULT_PROJECTS,
-      ],
       currentStep: !isNil(dialog.step) ? dialog.step : 1,
     });
   }, [dialog.isOpen, dialog.step, currentPlanInfo]);
@@ -161,7 +154,6 @@ export const UpgradeDialog: FC = () => {
         dialogState.selectedPlan,
         dialogState.selectedCycle,
         dialogState.selectedActiveFlows,
-        dialogState.selectedProjects,
         planData.plans,
       ),
     [dialogState],
@@ -189,7 +181,6 @@ export const UpgradeDialog: FC = () => {
   const handlePlanSelect = (plan: string) => {
     updateDialogState({
       selectedActiveFlows: [0],
-      selectedProjects: [0],
     });
 
     updateDialogState({ selectedPlan: plan });
@@ -207,10 +198,6 @@ export const UpgradeDialog: FC = () => {
     updateDialogState({ selectedActiveFlows: flows });
   };
 
-  const handleProjectsChange = (projects: number[]) => {
-    updateDialogState({ selectedProjects: projects });
-  };
-
   const handleActionClick = () => {
     const selectedPlanEnum = dialogState.selectedPlan as PlanName;
 
@@ -225,7 +212,6 @@ export const UpgradeDialog: FC = () => {
           cycle: dialogState.selectedCycle,
           addons: {
             activeFlows: dialogState.selectedActiveFlows[0],
-            projects: dialogState.selectedProjects[0],
           },
         });
         break;
@@ -236,7 +222,6 @@ export const UpgradeDialog: FC = () => {
           cycle: dialogState.selectedCycle,
           addons: {
             activeFlows: dialogState.selectedActiveFlows[0],
-            projects: dialogState.selectedProjects[0],
           },
         });
         break;
@@ -303,8 +288,6 @@ export const UpgradeDialog: FC = () => {
                   currentPlanInfo={currentPlanInfo}
                   selectedActiveFlows={dialogState.selectedActiveFlows}
                   onActiveFlowsChange={handleActiveFlowsChange}
-                  selectedProjects={dialogState.selectedProjects}
-                  onProjectsChange={handleProjectsChange}
                 />
               )}
             </div>
@@ -312,7 +295,6 @@ export const UpgradeDialog: FC = () => {
 
           <SubscriptionSummary
             dialogState={dialogState}
-            currentPlanInfo={currentPlanInfo}
             pricing={pricing}
             actionConfig={actionConfig}
             isLoading={isLoading}

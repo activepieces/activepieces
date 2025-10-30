@@ -16,7 +16,6 @@ export const PLUS_PLAN_PRICE_ID = getPriceIdFor(PRICE_NAMES.PLUS_PLAN)
 export const BUSINESS_PLAN_PRICE_ID = getPriceIdFor(PRICE_NAMES.BUSINESS_PLAN)
 export const AI_CREDIT_PRICE_ID = getPriceIdFor(PRICE_NAMES.AI_CREDITS)
 export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
-export const PROJECT_PRICE_ID = getPriceIdFor(PRICE_NAMES.PROJECT)
 
 export const AI_CREDIT_PRICE_IDS = [
     AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL],
@@ -36,11 +35,6 @@ export const BUSINESS_PLAN_PRICE_IDS = [
 export const ACTIVE_FLOW_PRICE_IDS = [
     ACTIVE_FLOW_PRICE_ID[BillingCycle.ANNUAL],
     ACTIVE_FLOW_PRICE_ID[BillingCycle.MONTHLY],
-]
-
-export const PROJECT_PRICE_IDS = [
-    PROJECT_PRICE_ID[BillingCycle.ANNUAL],
-    PROJECT_PRICE_ID[BillingCycle.MONTHLY],
 ]
 
 export const PlatformPlanHelper = {
@@ -116,21 +110,6 @@ export const PlatformPlanHelper = {
             })
         }
     },
-    checkLegitSubscriptionUpdateOrThrow: async (params: CheckLegitSubscriptionUpdateOrThrowParams) => {
-        const { projectsAddon, newPlan } = params
-
-        const isNotBusinessPlan = newPlan !== PlanName.BUSINESS
-        const requestProjectAddon = !isNil(projectsAddon) && projectsAddon > 0
-
-        if (isNotBusinessPlan && requestProjectAddon) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Extra projects are only available for the Business plan',
-                },
-            })
-        }
-    },
     handleResourceLocking: async ({ platformId, newLimits }: HandleResourceLockingParams): Promise<void> => {
         const usage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
@@ -144,10 +123,8 @@ export const PlatformPlanHelper = {
             currentPlan,
             currentCycle,
             newCycle,
-            currentProjectsLimit,
             newActiveFlowsLimit,
             newPlan,
-            newProjectsLimit,
         } = params
 
         const currentPlanTier = PLAN_HIERARCHY[currentPlan]
@@ -171,9 +148,7 @@ export const PlatformPlanHelper = {
             return false
         }
 
-        const isAddonUpgrade =
-            (!isNil(newActiveFlowsLimit) && newActiveFlowsLimit > currentActiveFlowsLimit) ||
-            (!isNil(newProjectsLimit) && newProjectsLimit > currentProjectsLimit)
+        const isAddonUpgrade = !isNil(newActiveFlowsLimit) && newActiveFlowsLimit > currentActiveFlowsLimit
 
         return isAddonUpgrade
     },
@@ -282,18 +257,11 @@ type CheckResourceLockedParams = {
     resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.ACTIVE_FLOWS>
 }
 
-type CheckLegitSubscriptionUpdateOrThrowParams = {
-    newPlan: PlanName
-    projectsAddon?: number
-}
-
 type IsUpgradeEperienceParams = {
     currentPlan: PlanName 
     newPlan: PlanName
     currentCycle: BillingCycle
     newCycle: BillingCycle
-    newProjectsLimit?: number
     newActiveFlowsLimit?: number
-    currentProjectsLimit: number
     currentActiveFlowsLimit: number
 }

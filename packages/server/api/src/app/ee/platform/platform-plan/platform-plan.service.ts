@@ -40,7 +40,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
     async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
         const { stripeSubscriptionStartDate: startDate, stripeSubscriptionEndDate: endDate } = platformPlan
 
-        if ( isNil(startDate) || isNil(endDate)) {
+        if (isNil(startDate) || isNil(endDate)) {
             return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix() }
         }
         return { startDate, endDate }
