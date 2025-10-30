@@ -534,25 +534,14 @@ export async function createPropertyDefinition(
 	}
 }
 
-export function getAdfFieldsProp() {
-	return Property.MultiSelectDropdown({
-		displayName: 'Fields in JSON Atlassian Document Format',
-		description: 'https://developer.atlassian.com/cloud/jira/platform/apis/document/structure',
-		required: false,
-		refreshers: [],
-		options: async () => {
-			// TODO: support other fields dynamically
-			return {
-				disabled: false,
-				options: [
-					{
-						label: 'Description',
-						value: 'description',
-					}
-				],
-			};
-		},
-	});
+// Only certain fields support ADF in issues
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
+// - description and environment fields in issues.
+// - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a string and don't handle Atlassian Document Format content.
+export function isFieldAdfCompatible(field: IssueFieldMetaData) {
+	const standardFields = ['description', 'environment'];
+
+	return field.schema.custom?.includes('textarea') || standardFields.includes(field.key);
 }
 
 function parseArray(value: Array<string> | string): Array<string> {
@@ -639,10 +628,7 @@ export function formatIssueFields(
 				break;
 
 			case 'string': {
-				const isCustomTextArea =
-					field.schema.custom?.includes('textarea') || ['description', 'environment'].includes(key);
-
-				if (isCustomTextArea) {
+				if (isFieldAdfCompatible(field)) {
           if (adfFields.includes(key)) {
             fieldsOutput[key] = JSON.parse(fieldInputValue);
           } else {
