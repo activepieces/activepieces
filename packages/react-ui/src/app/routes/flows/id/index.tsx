@@ -74,8 +74,8 @@ const FlowBuilderPage = () => {
         flowVersion={flow!.version}
         readonly={false}
         run={null}
-        sampleData={sampleData ?? {}}
-        sampleDataInput={sampleDataInput ?? {}}
+        outputSampleData={sampleData ?? {}}
+        inputSampleData={sampleDataInput ?? {}}
       >
         <BuilderPage />
       </BuilderStateProvider>
