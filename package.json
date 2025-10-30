@@ -181,6 +181,7 @@
     "deep-equal": "2.2.2",
     "deepmerge-ts": "7.1.0",
     "docusign-esign": "8.1.0",
+    "dotenv": "17.2.3",
     "drip-nodejs": "3.1.2",
     "embla-carousel-react": "8.1.8",
     "ethers": "6.15.0",
