@@ -51,7 +51,10 @@
       "options": {
         "cwd": "packages/pieces/community/pdf",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

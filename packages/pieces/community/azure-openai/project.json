@@ -47,7 +47,10 @@
       "options": {
         "cwd": "packages/pieces/community/azure-openai",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []
