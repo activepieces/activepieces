@@ -56,7 +56,7 @@ const fetchQuota = async (log: FastifyBaseLogger, zeroApiUrl: string, token: str
     }
 }
 
-const postTokenUsage = async (log: FastifyBaseLogger, zeroApiUrl: string, token: string, usage: TokenUsage): Promise<void> => {
+const postTokenUsage = async (log: FastifyBaseLogger, zeroApiUrl: string, token: string, usage: TokenUsage, projectId: string, flowId: string | undefined = undefined): Promise<void> => {
     const url = `${zeroApiUrl}/automationx/v1/token-used`
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ const postTokenUsage = async (log: FastifyBaseLogger, zeroApiUrl: string, token:
         const response = await fetch(url, {
             method: 'POST',
             headers,
-            body: JSON.stringify(usage),
+            body: JSON.stringify({ ...usage, projectId, flowId }),
         })
 
         if (!response.ok) {
@@ -101,10 +101,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => {
             log.debug(quota.available, 'available quota check response for flowRunsExceeded')
             return !quota.available.flow_executions
         },
-        async publishTokenUsage(projectId: string, usage: LanguageModelUsage): Promise<void> {
+        async publishTokenUsage({ projectId, flowId, usage }: PublishTokenParams): Promise<void> {
             if (isStandaloneVersion) return
             if (!usage.inputTokens || !usage.outputTokens) {
-                log.warn('no token usage found while publishing to promptx')
+                log.error('no token usage found while publishing to promptx')
                 return
             }
             const projectUserToken = await authenticationUtils.getProjectOwnerAndToken(projectId)
@@ -117,7 +117,13 @@ export const platformPlanService = (log: FastifyBaseLogger) => {
                     totalTokens: usage.totalTokens ?? usage.inputTokens + usage.outputTokens,
                 },
             }
-            await postTokenUsage(log, zeroApiUrl!, projectUserToken.token, tokenUsage)
+            await postTokenUsage(log, zeroApiUrl!, projectUserToken.token, tokenUsage, projectId, flowId)
         },
     }
+}
+
+type PublishTokenParams = {
+    usage: LanguageModelUsage
+    projectId: string
+    flowId?: string
 }

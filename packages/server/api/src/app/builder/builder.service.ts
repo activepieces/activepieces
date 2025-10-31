@@ -283,7 +283,11 @@ export const builderService = (log: FastifyBaseLogger) => ({
 
         if (result.usage) {
             log.info(result.usage, 'builder ai usage')
-            await platformPlanService(log).publishTokenUsage(projectId, result.usage)
+            await platformPlanService(log).publishTokenUsage({
+                projectId,
+                flowId,
+                usage: result.usage,
+            })
         }
 
         await builderService(log).saveMessages({ projectId, flowId, messages: [ userMessage ] })
