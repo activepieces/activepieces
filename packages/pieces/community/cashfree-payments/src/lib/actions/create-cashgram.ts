@@ -134,15 +134,15 @@ export const createCashgram = createAction({
       };
     }
 
-    // Validate link expiry date format
-    const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
-    if (!dateRegex.test(linkExpiry)) {
-      return {
-        success: false,
-        error: 'Invalid link expiry date format',
-        message: 'Link expiry date must be in YYYY/MM/DD format',
-      };
-    }
+    // // Validate link expiry date format
+    // const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
+    // if (!dateRegex.test(linkExpiry)) {
+    //   return {
+    //     success: false,
+    //     error: 'Invalid link expiry date format',
+    //     message: 'Link expiry date must be in YYYY/MM/DD format',
+    //   };
+    // }
 
     // Validate that expiry date is not more than 30 days from now
     const expiryDate = new Date(linkExpiry.replace(/\//g, '-'));
