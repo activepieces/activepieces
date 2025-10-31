@@ -61,8 +61,8 @@ export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
 
 
 export const RegistryPiecesRequestQuery = Type.Object({
-    release: Type.Optional(ExactVersionType),
-    edition: Type.Optional(Type.Enum(ApEdition)),
+    release: ExactVersionType,
+    edition: Type.Enum(ApEdition),
 })
 
 export type RegistryPiecesRequestQuery = Static<typeof RegistryPiecesRequestQuery>
