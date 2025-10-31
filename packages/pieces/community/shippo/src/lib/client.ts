@@ -62,13 +62,11 @@ export class ShippoClient {
   async listShippingLabels(params?: {
     page?: number;
     results_per_page?: number;
-    object_created_gt?: string;
   }): Promise<ApiListResponse<ShippingLabel>> {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.results_per_page) queryParams.append('results_per_page', params.results_per_page.toString());
-    if (params?.object_created_gt) queryParams.append('object_created_gt', params.object_created_gt);
-
+   
     const queryString = queryParams.toString();
     const endpoint = `/transactions${queryString ? `?${queryString}` : ''}`;
 

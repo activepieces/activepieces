@@ -1,32 +1,45 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+  Property,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { shippoAuth } from '../auth';
 import { ShippoClient } from '../client';
 
-const polling: Polling<PiecePropValueSchema<typeof shippoAuth>, { test_mode?: boolean }> = {
+const polling: Polling<
+  PiecePropValueSchema<typeof shippoAuth>,
+  { test_mode?: boolean }
+> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const client = new ShippoClient({
       apiToken: auth,
     });
 
-    const startDate = lastFetchEpochMS === 0
-      ? dayjs().subtract(7, 'days').toISOString()
-      : dayjs(lastFetchEpochMS).toISOString();
-
     const result = await client.listShippingLabels({
-      object_created_gt: startDate,
       results_per_page: 100,
     });
 
-    let labels = result.results;
+    let filteredLabels = result.results.filter((label) => {
+      const labelTime = dayjs(label.object_created).valueOf();
+      return labelTime > lastFetchEpochMS;
+    });
+
     if (!propsValue.test_mode) {
-      labels = labels.filter(label => !label.test);
+      filteredLabels = filteredLabels.filter(
+        (label) => !label.test
+      );
     }
 
-    return labels.map((label: any) => ({
-      epochMilliSeconds: dayjs(label.object_created || label.created_at).valueOf(),
+    return filteredLabels.map((label: any) => ({
+      epochMilliSeconds: dayjs(label.object_created).valueOf(),
       data: label,
     }));
   },
@@ -40,40 +53,48 @@ export const newShippingLabel = createTrigger({
   auth: shippoAuth,
   props: {
     test_mode: Property.Checkbox({
-      displayName: 'Test Mode',
-      description: 'Include test labels',
+      displayName: 'Include Test Labels',
+      description: 'Include test shipping labels in the trigger',
       required: false,
       defaultValue: false,
     }),
   },
   sampleData: {
-    "object_id": "label_123",
-    "carrier_account": "carrier_123",
-    "servicelevel_token": "usps_priority",
-    "tracking_number": "9400111899221345678900",
-    "tracking_status": "PRE_TRANSIT",
-    "tracking_url_provider": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899221345678900",
-    "rate": "8.45",
-    "parcel": "parcel_123",
-    "address_from": {
-      "name": "John Doe",
-      "street1": "123 Main St",
-      "city": "San Francisco",
-      "state": "CA",
-      "zip": "94105",
-      "country": "US"
+    commercial_invoice_url: 'string',
+    created_by: {
+      first_name: 'Shwan',
+      last_name: 'Ippotle',
+      username: 'shippotle@shippo.com',
     },
-    "address_to": {
-      "name": "Jane Smith",
-      "street1": "456 Oak Ave",
-      "city": "New York",
-      "state": "NY",
-      "zip": "10001",
-      "country": "US"
-    },
-    "metadata": "Order #123",
-    "test": true,
-    "created_at": "2023-10-01T12:00:00Z"
+    eta: 'string',
+    label_file_type: 'PDF_4x6',
+    label_url:
+      'https://shippo-delivery.s3.amazonaws.com/70ae8117ee1749e393f249d5b77c45e0.pdf?Signature=vDw1ltcyGveVR1OQoUDdzC43BY8%3D&Expires=1437093830&AWSAccessKeyId=AKIAJTHP3LLFMYAWALIA',
+    messages: [],
+    metadata: 'string',
+    object_created: '2019-08-24T14:15:22Z',
+    object_id: '915d94940ea54c3a80cbfa328722f5a1',
+    object_owner: 'shippotle@shippo.com',
+    object_state: 'VALID',
+    object_updated: '2019-08-24T14:15:22Z',
+    parcel: 'e94c7fdfdc7b495dbb390a28d929d90a',
+    qr_code_url:
+      'https://shippo-delivery.s3.amazonaws.com/96_qr_code.pdf?Signature=PEdWrp0mFWAGwJp7FW3b%2FeA2eyY%3D&Expires=1385930652&AWSAccessKeyId=AKIAJTHP3LLFMYAWALIA',
+    rate: {},
+    status: 'SUCCESS',
+    test: true,
+    tracking_number: '9499907123456123456781',
+    tracking_status: 'DELIVERED',
+    tracking_url_provider:
+      'https://tools.usps.com/go/TrackConfirmAction_input?origTrackNum=9499907123456123456781',
+  },
+  async test(context) {
+    return await pollingHelper.test(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
   },
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
@@ -94,21 +115,7 @@ export const newShippingLabel = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-      files: context.files
+      files: context.files,
     });
-  },
-  async test(context): Promise<any> {
-    const result = await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files
-    });
-
-    if(!result || result.length === 0){
-      return [newShippingLabel.sampleData]
-    }
-
-    return result
   },
 });

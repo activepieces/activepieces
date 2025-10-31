@@ -1,6 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { shippoAuth } from "../../lib/auth";
-import { ShippoClient } from "../../lib/client";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { shippoAuth } from '../../lib/auth';
+import { ShippoClient } from '../../lib/client';
 
 export const createOrder = createAction({
   name: 'create_order',
@@ -10,7 +10,7 @@ export const createOrder = createAction({
   props: {
     order_number: Property.ShortText({
       displayName: 'Order Number',
-      description: 'Unique identifier for the order',
+      description: 'Custom reference number for the order',
       required: true,
     }),
     order_status: Property.StaticDropdown({
@@ -19,24 +19,31 @@ export const createOrder = createAction({
       required: true,
       options: {
         options: [
+          { label: 'Unknown', value: 'UNKNOWN' },
+          { label: 'Awaiting Payment', value: 'AWAITPAY' },
           { label: 'Paid', value: 'PAID' },
-          { label: 'Unpaid', value: 'UNPAID' },
-          { label: 'Cancelled', value: 'CANCELLED' },
           { label: 'Refunded', value: 'REFUNDED' },
-          { label: 'On Hold', value: 'ONHOLD' },
+          { label: 'Cancelled', value: 'CANCELLED' },
+          { label: 'Partially Fulfilled', value: 'PARTIALLY_FULFILLED' },
+          { label: 'Shipped', value: 'SHIPPED' },
         ],
       },
-      defaultValue: 'UNPAID'
+      defaultValue: 'AWAITPAY',
     }),
     placed_at: Property.DateTime({
       displayName: 'Order Date',
-      description: 'When the order was placed',
-      required: false,
+      description: 'When the order was placed by the buyer (mandatory) - Format: 2025-10-31T11:56:29.244Z',
+      required: true,
     }),
     total_price: Property.ShortText({
       displayName: 'Total Price',
       description: 'Total price including shipping and tax',
       required: true,
+    }),
+    subtotal_price: Property.ShortText({
+      displayName: 'Subtotal Price',
+      description: 'Price before shipping and tax (optional)',
+      required: false,
     }),
     total_tax: Property.ShortText({
       displayName: 'Total Tax',
@@ -54,32 +61,37 @@ export const createOrder = createAction({
     from_name: Property.ShortText({
       displayName: 'Sender Name',
       description: 'Name of the sender',
-      required: true,
+      required: false,
+    }),
+    from_company: Property.ShortText({
+      displayName: 'Sender Company',
+      description: 'Company name of the sender',
+      required: false,
     }),
     from_street1: Property.ShortText({
       displayName: 'Sender Street Address',
       description: 'Street address line 1',
-      required: true,
+      required: false,
     }),
     from_city: Property.ShortText({
       displayName: 'Sender City',
       description: 'City',
-      required: true,
+      required: false,
     }),
     from_state: Property.ShortText({
       displayName: 'Sender State',
       description: 'State/Province',
-      required: true,
+      required: false,
     }),
     from_zip: Property.ShortText({
       displayName: 'Sender ZIP Code',
       description: 'ZIP/Postal code',
-      required: true,
+      required: false,
     }),
     from_country: Property.ShortText({
       displayName: 'Sender Country',
       description: 'Two-letter country code (e.g., US)',
-      required: true,
+      required: false,
       defaultValue: 'US',
     }),
     from_phone: Property.ShortText({
@@ -96,6 +108,11 @@ export const createOrder = createAction({
       displayName: 'Recipient Name',
       description: 'Name of the recipient',
       required: true,
+    }),
+    to_company: Property.ShortText({
+      displayName: 'Recipient Company',
+      description: 'Company name of the recipient',
+      required: false,
     }),
     to_street1: Property.ShortText({
       displayName: 'Recipient Street Address',
@@ -135,18 +152,18 @@ export const createOrder = createAction({
     // Line Items - Single Item (Simple approach)
     line_item_title: Property.ShortText({
       displayName: 'Item Title',
-      description: 'Name/description of the item',
-      required: true,
+      description: 'Name/description of the item (optional)',
+      required: false,
     }),
     line_item_quantity: Property.Number({
       displayName: 'Item Quantity',
-      required: true,
+      required: false,
       defaultValue: 1,
     }),
-    line_item_price: Property.ShortText({
-      displayName: 'Item Price',
-      description: 'Price per item (e.g., "29.99")',
-      required: true,
+    line_item_total_price: Property.ShortText({
+      displayName: 'Item Total Price',
+      description: 'Total price for this line item (quantity × unit price)',
+      required: false,
     }),
     line_item_sku: Property.ShortText({
       displayName: 'Item SKU',
@@ -203,6 +220,11 @@ export const createOrder = createAction({
       required: false,
       defaultValue: 'USD',
     }),
+    shipping_method: Property.ShortText({
+      displayName: 'Shipping Method',
+      description: 'Shipping method name (e.g., "USPS First Class Package") - optional',
+      required: false,
+    }),
 
     // Multiple Line Items
     additional_line_items: Property.Json({
@@ -218,9 +240,11 @@ export const createOrder = createAction({
       order_status,
       placed_at,
       total_price,
+      subtotal_price,
       total_tax,
       currency,
       from_name,
+      from_company,
       from_street1,
       from_city,
       from_state,
@@ -229,6 +253,7 @@ export const createOrder = createAction({
       from_phone,
       from_email,
       to_name,
+      to_company,
       to_street1,
       to_city,
       to_state,
@@ -238,7 +263,7 @@ export const createOrder = createAction({
       to_email,
       line_item_title,
       line_item_quantity,
-      line_item_price,
+      line_item_total_price,
       line_item_sku,
       line_item_weight,
       line_item_weight_unit,
@@ -246,24 +271,13 @@ export const createOrder = createAction({
       weight_unit,
       shipping_cost,
       shipping_cost_currency,
+      shipping_method,
       additional_line_items,
     } = context.propsValue;
 
     const client = new ShippoClient({
       apiToken: context.auth,
     });
-
-    // Build from address
-    const from_address: any = {
-      name: from_name,
-      street1: from_street1,
-      city: from_city,
-      state: from_state,
-      zip: from_zip,
-      country: from_country,
-    };
-    if (from_phone) from_address.phone = from_phone;
-    if (from_email) from_address.email = from_email;
 
     // Build to address
     const to_address: any = {
@@ -274,24 +288,60 @@ export const createOrder = createAction({
       zip: to_zip,
       country: to_country,
     };
+    if (to_company) to_address.company = to_company;
     if (to_phone) to_address.phone = to_phone;
     if (to_email) to_address.email = to_email;
 
-    // Build line items
+    // Build order data with mandatory fields
+    const orderData: any = {
+      order_number,
+      order_status: order_status as
+        | 'UNKNOWN'
+        | 'AWAITPAY'
+        | 'PAID'
+        | 'REFUNDED'
+        | 'CANCELLED'
+        | 'PARTIALLY_FULFILLED'
+        | 'SHIPPED',
+      placed_at,
+      total_price,
+      currency,
+      to_address,
+    };
+
+    // Build from address (optional)
+    if (from_name && from_street1 && from_city && from_state && from_zip && from_country) {
+      const from_address: any = {
+        name: from_name,
+        street1: from_street1,
+        city: from_city,
+        state: from_state,
+        zip: from_zip,
+        country: from_country,
+      };
+      if (from_company) from_address.company = from_company;
+      if (from_phone) from_address.phone = from_phone;
+      if (from_email) from_address.email = from_email;
+      orderData.from_address = from_address;
+    }
+
+    // Build line items (optional)
     const line_items = [];
 
-    // Add primary line item
-    const primary_item: any = {
-      title: line_item_title,
-      quantity: line_item_quantity,
-      total_price: line_item_price,
-      currency: currency,
-    };
-    if (line_item_sku) primary_item.sku = line_item_sku;
-    if (line_item_weight) primary_item.weight = line_item_weight;
-    if (line_item_weight_unit) primary_item.weight_unit = line_item_weight_unit;
+    // Add primary line item if provided
+    if (line_item_title && line_item_total_price) {
+      const primary_item: any = {
+        title: line_item_title,
+        quantity: line_item_quantity || 1,
+        total_price: line_item_total_price,
+        currency: currency,
+      };
+      if (line_item_sku) primary_item.sku = line_item_sku;
+      if (line_item_weight) primary_item.weight = line_item_weight;
+      if (line_item_weight_unit) primary_item.weight_unit = line_item_weight_unit;
 
-    line_items.push(primary_item);
+      line_items.push(primary_item);
+    }
 
     // Add additional line items if provided
     if (additional_line_items && Array.isArray(additional_line_items)) {
@@ -299,35 +349,30 @@ export const createOrder = createAction({
         const additional_item: any = {
           title: item.title || '',
           quantity: Number(item.quantity) || 1,
-          total_price: item.total_price || item.price || '0.00',
+          total_price: item.total_price || '0.00',
           currency: item.currency || currency,
         };
         if (item.sku) additional_item.sku = item.sku;
         if (item.weight) additional_item.weight = item.weight;
         if (item.weight_unit) additional_item.weight_unit = item.weight_unit;
-        
+
         line_items.push(additional_item);
       });
     }
 
-    // Build order data
-    const orderData: any = {
-      order_number,
-      order_status: order_status as 'PAID' | 'UNPAID' | 'CANCELLED' | 'REFUNDED' | 'ONHOLD',
-      placed_at: placed_at || new Date().toISOString(),
-      total_price,
-      currency,
-      from_address,
-      to_address,
-      line_items,
-    };
+    // Add line items to order if any exist
+    if (line_items.length > 0) {
+      orderData.line_items = line_items;
+    }
 
     // Optional fields
+    if (subtotal_price) orderData.subtotal_price = subtotal_price;
     if (total_tax) orderData.total_tax = total_tax;
     if (weight) orderData.weight = weight;
     if (weight_unit) orderData.weight_unit = weight_unit;
     if (shipping_cost) orderData.shipping_cost = shipping_cost;
     if (shipping_cost_currency) orderData.shipping_cost_currency = shipping_cost_currency;
+    if (shipping_method) orderData.shipping_method = shipping_method;
 
     return await client.createOrder(orderData);
   },
