@@ -10,7 +10,6 @@ import {
     ListVersionsResponse,
     PackageType,
     PieceType,
-    ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -33,7 +32,6 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
-            const { projectId } = params
             const originalPiecesMetadata: PieceMetadataSchema[] = (await loadPiecesMetadata()).map((p) => {
                 return {
                     id: nanoid(),
@@ -54,7 +52,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
             const filteredPieces = pieces.map((p) =>
                 toPieceMetadataModel({
                     pieceMetadata: p,
-                    projectId,
                 }),
             )
             const translatedPieces = filteredPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataModel>(piece, params.locale))
@@ -81,7 +78,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
 
             return toPieceMetadataModel({
                 pieceMetadata,
-                projectId,
             })
         },
         async registry(): Promise<PiecePackageInformation[]> {
@@ -114,7 +110,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
 
             const result = toPieceMetadataModel({
                 pieceMetadata,
-                projectId,
             })
 
             return pieceTranslation.translatePiece<PieceMetadataModel>(result, locale)
@@ -144,7 +139,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
 
 const toPieceMetadataModel = ({
     pieceMetadata,
-    projectId,
 }: ToPieceMetadataModelParams): PieceMetadataModel => {
     return {
         name: pieceMetadata.name,
@@ -161,7 +155,6 @@ const toPieceMetadataModel = ({
         categories: pieceMetadata.categories,
         triggers: pieceMetadata.triggers,
         directoryPath: pieceMetadata.directoryPath,
-        projectId,
         packageType: PackageType.REGISTRY,
         pieceType: PieceType.OFFICIAL,
         i18n: pieceMetadata.i18n,
@@ -172,5 +165,4 @@ const toPieceMetadataModel = ({
 
 type ToPieceMetadataModelParams = {
     pieceMetadata: PieceMetadata
-    projectId?: ProjectId
 }

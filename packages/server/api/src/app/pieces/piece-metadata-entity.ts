@@ -52,10 +52,6 @@ export const PieceMetadataEntity =
               type: String,
               nullable: true,
           },
-          projectId: {
-              type: String,
-              nullable: true,
-          },
           platformId: {
               type: String,
               nullable: true,

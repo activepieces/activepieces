@@ -18,7 +18,7 @@ import {
 import { EntityManager } from 'typeorm'
 
 type ListParams = {
-    release: string
+    release: string 
     projectId?: string
     platformId?: string
     includeHidden: boolean
