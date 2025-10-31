@@ -1,78 +1,60 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots, FIRECRAWL_API_BASE_URL } from '../common/common';
 
-function forDefaultScreenshot(): any {
-  return {
-    type: 'screenshot',
-    fullPage: true,
+function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
+  if (!useWebhook || !webhookProperties) {
+    return null;
+  }
+
+  const webhookUrl = webhookProperties['webhookUrl'];
+  if (!webhookUrl) {
+    return null;
+  }
+
+  const webhook: Record<string, any> = {
+    url: webhookUrl,
   };
+
+  if (webhookProperties['webhookHeaders']) {
+    webhook['headers'] = webhookProperties['webhookHeaders'];
+  }
+
+  if (webhookProperties['webhookMetadata']) {
+    webhook['metadata'] = webhookProperties['webhookMetadata'];
+  }
+
+  if (webhookProperties['webhookEvents'] && Array.isArray(webhookProperties['webhookEvents']) && webhookProperties['webhookEvents'].length > 0) {
+    webhook['events'] = webhookProperties['webhookEvents'];
+  }
+
+  return webhook;
 }
 
-export const scrape = createAction({
+export const crawl = createAction({
   auth: firecrawlAuth,
-  name: 'scrape',
-  displayName: 'Scrape Website',
-  description: 'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
+  name: 'crawl',
+  displayName: 'Crawl',
+  description: 'Crawl multiple pages from a website based on specified rules and patterns.',
   props: {
     url: Property.ShortText({
-      displayName: 'Website URL',
-      description: 'The webpage URL to scrape.',
+      displayName: 'URL',
+      description: 'The base URL to start crawling from.',
       required: true,
     }),
-    timeout: Property.Number({
-      displayName: 'Timeout (ms)',
-      description: 'Maximum time to wait for the page to load (in milliseconds).',
+    prompt: Property.LongText({
+      displayName: 'Prompt',
+      description: 'Describe what information you want to extract.',
       required: false,
-      defaultValue: 60000,
+      defaultValue: 'Get me all of the blog pages on the website, probably localed in /blog'
     }),
-    useActions: Property.Checkbox({
-      displayName: 'Perform Actions Before Scraping',
-      description: 'Enable to perform a sequence of actions on the page before scraping (like clicking buttons, filling forms, etc.). See [Firecrawl Actions Documentation](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) for details on available actions and their parameters.',
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of pages to crawl. Default limit is 10.',
       required: false,
-      defaultValue: false,
+      defaultValue: 10,
     }),
-    actionProperties: Property.DynamicProperties({
-      displayName: 'Action Properties',
-      description: 'Properties for actions that will be performed on the page.',
-      required: false,
-      refreshers: ['useActions'],
-      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
-        const useActions = propsValue['useActions'] as unknown as boolean;
-        
-        if (!useActions) {
-          return {};
-        }
-        
-        return {
-          actions: Property.Json({
-            displayName: 'Actions',
-            description: 'Sequence of actions to perform on the page.',
-            required: false,
-            defaultValue: [
-              {
-                type: 'wait',
-                selector: '#example'
-              },
-              {
-                type: 'write',
-                selector: '#input',
-                text: 'Hello World',
-              },
-              {
-                type: 'click',
-                selector: '#button',
-              },
-              {
-                type: 'screenshot',
-              },
-            ],
-          }),
-        };
-      },
-    }),
-
     formats: Property.Dropdown({
       displayName: 'Output Format',
       description: 'Choose what format you want your output in.',
@@ -83,40 +65,21 @@ export const scrape = createAction({
           options: [
             { label: 'Markdown', value: 'markdown' },
             { label: 'Summary', value: 'summary' },
-            { label: 'HTML', value: 'html' },
-            { label: 'Raw HTML', value: 'rawHtml' },
             { label: 'Links', value: 'links' },
-            { label: 'Images', value: 'images' },
+            { label: 'HTML', value: 'html' },
             { label: 'Screenshot', value: 'screenshot' },
-            { label: 'JSON', value: 'json' }
+            { label: 'JSON', value: 'json' },
           ]
         };
       },
       defaultValue: 'markdown',
     }),
-    extractPrompt: Property.DynamicProperties({
-      displayName: 'Extraction Prompt',
-      description: 'Prompt for extracting data.',
+    onlyMainContent: Property.Checkbox({
+      displayName: 'Only Main Content',
+      description: 'Only return the main content of the page, excluding headers, navs, footers, etc.',
       required: false,
-      refreshers: ['formats'],
-      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
-        const format = propsValue['formats'] as unknown as string;
-
-        if (format !== 'json') {
-          return {};
-        }
-
-        return {
-          prompt: Property.LongText({
-            displayName: 'Extraction Prompt',
-            description: 'Describe what information you want to extract.',
-            required: false,
-            defaultValue: 'Extract the following data from the provided text.',
-          }),
-        };
-      },
+      defaultValue: false,
     }),
-
     extractMode: Property.DynamicProperties({
       displayName: 'Schema Mode',
       description: 'Data schema type.',
@@ -155,7 +118,7 @@ export const scrape = createAction({
         const format = propsValue['formats'] as unknown as string;
 
         if (format !== 'json') {
-          return {}; 
+          return {};
         }
 
         if (mode === 'advanced') {
@@ -221,51 +184,112 @@ export const scrape = createAction({
         };
       },
     }),
+    timeout: Property.Number({
+      displayName: 'Timeout (seconds)',
+      description: 'Timeout in seconds after which the task will be cancelled',
+      required: false,
+      defaultValue: 300,
+    }),
+    useWebhook: Property.Checkbox({
+      displayName: 'Deliver Results to Webhook',
+      description: 'Enable to send crawl results to a webhook URL.',
+      required: false,
+      defaultValue: false,
+    }),
+    webhookProperties: Property.DynamicProperties({
+      displayName: 'Webhook Properties',
+      description: 'Properties for webhook configuration.',
+      required: false,
+      refreshers: ['useWebhook'],
+      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+        const useWebhook = propsValue['useWebhook'] as unknown as boolean;
+        
+        if (!useWebhook) {
+          return {};
+        }
+        
+        return {
+          webhookUrl: Property.ShortText({
+            displayName: 'Webhook URL',
+            description: 'The URL to send the webhook to. This will trigger for crawl started (crawl.started), every page crawled (crawl.page) and when the crawl is completed (crawl.completed or crawl.failed).',
+            required: true,
+          }),
+          webhookHeaders: Property.Json({
+            displayName: 'Webhook Headers',
+            description: 'Headers to send to the webhook URL.',
+            required: false,
+            defaultValue: {},
+          }),
+          webhookMetadata: Property.Json({
+            displayName: 'Webhook Metadata',
+            description: 'Custom metadata that will be included in all webhook payloads for this crawl.',
+            required: false,
+            defaultValue: {},
+          }),
+          webhookEvents: Property.Array({
+            displayName: 'Webhook Events',
+            description: 'Type of events that should be sent to the webhook URL. (default: all)',
+            required: false,
+            defaultValue: ['completed', 'page', 'failed', 'started'],
+          }),
+        };
+      },
+    }),
   },
   async run(context) {
     const { auth, propsValue } = context;
     const body: Record<string, any> = {
       url: propsValue.url,
-      timeout: propsValue.timeout,
+      sitemap: "include", 
+      crawlEntireDomain: false,
+      maxDiscoveryDepth: 10,
     };
-    
-    if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
-      body['actions'] = propsValue.actionProperties['actions'] || [];
-    }
-    
-    const format = propsValue.formats as string;
-    const formatsArray: any[] = []; 
 
-    // user selection
+    if (propsValue.limit !== undefined) {
+      body['limit'] = propsValue.limit;
+    }
+
+    if (propsValue.prompt !== undefined) {
+      body['prompt'] = propsValue.prompt
+    }
+
+    const scrapeOptions: Record<string, any> = {};
+    const format = propsValue.formats as string;
+
     if (format === 'screenshot') {
-      const screenshotFormat = forScreenshotOutputFormat();
-      formatsArray.push(screenshotFormat);
+      scrapeOptions['formats'] = [forScreenshotOutputFormat()];
     } else if (format === 'json') {
       const extractConfig = {
-        prompt: propsValue.extractPrompt?.['prompt'],
         mode: propsValue.extractMode?.['mode'],
         schema: propsValue.extractSchema
       };
+
       const jsonFormat = forJsonOutputFormat(extractConfig);
-      formatsArray.push({
+      scrapeOptions['formats'] = [{
         type: 'json',
-        prompt: jsonFormat.prompt,
         schema: jsonFormat.schema
-      });
+      }];
     } else {
-      const simpleFormat = forSimpleOutputFormat(format);
-      formatsArray.push(simpleFormat);
+      scrapeOptions['formats'] = [forSimpleOutputFormat(format)];
     }
 
-    if (format !== 'screenshot') {
-      const defaultScreenshot = forDefaultScreenshot();
-      formatsArray.push(defaultScreenshot);
+    if (propsValue.onlyMainContent !== undefined) {
+      scrapeOptions['onlyMainContent'] = propsValue.onlyMainContent;
     }
-    body['formats'] = formatsArray;
+    scrapeOptions['maxAge'] = 172800000;
+
+    if (Object.keys(scrapeOptions).length > 0) {
+      body['scrapeOptions'] = scrapeOptions;
+    }
+
+    const webhook = webhookConfig(propsValue.useWebhook || false, propsValue.webhookProperties);
+    if (webhook) {
+      body['webhook'] = webhook;
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${FIRECRAWL_API_BASE_URL}/scrape`,
+      url: `${FIRECRAWL_API_BASE_URL}/crawl`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${auth}`,
@@ -273,15 +297,15 @@ export const scrape = createAction({
       body: body,
     });
 
-    const result = response.body;
-    await downloadAndSaveScreenshot(result.data, context);
+    const jobId = response.body.id;
 
-    // reorder the data object to put screenshot first, then user's selected format only
-    result.data = {
-      screenshot: result.data.screenshot,
-      [format]: result.data[format],
-      metadata: result.data.metadata
-    };
+    // polling
+    const timeoutSeconds = propsValue.timeout || 300;
+    const result = await polling(jobId, auth, timeoutSeconds, 'crawl');
+
+    if (propsValue.formats === 'screenshot') {
+      await downloadAndSaveCrawlScreenshots(result, context);
+    }
 
     return result;
   },
