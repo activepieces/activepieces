@@ -15,6 +15,9 @@ export enum QueueName {
     WORKER_JOBS = 'workerJobs',
 }
 
+export const getPlatformQueueName = (platformId: string): string => {
+    return `platform-${platformId}-jobs`
+}
 
 export const ApQueueJob = Type.Object({
     id: Type.String(),

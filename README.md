@@ -68,7 +68,7 @@ When you contribute pieces to Activepieces they become automatically available a
 
 <img src="/docs/resources/create-action.png" alt="">
 
-- **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
+- **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK to help you build flows inside the builder.
 
 - **🏢 Enterprise-Ready**: Developers set up the tools, and anyone in the organization can use the no-code builder. Full customization from branding to control.
 
@@ -447,6 +447,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/uvenkatateja"><img src="https://avatars.githubusercontent.com/u/118493739?v=4?s=100" width="100px;" alt="uvenkatateja"/><br /><sub><b>uvenkatateja</b></sub></a><br /><a href="#plugin-uvenkatateja" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://akramcodez.tech"><img src="https://avatars.githubusercontent.com/u/179671552?v=4?s=100" width="100px;" alt="SK Akram"/><br /><sub><b>SK Akram</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=akramcodez" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/im-soohyun"><img src="https://avatars.githubusercontent.com/u/127273427?v=4?s=100" width="100px;" alt="Kim SooHyun"/><br /><sub><b>Kim SooHyun</b></sub></a><br /><a href="#security-im-soohyun" title="Security">🛡️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/srimalleswari205"><img src="https://avatars.githubusercontent.com/u/235991945?v=4?s=100" width="100px;" alt="Sri malleswari"/><br /><sub><b>Sri malleswari</b></sub></a><br /><a href="#plugin-srimalleswari205" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, QueueMode, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -12,13 +12,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
-
-
-export enum CopilotInstanceTypes {
-    AZURE_OPENAI = 'AZURE_OPENAI',
-    OPENAI = 'OPENAI',
-}
-
 
 
 export enum DatabaseType {
@@ -50,12 +43,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.PIECES_SOURCE]: PiecesSource.DB,
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
-    [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [AppSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
-    [AppSystemProp.AGENT_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '10',
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '180',

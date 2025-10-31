@@ -28,7 +28,11 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             reconnection: true,
         })
 
-        socket.auth = { token: workerToken, workerId: workerMachine.getWorkerId() }
+        socket.auth = {
+            token: workerToken,
+            workerId: workerMachine.getWorkerId(),
+            platformIdForDedicatedWorker: workerMachine.getPlatformIdForDedicatedWorker(),
+        }
 
         socket.on('connect', async () => {
             log.info({
@@ -42,13 +46,12 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
             await jobQueueWorker(log).start(workerToken)
         })
 
-        socket.on('disconnect', async () => {
-            await jobQueueWorker(log).pause()
+        socket.io.on('reconnect_attempt', (attempt: number) => {
             log.info({
-                message: 'Disconnected from server',
+                message: 'Socket reconnect attempt',
+                attempt,
             })
         })
-
         socket.on('connect_error', (error) => {
             log.error({
                 message: 'Socket connection error',

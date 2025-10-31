@@ -7,14 +7,11 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
-import { agentModule } from './agents/agent-module'
-import { agentRunsModule } from './agents/agent-runs/agent-runs-module'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { changelogModule } from './changelog/changelog.module'
-import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
@@ -196,7 +193,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule),
     await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
@@ -213,11 +209,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tablesModule)
     await app.register(userModule)
     await app.register(todoModule)
-    await app.register(adminPlatformModule)
     await app.register(changelogModule)
-    await app.register(agentModule)
     await app.register(todoActivityModule)
-    await app.register(agentRunsModule)
     await app.register(solutionsModule)
 
     app.get(
@@ -269,6 +262,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
+            await app.register(adminPlatformModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)

@@ -5,11 +5,11 @@ import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
-import { distributedLock, redisConnections } from '../../database/redis-connections'
+import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { distributedStore } from '../../helper/key-value'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
+import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
@@ -67,6 +67,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 }, '[runsMetadataQueue#worker] Runs metadata not found, skipping job')
                                 return
                             }
+
                             const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
                             if (runExists) {
@@ -80,7 +81,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
                                     ...spreadIfDefined('duration', runMetadata.duration),
-                                    ...spreadIfDefined('tasks', runMetadata.tasks),
                                     ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
                                     ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
@@ -93,6 +93,14 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
                             }
                             else {
+                                const flowExists = !isNil(runMetadata.flowId) && await flowService(log).exists(runMetadata.flowId!)
+                                if (!flowExists) {
+                                    log.info({
+                                        jobId: job.id,
+                                        runId: job.data.runId,
+                                    }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
+                                    return
+                                }
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
@@ -182,7 +190,7 @@ async function markParentRunAsFailed({
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')
 
-    const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
+    const callbackUrl = await domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
     const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
     await apAxios.post(callbackUrl, {
         status: 'error',

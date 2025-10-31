@@ -1,5 +1,5 @@
 
-import { EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FileType, FlowRunResponse, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequest, isFlowRunStateTerminal, isNil, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -30,7 +30,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateRunProgress, async (request, reply) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName: failedStepName, stepNameToTest, logsFileId } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId, failedStepName, stepNameToTest, logsFileId } = request.body
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
@@ -44,14 +44,13 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         await flowRunService(request.log).updateRun({
             flowRunId: runId,
             status: runDetails.status,
-            tasks: runDetails.tasks,
             duration: runDetails.duration,
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
             failedStepName,
             logsFileId,
+            pauseMetadata: 'pauseMetadata' in runDetails ? runDetails.pauseMetadata : undefined,
         })
-
 
         if (!isNil(stepNameToTest)) {
             const response = await stepRunProgressHandler(request.log).extractStepResponse({
@@ -61,8 +60,15 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 runId,
                 stepNameToTest,
             })
+            
             if (!isNil(response)) {
-                app.io.to(request.principal.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
+                const isTerminalOutput = isFlowRunStateTerminal({
+                    status: runDetails.status,
+                    ignoreInternalError: false,
+                })
+
+                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRESS
+                app.io.to(request.principal.projectId).emit(wsEvent, response)
             }
         }
         return reply.status(StatusCodes.NO_CONTENT).send()
