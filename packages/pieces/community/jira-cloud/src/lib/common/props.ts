@@ -629,20 +629,20 @@ export function formatIssueFields(
 
 			case 'string': {
 				if (isFieldAdfCompatible(field)) {
-          if (adfFields.includes(key)) {
-            fieldsOutput[key] = JSON.parse(fieldInputValue);
-          } else {
-            fieldsOutput[key] = {
-              type: 'doc',
-              version: 1,
-              content: [
-                {
-                  type: 'paragraph',
-                  content: [{ text: fieldInputValue, type: 'text' }],
-                },
-              ],
-            };
-          }
+					if (adfFields.includes(key)) {
+						fieldsOutput[key] = JSON.parse(fieldInputValue);
+					} else {
+						fieldsOutput[key] = {
+							type: 'doc',
+							version: 1,
+							content: [
+								{
+									type: 'paragraph',
+									content: [{ text: fieldInputValue, type: 'text' }],
+								},
+							],
+						};
+					}
 				} else {
 					fieldsOutput[key] = fieldInputValue;
 				}

@@ -104,8 +104,8 @@ export const updateIssueAction = createAction({
 				const issueIdValue = issueId as unknown as string;
 
 				const fields = await getFields(authValue, issueIdValue);
-				const adfCompatibileFields = fields.filter(isFieldAdfCompatible);
-				const fieldOptions = adfCompatibileFields.map(field => ({
+				const adfCompatibleFields = fields.filter(isFieldAdfCompatible);
+				const fieldOptions = adfCompatibleFields.map(field => ({
 					label: field.name,
 					value: field.key,
 				}))
