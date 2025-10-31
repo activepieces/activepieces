@@ -131,7 +131,7 @@ const updateProjectJsonConfig = async (
     executor: 'nx:run-commands',
     options: {
       cwd: `packages/pieces/${pieceType}/${pieceName}`,
-      command: 'bun install --no-save'
+      command: 'npm install --no-save'
     }
   };
 
