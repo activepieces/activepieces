@@ -23,7 +23,10 @@
           }
         ],
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-string-utils {args.ver} {args.tag}",
@@ -36,6 +39,13 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/text-helper",
+        "command": "npm install --no-save"
+      }
     }
   },
   "tags": []

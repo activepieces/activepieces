@@ -15,7 +15,7 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
             action: ApplicationEventName.USER_EMAIL_VERIFIED,
             data: {},
         })
-        return enterpriseLocalAuthnService(req.log).verifyEmail(req.body)
+        await enterpriseLocalAuthnService(req.log).verifyEmail(req.body)
     })
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
