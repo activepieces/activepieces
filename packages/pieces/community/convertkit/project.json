@@ -24,7 +24,10 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-convertkit {args.ver} {args.tag}",
@@ -41,6 +44,13 @@
         "lintFilePatterns": [
           "packages/pieces/community/convertkit/**/*.ts"
         ]
+      }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/convertkit",
+        "command": "npm install --no-save"
       }
     }
   },
