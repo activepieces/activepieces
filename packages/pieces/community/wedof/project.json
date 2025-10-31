@@ -24,7 +24,10 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-wedof {args.ver} {args.tag}",
@@ -41,6 +44,13 @@
         "lintFilePatterns": [
           "packages/pieces/community/wedof/**/*.ts"
         ]
+      }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/wedof",
+        "command": "npm install --no-save"
       }
     }
   },
