@@ -69,7 +69,7 @@ export function forJsonOutputFormat(jsonExtractionConfig: any): any {
 
   if (jsonExtractionConfig['mode'] === 'advanced'){
     const ajv = new Ajv();
-    let schema = jsonExtractionConfig['schema']['fields'];
+    const schema = jsonExtractionConfig['schema']['fields'];
     const isValidSchema = ajv.validateSchema(schema);
 
     if (!isValidSchema) {
