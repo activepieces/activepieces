@@ -4,7 +4,6 @@ import {
     AddActionRequest,
     AddBranchRequest,
     ApEdition,
-    BranchExecutionType,
     DeleteActionRequest,
     DeleteBranchRequest,
     FlowActionType,
@@ -459,9 +458,10 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
                         displayName: 'Router',
                         type: FlowActionType.ROUTER,
                         settings: {
+                            sampleData: {},
                             branches: [
-                                { branchName: 'Branch 1', branchType: BranchExecutionType.CONDITION, conditions: [] },
-                                { branchName: 'Otherwise', branchType: BranchExecutionType.FALLBACK },
+                                flowStructureUtil.createBranch('Branch 1', undefined ),
+                                flowStructureUtil.createBranch('Otherwise', undefined ),
                             ],
                             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
                         },
