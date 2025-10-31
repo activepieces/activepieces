@@ -34,7 +34,10 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
     },
     "nx-release-publish": {
       "options": {
@@ -46,6 +49,13 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/bigcommerce",
+        "command": "npm install --no-save"
+      }
     }
   }
 }

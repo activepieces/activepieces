@@ -15,7 +15,15 @@ export type PackageJson = {
 export type ProjectJson = {
   name: string;
   targets?: {
+    prebuild?: {
+      executor: string;
+      options: {
+        cwd: string;
+        command: string;
+      };
+    };
     build?: {
+      dependsOn?: string[];
       options?: {
         buildableProjectDepsInPackageJsonType?:
           | 'peerDependencies'
