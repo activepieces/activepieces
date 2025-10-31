@@ -45,7 +45,7 @@
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
-<<<<<<< HEAD
+
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
@@ -65,8 +65,6 @@
       "cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
-=======
->>>>>>> upstream/main
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
