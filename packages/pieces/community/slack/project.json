@@ -30,6 +30,16 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/slack",
+        "command": "npm install --no-save"
       }
     }
   },

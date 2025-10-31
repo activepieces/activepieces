@@ -24,7 +24,10 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-photoroom {args.ver} {args.tag}",
@@ -37,6 +40,13 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/photoroom",
+        "command": "npm install --no-save"
+      }
     }
   },
   "tags": []

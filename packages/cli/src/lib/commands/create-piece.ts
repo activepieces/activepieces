@@ -126,6 +126,16 @@ const updateProjectJsonConfig = async (
     '[updateProjectJsonConfig] targets.build.options is required'
   );
 
+  projectJson.targets.build.dependsOn = ['prebuild'];
+  projectJson.targets.prebuild = {
+    executor: 'nx:run-commands',
+    options: {
+      cwd: `packages/pieces/${pieceType}/${pieceName}`,
+      command: 'npm install --no-save'
+    }
+  };
+  console.log(projectJson);
+
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType =
     'dependencies';
   projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson =
