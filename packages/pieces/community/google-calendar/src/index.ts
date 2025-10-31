@@ -54,7 +54,8 @@ export const googleCalendar = createPiece({
     'abuaboud',
     'ikus060',
     'Cloudieunnie',
-    'sanket-a11y'
+    'sanket-a11y',
+    'geekyme'
   ],
   auth: googleCalendarAuth,
   actions: [
