@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import AdmZip from 'adm-zip';
+import { ZipReader, BlobReader, BlobWriter, getMimeType } from '@zip.js/zip.js';
 
 interface Result {
   file: string;
@@ -29,29 +29,40 @@ export const unzipFile = createAction({
     }),
   },
   async run(context) {
-    const zipFile = new AdmZip(context.propsValue.file.data);
+    const blob = new Blob([new Uint8Array(context.propsValue.file.data)]);
+    const zipReader = new ZipReader(new BlobReader(blob));
+    const entries = await zipReader.getEntries();
 
     const maxResults = context.propsValue.maxResults || 0;
 
-    if (maxResults !== 0 && zipFile.getEntryCount() > maxResults) {
-      throw `Zip file contains more entries than allowed: ${zipFile.getEntryCount()}`;
+    if (maxResults !== 0 && entries.length > maxResults) {
+      await zipReader.close();
+      throw `Zip file contains more entries than allowed: ${entries.length}`;
     }
 
     const results: Result[] = [];
-    for (const zipEntry of zipFile.getEntries()) {
-      if (!zipEntry.isDirectory) {
+
+    for (const entry of entries) {
+      if (!entry.directory) {
+        const mimeType = getMimeType(entry.filename);
+        const blob = await entry.getData(new BlobWriter(mimeType));
+        const arrayBuffer = await blob.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const fileBaseName = entry.filename.split('/').pop() || entry.filename;
         const fileReference = await context.files.write({
-          data: zipEntry.getData(),
-          fileName: zipEntry.name,
+          data: buffer,
+          fileName: fileBaseName,
         });
 
         results.push({
           file: fileReference,
-          filePath: zipEntry.entryName,
+          filePath: entry.filename,
         });
       }
     }
 
+    await zipReader.close();
     return results;
   },
 });

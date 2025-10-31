@@ -2,9 +2,6 @@
   "name": "@activepieces/piece-file-helper",
   "version": "0.1.17",
   "dependencies": {
-    "adm-zip": "^0.5.16"
-  },
-  "devDependencies": {
-    "@types/adm-zip": "^0.5.7"
+    "@zip.js/zip.js": "^2.8.8"
   }
 }

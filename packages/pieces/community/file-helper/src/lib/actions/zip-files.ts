@@ -1,5 +1,5 @@
 import { Property, createAction, ApFile } from '@activepieces/pieces-framework';
-import AdmZip from 'adm-zip';
+import { ZipWriter, BlobWriter, BlobReader } from '@zip.js/zip.js';
 
 interface FileObject {
   file: ApFile;
@@ -40,16 +40,22 @@ export const zipFiles = createAction({
   async run(context) {
     const fileProps = (context.propsValue.files as FileObject[]) ?? [];
 
-    const zipFile = new AdmZip();
+    const blobWriter = new BlobWriter('application/zip');
+    const zipWriter = new ZipWriter(blobWriter);
 
-    fileProps.forEach((fileProp) => {
+    for (const fileProp of fileProps) {
       // default to file name if filePath not explicitly provided
       const zipFilePath = fileProp.filePath ?? fileProp.file.filename;
-      zipFile.addFile(zipFilePath, fileProp.file.data);
-    });
+      const blob = new Blob([new Uint8Array(fileProp.file.data)]);
+      await zipWriter.add(zipFilePath, new BlobReader(blob));
+    }
+
+    await zipWriter.close();
+    const zipBlob = await blobWriter.getData();
+    const zipBuffer = Buffer.from(await zipBlob.arrayBuffer());
 
     return context.files.write({
-      data: zipFile.toBuffer(),
+      data: zipBuffer,
       fileName: context.propsValue.outputFileName,
     });
   },
