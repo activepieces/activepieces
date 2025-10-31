@@ -1,10 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 import {
+  extendDayJs,
   getCorrectedFormat,
   optionalTimeFormats,
   parseDate,
@@ -15,11 +12,6 @@ import {
 } from '../common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-
-dayjs.extend(advancedFormat);
-dayjs.extend(customParseFormat);
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export const addSubtractDateAction = createAction({
   name: 'add_subtract_date',
@@ -84,6 +76,9 @@ export const addSubtractDateAction = createAction({
     }),
   },
   async run(context) {
+    // Ensure all dayjs plugins are properly extended
+    extendDayJs();
+    
     const inputDate = context.propsValue.inputDate;
     const inputDateFormat = getCorrectedFormat(context.propsValue.inputDateFormat);
     const outputFormat = getCorrectedFormat(context.propsValue.outputFormat);
