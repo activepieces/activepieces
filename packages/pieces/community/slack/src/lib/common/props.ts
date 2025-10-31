@@ -68,10 +68,19 @@ export const threadTs = Property.ShortText({
   required: false,
 });
 
+export const mentionOriginFlow = Property.Checkbox({
+  displayName: 'Mention flow of origin?',
+  description:
+    'If checked, adds a mention at the end of the Slack message to indicate which flow sent the notification, with a link to said flow.',
+  required: false,
+  defaultValue: false,
+});
+
 export const blocks = Property.Json({
   displayName: 'Block Kit blocks',
   description: 'See https://api.slack.com/block-kit for specs',
   required: false,
+  defaultValue: []
 });
 
 export const userId = Property.Dropdown<string>({
