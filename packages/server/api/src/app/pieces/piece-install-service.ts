@@ -22,12 +22,12 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
-import { fileService } from '../../file/file.service'
-import { system } from '../../helper/system/system'
-import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
-import { pieceMetadataService } from '../piece-metadata-service'
+import { fileService } from '../file/file.service'
+import { system } from '../helper/system/system'
+import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+import { pieceMetadataService } from './metadata/piece-metadata-service'
 
-export const pieceService = (log: FastifyBaseLogger) => ({
+export const pieceInstallService = (log: FastifyBaseLogger) => ({
     async installPiece(
         platformId: string,
         projectId: string | undefined,
@@ -160,3 +160,4 @@ type GetPieceArchivePackageParams = {
     projectId?: ProjectId
     platformId?: PlatformId
 }
+

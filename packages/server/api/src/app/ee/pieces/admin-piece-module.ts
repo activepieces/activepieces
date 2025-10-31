@@ -1,7 +1,7 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
 import { PackageType, PieceType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { CreatePieceRequest } from './admin-piece-requests.ee'
 
 export const adminPieceModule: FastifyPluginAsyncTypebox = async (app) => {

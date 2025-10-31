@@ -5,7 +5,7 @@ import {
     SuggestionType,
 } from '@activepieces/shared'
 import Fuse from 'fuse.js'
-import { PieceMetadataSchema } from '../../piece-metadata-entity'
+import { PieceMetadataSchema } from '../piece-metadata-entity'
 
 export const pieceSearching = {
     search: (params: SearchParams): PieceMetadataSchema[] => {

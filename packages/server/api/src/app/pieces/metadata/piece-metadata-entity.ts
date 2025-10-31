@@ -12,7 +12,7 @@ import {
     COLLATION,
     isPostgres,
     JSON_COLUMN_TYPE,
-} from '../database/database-common'
+} from '../../database/database-common'
 
 
 type PieceMetadataSchemaWithRelations = PieceMetadataSchema & {
@@ -107,8 +107,8 @@ export const PieceMetadataEntity =
       },
       indices: [
           {
-              name: 'idx_piece_metadata_name_project_id_version',
-              columns: ['name', 'version', 'projectId'],
+              name: 'idx_piece_metadata_name_platform_id_version',
+              columns: ['name', 'version', 'platformId'],
               unique: true,
           },
       ],

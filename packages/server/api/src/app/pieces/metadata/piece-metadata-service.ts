@@ -1,27 +1,44 @@
-
-import { PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_REGEX, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
+import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
+import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
+    ApEdition,
+    apId,
+    assertNotNullOrUndefined,
+    ErrorCode,
+    EXACT_VERSION_REGEX,
+    isNil,
+    ListVersionsResponse,
+    LocalesEnum,
+    PackageType,
+    PieceCategory,
+    PieceOrderBy,
+    PieceSortBy,
+    PieceType,
+    PlatformId,
+    ProjectId,
+    SuggestionType,
+    PiecePackage,
+    PrivatePiecePackage,
+    PublicPiecePackage,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
-import { IsNull } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
-import {
-    PieceMetadataEntity,
-    PieceMetadataSchema,
-} from '../piece-metadata-entity'
+import { system } from '../../helper/system/system'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { localPieceCache } from './helper/local-piece-cache'
-import { PieceMetadataService } from './piece-metadata-service'
 import { pieceListUtils } from './utils'
-import { toPieceMetadataModelSummary } from '.'
+import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
+import { localPieceCache } from './local-piece-cache'
 
 const repo = repoFactory(PieceMetadataEntity)
 
-export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadataService => {
+export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
-        async list(params): Promise<PieceMetadataModelSummary[]> {
+        async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 ...params,
                 log,
@@ -48,7 +65,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
 
             return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
-        async registry(params): Promise<PiecePackageInformation[]> {
+        async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const allPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 release: params.release,
                 platformId: params.platformId,
@@ -61,7 +78,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 }
             })
         },
-        async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
+        async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 platformId,
@@ -85,7 +102,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
             }
             return piece
         },
-        async getOrThrow({ projectId, version, name, platformId, locale }): Promise<PieceMetadataModel> {
+        async getOrThrow({ projectId, version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ projectId, version, name, platformId })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
@@ -97,7 +114,8 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
             }
             return pieceTranslation.translatePiece<PieceMetadataModel>(piece, locale)
         },
-        async getVersions({ name, release, platformId }): Promise<ListVersionsResponse> {
+        async getVersions({ name, release, platformId }: ListVersionsParams): Promise<ListVersionsResponse> {
+            const devPieces = await loadDevPiecesIfEnabled(log)
             const pieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 platformId,
                 release,
@@ -109,7 +127,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                     return record
                 }, {} as ListVersionsResponse)
         },
-        async updateUsage({ id, usage }): Promise<void> {
+        async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await repo().findOneByOrFail({
                 id,
             })
@@ -119,7 +137,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 created: existingMetadata.created,
             })
         },
-        async resolveExactVersion({ name, version, projectId, platformId }): Promise<string> {
+        async resolveExactVersion({ name, version, projectId, platformId }: GetExactPieceVersionParams): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
@@ -141,7 +159,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
             packageType,
             pieceType,
             archiveId,
-        }): Promise<PieceMetadataSchema> {
+        }: CreateParams): Promise<PieceMetadataSchema> {
             const existingMetadata = await repo().findOneBy({
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
@@ -155,7 +173,7 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                     },
                 })
             }
-            const createdDate = await findOldestCreataDate({
+            const createdDate = await findOldestCreatedDate({
                 name: pieceMetadata.name,
                 platformId,
             })
@@ -172,7 +190,82 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
     }
 }
 
-const findOldestCreataDate = async ({ name, platformId }: { name: string, platformId: string | undefined }): Promise<string> => {
+export const getPiecePackageWithoutArchive = async (
+    log: FastifyBaseLogger,
+    projectId: string | undefined,
+    platformId: PlatformId | undefined,
+    pkg: Omit<PublicPiecePackage, 'directoryPath' | 'pieceType' | 'packageType'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive' | 'pieceType' | 'packageType'>,
+): Promise<PiecePackage> => {
+    const pieceMetadata = await pieceMetadataService(log).getOrThrow({
+        name: pkg.pieceName,
+        version: pkg.pieceVersion,
+        projectId,
+        platformId,
+    })
+    switch (pieceMetadata.packageType) {
+        case PackageType.ARCHIVE: {
+            assertNotNullOrUndefined(pieceMetadata.archiveId, 'archiveId')
+            return {
+                packageType: PackageType.ARCHIVE,
+                pieceName: pkg.pieceName,
+                pieceVersion: pieceMetadata.version,
+                pieceType: pieceMetadata.pieceType,
+                archiveId: pieceMetadata.archiveId,
+                archive: undefined,
+            }
+        }
+        case PackageType.REGISTRY: {
+            return {
+                packageType: PackageType.REGISTRY,
+                pieceName: pkg.pieceName,
+                pieceVersion: pieceMetadata.version,
+                pieceType: pieceMetadata.pieceType,
+            }
+        }
+    }
+}
+
+export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(
+    pieceMetadataEntityList: T[],
+    originalMetadataList: T[],
+    suggestionType?: SuggestionType,
+): PieceMetadataModelSummary[] {
+    return pieceMetadataEntityList.map((pieceMetadataEntity) => {
+        const originalMetadata = originalMetadataList.find((p) => p.name === pieceMetadataEntity.name)
+        assertNotNullOrUndefined(originalMetadata, `Original metadata not found for ${pieceMetadataEntity.name}`)
+        return {
+            ...pieceMetadataEntity,
+            actions: Object.keys(originalMetadata.actions).length,
+            triggers: Object.keys(originalMetadata.triggers).length,
+            suggestedActions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
+                Object.values(pieceMetadataEntity.actions) : undefined,
+            suggestedTriggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
+                Object.values(pieceMetadataEntity.triggers) : undefined,
+        }
+    })
+}
+
+const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> => {
+    const devPiecesConfig = system.get(AppSystemProp.DEV_PIECES)
+    if (isNil(devPiecesConfig)) {
+        return []
+    }
+
+    const packages = devPiecesConfig.split(',')
+    const pieces = await filePiecesUtils(packages, log).findAllPieces()
+
+    return pieces.map((p): PieceMetadataSchema => ({
+        id: apId(),
+        ...p,
+        projectUsage: 0,
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+    }))
+}
+
+const findOldestCreatedDate = async ({ name, platformId }: { name: string, platformId: string | undefined }): Promise<string> => {
     const piece = await repo().findOne({
         where: {
             name,
@@ -230,7 +323,6 @@ const increasePatchVersion = (version: string): string => {
     return incrementedVersion
 }
 
-
 const increaseMinorVersion = (version: string): string => {
     const incrementedVersion = semVer.inc(version, 'minor')
     if (isNil(incrementedVersion)) {
@@ -247,10 +339,21 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-async function findAllPiecesVersionsSortedByNameAscVersionDesc({ platformId, release, log }: { platformId?: string, release: string | undefined, log: FastifyBaseLogger }): Promise<PieceMetadataSchema[]> {
-    const piece = (await localPieceCache(log).getSortedbyNameAscThenVersionDesc())
-        .filter((piece) => isOfficialPiece(piece) || isCustomPiece(platformId, piece)).filter((piece) => isSupportedRelease(release, piece))
-    return piece
+async function findAllPiecesVersionsSortedByNameAscVersionDesc({
+    platformId,
+    release,
+    log
+}: {
+    platformId?: string
+    release: string | undefined
+    log: FastifyBaseLogger
+}): Promise<PieceMetadataSchema[]> {
+    const piecesFromDatabase = await localPieceCache(log).getSortedbyNameAscThenVersionDesc()
+    const piecesFromDevelopment = await loadDevPiecesIfEnabled(log)
+    const allPieces = [...piecesFromDevelopment, ...piecesFromDatabase]
+
+    return allPieces.filter((piece) => isOfficialPiece(piece) || isCustomPiece(platformId, piece))
+        .filter((piece) => isSupportedRelease(release, piece))
 }
 
 function isSupportedRelease(release: string | undefined, piece: PieceMetadataSchema): boolean {
@@ -270,10 +373,71 @@ function isOfficialPiece(piece: PieceMetadataSchema): boolean {
     return piece.pieceType === PieceType.OFFICIAL && isNil(piece.projectId) && isNil(piece.platformId)
 }
 
-
 function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchema): boolean {
     if (isNil(platformId)) {
         return false
     }
     return piece.platformId === platformId && isNil(piece.projectId) && piece.pieceType === PieceType.CUSTOM
+}
+
+// Types
+
+type ListParams = {
+    release: string
+    projectId?: string
+    platformId?: string
+    includeHidden: boolean
+    edition: ApEdition
+    categories?: PieceCategory[]
+    includeTags?: boolean
+    tags?: string[]
+    sortBy?: PieceSortBy
+    orderBy?: PieceOrderBy
+    searchQuery?: string
+    suggestionType?: SuggestionType
+    locale?: LocalesEnum
+}
+
+type GetOrThrowParams = {
+    name: string
+    version: string | undefined
+    entityManager?: EntityManager
+    projectId: string | undefined
+    platformId: string | undefined
+    locale?: LocalesEnum
+}
+
+type ListVersionsParams = {
+    name: string
+    projectId: string | undefined
+    release: string | undefined
+    edition: ApEdition
+    platformId: string | undefined
+}
+
+type CreateParams = {
+    pieceMetadata: PieceMetadata
+    platformId?: string
+    projectId?: string
+    packageType: PackageType
+    pieceType: PieceType
+    archiveId?: string
+}
+
+type UpdateUsage = {
+    id: string
+    usage: number
+}
+
+type GetExactPieceVersionParams = {
+    name: string
+    version: string
+    projectId: ProjectId
+    platformId: PlatformId
+}
+
+type RegistryParams = {
+    release: string
+    platformId?: string
+    edition: ApEdition
 }
