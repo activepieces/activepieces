@@ -14,6 +14,7 @@ export const createAttachment = createAction({
     props: {
         project_id: meisterTaskProps.projectId(true),
         task_id: meisterTaskProps.taskId(true),
+        
         file: Property.File({
             displayName: 'File',
             description: 'The file to attach.',
@@ -30,8 +31,8 @@ export const createAttachment = createAction({
         const { task_id, file, name } = context.propsValue;
 
         const formData = new FormData();
-        formData.append('local', file.data, file.filename);
-
+        formData.append('file', file.data, file.filename);
+        
         if (name) {
             formData.append('name', name as string);
         }
@@ -39,13 +40,14 @@ export const createAttachment = createAction({
         const request: HttpRequest<FormData> = {
             method: HttpMethod.POST,
             url: `${meisterTaskApiUrl}/tasks/${task_id}/attachments`,
-            body: formData,
+            body: formData, 
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: context.auth,
             },
             headers: {
                 ...formData.getHeaders(),
+                'User-Agent': 'ActivePieces'
             }
         };
 

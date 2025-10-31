@@ -23,12 +23,18 @@ export const findOrCreateAttachment = createAction({
 
     async run(context) {
         const { task_id, file } = context.propsValue;
+
+        if (!file || !file.filename) {
+            throw new Error("Invalid file provided. The file must have a filename.");
+        }
+        
         const filename = file.filename;
         const client = new MeisterTaskClient(context.auth);
 
         const attachments = await client.getAttachments(task_id as number);
+
         const foundAttachment = attachments.find(att =>
-            att.name.toLowerCase() === filename.toLowerCase()
+            att.name && filename && att.name.toLowerCase() === filename.toLowerCase()
         );
 
         if (foundAttachment) {
@@ -51,6 +57,7 @@ export const findOrCreateAttachment = createAction({
             },
             headers: {
                 ...formData.getHeaders(),
+                'User-Agent': 'ActivePieces'
             }
         };
 
