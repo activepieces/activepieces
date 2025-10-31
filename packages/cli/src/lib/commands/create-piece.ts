@@ -131,10 +131,9 @@ const updateProjectJsonConfig = async (
     executor: 'nx:run-commands',
     options: {
       cwd: `packages/pieces/${pieceType}/${pieceName}`,
-      command: 'npm install --no-save'
+      command: 'bun install --no-save'
     }
   };
-  console.log(projectJson);
 
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType =
     'dependencies';
