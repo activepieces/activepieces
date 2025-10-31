@@ -31,6 +31,7 @@
         "updateBuildableProjectDepsInPackageJson": true
       },
       "dependsOn": [
+        "^build",
         "prebuild"
       ]
     },
@@ -50,7 +51,10 @@
       "options": {
         "cwd": "packages/pieces/community/famulor",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

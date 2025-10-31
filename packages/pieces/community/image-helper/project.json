@@ -47,7 +47,10 @@
       "options": {
         "cwd": "packages/pieces/community/image-helper",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []

@@ -57,7 +57,10 @@
       "options": {
         "cwd": "packages/pieces/community/jira-cloud",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

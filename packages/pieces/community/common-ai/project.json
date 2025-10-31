@@ -19,10 +19,14 @@
         ]
       },
       "dependsOn": [
-        "prebuild"
+        "prebuild",
+        "^build"
       ]
     },
     "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/common-ai",
