@@ -18,7 +18,7 @@ declare module 'fastify' {
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     export interface FastifyContextConfig {
-        allowedPrincipals?: PrincipalType[]
+        allowedPrincipals: PrincipalType[]
         rawBody?: boolean
         skipAuth?: boolean
         scope?: EndpointScope

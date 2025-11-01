@@ -171,6 +171,7 @@ const ResumeFlowRunRequest = {
 
 const RetryFlowRequest = {
     config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         permission: Permission.WRITE_RUN,
     },
     schema: {
@@ -183,6 +184,7 @@ const RetryFlowRequest = {
 
 const BulkRetryFlowRequest = {
     config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         permission: Permission.WRITE_RUN,
     },
     schema: {
