@@ -1,7 +1,20 @@
 import dayjs from 'dayjs';
-import customParseFormat from "dayjs/plugin/customParseFormat";
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
-dayjs.extend(customParseFormat);
+// Centralized dayjs extension function to ensure all plugins are loaded
+// This prevents conflicts and ensures consistent behavior across all actions
+export function extendDayJs(): void {
+  dayjs.extend(customParseFormat);
+  dayjs.extend(advancedFormat);
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+}
+
+// Initialize plugins for common functions
+extendDayJs();
 
 export interface dateInformation {
   year: number;
@@ -68,7 +81,20 @@ export const getCorrectedFormat = (format:string) =>{
 }
 export function parseDate(date: string, format: string): dayjs.Dayjs {
   const correctedFormat = getCorrectedFormat(format);
-  const djs = dayjs(date, correctedFormat);
+  
+  // Try strict parsing with the provided format
+  let djs = dayjs(date, correctedFormat, true);
+  
+  // If strict parsing fails, try lenient parsing (useful for formats that native parser handles well)
+  if (!djs.isValid()) {
+    djs = dayjs(date, correctedFormat, false);
+  }
+  
+  // If still invalid, try without format (native parser fallback)
+  if (!djs.isValid()) {
+    djs = dayjs(date);
+  }
+  
   if (!djs.isValid()) {
     throw new Error(`Failed to parse the date: ${date} with format: ${correctedFormat}`);
   }

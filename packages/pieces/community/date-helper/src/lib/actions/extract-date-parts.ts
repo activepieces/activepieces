@@ -1,5 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
+  extendDayJs,
   optionalTimeFormats,
   timeFormat,
   timeParts,
@@ -56,6 +57,9 @@ export const extractDateParts = createAction({
     }),
   },
   async run(context) {
+    // Ensure all dayjs plugins are properly extended
+    extendDayJs();
+    
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const unitExtract = context.propsValue.unitExtract;

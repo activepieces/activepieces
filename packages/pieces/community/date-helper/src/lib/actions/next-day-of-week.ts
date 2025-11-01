@@ -3,6 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import {
+  extendDayJs,
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
@@ -10,15 +11,8 @@ import {
   getCorrectedFormat,
 } from '../common';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(advancedFormat);
 
 export const nextDayofWeek = createAction({
   name: 'next_day_of_week',
@@ -83,6 +77,9 @@ export const nextDayofWeek = createAction({
     }),
   },
   async run(context) {
+    // Ensure all dayjs plugins are properly extended
+    extendDayJs();
+    
     await propsValidation.validateZod(context.propsValue, {
       time: z.string().regex(/^\d\d:\d\d$/),
     });

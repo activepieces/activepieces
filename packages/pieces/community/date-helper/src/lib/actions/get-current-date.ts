@@ -1,19 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
 import {
+  extendDayJs,
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
   getCorrectedFormat
 } from '../common';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(advancedFormat);
 
 export const getCurrentDate = createAction({
   name: 'get_current_date',
@@ -47,6 +41,9 @@ export const getCurrentDate = createAction({
     }),
   },
   async run(context) {
+    // Ensure all dayjs plugins are properly extended
+    extendDayJs();
+    
     const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);
     const timeZone = context.propsValue.timeZone;
     return { result: dayjs().tz(timeZone).format(timeFormat) };
