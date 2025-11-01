@@ -3,6 +3,16 @@ import { PlatformId } from '../../platform'
 import { ProjectId } from '../../project/project'
 import { PrincipalType } from './principal-type'
 
+export type Principal = {
+    id: ApId
+    type: PrincipalType
+    projectId: ProjectId
+    platform: {
+        id: ApId
+    }
+    tokenVersion?: string
+}
+
 export type WorkerPrincipal = {
     id: ApId
     type: PrincipalType.WORKER
@@ -36,22 +46,3 @@ export type EnginePrincipal = {
         id: PlatformId
     }
 }
-
-export type StandardPrincipal = {
-    id: ApId
-    type: PrincipalType
-    projectId: ProjectId
-    platform: {
-        id: ApId
-    }
-    tokenVersion?: string
-}
-
-// Discriminated union by type
-export type Principal =
-    | WorkerPrincipal
-    | AnnonymousPrincipal
-    | ServicePrincipal
-    | UserPrincipal
-    | EnginePrincipal
-    | StandardPrincipal
