@@ -1,4 +1,4 @@
-import { FlowVersionMetadata, ListFlowVersionRequest, SeekPage } from '@activepieces/shared'
+import { FlowVersionMetadata, ListFlowVersionRequest, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
@@ -26,6 +26,9 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) 
 }
 
 const ListVersionParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
     schema: {
         params: Type.Object({
             flowId: Type.String(),

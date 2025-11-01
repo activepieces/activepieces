@@ -3,7 +3,7 @@ import {
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
+import { assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,
@@ -26,6 +26,9 @@ const readOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
         '/',
         {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
             schema: {
                 querystring: ListOAuth2AppRequest,
                 response: {
@@ -53,6 +56,9 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     app.post(
         '/',
         {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
             schema: {
                 body: UpsertOAuth2AppRequest,
             },
@@ -70,6 +76,9 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     app.delete(
         '/:id',
         {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
             schema: {
                 params: GetIdParams,
             },

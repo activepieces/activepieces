@@ -24,7 +24,7 @@ export const mcpRunController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetMcpRunRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         permissions: [Permission.READ_MCP],
     },
     schema: {

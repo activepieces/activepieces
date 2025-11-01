@@ -25,7 +25,7 @@ export const solutionsController: FastifyPluginAsyncTypebox = async (fastify) =>
 
 const ExportRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         body: ExportRequestBody,
@@ -37,7 +37,7 @@ const ExportRequest = {
 
 const ImportRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         body: Solution,

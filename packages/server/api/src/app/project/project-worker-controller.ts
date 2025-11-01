@@ -13,6 +13,6 @@ export const projectWorkerController: FastifyPluginAsyncTypebox = async (
 
 const GetWorkerProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
 }

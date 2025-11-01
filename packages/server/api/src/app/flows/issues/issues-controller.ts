@@ -44,7 +44,7 @@ const CountIssuesRequest = {
     config: {
         allowedPrincipals: [
             PrincipalType.USER,
-        ],
+        ] as const,
         permission:
             Permission.READ_ISSUES,
     },
@@ -55,7 +55,7 @@ const UpdateIssueRequest = {
     config: {
         allowedPrincipals: [
             PrincipalType.USER,
-        ],
+        ] as const,
         permission:
             Permission.WRITE_ISSUES,
      

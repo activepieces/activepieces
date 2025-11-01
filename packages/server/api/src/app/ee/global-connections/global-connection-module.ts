@@ -110,7 +110,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -125,7 +125,7 @@ const UpsertGlobalConnectionRequest = {
 
 const UpdateGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -140,7 +140,7 @@ const UpdateGlobalConnectionRequest = {
 
 const ListGlobalConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -155,7 +155,7 @@ const ListGlobalConnectionsRequest = {
 
 const DeleteGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {

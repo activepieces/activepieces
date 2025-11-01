@@ -77,7 +77,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 const CreateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         permissions: [Permission.WRITE_MCP],
     },
     schema: {
@@ -109,7 +109,7 @@ const GetMcpsRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         permissions: [Permission.WRITE_MCP],
     },
     schema: {
@@ -146,7 +146,7 @@ const RotateTokenRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
         permissions: [Permission.READ_MCP],
     },
     schema: {
@@ -164,7 +164,7 @@ const GetMcpRequest = {
 
 const DeleteMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         permissions: [Permission.WRITE_MCP],
     },
     schema: {

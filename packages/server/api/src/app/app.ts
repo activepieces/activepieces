@@ -157,8 +157,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
     await app.register(rateLimitModule)
-
-
     app.addHook('onResponse', async (request, reply) => {
         // eslint-disable-next-line
         reply.header('x-request-id', request.id)

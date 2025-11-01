@@ -71,7 +71,7 @@ const ListUsersRequest = {
         [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
 }
@@ -87,7 +87,7 @@ const UpdateUserRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
 }
@@ -99,7 +99,7 @@ const DeleteUserRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
 }

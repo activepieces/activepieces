@@ -86,6 +86,10 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const GetProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.READ_PROJECT_MEMBER,
+    },
     schema: {
         params: Type.Object({
             id: ApId,
@@ -94,6 +98,10 @@ const GetProjectRoleRequest = {
 }
 
 const ListProjectRolesRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.READ_PROJECT_MEMBER,
+    },
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectRole),
@@ -102,6 +110,10 @@ const ListProjectRolesRequest = {
 }
 
 const CreateProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.WRITE_PROJECT_MEMBER,
+    },
     schema: {
         body: CreateProjectRoleRequestBody,
         response: {
@@ -111,6 +123,10 @@ const CreateProjectRoleRequest = {
 }
 
 const UpdateProjectRoleRequest = {
+    config: {   
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.WRITE_PROJECT_MEMBER,
+    },
     schema: {
         body: UpdateProjectRoleRequestBody,
         params: Type.Object({
@@ -123,6 +139,10 @@ const UpdateProjectRoleRequest = {
 }
 
 const DeleteProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.WRITE_PROJECT_MEMBER,
+    },
     schema: {
         params: Type.Object({
             name: Type.String(),
@@ -135,7 +155,7 @@ const DeleteProjectRoleRequest = {
 
 const ListProjectMembersForProjectRoleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {

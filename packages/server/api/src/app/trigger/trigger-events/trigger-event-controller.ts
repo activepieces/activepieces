@@ -1,6 +1,7 @@
 
 import {
     ListTriggerEventsRequest,
+    PrincipalType,
     SaveTriggerEventRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -41,10 +42,16 @@ const ListTriggerEventsRequestParams = {
     schema: {
         querystring: ListTriggerEventsRequest,
     },
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,   
+    },
 }
 
 const SaveTriggerEventRequestParams = {
     schema: {
         body: SaveTriggerEventRequest,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }

@@ -15,6 +15,8 @@ import {
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    ServicePrincipal,
+    UserPrincipal,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -111,7 +113,7 @@ async function getUserId(principal: Principal): Promise<string> {
     return principal.id
 }
 
-async function isPlatformAdmin(principal: Principal, platformId: string): Promise<boolean> {
+async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, platformId: string): Promise<boolean> {
     if (principal.platform.id !== platformId) {
         return false
     }
@@ -124,7 +126,7 @@ async function isPlatformAdmin(principal: Principal, platformId: string): Promis
     return user.platformRole === PlatformRole.ADMIN
 }
 
-const assertProjectToDeleteIsNotPrincipalProject = (principal: Principal, projectId: string): void => {
+const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal | UserPrincipal, projectId: string): void => {
     if (principal.projectId === projectId) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
@@ -137,7 +139,7 @@ const assertProjectToDeleteIsNotPrincipalProject = (principal: Principal, projec
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
         permission: Permission.WRITE_PROJECT,
     },
@@ -156,7 +158,7 @@ const UpdateProjectRequest = {
 
 const CreateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -171,7 +173,7 @@ const CreateProjectRequest = {
 
 const ListProjectRequestForApiKey = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -190,7 +192,7 @@ const ListProjectRequestForApiKey = {
 
 const DeleteProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {

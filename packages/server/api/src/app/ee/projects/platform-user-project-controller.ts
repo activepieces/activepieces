@@ -20,7 +20,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
     fastify,
 ) => {
 
-    fastify.get('/:id', async (request) => {
+    fastify.get('/:id', GetProjectRequestForUser, async (request) => {
         return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.principal.projectId)
     })
 
@@ -66,9 +66,14 @@ async function getPlatformsForUser(identityId: string, platformId: string) {
     return platforms.filter((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
 }
 
+const GetProjectRequestForUser = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+}
 const ListProjectRequestForUser = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         response: {
@@ -80,7 +85,7 @@ const ListProjectRequestForUser = {
 
 const ListProjectsForPlatforms = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         response: {

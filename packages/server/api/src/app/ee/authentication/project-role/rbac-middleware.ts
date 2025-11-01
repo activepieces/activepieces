@@ -9,6 +9,7 @@ import {
     Principal,
     PrincipalType,
     ProjectRole,
+    UserPrincipal,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../../../helper/system/system'
@@ -66,7 +67,7 @@ export async function assertUserHasPermissionToFlow(
 }
 
 export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined, log: FastifyBaseLogger): Promise<void> => {
-    if (principal.type === PrincipalType.SERVICE || principal.type === PrincipalType.ENGINE) { 
+    if (principal.type !== PrincipalType.USER) { 
         return
     }
     const principalRole = await getPrincipalRoleOrThrow(principal, log)
@@ -97,7 +98,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     return req.routeOptions.config?.permission === undefined
 }
 
-export const getPrincipalRoleOrThrow = async (principal: Principal, log: FastifyBaseLogger): Promise<ProjectRole> => {
+export const getPrincipalRoleOrThrow = async (principal: UserPrincipal, log: FastifyBaseLogger): Promise<ProjectRole> => {
     const { id: userId, projectId } = principal
 
     const projectRole = await projectMemberService(log).getRole({
@@ -136,7 +137,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     return principalRole.permissions?.includes(routePermission)
 }
 
-const throwPermissionDenied = (projectRole: ProjectRole, principal: Principal, permission: Permission | undefined): never => {
+const throwPermissionDenied = (projectRole: ProjectRole, principal: UserPrincipal, permission: Permission | undefined): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {
