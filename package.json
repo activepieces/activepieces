@@ -411,9 +411,6 @@
     "rollup": "npm:@rollup/wasm-node"
   },
   "overrides": {
-    "@tryfabric/martian": {
-      "@notionhq/client": "$@notionhq/client"
-    },
     "vite": {
       "rollup": "npm:@rollup/wasm-node"
     }
