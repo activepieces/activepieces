@@ -18,10 +18,30 @@ export type WorkerPrincipal = {
     type: PrincipalType.WORKER
 }
 
+export type AnnonymousPrincipal = {
+    id: ApId
+    type: PrincipalType.UNKNOWN
+}
+
+export type ServicePrincipal = {
+    id: ApId
+    type: PrincipalType.SERVICE
+    platform: {
+        id: ApId
+    }
+}
+
+export type UserPrincipal = {
+    id: ApId
+    type: PrincipalType.USER
+    platform: {
+        id: ApId
+    }
+}
+
 export type EnginePrincipal = {
     id: ApId
     type: PrincipalType.ENGINE
-    projectId: ProjectId
     platform: {
         id: PlatformId
     }

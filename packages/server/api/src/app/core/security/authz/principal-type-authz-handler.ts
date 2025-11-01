@@ -2,7 +2,6 @@ import {
     ActivepiecesError,
     assertNotNullOrUndefined,
     ErrorCode,
-    PrincipalType,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
