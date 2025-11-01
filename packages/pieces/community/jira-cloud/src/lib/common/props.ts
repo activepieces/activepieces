@@ -534,6 +534,16 @@ export async function createPropertyDefinition(
 	}
 }
 
+// Only certain fields support ADF in issues
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
+// - description and environment fields in issues.
+// - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a string and don't handle Atlassian Document Format content.
+export function isFieldAdfCompatible(field: IssueFieldMetaData) {
+	const standardFields = ['description', 'environment'];
+
+	return field.schema.custom?.includes('textarea') || standardFields.includes(field.key);
+}
+
 function parseArray(value: Array<string> | string): Array<string> {
 	try {
 		if (Array.isArray(value)) {
@@ -557,6 +567,7 @@ function parseArray(value: Array<string> | string): Array<string> {
 export function formatIssueFields(
 	fieldsMetadata: IssueFieldMetaData[],
 	fieldsInput: Record<string, any>,
+  adfFields: string[],
 ) {
 	const fieldsOutput: Record<string, any> = {};
 
@@ -617,20 +628,21 @@ export function formatIssueFields(
 				break;
 
 			case 'string': {
-				const isCustomTextArea =
-					field.schema.custom?.includes('textarea') || ['description', 'environment'].includes(key);
-
-				if (isCustomTextArea) {
-					fieldsOutput[key] = {
-						type: 'doc',
-						version: 1,
-						content: [
-							{
-								type: 'paragraph',
-								content: [{ text: fieldInputValue, type: 'text' }],
-							},
-						],
-					};
+				if (isFieldAdfCompatible(field)) {
+					if (adfFields.includes(key)) {
+						fieldsOutput[key] = JSON.parse(fieldInputValue);
+					} else {
+						fieldsOutput[key] = {
+							type: 'doc',
+							version: 1,
+							content: [
+								{
+									type: 'paragraph',
+									content: [{ text: fieldInputValue, type: 'text' }],
+								},
+							],
+						};
+					}
 				} else {
 					fieldsOutput[key] = fieldInputValue;
 				}
