@@ -274,6 +274,7 @@ const migrateTemplatesHook: preValidationHookHandler<RawServerBase, RawRequestDe
 
 const UpdateFlowRequestOptions = {
     config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         permission: Permission.UPDATE_FLOW_STATUS,
     },
     schema: {
