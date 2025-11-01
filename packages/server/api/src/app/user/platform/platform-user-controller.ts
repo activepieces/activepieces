@@ -40,7 +40,6 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
             platformRole: req.body.platformRole,
             status: req.body.status,
             externalId: req.body.externalId,
-            lastChangelogDismissed: req.body.lastChangelogDismissed,
         })
     })
 
