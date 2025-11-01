@@ -14,10 +14,6 @@ export const UserEntity = new EntitySchema<UserSchema>({
         status: {
             type: String,
         },
-        lastChangelogDismissed: {
-            type: TIMESTAMP_COLUMN_TYPE,
-            nullable: true,
-        },
         platformRole: {
             type: String,
             nullable: false,
