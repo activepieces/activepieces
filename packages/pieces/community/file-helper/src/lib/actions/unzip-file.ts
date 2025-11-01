@@ -1,5 +1,15 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { ZipReader, BlobReader, BlobWriter, getMimeType } from '@zip.js/zip.js';
+import {
+  Property,
+  createAction,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
+import {
+  ZipReader,
+  BlobReader,
+  BlobWriter,
+  getMimeType,
+  EntryGetDataOptions,
+} from '@zip.js/zip.js';
 
 interface Result {
   file: string;
@@ -27,6 +37,32 @@ export const unzipFile = createAction({
       defaultValue: 0,
       required: false,
     }),
+    usePassword: Property.Checkbox({
+      displayName: 'Use password',
+      description: 'Enable if the zip file is password protected',
+      required: false,
+      defaultValue: false,
+    }),
+    passwordOptions: Property.DynamicProperties({
+      displayName: 'Password options',
+      auth: PieceAuth.None(),
+      required: false,
+      refreshers: ['usePassword'],
+      props: async ({ usePassword }) => {
+        if (!usePassword) {
+          return {};
+        }
+
+        const fields = {
+          password: Property.ShortText({
+            displayName: 'Password',
+            required: true,
+          }),
+        };
+
+        return fields;
+      },
+    }),
   },
   async run(context) {
     const blob = new Blob([new Uint8Array(context.propsValue.file.data)]);
@@ -40,12 +76,25 @@ export const unzipFile = createAction({
       throw `Zip file contains more entries than allowed: ${entries.length}`;
     }
 
+    // Prepare options for getData, including password if provided
+    const getDataOptions: EntryGetDataOptions = {};
+    if (context.propsValue.usePassword) {
+      const password = context.propsValue.passwordOptions?.[
+        'password'
+      ] as string;
+      getDataOptions.password = password;
+    }
+
     const results: Result[] = [];
 
     for (const entry of entries) {
       if (!entry.directory) {
         const mimeType = getMimeType(entry.filename);
-        const blob = await entry.getData(new BlobWriter(mimeType));
+
+        const blob = await entry.getData(
+          new BlobWriter(mimeType),
+          getDataOptions
+        );
         const arrayBuffer = await blob.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
