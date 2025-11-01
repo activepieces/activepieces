@@ -39,6 +39,6 @@ const GetCurrentUserRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }

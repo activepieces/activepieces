@@ -1,17 +1,7 @@
 import { ApId } from '../../common/id-generator'
 import { PlatformId } from '../../platform'
-import { ProjectId } from '../../project/project'
+import { ProjectId } from '../../project'
 import { PrincipalType } from './principal-type'
-
-export type Principal = {
-    id: ApId
-    type: PrincipalType
-    projectId: ProjectId
-    platform: {
-        id: ApId
-    }
-    tokenVersion?: string
-}
 
 export type WorkerPrincipal = {
     id: ApId
@@ -26,6 +16,7 @@ export type AnnonymousPrincipal = {
 export type ServicePrincipal = {
     id: ApId
     type: PrincipalType.SERVICE
+    projectId: ProjectId
     platform: {
         id: ApId
     }
@@ -34,15 +25,30 @@ export type ServicePrincipal = {
 export type UserPrincipal = {
     id: ApId
     type: PrincipalType.USER
+    projectId: ProjectId
     platform: {
         id: ApId
     }
+    tokenVersion?: string
 }
 
 export type EnginePrincipal = {
     id: ApId
     type: PrincipalType.ENGINE
+    projectId: ProjectId
     platform: {
         id: PlatformId
     }
 }
+
+
+export type PrincipalForType<T extends PrincipalType> = Extract<Principal, { type: T }>
+
+export type PrincipalForTypes<R extends readonly PrincipalType[]> = PrincipalForType<R[number]>
+
+export type Principal =
+    | WorkerPrincipal
+    | AnnonymousPrincipal
+    | ServicePrincipal
+    | UserPrincipal
+    | EnginePrincipal

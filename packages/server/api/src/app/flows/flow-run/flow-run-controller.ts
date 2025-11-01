@@ -142,7 +142,7 @@ const ListRequest = {
 const GetRequest = {
     config: {
         permission: Permission.READ_RUN,
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER] as const,
     },
     schema: {
         tags: ['flow-runs'],
@@ -184,7 +184,7 @@ const RetryFlowRequest = {
 
 const BulkRetryFlowRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_RUN,
     },
     schema: {
