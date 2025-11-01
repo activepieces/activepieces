@@ -1,6 +1,6 @@
 import { Project, User, UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
+import { BaseColumnSchemaPart } from '../database/database-common'
 
 export type UserSchema = User & {
     projects: Project[]
