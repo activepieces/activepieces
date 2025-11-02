@@ -1,10 +1,11 @@
+import dayjs from 'dayjs';
+import { jwtDecode } from 'jwt-decode';
+
 import {
   AuthenticationResponse,
   isNil,
   UserPrincipal,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
-import { jwtDecode } from 'jwt-decode';
 
 import { ApStorage } from './ap-browser-storage';
 import { authenticationApi } from './authentication-api';
