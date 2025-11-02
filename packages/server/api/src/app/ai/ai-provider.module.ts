@@ -29,7 +29,17 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onResponse: async (request, reply, response) => {
                 request.body = (request as ModifiedFastifyRequest).originalBody
-                const projectId = request.principal.projectId
+
+                const principal = request.principal
+                if (principal.type !== PrincipalType.ENGINE && principal.type !== PrincipalType.USER) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.AUTHORIZATION,
+                        params: {
+                            message: 'invalid route for principal type',
+                        },
+                    })
+                }
+                const projectId = principal.projectId
                 const { provider } = request.params as { provider: string }
                 if (aiProviderService.isNonUsageRequest(provider, request)) {
                     return reply.send(response.stream)
@@ -100,9 +110,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                     ...usage.metadata,
                                     ...buildAIUsageMetadata(request.headers),
                                 }
-                                await platformUsageService(app.log).increaseAiCreditUsage({ 
+                                await platformUsageService(app.log).increaseAiCreditUsage({
                                     projectId,
-                                    platformId: request.principal.platform.id,
+                                    platformId: principal!.platform.id,
                                     provider,
                                     model: usage.model,
                                     cost: usage.cost,
@@ -128,7 +138,8 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         preHandler: async (request) => {
-            if (![PrincipalType.ENGINE, PrincipalType.USER].includes(request.principal.type)) {
+            const principal = request.principal
+            if (principal.type !== PrincipalType.ENGINE && principal.type !== PrincipalType.USER) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {
@@ -140,7 +151,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             const provider = (request.params as { provider: string }).provider
             aiProviderService.validateRequest(provider, request)
 
-            const projectId = request.principal.projectId
+            const projectId = principal.projectId
             const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
             const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring: videoModelRequestCost })
             if (exceededLimit) {
@@ -151,14 +162,14 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                     },
                 })
             }
-           
 
-            const userPlatformId = request.principal.platform.id
+
+            const userPlatformId = principal.platform.id
             const providerConfig = getProviderConfigOrThrow(provider)
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
             const config = await aiProviderService.getConfig(provider, platformId);
- 
+
             (request as ModifiedFastifyRequest).customUpstream = aiProviderService.getBaseUrl(provider, config)
             request.raw.url = aiProviderService.rewriteUrl(provider, config, request.url)
 

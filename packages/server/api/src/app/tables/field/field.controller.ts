@@ -49,7 +49,7 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 }
 const CreateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         body: CreateFieldRequest,
@@ -61,7 +61,7 @@ const CreateRequest = {
 
 const GetFieldByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({
@@ -72,7 +72,7 @@ const GetFieldByIdRequest = {
 
 const DeleteFieldRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({
@@ -83,7 +83,7 @@ const DeleteFieldRequest = {
 
 const GetFieldsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         querystring: Type.Object({
@@ -94,7 +94,7 @@ const GetFieldsRequest = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({
