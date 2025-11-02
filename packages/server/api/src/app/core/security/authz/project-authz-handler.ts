@@ -35,17 +35,10 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
 
     protected doHandle(request: FastifyRequest): Promise<void> {
         const principal = request.principal
-        if (principal.type === PrincipalType.WORKER) {
+        if (principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN) {
             return Promise.resolve()
         }
-        if (principal.type === PrincipalType.UNKNOWN) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'You are unauthenticated and cannot access this resource',
-                },
-            })
-        }
+
         const projectId = requestUtils.extractProjectId(request)
 
         if (projectId && projectId !== principal.projectId) {
