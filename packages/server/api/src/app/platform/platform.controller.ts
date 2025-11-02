@@ -107,6 +107,10 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const UpdatePlatformRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         body: UpdatePlatformRequestBody,
         params: Type.Object({

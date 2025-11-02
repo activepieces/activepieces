@@ -88,7 +88,6 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 const GetProjectRoleRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
         params: Type.Object({
@@ -100,7 +99,6 @@ const GetProjectRoleRequest = {
 const ListProjectRolesRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
         response: {
@@ -112,7 +110,6 @@ const ListProjectRolesRequest = {
 const CreateProjectRoleRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
         body: CreateProjectRoleRequestBody,
@@ -125,7 +122,6 @@ const CreateProjectRoleRequest = {
 const UpdateProjectRoleRequest = {
     config: {   
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
         body: UpdateProjectRoleRequestBody,
@@ -141,7 +137,6 @@ const UpdateProjectRoleRequest = {
 const DeleteProjectRoleRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
         params: Type.Object({
@@ -156,7 +151,6 @@ const DeleteProjectRoleRequest = {
 const ListProjectMembersForProjectRoleRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],

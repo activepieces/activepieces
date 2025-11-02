@@ -78,7 +78,7 @@ const checkIfPlatformIsOwnedByUser = async (platformId: string, request: Fastify
 export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
     async (request, _res) => {
         const principal = request.principal
-        if (principal.type !== PrincipalType.USER) {
+        if (principal.type !== PrincipalType.USER && principal.type !== PrincipalType.SERVICE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {

@@ -43,10 +43,11 @@ afterAll(async () => {
 describe('Project API', () => {
     describe('Create Project', () => {
         it('it should create project by user', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -178,6 +179,9 @@ describe('Project API', () => {
                 type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const request: UpdateProjectPlatformRequest = {
@@ -358,9 +362,12 @@ describe('Project API', () => {
             await databaseConnection().getRepository('project').save([mockProject])
 
             const testToken = await generateMockToken({
-                type: PrincipalType.USER,
+                type: PrincipalType.USER,   
                 id: mockUser.id,
                 projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const metadata = { foo: 'bar' }
@@ -580,6 +587,7 @@ describe('Project API', () => {
             const operatorToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: operatorUser.id,
+                projectId: project1.id,
                 platform: { id: mockPlatform.id },
             })
             
@@ -604,7 +612,7 @@ describe('Project API', () => {
 
         it('Platform operator cannot update platform settings', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             
             const { mockUser: operatorUser } = await mockBasicUser({
                 user: {
@@ -616,6 +624,7 @@ describe('Project API', () => {
             const operatorToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: operatorUser.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
             
@@ -631,7 +640,7 @@ describe('Project API', () => {
                 },
             })
             
-            // assert
+         
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
@@ -659,6 +668,7 @@ describe('Project API', () => {
             const memberToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: memberUser.id,
+                projectId: project.id,
                 platform: { id: mockPlatform.id },
             })
             

@@ -44,7 +44,7 @@ declare module 'fastify' {
         skipAuth?: boolean
         scope?: EndpointScope
         permission?: Permission
-        allowedPrincipals?: readonly PrincipalType[]
+        allowedPrincipals: readonly PrincipalType[]
         otel?: boolean
     }
 
