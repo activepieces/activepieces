@@ -17,6 +17,7 @@ import { platformRepo } from '../../../platform/platform.service'
 import { userRepo } from '../../../user/user-service'
 import { licenseKeysService } from '../../license-keys/license-keys-service'
 import { fileRepo } from '../../../file/file.service'
+import { runsMetadataQueue } from '../../../flows/flow-run/flow-runs-queue'
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
@@ -31,9 +32,9 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             id: In(runIds ?? []),
         })
 
-
         const flowRuns = await query.getMany()
         for (const flowRun of flowRuns) {
+            await runsMetadataQueue(log).get().removeDeduplicationKey(flowRun.id);
             if (!isNil(flowRun.logsFileId)) {
                 continue
             }
