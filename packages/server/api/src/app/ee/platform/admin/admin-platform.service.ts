@@ -34,6 +34,9 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
         const flowRuns = await query.getMany()
         for (const flowRun of flowRuns) {
+            if (!isNil(flowRun.logsFileId)) {
+                continue
+            }
             const file = await fileRepo().createQueryBuilder('file')
                 .where('"file"."projectId" = :projectId', { projectId: flowRun.projectId })
                 .andWhere('"file"."type" = :type', { type: FileType.FLOW_RUN_LOG })

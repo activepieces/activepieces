@@ -217,13 +217,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         pauseMetadata,
         logsFileId,
     }: UpdateRunParams): Promise<void> {
-        log.info({
-            runId: flowRunId,
-            status,
-            duration,
-            failedStepName,
-        }, '[FlowRunService#updateRun]')
-
         await runsMetadataQueue(log).add({
             id: flowRunId,
             status,
@@ -238,6 +231,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 ignoreInternalError: true,
             }) ? new Date().toISOString() : undefined,
         })
+        log.info({
+            runId: flowRunId,
+            status,
+            duration,
+            failedStepName,
+        }, '[FlowRunService#updateRun]')
+
     },
 
     async start({
