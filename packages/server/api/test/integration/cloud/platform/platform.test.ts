@@ -1,4 +1,4 @@
-import { FilteredPieceBehavior,
+import { apId, FilteredPieceBehavior,
     PlanName,
     PlatformRole,
     PrincipalType,
@@ -358,5 +358,52 @@ describe('Platform API', () => {
             const userIdentityExists = await databaseConnection().getRepository('user_identity').findOneBy({ id: firstAccount.mockUserIdentity.id })
             expect(userIdentityExists).not.toBeNull()
         })
+    })
+    describe('get platform endpoint', () => {
+        it('fails if user is not part of the platform', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/v1/platforms/${apId()}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    }),
+    it('succeeds if user is part of the platform and is not admin', async () => {
+        // arrange
+        const { mockPlatform } = await mockAndSaveBasicSetup()
+        const { mockUser } = await mockBasicUser({
+            user: {
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            },
+        })
+        await databaseConnection().getRepository('user').save(mockUser)
+        const testToken = await generateMockToken({
+            type: PrincipalType.USER,
+            id: mockUser.id,
+            platform: { id: mockPlatform.id },
+        })
+        // act
+        const response = await app?.inject({
+            method: 'GET',
+            url: `/v1/platforms/${mockPlatform.id}`,
+            headers: {
+                authorization: `Bearer ${testToken}`,
+            },
+        })
+        // assert
+        expect(response?.statusCode).toBe(StatusCodes.OK)
     })
 })

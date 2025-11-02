@@ -22,11 +22,11 @@ export class RegistryPieceManager extends PieceManager {
         await this.savePackageArchivesToDiskIfNotCached(pieces)
 
         const cache = cacheState(projectPath, log)
-        
+
         await Promise.all(
             pieces.map(async (piece) => {
                 const pkg = this.pieceToDependency(piece)
-                
+
                 await cache.getOrSetCache({
                     key: pkg.alias,
                     cacheMiss: (value: string) => {
@@ -39,12 +39,16 @@ export class RegistryPieceManager extends PieceManager {
                         if (!pkg.standalone) {
                             await this.writePnpmWorkspaceConfig(projectPath)
                         }
-
-                        await packageManager(log).add({ 
-                            path: projectPath, 
-                            dependencies: [pkg], 
+                        const performanceStartTime = performance.now()
+                        await packageManager(log).add({
+                            path: projectPath,
+                            dependencies: [pkg],
                             installDir: exactVersionPath,
                         })
+                        log.info({
+                            alias: pkg.alias,
+                            timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
+                        }, 'Installed piece using pnpm')
                         return CacheState.READY
                     },
                     skipSave: NO_SAVE_GUARD,

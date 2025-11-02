@@ -85,17 +85,28 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
                 await fileSystemUtils.threadSafeMkdir(codePath)
 
+                const startTime = performance.now()
                 await installDependencies({
                     path: codePath,
                     packageJson: getPackageJson(packageJson),
                     log,
                 })
-
+                log.info({
+                    message: '[CodeBuilder#processCodeStep] Installed dependencies',
+                    path: codePath,
+                    timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
+                })
                 try {
+                    const timeTaken = performance.now()
                     await compileCode({
                         path: codePath,
                         code,
                         log,
+                    })
+                    log.info({
+                        message: '[CodeBuilder#processCodeStep] Compiled code',
+                        path: codePath,
+                        timeTaken: `${Math.floor(performance.now() - timeTaken)}ms`,
                     })
                 }
                 catch (error: unknown) {

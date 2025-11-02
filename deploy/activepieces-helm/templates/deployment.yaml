@@ -86,10 +86,6 @@ spec:
             - name: AP_FEATUREBASE_API_KEY
               value: {{ .Values.activepieces.featurebaseApiKey | quote }}
             {{- end }}
-            {{- if .Values.activepieces.showChangelog }}
-            - name: AP_SHOW_CHANGELOG
-              value: {{ .Values.activepieces.showChangelog | quote }}
-            {{- end }}
             {{- if .Values.activepieces.enableFlowOnPublish }}
             - name: AP_ENABLE_FLOW_ON_PUBLISH
               value: {{ .Values.activepieces.enableFlowOnPublish | quote }}
