@@ -63,6 +63,7 @@ scratch.md
 
 # environment variables
 .env
+packages/server/api/.env
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md

@@ -49,7 +49,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
                 SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
                 PIECES_SOURCE: system.getOrThrow(AppSystemProp.PIECES_SOURCE),
-                DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
+                DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',').map(p => p.trim()).filter(p => p.length > 0) ?? [],
                 SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
                 LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
                 LOKI_URL: system.get(AppSystemProp.LOKI_URL),
