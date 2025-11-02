@@ -102,3 +102,9 @@ export class AssertionError extends ExecutionError {
         super('AssertionError', formatMessage(`${fieldName} is null or undefined`), ExecutionErrorType.ENGINE, cause)
     }
 }
+
+export class PieceNotFoundError extends ExecutionError {
+    constructor(packageName: string, pieceVersion: string | undefined, cause?: unknown) {
+        super('PieceNotFoundError', formatMessage(`Piece not found for package: ${packageName}, pieceVersion: ${pieceVersion}`), ExecutionErrorType.ENGINE, cause)
+    }
+}

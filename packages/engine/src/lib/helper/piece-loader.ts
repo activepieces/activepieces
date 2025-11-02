@@ -3,6 +3,7 @@ import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 import { utils } from '../utils'
+import { PieceNotFoundError } from './execution-errors'
 import { tryCatch } from './try-catch'
 
 export const pieceLoader = {
@@ -24,14 +25,7 @@ export const pieceLoader = {
         })
 
         if (isNil(piece)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PIECE_NOT_FOUND,
-                params: {
-                    pieceName,
-                    pieceVersion,
-                    message: 'Piece not found in the engine',
-                },
-            })
+            throw new PieceNotFoundError(packageName, pieceVersion)
         }
 
         return piece
@@ -133,14 +127,7 @@ export const pieceLoader = {
                 break
         }
         if (isNil(piecePath)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PIECE_NOT_FOUND,
-                params: {
-                    pieceName: packageName,
-                    pieceVersion: undefined,
-                    message: `Piece path not found for package: ${packageName}`,
-                },
-            })
+            throw new PieceNotFoundError(packageName, undefined)
         }
         return piecePath
     },
