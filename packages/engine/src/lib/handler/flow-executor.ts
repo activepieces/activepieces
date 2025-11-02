@@ -50,7 +50,8 @@ export const flowExecutor = {
         let currentAction: FlowAction | null | undefined = action
 
         while (!isNil(currentAction)) {
-            if (currentAction.skip) {
+            const testSingleStepMode = !isNil(constants.stepNameToTest)
+            if (currentAction.skip && !testSingleStepMode) {
                 currentAction = currentAction.nextAction
                 continue
             }
@@ -68,7 +69,6 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-            const testSingleStepMode = !isNil(constants.stepNameToTest)
             const shouldBreakExecution = flowExecutionContext.verdict !== ExecutionVerdict.RUNNING || testSingleStepMode
 
             if (shouldBreakExecution) {
