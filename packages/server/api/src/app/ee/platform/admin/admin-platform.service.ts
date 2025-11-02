@@ -38,10 +38,16 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             if (!isNil(flowRun.logsFileId)) {
                 continue
             }
+            const now = new Date();
+            const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+            const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+
             const file = await fileRepo().createQueryBuilder('file')
                 .where('"file"."projectId" = :projectId', { projectId: flowRun.projectId })
                 .andWhere('"file"."type" = :type', { type: FileType.FLOW_RUN_LOG })
                 .andWhere(`"file"."metadata"->>'flowRunId' = :flowRunId`, { flowRunId: flowRun.id })
+                .andWhere('"file"."created" < :threeHoursAgo', { threeHoursAgo: threeHoursAgo.toISOString() })
+                .andWhere('"file"."created" > :sixHoursAgo', { sixHoursAgo: sixHoursAgo.toISOString() })
                 .getOne()
             if (isNil(file)) {
                 throw new Error('File not found for flow run')
