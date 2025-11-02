@@ -28,7 +28,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
             status: In([FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.QUEUED]),
-            runId: In(runIds ?? []),
+            id: In(runIds ?? []),
         })
 
 
