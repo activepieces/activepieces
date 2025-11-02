@@ -7,6 +7,23 @@ import { type Schema as AiSchema, tool, experimental_createMCPClient } from "ai"
 import z, { ZodRawShape, ZodSchema } from "zod";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
+/**
+ * AI_MODELS: Dynamically generated list of all available AI models from supported providers.
+ * 
+ * This list is automatically populated from SUPPORTED_AI_PROVIDERS, which includes:
+ * - OpenAI: Best for general-purpose tasks, creative writing, and code generation
+ * - Anthropic (Claude): Excellent for analysis, reasoning, and long-form content
+ * - Google Gemini: Competitive pricing with strong multimodal capabilities
+ * - Replicate: Specialized models for specific use cases
+ * 
+ * Models are identified by: `${provider}-${modelId}`
+ * Example: 'openai-gpt-4o-mini', 'anthropic-claude-3-5-sonnet-latest'
+ * 
+ * Adding new models: Update SUPPORTED_AI_PROVIDERS in @activepieces/common-ai
+ * This ensures all AI-powered pieces have access to the latest models.
+ * 
+ * Related: GitHub issues #8830, #8440
+ */
 export const AI_MODELS: AIModel[] = SUPPORTED_AI_PROVIDERS.flatMap(provider =>
     provider.languageModels.map(model => ({
         id: `${provider.provider}-${model.instance.modelId}`,
@@ -91,7 +108,8 @@ export const agentCommon = {
     getModelById(modelId: string): AIModel {
         const model = AI_MODELS.find(m => m.id === modelId);
         if (!model) {
-            throw new Error(`Model ${modelId} not found`);
+            const availableModels = AI_MODELS.map(m => m.id).join(', ');
+            throw new Error(`Model "${modelId}" not found. Available models: ${availableModels}`);
         }
         return model;
     },

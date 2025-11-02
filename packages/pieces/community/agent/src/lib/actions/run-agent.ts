@@ -18,7 +18,8 @@ export const runAgent = createAction({
     [AgentPieceProps.AI_MODEL]: Property.StaticDropdown({
       displayName: 'AI Model',
       required: true,
-      description: 'Choose your AI model and provider',
+      description: 'Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.',
+      defaultValue: 'openai-gpt-4o-mini',
       options: {
         options: AI_MODELS.map(model => ({
           label: `(${model.provider}) ${model.displayName}`,
