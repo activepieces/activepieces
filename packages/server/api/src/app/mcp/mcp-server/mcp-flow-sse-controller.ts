@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, CreateMCPServerFromStepParams, flowStructureUtil, McpTool } from '@activepieces/shared'
+import { CreateMCPServerFromStepParams, flowStructureUtil, McpTool, PrincipalType } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
@@ -33,7 +33,7 @@ export const mcpFlowSseControllerController: FastifyPluginAsyncTypebox = async (
 
 const CreateMCPServerFromStepRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         params: CreateMCPServerFromStepParams,

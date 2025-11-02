@@ -54,7 +54,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetAllFlowsByProjectParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
@@ -63,7 +63,7 @@ const GetAllFlowsByProjectParams = {
 
 const GetFileRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         params: Type.Object({
@@ -74,7 +74,7 @@ const GetFileRequestParams = {
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         querystring: GetFlowVersionForWorkerRequest,
