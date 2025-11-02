@@ -46,7 +46,7 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
             })
 
             const wsEvent = isTerminalOutput  ? WebsocketServerEvent.EMIT_TEST_STEP_FINISHED : WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS
-            await workerSocket(log).emitWithAck(wsEvent, { projectId, ...stepResponse })
+            workerSocket(log).emit(wsEvent, { projectId, ...stepResponse })
         }
     },
 })

@@ -26,40 +26,6 @@ export function sendToWorker(type: EngineSocketEvent, data: unknown): void {
     socket?.emit(type, data)
 }
 
-export const sendToWorkerWithAck = async (
-    type: EngineSocketEvent,
-    data: unknown,
-    options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number },
-): Promise<void> => {
-    const timeoutMs = options?.timeoutMs ?? 5000
-    const retries = options?.retries ?? 3
-    const retryDelayMs = options?.retryDelayMs ?? 2000
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            if (!socket || !socket.connected) {
-                throw new Error('Socket not connected')
-            }
-            await socket.timeout(timeoutMs).emitWithAck(type, data)
-            return
-        }
-        catch (error) {
-            if (attempt < retries) {
-                await new Promise(resolve => setTimeout(resolve, retryDelayMs))
-            }
-            else {
-                console.error({
-                    message: 'Failed to emit event',
-                    event: type,
-                    data,
-                    error,
-                })
-                throw error
-            }
-        }
-    }
-}
-
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
@@ -74,6 +40,9 @@ function setupSocket() {
         auth: {
             workerId: WORKER_ID,
         },
+        reconnection: true,
+        ackTimeout: 4000,
+        retries: 3,
     })
 
     // Redirect console.log/error to socket
