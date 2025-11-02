@@ -1,6 +1,7 @@
 import { inspect } from 'util'
 import {
     assertNotNullOrUndefined,
+    createErrorContext,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -9,6 +10,8 @@ import {
     EngineStderr,
     EngineStdout,
     ERROR_MESSAGES_TO_REDACT,
+    ExecutionErrorSource,
+    ExecutionErrorType,
     isNil,
 } from '@activepieces/shared'
 import WebSocket from 'ws'
@@ -18,17 +21,42 @@ import { utils } from './lib/utils'
 const WORKER_ID = process.env.WORKER_ID
 const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
 
-
 process.title = `engine-${WORKER_ID}`
 let socket: WebSocket | undefined
 
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-    const result = await execute(operationType, operation)
-    const resultParsed = JSON.parse(JSON.stringify(result))
-    socket?.send(JSON.stringify({
-        type: EngineSocketEvent.ENGINE_RESPONSE,
-        data: resultParsed,
-    }))
+    try {
+        const result = await execute(operationType, operation)
+        const resultParsed = JSON.parse(JSON.stringify(result))
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_RESPONSE,
+            data: resultParsed,
+        }))
+    } catch (e) {
+        createErrorContext()
+            .withOperation({
+                type: operationType,
+            })
+            .withError({
+                error: e,
+                type: ExecutionErrorType.INTERNAL,
+                source: ExecutionErrorSource.ENGINE,
+            })
+            .withMetadata({
+                location: 'executeFromSocket',
+            })
+            .buildAndLog()
+
+        const engineError: EngineResponse = {
+            response: undefined,
+            status: EngineResponseStatus.INTERNAL_ERROR,
+            error: e instanceof Error ? utils.formatError(e) : String(e),
+        }
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_RESPONSE,
+            data: engineError,
+        }))
+    }
 }
 
 function setupSocket() {
@@ -74,18 +102,24 @@ function setupSocket() {
         try {
             const message = JSON.parse(data)
             if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
-                executeFromSocket(message.data.operation, message.data.operationType).catch(e => {
-                    const engineError: EngineResponse = {
-                        response: undefined,
-                        status: EngineResponseStatus.INTERNAL_ERROR,
-                        error: utils.formatError(e),
-                    }
-                    socket?.send(JSON.stringify(engineError))
-                })
+                executeFromSocket(message.data.operation, message.data.operationType)
             }
         }
         catch (error) {
-            console.error('Error handling operation:', error)
+            createErrorContext()
+                .withOperation({
+                    type: EngineOperationType.EXECUTE_FLOW,
+                })
+                .withError({
+                    error,
+                    type: ExecutionErrorType.INTERNAL,
+                    source: ExecutionErrorSource.ENGINE,
+                })
+                .withMetadata({
+                    location: 'socket.onMessage',
+                    rawData: data.substring(0, 500),
+                })
+                .buildAndLog()
         }
     })
 
@@ -104,6 +138,20 @@ process.on('uncaughtException', (error) => sendToErrorSocket(error))
 process.on('unhandledRejection', (reason) => sendToErrorSocket(reason))
 
 function sendToErrorSocket(error: unknown) {
+    createErrorContext()
+        .withOperation({
+            type: EngineOperationType.EXECUTE_FLOW,
+        })
+        .withError({
+            error,
+            type: ExecutionErrorType.INTERNAL,
+            source: ExecutionErrorSource.ENGINE,
+        })
+        .withMetadata({
+            location: 'uncaughtException',
+        })
+        .buildAndLog()
+
     if (socket && socket.readyState === WebSocket.OPEN) {
         const engineStderr: EngineStderr = {
             message: inspect(error),

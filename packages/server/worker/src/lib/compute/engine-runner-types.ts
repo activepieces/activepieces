@@ -4,7 +4,7 @@ import {
     PieceMetadata,
     PropertyType,
 } from '@activepieces/pieces-framework'
-import { ActivepiecesError, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, SourceCode, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, EngineResponseStatus, ErrorCode, EXECUTION_ERROR_PREFIX, ExecuteActionResponse, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, SourceCode, TriggerHookType } from '@activepieces/shared'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -69,11 +69,23 @@ export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
 
 
         sandboxResponse.standardOutput.split('\n').forEach((f) => {
-            if (f.trim().length > 0) log.debug({}, chalk.yellow(f))
+            if (f.trim().length > 0) {
+                if (f.includes(EXECUTION_ERROR_PREFIX)) {
+                    log.error({}, chalk.yellow(f))
+                } else {
+                    log.info({}, chalk.yellow(f))
+                }
+            }
         })
 
         sandboxResponse.standardError.split('\n').forEach((f) => {
-            if (f.trim().length > 0) log.debug({}, chalk.red(f))
+            if (f.trim().length > 0) {
+                if (f.includes(EXECUTION_ERROR_PREFIX)) {
+                    log.error({}, chalk.red(f))
+                } else {
+                    log.warn({}, chalk.red(f))
+                }
+            }
         })
 
         if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {

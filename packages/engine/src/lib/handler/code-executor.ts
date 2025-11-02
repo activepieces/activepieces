@@ -1,6 +1,6 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { assertNotNullOrUndefined, CodeAction, FlowActionType, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, CodeAction, createErrorContext, EngineOperationStepType, ExecutionErrorSource, ExecutionErrorType, FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
@@ -57,6 +57,36 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     catch (e) {
         const handledError = handleExecutionError(e)
 
+        const [errorType, errorSource] = handledError.verdictResponse?.reason === FlowRunStatus.INTERNAL_ERROR
+            ? [ExecutionErrorType.INTERNAL, ExecutionErrorSource.ENGINE]
+            : [ExecutionErrorType.VALIDATION, ExecutionErrorSource.USER]
+
+        createErrorContext()
+            .withFlow({
+                flowId: constants.flowVersionId,
+                flowVersionId: constants.flowVersionId,
+            })
+            .withRun({
+                runId: constants.flowRunId,
+                projectId: constants.projectId,
+            })
+            .withStep({
+                name: action.name,
+                type: action.type,
+            })
+            .withOperation({
+                type: EngineOperationStepType.EXECUTE_CODE,
+            })
+            .withError({
+                error: e,
+                type: errorType,
+                source: errorSource,
+            })
+            .withInput(censoredInput as Record<string, unknown>)
+            .withMetadata({
+                artifactPath: path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`),
+            })
+            .buildAndLog()
 
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)

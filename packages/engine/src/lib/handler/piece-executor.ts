@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, createErrorContext, EngineOperationStepType, ExecutionErrorSource, ExecutionErrorType, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -181,6 +181,39 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
     }
     catch (e) {
         const handledError = handleExecutionError(e)
+        
+        const [errorType, errorSource] = handledError.verdictResponse?.reason === FlowRunStatus.INTERNAL_ERROR
+            ? [ExecutionErrorType.INTERNAL, ExecutionErrorSource.ENGINE]
+            : [ExecutionErrorType.VALIDATION, ExecutionErrorSource.USER]
+        
+        createErrorContext()
+            .withFlow({
+                flowId: constants.flowVersionId,
+                flowVersionId: constants.flowVersionId,
+            })
+            .withRun({
+                runId: constants.flowRunId,
+                projectId: constants.projectId,
+            })
+            .withStep({
+                name: action.name,
+                type: action.type,
+            })
+            .withOperation({
+                type: EngineOperationStepType.EXECUTE_PIECE,
+            })
+            .withError({
+                error: e,
+                type: errorType,
+                source: errorSource,
+            })
+            .withInput(stepOutput.input)
+            .withMetadata({
+                pieceName: action.settings.pieceName,
+                pieceVersion: action.settings.pieceVersion,
+                actionName: action.settings.actionName,
+            })
+            .buildAndLog()
 
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)

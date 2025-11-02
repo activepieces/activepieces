@@ -17,6 +17,11 @@ export enum EngineOperationType {
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
 }
 
+export enum EngineOperationStepType {
+    EXECUTE_PIECE = 'EXECUTE_PIECE',
+    EXECUTE_CODE = 'EXECUTE_CODE',
+}
+
 export enum TriggerHookType {
     ON_ENABLE = 'ON_ENABLE',
     ON_DISABLE = 'ON_DISABLE',

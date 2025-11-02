@@ -1,14 +1,10 @@
-import { STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
+import { ExecutionErrorSource, STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
 
-export enum ExecutionErrorType {
-    ENGINE = 'ENGINE',
-    USER = 'USER',
-}
 export class ExecutionError extends Error {
 
-    public type: ExecutionErrorType
+    public type: ExecutionErrorSource
 
-    constructor(name: string, message: string, type: ExecutionErrorType, public cause?: unknown) {
+    constructor(name: string, message: string, type: ExecutionErrorSource, public cause?: unknown) {
         super(message)
         this.name = name
         this.type = type
@@ -23,19 +19,19 @@ function formatMessage(message: string) {
 
 export class ConnectionNotFoundError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionNotFound', formatMessage(`connection (${connectionName}) not found`), ExecutionErrorType.USER, cause)
+        super('ConnectionNotFound', formatMessage(`connection (${connectionName}) not found`), ExecutionErrorSource.USER, cause)
     }
 }
 
 export class ConnectionLoadingError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.ENGINE, cause)
+        super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorSource.ENGINE, cause)
     }
 }
 
 export class ConnectionExpiredError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionExpired', formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorType.USER, cause)
+        super('ConnectionExpired', formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorSource.USER, cause)
     }
 }
 
@@ -44,32 +40,32 @@ export class StorageLimitError extends ExecutionError {
     public maxStorageSizeInBytes: number
 
     constructor(key: string, maxStorageSizeInBytes: number, cause?: unknown) {
-        super('StorageLimitError', formatMessage(`Failed to read/write key "${key}", the value you are trying to read/write is larger than ${Math.floor(maxStorageSizeInBytes / 1024)} KB`), ExecutionErrorType.USER, cause)
+        super('StorageLimitError', formatMessage(`Failed to read/write key "${key}", the value you are trying to read/write is larger than ${Math.floor(maxStorageSizeInBytes / 1024)} KB`), ExecutionErrorSource.USER, cause)
         this.maxStorageSizeInBytes = maxStorageSizeInBytes
     }
 }
 
 export class StorageInvalidKeyError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
-        super('StorageInvalidKeyError', formatMessage(`Failed to read/write key "${key}", the key is empty or longer than ${STORE_KEY_MAX_LENGTH} characters`), ExecutionErrorType.USER, cause)
+        super('StorageInvalidKeyError', formatMessage(`Failed to read/write key "${key}", the key is empty or longer than ${STORE_KEY_MAX_LENGTH} characters`), ExecutionErrorSource.USER, cause)
     }
 }
 
 export class StorageError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
-        super('StorageError', formatMessage(`Failed to read/write key "${key}" due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)
+        super('StorageError', formatMessage(`Failed to read/write key "${key}" due to ${JSON.stringify(cause)}`), ExecutionErrorSource.ENGINE, cause)
     }
 }
 
 export class FileStoreError extends ExecutionError {
     constructor(cause?: unknown) {
-        super('FileStoreError', formatMessage(`Failed to store file due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)
+        super('FileStoreError', formatMessage(`Failed to store file due to ${JSON.stringify(cause)}`), ExecutionErrorSource.ENGINE, cause)
     }
 }
 
 export class PausedFlowTimeoutError extends ExecutionError {
     constructor(cause?: unknown, maximumPauseDurationDays?: number) {
-        super('PausedFlowTimeoutError', `The flow cannot be paused for more than ${maximumPauseDurationDays} days`, ExecutionErrorType.USER, cause)
+        super('PausedFlowTimeoutError', `The flow cannot be paused for more than ${maximumPauseDurationDays} days`, ExecutionErrorSource.USER, cause)
     }
 }
 
@@ -77,7 +73,7 @@ export class ProgressUpdateError extends ExecutionError {
     constructor(message: string, cause?: unknown) {
         super('ProgressUpdateError', JSON.stringify({
             message,
-        }, null, 2), ExecutionErrorType.ENGINE, cause)
+        }, null, 2), ExecutionErrorSource.ENGINE, cause)
     }
 }
 
@@ -87,12 +83,12 @@ export class FileSizeError extends ExecutionError {
             message: 'File size is larger than maximum supported size',
             currentFileSize: `${currentFileSize} MB`,
             maximumSupportSize: `${maximumSupportSize} MB`,
-        }), ExecutionErrorType.USER, cause)
+        }), ExecutionErrorSource.USER, cause)
     }
 }
 
 export class FetchError extends ExecutionError {
     constructor(url: string, cause?: unknown) {
-        super('FetchError', formatMessage(`Failed to fetch from ${url}`), ExecutionErrorType.ENGINE, cause)
+        super('FetchError', formatMessage(`Failed to fetch from ${url}`), ExecutionErrorSource.ENGINE, cause)
     }
 }

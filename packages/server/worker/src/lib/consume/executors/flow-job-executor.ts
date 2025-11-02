@@ -1,5 +1,5 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, PauseType, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, createErrorContext, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionErrorSource, ExecutionErrorType, ExecutionType, FlowRunStatus, FlowVersion, isNil, PauseType, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, flowRunLogs } from '../../api/server-api.service'
@@ -195,6 +195,42 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             const isMemoryIssueError =
                 e instanceof ActivepiecesError &&
                 e.error.code === ErrorCode.MEMORY_ISSUE
+
+            const errorType = isTimeoutError 
+                ? ExecutionErrorType.TIMEOUT 
+                : isMemoryIssueError 
+                    ? ExecutionErrorType.MEMORY 
+                    : ExecutionErrorType.INTERNAL
+
+            const errorParams = e instanceof ActivepiecesError ? e.error.params : null
+
+            createErrorContext()
+                .withOperation({
+                    type: EngineOperationType.EXECUTE_FLOW,
+                })
+                .withFlow({
+                    flowId: jobData.flowVersionId,
+                    flowVersionId: jobData.flowVersionId,
+                })
+                .withRun({
+                    runId: jobData.runId,
+                    projectId: jobData.projectId,
+                })
+                .withError({
+                    error: e,
+                    type: errorType,
+                    source: ExecutionErrorSource.ENGINE,
+                })
+                .withMetadata({
+                    attemptNumber: attemptsStarted,
+                    executionType: jobData.executionType,
+                    synchronousHandlerId: jobData.synchronousHandlerId,
+                    httpRequestId: jobData.httpRequestId,
+                    environment: jobData.environment,
+                    standardOutput: errorParams && 'standardOutput' in errorParams ? errorParams.standardOutput : undefined,
+                    standardError: errorParams && 'standardError' in errorParams ? errorParams.standardError : undefined,
+                })
+                .buildAndLog()
 
             if (isTimeoutError) {
                 await handleTimeoutError(jobData, engineToken)

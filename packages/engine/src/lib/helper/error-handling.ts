@@ -1,7 +1,7 @@
-import { ActivepiecesError, CodeAction, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
+import { ActivepiecesError, CodeAction, ExecutionErrorSource, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
-import { ExecutionError, ExecutionErrorType } from './execution-errors'
+import { ExecutionError } from './execution-errors'
 
 export async function runWithExponentialBackoff<T extends CodeAction | PieceAction>(
     executionState: FlowExecutorContext,
@@ -46,7 +46,7 @@ export async function continueIfFailureHandler(
 }
 
 export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
-    const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
+    const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorSource.ENGINE
     const isActivepiecesError = error instanceof ActivepiecesError
     const errorMessage = isActivepiecesError ? JSON.stringify(error?.error?.params, null, 2) : JSON.stringify(error, null, 2)
     return {

@@ -144,6 +144,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             timeoutWorker = setTimeout(async () => {
                 didTimeout = true
+                log.error({
+                    workerIndex,
+                    workerId,
+                    operationType,
+                    timeoutInSeconds,
+                    flowVersionId: getFlowVersionId(operation, operationType),
+                }, 'Worker timeout - force terminating')
                 await forceTerminate(worker, log)
                 processes[workerIndex] = undefined
             }, timeoutInSeconds * 1000)
@@ -167,9 +174,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             engineSocketServer.subscribe(workerId, onResult, onStdout, onStderr)
 
             worker.on('error', (error) => {
-                log.info({
+                log.error({
                     error,
-                }, 'Worker returned something in stderr')
+                    workerIndex,
+                    workerId,
+                    operationType,
+                    flowVersionId: getFlowVersionId(operation, operationType),
+                }, 'Worker process error event')
                 reject({ status: EngineResponseStatus.INTERNAL_ERROR, error })
             })
 
@@ -180,10 +191,14 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                     stdError,
                     stdOut,
                     workerIndex,
+                    workerId,
                     code,
                     isRamIssue,
                     signal,
-                }, 'Worker exited')
+                    operationType,
+                    flowVersionId: getFlowVersionId(operation, operationType),
+                    didTimeout,
+                }, 'Worker exited unexpectedly')
 
 
                 if (didTimeout) {
@@ -217,7 +232,10 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             })
             log.info({
                 workerIndex,
+                workerId,
                 timeoutInSeconds,
+                operationType,
+                flowVersionId: getFlowVersionId(operation, operationType),
             }, 'Sending operation to worker')
             engineSocketServer.send(workerId, { operation, operationType })
         })
@@ -226,7 +244,12 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
     catch (error) {
         log.error({
             error,
-        }, 'Worker throw unexpected error')
+            workerIndex,
+            workerId,
+            operationType,
+            flowVersionId: getFlowVersionId(operation, operationType),
+            timeoutInSeconds,
+        }, 'Worker threw unexpected error')
         throw error
     }
     finally {
@@ -246,6 +269,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
         }
         log.debug({
             workerIndex,
+            workerId,
         }, 'Releasing worker')
     }
 }
