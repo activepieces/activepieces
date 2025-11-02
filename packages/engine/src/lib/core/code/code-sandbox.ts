@@ -1,5 +1,6 @@
-import { assertNotNullOrUndefined, ExecutionMode } from '@activepieces/shared'
+import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
+import { assertEngineNotNullOrUndefined } from '../assertions'
 
 export const EXECUTION_MODE = (process.env.AP_EXECUTION_MODE as ExecutionMode)
 
@@ -20,7 +21,7 @@ const loadCodeSandbox = async (): Promise<CodeSandbox> => {
         [ExecutionMode.SANDBOX_CODE_ONLY]: loadV8IsolateSandbox,
         [ExecutionMode.SANDBOX_CODE_AND_PROCESS]: loadV8IsolateSandbox,
     }
-    assertNotNullOrUndefined(EXECUTION_MODE, 'AP_EXECUTION_MODE')
+    assertEngineNotNullOrUndefined(EXECUTION_MODE, 'AP_EXECUTION_MODE')
     const loader = loaders[EXECUTION_MODE]
     return loader()
 }

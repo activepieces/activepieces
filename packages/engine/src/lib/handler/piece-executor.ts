@@ -1,7 +1,8 @@
 import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { assertEngineNotNullOrUndefined } from '../core/assertions'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
@@ -58,7 +59,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 }
 
 async function prepareAndExecutePieceAction({ action, executionState, constants, stepOutput, stepStartTime }: PrepareAndExecutePieceActionParams): Promise<FlowExecutorContext> {
-    assertNotNullOrUndefined(action.settings.actionName, 'actionName')
+    assertEngineNotNullOrUndefined(action.settings.actionName, 'actionName')
     const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
         pieceName: action.settings.pieceName,
         pieceVersion: action.settings.pieceVersion,
@@ -182,14 +183,14 @@ async function prepareAndExecutePieceAction({ action, executionState, constants,
 
     const stepEndTime = performance.now()
     if (params.hookResponse.type === 'stopped') {
-        assertNotNullOrUndefined(params.hookResponse.response, 'stopResponse')
+        assertEngineNotNullOrUndefined(params.hookResponse.response, 'stopResponse')
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict(ExecutionVerdict.SUCCEEDED, {
             reason: FlowRunStatus.SUCCEEDED,
             stopResponse: (params.hookResponse.response as StopHookParams).response,
         })
     }
     if (params.hookResponse.type === 'paused') {
-        assertNotNullOrUndefined(params.hookResponse.response, 'pauseResponse')
+        assertEngineNotNullOrUndefined(params.hookResponse.response, 'pauseResponse')
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
             .setVerdict(ExecutionVerdict.PAUSED, {
                 reason: FlowRunStatus.PAUSED,

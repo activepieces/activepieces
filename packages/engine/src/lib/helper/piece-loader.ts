@@ -151,7 +151,7 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
     const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
     for (const entry of entries) {
 
-        const doLoadPackageJson = async () => {
+        const { data: packageJsonPath } = await tryCatch((async () => {
             const packageJsonPath = entry.path
             const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
             const packageJson = JSON.parse(packageJsonContent)
@@ -159,9 +159,7 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
                 return path.dirname(packageJsonPath)
             }
             return null
-        }
-        
-        const { data: packageJsonPath } = await tryCatch(doLoadPackageJson())
+        })())
         return packageJsonPath
     }
     return null

@@ -1,6 +1,5 @@
 import { inspect } from 'util'
 import {
-    assertNotNullOrUndefined,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -12,6 +11,7 @@ import {
     isNil,
 } from '@activepieces/shared'
 import WebSocket from 'ws'
+import { assertEngineNotNullOrUndefined } from './lib/core/assertions'
 import { tryCatch } from './lib/helper/try-catch'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
@@ -24,12 +24,7 @@ process.title = `engine-${WORKER_ID}`
 let socket: WebSocket | undefined
 
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-    const { data: result, error: resultError } = await tryCatch(execute(operationType, operation))
-
-    if (resultError) {
-        throw resultError
-    }
-
+    const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
     socket?.send(JSON.stringify({
         type: EngineSocketEvent.ENGINE_RESPONSE,
@@ -38,7 +33,7 @@ async function executeFromSocket(operation: EngineOperation, operationType: Engi
 }
 
 function setupSocket() {
-    assertNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
+    assertEngineNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
 
     socket = new WebSocket(WS_URL, {
         headers: {

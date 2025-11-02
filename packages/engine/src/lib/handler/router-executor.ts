@@ -1,5 +1,6 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { assertEngineNotNullOrUndefined } from '../core/assertions'
 import { tryCatch } from '../helper/try-catch'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -114,7 +115,7 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
         let andGroup = true
         for (const condition of conditionGroup) {
             const castedCondition = condition
-            assertNotNullOrUndefined(castedCondition.operator, 'The operator is required but found to be undefined')
+            assertEngineNotNullOrUndefined(castedCondition.operator, 'The operator is required but found to be undefined')
             switch (castedCondition.operator) {
                 case BranchOperator.TEXT_CONTAINS: {
                     const firstValueContains = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(

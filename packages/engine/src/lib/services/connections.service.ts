@@ -8,7 +8,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
         async obtain(externalId: string): Promise<ConnectionValue> {
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
-            const doFetch = async () => {
+            const { data: connectionValue, error: connectionValueError } = await tryCatch((async () => {
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
@@ -27,8 +27,8 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                     throw new ConnectionExpiredError(externalId)
                 }
                 return getConnectionValue(connection)
-            }
-            const { data: connectionValue, error: connectionValueError } = await tryCatch(doFetch())
+            })())
+            
             if (connectionValueError) {
                 return handleFetchError({
                     url,

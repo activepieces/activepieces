@@ -11,7 +11,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
         async get(key: string): Promise<StoreEntry | null> {
             const url = buildUrl(apiUrl, key)
 
-            const doFetch = async () => {
+            const { data: storeEntry, error: storeEntryError } = await tryCatch((async () => {
                 const response = await fetch(url, {
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
@@ -25,9 +25,8 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 }
 
                 return response.json()
-            }
+            })())
 
-            const { data: storeEntry, error: storeEntryError } = await tryCatch(doFetch())
             if (storeEntryError) {
                 return handleFetchError({
                     url,
@@ -40,7 +39,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
         async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
             const url = buildUrl(apiUrl)
 
-            const doFetch = async () => {
+            const { data: storeEntry, error: storeEntryError } = await tryCatch((async () => {
                 const sizeOfValue = sizeof(request.value)
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
@@ -62,9 +61,8 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 }
 
                 return response.json()
-            }
+            })())
 
-            const { data: storeEntry, error: storeEntryError } = await tryCatch(doFetch())
             if (storeEntryError) {
                 return handleFetchError({
                     url,
@@ -77,7 +75,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
         async delete(request: DeleteStoreEntryRequest): Promise<null> {
             const url = buildUrl(apiUrl, request.key)
 
-            const doFetch = async () => {
+            const { data: storeEntry, error: storeEntryError } = await tryCatch((async () => {
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
@@ -93,9 +91,8 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 }
 
                 return null
-            }
-
-            const { data: storeEntry, error: storeEntryError } = await tryCatch(doFetch())
+            })())
+            
             if (storeEntryError) {
                 return handleFetchError({
                     url,

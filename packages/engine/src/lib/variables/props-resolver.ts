@@ -178,7 +178,7 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
-    const doEval = async () => {
+    const { data: result, error: resultError } = await tryCatch((async () => {
         const codeSandbox = await initCodeSandbox()
 
         const result = await codeSandbox.runScript({
@@ -187,8 +187,8 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>, 
             functions,
         })
         return result ?? ''
-    }
-    const { data: result, error: resultError } = await tryCatch(doEval())
+    })())
+
     if (resultError) {
         console.warn('[evalInScope] Error evaluating variable', resultError)
         return ''

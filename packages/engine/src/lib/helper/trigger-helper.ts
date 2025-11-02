@@ -1,7 +1,8 @@
 import { inspect } from 'node:util'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
+import { assertEngineNotNullOrUndefined } from '../core/assertions'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
@@ -22,7 +23,7 @@ type Listener = {
 export const triggerHelper = {
     async executeOnStart(trigger: FlowTrigger, constants: EngineConstants, payload: unknown) {
         const { pieceName, pieceVersion, triggerName, input, propertySettings } = (trigger as PieceTrigger).settings
-        assertNotNullOrUndefined(triggerName, 'triggerName is required')
+        assertEngineNotNullOrUndefined(triggerName, 'triggerName is required')
         const { pieceTrigger, processedInput } = await prepareTriggerExecution({
             pieceName,
             pieceVersion,
@@ -71,7 +72,7 @@ export const triggerHelper = {
 
     async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
         const { pieceName, pieceVersion, triggerName, input, propertySettings } = (params.flowVersion.trigger as PieceTrigger).settings
-        assertNotNullOrUndefined(triggerName, 'triggerName is required')
+        assertEngineNotNullOrUndefined(triggerName, 'triggerName is required')
 
         const { piece, pieceTrigger, processedInput } = await prepareTriggerExecution({
             pieceName,
@@ -159,10 +160,10 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.HANDSHAKE: {
-                const doOnHandshake = async () => {
+                const { data: handshakeResponse, error: handshakeResponseError } = await tryCatch((async () => {
                     return pieceTrigger.onHandshake(context)
-                }
-                const { data: handshakeResponse, error: handshakeResponseError } = await tryCatch(doOnHandshake())
+                })())
+
                 if (handshakeResponseError) {
                     console.error(handshakeResponseError)
                     return {
@@ -176,7 +177,7 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.TEST: {
-                const doTriggerTest = async () => {
+                const { data: testResponse, error: testResponseError } = await tryCatch((async () => {
                     return pieceTrigger.test({
                         ...context,
                         files: createFilesService({
@@ -186,8 +187,7 @@ export const triggerHelper = {
                             flowId: params.flowVersion.flowId,
                         }),
                     })
-                }
-                const { data: testResponse, error: testResponseError } = await tryCatch(doTriggerTest())
+                })())
 
                 if (testResponseError) {
                     console.error(testResponseError)
@@ -205,7 +205,7 @@ export const triggerHelper = {
             case TriggerHookType.RUN: {
                 if (pieceTrigger.type === TriggerStrategy.APP_WEBHOOK) {
 
-                    const doVerifyWebhook = async () => {
+                    const { data: verified, error: verifiedError } = await tryCatch((async () => {
                         if (!params.appWebhookUrl) {
                             throw new Error(`App webhook url is not available for piece name ${pieceName}`)
                         }
@@ -218,8 +218,8 @@ export const triggerHelper = {
                             payload: params.triggerPayload as EventPayload,
                             webhookSecret: params.webhookSecret,
                         })
-                    }
-                    const { data: verified, error: verifiedError } = await tryCatch(doVerifyWebhook())
+                    })())
+                    
                     if (verifiedError) {
                         return {
                             success: false,
@@ -236,7 +236,7 @@ export const triggerHelper = {
                     }
                 }
 
-                const doTriggerRun = async () => {
+                const { data: triggerRunResult, error: triggerRunError } = await tryCatch((async () => {
                     const items = await pieceTrigger.run({
                         ...context,
                         files: createFilesService({
@@ -250,8 +250,8 @@ export const triggerHelper = {
                         success: true,
                         output: items,
                     }
-                }
-                const { data: triggerRunResult, error: triggerRunError } = await tryCatch(doTriggerRun())
+                })())
+
                 if (triggerRunError) {
                     return {
                         success: false,

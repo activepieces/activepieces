@@ -96,3 +96,9 @@ export class FetchError extends ExecutionError {
         super('FetchError', formatMessage(`Failed to fetch from ${url}`), ExecutionErrorType.ENGINE, cause)
     }
 }
+
+export class AssertionError extends ExecutionError {
+    constructor(fieldName: string, cause?: unknown) {
+        super('AssertionError', formatMessage(`${fieldName} is null or undefined`), ExecutionErrorType.ENGINE, cause)
+    }
+}
