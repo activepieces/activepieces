@@ -8,10 +8,12 @@ import { memoryRouter } from '@/app/router';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import {
   combinePaths,
+  determineDefaultRoute,
   parentWindow,
   routesThatRequireProjectId,
 } from '@/lib/utils';
@@ -103,6 +105,7 @@ const EmbedPage = React.memo(() => {
   });
   const { setTheme } = useTheme();
   const { i18n } = useTranslation();
+  const { checkAccess } = useAuthorization();
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
       event.source === parentWindow &&
@@ -120,7 +123,11 @@ const EmbedPage = React.memo(() => {
           {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data, true);
-              const initialRoute = event.data.data.initialRoute ?? '/';
+              const configuredRoute = event.data.data.initialRoute ?? '/';
+
+              const defaultRoute = determineDefaultRoute(checkAccess);
+              const initialRoute =
+                configuredRoute === '/' ? defaultRoute : configuredRoute;
               //must use it to ensure that the correct router in RouterProvider is used before navigation
               flushSync(() => {
                 setEmbedState({
