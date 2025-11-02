@@ -3,6 +3,7 @@ import {
     AdminRetryRunsRequestBody,
     ApplyLicenseKeyByEmailRequestBody,
     ErrorCode,
+    FileType,
     FlowRetryStrategy,
     FlowRun,
     FlowRunStatus,
@@ -17,41 +18,36 @@ import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-se
 import { platformRepo } from '../../../platform/platform.service'
 import { userRepo } from '../../../user/user-service'
 import { licenseKeysService } from '../../license-keys/license-keys-service'
+import { fileRepo } from '../../../file/file.service'
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
 
     retryRuns: async ({
-        createdAfter,
-        createdBefore,
         runIds,
     }: AdminRetryRunsRequestBody): Promise<void> => {
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            status: In([FlowRunStatus.INTERNAL_ERROR]),
-        })
-        if (!isNil(runIds)) {
-            query = query.andWhere({
-                id: In(runIds),
-            })
-        }
-        if (!createdAfter || !createdBefore) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'createdAfter and createdBefore are required',
-                },
-            })
-        }
-        query = query.andWhere('flow_run.created >= :createdAfter', {
-            createdAfter,
-        })
-        query = query.andWhere('flow_run.created <= :createdBefore', {
-            createdBefore,
+            status: In([FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.QUEUED]),
+            runId: In(runIds ?? []),
         })
 
+
         const flowRuns = await query.getMany()
+        for (const flowRun of flowRuns) {
+            const file = await fileRepo().createQueryBuilder('file')
+                .where('"file"."projectId" = :projectId', { projectId: flowRun.projectId })
+                .andWhere('"file"."type" = :type', { type: FileType.FLOW_RUN_LOG })
+                .andWhere(`"file"."metadata"->>'flowRunId' = :flowRunId`, { flowRunId: flowRun.id })
+                .getOne()
+            if (isNil(file)) {
+                throw new Error('File not found for flow run')
+            }
+            await flowRunRepo().update(flowRun.id, {
+                logsFileId: file.id,
+            })
+        }
         const flowRunsByProject = flowRuns.reduce((acc, flowRun) => {
             acc[flowRun.projectId] = acc[flowRun.projectId] || []
             acc[flowRun.projectId].push(flowRun)
