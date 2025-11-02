@@ -64,17 +64,17 @@ export type BaseEngineOperation = {
     internalApiUrl: string
     publicApiUrl: string
     timeoutInSeconds: number
+    platformId: PlatformId
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
-    platformId: PlatformId
     auth: AppConnectionValue
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number }
+export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number, platformId: PlatformId }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string

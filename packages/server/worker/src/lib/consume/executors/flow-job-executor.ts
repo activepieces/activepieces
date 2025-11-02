@@ -27,6 +27,7 @@ async function prepareInput(
         case ExecutionType.BEGIN: {
 
             return {
+                platformId: jobData.platformId,
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
@@ -50,6 +51,7 @@ async function prepareInput(
         case ExecutionType.RESUME: {
 
             return {
+                platformId: jobData.platformId,
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,

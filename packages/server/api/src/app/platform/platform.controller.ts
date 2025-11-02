@@ -44,7 +44,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 
-    app.get('/:id', GetPlatformRequest, async (req, res) => {
+    app.get('/:id', GetPlatformRequest, async (req) => {
         if (req.principal.platform.id !== req.params.id) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
