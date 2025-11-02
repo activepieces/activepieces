@@ -43,6 +43,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
         {
             config: {
                 allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                skipAuth: true,
             },
             schema: {
                 body: ExchangeTokenRequest,
@@ -73,6 +74,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
         {
             config: {
                 allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                skipAuth: true,
             },
             schema: {
                 headers: AuthorizationHeaders,

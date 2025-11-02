@@ -38,7 +38,6 @@ import { globalConnectionModule } from './ee/global-connections/global-connectio
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
-import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
@@ -157,8 +156,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
     await app.register(rateLimitModule)
-
-
     app.addHook('onResponse', async (request, reply) => {
         // eslint-disable-next-line
         reply.header('x-request-id', request.id)
@@ -267,7 +264,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
-            await app.register(adminPieceModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
