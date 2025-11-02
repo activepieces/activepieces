@@ -3,6 +3,7 @@ import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 import { utils } from '../utils'
+import { tryCatch } from './try-catch'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -149,17 +150,19 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
     const distPath = path.resolve('dist/packages/pieces')
     const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
     for (const entry of entries) {
-        try {
+
+        const doLoadPackageJson = async () => {
             const packageJsonPath = entry.path
             const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
             const packageJson = JSON.parse(packageJsonContent)
             if (packageJson.name === packageName) {
                 return path.dirname(packageJsonPath)
             }
+            return null
         }
-        catch (error) {
-            // Skip invalid package.json files
-        }
+        
+        const { data: packageJsonPath } = await tryCatch(doLoadPackageJson())
+        return packageJsonPath
     }
     return null
 }

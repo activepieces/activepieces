@@ -4,9 +4,11 @@ import { assertNotNullOrUndefined, CodeAction, FlowActionType, GenericStepOutput
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { tryCatch } from '../helper/try-catch'
 import { progressService } from '../services/progress.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { ExecutionVerdict } from './context/flow-execution-context'
+import { EngineConstants } from './context/engine-constants'
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -34,29 +36,11 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         type: FlowActionType.CODE,
         status: StepOutputStatus.RUNNING,
     })
+    
+    const { data: executionStateResult, error: executionStateError } = await tryCatch(prepareAndExecuteCodeAction({ action, executionState, constants, stepOutput, resolvedInput, stepStartTime }))
 
-    try {
-
-        await progressService.sendUpdate({
-            engineConstants: constants,
-            flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
-        })
-
-        assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
-        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
-        const codeModule: CodeModule = await importFresh(artifactPath)
-        const codeSandbox = await initCodeSandbox()
-
-        const output = await codeSandbox.runCodeModule({
-            codeModule,
-            inputs: resolvedInput,
-        })
-
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime))
-    }
-    catch (e) {
-        const handledError = handleExecutionError(e)
-
+    if (executionStateError) {
+        const handledError = handleExecutionError(executionStateError)
 
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)
@@ -67,4 +51,35 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             .upsertStep(action.name, failedStepOutput)
             .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
     }
+
+    return executionStateResult
+}
+
+async function prepareAndExecuteCodeAction({ action, executionState, constants, stepOutput, resolvedInput, stepStartTime }: PrepareAndExecuteCodeActionParams): Promise<FlowExecutorContext> {
+    await progressService.sendUpdate({
+        engineConstants: constants,
+        flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+    })
+
+    assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
+    const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
+    const codeModule: CodeModule = await importFresh(artifactPath)
+    const codeSandbox = await initCodeSandbox()
+
+    const output = await codeSandbox.runCodeModule({
+        codeModule,
+        inputs: resolvedInput,
+    })
+
+    return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime))
+}
+
+
+type PrepareAndExecuteCodeActionParams = {
+    action: CodeAction
+    executionState: FlowExecutorContext
+    constants: EngineConstants
+    stepOutput: GenericStepOutput<FlowActionType.CODE, unknown>
+    resolvedInput: Record<string, unknown>
+    stepStartTime: number
 }

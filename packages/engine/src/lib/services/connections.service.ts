@@ -1,13 +1,14 @@
 import { AppConnection, AppConnectionStatus, AppConnectionType, BasicAuthConnectionValue, CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
+import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, FetchError } from '../helper/execution-errors'
+import { tryCatch } from '../helper/try-catch'
 
 export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
     return {
         async obtain(externalId: string): Promise<ConnectionValue> {
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
-            try {
+            const doFetch = async () => {
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
@@ -27,16 +28,14 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                 }
                 return getConnectionValue(connection)
             }
-            catch (e) {
-                if (e instanceof ExecutionError) {
-                    throw e
-                }
-
+            const { data: connectionValue, error: connectionValueError } = await tryCatch(doFetch())
+            if (connectionValueError) {
                 return handleFetchError({
                     url,
-                    cause: e,
+                    cause: connectionValueError,
                 })
             }
+            return connectionValue
         },
     }
 }
@@ -66,7 +65,7 @@ const getConnectionValue = (connection: AppConnection): ConnectionValue => {
     }
 }
 
-type ConnectionValue =
+export type ConnectionValue =
     | OAuth2ConnectionValueWithApp
     | CloudOAuth2ConnectionValue
     | BasicAuthConnectionValue

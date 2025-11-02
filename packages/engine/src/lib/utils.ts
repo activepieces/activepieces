@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { createConnectionService } from './services/connections.service'
+import { tryCatch } from './helper/try-catch'
+import { ConnectionValue, createConnectionService } from './services/connections.service'
 
 export type FileEntry = {
     name: string
@@ -24,29 +25,24 @@ export const utils = {
         const entries: FileEntry[] = []
 
         async function walkRecursive(currentPath: string) {
-            try {
-                const items = await fs.readdir(currentPath, { withFileTypes: true })
+            const items = await fs.readdir(currentPath, { withFileTypes: true })
 
-                for (const item of items) {
-                    const fullPath = path.join(currentPath, item.name)
-                    const absolutePath = path.resolve(fullPath)
+            for (const item of items) {
+                const fullPath = path.join(currentPath, item.name)
+                const absolutePath = path.resolve(fullPath)
 
-                    entries.push({
-                        name: item.name,
-                        path: absolutePath,
-                    })
+                entries.push({
+                    name: item.name,
+                    path: absolutePath,
+                })
 
-                    if (item.isDirectory()) {
-                        await walkRecursive(fullPath)
-                    }
+                if (item.isDirectory()) {
+                    await walkRecursive(fullPath)
                 }
-            }
-            catch (error) {
-                // Skip directories that can't be read
             }
         }
 
-        await walkRecursive(dirPath)
+        await tryCatch(walkRecursive(dirPath))
         return entries
     },
     formatError(value: Error): string {
@@ -69,20 +65,25 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                try {
-                    const { projectId, engineToken, apiUrl, target } = params
-                    const connection = await createConnectionService({ projectId, engineToken, apiUrl }).obtain(key)
-                    if (target === 'actions') {
-                        params.hookResponse.tags.push(`connection:${key}`)
-                    }
-                    return connection
-                }
-                catch (e) {
-                    return null
-                }
+                const { data: connection } = await tryCatch(getConnectionValue({ key, data: params }))
+                return connection
             },
         }
     },
+}
+
+async function getConnectionValue(params: GetConnectionValueParams): Promise<ConnectionValue> {
+    const { key, data } = params
+    const connection = await createConnectionService({ projectId: data.projectId, engineToken: data.engineToken, apiUrl: data.apiUrl }).obtain(key)
+    if (data.target === 'actions') {
+        data.hookResponse.tags.push(`connection:${key}`)
+    }
+    return connection
+}
+
+type GetConnectionValueParams = {
+    key: string
+    data: CreateConnectionManagerParams
 }
 
 export type HookResponse = {
