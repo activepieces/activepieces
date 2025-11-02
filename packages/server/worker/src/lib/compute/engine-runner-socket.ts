@@ -118,8 +118,8 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             onResult: (result: EngineResponse<unknown>) => void
             onStdout: (stdout: EngineStdout) => void
             onStderr: (stderr: EngineStderr) => void
-            updateRunProgress: (updateRunProgress: UpdateRunProgressRequest, log: FastifyBaseLogger) => void
-            sendFlowResponse: (sendFlowResponse: SendFlowResponseRequest, log: FastifyBaseLogger) => void
+            updateRunProgress: (data: UpdateRunProgressRequest, log: FastifyBaseLogger) => Promise<void>
+            sendFlowResponse: (data: SendFlowResponseRequest, log: FastifyBaseLogger) => Promise<void>
         }): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'sockets[workerId]')
@@ -139,14 +139,14 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 onStderr(data)
             })
 
-            socket.on(EngineSocketEvent.UPDATE_RUN_PROGRESS, (data: UpdateRunProgressRequest, callback: () => void) => {
-                callback?.()
-                updateRunProgress(data, log)
+            socket.on(EngineSocketEvent.UPDATE_RUN_PROGRESS, async (data: UpdateRunProgressRequest, callback: () => void) => {
+                await updateRunProgress(data, log)
+                callback()
             })
 
-            socket.on(EngineSocketEvent.SEND_FLOW_RESPONSE, (data: SendFlowResponseRequest, callback: () => void) => {
-                callback?.()
-                sendFlowResponse(data, log)
+            socket.on(EngineSocketEvent.SEND_FLOW_RESPONSE, async (data: SendFlowResponseRequest, callback: () => void) => {
+                await sendFlowResponse(data, log)
+                callback()
             })
         },
 

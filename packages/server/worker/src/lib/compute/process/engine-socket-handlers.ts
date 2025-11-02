@@ -1,7 +1,7 @@
 import { EngineHttpResponse, FlowRunResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, spreadIfDefined, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { runsMetadataQueue, workerSocket } from '../../flow-worker'
+import { appSocket, runsMetadataQueue } from '../../flow-worker'
 import { engineResponsePublisher } from '../../utils/engine-response-publisher'
 
 export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
@@ -46,7 +46,7 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
             })
 
             const wsEvent = isTerminalOutput  ? WebsocketServerEvent.EMIT_TEST_STEP_FINISHED : WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS
-            workerSocket(log).emit(wsEvent, { projectId, ...stepResponse })
+            await appSocket(log).emitWithAck(wsEvent, { projectId, ...stepResponse })
         }
     },
 })
