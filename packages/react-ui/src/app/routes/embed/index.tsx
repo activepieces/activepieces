@@ -120,7 +120,7 @@ const EmbedPage = React.memo(() => {
           {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data, true);
-              const initialRoute = event.data.data.initialRoute ?? '/';
+              const initialRoute = event.data.data.initialRoute ?? '/flows';
               //must use it to ensure that the correct router in RouterProvider is used before navigation
               flushSync(() => {
                 setEmbedState({
