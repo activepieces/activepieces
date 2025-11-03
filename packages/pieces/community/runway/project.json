@@ -56,7 +56,10 @@
       "options": {
         "cwd": "packages/pieces/community/runway",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

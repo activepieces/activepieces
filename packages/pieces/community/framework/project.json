@@ -21,7 +21,8 @@
         "updateBuildableProjectDepsInPackageJson": true
       },
       "dependsOn": [
-        "prebuild"
+        "prebuild",
+        "^build"
       ]
     },
     "publish": {
@@ -49,6 +50,9 @@
       }
     },
     "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/framework",

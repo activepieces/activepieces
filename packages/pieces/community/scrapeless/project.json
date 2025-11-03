@@ -56,7 +56,10 @@
       "options": {
         "cwd": "packages/pieces/community/scrapeless",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

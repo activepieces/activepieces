@@ -154,7 +154,7 @@ async function getFlowResponse(
 
 const GetAllFlowsByProjectParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
@@ -163,7 +163,7 @@ const GetAllFlowsByProjectParams = {
 
 const GetFileRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         params: Type.Object({
@@ -175,7 +175,7 @@ const GetFileRequestParams = {
 
 const UpdateRunProgress = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         body: UpdateRunProgressRequest,
@@ -184,7 +184,7 @@ const UpdateRunProgress = {
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         querystring: GetFlowVersionForWorkerRequest,
@@ -197,7 +197,7 @@ const GetLockedVersionRequest = {
 
 const UpdateFlowResponseParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         body: SendFlowResponseRequest,

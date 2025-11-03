@@ -41,7 +41,10 @@
       "options": {
         "cwd": "packages/pieces/community/openai",
         "command": "npm install --no-save"
-      }
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []
