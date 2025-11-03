@@ -2,9 +2,9 @@ import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { createConnectionService } from './services/connections.service'
-import { tryCatch, Result } from 'packages/shared/src/lib/common/try-catch'
+import { Result, tryCatch } from '@activepieces/shared'
 import { ExecutionError, ExecutionErrorType } from './helper/execution-errors'
+import { createConnectionService } from './services/connections.service'
 
 export type FileEntry = {
     name: string

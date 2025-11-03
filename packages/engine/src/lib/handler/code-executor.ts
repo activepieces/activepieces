@@ -6,9 +6,9 @@ import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError } from '../helper/execution-errors'
 import { progressService } from '../services/progress.service'
+import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
-import { utils } from '../utils'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
