@@ -2075,6 +2075,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "SinghaAnirban005",
+      "name": "Anirban Singha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143536290?v=4",
+      "profile": "https://github.com/SinghaAnirban005",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
