@@ -1,7 +1,7 @@
 import { Writable } from 'stream'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/common-ai'
 import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, EnginePrincipal, ErrorCode, isNil, PlatformUsageMetric, PrincipalType } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -18,6 +18,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         prefix: '/v1/ai-providers/proxy/:provider',
         upstream: '',
         disableRequestLogging: false,
+        config: {
+            allowedPrincipals: [PrincipalType.ENGINE],
+        },
         replyOptions: {
             rewriteRequestHeaders: (_request, headers) => {
                 headers['accept-encoding'] = 'identity'
@@ -30,15 +33,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             onResponse: async (request, reply, response) => {
                 request.body = (request as ModifiedFastifyRequest).originalBody
 
-                const principal = request.principal
-                if (principal.type !== PrincipalType.ENGINE && principal.type !== PrincipalType.USER) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.AUTHORIZATION,
-                        params: {
-                            message: 'invalid route for principal type',
-                        },
-                    })
-                }
+                const principal = request.principal as EnginePrincipal
                 const projectId = principal.projectId
                 const { provider } = request.params as { provider: string }
                 if (aiProviderService.isNonUsageRequest(provider, request)) {
@@ -138,16 +133,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         preHandler: async (request) => {
-            const principal = request.principal
-            if (principal.type !== PrincipalType.ENGINE && principal.type !== PrincipalType.USER) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
-                    params: {
-                        message: 'invalid route for principal type',
-                    },
-                })
-            }
-
+            const principal = request.principal as EnginePrincipal
             const provider = (request.params as { provider: string }).provider
             aiProviderService.validateRequest(provider, request)
 
