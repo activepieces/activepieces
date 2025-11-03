@@ -1,5 +1,6 @@
 import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
+import { EngineGenericError } from '../../helper/execution-errors'
 
 type RetryConstants = {
     maxAttempts: number
@@ -81,10 +82,10 @@ export class EngineConstants {
 
     public constructor(params: EngineConstantsParams) {
         if (!params.publicApiUrl.endsWith('/api/')) {
-            throw new Error('Public URL must end with a slash, got: ' + params.publicApiUrl)
+            throw new EngineGenericError('PublicUrlNotEndsWithSlashError', `Public URL must end with a slash, got: ${params.publicApiUrl}`)
         }
         if (!params.internalApiUrl.endsWith('/')) {
-            throw new Error('Internal API URL must end with a slash, got: ' + params.internalApiUrl)
+            throw new EngineGenericError('InternalApiUrlNotEndsWithSlashError', `Internal API URL must end with a slash, got: ${params.internalApiUrl}`)
         }
 
         this.flowId = params.flowId

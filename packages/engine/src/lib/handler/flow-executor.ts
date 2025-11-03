@@ -9,6 +9,7 @@ import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
+import { EngineGenericError } from '../helper/execution-errors'
 
 const executeFunction: Record<FlowActionType, BaseExecutor<FlowAction>> = {
     [FlowActionType.CODE]: codeExecutor,
@@ -20,9 +21,11 @@ const executeFunction: Record<FlowActionType, BaseExecutor<FlowAction>> = {
 export const flowExecutor = {
     getExecutorForAction(type: FlowActionType): BaseExecutor<FlowAction> {
         const executor = executeFunction[type]
+
         if (isNil(executor)) {
-            throw new Error('Not implemented')
+            throw new EngineGenericError('ExecutorNotFoundError', `Executor not found for action type: ${type}`)
         }
+        
         return executor
     },
     async executeFromTrigger({ executionState, constants, input }: {

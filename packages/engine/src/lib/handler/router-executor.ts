@@ -1,11 +1,11 @@
 import { BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { assertEngineNotNullOrUndefined } from '../core/assertions'
-import { tryCatch } from '../helper/try-catch'
+import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
+import { EngineGenericError } from '../helper/execution-errors'
 
 export const routerExecuter: BaseExecutor<RouterAction> = {
     async handle({
@@ -26,7 +26,7 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
             case RouterExecutionType.EXECUTE_FIRST_MATCH:
                 return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_FIRST_MATCH })
             default:
-                throw new Error(`Router execution type ${resolvedInput.executionType} is not supported`)
+                throw new EngineGenericError('RouterExecutionTypeNotSupportedError', `Router execution type ${resolvedInput.executionType} is not supported`)
         }
     },
 }
@@ -65,7 +65,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     }).setDuration(stepEndTime - stepStartTime)
     executionState = executionState.upsertStep(action.name, routerOutput)
 
-    const { data: executionStateResult, error: executionStateError } = await tryCatch(prepareAndExecuteRouterAction({ action, executionState, constants, routerOutput, resolvedInput, routerExecutionType }))
+    const { data: executionStateResult, error: executionStateError } = await tryCatchAndThrowEngineError(prepareAndExecuteRouterAction({ action, executionState, constants, routerOutput, resolvedInput, routerExecutionType }))
     if (executionStateError) {
         console.error(executionStateError)
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
@@ -115,7 +115,11 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
         let andGroup = true
         for (const condition of conditionGroup) {
             const castedCondition = condition
-            assertEngineNotNullOrUndefined(castedCondition.operator, 'The operator is required but found to be undefined')
+
+            if (isNil(castedCondition.operator)) {
+                throw new EngineGenericError('OperatorNotSetError', 'The operator is required but found to be undefined')
+            }
+
             switch (castedCondition.operator) {
                 case BranchOperator.TEXT_CONTAINS: {
                     const firstValueContains = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(

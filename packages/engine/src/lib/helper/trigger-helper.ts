@@ -2,7 +2,6 @@ import { inspect } from 'node:util'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
 import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
-import { assertEngineNotNullOrUndefined } from '../core/assertions'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
@@ -12,7 +11,8 @@ import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
-import { tryCatch } from './try-catch'
+import { tryCatchAndThrowEngineError } from './try-catch'
+import { EngineGenericError } from './execution-errors'
 
 type Listener = {
     events: string[]
@@ -23,7 +23,11 @@ type Listener = {
 export const triggerHelper = {
     async executeOnStart(trigger: FlowTrigger, constants: EngineConstants, payload: unknown) {
         const { pieceName, pieceVersion, triggerName, input, propertySettings } = (trigger as PieceTrigger).settings
-        assertEngineNotNullOrUndefined(triggerName, 'triggerName is required')
+
+        if (isNil(triggerName)) {
+            throw new EngineGenericError('TriggerNameNotSetError', 'Trigger name is not set')
+        }
+
         const { pieceTrigger, processedInput } = await prepareTriggerExecution({
             pieceName,
             pieceVersion,
@@ -72,7 +76,10 @@ export const triggerHelper = {
 
     async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
         const { pieceName, pieceVersion, triggerName, input, propertySettings } = (params.flowVersion.trigger as PieceTrigger).settings
-        assertEngineNotNullOrUndefined(triggerName, 'triggerName is required')
+
+        if (isNil(triggerName)) {
+            throw new EngineGenericError('TriggerNameNotSetError', 'Trigger name is not set')
+        }
 
         const { piece, pieceTrigger, processedInput } = await prepareTriggerExecution({
             pieceName,
@@ -106,7 +113,7 @@ export const triggerHelper = {
             },
             setSchedule(request: ScheduleOptions) {
                 if (!isValidCron(request.cronExpression)) {
-                    throw new Error(`Invalid cron expression: ${request.cronExpression}`)
+                    throw new EngineGenericError('InvalidCronExpressionError', `Invalid cron expression: ${request.cronExpression}`)
                 }
                 scheduleOptions = {
                     type: TriggerSourceScheduleType.CRON_EXPRESSION,
@@ -160,7 +167,7 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.HANDSHAKE: {
-                const { data: handshakeResponse, error: handshakeResponseError } = await tryCatch((async () => {
+                const { data: handshakeResponse, error: handshakeResponseError } = await tryCatchAndThrowEngineError((async () => {
                     return pieceTrigger.onHandshake(context)
                 })())
 
@@ -177,7 +184,7 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.TEST: {
-                const { data: testResponse, error: testResponseError } = await tryCatch((async () => {
+                const { data: testResponse, error: testResponseError } = await tryCatchAndThrowEngineError((async () => {
                     return pieceTrigger.test({
                         ...context,
                         files: createFilesService({
@@ -205,12 +212,12 @@ export const triggerHelper = {
             case TriggerHookType.RUN: {
                 if (pieceTrigger.type === TriggerStrategy.APP_WEBHOOK) {
 
-                    const { data: verified, error: verifiedError } = await tryCatch((async () => {
+                    const { data: verified, error: verifiedError } = await tryCatchAndThrowEngineError((async () => {
                         if (!params.appWebhookUrl) {
-                            throw new Error(`App webhook url is not available for piece name ${pieceName}`)
+                            throw new EngineGenericError('AppWebhookUrlNotAvailableError', `App webhook url is not available for piece name ${pieceName}`)
                         }
                         if (!params.webhookSecret) {
-                            throw new Error(`Webhook secret is not available for piece name ${pieceName}`)
+                            throw new EngineGenericError('WebhookSecretNotAvailableError', `Webhook secret is not available for piece name ${pieceName}`)
                         }
     
                         return piece.events?.verify({
@@ -236,7 +243,7 @@ export const triggerHelper = {
                     }
                 }
 
-                const { data: triggerRunResult, error: triggerRunError } = await tryCatch((async () => {
+                const { data: triggerRunResult, error: triggerRunError } = await tryCatchAndThrowEngineError((async () => {
                     const items = await pieceTrigger.run({
                         ...context,
                         files: createFilesService({
@@ -290,7 +297,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
     const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, propertySettings)
 
     if (Object.keys(errors).length > 0) {
-        throw new Error(JSON.stringify(errors, null, 2))
+        throw new EngineGenericError('TriggerExecutionError', `Trigger execution error: ${JSON.stringify(errors, null, 2)}`)
     }
 
     return { piece, pieceTrigger, processedInput }

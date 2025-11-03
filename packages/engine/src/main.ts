@@ -11,10 +11,10 @@ import {
     isNil,
 } from '@activepieces/shared'
 import WebSocket from 'ws'
-import { assertEngineNotNullOrUndefined } from './lib/core/assertions'
-import { tryCatch } from './lib/helper/try-catch'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
+import { tryCatchAndThrowEngineError } from './lib/helper/try-catch'
+import { EngineGenericError } from './lib/helper/execution-errors'
 
 const WORKER_ID = process.env.WORKER_ID
 const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
@@ -33,7 +33,9 @@ async function executeFromSocket(operation: EngineOperation, operationType: Engi
 }
 
 function setupSocket() {
-    assertEngineNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
+    if (isNil(WORKER_ID)) {
+        throw new EngineGenericError('WorkerIdNotSetError', 'WORKER_ID environment variable is not set')
+    }
 
     socket = new WebSocket(WS_URL, {
         headers: {
@@ -72,7 +74,7 @@ function setupSocket() {
     }
 
     socket.on('message', async (data: string) => {
-        const { error: resultError } = await tryCatch(onSocketMessage(data))
+        const { error: resultError } = await tryCatchAndThrowEngineError(onSocketMessage(data))
         if (resultError) {
             const engineError: EngineResponse = {
                 response: undefined,
