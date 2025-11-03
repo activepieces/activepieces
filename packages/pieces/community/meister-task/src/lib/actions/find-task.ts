@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { HttpMethod, QueryParams } from "@activepieces/pieces-common";
 import { meisterTaskAuth } from "../common/auth";
 import { MeisterTaskClient, MeisterTaskTask } from "../common/client";
@@ -9,7 +9,6 @@ export const findTask = createAction({
     name: 'find_task',
     displayName: 'Find Task',
     description: 'Finds a task by searching with filters.',
-
     props: {
         name: Property.ShortText({
             displayName: 'Task Name (Filter)',
@@ -22,27 +21,23 @@ export const findTask = createAction({
             required: false,
             options: {
                 options: [
-                    { label: 'Active', value: 'active' },
-                    { label: 'Archived', value: 'archived' },
-                    { label: 'Completed', value: 'completed' },
-                    { label: 'Trashed', value: 'trashed' },
+                    { label: 'Active', value: 'active' }, { label: 'Archived', value: 'archived' },
+                    { label: 'Completed', value: 'completed' }, { label: 'Trashed', value: 'trashed' },
                 ]
             }
         }),
-        project_id: meisterTaskProps.projectId(false),
+        project_id: meisterTaskProps.projectId(false), 
         assignee_id: meisterTaskProps.assigneeId(false),
     },
-
     async run(context) {
         const { name, status, project_id, assignee_id } = context.propsValue;
-        const client = new MeisterTaskClient(context.auth);
-
+        const client = new MeisterTaskClient(context.auth.access_token);
         const query: QueryParams = {};
         if (name) query['filter[name]'] = name;
         if (status) query['filter[status]'] = status as string;
         if (project_id) query['filter[project_id]'] = project_id.toString();
         if (assignee_id) query['filter[assignee_id]'] = assignee_id.toString();
-
+        
         return await client.makeRequest<MeisterTaskTask[]>(
             HttpMethod.GET,
             `/tasks`,

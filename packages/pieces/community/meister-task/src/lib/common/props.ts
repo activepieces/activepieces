@@ -1,19 +1,24 @@
-import { Property } from '@activepieces/pieces-framework';
+
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { MeisterTaskClient } from './client';
 
 export const meisterTaskProps = {
+    
     projectId: (required = true) => Property.Dropdown({
         displayName: 'Project',
         description: 'The project to use.',
         required: required,
         refreshers: [],
         options: async (context) => {
-            const auth = context['auth'] as string | undefined;
+            const auth = context['auth'] as OAuth2PropertyValue | undefined;
+
             if (!auth) {
-                return { disabled: true, placeholder: 'Connect your account first', options: [] };
+                return { disabled: true, placeholder: 'Connect your account first', options: [], };
             }
-            const client = new MeisterTaskClient(auth);
+
+            const client = new MeisterTaskClient(auth.access_token);
             const projects = await client.getProjects();
+            
             return {
                 disabled: false,
                 options: projects.map((project) => ({
@@ -28,18 +33,21 @@ export const meisterTaskProps = {
         displayName: 'Task',
         description: 'The task to which the label will be added.',
         required: required,
-        refreshers: ['project_id'],
+        refreshers: ['project_id'], 
         options: async (context) => {
-            const auth = context['auth'] as string | undefined;
+            const auth = context['auth'] as OAuth2PropertyValue | undefined;
             const projectId = context['project_id'] as number | undefined;
+
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
             if (!projectId) {
                 return { disabled: true, placeholder: 'Select a project first', options: [] };
             }
-            const client = new MeisterTaskClient(auth);
+
+            const client = new MeisterTaskClient(auth.access_token);
             const tasks = await client.getTasks(projectId);
+            
             return {
                 disabled: false,
                 options: tasks.map((task) => ({
@@ -54,18 +62,21 @@ export const meisterTaskProps = {
         displayName: 'Label',
         description: 'The label to add to the task.',
         required: required,
-        refreshers: ['project_id'],
+        refreshers: ['project_id'], 
         options: async (context) => {
-            const auth = context['auth'] as string | undefined;
+            const auth = context['auth'] as OAuth2PropertyValue | undefined;
             const projectId = context['project_id'] as number | undefined;
+
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
             if (!projectId) {
                 return { disabled: true, placeholder: 'Select a project first', options: [] };
             }
-            const client = new MeisterTaskClient(auth);
+
+            const client = new MeisterTaskClient(auth.access_token);
             const labels = await client.getLabels(projectId);
+            
             return {
                 disabled: false,
                 options: labels.map((label) => ({
@@ -80,18 +91,21 @@ export const meisterTaskProps = {
         displayName: 'Section',
         description: 'The section to create the task in.',
         required: required,
-        refreshers: ['project_id'],
+        refreshers: ['project_id'], 
         options: async (context) => {
-            const auth = context['auth'] as string | undefined;
+            const auth = context['auth'] as OAuth2PropertyValue | undefined;
             const projectId = context['project_id'] as number | undefined;
+
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
             if (!projectId) {
                 return { disabled: true, placeholder: 'Select a project first', options: [] };
             }
-            const client = new MeisterTaskClient(auth);
+
+            const client = new MeisterTaskClient(auth.access_token);
             const sections = await client.getSections(projectId);
+            
             return {
                 disabled: false,
                 options: sections.map((section) => ({
@@ -106,18 +120,26 @@ export const meisterTaskProps = {
         displayName: 'Assignee',
         description: 'The user to assign this task to.',
         required: required,
-        refreshers: ['project_id'],
+        refreshers: ['project_id'], 
         options: async (context) => {
-            const auth = context['auth'] as string | undefined;
+            const auth = context['auth'] as OAuth2PropertyValue | undefined;
             const projectId = context['project_id'] as number | undefined;
+
             if (!auth) {
                 return { disabled: true, placeholder: 'Connect your account first', options: [] };
             }
             if (!projectId) {
                 return { disabled: true, placeholder: 'Select a project first', options: [] };
             }
-            const client = new MeisterTaskClient(auth);
+
+            const client = new MeisterTaskClient(auth.access_token);
             const members = await client.getProjectMembers(projectId);
+            
+            if (!Array.isArray(members)) {
+                console.error("Failed to fetch project members, response was not an array:", members);
+                return { disabled: true, placeholder: 'Could not load members.', options: [], };
+            }
+            
             return {
                 disabled: false,
                 options: members.map((member) => ({

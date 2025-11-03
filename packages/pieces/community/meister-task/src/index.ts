@@ -1,4 +1,5 @@
-import { createPiece } from "@activepieces/pieces-framework";
+
+import { createPiece, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { meisterTaskAuth } from "./lib/common/auth";
@@ -28,13 +29,13 @@ import { newTask } from "./lib/triggers/new-task";
 
 export const meisterTask = createPiece({
     displayName: "MeisterTask",
-    auth: meisterTaskAuth,
+    auth: meisterTaskAuth, 
     minimumSupportedRelease: '0.36.1',
     logoUrl: "https://cdn.activepieces.com/pieces/meister-task.png",
-    categories: [PieceCategory.PRODUCTIVITY],
-    authors: ['srimalleswari205'],
+    categories: [PieceCategory.PRODUCTIVITY], 
+    authors: ['srimalleswari205'], 
     actions: [
-        createLabel,
+        createLabel, 
         addLabelToTask,
         createAttachment,
         createTask,
@@ -49,21 +50,22 @@ export const meisterTask = createPiece({
             auth: meisterTaskAuth,
             baseUrl: () => meisterTaskApiUrl,
             authMapping: async (auth) => {
+                const { access_token } = auth as OAuth2PropertyValue;
                 return {
-                    'Authorization': `Bearer ${auth}`,
+                    'Authorization': `Bearer ${access_token}`,
                 };
             },
         }),
     ],
     triggers: [
-      newAttachment,
-      newPerson,
-      newSection,
-      newComment,
-      newTaskLabel,
-      newChecklistItem,
-      newProject,
-      newLabel,
-      newTask
+        newAttachment,
+        newPerson,
+        newSection,
+        newComment,
+        newTaskLabel,
+        newChecklistItem,
+        newProject,
+        newLabel,
+        newTask
     ],
 });

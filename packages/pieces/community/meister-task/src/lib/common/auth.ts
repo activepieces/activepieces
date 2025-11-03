@@ -1,26 +1,37 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+
+
+import { PieceAuth, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { meisterTaskApiUrl } from './client';
 
-export const meisterTaskAuth = PieceAuth.SecretText({
-    displayName: 'Personal Access Token',
+const scopes = [
+    'userinfo.email',
+    'userinfo.profile',
+    'meistertask'
+];
+
+export const meisterTaskAuth = PieceAuth.OAuth2({
     description: `
-    To get your Personal Access Token:
+    To get your credentials:
     1. Log in to your MeisterTask account.
-    2. Visit: **https://www.mindmeister.com/api** (This is the correct URL for MeisterTask tokens).
-    3. Click **"Add"** under the "Personal Access Token" section.
-    4. Give your token a name and select the required scopes (e.g., \`meistertask.readonly\`, \`userinfo.profile\`).
-    5. Copy the generated token.
+    2. Visit **https://www.mindmeister.com/api** (This is the correct URL).
+    3. Click **"Add"** under "OAuth 2.0 Apps".
+    4. Set the **Redirect URI** to: \`https://cloud.activepieces.com/redirect\`
+    5. Copy the **Client ID** and **Client Secret** into the fields below.
     `,
+    authUrl: "https://www.mindmeister.com/oauth2/authorize",
+    tokenUrl: "https://www.mindmeister.com/oauth2/token",
     required: true,
+    scope: scopes,
     validate: async ({ auth }) => {
+        const accessToken = (auth as OAuth2PropertyValue).access_token;
         try {
             await httpClient.sendRequest({
                 method: HttpMethod.GET,
-                url: `${meisterTaskApiUrl}/projects`,
+                url: `${meisterTaskApiUrl}/projects`, 
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
-                    token: auth,
+                    token: accessToken,
                 },
             });
             return {
@@ -29,7 +40,7 @@ export const meisterTaskAuth = PieceAuth.SecretText({
         } catch (e) {
             return {
                 valid: false,
-                error: 'Invalid Personal Access Token.',
+                error: 'Invalid token or insufficient scopes.',
             };
         }
     },

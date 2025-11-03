@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { HttpMethod, QueryParams } from "@activepieces/pieces-common";
 import { meisterTaskAuth } from "../common/auth";
 import { MeisterTaskClient, MeisterTaskTask } from "../common/client";
@@ -9,7 +9,6 @@ export const findOrCreateTask = createAction({
     name: 'find_or_create_task',
     displayName: 'Find or Create Task',
     description: 'Finds a task by its name in a specific project. If not found, a new one will be created.',
-
     props: {
         project_id: meisterTaskProps.projectId(true),
         name: Property.ShortText({
@@ -30,58 +29,43 @@ export const findOrCreateTask = createAction({
             required: false,
         }),
     },
-
     async run(context) {
         const { project_id, name, section_id, assignee_id, description, due_date } = context.propsValue;
-        const client = new MeisterTaskClient(context.auth);
+        const client = new MeisterTaskClient(context.auth.access_token);
         const taskName = name as string;
 
         if (!project_id) {
             throw new Error("Project ID is missing, but it is a required field.");
         }
-
         const query: QueryParams = {
             search: taskName,
             project_id: project_id.toString(),
         };
-
         const findResponse = await client.makeRequest<MeisterTaskTask[]>(
             HttpMethod.GET,
             '/tasks',
             undefined,
             query
         );
-
         const exactMatch = findResponse.find(task => 
             task.name.toLowerCase() === taskName.toLowerCase()
         );
-
         if (exactMatch) {
-            return {
-                status: "found",
-                task: exactMatch
-            };
+            return { status: "found", task: exactMatch };
         }
-
         const createBody: Record<string, unknown> = {
             name: taskName,
             project_id: project_id,
         };
-
         if (description) createBody['description'] = description;
         if (section_id) createBody['section_id'] = section_id;
         if (assignee_id) createBody['assignee_id'] = assignee_id;
         if (due_date) createBody['due_date'] = due_date;
-
         const createResponse = await client.makeRequest<MeisterTaskTask>(
             HttpMethod.POST,
             `/tasks`,
             createBody
         );
-
-        return {
-            status: "created",
-            task: createResponse
-        };
+        return { status: "created", task: createResponse };
     },
 });

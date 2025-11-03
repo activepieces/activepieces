@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { meisterTaskAuth } from "../common/auth";
 import { meisterTaskApiUrl, MeisterTaskClient } from "../common/client";
@@ -10,7 +10,6 @@ export const findOrCreateAttachment = createAction({
     name: 'find_or_create_attachment',
     displayName: 'Find or Create Attachment',
     description: "Finds an attachment on a task by its name. If not found, uploads the new file.",
-
     props: {
         project_id: meisterTaskProps.projectId(true),
         task_id: meisterTaskProps.taskId(true),
@@ -20,32 +19,25 @@ export const findOrCreateAttachment = createAction({
             required: true,
         }),
     },
-
     async run(context) {
         const { task_id, file } = context.propsValue;
-
         if (!file || !file.filename) {
             throw new Error("Invalid file provided. The file must have a filename.");
         }
-        
-        const filename = file.filename;
-        const client = new MeisterTaskClient(context.auth);
+        const filenameToFind = file.filename.toLowerCase();
+        const client = new MeisterTaskClient(context.auth.access_token);
 
         const attachments = await client.getAttachments(task_id as number);
-
         const foundAttachment = attachments.find(att =>
-            att.name && filename && att.name.toLowerCase() === filename.toLowerCase()
+            att.name && att.name.toLowerCase() === filenameToFind
         );
 
         if (foundAttachment) {
-            return {
-                status: "found",
-                attachment: foundAttachment
-            };
+            return { status: "found", attachment: foundAttachment };
         }
 
         const formData = new FormData();
-        formData.append('file', file.data, file.filename);
+        formData.append('file', file.data, file.filename); 
 
         const request: HttpRequest<FormData> = {
             method: HttpMethod.POST,
@@ -53,19 +45,14 @@ export const findOrCreateAttachment = createAction({
             body: formData,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.auth,
+                token: context.auth.access_token,
             },
             headers: {
                 ...formData.getHeaders(),
                 'User-Agent': 'ActivePieces'
             }
         };
-
         const response = await httpClient.sendRequest(request);
-
-        return {
-            status: "created",
-            attachment: response.body
-        };
+        return { status: "created", attachment: response.body };
     },
 });
