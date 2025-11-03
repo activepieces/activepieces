@@ -9,24 +9,29 @@ export const pieceLoader = {
     loadPieceOrThrow: async (
         { pieceName, pieceVersion, pieceSource }: LoadPieceParams,
     ): Promise<Piece> => {
-        const packageName = pieceLoader.getPackageAlias({
-            pieceName,
-            pieceVersion,
-            pieceSource,
-        })
-        const piecePath = await pieceLoader.getPiecePath({ packageName, pieceSource })
-        const module = await import(piecePath)
+        const { data: piece, error: pieceError } = await utils.tryCatchAndThrowOnEngineError(async () => {
+            const packageName = pieceLoader.getPackageAlias({
+                pieceName,
+                pieceVersion,
+                pieceSource,
+            })
+            const piecePath = await pieceLoader.getPiecePath({ packageName, pieceSource })
+            const module = await import(piecePath)
 
-        const piece = extractPieceFromModule<Piece>({
-            module,
-            pieceName,
-            pieceVersion,
-        })
+            const piece = extractPieceFromModule<Piece>({
+                module,
+                pieceName,
+                pieceVersion,
+            })
 
-        if (isNil(piece)) {
-            throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}, pieceVersion: ${pieceVersion}`)
+            if (isNil(piece)) {
+                throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}, pieceVersion: ${pieceVersion}`)
+            }
+            return piece
+        })
+        if (pieceError) {
+            throw pieceError
         }
-
         return piece
     },
 
@@ -145,7 +150,7 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
                 return path.dirname(packageJsonPath)
             }
             return null
-        })())
+        }))
         return packageJsonPath
     }
     return null

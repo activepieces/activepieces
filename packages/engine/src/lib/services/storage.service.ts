@@ -25,7 +25,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 }
 
                 return response.json()
-            })())
+            }))
 
             if (storeEntryError) {
                 return handleFetchError({
@@ -61,7 +61,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 }
 
                 return response.json()
-            })())
+            }))
 
             if (storeEntryError) {
                 return handleFetchError({
@@ -91,7 +91,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 }
 
                 return null
-            })())
+            }))
             
             if (storeEntryError) {
                 return handleFetchError({

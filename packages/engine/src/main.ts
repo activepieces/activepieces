@@ -22,14 +22,6 @@ const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
 process.title = `engine-${WORKER_ID}`
 let socket: WebSocket | undefined
 
-async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-    const result = await execute(operationType, operation)
-    const resultParsed = JSON.parse(JSON.stringify(result))
-    socket?.send(JSON.stringify({
-        type: EngineSocketEvent.ENGINE_RESPONSE,
-        data: resultParsed,
-    }))
-}
 
 function setupSocket() {
     if (isNil(WORKER_ID)) {
@@ -73,7 +65,7 @@ function setupSocket() {
     }
 
     socket.on('message', async (data: string) => {
-        const { error: resultError } = await utils.tryCatchAndThrowOnEngineError(onSocketMessage(data))
+        const { error: resultError } = await utils.tryCatchAndThrowOnEngineError(() => onSocketMessage(data))
         if (resultError) {
             const engineError: EngineResponse = {
                 response: undefined,
@@ -114,9 +106,14 @@ function sendToErrorSocket(error: unknown) {
     }, 3000)
 }
 
-async function onSocketMessage(data: string) {
+async function onSocketMessage(data: string): Promise<void> {
     const message = JSON.parse(data)
     if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
-        await executeFromSocket(message.data.operation, message.data.operationType)
+        const result = await execute(message.data.operationType, message.data.operation)
+        const resultParsed = JSON.parse(JSON.stringify(result))
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_RESPONSE,
+            data: resultParsed,
+        }))
     }
 }

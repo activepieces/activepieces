@@ -3,7 +3,7 @@ import importFresh from '@activepieces/import-fresh-webpack'
 import { CodeAction, FlowActionType, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
-import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError } from '../helper/execution-errors'
 import { progressService } from '../services/progress.service'
 import { utils } from '../utils'
@@ -57,19 +57,17 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         })
     
         return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime))
-    })())
+    }))
 
     if (executionStateError) {
-        const handledError = handleExecutionError(executionStateError)
-
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)
-            .setErrorMessage(handledError.message)
+            .setErrorMessage(utils.formatError(executionStateError))
             .setDuration(performance.now() - stepStartTime)
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
+            .setVerdict(ExecutionVerdict.FAILED, undefined)
     }
 
     return executionStateResult

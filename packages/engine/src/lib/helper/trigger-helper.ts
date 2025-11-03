@@ -166,9 +166,7 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.HANDSHAKE: {
-                const { data: handshakeResponse, error: handshakeResponseError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                    return pieceTrigger.onHandshake(context)
-                })())
+                const { data: handshakeResponse, error: handshakeResponseError } = await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.onHandshake(context))
 
                 if (handshakeResponseError) {
                     console.error(handshakeResponseError)
@@ -183,17 +181,15 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.TEST: {
-                const { data: testResponse, error: testResponseError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-                    return pieceTrigger.test({
-                        ...context,
-                        files: createFilesService({
-                            apiUrl: constants.internalApiUrl,
-                            engineToken: params.engineToken!,
-                            stepName: triggerName,
-                            flowId: params.flowVersion.flowId,
-                        }),
-                    })
-                })())
+                const { data: testResponse, error: testResponseError } = await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.test({
+                    ...context,
+                    files: createFilesService({
+                        apiUrl: constants.internalApiUrl,
+                        engineToken: params.engineToken!,
+                        stepName: triggerName,
+                        flowId: params.flowVersion.flowId,
+                    }),
+                }))
 
                 if (testResponseError) {
                     console.error(testResponseError)
@@ -211,21 +207,21 @@ export const triggerHelper = {
             case TriggerHookType.RUN: {
                 if (pieceTrigger.type === TriggerStrategy.APP_WEBHOOK) {
 
-                    const { data: verified, error: verifiedError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+                    const { data: verified, error: verifiedError } = await utils.tryCatchAndThrowOnEngineError(async () => {
                         if (!params.appWebhookUrl) {
                             throw new EngineGenericError('AppWebhookUrlNotAvailableError', `App webhook url is not available for piece name ${pieceName}`)
                         }
                         if (!params.webhookSecret) {
                             throw new EngineGenericError('WebhookSecretNotAvailableError', `Webhook secret is not available for piece name ${pieceName}`)
                         }
-    
+
                         return piece.events?.verify({
                             appWebhookUrl: params.appWebhookUrl,
                             payload: params.triggerPayload as EventPayload,
                             webhookSecret: params.webhookSecret,
                         })
-                    })())
-                    
+                    })
+
                     if (verifiedError) {
                         return {
                             success: false,
@@ -242,7 +238,7 @@ export const triggerHelper = {
                     }
                 }
 
-                const { data: triggerRunResult, error: triggerRunError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+                const { data: triggerRunResult, error: triggerRunError } = await utils.tryCatchAndThrowOnEngineError(async () => {
                     const items = await pieceTrigger.run({
                         ...context,
                         files: createFilesService({
@@ -256,7 +252,7 @@ export const triggerHelper = {
                         success: true,
                         output: items,
                     }
-                })())
+                })
 
                 if (triggerRunError) {
                     return {

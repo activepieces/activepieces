@@ -12,8 +12,8 @@ export type FileEntry = {
 }
 
 export const utils = {
-    async tryCatchAndThrowOnEngineError<T>(promise: Promise<T>): Promise<Result<T, ExecutionError>> {
-        const result = await tryCatch<T, ExecutionError>(promise)
+    async tryCatchAndThrowOnEngineError<T>(fn: () => Promise<T>): Promise<Result<T, ExecutionError>> {
+        const result = await tryCatch<T, ExecutionError>(fn)
         if (isEngineError(result.error)) {
             throw result.error
         }
@@ -68,15 +68,11 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const connection = await utils.tryCatchAndThrowOnEngineError((async () => {
-                    const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl }).obtain(key)
-                    if (params.target === 'actions') {
-                        params.hookResponse.tags.push(`connection:${key}`)
-                    }
-                    return connection
-                })())
-
-                return connection ?? null
+                const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl }).obtain(key)
+                if (params.target === 'actions') {
+                    params.hookResponse.tags.push(`connection:${key}`)
+                }
+                return connection
             },
         }
     },

@@ -45,17 +45,6 @@ export async function continueIfFailureHandler(
     return executionState
 }
 
-export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
-    const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
-    const isActivepiecesError = error instanceof ActivepiecesError
-    const errorMessage = isActivepiecesError ? JSON.stringify(error?.error?.params, null, 2) : JSON.stringify(error, null, 2)
-    return {
-        message: error instanceof Error ? error.message : errorMessage,
-        verdictResponse: isEngineError ? {
-            reason: FlowRunStatus.INTERNAL_ERROR,
-        } : undefined,
-    }
-}
 
 const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorContext): boolean => {
     return flowExecutorContext.verdict === ExecutionVerdict.FAILED
@@ -69,7 +58,3 @@ type Request<T extends CodeAction | PieceAction> = {
 
 type RequestFunction<T extends CodeAction | PieceAction> = (request: Request<T>) => Promise<FlowExecutorContext>
 
-type ErrorHandlingResponse = {
-    message: string
-    verdictResponse: VerdictResponse | undefined
-}

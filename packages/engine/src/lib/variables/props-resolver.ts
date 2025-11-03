@@ -187,7 +187,7 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>, 
             functions,
         })
         return result ?? ''
-    })())
+    }))
 
     if (resultError) {
         console.warn('[evalInScope] Error evaluating variable', resultError)

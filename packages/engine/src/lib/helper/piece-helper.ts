@@ -103,7 +103,7 @@ export const pieceHelper = {
                     throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property}`)
                 }
             }
-        })())
+        }))
         
         if (executePropsError) {
             console.error(executePropsError)

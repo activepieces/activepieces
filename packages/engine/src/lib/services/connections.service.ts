@@ -27,7 +27,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                     throw new ConnectionExpiredError(externalId)
                 }
                 return getConnectionValue(connection)
-            })())
+            }))
             
             if (connectionValueError) {
                 return handleFetchError({
