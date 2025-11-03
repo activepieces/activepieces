@@ -90,7 +90,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {
@@ -103,7 +103,7 @@ const CreateRequest = {
 
 const GetTablesRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.READ_TABLE,
     },
     schema: {
@@ -119,7 +119,7 @@ const GetTablesRequest = {
 
 const DeleteRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
 
@@ -138,7 +138,7 @@ const DeleteRequest = {
 
 const GetTableByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.READ_TABLE,
     },
     schema: {
@@ -156,7 +156,7 @@ const GetTableByIdRequest = {
 
 const ExportTableRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.READ_TABLE,
     },
     schema: {
@@ -174,7 +174,7 @@ const ExportTableRequest = {
 
 const CreateTableWebhook = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {
@@ -190,7 +190,7 @@ const CreateTableWebhook = {
 
 const DeleteTableWebhook = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {
@@ -206,7 +206,7 @@ const DeleteTableWebhook = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {

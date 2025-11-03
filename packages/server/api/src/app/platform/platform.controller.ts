@@ -107,6 +107,10 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const UpdatePlatformRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         body: UpdatePlatformRequestBody,
         params: Type.Object({
@@ -121,7 +125,7 @@ const UpdatePlatformRequest = {
 
 const GetPlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -139,7 +143,7 @@ const GetPlatformRequest = {
 
 const DeletePlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {

@@ -24,7 +24,7 @@
     "dayjs": "1.11.9",
     "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",
-    "socket.io-client": "4.7.5",
+    "socket.io-client": "4.8.1",
     "jsonwebtoken": "9.0.1"
   }
 }
