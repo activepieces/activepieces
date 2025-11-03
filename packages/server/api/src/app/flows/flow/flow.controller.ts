@@ -18,7 +18,6 @@ import {
     isNil,
     ListFlowsRequest,
     Permission,
-    PlatformUsageMetric,
     PopulatedFlow,
     PrincipalType,
     SeekPage,
@@ -34,7 +33,6 @@ import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowMigrations } from '../flow-version/migrations'
@@ -72,11 +70,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
         const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
         if (turnOnFlow || publishDisabledFlow) {
-            await PlatformPlanHelper.checkQuotaOrThrow({
-                platformId: request.principal.platform.id,
-                projectId: request.principal.projectId,
-                metric: PlatformUsageMetric.ACTIVE_FLOWS,
-            })
+            // Louai: fix this 
+            // await PlatformPlanHelper.checkQuotaOrThrow({
+            //     platformId: request.principal.platform.id,
+            //     projectId: request.principal.projectId,
+            //     metric: PlatformUsageMetric.ACTIVE_FLOWS,
+            // })
         }
         await assertThatFlowIsNotBeingUsed(flow, userId)
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {

@@ -1,13 +1,13 @@
-import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, getPlanLimits } from '@activepieces/ee-shared'
+import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil, PlanName } from '@activepieces/shared'
+import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
-import { ACTIVE_FLOW_PRICE_IDS, AI_CREDIT_PRICE_IDS, BUSINESS_PLAN_PRICE_IDS, PlatformPlanHelper, PLUS_PLAN_PRICE_IDS } from './platform-plan-helper'
+import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID } from './platform-plan-helper'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
@@ -39,21 +39,14 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const subscription = webhook.data.object as Stripe.Subscription
                         const platformId = subscription.metadata.platformId as string
 
-                        const isUnknowSubscription = subscription.items.data.every(item => ![...PLUS_PLAN_PRICE_IDS, ...BUSINESS_PLAN_PRICE_IDS].includes(item.price.id))
-                        if (isUnknowSubscription) {
-                            break
-                        }
-
                         const subscriptionStarted = webhook.type === 'customer.subscription.created'
                         if (subscriptionStarted) {
                             await addThresholdOnAiCreditsItem(stripe, subscription)
                         }
 
-                        const { plan: newPlan, cycle } = PlatformPlanHelper.getPlanFromSubscription(subscription)
                         request.log.info({
                             webhookType: webhook.type,
                             subscriptionStatus: subscription.status,
-                            newPlan,
                         }, 'Processing subscription event')
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
@@ -67,19 +60,16 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             stripePaymentMethod: subscription.default_payment_method as string ?? undefined,
                         })
 
-                        const extraActiveFlows = subscription.items.data.find(item => ACTIVE_FLOW_PRICE_IDS.includes(item.price.id))?.quantity ?? 0
+                        const extraActiveFlows = subscription.items.data.find(item => ACTIVE_FLOW_PRICE_ID === item.price.id)?.quantity ?? 0
 
-                        const newLimits = getPlanLimits(newPlan)
-                        const isFreePlan = newPlan === PlanName.FREE
+                        const newLimits = { ...STANDARD_CLOUD_PLAN }
                         const isAddonUpgrade =  extraActiveFlows > 0
-                        const shouldResetPlatfromUsage = isFreePlan || !isAddonUpgrade
+                        const shouldResetPlatfromUsage = isAddonUpgrade
 
                         if (isAddonUpgrade) {
                             newLimits.activeFlowsLimit = (newLimits.activeFlowsLimit ?? 0) + extraActiveFlows
                         }
 
-                        await PlatformPlanHelper.handleResourceLocking({ platformId, newLimits })
-                        
                         if (shouldResetPlatfromUsage) {
                             await platformUsageService(request.log).resetPlatformUsage(platformId)
                         }
@@ -87,9 +77,8 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         await platformPlanService(request.log).update({ 
                             ...newLimits,
                             platformId,
-                            stripeBillingCycle: cycle,
-                            stripeSubscriptionId: isFreePlan ? undefined : stripeSubscriptionId,
-                            aiCreditsOverageState: isFreePlan ? AiOverageState.NOT_ALLOWED : AiOverageState.ALLOWED_BUT_OFF,
+                            stripeSubscriptionId,
+                            aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
                         })
                         break
                     }
@@ -120,7 +109,7 @@ const WebhookRequest = {
 
 async function addThresholdOnAiCreditsItem(stripe: Stripe, subscription: Stripe.Subscription): Promise<void> {
     const subWithItems = subscription.items?.data?.length ? subscription : await stripe.subscriptions.retrieve(subscription.id, { expand: ['items.data'] })
-    const aiCreditsItem = subWithItems.items.data.find(item => AI_CREDIT_PRICE_IDS.includes(item.price?.id))
+    const aiCreditsItem = subWithItems.items.data.find(item => AI_CREDIT_PRICE_ID === item.price?.id)
 
     if (!aiCreditsItem) return
     await stripe.subscriptionItems.update(aiCreditsItem.id, { billing_thresholds: { usage_gte: AI_CREDITS_USAGE_THRESHOLD } })

@@ -45,16 +45,9 @@ export enum AiOverageState {
 }
 
 export enum PlanName {
-    FREE = 'free',
-    PLUS = 'plus',
-    BUSINESS = 'business',
+    STANDARD = 'standard',
     ENTERPRISE = 'enterprise',
-    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
-    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
-    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
-    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
-    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
-    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
+    APPSUMO_ACTIVEPIECES = 'appsumo_activepieces',
 }
 
 export const PlatformPlan = Type.Object({
@@ -94,11 +87,8 @@ export const PlatformPlan = Type.Object({
     stripeSubscriptionEndDate: Type.Optional(Type.Number()),
     stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
     stripePaymentMethod: Type.Optional(Type.String()),
-    stripeBillingCycle: Type.String(),
 
     projectsLimit: Nullable(Type.Number()),
-    tablesLimit: Nullable(Type.Number()),
-    mcpLimit: Nullable(Type.Number()),
     activeFlowsLimit: Nullable(Type.Number()),
 
     dedicatedWorkers: Nullable(Type.Object({

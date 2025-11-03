@@ -126,13 +126,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
 })
 
 const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
-    [PlanName.FREE]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 10,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 15,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 20,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
+    [PlanName.APPSUMO_ACTIVEPIECES]: 15,
     [PlanName.ENTERPRISE]: 30,
 }
 

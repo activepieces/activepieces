@@ -17,7 +17,6 @@ import {
 import {
   AiOverageState,
   PlatformBillingInformation,
-  PlanName,
 } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
@@ -37,21 +36,18 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const totalCreditsUsed = usage.aiCredits;
 
   const aiOverrageState =
-    plan.aiCreditsOverageState ??
-    plan.aiCreditsOverageState ??
-    AiOverageState.NOT_ALLOWED;
-
-  const isFreePlan = plan.plan === PlanName.FREE;
+    plan.aiCreditsOverageState ?? AiOverageState.NOT_ALLOWED;
 
   const overageConfig = useMemo(() => {
     const isAllowed = aiOverrageState !== AiOverageState.NOT_ALLOWED;
     const isEnabled = aiOverrageState === AiOverageState.ALLOWED_AND_ON;
+
     return {
       allowed: isAllowed,
       enabled: isEnabled,
-      canToggle: !isFreePlan && isAllowed,
+      canToggle: isAllowed,
     };
-  }, [aiOverrageState, isFreePlan]);
+  }, [aiOverrageState]);
 
   const [usageBasedEnabled, setUsageBasedEnabled] = useState(
     overageConfig.enabled,

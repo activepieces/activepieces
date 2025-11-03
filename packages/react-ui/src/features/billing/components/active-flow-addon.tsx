@@ -10,13 +10,8 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  BillingCycle,
-  PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP,
-} from '@activepieces/ee-shared';
+import { PRICE_PER_EXTRA_5_ACTIVE_FLOWS } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
-
-import { useManagePlanDialogStore } from './upgrade-dialog/store';
 
 type BusinessActiveFlowsProps = {
   platformSubscription: PlatformBillingInformation;
@@ -25,11 +20,6 @@ type BusinessActiveFlowsProps = {
 export function ActiveFlowAddon({
   platformSubscription,
 }: BusinessActiveFlowsProps) {
-  const PRICE_PER_EXTRA_5_ACTIVE_FLOWS =
-    PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP[
-      platformSubscription.plan.stripeBillingCycle as BillingCycle
-    ];
-  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
   const { plan, usage } = platformSubscription;
   const currentActiveFlows = usage.activeFlows || 0;
   const activeFlowsLimit = plan.activeFlowsLimit ?? 10;
@@ -53,7 +43,11 @@ export function ActiveFlowAddon({
               </p>
             </div>
           </div>
-          <Button variant="link" onClick={() => openDialog({ step: 2 })}>
+          {/** Louai: fix this next */}
+          <Button
+            variant="link"
+            onClick={() => console.log('Purshace more flows experience')}
+          >
             {t('Extra Flows?')}
           </Button>
         </div>

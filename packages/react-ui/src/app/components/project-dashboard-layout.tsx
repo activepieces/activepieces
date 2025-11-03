@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
-import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { projectHooks } from '@/hooks/project-hooks';
 import { isNil } from '@activepieces/shared';
 
@@ -57,8 +56,6 @@ export function ProjectDashboardLayout({
             {children}
           </SidebarInset>
         </SidebarProvider>
-
-        <UpgradeDialog />
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );

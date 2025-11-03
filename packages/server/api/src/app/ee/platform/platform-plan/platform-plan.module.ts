@@ -1,4 +1,3 @@
-import { BillingCycle } from '@activepieces/ee-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import Stripe from 'stripe'
@@ -29,7 +28,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
 
         const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-        const item = subscription.items.data.find((item) => [AI_CREDIT_PRICE_ID[BillingCycle.MONTHLY], AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL]].includes(item.price.id ))
+        const item = subscription.items.data.find((item) => AI_CREDIT_PRICE_ID === item.price.id)
         if (isNil(item)) {
             return
         }

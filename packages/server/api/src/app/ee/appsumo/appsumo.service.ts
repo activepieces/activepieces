@@ -1,5 +1,5 @@
-import { APPSUMO_PLAN, FREE_CLOUD_PLAN } from '@activepieces/ee-shared'
-import { isNil, PlanName, PlatformPlanWithOnlyLimits, PlatformRole } from '@activepieces/shared'
+import { APPSUMO_PLAN, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { isNil, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -10,43 +10,7 @@ import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 const appsumoRepo = repoFactory(AppSumoEntity)
 
-const appSumoPlans: Record<string, PlatformPlanWithOnlyLimits> = {
-    activepieces_tier1: APPSUMO_PLAN({
-        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER1,
-        tablesLimit: 5,
-        mcpLimit: 5,
-    }),
-    activepieces_tier2: APPSUMO_PLAN({
-        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER2,
-        tablesLimit: 5,
-        mcpLimit: 5,
-    }),
-    activepieces_tier3: APPSUMO_PLAN({
-        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER3,
-        tablesLimit: 5,
-        mcpLimit: 5,
-    }),
-    activepieces_tier4: APPSUMO_PLAN({
-        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER4,
-        tablesLimit: 10,
-        mcpLimit: 10,
-    }),
-    activepieces_tier5: APPSUMO_PLAN({
-        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER5,
-        tablesLimit: 20,
-        mcpLimit: 20,
-    }),
-    activepieces_tier6: APPSUMO_PLAN({
-        planName: PlanName.APPSUMO_ACTIVEPIECES_TIER6,
-        tablesLimit: 50,
-        mcpLimit: 50,
-    }),
-}
-
 export const appsumoService = (log: FastifyBaseLogger) => ({
-    getPlanInformation(plan_id: string): PlatformPlanWithOnlyLimits {
-        return appSumoPlans[plan_id]
-    },
     async getByEmail(email: string): Promise<AppSumoPlan | null> {
         return appsumoRepo().findOneBy({
             activation_email: email,
@@ -74,7 +38,6 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
         const { plan_id, action, uuid, activation_email: rawEmail } = request
         const appSumoLicense = await appsumoService(log).getById(uuid)
         const activation_email = appSumoLicense?.activation_email ?? rawEmail
-        const appSumoPlan = appsumoService(log).getPlanInformation(plan_id)
         const identity = await userIdentityService(log).getIdentityByEmail(activation_email)
         if (!isNil(identity)) {
             const user = await userRepo().findOne({
@@ -93,13 +56,13 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                 if (action === 'refund') {
                     await platformPlanService(log).update({
                         platformId: project.platformId,
-                        ...FREE_CLOUD_PLAN,
+                        ...STANDARD_CLOUD_PLAN,
                     })
                 }
                 else {
                     await platformPlanService(log).update({
                         platformId: project.platformId,
-                        ...appSumoPlan,
+                        ...APPSUMO_PLAN,
                     })
 
                 }
