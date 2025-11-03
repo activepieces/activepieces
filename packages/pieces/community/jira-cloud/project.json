@@ -7,7 +7,9 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/jira-cloud",
         "tsConfig": "packages/pieces/community/jira-cloud/tsconfig.lib.json",
@@ -24,22 +26,41 @@
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       },
-      "dependsOn": ["prebuild", "^build"]
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-jira-cloud {args.ver} {args.tag}",
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
         "jestConfig": "packages/pieces/community/jira-cloud/jest.config.ts"
       }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/jira-cloud",
+        "command": "npm install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }
