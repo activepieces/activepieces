@@ -10,9 +10,8 @@ import { createContextStore } from '../services/storage.service'
 import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
-import { pieceLoader } from './piece-loader'
-import { tryCatchAndThrowEngineError } from './try-catch'
 import { EngineGenericError } from './execution-errors'
+import { pieceLoader } from './piece-loader'
 
 type Listener = {
     events: string[]
@@ -167,7 +166,7 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.HANDSHAKE: {
-                const { data: handshakeResponse, error: handshakeResponseError } = await tryCatchAndThrowEngineError((async () => {
+                const { data: handshakeResponse, error: handshakeResponseError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                     return pieceTrigger.onHandshake(context)
                 })())
 
@@ -184,7 +183,7 @@ export const triggerHelper = {
                 }
             }
             case TriggerHookType.TEST: {
-                const { data: testResponse, error: testResponseError } = await tryCatchAndThrowEngineError((async () => {
+                const { data: testResponse, error: testResponseError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                     return pieceTrigger.test({
                         ...context,
                         files: createFilesService({
@@ -212,7 +211,7 @@ export const triggerHelper = {
             case TriggerHookType.RUN: {
                 if (pieceTrigger.type === TriggerStrategy.APP_WEBHOOK) {
 
-                    const { data: verified, error: verifiedError } = await tryCatchAndThrowEngineError((async () => {
+                    const { data: verified, error: verifiedError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                         if (!params.appWebhookUrl) {
                             throw new EngineGenericError('AppWebhookUrlNotAvailableError', `App webhook url is not available for piece name ${pieceName}`)
                         }
@@ -243,7 +242,7 @@ export const triggerHelper = {
                     }
                 }
 
-                const { data: triggerRunResult, error: triggerRunError } = await tryCatchAndThrowEngineError((async () => {
+                const { data: triggerRunResult, error: triggerRunError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                     const items = await pieceTrigger.run({
                         ...context,
                         files: createFilesService({
@@ -297,7 +296,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
     const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, propertySettings)
 
     if (Object.keys(errors).length > 0) {
-        throw new EngineGenericError('TriggerExecutionError', `Trigger execution error: ${JSON.stringify(errors, null, 2)}`)
+        throw new Error(JSON.stringify(errors, null, 2))
     }
 
     return { piece, pieceTrigger, processedInput }

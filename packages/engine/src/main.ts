@@ -11,10 +11,9 @@ import {
     isNil,
 } from '@activepieces/shared'
 import WebSocket from 'ws'
+import { EngineGenericError } from './lib/helper/execution-errors'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
-import { tryCatchAndThrowEngineError } from './lib/helper/try-catch'
-import { EngineGenericError } from './lib/helper/execution-errors'
 
 const WORKER_ID = process.env.WORKER_ID
 const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
@@ -74,7 +73,7 @@ function setupSocket() {
     }
 
     socket.on('message', async (data: string) => {
-        const { error: resultError } = await tryCatchAndThrowEngineError(onSocketMessage(data))
+        const { error: resultError } = await utils.tryCatchAndThrowOnEngineError(onSocketMessage(data))
         if (resultError) {
             const engineError: EngineResponse = {
                 response: undefined,

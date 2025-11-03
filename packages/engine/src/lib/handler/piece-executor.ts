@@ -13,7 +13,6 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
-import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -39,7 +38,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         status: StepOutputStatus.RUNNING,
     })
 
-    const { data: executionStateResult, error: executionStateError } = await tryCatchAndThrowEngineError((async () => {
+    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
         if (isNil(action.settings.actionName)) {
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
@@ -60,7 +59,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
     
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
-            throw new EngineGenericError('PieceActionExecutionError', `Piece action execution error: ${JSON.stringify(errors, null, 2)}`)
+            throw new Error(JSON.stringify(errors, null, 2))
         }
     
     

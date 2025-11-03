@@ -4,12 +4,12 @@ type Success<T> = {
     error: null
 }
   
-  type Failure<E> = {
-      data: null
-      error: E
-  }
+type Failure<E> = {
+    data: null
+    error: E
+}
   
-  type Result<T, E = Error> = Success<T> | Failure<E>
+export type Result<T, E = Error> = Success<T> | Failure<E>
   
 // Main wrapper function
 export async function tryCatch<T, E = Error>(

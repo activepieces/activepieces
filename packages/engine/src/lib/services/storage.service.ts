@@ -4,14 +4,14 @@ import { DeleteStoreEntryRequest, FlowId, isNil, PutStoreEntryRequest, STORE_KEY
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
 import { ExecutionError, FetchError, StorageError, StorageInvalidKeyError, StorageLimitError } from '../helper/execution-errors'
-import { tryCatchAndThrowEngineError } from '../helper/try-catch'
+import { utils } from '../utils'
 
 export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
             const url = buildUrl(apiUrl, key)
 
-            const { data: storeEntry, error: storeEntryError } = await tryCatchAndThrowEngineError((async () => {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const response = await fetch(url, {
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
@@ -39,7 +39,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
         async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
             const url = buildUrl(apiUrl)
 
-            const { data: storeEntry, error: storeEntryError } = await tryCatchAndThrowEngineError((async () => {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const sizeOfValue = sizeof(request.value)
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
@@ -75,7 +75,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
         async delete(request: DeleteStoreEntryRequest): Promise<null> {
             const url = buildUrl(apiUrl, request.key)
 
-            const { data: storeEntry, error: storeEntryError } = await tryCatchAndThrowEngineError((async () => {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
