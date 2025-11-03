@@ -26,7 +26,6 @@ import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
-import { tryCatchAndThrowEngineError } from './try-catch'
 
 export const pieceHelper = {
     async executeProps({ params, pieceSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
@@ -38,7 +37,7 @@ export const pieceHelper = {
             throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property.type} for ${property.displayName}`)
         }
 
-        const { data: executePropsResult, error: executePropsError } = await tryCatchAndThrowEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
+        const { data: executePropsResult, error: executePropsError } = await utils.tryCatchAndThrowOnEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
                 projectId: params.projectId,

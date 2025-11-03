@@ -5,7 +5,6 @@ import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
-import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
@@ -39,7 +38,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         status: StepOutputStatus.RUNNING,
     })
 
-    const { data: executionStateResult, error: executionStateError } = await tryCatchAndThrowEngineError((async () => {
+    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
         if (isNil(action.settings.actionName)) {
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
@@ -60,7 +59,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
     
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
-            throw new EngineGenericError('PieceActionExecutionError', `Piece action execution error: ${JSON.stringify(errors, null, 2)}`)
+            throw new Error(JSON.stringify(errors, null, 2))
         }
     
     

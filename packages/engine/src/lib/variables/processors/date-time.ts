@@ -1,7 +1,6 @@
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { EngineGenericError } from '../../helper/execution-errors'
 import { ProcessorFn } from './types'
 
 export const dateTimeProcessor: ProcessorFn = (_property, value) => {
@@ -9,9 +8,7 @@ export const dateTimeProcessor: ProcessorFn = (_property, value) => {
     dayjs.extend(timezone)
     const dateTimeString = value
     try {
-        if (!dateTimeString) {
-            throw new EngineGenericError('DateTimeStringUndefinedError', 'Date time string is undefined')
-        }
+        if (!dateTimeString) throw Error('Undefined input')
         return dayjs.tz(dateTimeString, 'UTC').toISOString()
     }
     catch (error) {

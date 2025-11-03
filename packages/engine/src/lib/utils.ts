@@ -1,11 +1,10 @@
 import fs from 'fs/promises'
-import { readFile } from 'node:fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { EngineGenericError } from './helper/execution-errors'
-import { tryCatchAndThrowEngineError } from './helper/try-catch'
-import { ConnectionValue, createConnectionService } from './services/connections.service'
+import { createConnectionService } from './services/connections.service'
+import { tryCatch, Result } from 'packages/shared/src/lib/common/try-catch'
+import { ExecutionError, ExecutionErrorType } from './helper/execution-errors'
 
 export type FileEntry = {
     name: string
@@ -13,14 +12,12 @@ export type FileEntry = {
 }
 
 export const utils = {
-    async parseJsonFile<T>(filePath: string): Promise<T> {
-        try {
-            const file = await readFile(filePath, 'utf-8')
-            return JSON.parse(file)
+    async tryCatchAndThrowOnEngineError<T>(promise: Promise<T>): Promise<Result<T, ExecutionError>> {
+        const result = await tryCatch<T, ExecutionError>(promise)
+        if (isEngineError(result.error)) {
+            throw result.error
         }
-        catch (e) {
-            throw new EngineGenericError('ParseJsonFileError', `Failed to parse JSON file: ${filePath}`)
-        }
+        return result
     },
     async walk(dirPath: string): Promise<FileEntry[]> {
         const entries: FileEntry[] = []
@@ -43,7 +40,7 @@ export const utils = {
             }
         }
 
-        await tryCatchAndThrowEngineError(walkRecursive(dirPath))
+        await this.tryCatchAndThrowOnEngineError(walkRecursive(dirPath))
         return entries
     },
     formatError(value: Error): string {
@@ -66,25 +63,22 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const { data: connection } = await tryCatchAndThrowEngineError(getConnectionValue({ key, data: params }))
-                return connection
+                const connection = await utils.tryCatchAndThrowOnEngineError((async () => {
+                    const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl }).obtain(key)
+                    if (params.target === 'actions') {
+                        params.hookResponse.tags.push(`connection:${key}`)
+                    }
+                    return connection
+                })())
+
+                return connection ?? null
             },
         }
     },
 }
 
-async function getConnectionValue(params: GetConnectionValueParams): Promise<ConnectionValue> {
-    const { key, data } = params
-    const connection = await createConnectionService({ projectId: data.projectId, engineToken: data.engineToken, apiUrl: data.apiUrl }).obtain(key)
-    if (data.target === 'actions') {
-        data.hookResponse.tags.push(`connection:${key}`)
-    }
-    return connection
-}
-
-type GetConnectionValueParams = {
-    key: string
-    data: CreateConnectionManagerParams
+function isEngineError(error: unknown): error is ExecutionError {
+    return error instanceof ExecutionError && error.type === ExecutionErrorType.ENGINE
 }
 
 export type HookResponse = {

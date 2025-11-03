@@ -5,10 +5,10 @@ import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError } from '../helper/execution-errors'
-import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 import { progressService } from '../services/progress.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
+import { utils } from '../utils'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -37,7 +37,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         status: StepOutputStatus.RUNNING,
     })
     
-    const { data: executionStateResult, error: executionStateError } = await tryCatchAndThrowEngineError((async () => {
+    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
         await progressService.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
@@ -46,7 +46,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         if (isNil(constants.runEnvironment)) {
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
-        
+
         const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
         const codeModule: CodeModule = await importFresh(artifactPath)
         const codeSandbox = await initCodeSandbox()

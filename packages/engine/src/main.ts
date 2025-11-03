@@ -12,7 +12,6 @@ import {
 } from '@activepieces/shared'
 import WebSocket from 'ws'
 import { EngineGenericError } from './lib/helper/execution-errors'
-import { tryCatchAndThrowEngineError } from './lib/helper/try-catch'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
 
@@ -74,7 +73,7 @@ function setupSocket() {
     }
 
     socket.on('message', async (data: string) => {
-        const { error: resultError } = await tryCatchAndThrowEngineError(onSocketMessage(data))
+        const { error: resultError } = await utils.tryCatchAndThrowOnEngineError(onSocketMessage(data))
         if (resultError) {
             const engineError: EngineResponse = {
                 response: undefined,

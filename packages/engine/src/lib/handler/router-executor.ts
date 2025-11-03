@@ -1,11 +1,11 @@
 import { BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { EngineGenericError } from '../helper/execution-errors'
-import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
+import { utils } from '../utils'
 
 export const routerExecuter: BaseExecutor<RouterAction> = {
     async handle({
@@ -65,7 +65,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     }).setDuration(stepEndTime - stepStartTime)
     executionState = executionState.upsertStep(action.name, routerOutput)
 
-    const { data: executionStateResult, error: executionStateError } = await tryCatchAndThrowEngineError(prepareAndExecuteRouterAction({ action, executionState, constants, routerOutput, resolvedInput, routerExecutionType }))
+    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(prepareAndExecuteRouterAction({ action, executionState, constants, routerOutput, resolvedInput, routerExecutionType }))
     if (executionStateError) {
         console.error(executionStateError)
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)

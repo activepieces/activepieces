@@ -4,7 +4,6 @@ import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-f
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 import { utils } from '../utils'
 import { EngineGenericError } from './execution-errors'
-import { tryCatchAndThrowEngineError } from './try-catch'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -138,7 +137,7 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
     const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
     for (const entry of entries) {
 
-        const { data: packageJsonPath } = await tryCatchAndThrowEngineError((async () => {
+        const { data: packageJsonPath } = await utils.tryCatchAndThrowOnEngineError((async () => {
             const packageJsonPath = entry.path
             const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
             const packageJson = JSON.parse(packageJsonContent)
