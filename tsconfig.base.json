@@ -1329,12 +1329,6 @@
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
-      ],
-      "@activepieces/piece-meister-task": [
-        "packages/pieces/community/meister-task/src/index.ts"
-      ],
-      "@activepieces/piece-meistertask": [
-        "packages/pieces/community/meistertask/src/index.ts"
       ]
     },
     "resolveJsonModule": true

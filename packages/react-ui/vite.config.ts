@@ -34,11 +34,7 @@ export default defineConfig(({ command, mode }) => {
         },
       },
       port: 4200,
-      host: 'localhost',
-      allowedHosts: [
-      'localhost',
-      'overvaluable-skyler-botryose.ngrok-free.dev'
-    ]
+      host: '0.0.0.0',
     },
 
     preview: {
