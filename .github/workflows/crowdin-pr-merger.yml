@@ -19,14 +19,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup nodejs
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 20
           cache: 'npm'
-      
       - name: Install dependencies
-        run: npm ci
+        run: npm install -g bun && bun install
       
       - name: Add label to PR
         uses: actions/github-script@v7

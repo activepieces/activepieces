@@ -45,7 +45,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
 
 const installPieceParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {

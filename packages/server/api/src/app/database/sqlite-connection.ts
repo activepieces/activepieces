@@ -160,6 +160,7 @@ import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761
 import { AddMaximumConcurrentJobsPerProjectSqlite1761499100171 } from './migration/sqlite/1761499100171-AddMaximumConcurrentJobsPerProjectSqlite'
 import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/1761574814842-RemoveTasksAndTasksLimitSqlite'
 import { RemoveProjectIdFromPieceMetadataSqlite1761904011591 } from './migration/sqlite/1761904011591-RemoveProjectIdFromPieceMetadataSqlite'
+import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -335,8 +336,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveAgentidFromMcpEntity1761428653922,
         AddMaximumConcurrentJobsPerProjectSqlite1761499100171,
         RemoveTasksAndTasksLimitSqlite1761574814842,
+        DeleteLastChangelogDismissedAtSqlite1762018344394,
         RemoveProjectIdFromPieceMetadataSqlite1761904011591
-        ,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

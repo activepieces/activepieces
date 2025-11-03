@@ -37,10 +37,10 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
         return pieceMetadataService(req.log).getVersions({
             name: req.query.name,
-            projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
+            projectId: req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId,
             release: req.query.release,
             edition: req.query.edition ?? ApEdition.COMMUNITY,
-            platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
+            platformId: req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
         })
     })
 
@@ -58,8 +58,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const includeTags = query.includeTags ?? false
         const release = query.release ?? latestRelease
         const edition = query.edition ?? ApEdition.COMMUNITY
-        const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
-        const projectId = [PrincipalType.UNKNOWN, PrincipalType.SERVICE].includes(req.principal.type) ? undefined : req.principal.projectId
+        const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
+        const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER || req.principal.type === PrincipalType.SERVICE ? undefined : req.principal.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             release,
             includeHidden: query.includeHidden ?? false,
@@ -91,8 +91,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
-            const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
+            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
+            const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
             return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
@@ -110,8 +110,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const { name } = req.params
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
-            const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
+            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
+            const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
             return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
@@ -126,7 +126,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
             edition: req.query.edition,
-            platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
+            platformId: req.principal.type === PrincipalType.UNKNOWN 
+            || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
         })
         return pieces
     })
@@ -216,6 +217,9 @@ const ListCategoriesRequest = {
 const OptionsPieceRequest = {
     schema: {
         body: PieceOptionRequest,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 

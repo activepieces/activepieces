@@ -17,7 +17,7 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-    > {
+> {
     const previousExecutionFile = (jobData.executionType === ExecutionType.RESUME || attempsStarted > 1) ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
 
@@ -160,10 +160,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 engineToken,
                 input,
             )
-            if (
-                result.status === FlowRunStatus.INTERNAL_ERROR ||
-                status === EngineResponseStatus.INTERNAL_ERROR
-            ) {
+            if (status === EngineResponseStatus.INTERNAL_ERROR) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {

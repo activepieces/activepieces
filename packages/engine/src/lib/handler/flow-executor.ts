@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
 import { ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, isNil } from '@activepieces/shared'
+import { EngineGenericError } from '../helper/execution-errors'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
@@ -20,9 +21,11 @@ const executeFunction: Record<FlowActionType, BaseExecutor<FlowAction>> = {
 export const flowExecutor = {
     getExecutorForAction(type: FlowActionType): BaseExecutor<FlowAction> {
         const executor = executeFunction[type]
+
         if (isNil(executor)) {
-            throw new Error('Not implemented')
+            throw new EngineGenericError('ExecutorNotFoundError', `Executor not found for action type: ${type}`)
         }
+        
         return executor
     },
     async executeFromTrigger({ executionState, constants, input }: {
@@ -50,7 +53,8 @@ export const flowExecutor = {
         let currentAction: FlowAction | null | undefined = action
 
         while (!isNil(currentAction)) {
-            if (currentAction.skip) {
+            const testSingleStepMode = !isNil(constants.stepNameToTest)
+            if (currentAction.skip && !testSingleStepMode) {
                 currentAction = currentAction.nextAction
                 continue
             }
@@ -68,7 +72,6 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-            const testSingleStepMode = !isNil(constants.stepNameToTest)
             const shouldBreakExecution = flowExecutionContext.verdict !== ExecutionVerdict.RUNNING || testSingleStepMode
 
             if (shouldBreakExecution) {
