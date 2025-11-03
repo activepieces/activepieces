@@ -27,7 +27,7 @@ if (os === 'win32') {
 else {
   execSync('rm -rf node_modules');
 }
-execSync('npm ci');
+execSync('bun install');
 execSync('npx pnpm store add \
   @tsconfig/node18@1.0.0 \
   @types/node@18.17.1 \
