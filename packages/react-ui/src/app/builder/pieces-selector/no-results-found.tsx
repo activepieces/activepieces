@@ -4,7 +4,7 @@ import { SearchX } from 'lucide-react';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { ApFlagId, feedbackUrl } from '@activepieces/shared';
 
 const NoResultsFound = () => {
   const { data: showCommunityLinks } = flagsHooks.useFlag<boolean>(
@@ -24,7 +24,7 @@ const NoResultsFound = () => {
           size="sm"
           onClick={() => {
             window.open(
-              `${supportUrl}/c/feature-requests/9`,
+              `${feedbackUrl}`,
               '_blank',
               'noopener noreferrer',
             );
