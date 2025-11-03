@@ -20,18 +20,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: 'npm'
+          bun-version: 1.3.1
       
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Run Checkly tests (${{ inputs.environment }})
         id: checkly-tests
         run: |
-          npx checkly test \
+          bunx checkly test \
             --config=packages/tests-e2e/checkly.config.ts \
             --reporter=github \
             --record \

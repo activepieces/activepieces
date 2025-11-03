@@ -409,10 +409,5 @@
   },
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node"
-  },
-  "overrides": {
-    "vite": {
-      "rollup": "npm:@rollup/wasm-node"
-    }
   }
 }
