@@ -21,7 +21,12 @@ export async function apiRequest<T>(auth: OAuth2PropertyValue, method: HttpMetho
 }
 
 export async function getProjects(auth: OAuth2PropertyValue) {
-  return await apiRequest<any[]>(auth, HttpMethod.GET, '/projects');
+  try {
+    return await apiRequest<any[]>(auth, HttpMethod.GET, '/projects');
+  } catch (error) {
+    console.error('MeisterTask API Error - Projects:', error);
+    throw error;
+  }
 }
 
 export async function getSections(auth: OAuth2PropertyValue, projectId: string) {
