@@ -107,9 +107,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        stripeBillingCycle: {
-            type: String,
-        },
         tablesEnabled: {
             type: Boolean,
         },
@@ -120,16 +117,8 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
-        tablesLimit: {
-            type: Number,
-            nullable: true,
-        },
         agentsEnabled: {
             type: Boolean,
-        },
-        mcpLimit: {
-            type: Number,
-            nullable: true,
         },
         activeFlowsLimit: {
             type: Number,

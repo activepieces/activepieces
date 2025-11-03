@@ -1,6 +1,6 @@
-import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, isCloudPlanButNotEnterprise, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, isNil, PlanName, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -85,7 +85,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
     },
     async getNextBillingAmount(params: GetBillingAmountParams): Promise<number> {
-        const { plan, subscriptionId } = params
+        const { subscriptionId } = params
         const stripe = stripeHelper(log).getStripe()
         if (isNil(stripe)) {
             return 0
@@ -99,17 +99,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
         }
         catch {
-            switch (plan) {
-                case PlanName.PLUS: {
-                    return 25
-                }
-                case PlanName.BUSINESS: {
-                    return 150
-                }
-                default: {
-                    return 0
-                }
-            }
+            return 0
         }
     },
     async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
@@ -123,8 +113,6 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     const user = await userService.getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
 
-    const plan = getInitialPlanByEdition()
-
     const defaultStartDate = apDayjs().startOf('month').unix()
     const defaultEndDate = apDayjs().endOf('month').unix()
 
@@ -134,8 +122,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeCustomerId,
         stripeSubscriptionStartDate: defaultStartDate,
         stripeSubscriptionEndDate: defaultEndDate,
-        stripeBillingCycle: BillingCycle.MONTHLY,
-        ...plan,
+        ...STANDARD_CLOUD_PLAN,
     }
     const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
     if (!isNil(savedPlatformPlan.plan)) {
@@ -143,16 +130,6 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     }
 
     return savedPlatformPlan
-}
-
-function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
-    switch (edition) {
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-            return OPEN_SOURCE_PLAN
-        case ApEdition.CLOUD:
-            return FREE_CLOUD_PLAN
-    }
 }
 
 async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
@@ -179,5 +156,4 @@ type UpdateByCustomerId = {
 
 type GetBillingAmountParams = {
     subscriptionId?: string
-    plan: string
 }

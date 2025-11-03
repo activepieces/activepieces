@@ -1,4 +1,4 @@
-import { BillingCycle, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -189,10 +189,9 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
-            ...OPEN_SOURCE_PLAN,
+            ...STANDARD_CLOUD_PLAN,
             stripeSubscriptionStartDate: 0,
             stripeSubscriptionEndDate: 0,
-            stripeBillingCycle: BillingCycle.MONTHLY,
         }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
