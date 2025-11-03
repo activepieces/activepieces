@@ -22,7 +22,7 @@ const findPieceInModule= async (pieceOutputFile: string) => {
 
 const installDependencies = async (pieceFolder: string) => {
     console.log(chalk.blue(`Installing dependencies ${pieceFolder}`))
-    await exec(`npm install`, {cwd: pieceFolder,})
+    await exec(`bun install`, {cwd: pieceFolder,})
     console.log(chalk.green(`Dependencies installed ${pieceFolder}`))
 }
 

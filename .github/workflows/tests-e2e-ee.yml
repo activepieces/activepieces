@@ -63,21 +63,20 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
         
-      - name: Setup Node.js
+      - name: Setup nodejs
         uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: 'npm'
-          
       - name: Install dependencies
-        run: npm ci
+        run: npm install -g bun && bun install
         
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
         
       - name: Run E2E tests
         run: |
-          npm run test:e2e
+          bun run test:e2e
         env:
           CI: true
           

@@ -1,5 +1,6 @@
 import { assertEqual, FlowActionType, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
+import { EngineGenericError } from '../../helper/execution-errors'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -177,7 +178,7 @@ export class FlowExecutorContext {
             case ExecutionVerdict.PAUSED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason !== FlowRunStatus.PAUSED) {
-                    throw new Error('Verdict Response should have pause metadata response')
+                    throw new EngineGenericError('VerdictResponseShouldHavePauseMetadataResponseError', 'Verdict Response should have pause metadata response')
                 }
                 return {
                     ...baseExecutionOutput,
@@ -208,7 +209,7 @@ export class FlowExecutorContext {
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-                throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+                throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
             flattenedSteps = {
@@ -234,7 +235,7 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
     currentPath.path.forEach(([stepName, iteration]) => {
         const stepOutput = targetMap[stepName]
         if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-            throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+            throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', `[ExecutionState#getTargetMap] Not instance of Loop On Items step output: ${stepOutput.type}`)
         }
         targetMap = stepOutput.output.iterations[iteration]
     })

@@ -52,7 +52,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
 
 const GetProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({
@@ -63,7 +63,7 @@ const GetProjectReleaseRequest = {
 
 const ListProjectReleasesRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         querystring: ListProjectReleasesRequest,
@@ -75,7 +75,7 @@ const ListProjectReleasesRequestParams = {
 
 const DiffProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         body: DiffReleaseRequest,
@@ -84,7 +84,7 @@ const DiffProjectReleaseRequest = {
 
 const CreateProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
     },
     schema: {
         tags: ['project-releases'],
