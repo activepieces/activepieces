@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { ConnectionValue, createConnectionService } from './services/connections.service'
-import { tryCatchAndThrowEngineError } from './helper/try-catch'
 import { EngineGenericError } from './helper/execution-errors'
+import { tryCatchAndThrowEngineError } from './helper/try-catch'
+import { ConnectionValue, createConnectionService } from './services/connections.service'
 
 export type FileEntry = {
     name: string

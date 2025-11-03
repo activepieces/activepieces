@@ -24,9 +24,9 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
+import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
 import { tryCatchAndThrowEngineError } from './try-catch'
-import { EngineGenericError } from './execution-errors'
 
 export const pieceHelper = {
     async executeProps({ params, pieceSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {

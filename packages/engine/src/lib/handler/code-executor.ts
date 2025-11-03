@@ -4,11 +4,11 @@ import { CodeAction, FlowActionType, GenericStepOutput, isNil, StepOutputStatus 
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { EngineGenericError } from '../helper/execution-errors'
 import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 import { progressService } from '../services/progress.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
-import { EngineGenericError } from '../helper/execution-errors'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({

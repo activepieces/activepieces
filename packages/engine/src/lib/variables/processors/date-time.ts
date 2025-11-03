@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { ProcessorFn } from './types'
 import { EngineGenericError } from '../../helper/execution-errors'
+import { ProcessorFn } from './types'
 
 export const dateTimeProcessor: ProcessorFn = (_property, value) => {
     dayjs.extend(utc)
