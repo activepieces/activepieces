@@ -6,11 +6,31 @@ import {
 	issueIdOrKeyProp,
 	issueStatusIdProp,
 	transformCustomFields,
+	isFieldAdfCompatible,
 } from '../common/props';
 import { jiraApiCall } from '../common';
 import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
+
+async function getFields(auth: JiraAuth, issueId: string): Promise<IssueFieldMetaData[]> {
+	const response = await jiraApiCall<{ fields: { [x: string]: IssueFieldMetaData } }>({
+		auth: auth,
+		method: HttpMethod.GET,
+		resourceUri: `/issue/${issueId}/editmeta`,
+	});
+
+	const fields: IssueFieldMetaData[] = [];
+	for (const key in response.fields) {
+		fields.push(response.fields[key]);
+	}
+
+	if (!fields || !Array.isArray(fields)) {
+		return [];
+	}
+
+	return fields;
+}
 
 export const updateIssueAction = createAction({
 	name: 'update_issue',
@@ -32,17 +52,11 @@ export const updateIssueAction = createAction({
 				const props: DynamicPropsValue = {};
 
 				const authValue = auth as JiraAuth;
-				const response = await jiraApiCall<{ fields: { [x: string]: IssueFieldMetaData } }>({
-					auth: authValue,
-					method: HttpMethod.GET,
-					resourceUri: `/issue/${issueId}/editmeta`,
-				});
+				const issueIdValue = issueId as unknown as string;
 
-				if (!response.fields) return {};
+				const fields = await getFields(authValue, issueIdValue);
 
-				for (const key in response.fields) {
-					const field = response.fields[key];
-
+				for (const field of fields) {
 					// skip invalid custom fields
 					if (field.schema.custom) {
 						const customFieldType = field.schema.custom.split(':')[1];
@@ -73,9 +87,38 @@ export const updateIssueAction = createAction({
 				return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
 			},
 		}),
+		adfFields: Property.MultiSelectDropdown({
+			displayName: 'Fields in JSON Atlassian Document Format',
+			description: 'https://developer.atlassian.com/cloud/jira/platform/apis/document/structure',
+			required: false,
+			refreshers: ['issueId'],
+			options: async ({ auth, issueId }) => {
+				if (!auth || !issueId) {
+					return {
+						disabled: true,
+						options: [],
+					};
+				}
+
+				const authValue = auth as JiraAuth;
+				const issueIdValue = issueId as unknown as string;
+
+				const fields = await getFields(authValue, issueIdValue);
+				const adfCompatibleFields = fields.filter(isFieldAdfCompatible);
+				const fieldOptions = adfCompatibleFields.map(field => ({
+					label: field.name,
+					value: field.key,
+				}))
+	
+				return {
+					disabled: false,
+					options: fieldOptions,
+				};
+			},
+		}),
 	},
 	async run(context) {
-		const { issueId, statusId } = context.propsValue;
+		const { issueId, statusId, adfFields } = context.propsValue;
 		const inputIssueFields = context.propsValue.issueFields ?? {};
 
 		if (isNil(issueId)) {
@@ -103,7 +146,8 @@ export const updateIssueAction = createAction({
 
 		const flattenedFields = Object.values(issueTypeFields.fields);
 
-		const formattedFields = formatIssueFields(flattenedFields, inputIssueFields);
+		const formattedAdfFields = adfFields || [];
+		const formattedFields = formatIssueFields(flattenedFields, inputIssueFields, formattedAdfFields);
 
 		const response = await jiraApiCall({
 			auth: context.auth,
