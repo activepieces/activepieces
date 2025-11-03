@@ -30,7 +30,7 @@ jobs:
       - name: Run Checkly tests (${{ inputs.environment }})
         id: checkly-tests
         run: |
-          bunx checkly test \
+          npx checkly test \
             --config=packages/tests-e2e/checkly.config.ts \
             --reporter=github \
             --record \

@@ -52,7 +52,7 @@ COPY . .
 ENV NX_NO_CLOUD=true
 
 RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
-RUN bunx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && bun install --production --force

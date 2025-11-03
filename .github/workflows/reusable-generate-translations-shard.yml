@@ -51,7 +51,7 @@ jobs:
 
       - name: Generate translation files for shard
         run: |
-          bunx cli pieces generate-translation-file-for-all-pieces -- --shard-index ${{ inputs.shard_index }} --shard-total ${{ inputs.shard_total }}
+          npx cli pieces generate-translation-file-for-all-pieces -- --shard-index ${{ inputs.shard_index }} --shard-total ${{ inputs.shard_total }}
 
       - name: Commit and push changes (if any)
         env:

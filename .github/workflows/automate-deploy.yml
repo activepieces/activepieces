@@ -79,7 +79,7 @@ jobs:
       - name: Install dependencies
         run: bun install
       - name: Run Checkly Deploy
-        run: bunx checkly deploy --config=packages/tests-e2e/checkly.config.ts --force
+        run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts --force
         env:
           CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
           CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
