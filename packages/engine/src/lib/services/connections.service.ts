@@ -1,14 +1,14 @@
 import { AppConnection, AppConnectionStatus, AppConnectionType, BasicAuthConnectionValue, CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, FetchError } from '../helper/execution-errors'
-import { tryCatch } from '../helper/try-catch'
+import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 
 export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
     return {
         async obtain(externalId: string): Promise<ConnectionValue> {
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
-            const { data: connectionValue, error: connectionValueError } = await tryCatch((async () => {
+            const { data: connectionValue, error: connectionValueError } = await tryCatchAndThrowEngineError((async () => {
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {

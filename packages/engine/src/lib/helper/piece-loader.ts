@@ -3,8 +3,8 @@ import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 import { utils } from '../utils'
-import { PieceNotFoundError } from './execution-errors'
-import { tryCatch } from './try-catch'
+import { EngineGenericError } from './execution-errors'
+import { tryCatchAndThrowEngineError } from './try-catch'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -25,7 +25,7 @@ export const pieceLoader = {
         })
 
         if (isNil(piece)) {
-            throw new PieceNotFoundError(packageName, pieceVersion)
+            throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}, pieceVersion: ${pieceVersion}`)
         }
 
         return piece
@@ -37,7 +37,7 @@ export const pieceLoader = {
         const trigger = piece.getTrigger(triggerName)
 
         if (trigger === undefined) {
-            throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
+            throw new EngineGenericError('TriggerNotFoundError', `Trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
         }
 
         return {
@@ -127,7 +127,7 @@ export const pieceLoader = {
                 break
         }
         if (isNil(piecePath)) {
-            throw new PieceNotFoundError(packageName, undefined)
+            throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}`)
         }
         return piecePath
     },
@@ -138,7 +138,7 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
     const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
     for (const entry of entries) {
 
-        const { data: packageJsonPath } = await tryCatch((async () => {
+        const { data: packageJsonPath } = await tryCatchAndThrowEngineError((async () => {
             const packageJsonPath = entry.path
             const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
             const packageJson = JSON.parse(packageJsonContent)

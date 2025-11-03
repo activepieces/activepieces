@@ -3,8 +3,9 @@ import { readFile } from 'node:fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { tryCatch } from './helper/try-catch'
 import { ConnectionValue, createConnectionService } from './services/connections.service'
+import { tryCatchAndThrowEngineError } from './helper/try-catch'
+import { EngineGenericError } from './helper/execution-errors'
 
 export type FileEntry = {
     name: string
@@ -18,7 +19,7 @@ export const utils = {
             return JSON.parse(file)
         }
         catch (e) {
-            throw Error((e as Error).message)
+            throw new EngineGenericError('ParseJsonFileError', `Failed to parse JSON file: ${filePath}`)
         }
     },
     async walk(dirPath: string): Promise<FileEntry[]> {
@@ -42,7 +43,7 @@ export const utils = {
             }
         }
 
-        await tryCatch(walkRecursive(dirPath))
+        await tryCatchAndThrowEngineError(walkRecursive(dirPath))
         return entries
     },
     formatError(value: Error): string {
@@ -65,7 +66,7 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const { data: connection } = await tryCatch(getConnectionValue({ key, data: params }))
+                const { data: connection } = await tryCatchAndThrowEngineError(getConnectionValue({ key, data: params }))
                 return connection
             },
         }

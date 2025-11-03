@@ -2,7 +2,7 @@ import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { tryCatch } from '../helper/try-catch'
+import { tryCatchAndThrowEngineError } from '../helper/try-catch'
 import { createConnectionService } from '../services/connections.service'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
@@ -178,7 +178,7 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
-    const { data: result, error: resultError } = await tryCatch((async () => {
+    const { data: result, error: resultError } = await tryCatchAndThrowEngineError((async () => {
         const codeSandbox = await initCodeSandbox()
 
         const result = await codeSandbox.runScript({

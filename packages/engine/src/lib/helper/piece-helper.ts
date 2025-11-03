@@ -2,7 +2,6 @@ import {
     DropdownProperty,
     DynamicProperties,
     ExecutePropsResult,
-    InputProperty,
     MultiSelectDropdownProperty,
     PieceMetadata,
     PiecePropertyMap,
@@ -26,7 +25,8 @@ import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
-import { tryCatch } from './try-catch'
+import { tryCatchAndThrowEngineError } from './try-catch'
+import { EngineGenericError } from './execution-errors'
 
 export const pieceHelper = {
     async executeProps({ params, pieceSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
@@ -35,10 +35,77 @@ export const pieceHelper = {
             pieceSource,
         })
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
-            throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
+            throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property.type} for ${property.displayName}`)
         }
 
-        const { data: executePropsResult, error: executePropsError } = await tryCatch(prepareAndExecuteProps({ property, params, executionState, constants, searchValue }))
+        const { data: executePropsResult, error: executePropsError } = await tryCatchAndThrowEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
+            const { resolvedInput } = await createPropsResolver({
+                apiUrl: constants.internalApiUrl,
+                projectId: params.projectId,
+                engineToken: params.engineToken,
+            }).resolve<
+            StaticPropsValue<PiecePropertyMap>
+            >({
+                unresolvedInput: params.input,
+                executionState,
+            })
+            const ctx = {
+                searchValue,
+                server: {
+                    token: params.engineToken,
+                    apiUrl: constants.internalApiUrl,
+                    publicUrl: params.publicApiUrl,
+                },
+                project: {
+                    id: params.projectId,
+                    externalId: constants.externalProjectId,
+                },
+                flows: createFlowsContext(constants),
+                step: {
+                    name: params.actionOrTriggerName,
+                },
+                connections: utils.createConnectionManager({
+                    projectId: params.projectId,
+                    engineToken: params.engineToken,
+                    apiUrl: constants.internalApiUrl,
+                    target: 'properties',
+                }),
+            }
+        
+            switch (property.type) {
+                case PropertyType.DYNAMIC: {
+                    const dynamicProperty = property as DynamicProperties<boolean>
+                    const props = await dynamicProperty.props(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.DYNAMIC,
+                        options: props,
+                    }
+                }
+                case PropertyType.MULTI_SELECT_DROPDOWN: {
+                    const multiSelectProperty = property as MultiSelectDropdownProperty<
+                    unknown,
+                    boolean
+                    >
+                    const options = await multiSelectProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.MULTI_SELECT_DROPDOWN,
+                        options,
+                    }
+                }
+                case PropertyType.DROPDOWN: {
+                    const dropdownProperty = property as DropdownProperty<unknown, boolean>
+                    const options = await dropdownProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.DROPDOWN,
+                        options,
+                    }
+                }
+                default: {
+                    throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property}`)
+                }
+            }
+        })())
+        
         if (executePropsError) {
             console.error(executePropsError)
             return {
@@ -52,7 +119,6 @@ export const pieceHelper = {
         }
 
         return executePropsResult
-
     },
 
     async executeValidateAuth(
@@ -104,7 +170,7 @@ export const pieceHelper = {
                 })
             }
             default: {
-                throw new Error('Invalid auth type')
+                throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
             }
         }
     },
@@ -125,83 +191,6 @@ export const pieceHelper = {
         }
     },
 }
-
-async function prepareAndExecuteProps({ property, params, executionState, constants, searchValue }: PrepareAndExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
-    const { resolvedInput } = await createPropsResolver({
-        apiUrl: constants.internalApiUrl,
-        projectId: params.projectId,
-        engineToken: params.engineToken,
-    }).resolve<
-    StaticPropsValue<PiecePropertyMap>
-    >({
-        unresolvedInput: params.input,
-        executionState,
-    })
-    const ctx = {
-        searchValue,
-        server: {
-            token: params.engineToken,
-            apiUrl: constants.internalApiUrl,
-            publicUrl: params.publicApiUrl,
-        },
-        project: {
-            id: params.projectId,
-            externalId: constants.externalProjectId,
-        },
-        flows: createFlowsContext(constants),
-        step: {
-            name: params.actionOrTriggerName,
-        },
-        connections: utils.createConnectionManager({
-            projectId: params.projectId,
-            engineToken: params.engineToken,
-            apiUrl: constants.internalApiUrl,
-            target: 'properties',
-        }),
-    }
-
-    switch (property.type) {
-        case PropertyType.DYNAMIC: {
-            const dynamicProperty = property as DynamicProperties<boolean>
-            const props = await dynamicProperty.props(resolvedInput, ctx)
-            return {
-                type: PropertyType.DYNAMIC,
-                options: props,
-            }
-        }
-        case PropertyType.MULTI_SELECT_DROPDOWN: {
-            const multiSelectProperty = property as MultiSelectDropdownProperty<
-            unknown,
-            boolean
-            >
-            const options = await multiSelectProperty.options(resolvedInput, ctx)
-            return {
-                type: PropertyType.MULTI_SELECT_DROPDOWN,
-                options,
-            }
-        }
-        case PropertyType.DROPDOWN: {
-            const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            const options = await dropdownProperty.options(resolvedInput, ctx)
-            return {
-                type: PropertyType.DROPDOWN,
-                options,
-            }
-        }
-        default: {
-            throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
-        }
-    }
-}
-
-type PrepareAndExecutePropsParams = {
-    property: InputProperty
-    params: ExecutePropsOptions
-    executionState: FlowExecutorContext
-    constants: EngineConstants
-    searchValue?: string
-}
-
 
 type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, pieceSource: string, constants: EngineConstants }
 

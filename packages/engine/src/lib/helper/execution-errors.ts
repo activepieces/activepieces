@@ -97,14 +97,8 @@ export class FetchError extends ExecutionError {
     }
 }
 
-export class AssertionError extends ExecutionError {
-    constructor(fieldName: string, cause?: unknown) {
-        super('AssertionError', formatMessage(`${fieldName} is null or undefined`), ExecutionErrorType.ENGINE, cause)
-    }
-}
-
-export class PieceNotFoundError extends ExecutionError {
-    constructor(packageName: string, pieceVersion: string | undefined, cause?: unknown) {
-        super('PieceNotFoundError', formatMessage(`Piece not found for package: ${packageName}, pieceVersion: ${pieceVersion}`), ExecutionErrorType.ENGINE, cause)
+export class EngineGenericError extends ExecutionError {
+    constructor(name: string, message: string, cause?: unknown) {
+        super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
     }
 }
