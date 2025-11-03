@@ -13,8 +13,6 @@ import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-us
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
-import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
-import { UsageCards } from '@/features/billing/components/usage-cards';
 import {
   billingMutations,
   billingQueries,
@@ -28,7 +26,6 @@ export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
     useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
-  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
 
   const {
     data: platformPlanInfo,
@@ -43,8 +40,6 @@ export default function Billing() {
   const isSubscriptionActive = [ApSubscriptionStatus.ACTIVE].includes(
     status as ApSubscriptionStatus,
   );
-  const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
-  const isPlus = platformPlanInfo?.plan.plan === PlanName.PLUS;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
@@ -74,7 +69,7 @@ export default function Billing() {
         beta={true}
       >
         <div className="flex items-center gap-2">
-          {isEnterprise ? (
+          {isEnterprise && (
             <Button
               variant="default"
               onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
@@ -84,31 +79,20 @@ export default function Billing() {
                 ? t('Update License')
                 : t('Activate License')}
             </Button>
-          ) : (
-            isSubscriptionActive && (
-              <Button
-                variant="outline"
-                onClick={() => redirectToPortalSession()}
-              >
-                {t('Access Billing Portal')}
-              </Button>
-            )
           )}
-          {!isEnterprise && (
-            <Button variant="default" onClick={() => openDialog()}>
-              {t('Upgrade Plan')}
+
+          {!isEnterprise && isSubscriptionActive && (
+            <Button variant="outline" onClick={() => redirectToPortalSession()}>
+              {t('Access Billing Portal')}
             </Button>
           )}
         </div>
       </DashboardPageHeader>
+
       <section className="flex flex-col w-full gap-6">
         {!isEnterprise && <SubscriptionInfo info={platformPlanInfo} />}
 
-        <UsageCards platformSubscription={platformPlanInfo} />
-
-        {(isBusinessPlan || isPlus) && (
-          <ActiveFlowAddon platformSubscription={platformPlanInfo} />
-        )}
+        <ActiveFlowAddon platformSubscription={platformPlanInfo} />
 
         {!isEnterprise && (
           <AICreditUsage platformSubscription={platformPlanInfo} />
@@ -153,7 +137,7 @@ export default function Billing() {
           isOpen={isActivateLicenseKeyDialogOpen}
           onOpenChange={setIsActivateLicenseKeyDialogOpen}
         />
-      </section>{' '}
+      </section>
     </>
   );
 }

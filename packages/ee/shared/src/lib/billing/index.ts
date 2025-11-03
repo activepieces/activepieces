@@ -1,15 +1,7 @@
-import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
-export enum BillingCycle {
-    MONTHLY = 'monthly',
-    ANNUAL = 'annual',
-}
-
-export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP = {
-    [BillingCycle.ANNUAL]: 11.4,
-    [BillingCycle.MONTHLY]: 15,
-}
+export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS = 15
 
 export const AI_CREDITS_USAGE_THRESHOLD = 15000
 
@@ -26,213 +18,55 @@ export enum ApSubscriptionStatus {
     CANCELED = 'canceled',
 }
 
-export type StripePlanName = PlanName.PLUS | PlanName.BUSINESS
-
 export const METRIC_TO_LIMIT_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlowsLimit',
     [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
-    [PlatformUsageMetric.TABLES]: 'tablesLimit',
-    [PlatformUsageMetric.MCPS]: 'mcpLimit',
 } as const
 
 export const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
     [PlatformUsageMetric.PROJECTS]: 'projects',
-    [PlatformUsageMetric.TABLES]: 'tables',
-    [PlatformUsageMetric.MCPS]: 'mcps',
 } as const
 
 export const RESOURCE_TO_MESSAGE_MAPPING = {
     [PlatformUsageMetric.PROJECTS]: 'Project limit reached. Delete old projects or upgrade to create new ones.',
-    [PlatformUsageMetric.TABLES]: 'Table limit reached. Please delete tables or upgrade to restore access.',
-    [PlatformUsageMetric.MCPS]: 'MCP server limit reached. Delete unused MCPs or upgrade your plan to continue.',
 }
-
-const Addons = Type.Object({
-    activeFlows: Type.Optional(Type.Number()),
-})
-
-export const CreateSubscriptionParamsSchema = Type.Object({
-    plan: Type.Union([Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
-    cycle: Type.Enum(BillingCycle),
-    addons: Addons,
-})
-export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
 
 export const SetAiCreditsOverageLimitParamsSchema = Type.Object({
     limit: Type.Number({ minimum: 10 }),
 })
+
 export type SetAiCreditsOverageLimitParams = Static<typeof SetAiCreditsOverageLimitParamsSchema>
 
 export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
     state: Type.Enum(AiOverageState),
 })
+
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
 
-export const UpdateSubscriptionParamsSchema = Type.Object({
-    plan: Type.Union([Type.Literal(PlanName.FREE), Type.Literal(PlanName.PLUS), Type.Literal(PlanName.BUSINESS)]),
-    addons: Addons,
-    cycle: Type.Enum(BillingCycle),
-})
-export type UpdateSubscriptionParams = Static<typeof UpdateSubscriptionParamsSchema>
-
 export enum PRICE_NAMES {
-    PLUS_PLAN = 'plus-plan',
-    BUSINESS_PLAN = 'business-plan',
     AI_CREDITS = 'ai-credit',
     ACTIVE_FLOWS = 'active-flow',
 }
 
-export const getPlanLimits = (planName: PlanName): Partial<PlatformPlanLimits> => {
-    switch (planName) {
-        case PlanName.FREE:
-            return { ...FREE_CLOUD_PLAN }
-        case PlanName.PLUS:
-            return { ...PLUS_CLOUD_PLAN }
-        case PlanName.BUSINESS:
-            return { ...BUSINESS_CLOUD_PLAN }
-        default:
-            throw new Error(`Invalid plan name: ${planName}`)
-    }
-}
-
-export const PLAN_HIERARCHY = {
-    [PlanName.FREE]: 0,
-    [PlanName.PLUS]: 1,
-    [PlanName.BUSINESS]: 2,
-    [PlanName.ENTERPRISE]: 3,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 0,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 0,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 1,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 2,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 3,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 4,
-} as const
-
-export const BILLING_CYCLE_HIERARCHY = {
-    [BillingCycle.MONTHLY]: 0,
-    [BillingCycle.ANNUAL]: 1,
-} as const
-
 export const PRICE_ID_MAP = {
-    [PRICE_NAMES.PLUS_PLAN]: {
-        [BillingCycle.MONTHLY]: {
-            dev: 'price_1RTRd4QN93Aoq4f8E22qF5JU',
-            prod: 'price_1RflgUKZ0dZRqLEK5COq9Kn8',
-        },
-        [BillingCycle.ANNUAL]: {
-            dev: 'price_1RtZrSQN93Aoq4f8KLZq4yif',
-            prod: 'price_1RtZwlKZ0dZRqLEKBiPradv4',
-        },
-    },
-    [PRICE_NAMES.BUSINESS_PLAN]: {
-        [BillingCycle.MONTHLY]: {
-            dev: 'price_1RTReBQN93Aoq4f8v9CnMTFT',
-            prod: 'price_1RflgbKZ0dZRqLEKaW4Nlt0P',
-        },
-        [BillingCycle.ANNUAL]: {
-            dev: 'price_1RtZpuQN93Aoq4f8mNgEjs0b',
-            prod: 'price_1RtZxNKZ0dZRqLEKqTYawR8q',
-        },
-    },
     [PRICE_NAMES.AI_CREDITS]: {
-        [BillingCycle.MONTHLY]: {
-            dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
-            prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
-        },
-        [BillingCycle.ANNUAL]: {
-            dev: 'price_1RtPc0QN93Aoq4f8JAPe5HbG',
-            prod: 'price_1RtZziKZ0dZRqLEKiWU2iAz8',
-        },
+        dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
+        prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
     },
     [PRICE_NAMES.ACTIVE_FLOWS]: {
-        [BillingCycle.MONTHLY]: {
-            dev: 'price_1RsK9qQN93Aoq4f8nhN9xvvu',
-            prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn',
-        },
-        [BillingCycle.ANNUAL]: {
-            dev: 'price_1RtZmHQN93Aoq4f8OqAfOl8R',
-            prod: 'price_1RtZvzKZ0dZRqLEKGHOXlfDP',
-        },
+        dev: 'price_1RsK9qQN93Aoq4f8nhN9xvvu',
+        prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn',
     },
 }
 
-export const FREE_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
-    plan: 'free',
+export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
+    plan: 'standard',
     includedAiCredits: 200,
     aiCreditsOverageLimit: undefined,
-    aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
-    activeFlowsLimit: 10,
-    projectsLimit: 1,
-    tablesLimit: 1,
-    mcpLimit: 1,
-
-    agentsEnabled: true,
-    tablesEnabled: true,
-    todosEnabled: true,
-    mcpsEnabled: true,
-
-    embeddingEnabled: false,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    environmentsEnabled: false,
-    analyticsEnabled: false,
-    showPoweredBy: false,
-    auditLogEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    ssoEnabled: false,
-}
-
-export const APPSUMO_PLAN = ({ planName: planname, tablesLimit, mcpLimit }: { planName: string, tablesLimit: number, mcpLimit: number }): PlatformPlanWithOnlyLimits => {
-    return {
-        plan: planname,
-        includedAiCredits: 200,
-        aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-        aiCreditsOverageLimit: undefined,
-        activeFlowsLimit: undefined,
-        projectsLimit: 1,
-        mcpLimit,
-        tablesLimit,
-
-        agentsEnabled: true,
-        tablesEnabled: true,
-        todosEnabled: true,
-        mcpsEnabled: true,
-
-        embeddingEnabled: false,
-        globalConnectionsEnabled: false,
-        customRolesEnabled: false,
-        environmentsEnabled: false,
-        analyticsEnabled: false,
-        showPoweredBy: false,
-        auditLogEnabled: false,
-        managePiecesEnabled: false,
-        manageTemplatesEnabled: false,
-        customAppearanceEnabled: false,
-        manageProjectsEnabled: false,
-        projectRolesEnabled: true,
-        customDomainsEnabled: false,
-        apiKeysEnabled: false,
-        ssoEnabled: false,
-
-    }
-}
-
-export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
-    plan: 'plus',
-    includedAiCredits: 500,
-    aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     activeFlowsLimit: 10,
     projectsLimit: 1,
-    mcpLimit: undefined,
-    tablesLimit: undefined,
 
     agentsEnabled: true,
     tablesEnabled: true,
@@ -244,68 +78,7 @@ export const PLUS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     customRolesEnabled: false,
     environmentsEnabled: false,
     analyticsEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    ssoEnabled: false,
     showPoweredBy: false,
-    auditLogEnabled: false,
-}
-
-export const BUSINESS_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
-    plan: 'business',
-    includedAiCredits: 1000,
-    aiCreditsOverageLimit: undefined,
-    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    activeFlowsLimit: 50,
-    projectsLimit: 10,
-    mcpLimit: undefined,
-    tablesLimit: undefined,
-
-    agentsEnabled: true,
-    tablesEnabled: true,
-    todosEnabled: true,
-    mcpsEnabled: true,
-
-    embeddingEnabled: false,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    environmentsEnabled: false,
-    analyticsEnabled: true,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
-    manageProjectsEnabled: true,
-    projectRolesEnabled: true,
-    customDomainsEnabled: false,
-    apiKeysEnabled: true,
-    ssoEnabled: true,
-    showPoweredBy: false,
-    auditLogEnabled: false,
-
-}
-
-export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
-    embeddingEnabled: false,
-
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-
-    mcpsEnabled: true,
-    tablesEnabled: true,
-    todosEnabled: true,
-    agentsEnabled: true,
-    includedAiCredits: 0,
-    aiCreditsOverageLimit: undefined,
-    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
-    environmentsEnabled: false,
-    analyticsEnabled: false,
-    showPoweredBy: false,
-
     auditLogEnabled: false,
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
@@ -315,14 +88,18 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     customDomainsEnabled: false,
     apiKeysEnabled: false,
     ssoEnabled: false,
-    stripeCustomerId: undefined,
-    stripeSubscriptionId: undefined,
-    stripeSubscriptionStatus: undefined,
+}
+
+export const APPSUMO_PLAN:  PlatformPlanWithOnlyLimits = {
+    ...STANDARD_CLOUD_PLAN,
+    plan: PlanName.APPSUMO_ACTIVEPIECES,
+    activeFlowsLimit: undefined
 }
 
 export const isCloudPlanButNotEnterprise = (plan: string | undefined): boolean => {
     if (isNil(plan)) {
         return false
     }
-    return plan === PlanName.PLUS || plan === PlanName.BUSINESS || plan === PlanName.FREE
+    // Louai: to be determined later
+    return true
 }

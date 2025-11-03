@@ -4,7 +4,6 @@ import { ReactNode, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -29,7 +28,6 @@ export const LimitAlert = ({
     ApFlagId.SHOW_BILLING,
   );
   const { project } = projectHooks.useCurrentProject();
-  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
   const { checkAccess } = useAuthorization();
   const [isProjectSettingsDialogOpen, setIsProjectSettingsDialogOpen] =
     useState(false);
@@ -103,10 +101,11 @@ export const LimitAlert = ({
         </div>
         <div className="flex flex-col gap-2 relative">
           {showBilling && (
+            // Louai: think about this later
             <Button
               variant="outline"
               className="!text-primary"
-              onClick={() => openDialog()}
+              onClick={() => console.log('Hello')}
             >
               {t('Upgrade Plan')}
             </Button>
