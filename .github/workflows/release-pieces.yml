@@ -41,12 +41,8 @@ jobs:
       - name: Install dependencies
         run: npm install -g bun && bun install
 
-      - name: build packages
-        run: npx nx run-many --target=build
-
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
-
 
       - name: publish shared package
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
@@ -71,11 +67,14 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}          
           
+      - name: build packages
+        run: npx nx run-many --target=build
 
       - name: publish pieces packages
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 
       - name: Check available memory
         run: free -h
