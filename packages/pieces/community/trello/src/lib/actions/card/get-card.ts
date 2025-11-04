@@ -4,15 +4,15 @@ import {
   HttpRequest,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { trelloCommon } from '../common';
-import { TrelloCard } from '../common/props/card';
-import { trelloAuth } from '../..';
+import { trelloCommon } from '../../common';
+import { TrelloCard } from '../../common/props/card';
+import { trelloAuth } from '../../..';
 
 export const getCard = createAction({
   auth: trelloAuth,
   name: 'get_card',
   displayName: 'Get Card',
-  description: 'Get a card in Trello',
+  description: 'Gets a card by ID.',
   props: {
     cardId: Property.ShortText({
       description: 'The card ID',
