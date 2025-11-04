@@ -11,7 +11,7 @@ export const deleteCardAttachment = createAction({
   auth: trelloAuth,
   name: 'delete_card_attachment',
   displayName: 'Delete Card Attachment',
-  description: 'Delete an attachment from a card',
+  description: 'Deletes an attachment from a card.',
   props: {
     card_id: Property.ShortText({
       description: 'The ID of the card',

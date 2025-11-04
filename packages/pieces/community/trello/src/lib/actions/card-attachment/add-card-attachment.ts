@@ -1,70 +1,34 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpRequest,
   HttpMethod,
+  QueryParams,
 } from '@activepieces/pieces-common';
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
+import FormData from "form-data";
 
 export const addCardAttachment = createAction({
   auth: trelloAuth,
   name: 'add_card_attachment',
   displayName: 'Add Card Attachment',
-  description: 'Add an attachment to a card',
+  description: 'Adds an attachment to a card.',
   props: {
     card_id: Property.ShortText({
       description: 'The ID of the card to add attachment to',
       displayName: 'Card ID',
       required: true,
     }),
-    attachment_type: Property.StaticDropdown({
-      description: 'Type of attachment to add',
-      displayName: 'Attachment Type',
+    attachment: Property.File({
+      displayName: 'Attachment File',
       required: true,
-      options: {
-        options: [
-          { label: 'URL', value: 'url' },
-          { label: 'File', value: 'file' },
-        ],
-      },
-    }),
-    attachment_details: Property.DynamicProperties({
-      displayName: 'Attachment Details',
-      required: true,
-      refreshers: ['attachment_type'],
-      async props({ attachment_type }) {
-        const propsBuilders: Record<string, () => DynamicPropsValue> = {
-          url: () => ({
-            url: Property.LongText({
-              description: 'URL to attach',
-              displayName: 'URL',
-              required: true,
-            }),
-          }),
-          file: () => ({
-            file: Property.File({
-              description: 'File to attach',
-              displayName: 'File',
-              required: true,
-            }),
-          }),
-        };
-        
-        if (!attachment_type || typeof attachment_type !== 'string' || !propsBuilders[attachment_type]) {
-          return {};
-        }
-        
-        return propsBuilders[attachment_type]();
-      },
     }),
     name: Property.ShortText({
-      description: 'Name of the attachment',
       displayName: 'Attachment Name',
       required: false,
     }),
     mime_type: Property.ShortText({
-      description: 'MIME type of the attachment',
       displayName: 'MIME Type',
       required: false,
     }),
@@ -76,26 +40,23 @@ export const addCardAttachment = createAction({
   },
 
   async run(context) {
-    const attachmentType = context.propsValue['attachment_type'];
-    const attachmentDetails = context.propsValue['attachment_details'];
-    const body: any = {};
+    const attachment = context.propsValue.attachment;
+    const qs:QueryParams = {}
     
-    if (attachmentType === 'url' && attachmentDetails?.['url']) {
-      body.url = attachmentDetails['url'];
-    } else if (attachmentType === 'file' && attachmentDetails?.['file']) {
-      body.file = attachmentDetails['file'];
-    }
-    
+    const formData = new FormData();
+
+    formData.append('file',attachment.data,{filename:attachment.filename});
+
     if (context.propsValue['name']) {
-      body.name = context.propsValue['name'];
+      qs['name'] = context.propsValue['name'];
     }
     
     if (context.propsValue['mime_type']) {
-      body.mimeType = context.propsValue['mime_type'];
+      qs['mimeType'] = context.propsValue['mime_type'];
     }
     
     if (context.propsValue['set_cover']) {
-      body.setCover = context.propsValue['set_cover'];
+      qs['setCover'] = context.propsValue['set_cover'] ?'true':'false';
     }
 
     const request: HttpRequest = {
@@ -108,9 +69,10 @@ export const addCardAttachment = createAction({
         context.auth.password,
       headers: {
         Accept: 'application/json',
+        ...formData.getHeaders()
       },
-      body,
-      queryParams: {},
+      body:formData,
+      queryParams: qs,
     };
     
     const response = await httpClient.sendRequest(request);

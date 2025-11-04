@@ -12,7 +12,7 @@ export const getCard = createAction({
   auth: trelloAuth,
   name: 'get_card',
   displayName: 'Get Card',
-  description: 'Get a card in Trello',
+  description: 'Gets a card by ID.',
   props: {
     cardId: Property.ShortText({
       description: 'The card ID',

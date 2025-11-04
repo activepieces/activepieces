@@ -11,10 +11,10 @@ export const deleteCard = createAction({
   auth: trelloAuth,
   name: 'delete_card',
   displayName: 'Delete Card',
-  description: 'Delete a card from Trello',
+  description: 'Deletes an existing card.',
   props: {
     card_id: Property.ShortText({
-      description: 'The ID of the card to delete',
+      description: 'The ID of the card to delete.',
       displayName: 'Card ID',
       required: true,
     }),

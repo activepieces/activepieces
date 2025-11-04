@@ -12,7 +12,7 @@ export const updateCard = createAction({
   auth: trelloAuth,
   name: 'update_card',
   displayName: 'Update Card',
-  description: 'Update an existing card in Trello',
+  description: 'Updates an existing card.',
   props: {
     card_id: Property.ShortText({
       description: 'The ID of the card to update',
