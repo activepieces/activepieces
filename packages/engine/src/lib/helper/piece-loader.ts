@@ -3,36 +3,35 @@ import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 import { utils } from '../utils'
+import { EngineGenericError } from './execution-errors'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
         { pieceName, pieceVersion, pieceSource }: LoadPieceParams,
     ): Promise<Piece> => {
-        const packageName = pieceLoader.getPackageAlias({
-            pieceName,
-            pieceVersion,
-            pieceSource,
-        })
-        const piecePath = await pieceLoader.getPiecePath({ packageName, pieceSource })
-        const module = await import(piecePath)
-
-        const piece = extractPieceFromModule<Piece>({
-            module,
-            pieceName,
-            pieceVersion,
-        })
-
-        if (isNil(piece)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PIECE_NOT_FOUND,
-                params: {
-                    pieceName,
-                    pieceVersion,
-                    message: 'Piece not found in the engine',
-                },
+        const { data: piece, error: pieceError } = await utils.tryCatchAndThrowOnEngineError(async () => {
+            const packageName = pieceLoader.getPackageAlias({
+                pieceName,
+                pieceVersion,
+                pieceSource,
             })
-        }
+            const piecePath = await pieceLoader.getPiecePath({ packageName, pieceSource })
+            const module = await import(piecePath)
 
+            const piece = extractPieceFromModule<Piece>({
+                module,
+                pieceName,
+                pieceVersion,
+            })
+
+            if (isNil(piece)) {
+                throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}, pieceVersion: ${pieceVersion}`)
+            }
+            return piece
+        })
+        if (pieceError) {
+            throw pieceError
+        }
         return piece
     },
 
@@ -42,7 +41,7 @@ export const pieceLoader = {
         const trigger = piece.getTrigger(triggerName)
 
         if (trigger === undefined) {
-            throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
+            throw new EngineGenericError('TriggerNotFoundError', `Trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
         }
 
         return {
@@ -132,14 +131,7 @@ export const pieceLoader = {
                 break
         }
         if (isNil(piecePath)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PIECE_NOT_FOUND,
-                params: {
-                    pieceName: packageName,
-                    pieceVersion: undefined,
-                    message: `Piece path not found for package: ${packageName}`,
-                },
-            })
+            throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}`)
         }
         return piecePath
     },
@@ -149,16 +141,17 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
     const distPath = path.resolve('dist/packages/pieces')
     const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
     for (const entry of entries) {
-        try {
+        const { data: packageJsonPath } = await utils.tryCatchAndThrowOnEngineError((async () => {
             const packageJsonPath = entry.path
             const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
             const packageJson = JSON.parse(packageJsonContent)
             if (packageJson.name === packageName) {
                 return path.dirname(packageJsonPath)
             }
-        }
-        catch (error) {
-            // Skip invalid package.json files
+            return null
+        }))
+        if (packageJsonPath) {
+            return packageJsonPath
         }
     }
     return null
