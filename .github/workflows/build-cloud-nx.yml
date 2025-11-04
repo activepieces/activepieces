@@ -26,8 +26,6 @@ jobs:
         with:
           bun-version: latest
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --skip-install
-        if: github.event.pull_request.head.repo.full_name == github.repository
    
       - run: bun install
 
@@ -59,67 +57,33 @@ jobs:
           echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
 
       - name: Lint affected projects excluding pieces
-        run: |
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            npx nx affected --target=lint --exclude="pieces-*" --agents --parallel
-          else
-            npx nx affected --target=lint --exclude="pieces-*"
-          fi
+        run: npx nx affected --target=lint --exclude="pieces-*"
       
       - name: Lint changed pieces projects
         if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: |
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
-          else
-            npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-          fi
+        run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
       
       - name: Lint all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: |
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            npx nx run-many --target=lint --projects="pieces-*" --agents --parallel
-          else
-            npx nx run-many --target=lint --projects="pieces-*"
-          fi
+        run: npx nx run-many --target=lint --projects="pieces-*"
         
       - name: Build affected projects excluding pieces
-        run: |
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            npx nx affected --target=build -c production --exclude="pieces-*" --agents --parallel
-          else
-            npx nx affected --target=build -c production --exclude="pieces-*"
-          fi
+        run: npx nx affected --target=build -c production --exclude="pieces-*"
     
       - name: Build changed pieces projects
         if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: |
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
-          else
-            npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-          fi
+        run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
       
       - name: Build all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: |
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            npx nx run-many --target=build -c production --projects="pieces-*" --agents --parallel
-          else
-            npx nx run-many --target=build -c production --projects="pieces-*"
-          fi
+        run: npx nx run-many --target=build -c production --projects="pieces-*"
       
       - name: Run all tests in parallel
         run: |
           set -euo pipefail
           pids=()
 
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
-            npx nx run-many --target=test --projects=engine,shared --agents --parallel &
-          else
-            npx nx run-many --target=test --projects=engine,shared &
-          fi
+          npx nx run-many --target=test --projects=engine,shared &
           pids+=($!)
 
           npx nx run server-api:test-ce &
