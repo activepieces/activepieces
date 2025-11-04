@@ -1,7 +1,5 @@
 import { inspect } from 'util'
 import {
-    EngineOperation,
-    EngineOperationType,
     EngineResponse,
     EngineResponseStatus,
     EngineSocketEvent,
