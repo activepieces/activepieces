@@ -17,15 +17,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'npm'
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js"
         if: github.event.pull_request.head.repo.full_name == github.repository
    
-      - run: npm install -g bun && bun install
+      - run: bun install
 
       - run: npx nx reset 
 
