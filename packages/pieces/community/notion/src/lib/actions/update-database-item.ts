@@ -12,7 +12,8 @@ export const updateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'update_database_item',
   displayName: 'Update Database Item',
-  description: 'Updates an item in database',
+  description:
+    'Update specific fields in a Notion database item. Perfect for maintaining data, tracking changes, or syncing information across systems.',
   props: {
     database_id: notionCommon.database_id,
     database_item_id: notionCommon.database_item_id,
@@ -35,11 +36,16 @@ export const updateDatabaseItem = createAction({
     });
 
     Object.keys(databaseFields).forEach((key) => {
-      if (databaseFields[key] !== '') {
+      const value = databaseFields[key];
+      if (
+        value !== '' &&
+        value !== undefined &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+      ) {
         const fieldType: string = properties[key].type;
-        notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-          databaseFields[key]
-        );
+        notionFields[key] =
+          NotionFieldMapping[fieldType].buildNotionType(value);
       }
     });
     return await notion.pages.update({

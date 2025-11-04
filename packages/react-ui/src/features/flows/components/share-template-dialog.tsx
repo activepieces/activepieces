@@ -16,12 +16,10 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { FlowTemplate, TemplateType } from '@activepieces/shared';
-
-import { useNewWindow } from '../../../components/embed-provider';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),
@@ -65,7 +63,6 @@ const ShareTemplateDialog: React.FC<{
       openNewIndow(`/templates/${data.id}`);
       setIsShareDialogOpen(false);
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   const onShareTemplateSubmit: SubmitHandler<{

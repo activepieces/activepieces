@@ -6,9 +6,8 @@ import { determineDefaultRoute } from '@/lib/utils';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
-  const { checkAccess } = useAuthorization();
   const location = useLocation();
-
+  const { checkAccess } = useAuthorization();
   if (!token) {
     const searchParams = new URLSearchParams();
     searchParams.set('from', location.pathname + location.search);

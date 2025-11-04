@@ -51,6 +51,7 @@ const JsonEditor = React.memo(
       styleTheme,
       EditorState.readOnly.of(readonly),
       EditorView.editable.of(!readonly),
+      EditorView.lineWrapping,
       json(),
     ];
     const ref = useRef<ReactCodeMirrorRef>(null);

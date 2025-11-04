@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { platformApi } from '@/lib/platforms-api';
 import {
   PlatformWithoutSensitiveData,
@@ -73,10 +73,6 @@ export const AllowedDomainDialog = ({
         duration: 3000,
       });
       setOpen(false);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

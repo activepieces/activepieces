@@ -1,3 +1,4 @@
+import { AIUsage } from '@activepieces/common-ai'
 import {
     AppConnection,
     Cell,
@@ -13,7 +14,12 @@ import {
     User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
+import {
+    ApIdSchema,
+    BaseColumnSchemaPart,
+    JSONB_COLUMN_TYPE,
+    TIMESTAMP_COLUMN_TYPE,
+} from '../database/database-common'
 
 type ProjectSchema = Project & {
     owner: User
@@ -28,6 +34,7 @@ type ProjectSchema = Project & {
     records: Record[]
     cells: Cell[]
     tableWebhooks: TableWebhook[]
+    aiUsage: AIUsage[]
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -43,9 +50,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         displayName: {
             type: String,
         },
-        notifyStatus: {
-            type: String,
-        },
         platformId: {
             ...ApIdSchema,
         },
@@ -53,10 +57,18 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: String,
             nullable: true,
         },
+        maxConcurrentJobs: {
+            type: Number,
+            nullable: true,
+        },
         releasesEnabled: {
             type: Boolean,
             nullable: false,
             default: false,
+        },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
     },
     indices: [
@@ -140,6 +152,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         tableWebhooks: {
             type: 'one-to-many',
             target: 'table_webhook',
+            inverseSide: 'project',
+        },
+        aiUsage: {
+            type: 'one-to-many',
+            target: 'ai_usage',
             inverseSide: 'project',
         },
     },

@@ -1,0 +1,19 @@
+{
+  "Square": "Square",
+  "Payment solutions for every business": "Payment solutions for every business",
+  "Authentication": "Authentication",
+  "New Order": "New Order",
+  "Order Updated": "Order Updated",
+  "New Customer": "New Customer",
+  "Customer Updated": "Customer Updated",
+  "New Appointment": "New Appointment",
+  "New Payment": "New Payment",
+  "New Invoice": "New Invoice",
+  "Triggered when a new order is created": "Triggered when a new order is created",
+  "Triggered when an order is updated": "Triggered when an order is updated",
+  "Triggered when a customer is created": "Triggered when a customer is created",
+  "Triggered when a customer is updated": "Triggered when a customer is updated",
+  "Triggered when a new appointment is created": "Triggered when a new appointment is created",
+  "Triggered when a new payment is created": "Triggered when a new payment is created",
+  "Triggered when a new invoice is created": "Triggered when a new invoice is created"
+}

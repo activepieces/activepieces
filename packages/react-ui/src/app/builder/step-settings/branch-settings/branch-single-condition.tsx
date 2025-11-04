@@ -119,7 +119,10 @@ const BranchSingleCondition = ({
                   <TextInputWithMentions
                     disabled={readonly}
                     placeholder={t('First value')}
-                    onChange={field.onChange}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      form.trigger();
+                    }}
                     initialValue={field.value}
                   ></TextInputWithMentions>
                   <FormMessage />
@@ -151,6 +154,7 @@ const BranchSingleCondition = ({
                       );
                     }
                     field.onChange(e);
+                    form.trigger();
                   }}
                 />
                 <FormMessage />
@@ -167,7 +171,10 @@ const BranchSingleCondition = ({
                     placeholder={t('Second value')}
                     disabled={readonly}
                     initialValue={field.value || ''}
-                    onChange={field.onChange}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      form.trigger();
+                    }}
                   ></TextInputWithMentions>
                   <FormMessage />
                 </FormItem>

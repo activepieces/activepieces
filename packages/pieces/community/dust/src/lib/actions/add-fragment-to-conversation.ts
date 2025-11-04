@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { dustAuth } from '../..';
+import { dustAuth, DustAuthType } from '../..';
 import { DUST_BASE_URL } from '../common';
 import {
   httpClient,
@@ -32,9 +32,13 @@ export const addFragmentToConversation = createAction({
         mime.lookup(propsValue.fragment.filename)
       : mime.lookup(propsValue.fragment.filename);
 
+    const dustAuth = auth as DustAuthType;
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${DUST_BASE_URL}/${auth.workspaceId}/assistant/conversations/${propsValue.conversationId}/content_fragments`,
+      url: `${DUST_BASE_URL[dustAuth.region || 'us']}/${
+        dustAuth.workspaceId
+      }/assistant/conversations/${propsValue.conversationId}/content_fragments`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.apiKey}`,

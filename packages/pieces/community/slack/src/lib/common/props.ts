@@ -6,15 +6,17 @@ const slackChannelBotInstruction = `
 	  1. Type /invite in the channel's chat.
 	  2. Click on Add apps to this channel.
 	  3. Search for and add the bot.
-  `
+  `;
 
 export const multiSelectChannelInfo = Property.MarkDown({
-  value: slackChannelBotInstruction +
+  value:
+    slackChannelBotInstruction +
     `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly in an array like this: \`{\`{ ['your_channel_id_1', 'your_channel_id_2', ...] \`}\`}`,
 });
 
 export const singleSelectChannelInfo = Property.MarkDown({
-  value: slackChannelBotInstruction +
+  value:
+    slackChannelBotInstruction +
     `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.
   `,
 });
@@ -59,6 +61,13 @@ export const profilePicture = Property.ShortText({
   required: false,
 });
 
+export const threadTs = Property.ShortText({
+  displayName: 'Thread ts',
+  description:
+    'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
+  required: false,
+});
+
 export const blocks = Property.Json({
   displayName: 'Block Kit blocks',
   description: 'See https://api.slack.com/block-kit for specs',
@@ -98,7 +107,7 @@ export const userId = Property.Dropdown<string>({
     }
     return {
       disabled: false,
-      placeholder: 'Select channel',
+      placeholder: 'Select User',
       options: users,
     };
   },
@@ -112,6 +121,24 @@ export const text = Property.LongText({
 export const actions = Property.Array({
   displayName: 'Action Buttons',
   required: true,
+  properties: {
+    label: Property.ShortText({
+      displayName: 'Label',
+      required: true,
+    }),
+    style: Property.StaticDropdown({
+      displayName: 'Style',
+      required: false,
+      defaultValue: null,
+      options: {
+        options: [
+          { label: 'Default', value: null },
+          { label: 'Primary', value: 'primary' },
+          { label: 'Danger', value: 'danger' },
+        ],
+      },
+    }),
+  },
 });
 
 export async function getChannels(accessToken: string) {

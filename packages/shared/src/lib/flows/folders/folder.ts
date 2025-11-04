@@ -8,9 +8,10 @@ export const Folder = Type.Object({
     id: Type.String(),
     projectId: Type.String(),
     displayName: Type.String(),
+    displayOrder: Type.Number(),
 })
 
-export const UncategorizedFolderId = 'UNCATEGORIZED'
+export const UncategorizedFolderId = 'NULL'
 export type Folder = Static<typeof Folder>
 
 export type FolderDto = Folder & { numberOfFlows: number }

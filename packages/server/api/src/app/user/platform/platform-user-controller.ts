@@ -2,8 +2,10 @@ import {
     ApId,
     assertNotNullOrUndefined,
     EndpointScope,
+    ListUsersRequestBody,
     PrincipalType,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpdateUserRequestBody,
     UserWithMetaInformation,
 } from '@activepieces/shared'
@@ -22,6 +24,9 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 
         return userService.list({
             platformId,
+            externalId: req.query.externalId,
+            cursorRequest: req.query.cursor ?? null,
+            limit: req.query.limit ?? 10,
         })
     })
 
@@ -53,15 +58,19 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 
 const ListUsersRequest = {
     schema: {
+        querystring: ListUsersRequestBody,
         response: {
             [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
         },
+        tags: ['users'],
+        description: 'List users',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     response: {
         [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
 }
@@ -77,7 +86,7 @@ const UpdateUserRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
 }
@@ -89,7 +98,7 @@ const DeleteUserRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
 }

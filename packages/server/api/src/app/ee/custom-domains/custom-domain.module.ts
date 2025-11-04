@@ -2,7 +2,7 @@ import {
     AddDomainRequest,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,
@@ -19,7 +19,7 @@ const GetOneRequest = Type.Object({
 type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.customDomainsEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
@@ -30,6 +30,9 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         {
             schema: {
                 body: AddDomainRequest,
+            },
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
             },
         },
         async (request, reply) => {
@@ -61,6 +64,9 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             schema: {
                 querystring: ListCustomDomainsRequest,
             },
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
         },
         async (request) => {
             const platformId = request.principal.platform.id
@@ -78,6 +84,9 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         {
             schema: {
                 params: GetOneRequest,
+            },
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
             },
         },
         async (request) => {

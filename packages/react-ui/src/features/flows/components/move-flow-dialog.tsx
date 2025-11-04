@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 
@@ -73,7 +73,6 @@ const MoveFlowDialog = ({ children, flows, onMoveTo }: MoveFlowDialogProps) => {
         title: t('Moved flows successfully'),
       });
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   return (

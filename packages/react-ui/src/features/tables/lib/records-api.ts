@@ -8,9 +8,11 @@ import {
   UpdateRecordRequest,
 } from '@activepieces/shared';
 
+import { FieldsMapping } from './utils';
+
 export const recordsApi = {
   list(request: ListRecordsRequest): Promise<SeekPage<PopulatedRecord>> {
-    return api.post<SeekPage<PopulatedRecord>>('/v1/records/list', request);
+    return api.get<SeekPage<PopulatedRecord>>('/v1/records', request);
   },
 
   create(request: CreateRecordsRequest): Promise<PopulatedRecord[]> {
@@ -27,5 +29,38 @@ export const recordsApi = {
 
   delete(request: DeleteRecordsRequest): Promise<void> {
     return api.delete<void>(`/v1/records/`, undefined, request);
+  },
+
+  async importCsv({
+    csvRecords,
+    tableId,
+    fieldsMapping,
+    maxRecordsLimit,
+  }: {
+    csvRecords: string[][];
+    tableId: string;
+    fieldsMapping: FieldsMapping;
+    maxRecordsLimit: number;
+  }) {
+    const records: CreateRecordsRequest['records'] = csvRecords.map(
+      (recordCells) => {
+        return recordCells
+          .map((value, index) => {
+            const fieldMapping = fieldsMapping[index];
+            if (!fieldMapping) {
+              return null;
+            }
+            return {
+              value: value,
+              fieldId: fieldMapping,
+            };
+          })
+          .filter((cell) => cell !== null);
+      },
+    );
+    return await recordsApi.create({
+      tableId,
+      records: records.slice(0, maxRecordsLimit),
+    });
   },
 };

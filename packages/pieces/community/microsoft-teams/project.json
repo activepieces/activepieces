@@ -15,11 +15,20 @@
         "packageJson": "packages/pieces/community/microsoft-teams/package.json",
         "main": "packages/pieces/community/microsoft-teams/src/index.ts",
         "assets": [
-          "packages/pieces/community/microsoft-teams/*.md"
+          "packages/pieces/community/microsoft-teams/*.md",
+          {
+            "input": "packages/pieces/community/microsoft-teams/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-microsoft-teams {args.ver} {args.tag}",
@@ -37,6 +46,16 @@
           "packages/pieces/community/microsoft-teams/**/*.ts"
         ]
       }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/microsoft-teams",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []

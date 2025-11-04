@@ -92,7 +92,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
       userId: 'me',
       startHistoryId: lastHistoryId as string,
       labelId: context.propsValue.label.id,
-      historyTypes: ['labelAdded'],
+      historyTypes: ['labelAdded', 'messageAdded'],
     });
 
     const labeledMessages = new Map<string, string>();
@@ -108,6 +108,20 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
             ) {
               labeledMessages.set(
                 labelAdded.message.id,
+                history.id?.toString() || ''
+              );
+            }
+          }
+        } else if (history.messagesAdded) {
+          for (const messageAdded of history.messagesAdded) {
+            if (
+              messageAdded.message?.id &&
+              messageAdded.message.labelIds?.includes(
+                context.propsValue.label.id
+              )
+            ) {
+              labeledMessages.set(
+                messageAdded.message.id,
                 history.id?.toString() || ''
               );
             }

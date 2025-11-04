@@ -27,16 +27,20 @@ describe('Audit Event API', () => {
     describe('List Audit event API', () => {
         it('should list audit events', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
-            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
-
-
-            await databaseConnection().getRepository('platform').update(mockPlatformOne.id, {
-                auditLogEnabled: true,
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup({
+                plan: {
+                    auditLogEnabled: true,
+                },
             })
+            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo, mockProject: mockProjectOne } = await mockAndSaveBasicSetup({
+               
+            })
+
+
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
+                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -92,7 +96,7 @@ describe('Audit Event API', () => {
 
         it('should return forbidden if the user is not the owner', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -103,6 +107,7 @@ describe('Audit Event API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 

@@ -14,7 +14,7 @@ async function getMimeType(
 ): Promise<string> {
   const mimeType = (
     await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=mimeType`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=mimeType&supportsAllDrives=true`,
       {
         headers: {
           Authorization: `Bearer ${auth.access_token}`,
@@ -52,14 +52,14 @@ const googledlCall = async (
       )
     );
 
-  const extention = '.' + extension(mimeType);
-  const srcFileName = fileName ?? fileId + extention;
+  const extensionResult = extension(mimeType);
+  const fileExtension = extensionResult ? '.' + extensionResult : '';
+  const srcFileName = fileName ?? fileId + fileExtension;
   // const name =
   //   (srcFileName
-  //     ? srcFileName.replace(new RegExp(extention + '$'), '')
-  //     : fileId) + extention;
+  //     ? srcFileName.replace(new RegExp(fileExtension + '$'), '')
+  //     : fileId) + fileExtension;
 
-  // console.log(extention, srcFileName, name);
   return files.write({
     fileName: srcFileName,
     data: Buffer.from(await download.arrayBuffer()),
@@ -97,7 +97,7 @@ export async function downloadFileFromDrive(
         break;
     }
     return await googledlCall(
-      `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${mimeType}&supportsAllDrives=true`,
       auth,
       fileId,
       files,
@@ -105,7 +105,7 @@ export async function downloadFileFromDrive(
     );
   } else {
     return await googledlCall(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,
       auth,
       fileId,
       files,

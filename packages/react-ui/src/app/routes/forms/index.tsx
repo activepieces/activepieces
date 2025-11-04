@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { ApForm } from '@/features/human-input/components/ap-form';
-import { humanInputApi } from '@/features/human-input/lib/human-input-api';
+import { LoadingScreen } from '@/components/ui/loading-screen';
+import { ApForm } from '@/features/forms/components/ap-form';
+import { humanInputApi } from '@/features/forms/lib/human-input-api';
 import {
   FormResponse,
   isNil,
@@ -31,11 +31,7 @@ export const FormPage = () => {
 
   return (
     <>
-      {isLoading && (
-        <div className="bg-background flex h-screen w-screen items-center justify-center ">
-          <LoadingSpinner size={50}></LoadingSpinner>
-        </div>
-      )}
+      {isLoading && <LoadingScreen />}
       {isError && (
         <NotFoundPage
           title="Hmm... this form isn't here"

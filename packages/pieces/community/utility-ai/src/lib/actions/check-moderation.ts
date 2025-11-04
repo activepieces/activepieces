@@ -1,5 +1,9 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { AI, aiProps } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { isNil, SeekPage } from '@activepieces/shared';
+import { AI_USAGE_FEATURE_HEADER, AIProviderWithoutSensitiveData, AIUsageFeature } from '@activepieces/common-ai';
+import OpenAI from 'openai';
+import { ModerationMultiModalInput } from 'openai/resources/moderations';
 
 export const checkModeration = createAction({
   name: 'checkModeration',
@@ -7,8 +11,64 @@ export const checkModeration = createAction({
   description:
     'Classifies if text or image contains hate, hate/threatening, self-harm, sexual, sexual/minors, violence, or violence/graphic content.',
   props: {
-    provider: aiProps('moderation').provider,
-    model: aiProps('moderation').model,
+    provider: Property.Dropdown<string, true>({
+      displayName: 'Provider',
+      required: true,
+      refreshers: [],
+      options: async (_, ctx) => {
+          const { body: { data: supportedProviders } } = await httpClient.sendRequest<
+              SeekPage<AIProviderWithoutSensitiveData>
+          >({
+              method: HttpMethod.GET,
+              url: `${ctx.server.apiUrl}v1/ai-providers`,
+              headers: {
+                  Authorization: `Bearer ${ctx.server.token}`,
+              },
+          });
+
+          const openaiProvider = supportedProviders.find(provider => provider.provider === 'openai');
+
+          return {
+              placeholder: openaiProvider ? 'Select AI Provider' : `No OpenAI providers available for moderation`,
+              disabled: !openaiProvider,
+              options: openaiProvider ? [
+                {
+                  value: openaiProvider.provider,
+                  label: openaiProvider.provider
+                }
+              ] : [],
+          };
+      },
+  }),
+  model: Property.Dropdown({
+      displayName: 'Model',
+      required: true,
+      defaultValue: 'omni-moderation-latest',
+      refreshers: ['provider'],
+      options: async (propsValue) => {
+          const provider = propsValue['provider'] as string;
+          if (isNil(provider)) {
+              return {
+                  disabled: true,
+                  options: [],
+                  placeholder: 'Select AI Provider',
+              };
+          }
+
+          const openaiModerationModels = [
+            {
+              label: 'omni-moderation-latest',
+              value: 'omni-moderation-latest',
+            },
+          ];
+
+          return {
+              placeholder: 'Select AI Model',
+              disabled: false,
+              options: openaiModerationModels,
+          };
+      },
+  }),
     text: Property.LongText({
       displayName: 'Text',
       required: false,
@@ -25,30 +85,45 @@ export const checkModeration = createAction({
     }),
   },
   async run(context) {
+    const providerName = context.propsValue.provider as string;
     const text = context.propsValue.text;
     const images = (context.propsValue.images as Array<{ file: ApFile }>) ?? [];
-    const ai = AI({
-      provider: context.propsValue.provider,
-      server: context.server,
-    });
 
-    const moderation = ai.moderation?.create;
-    if (!moderation) {
-      throw new Error(
-        `Checking moderation is not supported by provider ${context.propsValue.provider}`
-      );
-    }
+    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}/v1`;
+    const engineToken = context.server.token;
 
     if (!text && !images.length) {
       throw new Error('Please provide text or images to check moderation');
     }
 
-    const response = await moderation({
-      model: context.propsValue.model,
-      text,
-      images: images.map((image) => image.file),
+    const client = new OpenAI({
+      apiKey: engineToken,
+      baseURL,
+      defaultHeaders: {
+        [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.UTILITY_AI,
+      },
     });
 
-    return response;
+    const input: ModerationMultiModalInput[] = [];
+
+    if (text) { 
+      input.push({ type: 'text', text });
+    }
+
+    for (const image of images) {
+      input.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:image/${image.file.extension};base64,${image.file.base64}`,
+        },
+      });
+    }
+
+    const moderation = await client.moderations.create({
+      input,
+      model: context.propsValue.model,
+    });
+
+    return moderation.results[0];
   },
 });

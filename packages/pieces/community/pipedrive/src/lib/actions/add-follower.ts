@@ -1,12 +1,6 @@
 import { pipedriveAuth } from '../../index';
-import { createAction, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import {
-	fetchDealsOptions,
-	fetchOrganizationsOptions,
-	fetchPersonsOptions,
-	fetchProductsOptions,
-	ownerIdProp,
-} from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ownerIdProp } from '../common/props';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -43,47 +37,10 @@ export const addFollowerAction = createAction({
 				],
 			},
 		}),
-		entityId: Property.Dropdown({
+		entityId: Property.ShortText({
 			displayName: 'Target Object ID',
 			description: 'ID of the object to add the follower to.',
-			refreshers: ['entity'],
-			required: true,
-			options: async ({ auth, entity }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account.',
-					};
-				}
-				if (!entity)
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please select entity type.',
-					};
-				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				let options;
-				switch (entity) {
-					case 'deal':
-						options = await fetchDealsOptions(authValue);
-						break;
-					case 'person':
-						options = await fetchPersonsOptions(authValue);
-						break;
-					case 'organization':
-						options = await fetchOrganizationsOptions(authValue);
-						break;
-					case 'product':
-						options = await fetchProductsOptions(authValue);
-						break;
-				}
-
-				return {
-					disabled: false,
-					options: options ?? [],
-				};
-			},
+			required:true
 		}),
 	},
 	async run(context) {
@@ -114,7 +71,7 @@ export const addFollowerAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
-			resourceUri: endpoint,
+			resourceUri: `/v2${endpoint}`,
 			body: {
 				user_id: followerId,
 			},

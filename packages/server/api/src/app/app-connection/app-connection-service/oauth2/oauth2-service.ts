@@ -29,6 +29,7 @@ export type OAuth2RequestBody = {
     grantType?: OAuth2GrantType
     authorizationMethod?: OAuth2AuthorizationMethod
     codeVerifier?: string
+    scope?: string
 }
 
 export type ClaimOAuth2Request = {

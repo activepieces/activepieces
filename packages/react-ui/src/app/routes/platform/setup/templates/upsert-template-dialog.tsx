@@ -18,7 +18,6 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TagInput } from '@/components/ui/tag-input';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 import {
@@ -61,8 +60,6 @@ export const UpsertTemplateDialog = ({
     resolver: typeboxResolver(UpsertFlowTemplateSchema),
   });
 
-  const { toast } = useToast();
-
   const { mutate, isPending } = useMutation({
     mutationKey: ['create-template'],
     mutationFn: () => {
@@ -78,14 +75,11 @@ export const UpsertTemplateDialog = ({
         description: formValue.description,
         id: template?.id,
         tags: formValue.tags,
+        metadata: template?.metadata,
       });
     },
     onSuccess: () => {
       onDone();
-      setOpen(false);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
       setOpen(false);
     },
   });
@@ -188,8 +182,10 @@ export const UpsertTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const json = JSON.parse(text) as FlowTemplate;
-                            field.onChange(json.template);
+                            const migratedTemplate = JSON.parse(
+                              text,
+                            ) as FlowTemplate;
+                            field.onChange(migratedTemplate.template);
                           } catch (e) {
                             form.setError('template', {
                               message: t('Invalid JSON'),

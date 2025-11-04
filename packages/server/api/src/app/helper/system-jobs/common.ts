@@ -1,37 +1,36 @@
-import { ProjectId } from '@activepieces/shared'
+import { PlatformId, ProjectId } from '@activepieces/shared'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
-    HARD_DELETE_PROJECT = 'hard-delete-project',
-    PLATFORM_USAGE_REPORT = 'platform-usage-report',
-    USAGE_REPORT = 'usage-report',
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
-    TRIAL_TRACKER = 'trial-tracker',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
-    ISSUES_REMINDER = 'issue-reminder',
+    TRIAL_TRACKER = 'trial-tracker',
+    ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
+    AI_USAGE_REPORT = 'ai-usage-report',
 }
 
-type HardDeleteProjectSystemJobData = {
-    projectId: ProjectId
-}
-type IssuesReminderSystemJobData = {
+type IssuesSummarySystemJobData = {
     projectId: ProjectId
     projectName: string
     platformId: string
 }
 
+type AiUsageReportSystemJobData = {
+    platformId: PlatformId
+    overage: string
+    idempotencyKey: string
+}
+
 type SystemJobDataMap = {
-    [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
-    [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
-    [SystemJobName.PLATFORM_USAGE_REPORT]: Record<string, never>
-    [SystemJobName.USAGE_REPORT]: Record<string, never>
+    [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
+    [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
-    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
+    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

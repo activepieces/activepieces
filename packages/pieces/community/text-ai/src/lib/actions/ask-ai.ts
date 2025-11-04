@@ -1,18 +1,16 @@
-import {
-  AI,
-  AIChatMessage,
-  AIChatRole,
-  aiProps,
-} from '@activepieces/pieces-common';
+import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, WebSearchOptions, createAIModel, createWebSearchTool } from '@activepieces/common-ai';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { LanguageModelV2 } from '@ai-sdk/provider';
+import { ModelMessage, generateText, stepCountIs } from 'ai';
+import { aiProps } from '@activepieces/common-ai';
 
-export const askAi = createAction({
+export const askAI = createAction({
   name: 'askAi',
   displayName: 'Ask AI',
   description: '',
   props: {
-    provider: aiProps('text').provider,
-    model: aiProps('text').model,
+    provider: aiProps({ modelType: 'language' }).provider,
+    model: aiProps({ modelType: 'language' }).model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -28,61 +26,81 @@ export const askAi = createAction({
       description:
         'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
     }),
-    maxTokens: Property.Number({
+    maxOutputTokens: Property.Number({
       displayName: 'Max Tokens',
       required: false,
       defaultValue: 2000,
     }),
+    webSearch: aiProps({ modelType: 'language' }).webSearch,
+    webSearchOptions: aiProps({ modelType: 'language' }).webSearchOptions,
   },
   async run(context) {
-
-    const ai = AI({ provider: context.propsValue.provider, server: context.server });
-
+    const providerName = context.propsValue.provider as string;
+    const modelInstance = context.propsValue.model as LanguageModelV2;
     const storage = context.store;
+    const webSearchOptions = context.propsValue.webSearchOptions as WebSearchOptions;
+
+    const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
+    if (!providerConfig) {
+      throw new Error(`Provider ${providerName} not found`);
+    }
+
+    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+    const engineToken = context.server.token;
+    const model = createAIModel({
+      providerName,
+      modelInstance,
+      engineToken,
+      baseURL,
+      metadata: {
+        feature: AIUsageFeature.TEXT_AI,
+      },
+      openaiResponsesModel: true,
+    });
 
     const conversationKey = context.propsValue.conversationKey
       ? `ask-ai-conversation:${context.propsValue.conversationKey}`
       : null;
 
-    let conversation: { messages: AIChatMessage[] } | undefined = undefined;
+    let conversation = null;
     if (conversationKey) {
-      conversation = (await storage.get<{ messages: AIChatMessage[] }>(
+      conversation = (await storage.get<ModelMessage[]>(
         conversationKey
-      )) ?? { messages: [] };
+      )) ?? [];
       if (!conversation) {
         await storage.put(conversationKey, { messages: [] });
       }
     }
 
-    const response = await ai.chat.text({
-      model: context.propsValue.model,
-      messages: conversation?.messages
-        ? [
-            ...conversation.messages,
-            {
-              role: AIChatRole.USER,
-              content: context.propsValue.prompt,
-            },
-          ]
-        : [{ role: AIChatRole.USER, content: context.propsValue.prompt }],
-      creativity: context.propsValue.creativity,
-      maxTokens: context.propsValue.maxTokens,
+    const response = await generateText({
+      model,
+      messages: [
+        ...(conversation ?? []),
+        {
+          role: 'user',
+          content: context.propsValue.prompt,
+        },
+      ],
+      maxOutputTokens: context.propsValue.maxOutputTokens,
+      temperature: (context.propsValue.creativity ?? 100) / 100,
+      tools: context.propsValue.webSearch ? createWebSearchTool(providerName, webSearchOptions) : undefined,
+      stopWhen: stepCountIs(webSearchOptions?.maxUses ?? 5),
     });
 
-    conversation?.messages.push({
-      role: AIChatRole.USER,
+    conversation?.push({
+      role: 'user',
       content: context.propsValue.prompt,
     });
 
-    conversation?.messages.push({
-      role: AIChatRole.ASSISTANT,
-      content: response.choices[0].content,
+    conversation?.push({
+      role: 'assistant',
+      content: response.text ?? '',
     });
 
     if (conversationKey) {
       await storage.put(conversationKey, conversation);
     }
 
-    return response.choices[0].content;
+    return webSearchOptions.includeSources ? { text: response.text, sources: response.sources } : response.text;
   },
 });

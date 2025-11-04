@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-qdrant",
-  "version": "0.2.0"
+  "version": "0.2.8",
+  "dependencies": {
+    "@qdrant/js-client-rest": "1.7.0"
+  }
 }

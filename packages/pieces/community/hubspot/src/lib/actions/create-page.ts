@@ -111,12 +111,12 @@ export const createPageAction = createAction({
 			});
 		}
 
-		const pageDeatils = await httpClient.sendRequest({
+		const pageDetails = await httpClient.sendRequest({
 			method: HttpMethod.GET,
 			url: `${url}/${createdPage.body.id}`,
 			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
 		});
 
-		return pageDeatils.body;
+		return pageDetails.body;
 	},
 });

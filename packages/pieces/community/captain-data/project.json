@@ -5,10 +5,11 @@
   "projectType": "library",
   "release": {
     "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/{projectRoot}",
-        "currentVersionResolver": "git-tag"
-      }
+      "currentVersionResolver": "git-tag",
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ]
     }
   },
   "tags": [],
@@ -24,11 +25,20 @@
         "packageJson": "packages/pieces/community/captain-data/package.json",
         "main": "packages/pieces/community/captain-data/src/index.ts",
         "assets": [
-          "packages/pieces/community/captain-data/*.md"
+          "packages/pieces/community/captain-data/*.md",
+          {
+            "input": "packages/pieces/community/captain-data/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "nx-release-publish": {
       "options": {
@@ -39,6 +49,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/captain-data",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   }

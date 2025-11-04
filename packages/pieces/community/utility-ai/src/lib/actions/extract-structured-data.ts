@@ -1,23 +1,22 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
-import { AI, AIChatRole, aiProps, AIFunctionArgumentDefinition } from '@activepieces/pieces-common';
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai';
+import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
+import { LanguageModelV2 } from '@ai-sdk/provider';
+import mime from 'mime-types';
 import Ajv from 'ajv';
+import { aiProps } from '@activepieces/common-ai';
 
 export const extractStructuredData = createAction({
 	name: 'extractStructuredData',
 	displayName: 'Extract Structured Data',
 	description: 'Extract structured data from provided text,image or PDF.',
 	props: {
-		provider: aiProps('function').provider,
-		model: aiProps('function').model,
+		provider: aiProps({ modelType: 'language', functionCalling: true }).provider,
+		model: aiProps({ modelType: 'language', functionCalling: true }).model,
 		text: Property.LongText({
 			displayName: 'Text',
 			description: 'Text to extract structured data from.',
 			required: false,
-		}),
-		markdown:Property.MarkDown({
-			variant:MarkdownVariant.INFO,
-			value:`OpenAI supports only images. All other file types will be ignored. To process PDFs, use the Convert to Image action.`,
 		}),
 		files: Property.Array({
 			displayName: 'Files',
@@ -118,30 +117,42 @@ export const extractStructuredData = createAction({
 				};
 			},
 		}),
-		maxTokens: Property.Number({
+		maxOutputTokens: Property.Number({
 			displayName: 'Max Tokens',
 			required: false,
 			defaultValue: 2000,
 		}),
 	},
 	async run(context) {
-		const provider = context.propsValue.provider;
-		const model = context.propsValue.model;
+		const providerName = context.propsValue.provider as string;
+		const modelInstance = context.propsValue.model as LanguageModelV2;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
 		const prompt = context.propsValue.prompt;
 		const schema = context.propsValue.schama;
+		const maxOutputTokens = context.propsValue.maxOutputTokens;
 
 		if (!text && !files.length) {
 			throw new Error('Please provide text or image/PDF to extract data from.');
 		}
 
-		const ai = AI({ provider, server: context.server });
+		const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+		const engineToken = context.server.token;
+		const model = createAIModel({
+			providerName,
+			modelInstance,
+			engineToken,
+			baseURL,
+			metadata: {
+				feature: AIUsageFeature.UTILITY_AI,
+			},
+		});
 
-		let params: AIFunctionArgumentDefinition;
+		let schemaDefinition: any;
+		
 		if (context.propsValue.mode === 'advanced') {
 			const ajv = new Ajv();
-			const isValidSchema = ajv.validateSchema(schema);
+			const isValidSchema = ajv.validateSchema(schema['fields']);
 
 			if (!isValidSchema) {
 				throw new Error(
@@ -152,77 +163,119 @@ export const extractStructuredData = createAction({
 				);
 			}
 
-			params = schema['fields'] as AIFunctionArgumentDefinition;
+			schemaDefinition = jsonSchema(schema['fields'] as any);
 		} else {
-			params = {
-				type: 'object',
-				properties: (
-					schema['fields'] as Array<{
-						name: string;
-						description?: string;
-						type: string;
-						isRequired: boolean;
-					}>
-				).reduce((acc, field) => {
-					acc[field.name] = {
-						type: field.type,
-						description: field.description,
-					};
-					return acc;
-				}, {} as Record<string, { type: string; description?: string }>),
-				required: (
-					schema['fields'] as Array<{
-						name: string;
-						description?: string;
-						type: string;
-						isRequired: boolean;
-					}>
-				)
-					.filter((field) => field.isRequired)
-					.map((field) => field.name),
-			};
-		}
+			const fields = schema['fields'] as Array<{
+				name: string;
+				description?: string;
+				type: string;
+				isRequired: boolean;
+			}>;
 
-		const functionCalling = ai?.function?.call;
-		if (!functionCalling) {
-			throw new Error(`Model ${model} does not support iextract structured data.`);
-		}
+			const properties: Record<string, any> = {};
+			const required: string[] = [];
 
-		const messages = [
-			{
-				role: AIChatRole.USER,
-				content: prompt ?? 'Use optical character recognition (OCR) to extract from provided data.',
-			},
-		];
-		if (!isNil(text) && text !== '') {
-			messages.push({
-				role: AIChatRole.USER,
-				content: text,
+			fields.forEach((field) => {
+				if (!/^[a-zA-Z0-9_.-]+$/.test(field.name)) {
+					throw new Error(`Invalid field name: ${field.name}. Field names can only contain letters, numbers, underscores, dots and hyphens.`);
+				}
+
+				properties[field.name] = {
+					type: field.type,
+					description: field.description,
+				};
+
+				if (field.isRequired) {
+					required.push(field.name);
+				}
 			});
+
+			const jsonSchemaObject = {
+				type: 'object' as const,
+				properties,
+				required,
+			};
+
+			schemaDefinition = jsonSchema(jsonSchemaObject);
 		}
 
-		const response = await functionCalling({
-			model,
-			files: files.map((file) => file.file),
-			messages,
-			functions: [
-				{
-					name: 'extract_structured_data',
-					description: 'Extract the following data from the provided data.',
-					arguments: params,
-				},
-			],
+		const extractionTool = tool({
+			description: 'Extract structured data from the provided content',
+			inputSchema: schemaDefinition,
+			execute: async (data) => {
+				return data;
+			},
 		});
 
-		const args = response?.call?.function?.arguments;
-		if (isNil(args)) {
-			throw new Error(
-				JSON.stringify({
-					message:
-						response.choices[0].content ?? 'Failed to extract structured data from the input.',
-				}),
-			);
+		const messages: Array<ModelMessage> = [];
+
+		const contentParts: UserModelMessage['content']= [];
+
+		let textContent = prompt || 'Extract the following data from the provided data.';
+		if (text) {
+			textContent += `\n\nText to analyze:\n${text}`;
 		}
-		return args;
+
+		contentParts.push({
+			type: 'text',
+			text: textContent,
+		});
+
+		if (files.length > 0) {
+			for (const fileWrapper of files) {
+				const file = fileWrapper.file;
+				if (!file) {
+					continue;
+				}
+				const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
+
+				if (fileType && fileType.startsWith('image')  && file.base64) {
+					contentParts.push({
+						type: 'image',
+						image: `data:${fileType};base64,${file.base64}`,
+					});
+				} else if (fileType && fileType.startsWith('application/pdf') && file.base64) {
+					contentParts.push({
+                        type: 'file',
+						data: `data:${fileType};base64,${file.base64}`,
+                        mediaType: fileType,
+						filename: file.filename,
+                    });
+				}
+			}
+		}
+
+		messages.push({
+			role: 'user',
+			content: contentParts,
+		});
+
+		try {
+			const result = await generateText({
+				model,
+				maxOutputTokens,
+				tools: {
+					extractData: extractionTool,
+				},
+				toolChoice: 'required',
+				messages,
+				headers: {
+					'Authorization': `Bearer ${engineToken}`,
+				},
+			});
+
+			const toolCalls = result.toolCalls;
+			if (!toolCalls || toolCalls.length === 0) {
+				throw new Error('No structured data could be extracted from the input.');
+			}
+
+			const extractedData = toolCalls[0].input;
+			return extractedData;
+
+		} catch (error) {
+			throw new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
 	},
 });
+
+

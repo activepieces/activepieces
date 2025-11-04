@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { ArrayInput } from '@/components/ui/array-input';
+import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
@@ -49,6 +49,7 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
+      case PropertyType.DATE_TIME:
         return {
           ...acc,
           [key]: null,
@@ -69,6 +70,7 @@ const ArrayPieceProperty = React.memo(
     arrayProperty,
   }: ArrayPropertyProps) => {
     const form = useFormContext();
+
     const [fields, setFields] = useState<ArrayField[]>(() => {
       const formValues = form.getValues(inputName);
       if (formValues) {
@@ -153,6 +155,9 @@ const ArrayPieceProperty = React.memo(
                     useMentionTextInput={useMentionTextInput}
                     allowDynamicValues={false}
                     disabled={disabled}
+                    onValueChange={() => {
+                      form.trigger(inputName);
+                    }}
                   ></AutoPropertiesFormComponent>
                 </div>
               ))}

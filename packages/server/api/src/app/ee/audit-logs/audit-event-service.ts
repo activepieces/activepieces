@@ -31,14 +31,15 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         rejectedPromiseHandler(saveEvent(requestInformation, params, log), log)
     },
     sendUserEventFromRequest(request: FastifyRequest, params: AuditEventParam): void {
-        if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
+        const principal = request.principal
+        if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
             return
         }
         rejectedPromiseHandler((async () => {
-            const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
+            const userId = await authenticationUtils.extractUserIdFromPrincipal(principal)
             await saveEvent({
-                platformId: request.principal.platform.id,
-                projectId: request.principal.projectId,
+                platformId: principal.platform.id,
+                projectId: principal.projectId,
                 userId,
                 ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             }, params, log)
@@ -99,8 +100,8 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
 
 async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: FastifyBaseLogger): Promise<void> {
     const platformId = info.platformId
-    const platform = await platformService.getOneOrThrow(platformId)
-    if (!platform.auditLogEnabled) {
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    if (!platform.plan.auditLogEnabled) {
         return
     }
     const user = info.userId ? await userService.getOneOrFail({

@@ -15,11 +15,20 @@
         "packageJson": "packages/pieces/community/zoho-books/package.json",
         "main": "packages/pieces/community/zoho-books/src/index.ts",
         "assets": [
-          "packages/pieces/community/zoho-books/*.md"
+          "packages/pieces/community/zoho-books/*.md",
+          {
+            "input": "packages/pieces/community/zoho-books/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-zoho-books {args.ver} {args.tag}",
@@ -31,6 +40,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/zoho-books",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   },

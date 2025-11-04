@@ -15,11 +15,20 @@
         "packageJson": "packages/pieces/community/segment/package.json",
         "main": "packages/pieces/community/segment/src/index.ts",
         "assets": [
-          "packages/pieces/community/segment/*.md"
+          "packages/pieces/community/segment/*.md",
+          {
+            "input": "packages/pieces/community/segment/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-segment {args.ver} {args.tag}",
@@ -31,6 +40,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/segment",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   },

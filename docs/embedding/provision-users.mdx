@@ -18,6 +18,7 @@ To achieve this, the backend will generate a signed token that contains all the 
 
     This will generate a public and private key pair. The public key will be used by Activepieces to verify the signature of the JWT tokens you send. The private key will be used by you to sign the JWT tokens.
 
+    ![Create Signing Key](../resources/screenshots/create-signing-key.png)
     <Warning>
       Please store your private key in a safe place, as it will not be stored in Activepieces.
     </Warning>
@@ -30,6 +31,7 @@ To achieve this, the backend will generate a signed token that contains all the 
 
     <Tip>
       To obtain the `SIGNING_KEY_ID`, refer to the signing key table and locate the value in the first column.
+       ![Signing Key ID](../resources/screenshots/signing-key-id.png)
     </Tip>
 
     ```json
@@ -50,7 +52,9 @@ To achieve this, the backend will generate a signed token that contains all the 
       "lastName": "Doe",
       "role": "EDITOR",
       "piecesFilterType": "NONE",
-      "exp": 1856563200
+      "exp": 1856563200,
+      "tasks": 50000,
+      "aiCredits": 250
     }
     ```
 
@@ -58,13 +62,15 @@ To achieve this, the backend will generate a signed token that contains all the 
     |-------------------|-------------------------------------------------|
     | externalUserId    | Unique identification of the user in **your** software |
     | externalProjectId | Unique identification of the user's project in **your** software |
+    | projectDisplayName| Display name of the user's project |
     | firstName         | First name of the user                           |
     | lastName          | Last name of the user                            |
     | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
     | exp               | Expiry timestamp for the token (Unix timestamp)  |
     | piecesFilterType  | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
     | piecesTags        | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
-    | tasks             | Customize the task limit, check the section below  |
+    | tasks             | Customize the tasks limit for your user's project |
+    | aiCredits         | Customize the ai credits limit for your user's project |
 
     You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in Node.js:
 

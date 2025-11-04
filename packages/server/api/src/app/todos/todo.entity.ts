@@ -12,6 +12,7 @@ export type TodoSchema = Todo & {
     flow: Flow
     run: FlowRun
     assignee: User
+    createdByUser: User
 }
 
 export const TodoEntity = new EntitySchema<TodoSchema>({
@@ -25,6 +26,10 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
         description: {
             type: String,
             nullable: true,
+        },
+        environment: {
+            type: String,
+            nullable: false,
         },
         status: {
             type: JSONB_COLUMN_TYPE,
@@ -46,9 +51,13 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             ...ApIdSchema,
             nullable: false,
         },
+        createdByUserId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         flowId: {
             ...ApIdSchema,
-            nullable: false,
+            nullable: true,
         },
         runId: {
             ...ApIdSchema,
@@ -57,6 +66,11 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
         resolveUrl: {
             type: String,
             nullable: true,
+        },
+        locked: {
+            type: Boolean,
+            nullable: false,
+            default: false,
         },
     },
     indices: [
@@ -83,6 +97,12 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
                 name: 'platformId',
                 foreignKeyConstraintName: 'fk_todo_platform_id',
             },
+        },
+        createdByUser: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'CASCADE',
         },
         project: {
             type: 'many-to-one',

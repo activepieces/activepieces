@@ -1,0 +1,36 @@
+---
+title: 'Piece i18n'
+description: 'Learn about translating pieces to multiple locales'
+icon: 'globe'
+---
+
+<Steps>
+  <Step title="Generate">
+    Run the following command to create a translation file with all the strings that need translation in your piece
+    ```bash
+    npm run cli pieces generate-translation-file PIECE_FOLDER_NAME
+    ```
+  </Step>
+  <Step title="Translate">
+     Make a copy of `packages/pieces/<community_or_custom>/<your_piece>/src/i18n/translation.json`, name it `<locale>.json` i.e fr.json and translate the values.
+    <Tip>
+      For open source pieces, you can use the [Crowdin project](https://crowdin.com/project/activepieces) to translate to different languages. These translations will automatically sync back to your code.
+    </Tip>
+  </Step>
+  
+   <Step title="Test Locally">
+    After following the steps to [setup your development environment](/developers/development-setup/getting-started), click the small cog icon next to the logo in your dashboard and change the locale.
+
+     ![Locales](/resources/i18n-pieces.png)
+    <br></br>
+  
+    In the builder your piece will now appear in the translated language:
+    ![French Webhooks](/resources/french-webhooks.png)
+  </Step>
+
+  <Step title="Publish">
+  Follow the docs here to [publish your piece](/developers/sharing-pieces/overview)
+
+  </Step>
+
+</Steps>

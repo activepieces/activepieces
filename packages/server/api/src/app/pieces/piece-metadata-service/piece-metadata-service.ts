@@ -1,9 +1,11 @@
 import { PieceMetadata, 
     PieceMetadataModel,
-    PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+    PieceMetadataModelSummary, 
+    PiecePackageInformation } from '@activepieces/pieces-framework'
 import {
     ApEdition,
     ListVersionsResponse,
+    LocalesEnum,
     PackageType,
     PieceCategory,
     PieceOrderBy,
@@ -28,6 +30,7 @@ type ListParams = {
     orderBy?: PieceOrderBy
     searchQuery?: string
     suggestionType?: SuggestionType
+    locale?: LocalesEnum
 }
 
 type GetOrThrowParams = {
@@ -36,6 +39,7 @@ type GetOrThrowParams = {
     entityManager?: EntityManager
     projectId: string | undefined
     platformId: string | undefined
+    locale?: LocalesEnum
 }
 
 type ListVersionsParams = {
@@ -67,12 +71,19 @@ type GetExactPieceVersionParams = {
     platformId: PlatformId
 }
 
+type RegistryParams = {
+    release: string
+    platformId?: string
+    edition: ApEdition
+}
+
 export type PieceMetadataService = {
     list(params: ListParams): Promise<PieceMetadataModelSummary[]>
+    registry(params: RegistryParams): Promise<PiecePackageInformation[]>
     get(params: GetOrThrowParams): Promise<PieceMetadataModel | undefined>
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>
     create(params: CreateParams): Promise<PieceMetadataModel>
     updateUsage(params: UpdateUsage): Promise<void>
-    getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
+    resolveExactVersion(params: GetExactPieceVersionParams): Promise<string>
 }

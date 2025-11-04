@@ -21,20 +21,23 @@ const ApTableFooter = ({
   const recordsPercentage = maxRecords ? (recordsCount / maxRecords) * 100 : 0;
   const fieldsPercentage = maxFields ? (fieldsCount / maxFields) * 100 : 0;
   const selectedRecords = useTableState((state) => state.selectedRecords);
-  const areAllRecordsSelected = selectedRecords.size === recordsCount;
+  const hasSelectedRows = selectedRecords.size > 0;
+  const areAllRecordsSelected =
+    selectedRecords.size === recordsCount && recordsCount > 0;
   return (
     <div className="flex items-center justify-between bg-muted/30 px-2 h-[40px]">
       <div className="flex items-center gap-2">
         <div className="text-sm font-sm mt-1">
           {!areAllRecordsSelected && (
             <>
-              {selectedRecords.size > 0
-                ? t('recordsCount', { recordsCount: selectedRecords.size }) +
-                  ` ${t('selected')}`
-                : t('recordsCount', { recordsCount }) +
-                  ' (' +
-                  recordsPercentage.toFixed(2) +
-                  '%)'}
+              {!hasSelectedRows &&
+                `${t('recordsCount', {
+                  recordsCount,
+                })} (${recordsPercentage.toFixed(2)}%)`}{' '}
+              {hasSelectedRows &&
+                `${t('selected')} ${t('recordsCount', {
+                  recordsCount: selectedRecords.size,
+                })}`}
             </>
           )}
           {areAllRecordsSelected && t('All records selected')}

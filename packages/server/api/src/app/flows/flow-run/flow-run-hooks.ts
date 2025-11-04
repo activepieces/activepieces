@@ -1,14 +1,26 @@
-import { FlowRun } from '@activepieces/shared'
-import { hooksFactory } from '../../helper/hooks-factory'
+import { ApEdition, FlowRun, isFailedState, isFlowRunStateTerminal, isNil, RunEnvironment } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { alertsService } from '../../ee/alerts/alerts-service'
+import { issuesService } from '../../flows/issues/issues-service'
+import { system } from '../../helper/system/system'
 
-export type FlowRunHooks = {
-    onFinish(flowRun: FlowRun): Promise<void>
-}
-
-export const flowRunHooks = hooksFactory.create<FlowRunHooks>(() => {
-    return {
-        onFinish: async () => {
-            // Do nothing
-        },
-    }
+const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
+export const flowRunHooks = (log: FastifyBaseLogger) => ({
+    async onFinish(flowRun: FlowRun): Promise<void> {
+        if (!isFlowRunStateTerminal({
+            status: flowRun.status,
+            ignoreInternalError: true,
+        })) {
+            return
+        }
+        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStepName)) {
+            const issue = await issuesService(log).add(flowRun)
+            if (paidEditions) {
+                await alertsService(log).sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
+            }
+        }
+        if (!paidEditions) {
+            return
+        }
+    },
 })

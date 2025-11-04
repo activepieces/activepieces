@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-snowflake",
-  "version": "0.0.10"
+  "version": "0.0.17",
+  "dependencies": {
+    "snowflake-sdk": "1.9.3"
+  }
 }

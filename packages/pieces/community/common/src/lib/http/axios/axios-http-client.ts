@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import axiosRetry from 'axios-retry';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
@@ -19,9 +19,11 @@ export class AxiosHttpClient extends BaseHttpClient {
   }
 
   async sendRequest<ResponseBody extends HttpMessageBody = any>(
-    request: HttpRequest<HttpRequestBody>
+    request: HttpRequest<HttpRequestBody>,
+    axiosClient?: AxiosInstance
   ): Promise<HttpResponse<ResponseBody>> {
     try {
+      const axiosInstance = axiosClient || axios;
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
       const { urlWithoutQueryParams, queryParams: urlQueryParams } = this.getUrl(request);
       const headers = this.getHeaders(request);
@@ -45,7 +47,7 @@ export class AxiosHttpClient extends BaseHttpClient {
       };
 
       if (request.retries && request.retries > 0) {
-        axiosRetry(axios, {
+        axiosRetry(axiosInstance, {
           retries: request.retries,
           retryDelay: axiosRetry.exponentialDelay,
           retryCondition: (error) => {
@@ -54,7 +56,7 @@ export class AxiosHttpClient extends BaseHttpClient {
         });
       }
 
-      const response = await axios.request(config);
+      const response = await axiosInstance.request(config);
 
       return {
         status: response.status,
@@ -62,23 +64,18 @@ export class AxiosHttpClient extends BaseHttpClient {
         body: response.data,
       };
     } catch (e) {
-      console.error('[HttpClient#sendRequest] error:', e);
       if (axios.isAxiosError(e)) {
+        const httpError =  new HttpError(request.body, e);
         console.error(
-          '[HttpClient#sendRequest] error, responseStatus:',
-          e.response?.status
+          '[HttpClient#(sanitized error message)] Request failed:',
+          httpError
         );
-        console.error(
-          '[HttpClient#sendRequest] error, responseBody:',
-          JSON.stringify(e.response?.data)
-        );
-
-        throw new HttpError(request.body, e);
+        throw httpError;
       }
-
       throw e;
     }
   }
+
 
   private getAxiosRequestMethod(httpMethod: HttpMethod): string {
     return httpMethod.toString();

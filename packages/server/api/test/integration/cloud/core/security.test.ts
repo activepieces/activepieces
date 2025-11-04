@@ -45,10 +45,12 @@ describe('API Security', () => {
             for (const route of routes) {
                 const mockRequest = {
                     method: 'POST',
-                    routerPath: route,
-                    routeConfig: {
-                        skipAuth: true,
-                        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                    routeOptions: {
+                        url: route,
+                        config: {
+                            skipAuth: true,
+                            allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                        },
                     },
                     headers: {
 
@@ -65,62 +67,6 @@ describe('API Security', () => {
         })
 
     })
-    describe('Global API Key Authentication', () => {
-        it('Authenticates Admin User using Global API Key', async () => {
-            // arrange
-            const mockApiKey = 'api-key'
-            const mockRequest = {
-                method: 'POST',
-                routerPath: '/v1/admin/platforms',
-                headers: {
-                    'api-key': mockApiKey,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SUPER_USER],
-                },
-            } as unknown as FastifyRequest
-
-            // act
-            const result = securityHandlerChain(mockRequest)
-
-            // assert
-            await expect(result).resolves.toBeUndefined()
-
-            expect(mockRequest.principal).toEqual(
-                expect.objectContaining({
-                    id: expect.stringMatching(/SUPER_USER_.{21}/),
-                    type: PrincipalType.SUPER_USER,
-                    projectId: expect.stringMatching(/SUPER_USER_.{21}/),
-                }),
-            )
-        })
-
-        it('Fails if provided API key is invalid', async () => {
-            // arrange
-            const mockInvalidApiKey = '321'
-            const mockRequest = {
-                method: 'POST',
-                routerPath: '/v1/admin/users',
-                headers: {
-                    'api-key': mockInvalidApiKey,
-                },
-                routeConfig: {},
-            } as unknown as FastifyRequest
-
-            // act
-            const result = securityHandlerChain(mockRequest)
-
-            // assert
-            return result.catch((e) => {
-                expect(e).toEqual(
-                    new ActivepiecesError({
-                        code: ErrorCode.INVALID_API_KEY,
-                        params: {},
-                    }),
-                )
-            })
-        })
-    })
 
     describe('Platform API Key Authentication', () => {
         it('Authenticates service principals', async () => {
@@ -130,13 +76,15 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PLATFORM,
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PLATFORM,
                 },
             } as unknown as FastifyRequest
 
@@ -165,16 +113,18 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PROJECT,
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
                 },
                 body: {
                     projectId: mockProject.id,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PROJECT,
                 },
             } as unknown as FastifyRequest
 
@@ -203,16 +153,18 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PROJECT,
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
                 },
                 query: {
                     projectId: mockProject.id,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PROJECT,
                 },
             } as unknown as FastifyRequest
 
@@ -244,16 +196,18 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows/:id',
+                routeOptions: {
+                    url: '/v1/flows/:id',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PROJECT,
+                    },
+                },
                 params: {
                     id: mockFlow.id,
                 },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PROJECT,
                 },
             } as unknown as FastifyRequest
 
@@ -282,16 +236,18 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PROJECT,
+                    },
+                },
                 query: {
                     projectId: mockOtherProject.id,
                 },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PROJECT,
                 },
             } as unknown as FastifyRequest
 
@@ -315,13 +271,15 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PROJECT,
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PROJECT,
                 },
             } as unknown as FastifyRequest
 
@@ -331,7 +289,7 @@ describe('API Security', () => {
             // assert
             await expect(result).rejects.toEqual(
                 new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
+                    code: ErrorCode.VALIDATION,
                     params: {
                         message: 'invalid project id',
                     },
@@ -346,16 +304,18 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PROJECT,
+                    },
+                },
                 query: {
                     projectId: mockNonExistentProjectId,
                 },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PROJECT,
                 },
             } as unknown as FastifyRequest
 
@@ -379,13 +339,15 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'POST',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                        scope: EndpointScope.PLATFORM,
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockNonExistentApiKey}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
-                    scope: EndpointScope.PLATFORM,
                 },
             } as unknown as FastifyRequest
 
@@ -409,13 +371,15 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'POST',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                        scope: EndpointScope.PLATFORM,
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.USER],
-                    scope: EndpointScope.PLATFORM,
                 },
             } as unknown as FastifyRequest
 
@@ -456,11 +420,13 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {},
+                },
                 headers: {
                     authorization: `Bearer ${mockAccessToken}`,
                 },
-                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act
@@ -494,11 +460,15 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockAccessToken}`,
                 },
-                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act
@@ -535,12 +505,14 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.SERVICE],
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockAccessToken}`,
-                },
-                routeConfig: {
-                    allowedPrincipals: [PrincipalType.SERVICE],
                 },
             } as unknown as FastifyRequest
 
@@ -576,14 +548,18 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
+                },
                 query: {
                     projectId: mockOtherProjectId,
                 },
                 headers: {
                     authorization: `Bearer ${mockAccessToken}`,
                 },
-                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act
@@ -618,14 +594,18 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: '/v1/flows',
+                routeOptions: {
+                    url: '/v1/flows',
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
+                },
                 headers: {
                     authorization: `Bearer ${mockAccessToken}`,
                 },
                 body: {
                     projectId: mockOtherProjectId,
                 },
-                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act
@@ -650,9 +630,13 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: nonAuthenticatedRoute,
+                routeOptions: {
+                    url: nonAuthenticatedRoute,
+                    config: {
+                        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                    },
+                },
                 headers: {},
-                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act
@@ -665,10 +649,6 @@ describe('API Security', () => {
                 expect.objectContaining({
                     id: expect.stringMatching(/ANONYMOUS_.{21}/),
                     type: PrincipalType.UNKNOWN,
-                    projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
-                    platform: {
-                        id: expect.stringMatching(/ANONYMOUS_.{21}/),
-                    },
                 }),
             )
         })
@@ -679,9 +659,13 @@ describe('API Security', () => {
 
             const mockRequest = {
                 method: 'GET',
-                routerPath: authenticatedRoute,
+                routeOptions: {
+                    url: authenticatedRoute,
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
+                },
                 headers: {},
-                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act

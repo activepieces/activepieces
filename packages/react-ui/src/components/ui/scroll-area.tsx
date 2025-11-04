@@ -1,5 +1,4 @@
 'use client';
-
 import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 import * as React from 'react';
 
@@ -10,6 +9,9 @@ const ScrollArea = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
     viewPortClassName?: string;
     orientation?: 'vertical' | 'horizontal';
+    viewPortRef?: React.RefObject<HTMLDivElement>;
+    showGradient?: boolean;
+    gradientClassName?: string;
   }
 >(
   (
@@ -17,28 +19,73 @@ const ScrollArea = React.forwardRef<
       className,
       children,
       viewPortClassName,
+      viewPortRef,
       orientation = 'vertical',
+      showGradient = false,
+      gradientClassName,
       ...props
     },
     ref,
-  ) => (
-    <ScrollAreaPrimitive.Root
-      ref={ref}
-      className={cn('relative overflow-hidden', className)}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport
-        className={cn(
-          'size-full rounded-[inherit] [&>div]:!block',
-          viewPortClassName,
-        )}
+  ) => {
+    const [showBottomGradient, setShowBottomGradient] = React.useState(false);
+    const internalViewPortRef = React.useRef<HTMLDivElement>(null);
+    const viewportRef = viewPortRef || internalViewPortRef;
+
+    React.useEffect(() => {
+      if (!showGradient || !viewportRef.current) return;
+
+      const viewport = viewportRef.current;
+      const checkScroll = () => {
+        const { scrollTop, scrollHeight, clientHeight } = viewport;
+        const hasScrollableContent = scrollHeight > clientHeight;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+        setShowBottomGradient(hasScrollableContent && !isAtBottom);
+      };
+
+      checkScroll();
+      viewport.addEventListener('scroll', checkScroll);
+
+      const resizeObserver = new ResizeObserver(checkScroll);
+      if (viewport.firstElementChild) {
+        resizeObserver.observe(viewport.firstElementChild);
+      }
+
+      return () => {
+        viewport.removeEventListener('scroll', checkScroll);
+        resizeObserver.disconnect();
+      };
+    }, [showGradient, viewportRef]);
+
+    return (
+      <ScrollAreaPrimitive.Root
+        ref={ref}
+        className={cn('relative overflow-hidden', className)}
+        {...props}
       >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
-      <ScrollBar orientation={orientation} />
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
-  ),
+        <ScrollAreaPrimitive.Viewport
+          className={cn(
+            'size-full rounded-[inherit] [&>div]:!block',
+            viewPortClassName,
+          )}
+          ref={viewportRef}
+        >
+          {children}
+        </ScrollAreaPrimitive.Viewport>
+        <ScrollBar orientation={orientation} />
+        <ScrollAreaPrimitive.Corner />
+
+        {showGradient && showBottomGradient && (
+          <div
+            className={cn(
+              'pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-t from-sidebar to-transparent',
+              gradientClassName,
+            )}
+          />
+        )}
+      </ScrollAreaPrimitive.Root>
+    );
+  },
 );
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 

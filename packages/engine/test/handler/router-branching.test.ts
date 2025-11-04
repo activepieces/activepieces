@@ -1,9 +1,9 @@
-import { Action, BranchCondition, BranchOperator, RouterExecutionType } from '@activepieces/shared'
+import { BranchCondition, BranchOperator, FlowAction, RouterExecutionType } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, generateMockEngineConstants } from './test-helper'
 
-function executeRouterActionWithOneCondition(children: Action[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType): Promise<FlowExecutorContext> {
+function executeRouterActionWithOneCondition(children: FlowAction[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType): Promise<FlowExecutorContext> {
     return flowExecutor.execute({
         action: buildRouterWithOneCondition({
             children,
@@ -375,7 +375,7 @@ describe('router with branching different conditions', () => {
         expect(result.steps.router).toBeUndefined()
     })
     it('should skip router action in flow', async () => {
-        const router: Action = {
+        const router: FlowAction = {
             ...buildRouterWithOneCondition({ children: [
                 buildPieceAction({
                     name: 'data_mapper',

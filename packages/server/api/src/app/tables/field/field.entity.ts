@@ -28,6 +28,10 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
             ...ApIdSchema,
             nullable: false,
         },
+        externalId: {
+            type: String,
+            nullable: false,
+        },
         data: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,

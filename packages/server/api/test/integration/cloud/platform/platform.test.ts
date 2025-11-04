@@ -1,7 +1,5 @@
-import {
-    CopilotProviderType,
-    FilteredPieceBehavior,
-    LocalesEnum,
+import { apId, FilteredPieceBehavior,
+    PlanName,
     PlatformRole,
     PrincipalType,
     UpdatePlatformRequestBody,
@@ -13,11 +11,12 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { checkIfSolutionExistsInDb, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
+
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
@@ -31,14 +30,17 @@ describe('Platform API', () => {
     describe('update platform endpoint', () => {
         it('patches a platform by id', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+                plan: {
                     embeddingEnabled: false,
+                },
+                platform: {
                 },
             })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
             const requestBody: UpdatePlatformRequestBody = {
@@ -61,7 +63,6 @@ describe('Platform API', () => {
                 allowedAuthDomains: ['yahoo.com'],
                 cloudAuthEnabled: false,
                 emailAuthEnabled: false,
-                defaultLocale: LocalesEnum.ENGLISH,
             }
             // act
             const response = await app?.inject({
@@ -99,15 +100,12 @@ describe('Platform API', () => {
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
-            expect(responseBody.analyticsEnabled).toBe(false)
             expect(responseBody.cloudAuthEnabled).toBe(false)
-            expect(responseBody.embeddingEnabled).toBe(false)
-            expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
         })
 
         it('fails if user is not owner', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -119,6 +117,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -143,7 +142,7 @@ describe('Platform API', () => {
     describe('get platform endpoint', () => {
         it('Always Returns non-sensitive information for platform', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
                 platform: {
                     smtp: {
                         host: faker.internet.password(),
@@ -163,22 +162,13 @@ describe('Platform API', () => {
                             idpMetadata: faker.internet.password(),
                         },
                     },
-                    flowIssuesEnabled: false,
-                    alertsEnabled: false,
-                    copilotSettings: {
-                        providers: {
-                            [CopilotProviderType.OPENAI]: {
-                                baseUrl: faker.internet.password(),
-                                apiKey: faker.internet.password(),
-                            },
-                        },
-                    },
                 },
             })
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -198,7 +188,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(38)
+            expect(Object.keys(responseBody).length).toBe(20)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -206,27 +196,25 @@ describe('Platform API', () => {
             expect(responseBody.federatedAuthProviders.google).toStrictEqual({
                 clientId: mockPlatform.federatedAuthProviders?.google?.clientId,
             })
-            expect(responseBody.copilotSettings.providers.openai).toStrictEqual({})
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
-            expect(responseBody.alertsEnabled).toBe(false)
-            expect(responseBody.flowIssuesEnabled).toBe(false)
         })
 
 
         it('Fails if user is not a platform member', async () => {
-            const { mockOwner: mockOwner1, mockPlatform: mockPlatform1 } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockOwner1, mockPlatform: mockPlatform1, mockProject: mockProject1 } = await mockAndSaveBasicSetup()
             const { mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup()
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
+                id: mockOwner1.id,
+                projectId: mockProject1.id,
                 platform: {
                     id: mockPlatform1.id,
                 },
-                id: mockOwner1.id,
             })
 
             // act
@@ -238,12 +226,194 @@ describe('Platform API', () => {
                 },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
-            const responseBody = response?.json()
-
-            expect(responseBody?.message).toBe(
-                'userPlatformId and paramId should be equal',
-            )
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
+    }),
+    describe('delete platform endpoint', () => {
+        it('deletes a platform by id', async () => {
+            // arrange
+            const firstAccount = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const secondAccount = await mockAndSaveBasicSetup(
+                {
+                    plan: {
+                        plan: PlanName.FREE,
+                    },
+                },
+            )
+          
+            const ownerSolution = await createMockSolutionAndSave({ projectId: firstAccount.mockProject.id, platformId: firstAccount.mockPlatform.id, userId: firstAccount.mockOwner.id })
+          
+            const secondSolution = await createMockSolutionAndSave({ projectId: secondAccount.mockProject.id, platformId: secondAccount.mockPlatform.id, userId: secondAccount.mockOwner.id })
+          
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: firstAccount.mockOwner.id,
+                projectId: firstAccount.mockProject.id,
+                platform: { id: firstAccount.mockPlatform.id },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const secondSolutionExists = await checkIfSolutionExistsInDb(secondSolution)
+            expect(secondSolutionExists).toBe(true)
+            const ownerSolutionExists = await checkIfSolutionExistsInDb(ownerSolution)
+            expect(ownerSolutionExists).toBe(false)
+        }),
+        it('fails if platform is not eligible for deletion', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.ENTERPRISE,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.UNPROCESSABLE_ENTITY)
+        }),
+        it('fails if user is not owner', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const secondAccount = await mockAndSaveBasicSetup(
+                {
+                    plan: {
+                        plan: PlanName.FREE,
+                    },
+                },
+            )
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/platforms/${secondAccount.mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        }),
+        it('doesn\'t delete user identity if it has other users', async () => {
+            // arrange
+            const firstAccount = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const secondPlatform = await mockAndSaveBasicSetup( {
+                plan: {
+                    plan: PlanName.FREE,
+                },
+            })
+            const secondUser = createMockUser({
+                platformId: secondPlatform.mockPlatform.id,
+                platformRole: PlatformRole.ADMIN,
+                identityId: firstAccount.mockUserIdentity.id,
+            })
+            await databaseConnection().getRepository('user').save(secondUser)
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: firstAccount.mockOwner.id,
+                projectId: firstAccount.mockProject.id,
+                platform: { id: firstAccount.mockPlatform.id },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/platforms/${firstAccount.mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const userIdentityExists = await databaseConnection().getRepository('user_identity').findOneBy({ id: firstAccount.mockUserIdentity.id })
+            expect(userIdentityExists).not.toBeNull()
+        })
+    })
+    describe('get platform endpoint', () => {
+        it('fails if user is not part of the platform', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/v1/platforms/${apId()}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    }),
+    it('succeeds if user is part of the platform and is not admin', async () => {
+        // arrange
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        const { mockUser } = await mockBasicUser({
+            user: {
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            },
+        })
+        await databaseConnection().getRepository('user').save(mockUser)
+        const testToken = await generateMockToken({
+            type: PrincipalType.USER,
+            id: mockUser.id,
+            projectId: mockProject.id,
+            platform: { id: mockPlatform.id },
+        })
+        // act
+        const response = await app?.inject({
+            method: 'GET',
+            url: `/v1/platforms/${mockPlatform.id}`,
+            headers: {
+                authorization: `Bearer ${testToken}`,
+            },
+        })
+        // assert
+        expect(response?.statusCode).toBe(StatusCodes.OK)
     })
 })

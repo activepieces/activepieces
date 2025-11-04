@@ -1,7 +1,13 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared';
+import {
+  Field,
+  FieldType,
+  PopulatedRecord,
+  Table,
+  TableAutomationStatus,
+} from '@activepieces/shared';
 
 import { createServerState } from './ap-tables-server-state';
 
@@ -12,6 +18,7 @@ export type ClientCellData = {
 
 export type ClientRecordData = {
   uuid: string;
+  agentRunId: string | null;
   values: ClientCellData[];
 };
 
@@ -29,6 +36,19 @@ export type ClientField = {
       };
     }
 );
+const mapRecorddToClientRecordsData = (
+  records: PopulatedRecord[],
+  fields: Field[],
+): ClientRecordData[] => {
+  return records.map((record) => ({
+    uuid: nanoid(),
+    agentRunId: null,
+    values: Object.entries(record.cells).map(([fieldId, cell]) => ({
+      fieldIndex: fields.findIndex((field) => field.id === fieldId),
+      value: cell.value,
+    })),
+  }));
+};
 
 export type TableState = {
   isSaving: boolean;
@@ -44,6 +64,8 @@ export type TableState = {
   setSelectedCell: (
     selectedCell: { rowIdx: number; columnIdx: number } | null,
   ) => void;
+  selectedAgentRunId: string | null;
+  setSelectedAgentRunId: (agentRunId: string | null) => void;
   createRecord: (recordData: ClientRecordData) => void;
   updateRecord: (
     recordIndex: number,
@@ -54,6 +76,11 @@ export type TableState = {
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
+  setRecords: (records: PopulatedRecord[]) => void;
+  setAgentRunId: (recordId: string, agentRunId: string | null) => void;
+  toggleStatus: () => void;
+  serverFields: Field[];
+  serverRecords: PopulatedRecord[];
 };
 
 export const createApTableStore = (
@@ -68,6 +95,13 @@ export const createApTableStore = (
       records,
       (isSaving: boolean) => set({ isSaving }),
     );
+    const selectedCell =
+      records.length > 0
+        ? {
+            rowIdx: 0,
+            columnIdx: 1,
+          }
+        : null;
 
     return {
       isSaving: false,
@@ -75,9 +109,15 @@ export const createApTableStore = (
       table,
       setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
         set({ selectedRecords }),
-      selectedCell: null,
+      selectedCell: selectedCell,
+      selectedAgentRunId: null,
+      setSelectedAgentRunId: (agentRunId: string | null) =>
+        set({ selectedAgentRunId: agentRunId }),
       renameTable: (newName: string) =>
         set((state) => {
+          serverState.update({
+            name: newName,
+          });
           return {
             table: {
               ...state.table,
@@ -103,13 +143,7 @@ export const createApTableStore = (
           type: field.type,
         };
       }),
-      records: records.map((record) => ({
-        uuid: nanoid(),
-        values: Object.entries(record.cells).map(([fieldId, cell]) => ({
-          fieldIndex: fields.findIndex((field) => field.id === fieldId),
-          value: cell.value,
-        })),
-      })),
+      records: mapRecorddToClientRecordsData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
         return set((state) => {
@@ -182,6 +216,43 @@ export const createApTableStore = (
           };
         });
       },
+      setRecords: (records: PopulatedRecord[]) => {
+        serverState.setRecords(records);
+        return set((state) => {
+          return {
+            records: mapRecorddToClientRecordsData(records, serverState.fields),
+          };
+        });
+      },
+      setAgentRunId: (recordId: string, agentRunId: string | null) => {
+        const recordIndex = serverState.records.findIndex(
+          (record) => record.id === recordId,
+        );
+        set((state) => ({
+          records: state.records.map((record, index) =>
+            index === recordIndex ? { ...record, agentRunId } : record,
+          ),
+        }));
+      },
+      toggleStatus: () => {
+        return set((state) => {
+          const newStatus =
+            state.table.status === TableAutomationStatus.ENABLED
+              ? TableAutomationStatus.DISABLED
+              : TableAutomationStatus.ENABLED;
+          serverState.update({
+            status: newStatus,
+          });
+          return {
+            table: {
+              ...state.table,
+              status: newStatus,
+            },
+          };
+        });
+      },
+      serverFields: serverState.fields,
+      serverRecords: serverState.records,
     };
   });
 };

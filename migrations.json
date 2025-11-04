@@ -1,66 +1,63 @@
 {
   "migrations": [
     {
-      "version": "20.0.0-beta.7",
-      "description": "Migration for v20.0.0-beta.7",
-      "implementation": "./src/migrations/update-20-0-0/move-use-daemon-process",
+      "version": "22.0.0-beta.1",
+      "description": "Updates release version config based on the breaking changes in Nx v22",
+      "implementation": "./src/migrations/update-22-0-0/release-version-config-changes",
       "package": "nx",
-      "name": "move-use-daemon-process"
+      "name": "22-0-0-release-version-config-changes"
     },
     {
-      "version": "20.0.1",
-      "description": "Set `useLegacyCache` to true for migrating workspaces",
-      "implementation": "./src/migrations/update-20-0-1/use-legacy-cache",
-      "x-repair-skip": true,
+      "version": "22.0.0-beta.2",
+      "description": "Consolidates releaseTag* options into nested releaseTag object structure",
+      "implementation": "./src/migrations/update-22-0-0/consolidate-release-tag-config",
       "package": "nx",
-      "name": "use-legacy-cache"
+      "name": "22-0-0-consolidate-release-tag-config"
     },
     {
       "cli": "nx",
-      "version": "20.0.0-beta.5",
-      "description": "replace getJestProjects with getJestProjectsAsync",
-      "implementation": "./src/migrations/update-20-0-0/replace-getJestProjects-with-getJestProjectsAsync",
-      "package": "@nx/jest",
-      "name": "replace-getJestProjects-with-getJestProjectsAsync"
-    },
-    {
-      "version": "19.6.0-beta.0",
-      "description": "Add dependsOn: [build] to preview targets using preview-server",
-      "implementation": "./src/migrations/update-19-6-0/add-depends-on-for-preview",
-      "package": "@nx/vite",
-      "name": "update-19-6-0-add-depends-on-for-preview-server"
-    },
-    {
-      "cli": "nx",
-      "version": "19.6.3-beta.0",
-      "description": "Migrate proxy config files to match new format from webpack-dev-server v5.",
-      "implementation": "./src/migrations/update-19-6-3/proxy-config",
+      "version": "22.0.0-beta.0",
+      "description": "Remove deprecated deleteOutputPath and sassImplementation options from @nx/webpack:webpack",
+      "implementation": "./src/migrations/update-22-0-0/remove-deprecated-options",
       "package": "@nx/webpack",
-      "name": "update-19-6-3-proxy-config"
+      "name": "update-22-0-0-remove-deprecated-options"
+    },
+    {
+      "version": "21.5.0-beta.2",
+      "description": "Migrate the legacy 'development' custom condition to a workspace-unique custom condition name.",
+      "factory": "./src/migrations/update-21-5-0/migrate-development-custom-condition",
+      "package": "@nx/js",
+      "name": "migrate-development-custom-condition"
+    },
+    {
+      "version": "22.0.0-beta.0",
+      "description": "Remove the deprecated `external` and `externalBuildTargets` options from the `@nx/js:swc` and `@nx/js:tsc` executors.",
+      "factory": "./src/migrations/update-22-0-0/remove-external-options-from-js-executors",
+      "package": "@nx/js",
+      "name": "remove-external-options-from-js-executors"
     },
     {
       "cli": "nx",
-      "version": "19.6.0-beta.4",
-      "description": "Ensure Module Federation DTS is turned off by default.",
-      "factory": "./src/migrations/update-19-6-0/turn-off-dts-by-default",
+      "version": "22.0.0-beta.0",
+      "description": "Updates webpack configs using React to use the new withSvgr composable function instead of the svgr option in withReact or NxReactWebpackPlugin.",
+      "factory": "./src/migrations/update-22-0-0/add-svgr-to-webpack-config",
       "package": "@nx/react",
-      "name": "update-19-6-0-turn-module-federation-dts-off"
+      "name": "update-22-0-0-add-svgr-to-webpack-config"
     },
     {
-      "cli": "nx",
-      "version": "19.6.0-beta.4",
-      "description": "Update the server file for Module Federation SSR port value to be the same as the 'serve' target port value.",
-      "factory": "./src/migrations/update-19-6-0/update-ssr-server-port",
-      "package": "@nx/react",
-      "name": "update-module-federation-ssr-server-file"
+      "version": "21.3.0-beta.3",
+      "description": "Rename the CLI option `testPathPattern` to `testPathPatterns`.",
+      "implementation": "./src/migrations/update-21-3-0/rename-test-path-pattern",
+      "package": "@nx/jest",
+      "name": "rename-test-path-pattern"
     },
     {
-      "cli": "nx",
-      "version": "19.6.1-beta.0",
-      "description": "Ensure Target Defaults are set correctly for Module Federation.",
-      "factory": "./src/migrations/update-19-6-1/ensure-depends-on-for-mf",
-      "package": "@nx/react",
-      "name": "update-19-6-1-ensure-module-federation-target-defaults"
+      "version": "21.3.0-beta.3",
+      "requires": { "jest": ">=30.0.0" },
+      "description": "Replace removed matcher aliases in Jest v30 with their corresponding matcher",
+      "implementation": "./src/migrations/update-21-3-0/replace-removed-matcher-aliases",
+      "package": "@nx/jest",
+      "name": "replace-removed-matcher-aliases"
     }
   ]
 }

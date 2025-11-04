@@ -59,7 +59,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
         )}
       >
         {value.map((item) => (
-          <Badge key={item} variant={'secondary'}>
+          <Badge key={item} variant={'accent'}>
             <span className="text-xs font-medium">{item}</span>
             <Button
               variant={'ghost'}

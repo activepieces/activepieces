@@ -1,5 +1,7 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { EngineGenericError } from '../helper/execution-errors'
+import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
@@ -14,7 +16,6 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<RouterActionSettings>({
             unresolvedInput: {
                 ...action.settings,
-                inputUiInfo: undefined,
             },
             executionState,
         })
@@ -25,7 +26,7 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
             case RouterExecutionType.EXECUTE_FIRST_MATCH:
                 return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_FIRST_MATCH })
             default:
-                throw new Error(`Router execution type ${resolvedInput.executionType} is not supported`)
+                throw new EngineGenericError('RouterExecutionTypeNotSupportedError', `Router execution type ${resolvedInput.executionType} is not supported`)
         }
     },
 }
@@ -38,6 +39,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     resolvedInput: RouterActionSettings
     routerExecutionType: RouterExecutionType
 }): Promise<FlowExecutorContext> {
+    const stepStartTime = performance.now()
 
     const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
         return branch.branchType === BranchExecutionType.FALLBACK ? true : evaluateConditions(branch.conditions)
@@ -51,6 +53,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return fallback
     })
 
+    const stepEndTime = performance.now()
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
@@ -59,32 +62,39 @@ async function handleRouterExecution({ action, executionState, constants, censor
             branchIndex: index + 1,
             evaluation: evaluatedConditions[index],
         })),
-    })
+    }).setDuration(stepEndTime - stepStartTime)
     executionState = executionState.upsertStep(action.name, routerOutput)
 
-    try {
+    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
-            if (constants.testSingleStepMode) {
+            if (!isNil(constants.stepNameToTest)) {
                 break
             }
-            if (evaluatedConditions[i]) {
-                executionState = (await flowExecutor.execute({
-                    action: action.children[i],
-                    executionState,
-                    constants,
-                }))
-                if (routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH) {
-                    break
-                }
+            const condition = routerOutput.output?.branches[i].evaluation
+            if (!condition) {
+                continue
+            }
+    
+            executionState = await flowExecutor.execute({
+                action: action.children[i],
+                executionState,
+                constants,
+            })
+    
+            const shouldBreakExecution = executionState.verdict !== ExecutionVerdict.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
+            if (shouldBreakExecution) {
+                break
             }
         }
         return executionState
-    }
-    catch (e) {
-        console.error(e)
+    });
+    if (executionStateError) {
+        console.error(executionStateError)
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
         return executionState.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
     }
+
+    return executionStateResult
 }
 
 
@@ -94,7 +104,11 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
         let andGroup = true
         for (const condition of conditionGroup) {
             const castedCondition = condition
-            assertNotNullOrUndefined(castedCondition.operator, 'The operator is required but found to be undefined')
+
+            if (isNil(castedCondition.operator)) {
+                throw new EngineGenericError('OperatorNotSetError', 'The operator is required but found to be undefined')
+            }
+
             switch (castedCondition.operator) {
                 case BranchOperator.TEXT_CONTAINS: {
                     const firstValueContains = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(

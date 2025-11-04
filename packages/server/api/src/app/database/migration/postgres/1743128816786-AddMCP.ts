@@ -28,13 +28,13 @@ export class AddMCP1743128816786 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_app_connection_mcp_id"
+            DROP INDEX "idx_app_connection_mcp_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "app_connection" DROP COLUMN "mcpId"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."mcp_project_id"
+            DROP INDEX "mcp_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "mcp"

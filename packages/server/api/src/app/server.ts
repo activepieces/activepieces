@@ -3,7 +3,7 @@ import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
-import fastify, { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import fastify, { FastifyInstance } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import qs from 'qs'
@@ -14,8 +14,10 @@ import { system } from './helper/system/system'
 import { setupWorker } from './worker'
 
 
+export let app: FastifyInstance | undefined = undefined
+
 export const setupServer = async (): Promise<FastifyInstance> => {
-    const app = await setupBaseApp()
+    app = await setupBaseApp()
 
     if (system.isApp()) {
         await setupApp(app)
@@ -28,13 +30,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
 async function setupBaseApp(): Promise<FastifyInstance> {
     const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
-
+    const fileSizeLimit = Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
     const app = fastify({
-        logger: system.globalLogger() as FastifyBaseLogger,
+        disableRequestLogging: true,
+        querystringParser: qs.parse,
+        loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
         // Default 100MB, also set in nginx.conf
-        bodyLimit: Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024),
+        bodyLimit: fileSizeLimit,
         genReqId: () => {
             return `req_${apId()}`
         },
@@ -48,7 +52,6 @@ async function setupBaseApp(): Promise<FastifyInstance> {
             },
         },
     })
-
 
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {

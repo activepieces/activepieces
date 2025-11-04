@@ -14,19 +14,20 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
+  DataTableFilters,
   LIMIT_QUERY_PARAM,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { auditEventsApi } from '@/features/platform-admin-panel/lib/audit-events-api';
+import { auditEventsApi } from '@/features/platform-admin/lib/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -41,12 +42,10 @@ import { isNil } from '@activepieces/shared';
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
-
   const { data: projects } = projectHooks.useProjects();
-
   const { data: users } = platformUserHooks.useUsers();
 
-  const filters = [
+  const filters: DataTableFilters<keyof ApplicationEvent>[] = [
     {
       type: 'select',
       title: t('Action'),
@@ -58,7 +57,7 @@ export default function AuditLogsPage() {
         };
       }),
       icon: Wand,
-    } as const,
+    },
     {
       type: 'select',
       title: t('Performed By'),
@@ -71,7 +70,7 @@ export default function AuditLogsPage() {
           };
         }) ?? [],
       icon: Users,
-    } as const,
+    },
     {
       type: 'select',
       title: t('Project'),
@@ -84,14 +83,13 @@ export default function AuditLogsPage() {
           };
         }) ?? [],
       icon: Folder,
-    } as const,
+    },
     {
       type: 'date',
       title: t('Created'),
       accessorKey: 'created',
-      options: [],
       icon: CheckIcon,
-    } as const,
+    },
   ];
 
   const { data: auditLogsData, isLoading } = useQuery({
@@ -116,7 +114,7 @@ export default function AuditLogsPage() {
     },
   });
 
-  const isEnabled = platform.auditLogEnabled;
+  const isEnabled = platform.plan.auditLogEnabled;
   return (
     <LockedFeatureGuard
       featureKey="AUDIT_LOGS"
@@ -127,11 +125,10 @@ export default function AuditLogsPage() {
       )}
     >
       <div className="flex flex-col  w-full">
-        <TableTitle
+        <DashboardPageHeader
           description={t('Track activities done within your platform')}
-        >
-          {t('Audit Logs')}
-        </TableTitle>
+          title={t('Audit Logs')}
+        />
         <DataTable
           emptyStateTextTitle={t('No audit logs found')}
           emptyStateTextDescription={t(

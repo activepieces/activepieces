@@ -29,19 +29,32 @@ export const clickupRegisterTrigger = ({
     description,
     props: {
       workspace_id: clickupCommon.workspace_id(true),
+      space_id: clickupCommon.space_id(false), // Optional, depends on workspace
+      folder_id: clickupCommon.folder_id(false), // Optional, depends on space
+      list_id: clickupCommon.list_id(false), // Optional, depends on folder or space
+      task_id: clickupCommon.task_id(false), // Optional, depends on list
     },
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-      const { workspace_id } = context.propsValue;
+      const { workspace_id, space_id, folder_id, list_id, task_id } =
+        context.propsValue;
+
+      const requestBody: Record<string, unknown> = {
+        endpoint: context.webhookUrl,
+        events: [eventType],
+      };
+
+      // Add scope narrowing properties to the webhook request body
+      if (space_id) requestBody.space_id = space_id;
+      if (folder_id) requestBody.folder_id = folder_id;
+      if (list_id) requestBody.list_id = list_id;
+      if (task_id) requestBody.task_id = task_id;
 
       const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `https://api.clickup.com/api/v2/team/${workspace_id}/webhook`,
-        body: {
-          endpoint: context.webhookUrl,
-          events: [eventType],
-        },
+        body: requestBody,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth.access_token,
@@ -114,10 +127,10 @@ interface WebhookInformation {
     endpoint: string;
     client_id: string;
     events: ClickupEventType[];
-    task_id: string;
-    list_id: string;
-    folder_id: string;
-    space_id: string;
+    task_id?: string;
+    list_id?: string;
+    folder_id?: string;
+    space_id?: string;
     health: {
       status: string;
       fail_count: number;

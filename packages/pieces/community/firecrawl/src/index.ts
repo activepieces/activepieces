@@ -1,8 +1,13 @@
 import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { extractWithPrompt } from './lib/actions/extract-with-prompt';
-import { extractWithSchema } from './lib/actions/extract-with-schema';
+import { scrape } from './lib/actions/scrape';
+import { extract } from './lib/actions/extract';
+import { crawl } from './lib/actions/crawl';
+import { crawlResults } from './lib/actions/crawl-results';
+import { map } from './lib/actions/map';
+import { FIRECRAWL_API_BASE_URL } from './lib/common/common';
+
 const markdownDescription = `
 Follow these steps to obtain your Firecrawl API Key:
 
@@ -19,7 +24,7 @@ export const firecrawlAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: 'https://api.firecrawl.dev/v1/scrape',
+        url: `${FIRECRAWL_API_BASE_URL}/scrape`,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${auth}`,
@@ -50,13 +55,17 @@ export const firecrawl = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/firecrawl.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["geekyme-fsmk"],
+  authors: ["geekyme-fsmk", "geekyme", "arinmakk"],
   auth: firecrawlAuth,
   actions: [
-    extractWithPrompt,
-    extractWithSchema,
+    scrape,
+    extract,
+    crawl,
+    crawlResults,
+    map,
+
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.firecrawl.dev/v1',
+      baseUrl: () => FIRECRAWL_API_BASE_URL,
       auth: firecrawlAuth,
       authMapping: async (auth) => ({
         'Authorization': `Bearer ${auth}`,

@@ -22,6 +22,7 @@ export const folderModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+
     fastify.post('/', CreateFolderParams, async (request) => {
         const createdFolder = await folderService(request.log).upsert({
             projectId: request.principal.projectId,
@@ -109,7 +110,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_FLOW,
     },
     schema: {
@@ -122,7 +123,7 @@ const CreateFolderParams = {
 
 const UpdateFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_FLOW,
     },
     schema: {
@@ -138,7 +139,7 @@ const UpdateFolderParams = {
 
 const GetFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_FLOW,
     },
     schema: {
@@ -153,7 +154,7 @@ const GetFolderParams = {
 
 const ListFoldersParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_FLOW,
     },
     schema: {
@@ -166,7 +167,7 @@ const ListFoldersParams = {
 
 const DeleteFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_FLOW,
     },
     schema: {

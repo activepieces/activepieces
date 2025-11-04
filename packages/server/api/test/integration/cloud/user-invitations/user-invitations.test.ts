@@ -494,7 +494,10 @@ async function createBasicEnvironment({ platform }: { platform?: Partial<Platfor
     const { mockOwner, mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey({
         platform: {
             ...platform,
+        },
+        plan: {
             projectRolesEnabled: true,
+            auditLogEnabled: false,
         },
     })
 

@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -7,24 +6,27 @@ import {
     ErrorCode,
     ExportTableResponse,
     isNil,
+    PlatformUsageMetric,
     SeekPage,
+    spreadIfDefined,
     Table,
     TableWebhook,
     TableWebhookEventType,
     UpdateTableRequest,
 } from '@activepieces/shared'
-import { ILike } from 'typeorm'
+import { ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
+import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
+import { projectService } from '../../project/project-service'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
 
-const tableRepo = repoFactory(TableEntity)
+export const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 
@@ -33,15 +35,22 @@ export const tableService = {
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-        await this.validateCount({ projectId })
+        const platformId = await projectService.getPlatformId(projectId)
+        await PlatformPlanHelper.checkQuotaOrThrow({
+            platformId,
+            projectId,
+            metric: PlatformUsageMetric.TABLES,
+        })
+
         const table = await tableRepo().save({
             id: apId(),
+            externalId: request.externalId ?? apId(),
             name: request.name,
             projectId,
         })
         return table
     },
-    async list({ projectId, cursor, limit, name }: ListParams): Promise<SeekPage<Table>> {
+    async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
         const paginator = buildPaginator({
@@ -57,6 +66,9 @@ export const tableService = {
         if (!isNil(name)) {
             queryWhere.name = ILike(`%${name}%`)
         }
+        if (!isNil(externalIds)) {
+            queryWhere.externalId = In(externalIds)
+        }
         const paginationResult = await paginator.paginate(
             tableRepo().createQueryBuilder('table').where(queryWhere),
         )
@@ -64,14 +76,13 @@ export const tableService = {
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
 
-    async getById({
+    async getOneOrThrow({
         projectId,
         id,
     }: GetByIdParams): Promise<Table> {
         const table = await tableRepo().findOne({
             where: { projectId, id },
         })
-
         if (isNil(table)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -81,7 +92,23 @@ export const tableService = {
                 },
             })
         }
+        return table
+    },
 
+    async getOneByExternalIdOrThrow({
+        projectId,
+        externalId,
+    }: GetOneByExternalIdParams): Promise<Table> {
+        const table = await tableRepo().findOneBy({ projectId, externalId })
+        if (isNil(table)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Table',
+                    entityId: externalId,
+                },
+            })
+        }
         return table
     },
 
@@ -89,6 +116,7 @@ export const tableService = {
         projectId,
         id,
     }: DeleteParams): Promise<void> {
+
         await tableRepo().delete({
             projectId,
             id,
@@ -99,7 +127,7 @@ export const tableService = {
         projectId,
         id,
     }: ExportTableParams): Promise<ExportTableResponse> {
-        const table = await this.getById({ projectId, id })
+        const table = await this.getOneOrThrow({ projectId, id })
 
         // TODO: Change field sorting to use position when it's added
         const fields = await fieldService.getAll({ projectId, tableId: id })
@@ -166,29 +194,19 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
-        await tableRepo().update({
-            id,
-            projectId,
-        }, {
-            name: request.name,
+        await tableRepo().update({ id, projectId }, { 
+            ...spreadIfDefined('name', request.name),
+            ...spreadIfDefined('trigger', request.trigger),
+            ...spreadIfDefined('status', request.status),
         })
-        return this.getById({ projectId, id })
+        return this.getOneOrThrow({ projectId, id })
     },
     async count({ projectId }: CountParams): Promise<number> {
         return tableRepo().count({
             where: { projectId },
         })
     },
-    async validateCount(params: CountParams): Promise<void> {
-        const countRes = await this.count(params)
-        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_TABLES_PER_PROJECT)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: `Max tables per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_TABLES_PER_PROJECT)}`,
-                },
-            })
-        }
-    },
+
 }
 
 type CreateParams = {
@@ -201,11 +219,17 @@ type ListParams = {
     cursor: string | undefined
     limit: number
     name: string | undefined
+    externalIds: string[] | undefined
 }
 
 type GetByIdParams = {
     projectId: string
     id: string
+}
+
+type GetOneByExternalIdParams = {
+    projectId: string
+    externalId: string
 }
 
 type DeleteParams = {

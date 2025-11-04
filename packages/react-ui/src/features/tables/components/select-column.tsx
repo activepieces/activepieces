@@ -1,15 +1,11 @@
-import {
-  useHeaderRowSelection,
-  useRowSelection,
-  type Column,
-} from 'react-data-grid';
+import { useHeaderRowSelection, useRowSelection } from 'react-data-grid';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 import { Row } from '../lib/types';
 
-function SelectHeaderCell() {
+export function SelectHeaderCell() {
   const { isRowSelected, onRowSelectionChange } = useHeaderRowSelection();
 
   return (
@@ -22,6 +18,7 @@ function SelectHeaderCell() {
     >
       <Checkbox
         aria-label="Select all rows"
+        variant="secondary"
         checked={Boolean(isRowSelected)}
         onCheckedChange={(checked) => {
           onRowSelectionChange({ checked: Boolean(checked) });
@@ -31,49 +28,61 @@ function SelectHeaderCell() {
   );
 }
 
-function SelectCell({ row, rowIndex }: { row: Row; rowIndex: number }) {
+export function SelectCell({
+  row,
+  rowIndex,
+  onClick,
+}: {
+  row: Row;
+  rowIndex: number;
+  onClick?: () => void;
+}) {
+  const locked = row.locked;
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
   return (
-    <div className="flex items-center justify-start h-full pl-4 group">
-      <div
-        className={cn('group-hover:block hidden', isRowSelected && '!block')}
-      >
-        <Checkbox
-          aria-label="Select row"
-          checked={Boolean(isRowSelected)}
-          onCheckedChange={(checked) => {
-            onRowSelectionChange({
-              row,
-              checked: Boolean(checked),
-              isShiftClick: false,
-            });
-          }}
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
+    <div
+      className={cn(
+        'flex items-center justify-start h-full pl-4 group',
+        locked && 'locked-row',
+      )}
+      onClick={onClick}
+    >
+      {!locked && (
+        <div
+          className={cn('group-hover:block hidden', isRowSelected && '!block')}
+        >
+          <Checkbox
+            aria-label="Select row"
+            variant="secondary"
+            checked={Boolean(isRowSelected)}
+            onCheckedChange={(checked) => {
+              onRowSelectionChange({
+                row,
+                checked: Boolean(checked),
+                isShiftClick: false,
+              });
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
       <div
         className={cn(
-          'group-hover:hidden block select-none',
-          isRowSelected && '!hidden',
+          locked ? 'block select-none' : 'group-hover:hidden block select-none',
+          isRowSelected && !locked && '!hidden',
         )}
       >
-        {rowIndex}
+        {locked ? (
+          <img
+            src="https://cdn.activepieces.com/quicknew/agents/robots/robot_186.png"
+            alt="Locked"
+            className="w-6 h-6 rounded-full object-cover"
+            style={{ display: 'inline-block' }}
+          />
+        ) : (
+          rowIndex
+        )}
       </div>
     </div>
   );
 }
-
-export const SelectColumn: Column<Row, { id: string }> = {
-  key: 'select-row',
-  name: 'Select',
-  width: 66,
-  minWidth: 66,
-  maxWidth: 66,
-  resizable: false,
-  sortable: false,
-  frozen: true,
-  renderHeaderCell: () => <SelectHeaderCell />,
-  renderCell: (props) => (
-    <SelectCell row={props.row} rowIndex={props.rowIdx + 1} />
-  ),
-};

@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, EnginePrincipal, ErrorCode, isNil, PrincipalType, Project, ServicePrincipal, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserPrincipal, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
@@ -18,6 +18,7 @@ export const authenticationUtils = {
         const isInvited = await userInvitationsService(log).hasAnyAcceptedInvitations({
             platformId,
             email,
+            
         })
         if (!isInvited) {
             throw new ActivepiecesError({
@@ -91,8 +92,8 @@ export const authenticationUtils = {
         if (edition === ApEdition.COMMUNITY) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
-        if (!platform.ssoEnabled) {
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.ssoEnabled) {
             return
         }
         const emailDomain = email.split('@')[1]
@@ -118,8 +119,8 @@ export const authenticationUtils = {
         if (edition === ApEdition.COMMUNITY) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
-        if (!platform.ssoEnabled) {
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
+        if (!platform.plan.ssoEnabled) {
             return
         }
         if (provider !== UserIdentityProvider.EMAIL) {
@@ -159,12 +160,12 @@ export const authenticationUtils = {
     },
 
     async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService.getOneWithPlanOrThrow(platformId)
         const environment = system.get(AppSystemProp.ENVIRONMENT)
         if (environment !== ApEnvironment.PRODUCTION) {
             return
         }
-        if (platform.embeddingEnabled) {
+        if (platform.plan.embeddingEnabled) {
             return
         }
         try {
@@ -185,7 +186,7 @@ export const authenticationUtils = {
         }
     },
     async extractUserIdFromPrincipal(
-        principal: Principal,
+        principal: UserPrincipal | ServicePrincipal | EnginePrincipal,
     ): Promise<string> {
         if (principal.type === PrincipalType.USER) {
             return principal.id

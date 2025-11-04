@@ -1,4 +1,4 @@
-import { FlowsContext } from '@activepieces/pieces-framework'
+import { FlowsContext, ListFlowsContextParams } from '@activepieces/pieces-framework'
 import { PopulatedFlow, SeekPage } from '@activepieces/shared'
 
 
@@ -10,8 +10,12 @@ type CreateFlowsServiceParams = {
 }
 export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVersionId }: CreateFlowsServiceParams): FlowsContext => {
     return {
-        async list(): Promise<SeekPage<PopulatedFlow>> {
-            const response = await fetch(`${internalApiUrl}v1/engine/populated-flows`, {
+        async list(params: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>> {
+            const queryParams = new URLSearchParams()
+            if (params?.externalIds) {
+                queryParams.set('externalIds', params.externalIds.join(','))
+            }
+            const response = await fetch(`${internalApiUrl}v1/engine/populated-flows?${queryParams.toString()}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

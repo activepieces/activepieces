@@ -32,6 +32,8 @@ describe('Git API', () => {
         it('should not allow create git repo for other projects', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
@@ -57,6 +59,9 @@ describe('Git API', () => {
             const token = await generateMockToken({
                 id: mockOwner.id,
                 projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
                 type: PrincipalType.USER,
             })
 
@@ -75,6 +80,8 @@ describe('Git API', () => {
         it('should create a git repo', async () => {
             const { mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
@@ -121,6 +128,8 @@ describe('Git API', () => {
         it('should delete a git repo', async () => {
             const { mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
@@ -149,6 +158,8 @@ describe('Git API', () => {
         it('should not allow delete git repo for other projects', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
@@ -166,6 +177,9 @@ describe('Git API', () => {
                 id: mockOwner.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                },
             })
 
             const response = await app?.inject({
@@ -184,11 +198,15 @@ describe('Git API', () => {
         it('should list return forbidden when api request wrong project', async () => {
             const { mockPlatform, mockProject, mockApiKey, mockOwner } = await mockAndSaveBasicSetupWithApiKey({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
             const { mockProject: mockProject3 } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
@@ -217,11 +235,15 @@ describe('Git API', () => {
         it('should list return forbidden when user request wrong project', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
             const { mockProject: mockProject3 } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })
@@ -241,6 +263,9 @@ describe('Git API', () => {
                 id: mockOwner.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                },
             })
 
             const response = await app?.inject({
@@ -256,6 +281,8 @@ describe('Git API', () => {
         it('should list a git repo', async () => {
             const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
+                },
+                plan: {
                     environmentsEnabled: true,
                 },
             })

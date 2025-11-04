@@ -21,52 +21,85 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   GitBranchType,
   GitPushOperationType,
   PushGitRepoRequest,
+  PushFlowsGitRepoRequest,
+  PushTablesGitRepoRequest,
 } from '@activepieces/ee-shared';
 import {
   assertNotNullOrUndefined,
-  ErrorCode,
   PopulatedFlow,
+  Table,
 } from '@activepieces/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
 
-type PushToGitDialogProps = {
-  flows: PopulatedFlow[];
-  children?: React.ReactNode;
-};
+type PushToGitDialogProps =
+  | {
+      type: 'flow';
+      flows: PopulatedFlow[];
+      children?: React.ReactNode;
+    }
+  | {
+      type: 'table';
+      tables: Table[];
+      children?: React.ReactNode;
+    };
 
-const PushToGitDialog = ({ children, flows }: PushToGitDialogProps) => {
+const PushToGitDialog = (props: PushToGitDialogProps) => {
   const [open, setOpen] = React.useState(false);
 
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
+    platform.plan.environmentsEnabled,
   );
   const form = useForm<PushGitRepoRequest>({
     defaultValues: {
-      type: GitPushOperationType.PUSH_FLOW,
+      type:
+        props.type === 'flow'
+          ? GitPushOperationType.PUSH_FLOW
+          : GitPushOperationType.PUSH_TABLE,
       commitMessage: '',
-      flowIds: [],
+      externalFlowIds:
+        props.type === 'flow' ? props.flows.map((item) => item.externalId) : [],
+      externalTableIds:
+        props.type === 'table'
+          ? props.tables.map((item) => item.externalId)
+          : [],
     },
-    resolver: typeboxResolver(PushGitRepoRequest),
+    resolver: typeboxResolver(
+      props.type === 'flow'
+        ? PushFlowsGitRepoRequest
+        : PushTablesGitRepoRequest,
+    ),
   });
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: PushGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
-      await gitSyncApi.push(gitSync.id, {
-        ...request,
-        flowIds: flows.map((flow) => flow.id),
-      });
+      switch (props.type) {
+        case 'flow':
+          await gitSyncApi.push(gitSync.id, {
+            type: GitPushOperationType.PUSH_FLOW,
+            commitMessage: request.commitMessage,
+            externalFlowIds: props.flows.map((item) => item.externalId),
+          });
+          break;
+        case 'table':
+          await gitSyncApi.push(gitSync.id, {
+            type: GitPushOperationType.PUSH_TABLE,
+            commitMessage: request.commitMessage,
+            externalTableIds: props.tables.map((item) => item.externalId),
+          });
+          break;
+      }
     },
     onSuccess: () => {
       toast({
@@ -76,17 +109,6 @@ const PushToGitDialog = ({ children, flows }: PushToGitDialogProps) => {
       });
       setOpen(false);
     },
-    onError: (error: any) => {
-      if (error.response.data.code === ErrorCode.FLOW_OPERATION_INVALID) {
-        toast({
-          title: t('Invalid Operation'),
-          description: error.response.data.params.message,
-          duration: 3000,
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
-    },
   });
 
   if (!gitSync || gitSync.branchType !== GitBranchType.DEVELOPMENT) {
@@ -94,7 +116,7 @@ const PushToGitDialog = ({ children, flows }: PushToGitDialogProps) => {
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>

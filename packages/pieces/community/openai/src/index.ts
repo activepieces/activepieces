@@ -1,12 +1,11 @@
 import {
-  AI_PROVIDERS_MAKRDOWN,
   AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory,  } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';
 import { askOpenAI } from './lib/actions/send-prompt';
@@ -16,9 +15,10 @@ import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
 import { baseUrl } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
+import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 
 export const openaiAuth = PieceAuth.SecretText({
-  description: AI_PROVIDERS_MAKRDOWN.openai,
+  description: SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'openai')?.markdown,
   displayName: 'API Key',
   required: true,
   validate: async (auth) => {
@@ -48,7 +48,7 @@ export const openaiAuth = PieceAuth.SecretText({
 export const openai = createPiece({
   displayName: 'OpenAI',
   description: 'Use the many tools ChatGPT has to offer.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.63.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: openaiAuth,
@@ -81,6 +81,7 @@ export const openai = createPiece({
     'MoShizzle',
     'khaledmashaly',
     'abuaboud',
+    'amrdb',
   ],
   triggers: [],
 });
