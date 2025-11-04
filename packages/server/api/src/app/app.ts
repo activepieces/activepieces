@@ -7,19 +7,16 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
-import { agentModule } from './agents/agent-module'
-import { agentRunsModule } from './agents/agent-runs/agent-runs-module'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
-import { changelogModule } from './changelog/changelog.module'
-import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
-import { redisConnections } from './database/redis'
+import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
+import { alertsService } from './ee/alerts/alerts-service'
 import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
@@ -38,11 +35,9 @@ import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
-import { emailService } from './ee/helper/email/email-service'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
-import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
@@ -79,7 +74,6 @@ import { tagsModule } from './pieces/tags/tags-module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
-import { queueMetricsModule } from './queue-metrics/queue-metrics.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { todoActivityModule } from './todos/activity/todos-activity.module'
@@ -90,10 +84,14 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
-import { jobQueueWorker } from './workers/queue/job-queue-worker'
+import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
+
+    app.addContentTypeParser('application/octet-stream', { parseAs: 'buffer' }, async (_request: FastifyRequest, payload: unknown) => {
+        return payload as Buffer
+    })
 
     await app.register(swagger, {
         hideUntagged: true,
@@ -158,8 +156,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
     await app.register(rateLimitModule)
-
-
     app.addHook('onResponse', async (request, reply) => {
         // eslint-disable-next-line
         reply.header('x-request-id', request.id)
@@ -193,7 +189,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(openapiModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule),
     await app.register(triggerModule)
     await app.register(platformModule)
     await app.register(humanInputModule)
@@ -210,11 +205,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tablesModule)
     await app.register(userModule)
     await app.register(todoModule)
-    await app.register(adminPlatformModule)
-    await app.register(changelogModule)
-    await app.register(agentModule)
     await app.register(todoActivityModule)
-    await app.register(agentRunsModule)
     await app.register(solutionsModule)
 
     app.get(
@@ -266,13 +257,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
+            await app.register(adminPlatformModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
             await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
-            await app.register(adminPieceModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
@@ -294,7 +285,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flagHooks.set(enterpriseFlagsHooks)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => alertsService(app.log).runScheduledReminderJob(data))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
@@ -319,7 +310,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             await app.register(queueMetricsModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => alertsService(app.log).runScheduledReminderJob(data))
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
@@ -335,8 +326,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('onClose', async () => {
         app.log.info('Shutting down')
-        await jobQueueWorker(app.log).close()
         await systemJobsSchedule(app.log).close()
+        await redisConnections.destroy()
+        await distributedLock(app.log).destroy()
         await engineResponseWatcher(app.log).shutdown()
     })
 
@@ -346,7 +338,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 async function getAdapter() {
-    const redisConnectionInstance = await redisConnections.useExisting()  
+    const redisConnectionInstance = await redisConnections.useExisting()
     const sub = redisConnectionInstance.duplicate()
     const pub = redisConnectionInstance.duplicate()
     return createAdapter(pub, sub, {

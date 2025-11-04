@@ -1,6 +1,5 @@
 import { inspect } from 'util'
 import {
-    assertNotNullOrUndefined,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -8,9 +7,11 @@ import {
     EngineSocketEvent,
     EngineStderr,
     EngineStdout,
+    ERROR_MESSAGES_TO_REDACT,
     isNil,
 } from '@activepieces/shared'
 import WebSocket from 'ws'
+import { EngineGenericError } from './lib/helper/execution-errors'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
 
@@ -21,17 +22,11 @@ const WS_URL = 'ws://127.0.0.1:12345/worker/ws'
 process.title = `engine-${WORKER_ID}`
 let socket: WebSocket | undefined
 
-async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-    const result = await execute(operationType, operation)
-    const resultParsed = JSON.parse(JSON.stringify(result))
-    socket?.send(JSON.stringify({
-        type: EngineSocketEvent.ENGINE_RESPONSE,
-        data: resultParsed,
-    }))
-}
 
 function setupSocket() {
-    assertNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
+    if (isNil(WORKER_ID)) {
+        throw new EngineGenericError('WorkerIdNotSetError', 'WORKER_ID environment variable is not set')
+    }
 
     socket = new WebSocket(WS_URL, {
         headers: {
@@ -52,34 +47,33 @@ function setupSocket() {
         originalLog.apply(console, args)
     }
 
-    const originalError = console.error
+    const originalError = console.error 
     console.error = function (...args) {
+        let sanitizedArgs = [...args]
+        if (typeof args[0] === 'string' && ERROR_MESSAGES_TO_REDACT.some(errorMessage => args[0].includes(errorMessage))) {
+            sanitizedArgs = [sanitizedArgs[0], 'REDACTED']
+        }
         const engineStderr: EngineStderr = {
-            message: args.join(' ') + '\n',
+            message: sanitizedArgs.join(' ') + '\n',
         }
         socket?.send(JSON.stringify({
             type: EngineSocketEvent.ENGINE_STDERR,
             data: engineStderr,
         }))
-        originalError.apply(console, args)
+       
+        originalError.apply(console, sanitizedArgs)
     }
 
-    socket.on('message', (data: string) => {
-        try {
-            const message = JSON.parse(data)
-            if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
-                executeFromSocket(message.data.operation, message.data.operationType).catch(e => {
-                    const engineError: EngineResponse = {
-                        response: undefined,
-                        status: EngineResponseStatus.INTERNAL_ERROR,
-                        error: utils.formatError(e),
-                    }
-                    socket?.send(JSON.stringify(engineError))
-                })
+    socket.on('message', async (data: string) => {
+        const { error: resultError } = await utils.tryCatchAndThrowOnEngineError(() => onSocketMessage(data))
+        if (resultError) {
+            const engineError: EngineResponse = {
+                response: undefined,
+                status: EngineResponseStatus.INTERNAL_ERROR,
+                error: utils.formatError(resultError),
             }
-        }
-        catch (error) {
-            console.error('Error handling operation:', error)
+            console.error('Error handling operation:', engineError)
+            socket?.send(JSON.stringify(engineError))
         }
     })
 
@@ -110,4 +104,16 @@ function sendToErrorSocket(error: unknown) {
     setTimeout(() => {
         process.exit(1)
     }, 3000)
+}
+
+async function onSocketMessage(data: string): Promise<void> {
+    const message = JSON.parse(data)
+    if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
+        const result = await execute(message.data.operationType, message.data.operation)
+        const resultParsed = JSON.parse(JSON.stringify(result))
+        socket?.send(JSON.stringify({
+            type: EngineSocketEvent.ENGINE_RESPONSE,
+            data: resultParsed,
+        }))
+    }
 }

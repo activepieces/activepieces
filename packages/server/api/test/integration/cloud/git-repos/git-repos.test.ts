@@ -59,6 +59,9 @@ describe('Git API', () => {
             const token = await generateMockToken({
                 id: mockOwner.id,
                 projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
                 type: PrincipalType.USER,
             })
 
@@ -174,6 +177,9 @@ describe('Git API', () => {
                 id: mockOwner.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                },
             })
 
             const response = await app?.inject({
@@ -257,6 +263,9 @@ describe('Git API', () => {
                 id: mockOwner.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                },
             })
 
             const response = await app?.inject({

@@ -1,5 +1,6 @@
 import { assertEqual, FlowActionType, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
+import { EngineGenericError } from '../../helper/execution-errors'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -21,7 +22,6 @@ export type VerdictResponse = {
 }
 
 export class FlowExecutorContext {
-    tasks: number
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
     pauseRequestId: string
@@ -29,7 +29,7 @@ export class FlowExecutorContext {
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
     error?: FlowError
-    testSingleStepMode?: boolean
+    stepNameToTest?: boolean
 
     /**
      * Execution time in milliseconds
@@ -37,7 +37,6 @@ export class FlowExecutorContext {
     duration: number
 
     constructor(copyFrom?: FlowExecutorContext) {
-        this.tasks = copyFrom?.tasks ?? 0
         this.tags = copyFrom?.tags ?? []
         this.steps = copyFrom?.steps ?? {}
         this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
@@ -46,7 +45,7 @@ export class FlowExecutorContext {
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.error = copyFrom?.error ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
-        this.testSingleStepMode = copyFrom?.testSingleStepMode ?? false
+        this.stepNameToTest = copyFrom?.stepNameToTest ?? false
     }
 
     static empty(): FlowExecutorContext {
@@ -106,13 +105,6 @@ export class FlowExecutorContext {
         })
     }
 
-    public increaseTask(tasks = 1): FlowExecutorContext {
-        return new FlowExecutorContext({
-            ...this,
-            tasks: this.tasks + tasks,
-        })
-    }
-
     public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
         const steps = {
             ...this.steps,
@@ -127,7 +119,6 @@ export class FlowExecutorContext {
 
         return new FlowExecutorContext({
             ...this,
-            tasks: this.tasks,
             ...spreadIfDefined('error', error),
             steps,
         })
@@ -165,7 +156,6 @@ export class FlowExecutorContext {
     public async toResponse(): Promise<FlowRunResponse> {
         const baseExecutionOutput = {
             duration: this.duration,
-            tasks: this.tasks,
             tags: [...this.tags],
             steps: await loggingUtils.trimExecution(this.steps),
         }
@@ -188,7 +178,7 @@ export class FlowExecutorContext {
             case ExecutionVerdict.PAUSED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason !== FlowRunStatus.PAUSED) {
-                    throw new Error('Verdict Response should have pause metadata response')
+                    throw new EngineGenericError('VerdictResponseShouldHavePauseMetadataResponseError', 'Verdict Response should have pause metadata response')
                 }
                 return {
                     ...baseExecutionOutput,
@@ -219,7 +209,7 @@ export class FlowExecutorContext {
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-                throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+                throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
             flattenedSteps = {
@@ -245,7 +235,7 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
     currentPath.path.forEach(([stepName, iteration]) => {
         const stepOutput = targetMap[stepName]
         if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-            throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+            throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', `[ExecutionState#getTargetMap] Not instance of Loop On Items step output: ${stepOutput.type}`)
         }
         targetMap = stepOutput.output.iterations[iteration]
     })

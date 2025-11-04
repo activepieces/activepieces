@@ -6,21 +6,21 @@ import {
     PlatformWithoutSensitiveData,
     PrincipalType,
 } from '@activepieces/shared'
-import { onRequestAsyncHookHandler } from 'fastify'
+import { FastifyRequest, onRequestAsyncHookHandler } from 'fastify'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 
-const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new ActivepiecesError({
-    code: ErrorCode.AUTHORIZATION,
-    params: {},
-})
-
 export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWithoutSensitiveData) => boolean): onRequestAsyncHookHandler =>
     async (request, _res) => {
-        const platformId = request.principal.platform.id
+        const platformId = 'platform' in request.principal ? request.principal.platform.id : null
 
         if (isNil(platformId)) {
-            throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Platform ID is required',
+                },
+            })
         }
 
         const platform = await platformService.getOneWithPlanOrThrow(platformId)
@@ -36,29 +36,72 @@ export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWitho
         }
     }
 
+const checkIfPlatformIsOwnedByUser = async (platformId: string, request: FastifyRequest) => {
+    if (isNil(platformId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Platform ID is required',
+            },
+        })
+    }
+    
+
+    const isApiKey = request.principal.type === PrincipalType.SERVICE
+    if (isApiKey) {
+        return
+    }
+
+    const user = await userService.getOneOrFail({
+        id: request.principal.id,
+    })
+
+    if (isNil(user)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User is not found',
+            },
+        })
+    }
+
+    const canEditPlatform = user.platformRole === PlatformRole.ADMIN && user.platformId === platformId 
+    if (!canEditPlatform) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User is not owner of the platform',
+            },
+        })
+    }
+}
 export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
     async (request, _res) => {
-        const platformId = request.principal.platform.id
-
-        if (isNil(platformId)) {
-            throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
+        const principal = request.principal
+        if (principal.type !== PrincipalType.USER && principal.type !== PrincipalType.SERVICE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are unauthenticated and cannot access this resource',
+                },
+            })
         }
+        const platformId = principal.platform.id
+        await checkIfPlatformIsOwnedByUser(platformId, request)
+        
+    }
 
-        const isApiKey = request.principal.type === PrincipalType.SERVICE
-        if (isApiKey) {
-            return
+    
+export const platformToEditMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
+    async (request, _res) => {
+        if (!request.params || typeof request.params !== 'object' || !('id' in request.params) || typeof request.params.id !== 'string') {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Platform ID is required',
+                },
+            })
         }
-
-        const user = await userService.getOneOrFail({
-            id: request.principal.id,
-        })
-
-        if (isNil(user)) {
-            throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
-        }
-
-        const canEditPlatform = user.platformRole === PlatformRole.ADMIN && user.platformId === platformId
-        if (!canEditPlatform) {
-            throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
-        }
+        
+        await checkIfPlatformIsOwnedByUser(request.params.id, request)
     }

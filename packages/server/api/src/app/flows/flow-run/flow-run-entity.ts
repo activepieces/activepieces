@@ -58,10 +58,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             nullable: true,
             type: Number,
         },
-        tasks: {
-            nullable: true,
-            type: Number,
-        },
         startTime: {
             type: TIMESTAMP_COLUMN_TYPE,
         },
@@ -114,6 +110,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_parent_run_id',
             columns: ['parentRunId'],
+        },
+        {
+            name: 'idx_run_flow_version_id',
+            columns: ['flowVersionId'],
         },
     ],
     relations: {

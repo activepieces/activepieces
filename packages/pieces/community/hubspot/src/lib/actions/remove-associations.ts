@@ -8,6 +8,7 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
+import { chunk } from '@activepieces/shared';
 
 export const removeAssociationsAction = createAction({
     auth: hubspotAuth,
@@ -79,30 +80,43 @@ export const removeAssociationsAction = createAction({
         }
         const associationCategory = association.category;
 
-        const response = await client.crm.associations.v4.batchApi.archiveLabels(
-            fromObjectType as string,
-            toObjectType as string,
-            {
-                inputs: toObjectIds.map((objectId) => {
-                    return {
-                        _from: {
-                            id: fromObjectId,
-                        },
-                        to: {
-                            id: objectId,
-                        },
-                        types: [
-                            {
-                                associationCategory:
-                                    associationCategory as unknown as AssociationSpecAssociationCategoryEnum,
-                                associationTypeId: associationType,
-                            },
-                        ],
-                    };
-                }),
-            },
-        );
+        // Batch API limit is 1000, but using 100 for consistency and safety
+        const BATCH_SIZE = 100;
+        const chunks = chunk(toObjectIds, BATCH_SIZE);
+        const responses = [];
 
-        return {success: true};
+        for (const chunkBatch of chunks) {
+            const response = await client.crm.associations.v4.batchApi.archiveLabels(
+                fromObjectType as string,
+                toObjectType as string,
+                {
+                    inputs: chunkBatch.map((objectId) => {
+                        return {
+                            _from: {
+                                id: fromObjectId,
+                            },
+                            to: {
+                                id: objectId,
+                            },
+                            types: [
+                                {
+                                    associationCategory:
+                                        associationCategory as unknown as AssociationSpecAssociationCategoryEnum,
+                                    associationTypeId: associationType,
+                                },
+                            ],
+                        };
+                    }),
+                },
+            );
+            responses.push(response);
+        }
+
+        return {
+            success: true,
+            totalAssociations: toObjectIds.length,
+            batchCount: chunks.length,
+            responses,
+        };
     },
 });
