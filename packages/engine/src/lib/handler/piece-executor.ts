@@ -198,6 +198,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
+            .setVerdict(ExecutionVerdict.FAILED, undefined)
     }
 
     return executionStateResult
