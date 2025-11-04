@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,28 +9,34 @@ export const createAttachment = createAction({
   displayName: 'Create Attachment',
   description: 'Creates a new attachment',
   props: {
-    task_id: Property.ShortText({
+    task_id: Property.Number({
       displayName: 'Task ID',
       required: true,
     }),
-    name: Property.ShortText({
-      displayName: 'File Name',
+    file_url: Property.File({
+      displayName: 'File URL',
+      description: 'URL of the file to attach',
       required: true,
     }),
-    local: Property.ShortText({
-      displayName: 'File URL',
-      required: true,
+    name: Property.ShortText({
+      displayName: 'Attachment Name',
+      required: false,
     }),
   },
-  
   async run(context) {
-    const { task_id, name, local } = context.propsValue;
-    
-    return await meisterTaskCommon.makeRequest(
+    const token = context.auth.access_token;
+    const { task_id, file_url, name } = context.propsValue;
+
+    const body: any = { url: file_url };
+    if (name) body.name = name;
+
+    const response = await makeRequest(
       HttpMethod.POST,
       `/tasks/${task_id}/attachments`,
-      context.auth.access_token,
-      { name, local }
+      token,
+      body
     );
+
+    return response.body;
   },
 });

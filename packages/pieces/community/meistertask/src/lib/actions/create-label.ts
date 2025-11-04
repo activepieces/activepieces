@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { meistertaskAuth } from '../../index';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -10,10 +10,7 @@ export const createLabel = createAction({
   displayName: 'Create Label',
   description: 'Creates a new label',
   props: {
-    project_id: Property.ShortText({
-      displayName: 'Project ID',
-      required: true,
-    }),
+    project: meisterTaskCommon.project,
     name: Property.ShortText({
       displayName: 'Label Name',
       required: true,
@@ -24,15 +21,20 @@ export const createLabel = createAction({
       required: false,
     }),
   },
-  
   async run(context) {
-    const { project_id, name, color } = context.propsValue;
-    
-    return await meisterTaskCommon.makeRequest(
+    const token = context.auth.access_token;
+    const { project, name, color } = context.propsValue;
+
+    const body: any = { name };
+    if (color) body.color = color;
+
+    const response = await makeRequest(
       HttpMethod.POST,
-      `/projects/${project_id}/labels`,
-      context.auth.access_token,
-      { name, color }
+      `/projects/${project}/labels`,
+      token,
+      body
     );
+
+    return response.body;
   },
 });

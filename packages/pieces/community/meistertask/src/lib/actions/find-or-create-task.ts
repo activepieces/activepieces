@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,51 +9,68 @@ export const findOrCreateTask = createAction({
   displayName: 'Find or Create Task',
   description: 'Finds a task by searching, or creates one if it doesn\'t exist',
   props: {
-    section_id: Property.ShortText({
-      displayName: 'Section ID',
-      required: true,
-    }),
+    project: meisterTaskCommon.project,
+    section: meisterTaskCommon.section,
     name: Property.ShortText({
       displayName: 'Task Name',
       required: true,
     }),
     notes: Property.LongText({
       displayName: 'Notes',
+      description: 'Notes for the task (used if creating)',
       required: false,
     }),
-    assigned_to_id: Property.ShortText({
-      displayName: 'Assigned To ID',
-      required: false,
-    }),
-    due: Property.ShortText({
+    assigned_to: meisterTaskCommon.person,
+    due_date: Property.DateTime({
       displayName: 'Due Date',
-      description: 'ISO 8601 format (e.g., 2025-12-31)',
+      description: 'Due date for the task (used if creating)',
       required: false,
     }),
   },
-  
   async run(context) {
-    const { section_id, name, notes, assigned_to_id, due } = context.propsValue;
-    
+    const token = context.auth.access_token;
+    const { section, name, notes, assigned_to, due_date } = context.propsValue;
+
     // Try to find existing task
-    const tasks = await meisterTaskCommon.makeRequest<Array<any>>(
+    const findResponse = await makeRequest(
       HttpMethod.GET,
-      `/sections/${section_id}/tasks`,
-      context.auth.access_token
+      `/sections/${section}/tasks`,
+      token
     );
-    
-    const existingTask = tasks.find((task) => task.name === name);
-    
+
+    const existingTask = findResponse.body.find((task: any) =>
+      task.name.toLowerCase() === name.toLowerCase()
+    );
+
     if (existingTask) {
-      return existingTask;
+      return {
+        found: true,
+        created: false,
+        task: existingTask,
+      };
     }
-    
-    // Create new task if not found
-    return await meisterTaskCommon.makeRequest(
+
+    // Create new task
+    const body: any = {
+      name,
+      section_id: section,
+    };
+
+    if (notes) body.notes = notes;
+    if (assigned_to) body.assigned_to_id = assigned_to;
+    if (due_date) body.due = due_date;
+
+    const createResponse = await makeRequest(
       HttpMethod.POST,
-      `/sections/${section_id}/tasks`,
-      context.auth.access_token,
-      { name, notes, assigned_to_id, due }
+      '/tasks',
+      token,
+      body
     );
+
+    return {
+      found: false,
+      created: true,
+      task: createResponse.body,
+    };
   },
 });

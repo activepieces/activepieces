@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,29 +9,31 @@ export const findTask = createAction({
   displayName: 'Find Task',
   description: 'Finds a task by searching',
   props: {
-    section_id: Property.ShortText({
-      displayName: 'Section ID',
-      required: true,
-    }),
+    project: meisterTaskCommon.project,
+    section: meisterTaskCommon.section,
     name: Property.ShortText({
       displayName: 'Task Name',
       required: false,
     }),
   },
-  
   async run(context) {
-    const { section_id, name } = context.propsValue;
-    
-    const tasks = await meisterTaskCommon.makeRequest<Array<unknown>>(
+    const token = context.auth.access_token;
+    const { section, name } = context.propsValue;
+
+    const response = await makeRequest(
       HttpMethod.GET,
-      `/sections/${section_id}/tasks`,
-      context.auth.access_token
+      `/sections/${section}/tasks`,
+      token
     );
-    
+
+    let tasks = response.body;
+
     if (name) {
-      return tasks.find((task: any) => task.name === name) || null;
+      tasks = tasks.filter((task: any) =>
+        task.name.toLowerCase().includes(name.toLowerCase())
+      );
     }
-    
-    return tasks;
+
+    return tasks.length > 0 ? tasks[0] : null;
   },
 });

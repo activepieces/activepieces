@@ -1,52 +1,17 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { createWebhookTrigger } from "../common/common";
 
-const TRIGGER_NAME = 'new_comment';
-const KEY = `${TRIGGER_NAME}_webhook_id`;
 
-export const newComment = createTrigger({
-  auth: meistertaskAuth,
+export const newComment = createWebhookTrigger({
   name: 'new_comment',
   displayName: 'New Comment',
   description: 'Triggers when a new comment is created on a task',
-  type: TriggerStrategy.WEBHOOK,
-  props: {},
-  
+  eventType: 'comment:created',
+  requiresProject: true,
   sampleData: {
-    id: '44444',
+    id: 98765,
     text: 'This is a comment',
-    task_id: '67890',
-    person_id: '11111',
-    created_at: '2025-01-01T12:00:00Z',
-  },
-  
-  async onEnable(context) {
-    const webhook = await meisterTaskCommon.createWebhook(
-      context.auth.access_token,
-      context.webhookUrl,
-      'project',
-      '*',
-      ['comment:created']
-    );
-    
-    await context.store.put(KEY, webhook.id);
-  },
-  
-  async onDisable(context) {
-    const webhookId = await context.store.get<string>(KEY);
-    
-    if (webhookId) {
-      await meisterTaskCommon.deleteWebhook(
-        context.auth.access_token,
-        webhookId
-      ).then(async () => {
-        await context.store.delete(KEY);
-      });
-    }
-  },
-  
-  async run(context) {
-    return [context.payload.body];
+    task_id: 789,
+    person_id: 12345,
+    created_at: '2024-01-15T10:30:00Z',
   },
 });

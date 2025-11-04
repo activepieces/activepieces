@@ -1,52 +1,16 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { createWebhookTrigger } from "../common/common";
 
-const TRIGGER_NAME = 'new_checklist_item';
-const KEY = `${TRIGGER_NAME}_webhook_id`;
-
-export const newChecklistItem = createTrigger({
-  auth: meistertaskAuth,
+export const newChecklistItem = createWebhookTrigger({
   name: 'new_checklist_item',
   displayName: 'New Checklist Item',
   description: 'Triggers when a new checklist item is added to a task',
-  type: TriggerStrategy.WEBHOOK,
-  props: {},
-  
+  eventType: 'checklist_item:created',
+  requiresProject: true,
   sampleData: {
-    id: '66666',
-    name: 'Checklist item',
-    task_id: '67890',
-    status: 'open',
-    created_at: '2025-01-01T12:00:00Z',
-  },
-  
-  async onEnable(context) {
-    const webhook = await meisterTaskCommon.createWebhook(
-      context.auth.access_token,
-      context.webhookUrl,
-      'project',
-      '*',
-      ['checklist_item:created']
-    );
-    
-    await context.store.put(KEY, webhook.id);
-  },
-  
-  async onDisable(context) {
-    const webhookId = await context.store.get<string>(KEY);
-    
-    if (webhookId) {
-      await meisterTaskCommon.deleteWebhook(
-        context.auth.access_token,
-        webhookId
-      ).then(async () => {
-        await context.store.delete(KEY);
-      });
-    }
-  },
-  
-  async run(context) {
-    return [context.payload.body];
+    id: 33333,
+    name: 'Review document',
+    status: 0,
+    task_id: 789,
+    created_at: '2024-01-15T10:30:00Z',
   },
 });

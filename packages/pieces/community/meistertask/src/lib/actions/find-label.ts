@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,20 +9,26 @@ export const findLabel = createAction({
   displayName: 'Find Label',
   description: 'Finds a label by searching',
   props: {
-    project_id: Property.ShortText({
-      displayName: 'Project ID',
+    project: meisterTaskCommon.project,
+    name: Property.ShortText({
+      displayName: 'Label Name',
       required: true,
     }),
   },
-  
   async run(context) {
-    const { project_id } = context.propsValue;
-    
-    const labels = await meisterTaskCommon.makeRequest<Array<unknown>>(
+    const token = context.auth.access_token;
+    const { project, name } = context.propsValue;
+
+    const response = await makeRequest(
       HttpMethod.GET,
-      `/projects/${project_id}/labels`,
-      context.auth.access_token
+      `/projects/${project}/labels`,
+      token
     );
-    return labels;
+
+    const labels = response.body.filter((label: any) =>
+      label.name.toLowerCase().includes(name.toLowerCase())
+    );
+
+    return labels.length > 0 ? labels[0] : null;
   },
 });

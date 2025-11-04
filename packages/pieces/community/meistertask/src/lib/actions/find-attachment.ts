@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,20 +9,33 @@ export const findAttachment = createAction({
   displayName: 'Find Attachment',
   description: 'Finds an attachment by searching',
   props: {
-    task_id: Property.ShortText({
+    task_id: Property.Number({
       displayName: 'Task ID',
       required: true,
     }),
+    name: Property.ShortText({
+      displayName: 'Attachment Name',
+      required: false,
+    }),
   },
-  
   async run(context) {
-    const { task_id } = context.propsValue;
-    
-    const attachments = await meisterTaskCommon.makeRequest<Array<unknown>>(
+    const token = context.auth.access_token;
+    const { task_id, name } = context.propsValue;
+
+    const response = await makeRequest(
       HttpMethod.GET,
       `/tasks/${task_id}/attachments`,
-      context.auth.access_token
+      token
     );
-    return attachments;
+
+    let attachments = response.body;
+
+    if (name) {
+      attachments = attachments.filter((att: any) =>
+        att.name.toLowerCase().includes(name.toLowerCase())
+      );
+    }
+
+    return attachments.length > 0 ? attachments[0] : null;
   },
 });

@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,43 +9,55 @@ export const findOrCreateLabel = createAction({
   displayName: 'Find or Create Label',
   description: 'Finds a label by searching, or creates one if it doesn\'t exist',
   props: {
-    project_id: Property.ShortText({
-      displayName: 'Project ID',
-      required: true,
-    }),
+    project: meisterTaskCommon.project,
     name: Property.ShortText({
       displayName: 'Label Name',
       required: true,
     }),
     color: Property.ShortText({
       displayName: 'Color',
-      description: 'Hex color code (e.g., #FF0000)',
+      description: 'Hex color code (e.g., #FF0000) - used if creating',
       required: false,
     }),
   },
-  
   async run(context) {
-    const { project_id, name, color } = context.propsValue;
-    
+    const token = context.auth.access_token;
+    const { project, name, color } = context.propsValue;
+
     // Try to find existing label
-    const labels = await meisterTaskCommon.makeRequest<Array<any>>(
+    const findResponse = await makeRequest(
       HttpMethod.GET,
-      `/projects/${project_id}/labels`,
-      context.auth.access_token
+      `/projects/${project}/labels`,
+      token
     );
-    
-    const existingLabel = labels.find((label) => label.name === name);
-    
+
+    const existingLabel = findResponse.body.find((label: any) =>
+      label.name.toLowerCase() === name.toLowerCase()
+    );
+
     if (existingLabel) {
-      return existingLabel;
+      return {
+        found: true,
+        created: false,
+        label: existingLabel,
+      };
     }
-    
-    // Create new label if not found
-    return await meisterTaskCommon.makeRequest(
+
+    // Create new label
+    const body: any = { name };
+    if (color) body.color = color;
+
+    const createResponse = await makeRequest(
       HttpMethod.POST,
-      `/projects/${project_id}/labels`,
-      context.auth.access_token,
-      { name, color }
+      `/projects/${project}/labels`,
+      token,
+      body
     );
+
+    return {
+      found: false,
+      created: true,
+      label: createResponse.body,
+    };
   },
 });

@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,19 +9,21 @@ export const findPerson = createAction({
   displayName: 'Find Person',
   description: 'Finds a person based on person_id',
   props: {
-    person_id: Property.ShortText({
+    person_id: Property.Number({
       displayName: 'Person ID',
       required: true,
     }),
   },
-  
   async run(context) {
+    const token = context.auth.access_token;
     const { person_id } = context.propsValue;
-    
-    return await meisterTaskCommon.makeRequest(
+
+    const response = await makeRequest(
       HttpMethod.GET,
       `/persons/${person_id}`,
-      context.auth.access_token
+      token
     );
+
+    return response.body;
   },
 });

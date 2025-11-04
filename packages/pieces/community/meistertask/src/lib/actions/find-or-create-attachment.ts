@@ -1,50 +1,63 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const findOrCreateAttachment= createAction({
+export const findOrCreateAttachment = createAction({
   auth: meistertaskAuth,
   name: 'find_or_create_attachment',
   displayName: 'Find or Create Attachment',
   description: 'Finds an attachment by searching, or creates one if it doesn\'t exist',
   props: {
-    task_id: Property.ShortText({
+    task_id: Property.Number({
       displayName: 'Task ID',
       required: true,
     }),
     name: Property.ShortText({
-      displayName: 'File Name',
+      displayName: 'Attachment Name',
       required: true,
     }),
-    local: Property.ShortText({
+    file_url: Property.File({
       displayName: 'File URL',
+      description: 'URL of the file to attach (used if creating)',
       required: true,
     }),
   },
-  
   async run(context) {
-    const { task_id, name, local } = context.propsValue;
-    
+    const token = context.auth.access_token;
+    const { task_id, name, file_url } = context.propsValue;
+
     // Try to find existing attachment
-    const attachments = await meisterTaskCommon.makeRequest<Array<any>>(
+    const findResponse = await makeRequest(
       HttpMethod.GET,
       `/tasks/${task_id}/attachments`,
-      context.auth.access_token
+      token
     );
-    
-    const existingAttachment = attachments.find((att) => att.name === name);
-    
+
+    const existingAttachment = findResponse.body.find((att: any) =>
+      att.name.toLowerCase() === name.toLowerCase()
+    );
+
     if (existingAttachment) {
-      return existingAttachment;
+      return {
+        found: true,
+        created: false,
+        attachment: existingAttachment,
+      };
     }
-    
-    // Create new attachment if not found
-    return await meisterTaskCommon.makeRequest(
+
+    // Create new attachment
+    const createResponse = await makeRequest(
       HttpMethod.POST,
       `/tasks/${task_id}/attachments`,
-      context.auth.access_token,
-      { name, local }
+      token,
+      { url: file_url, name }
     );
+
+    return {
+      found: false,
+      created: true,
+      attachment: createResponse.body,
+    };
   },
 });

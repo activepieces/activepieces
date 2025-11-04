@@ -1,5 +1,5 @@
 import { meistertaskAuth } from '../../index';
-import { meisterTaskCommon } from '../common/common';
+import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -9,7 +9,7 @@ export const updateTask = createAction({
   displayName: 'Update Task',
   description: 'Updates an existing task',
   props: {
-    id: Property.ShortText({
+    task_id: Property.Number({
       displayName: 'Task ID',
       required: true,
     }),
@@ -21,42 +21,45 @@ export const updateTask = createAction({
       displayName: 'Notes',
       required: false,
     }),
-    assigned_to_id: Property.ShortText({
-      displayName: 'Assigned To ID',
-      required: false,
-    }),
-    section_id: Property.ShortText({
-      displayName: 'The ID of the parent section',
-      required: false,
-    }),
-    status: Property.Number({
+    status: Property.StaticDropdown({
       displayName: 'Status',
-      description: '1 = Open, 2 = Completed',
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Open', value: 1 },
+          { label: 'Completed', value: 2 },
+          { label: 'Trashed', value: 18 },
+        ],
+      },
+    }),
+    assigned_to: Property.Number({
+      displayName: 'Assigned To (Person ID)',
       required: false,
     }),
-    due: Property.DateTime({
+    due_date: Property.DateTime({
       displayName: 'Due Date',
-      description: 'ISO 8601 format (e.g., 2025-12-31)',
       required: false,
     }),
   },
-  
   async run(context) {
-    const { id, name, notes, assigned_to_id, status, due, section_id } = context.propsValue;
-    
-    const updateData: Record<string, unknown> = {};
-    if (name) updateData[name] = name;
-    if (notes) updateData[notes] = notes;
-    if (assigned_to_id) updateData[assigned_to_id] = assigned_to_id;
-    if (status) updateData[status] = status;
-    if (due) updateData[due] = due;
-    if(section_id) updateData[section_id] = section_id;
-    
-    return await meisterTaskCommon.makeRequest(
+    const token = context.auth.access_token;
+    const { task_id, name, notes, status, assigned_to, due_date } = context.propsValue;
+
+    const body: any = {};
+    if (name) body.name = name;
+    if (notes) body.notes = notes;
+    if (status) body.status = status;
+    if (assigned_to) body.assigned_to_id = assigned_to;
+    if (due_date) body.due = due_date;
+
+    const response = await makeRequest(
       HttpMethod.PUT,
-      `/tasks/${id}`,
-      context.auth.access_token,
-      updateData
+      `/tasks/${task_id}`,
+      token,
+      body
     );
+
+    return response.body;
   },
 });
