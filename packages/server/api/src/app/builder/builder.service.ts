@@ -34,7 +34,7 @@ import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { platformPlanService } from '../platform-plan/platform-plan.service'
 import { buildBuilderTools } from './builder.tools'
-import { BuilderOpenAiModel, builderSystemPrompt } from './constants'
+import { BuilderOpenAiModel, builderSystemPromptV2 } from './constants'
 import { BuilderMessageEntity } from './message.entity'
 
 const STEP_COUNT_LIMIT = 10
@@ -257,7 +257,7 @@ export const builderService = (log: FastifyBaseLogger) => ({
         const flowVersion = await flowVersionService(log).getLatestVersion(flowId, FlowVersionState.DRAFT)
         assertNotNullOrUndefined(flowVersion, 'No latest flow version found')
 
-        const systemWithFlowPrompt = builderSystemPrompt + '\n' + 'Current flow:\n' + stripFlowVersionForAiPrompt(flowVersion)
+        const systemWithFlowPrompt = builderSystemPromptV2 + '\n' + 'Current flow:\n' + stripFlowVersionForAiPrompt(flowVersion)
 
         const userMessage: UserModelMessage = { role: 'user', content: messages[messages.length - 1].content }
         const oldMessages = await builderService(log).fetchMessages({ projectId, flowId, limit: 10 })
