@@ -50,6 +50,9 @@
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
+      ],
+      "@activepieces/cheapestinference": [
+        "packages/pieces/community/cheapestinference/src/index.ts"
       ]
     },
     "resolveJsonModule": true

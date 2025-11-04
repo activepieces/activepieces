@@ -23,7 +23,7 @@ import { pieceListUtils } from './utils'
 import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-    const packages = system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',')
+    const packages = system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',').map(p => p.trim()).filter(p => p.length > 0)
     const pieces = await filePiecesUtils(packages, system.globalLogger()).findAllPieces()
 
     return pieces.sort((a, b) =>
