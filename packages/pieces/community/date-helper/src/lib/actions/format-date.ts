@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   extendDayJs,
   optionalTimeFormats,
+  parseDate,
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
@@ -93,5 +94,7 @@ function changeDateFormat(
   outputFormat: string,
   outputTimeZone: string
 ): string {
-  return dayjs.tz(inputDate, inputFormat, inputTimeZone).tz(outputTimeZone).format(outputFormat);
+  const parsedDate = parseDate(inputDate, inputFormat);
+  
+  return parsedDate.tz(inputTimeZone, true).tz(outputTimeZone).format(outputFormat);
 }
