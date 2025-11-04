@@ -22,10 +22,15 @@ afterAll(async () => {
 
 describe('Webhook Service', () => {
     it('should return GONE if the flow is not found', async () => {
-        const { mockProject } = await mockAndSaveBasicSetup()
+        const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+        const { mockPlatform } = await mockAndSaveBasicSetup()
         const mockToken = await generateMockToken({
             type: PrincipalType.USER,
             projectId: mockProject.id,
+            id: mockOwner.id,
+            platform: {
+                id: mockPlatform.id,
+            },
         })
 
         const response = await app?.inject({
@@ -38,8 +43,8 @@ describe('Webhook Service', () => {
         expect(response?.statusCode).toBe(StatusCodes.GONE)
     }),
     it('should return NOT FOUND if the flow is disabled', async () => {
-        const { mockProject } = await mockAndSaveBasicSetup()
-    
+        const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
+        const { mockOwner } = await mockAndSaveBasicSetup()
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
             status: FlowStatus.DISABLED,
@@ -55,6 +60,10 @@ describe('Webhook Service', () => {
         const mockToken = await generateMockToken({
             type: PrincipalType.USER,
             projectId: mockProject.id,
+            platform: {
+                id: mockPlatform.id,
+            },
+            id: mockOwner.id,
         })
         const response = await app?.inject({
             method: 'GET',
