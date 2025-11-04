@@ -5,6 +5,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
+
 import customHtmlPlugin from './vite-plugins/html-plugin';
 
 export default defineConfig(({ command, mode }) => {
