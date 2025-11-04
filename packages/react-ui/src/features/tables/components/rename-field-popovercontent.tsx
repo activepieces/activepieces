@@ -37,7 +37,8 @@ const RenameFieldPopoverContent = ({ name }: { name: string }) => {
       if (
         fields.find(
           (field) =>
-            field.name.trim().toLowerCase() === values.name.trim().toLowerCase() &&
+            field.name.trim().toLowerCase() ===
+              values.name.trim().toLowerCase() &&
             field.name.trim().toLowerCase() !== name.trim().toLowerCase(),
         )
       ) {
