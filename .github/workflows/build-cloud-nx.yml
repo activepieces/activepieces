@@ -26,7 +26,7 @@ jobs:
         with:
           bun-version: latest
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js"
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --skip-install
         if: github.event.pull_request.head.repo.full_name == github.repository
    
       - run: bun install
