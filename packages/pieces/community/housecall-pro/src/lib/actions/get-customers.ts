@@ -20,22 +20,47 @@ export const getCustomers = createAction({
       required: false,
       defaultValue: 50,
     }),
-    search: Property.ShortText({
-      displayName: 'Search',
-      description: 'Search customers by name, email, or phone',
+    q: Property.ShortText({
+      displayName: 'Search Query',
+      description: 'Search customers by name, email, mobile number, and address',
+      required: false,
+    }),
+    expand: Property.StaticMultiSelectDropdown({
+      displayName: 'Expand',
+      description: 'Expand related data',
+      required: false,
+      options: {
+        options: [
+          { label: 'Attachments', value: 'attachments' },
+          { label: 'Do Not Service', value: 'do_not_service' },
+        ],
+      },
+    }),
+    location_ids: Property.Array({
+      displayName: 'Location IDs',
+      description: 'IDs of locations from which to pull customers',
       required: false,
     }),
     sort_by: Property.StaticDropdown({
       displayName: 'Sort By',
+      description: 'The customer attribute by which to sort the results',
       required: false,
       options: {
         options: [
-          { label: 'Created Date (Newest First)', value: 'created_at_desc' },
-          { label: 'Created Date (Oldest First)', value: 'created_at_asc' },
-          { label: 'Updated Date (Newest First)', value: 'updated_at_desc' },
-          { label: 'Updated Date (Oldest First)', value: 'updated_at_asc' },
-          { label: 'Last Name (A-Z)', value: 'last_name_asc' },
-          { label: 'Last Name (Z-A)', value: 'last_name_desc' },
+          { label: 'Created At', value: 'created_at' },
+          { label: 'Updated At', value: 'updated_at' },
+          { label: 'Last Name', value: 'last_name' },
+        ],
+      },
+    }),
+    sort_direction: Property.StaticDropdown({
+      displayName: 'Sort Direction',
+      description: 'The order of sorting (ascending or descending)',
+      required: false,
+      options: {
+        options: [
+          { label: 'Ascending', value: 'asc' },
+          { label: 'Descending', value: 'desc' },
         ],
       },
     }),
@@ -47,32 +72,24 @@ export const getCustomers = createAction({
       page_size: (propsValue.page_size || 50).toString(),
     };
 
-    if (propsValue.search) {
-      queryParams['search'] = propsValue.search;
+    if (propsValue.q) {
+      queryParams['q'] = propsValue.q;
+    }
+
+    if (propsValue.expand && propsValue.expand.length > 0) {
+      queryParams['expand'] = propsValue.expand.join(',');
+    }
+
+    if (propsValue.location_ids && propsValue.location_ids.length > 0) {
+      queryParams['location_ids'] = (propsValue.location_ids as string[]).join(',');
     }
 
     if (propsValue.sort_by) {
-      // Map our friendly names to API parameters
-      const sortMapping: Record<string, string> = {
-        'created_at_desc': 'created_at',
-        'created_at_asc': 'created_at',
-        'updated_at_desc': 'updated_at',
-        'updated_at_asc': 'updated_at',
-        'last_name_asc': 'last_name',
-        'last_name_desc': 'last_name',
-      };
+      queryParams['sort_by'] = propsValue.sort_by;
+    }
 
-      const directionMapping: Record<string, string> = {
-        'created_at_desc': 'desc',
-        'created_at_asc': 'asc',
-        'updated_at_desc': 'desc',
-        'updated_at_asc': 'asc',
-        'last_name_asc': 'asc',
-        'last_name_desc': 'desc',
-      };
-
-      queryParams['sort_by'] = sortMapping[propsValue.sort_by];
-      queryParams['sort_direction'] = directionMapping[propsValue.sort_by];
+    if (propsValue.sort_direction) {
+      queryParams['sort_direction'] = propsValue.sort_direction;
     }
 
     const response = await makeHousecallProRequest(

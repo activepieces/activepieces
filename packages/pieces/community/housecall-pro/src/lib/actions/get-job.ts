@@ -30,13 +30,13 @@ export const getJob = createAction({
 
     const queryParams: Record<string, string> = {};
 
-    if (propsValue.expand && propsValue.expand.length > 0) {
-      queryParams["expand"] = propsValue.expand.join(",");
+    if (propsValue['expand'] && propsValue['expand'].length > 0) {
+      queryParams['expand'] = propsValue['expand'].join(',');
     }
 
     const response = await makeHousecallProRequest(
       auth,
-      `/jobs/${propsValue.job_id}`,
+      `/jobs/${propsValue['job_id']}`,
       HttpMethod.GET,
       undefined,
       queryParams
