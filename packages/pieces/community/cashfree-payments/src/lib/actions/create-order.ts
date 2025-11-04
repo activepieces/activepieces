@@ -1,18 +1,35 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { cashfreeAuth } from '../common/auth';
 
 export const createOrder = createAction({
   name: 'create-order',
   displayName: 'Create Order',
   description: 'Creates an order in Cashfree Payment Gateway',
-  auth: cashfreeAuth,
+  requireAuth: true, // This action requires the piece-level authentication
   props: {
+    environment: Property.StaticDropdown({
+      displayName: 'Environment',
+      description: 'Choose the environment for API calls',
+      required: true,
+      defaultValue: 'sandbox',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Sandbox',
+            value: 'sandbox',
+          },
+          {
+            label: 'Production',
+            value: 'production',
+          },
+        ],
+      },
+    }),
     // Required Fields
     orderAmount: Property.Number({
       displayName: 'Order Amount',
-      description:
-        'Bill amount for the order. Provide up to two decimals (e.g., 10.15 means Rs 10 and 15 paisa)',
+      description: 'Bill amount for the order. Provide up to two decimals (e.g., 10.15 means Rs 10 and 15 paisa)',
       required: true,
     }),
     orderCurrency: Property.StaticDropdown({
@@ -32,17 +49,15 @@ export const createOrder = createAction({
     }),
     customerId: Property.ShortText({
       displayName: 'Customer ID',
-      description:
-        'A unique identifier for the customer. Use alphanumeric values only (3-50 characters)',
+      description: 'A unique identifier for the customer. Use alphanumeric values only (3-50 characters)',
       required: true,
     }),
     customerPhone: Property.ShortText({
       displayName: 'Customer Phone',
-      description:
-        'Customer phone number (minimum 10 digits). For international numbers, prefix with +',
+      description: 'Customer phone number (minimum 10 digits). For international numbers, prefix with +',
       required: true,
     }),
-
+    
     // Optional Customer Details
     customerEmail: Property.ShortText({
       displayName: 'Customer Email',
@@ -56,28 +71,24 @@ export const createOrder = createAction({
     }),
     customerBankAccountNumber: Property.ShortText({
       displayName: 'Customer Bank Account Number',
-      description:
-        'Customer bank account. Required for TPV (Third Party Verification) (3-20 characters)',
+      description: 'Customer bank account. Required for TPV (Third Party Verification) (3-20 characters)',
       required: false,
     }),
     customerBankIfsc: Property.ShortText({
       displayName: 'Customer Bank IFSC',
-      description:
-        'Customer bank IFSC. Required for TPV (Third Party Verification)',
+      description: 'Customer bank IFSC. Required for TPV (Third Party Verification)',
       required: false,
     }),
     customerBankCode: Property.Number({
       displayName: 'Customer Bank Code',
-      description:
-        'Customer bank code. Required for net banking payments with TPV',
+      description: 'Customer bank code. Required for net banking payments with TPV',
       required: false,
     }),
-
+    
     // Order Details
     orderId: Property.ShortText({
       displayName: 'Order ID',
-      description:
-        'Order identifier in your system. Alphanumeric, "_" and "-" only (3-45 characters). Will be auto-generated if not provided',
+      description: 'Order identifier in your system. Alphanumeric, "_" and "-" only (3-45 characters). Will be auto-generated if not provided',
       required: false,
     }),
     orderNote: Property.ShortText({
@@ -90,27 +101,24 @@ export const createOrder = createAction({
       description: 'ISO 8601 format. Example: 2021-07-02T10:20:12+05:30',
       required: false,
     }),
-
+    
     // Order Meta
     returnUrl: Property.ShortText({
       displayName: 'Return URL',
-      description:
-        'URL to redirect customer after payment completion (max 250 characters)',
+      description: 'URL to redirect customer after payment completion (max 250 characters)',
       required: false,
     }),
     notifyUrl: Property.ShortText({
       displayName: 'Notify URL',
-      description:
-        'HTTPS URL for server-to-server notifications (max 250 characters)',
+      description: 'HTTPS URL for server-to-server notifications (max 250 characters)',
       required: false,
     }),
     paymentMethods: Property.ShortText({
       displayName: 'Payment Methods',
-      description:
-        'Comma-separated values: cc,dc,ccc,ppc,nb,upi,paypal,app,paylater,cardlessemi,dcemi,ccemi,banktransfer',
+      description: 'Comma-separated values: cc,dc,ccc,ppc,nb,upi,paypal,app,paylater,cardlessemi,dcemi,ccemi,banktransfer',
       required: false,
     }),
-
+    
     // Cart Details
     cartName: Property.ShortText({
       displayName: 'Cart Name',
@@ -127,7 +135,7 @@ export const createOrder = createAction({
       description: 'Shipping charges for the order',
       required: false,
     }),
-
+    
     // Shipping Address
     shippingFullName: Property.ShortText({
       displayName: 'Shipping - Full Name',
@@ -164,7 +172,7 @@ export const createOrder = createAction({
       description: 'Secondary address line for shipping',
       required: false,
     }),
-
+    
     // Billing Address
     billingFullName: Property.ShortText({
       displayName: 'Billing - Full Name',
@@ -201,12 +209,11 @@ export const createOrder = createAction({
       description: 'Secondary address line for billing',
       required: false,
     }),
-
+    
     // Terminal (for SoftPOS)
     terminalType: Property.ShortText({
       displayName: 'Terminal Type',
-      description:
-        'Type of terminal (e.g., SPOS) for SoftPOS orders (4-10 characters)',
+      description: 'Type of terminal (e.g., SPOS) for SoftPOS orders (4-10 characters)',
       required: false,
     }),
     terminalId: Property.ShortText({
@@ -234,7 +241,7 @@ export const createOrder = createAction({
       description: 'Note given by merchant while creating the terminal',
       required: false,
     }),
-
+    
     // Products Configuration
     oneClickCheckoutEnabled: Property.Checkbox({
       displayName: 'Enable One Click Checkout',
@@ -246,47 +253,42 @@ export const createOrder = createAction({
       description: 'Enable Verify and Pay feature',
       required: false,
     }),
-
+    
     // Order Tags (JSON string)
     orderTags: Property.LongText({
       displayName: 'Order Tags',
-      description:
-        'Custom tags as JSON object. Example: {"product":"Laptop","city":"Bangalore"}. Maximum 10 tags',
+      description: 'Custom tags as JSON object. Example: {"product":"Laptop","city":"Bangalore"}. Maximum 10 tags',
       required: false,
     }),
   },
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, environment, clientSecret, bearerToken } = context.auth as {
+    const { authType, clientId, clientSecret } = context.auth as {
       authType: string;
-      environment: string;
       clientId?: string;
       clientSecret?: string;
-      bearerToken?: string;
     };
-
-     // Validate authentication based on type
-    if (authType === 'client_credentials' && (!clientId || !clientSecret)) {
+    
+    // Validate authentication - only client credentials supported for payment operations
+    if (authType !== 'client_credentials') {
       return {
         success: false,
-        error:
-          'Client ID and Client Secret are required when using client credentials authentication',
-        message: 'Please provide both Client ID and Client Secret',
+        error: 'Invalid authentication type for payment operations',
+        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
       };
     }
-
-    if (authType === 'bearer_token' && !bearerToken) {
+    
+    if (!clientId || !clientSecret) {
       return {
         success: false,
-        error:
-          'Bearer Token is required when using bearer token authentication',
-        message: 'Please provide a valid Bearer Token',
+        error: 'Client ID and Client Secret are required',
+        message: 'Please provide both Client ID and Client Secret for authentication',
       };
     }
-
+    
     // Get action-specific values from props (including environment)
     const {
-      
+      environment,
       orderAmount,
       orderCurrency,
       customerId,
@@ -331,26 +333,22 @@ export const createOrder = createAction({
     } = context.propsValue;
 
     // Determine the base URL based on environment
-    const baseUrl =
-      environment === 'production'
-        ? 'https://api.cashfree.com/pg/orders'
-        : 'https://sandbox.cashfree.com/pg/orders';
+    const baseUrl = environment === 'production' 
+      ? 'https://api.cashfree.com/pg/orders'
+      : 'https://sandbox.cashfree.com/pg/orders';
 
     // Generate order ID if not provided
-    const generatedOrderId =
-      orderId ||
-      `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const generatedOrderId = orderId || `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Build customer details object
     const customerDetails: any = {
       customer_id: customerId,
       customer_phone: customerPhone,
     };
-
+    
     if (customerEmail) customerDetails.customer_email = customerEmail;
     if (customerName) customerDetails.customer_name = customerName;
-    if (customerBankAccountNumber)
-      customerDetails.customer_bank_account_number = customerBankAccountNumber;
+    if (customerBankAccountNumber) customerDetails.customer_bank_account_number = customerBankAccountNumber;
     if (customerBankIfsc) customerDetails.customer_bank_ifsc = customerBankIfsc;
     if (customerBankCode) customerDetails.customer_bank_code = customerBankCode;
 
@@ -365,58 +363,29 @@ export const createOrder = createAction({
     if (cartName) cartDetails.cart_name = cartName;
     if (customerNote) cartDetails.customer_note = customerNote;
     if (shippingCharge) cartDetails.shipping_charge = shippingCharge;
-
+    
     // Shipping address
-    if (
-      shippingFullName ||
-      shippingCountry ||
-      shippingCity ||
-      shippingState ||
-      shippingPincode ||
-      shippingAddress1 ||
-      shippingAddress2
-    ) {
+    if (shippingFullName || shippingCountry || shippingCity || shippingState || shippingPincode || shippingAddress1 || shippingAddress2) {
       cartDetails.customer_shipping_address = {};
-      if (shippingFullName)
-        cartDetails.customer_shipping_address.full_name = shippingFullName;
-      if (shippingCountry)
-        cartDetails.customer_shipping_address.country = shippingCountry;
-      if (shippingCity)
-        cartDetails.customer_shipping_address.city = shippingCity;
-      if (shippingState)
-        cartDetails.customer_shipping_address.state = shippingState;
-      if (shippingPincode)
-        cartDetails.customer_shipping_address.pincode = shippingPincode;
-      if (shippingAddress1)
-        cartDetails.customer_shipping_address.address_1 = shippingAddress1;
-      if (shippingAddress2)
-        cartDetails.customer_shipping_address.address_2 = shippingAddress2;
+      if (shippingFullName) cartDetails.customer_shipping_address.full_name = shippingFullName;
+      if (shippingCountry) cartDetails.customer_shipping_address.country = shippingCountry;
+      if (shippingCity) cartDetails.customer_shipping_address.city = shippingCity;
+      if (shippingState) cartDetails.customer_shipping_address.state = shippingState;
+      if (shippingPincode) cartDetails.customer_shipping_address.pincode = shippingPincode;
+      if (shippingAddress1) cartDetails.customer_shipping_address.address_1 = shippingAddress1;
+      if (shippingAddress2) cartDetails.customer_shipping_address.address_2 = shippingAddress2;
     }
-
+    
     // Billing address
-    if (
-      billingFullName ||
-      billingCountry ||
-      billingCity ||
-      billingState ||
-      billingPincode ||
-      billingAddress1 ||
-      billingAddress2
-    ) {
+    if (billingFullName || billingCountry || billingCity || billingState || billingPincode || billingAddress1 || billingAddress2) {
       cartDetails.customer_billing_address = {};
-      if (billingFullName)
-        cartDetails.customer_billing_address.full_name = billingFullName;
-      if (billingCountry)
-        cartDetails.customer_billing_address.country = billingCountry;
+      if (billingFullName) cartDetails.customer_billing_address.full_name = billingFullName;
+      if (billingCountry) cartDetails.customer_billing_address.country = billingCountry;
       if (billingCity) cartDetails.customer_billing_address.city = billingCity;
-      if (billingState)
-        cartDetails.customer_billing_address.state = billingState;
-      if (billingPincode)
-        cartDetails.customer_billing_address.pincode = billingPincode;
-      if (billingAddress1)
-        cartDetails.customer_billing_address.address_1 = billingAddress1;
-      if (billingAddress2)
-        cartDetails.customer_billing_address.address_2 = billingAddress2;
+      if (billingState) cartDetails.customer_billing_address.state = billingState;
+      if (billingPincode) cartDetails.customer_billing_address.pincode = billingPincode;
+      if (billingAddress1) cartDetails.customer_billing_address.address_1 = billingAddress1;
+      if (billingAddress2) cartDetails.customer_billing_address.address_2 = billingAddress2;
     }
 
     // Build terminal object
@@ -448,8 +417,7 @@ export const createOrder = createAction({
         return {
           success: false,
           error: 'Invalid JSON format for order tags',
-          message:
-            'Order tags must be valid JSON format. Example: {"product":"Laptop","city":"Bangalore"}',
+          message: 'Order tags must be valid JSON format. Example: {"product":"Laptop","city":"Bangalore"}',
         };
       }
     }
@@ -464,27 +432,21 @@ export const createOrder = createAction({
 
     // Add optional fields
     if (Object.keys(orderMeta).length > 0) requestBody.order_meta = orderMeta;
-    if (Object.keys(cartDetails).length > 0)
-      requestBody.cart_details = cartDetails;
+    if (Object.keys(cartDetails).length > 0) requestBody.cart_details = cartDetails;
     if (Object.keys(terminal).length > 0) requestBody.terminal = terminal;
     if (Object.keys(products).length > 0) requestBody.products = products;
     if (orderNote) requestBody.order_note = orderNote;
     if (orderExpiryTime) requestBody.order_expiry_time = orderExpiryTime;
     if (parsedOrderTags) requestBody.order_tags = parsedOrderTags;
 
-    // Build headers based on authentication type
+    // Build headers - only client credentials supported
     const headers: any = {
       'x-api-version': '2025-01-01',
       'Content-Type': 'application/json',
-      Accept: 'application/json',
+      'Accept': 'application/json',
+      'X-Client-Id': clientId,
+      'X-Client-Secret': clientSecret,
     };
-
-    if (authType === 'client_credentials') {
-      headers['X-Client-Id'] = clientId;
-      headers['X-Client-Secret'] = clientSecret;
-    } else if (authType === 'bearer_token') {
-      headers['Authorization'] = `Bearer ${bearerToken}`;
-    }
 
     try {
       const response = await httpClient.sendRequest({

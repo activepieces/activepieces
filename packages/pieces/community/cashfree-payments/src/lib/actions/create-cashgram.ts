@@ -1,18 +1,37 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { cashfreeAuth } from '../common/auth';
+import { generateCashgramToken, validateAuthCredentials } from '../auth/cashgram-auth';
 
 export const createCashgram = createAction({
   name: 'create-cashgram',
   displayName: 'Create Cashgram',
   description: 'Create a Cashgram for instant money transfers using Cashfree',
-  auth: cashfreeAuth,
+  requireAuth: true,
   props: {
+    environment: Property.StaticDropdown({
+      displayName: 'Environment',
+      description: 'Choose the environment for API calls',
+      required: true,
+      defaultValue: 'sandbox',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Sandbox',
+            value: 'sandbox',
+          },
+          {
+            label: 'Production',
+            value: 'production',
+          },
+        ],
+      },
+    }),
+    
     // Required Fields
     cashgramId: Property.ShortText({
       displayName: 'Cashgram ID',
-      description:
-        'Unique ID of the Cashgram. Alphanumeric, underscore (_), and hyphen (-) allowed (35 character limit)',
+      description: 'Unique ID of the Cashgram. Alphanumeric, underscore (_), and hyphen (-) allowed (35 character limit)',
       required: true,
     }),
     amount: Property.Number({
@@ -30,13 +49,12 @@ export const createCashgram = createAction({
       description: 'Phone number of the contact',
       required: true,
     }),
-    linkExpiry: Property.DateTime({
+    linkExpiry: Property.ShortText({
       displayName: 'Link Expiry Date',
-      description:
-        'Date to expire the cashgram link. Format: YYYY/MM/DD (maximum 30 days from creation)',
+      description: 'Date to expire the cashgram link. Format: YYYY/MM/DD (maximum 30 days from creation)',
       required: true,
     }),
-
+    
     // Optional Fields
     email: Property.ShortText({
       displayName: 'Email',
@@ -55,38 +73,79 @@ export const createCashgram = createAction({
       defaultValue: true,
     }),
   },
-
+  
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, bearerToken, environment, clientId, clientSecret } = context.auth as {
+    const { 
+      authType, 
+      clientId,
+      clientSecret,
+      publicKey
+    } = context.auth as {
       authType: string;
-      environment: string;
       clientId?: string;
       clientSecret?: string;
-      bearerToken?: string;
+      publicKey?: string;
     };
 
-     // Validate authentication based on type
-    if (authType === 'client_credentials' && (!clientId || !clientSecret)) {
+    let finalBearerToken: string;
+
+    // Validate credentials based on auth type
+    const validation = validateAuthCredentials(authType, {
+      clientId,
+      clientSecret,
+      publicKey,
+    });
+
+    if (!validation.isValid) {
       return {
         success: false,
-        error:
-          'Client ID and Client Secret are required when using client credentials authentication',
-        message: 'Please provide both Client ID and Client Secret',
+        error: 'Invalid authentication credentials',
+        message: validation.error,
       };
     }
 
-    if (authType === 'bearer_token' && !bearerToken) {
+    // Handle different authentication types
+    if (authType === 'client_credentials') {
+      // For regular payment operations - not supported for Cashgram
       return {
         success: false,
-        error:
-          'Bearer Token is required when using bearer token authentication',
-        message: 'Please provide a valid Bearer Token',
+        error: 'Invalid authentication type for Cashgram API',
+        message: 'Cashgram operations require "Client Credentials + Public Key" authentication. Please select the appropriate authentication method and provide your public key.',
+      };
+    } else if (authType === 'client_credentials_with_public_key') {
+      // Generate bearer token using client credentials and public key
+      const { environment } = context.propsValue;
+
+      const tokenResponse = await generateCashgramToken(
+        {
+          clientId: clientId!,
+          clientSecret: clientSecret!,
+          publicKey: publicKey!,
+        },
+        environment as 'sandbox' | 'production'
+      );
+
+      if (!tokenResponse.success || !tokenResponse.token) {
+        return {
+          success: false,
+          error: tokenResponse.error,
+          message: tokenResponse.message || 'Failed to generate bearer token for Cashgram authentication',
+        };
+      }
+
+      finalBearerToken = tokenResponse.token;
+    } else {
+      return {
+        success: false,
+        error: 'Invalid authentication type for Cashgram API',
+        message: 'Cashgram API requires "Client Credentials + Public Key" authentication.',
       };
     }
 
     // Get action-specific values from props
     const {
+      environment,
       cashgramId,
       amount,
       name,
@@ -120,13 +179,12 @@ export const createCashgram = createAction({
       return {
         success: false,
         error: 'Invalid Cashgram ID format',
-        message:
-          'Cashgram ID can only contain alphanumeric characters, underscore (_), and hyphen (-)',
+        message: 'Cashgram ID can only contain alphanumeric characters, underscore (_), and hyphen (-)',
       };
     }
 
     // Validate amount
-    if (amount < 1.0) {
+    if (amount < 1.00) {
       return {
         success: false,
         error: 'Invalid amount',
@@ -134,15 +192,15 @@ export const createCashgram = createAction({
       };
     }
 
-    // // Validate link expiry date format
-    // const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
-    // if (!dateRegex.test(linkExpiry)) {
-    //   return {
-    //     success: false,
-    //     error: 'Invalid link expiry date format',
-    //     message: 'Link expiry date must be in YYYY/MM/DD format',
-    //   };
-    // }
+    // Validate link expiry date format
+    const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
+    if (!dateRegex.test(linkExpiry)) {
+      return {
+        success: false,
+        error: 'Invalid link expiry date format',
+        message: 'Link expiry date must be in YYYY/MM/DD format',
+      };
+    }
 
     // Validate that expiry date is not more than 30 days from now
     const expiryDate = new Date(linkExpiry.replace(/\//g, '-'));
@@ -185,10 +243,9 @@ export const createCashgram = createAction({
     }
 
     // Determine the base URL based on environment
-    const baseUrl =
-      environment === 'production'
-        ? 'https://payout-api.cashfree.com/payout/v1/createCashgram'
-        : 'https://payout-gamma.cashfree.com/payout/v1/createCashgram';
+    const baseUrl = environment === 'production' 
+      ? 'https://payout-api.cashfree.com/payout/v1/createCashgram'
+      : 'https://payout-gamma.cashfree.com/payout/v1/createCashgram';
 
     // Prepare the request body
     const requestBody: any = {
@@ -202,14 +259,13 @@ export const createCashgram = createAction({
     // Add optional fields
     if (email) requestBody.email = email;
     if (remarks) requestBody.remarks = remarks;
-    if (notifyCustomer !== undefined)
-      requestBody.notifyCustomer = notifyCustomer;
+    if (notifyCustomer !== undefined) requestBody.notifyCustomer = notifyCustomer;
 
     // Build headers
     const headers: any = {
-      Authorization: `Bearer ${bearerToken}`,
+      'Authorization': `Bearer ${finalBearerToken}`,
       'Content-Type': 'application/json',
-      Accept: 'application/json',
+      'Accept': 'application/json',
     };
 
     try {
@@ -226,6 +282,22 @@ export const createCashgram = createAction({
           success: true,
           data: responseData,
           message: responseData?.message || 'Cashgram created successfully',
+          
+          // Response details
+          status: responseData?.status,
+          subCode: responseData?.subCode,
+          referenceId: responseData?.data?.referenceId,
+          cashgramLink: responseData?.data?.cashgramLink,
+          
+          // Request details for reference
+          cashgramId: cashgramId,
+          amount: amount,
+          contactName: name,
+          contactPhone: phone,
+          contactEmail: email,
+          linkExpiryDate: linkExpiry,
+          remarks: remarks,
+          customerNotified: notifyCustomer,
         };
       } else {
         // Handle specific error cases
@@ -247,8 +319,7 @@ export const createCashgram = createAction({
           return {
             success: false,
             error: response.body,
-            message:
-              'Forbidden - You do not have permission to create Cashgrams',
+            message: 'Forbidden - You do not have permission to create Cashgrams',
             status: response.status,
           };
         } else if (response.status === 409) {

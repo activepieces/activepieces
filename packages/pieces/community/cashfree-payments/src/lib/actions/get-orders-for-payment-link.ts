@@ -4,18 +4,36 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const getOrdersForPaymentLink = createAction({
   name: 'get-orders-for-payment-link',
   displayName: 'Get Orders for Payment Link',
-  description:
-    'View all order details for a payment link in Cashfree Payment Gateway',
+  description: 'View all order details for a payment link in Cashfree Payment Gateway',
   requireAuth: true,
   props: {
+    environment: Property.StaticDropdown({
+      displayName: 'Environment',
+      description: 'Choose the environment for API calls',
+      required: true,
+      defaultValue: 'sandbox',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Sandbox',
+            value: 'sandbox',
+          },
+          {
+            label: 'Production',
+            value: 'production',
+          },
+        ],
+      },
+    }),
+    
     // Required Fields
     linkId: Property.ShortText({
       displayName: 'Payment Link ID',
-      description:
-        'The payment link ID for which you want to view the order details',
+      description: 'The payment link ID for which you want to view the order details',
       required: true,
     }),
-
+    
     // Optional Query Parameters
     status: Property.StaticDropdown({
       displayName: 'Order Status Filter',
@@ -36,12 +54,11 @@ export const getOrdersForPaymentLink = createAction({
         ],
       },
     }),
-
+    
     // Optional Headers
     requestId: Property.ShortText({
       displayName: 'Request ID',
-      description:
-        'Request ID for the API call. Can be used to resolve tech issues',
+      description: 'Request ID for the API call. Can be used to resolve tech issues',
       required: false,
     }),
     idempotencyKey: Property.ShortText({
@@ -50,39 +67,40 @@ export const getOrdersForPaymentLink = createAction({
       required: false,
     }),
   },
-
+  
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, environment, clientSecret, bearerToken } =
-      context.auth as {
-        authType: string;
-        environment: string;
-        clientId?: string;
-        clientSecret?: string;
-        bearerToken?: string;
-      };
-
-    // Validate authentication based on type
-    if (authType === 'client_credentials' && (!clientId || !clientSecret)) {
+    const { authType, clientId, clientSecret } = context.auth as {
+      authType: string;
+      clientId?: string;
+      clientSecret?: string;
+    };
+    
+    // Validate authentication - only client credentials supported for payment operations
+    if (authType !== 'client_credentials') {
       return {
         success: false,
-        error:
-          'Client ID and Client Secret are required when using client credentials authentication',
-        message: 'Please provide both Client ID and Client Secret',
+        error: 'Invalid authentication type for payment operations',
+        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
       };
     }
-
-    if (authType === 'bearer_token' && !bearerToken) {
+    
+    if (!clientId || !clientSecret) {
       return {
         success: false,
-        error:
-          'Bearer Token is required when using bearer token authentication',
-        message: 'Please provide a valid Bearer Token',
+        error: 'Client ID and Client Secret are required',
+        message: 'Please provide both Client ID and Client Secret for authentication',
       };
     }
 
     // Get action-specific values from props
-    const { linkId, status, requestId, idempotencyKey } = context.propsValue;
+    const {
+      environment,
+      linkId,
+      status,
+      requestId,
+      idempotencyKey,
+    } = context.propsValue;
 
     // Validate link ID format
     if (!linkId || linkId.trim().length === 0) {
@@ -94,33 +112,27 @@ export const getOrdersForPaymentLink = createAction({
     }
 
     // Determine the base URL based on environment
-    let baseUrl =
-      environment === 'production'
-        ? `https://api.cashfree.com/pg/links/${linkId}/orders`
-        : `https://sandbox.cashfree.com/pg/links/${linkId}/orders`;
+    let baseUrl = environment === 'production' 
+      ? `https://api.cashfree.com/pg/links/${linkId}/orders`
+      : `https://sandbox.cashfree.com/pg/links/${linkId}/orders`;
 
     // Add query parameters if status is provided
     const queryParams = new URLSearchParams();
     if (status && status !== 'PAID') {
       queryParams.append('status', status);
     }
-
+    
     if (queryParams.toString()) {
       baseUrl += `?${queryParams.toString()}`;
     }
 
-    // Build headers based on authentication type
+    // Build headers - only client credentials supported
     const headers: any = {
       'x-api-version': '2025-01-01',
-      Accept: 'application/json',
+      'Accept': 'application/json',
+      'x-client-id': clientId,
+      'x-client-secret': clientSecret,
     };
-
-    if (authType === 'client_credentials') {
-      headers['x-client-id'] = clientId;
-      headers['x-client-secret'] = clientSecret;
-    } else if (authType === 'bearer_token') {
-      headers['Authorization'] = `Bearer ${bearerToken}`;
-    }
 
     // Add optional headers
     if (requestId) headers['x-request-id'] = requestId;
@@ -135,26 +147,23 @@ export const getOrdersForPaymentLink = createAction({
 
       if (response.status === 200) {
         const ordersData = response.body;
-
+        
         // Extract orders array and metadata
-        const orders = Array.isArray(ordersData)
-          ? ordersData
-          : ordersData?.orders || [];
+        const orders = Array.isArray(ordersData) ? ordersData : ordersData?.orders || [];
         const totalOrders = orders.length;
-
+        
         // Calculate summary statistics
         let totalAmount = 0;
         let paidAmount = 0;
         let paidOrdersCount = 0;
         const orderStatuses = new Set();
-
+        
         orders.forEach((order: any) => {
           if (order.order_amount) totalAmount += parseFloat(order.order_amount);
           if (order.order_status) orderStatuses.add(order.order_status);
           if (order.order_status === 'PAID') {
             paidOrdersCount++;
-            if (order.order_amount)
-              paidAmount += parseFloat(order.order_amount);
+            if (order.order_amount) paidAmount += parseFloat(order.order_amount);
           }
         });
 
@@ -162,7 +171,7 @@ export const getOrdersForPaymentLink = createAction({
           success: true,
           data: ordersData,
           message: `Found ${totalOrders} order(s) for payment link`,
-
+          
           // Summary information
           summary: {
             totalOrders: totalOrders,
@@ -171,28 +180,18 @@ export const getOrdersForPaymentLink = createAction({
             paidAmount: paidAmount,
             orderStatuses: Array.from(orderStatuses),
           },
-
+          
           // Individual orders
           orders: orders,
-
+          
           // Request parameters for reference
           linkId: linkId,
           statusFilter: status || 'PAID',
-
+          
           // Quick access to key order information
           orderIds: orders.map((order: any) => order.order_id).filter(Boolean),
-          customerIds: [
-            ...new Set(
-              orders
-                .map((order: any) => order.customer_details?.customer_id)
-                .filter(Boolean)
-            ),
-          ],
-          paymentMethods: [
-            ...new Set(
-              orders.map((order: any) => order.payment_method).filter(Boolean)
-            ),
-          ],
+          customerIds: [...new Set(orders.map((order: any) => order.customer_details?.customer_id).filter(Boolean))],
+          paymentMethods: [...new Set(orders.map((order: any) => order.payment_method).filter(Boolean))],
         };
       } else {
         // Handle specific error cases
@@ -214,16 +213,14 @@ export const getOrdersForPaymentLink = createAction({
           return {
             success: false,
             error: response.body,
-            message:
-              'Unauthorized - Please check your authentication credentials',
+            message: 'Unauthorized - Please check your authentication credentials',
             status: response.status,
           };
         } else if (response.status === 403) {
           return {
             success: false,
             error: response.body,
-            message:
-              "Forbidden - You do not have permission to access this link's orders",
+            message: 'Forbidden - You do not have permission to access this link\'s orders',
             status: response.status,
           };
         } else {
