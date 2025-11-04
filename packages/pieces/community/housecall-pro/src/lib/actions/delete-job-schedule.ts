@@ -19,7 +19,7 @@ export const deleteJobSchedule = createAction({
 
     const response = await makeHousecallProRequest(
       auth,
-      `/jobs/${propsValue.job_id}/schedule`,
+      `/jobs/${propsValue['job_id']}/schedule`,
       HttpMethod.DELETE
     );
 

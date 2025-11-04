@@ -55,42 +55,34 @@ export const updateJobSchedule = createAction({
       description: "Array of employee objects with employee_id",
       required: false,
     }),
-    employee_id: Property.ShortText({
-      displayName: "Employee ID",
-      description: "ID of the employee assigned to the job",
-      required: false,
-    }),
   },
   async run(context) {
     const { auth, propsValue } = context;
 
     const scheduleData: Record<string, any> = {
-      start_time: propsValue.start_time,
-      end_time: propsValue.end_time,
+      start_time: propsValue['start_time'],
+      end_time: propsValue['end_time'],
     };
 
-    if (propsValue.arrival_window_in_minutes !== undefined) {
-      scheduleData["arrival_window_in_minutes"] = propsValue.arrival_window_in_minutes;
+    if (propsValue['arrival_window_in_minutes'] !== undefined) {
+      scheduleData['arrival_window_in_minutes'] = propsValue['arrival_window_in_minutes'];
     }
-    if (propsValue.notify !== undefined) {
-      scheduleData["notify"] = propsValue.notify;
+    if (propsValue['notify'] !== undefined) {
+      scheduleData['notify'] = propsValue['notify'];
     }
-    if (propsValue.notify_pro !== undefined) {
-      scheduleData["notify_pro"] = propsValue.notify_pro;
+    if (propsValue['notify_pro'] !== undefined) {
+      scheduleData['notify_pro'] = propsValue['notify_pro'];
     }
-    if (propsValue.expand && propsValue.expand.length > 0) {
-      scheduleData["expand"] = propsValue.expand.join(",");
+    if (propsValue['expand'] && propsValue['expand'].length > 0) {
+      scheduleData['expand'] = propsValue['expand'].join(',');
     }
-    if (propsValue.dispatched_employees) {
-      scheduleData["dispatched_employees"] = propsValue.dispatched_employees;
-    }
-    if (propsValue.employee_id) {
-      scheduleData["employee_id"] = propsValue.employee_id;
+    if (propsValue['dispatched_employees'] && propsValue['dispatched_employees'].length > 0) {
+      scheduleData['dispatched_employees'] = propsValue['dispatched_employees'];
     }
 
     const response = await makeHousecallProRequest(
       auth,
-      `/jobs/${propsValue.job_id}/schedule`,
+      `/jobs/${propsValue['job_id']}/schedule`,
       HttpMethod.PUT,
       scheduleData
     );

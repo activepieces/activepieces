@@ -1,100 +1,129 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { housecallProAuth, makeHousecallProRequest, HousecallProJob } from "../common";
+import { housecallProAuth, makeHousecallProRequest } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
 
 export const createJob = createAction({
   auth: housecallProAuth,
   name: 'create_job',
   displayName: 'Create Job',
-  description: 'Create a new job in Housecall Pro.',
+  description: 'Create a job with the ID for an already existing address and customer.',
   props: {
-    customer_id: Property.Number({
+    customer_id: Property.ShortText({
       displayName: 'Customer ID',
       description: 'The ID of the customer this job is for',
       required: true,
     }),
-    title: Property.ShortText({
-      displayName: 'Job Title',
+    address_id: Property.ShortText({
+      displayName: 'Address ID',
+      description: 'The ID of the address for this job',
       required: true,
     }),
-    description: Property.LongText({
-      displayName: 'Description',
+    invoice_number: Property.Number({
+      displayName: 'Invoice Number',
+      description: 'Invoice number must be unique across all of a company\'s jobs. If left blank, one will be automatically generated.',
       required: false,
     }),
-    work_status: Property.StaticDropdown({
-      displayName: 'Work Status',
-      required: false,
-      options: {
-        options: [
-          { label: 'New', value: 'new' },
-          { label: 'Scheduled', value: 'scheduled' },
-          { label: 'In Progress', value: 'in_progress' },
-          { label: 'Completed', value: 'completed' },
-          { label: 'Cancelled', value: 'cancelled' },
-        ],
-      },
-    }),
-    scheduled_date: Property.DateTime({
-      displayName: 'Scheduled Date & Time',
-      description: 'When the job is scheduled (ISO 8601 format)',
+    scheduled_start: Property.DateTime({
+      displayName: 'Scheduled Start',
+      description: 'Start time of job in ISO8601 format (e.g., 2021-01-14T20:14:00)',
       required: false,
     }),
-    duration: Property.Number({
-      displayName: 'Duration (minutes)',
-      description: 'Estimated duration of the job in minutes',
+    scheduled_end: Property.DateTime({
+      displayName: 'Scheduled End',
+      description: 'End time of job in ISO8601 format (e.g., 2021-01-14T21:14:00)',
       required: false,
     }),
-    address: Property.ShortText({
-      displayName: 'Job Address',
-      description: 'Address where the job will be performed',
+    arrival_window: Property.Number({
+      displayName: 'Arrival Window (minutes)',
+      description: 'Integer value in minutes of arrival window',
       required: false,
     }),
-    city: Property.ShortText({
-      displayName: 'City',
+    assigned_employee_ids: Property.Array({
+      displayName: 'Assigned Employee IDs',
+      description: 'Array of employee IDs to assign to the job',
       required: false,
     }),
-    state: Property.ShortText({
-      displayName: 'State',
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Array of tags to assign to the job',
       required: false,
     }),
-    zip: Property.ShortText({
-      displayName: 'ZIP Code',
+    lead_source: Property.ShortText({
+      displayName: 'Lead Source',
       required: false,
     }),
     notes: Property.LongText({
       displayName: 'Notes',
       required: false,
     }),
+    line_items: Property.Array({
+      displayName: 'Line Items',
+      description: 'Array of line items for the job',
+      required: false,
+    }),
+    pricing_form: Property.Json({
+      displayName: 'Pricing Form',
+      description: 'Pricing form object with fields and options (use UUIDs from GET price form endpoint)',
+      required: false,
+    }),
+    job_fields: Property.Json({
+      displayName: 'Job Fields',
+      description: 'Job fields object (e.g., job_type_id, business_unit_id)',
+      required: false,
+    }),
   },
 
   async run({ auth, propsValue }) {
-    const jobData: Partial<HousecallProJob> = {
-      customer_id: propsValue.customer_id,
-      title: propsValue.title,
-      description: propsValue.description,
-      work_status: propsValue.work_status,
-      scheduled_date: propsValue.scheduled_date,
-      duration: propsValue.duration,
-      address: propsValue.address,
-      city: propsValue.city,
-      state: propsValue.state,
-      zip: propsValue.zip,
-      notes: propsValue.notes,
+    const jobData: Record<string, any> = {
+      customer_id: propsValue['customer_id'],
+      address_id: propsValue['address_id'],
     };
 
-    // Remove undefined values
-    const cleanJobData: Partial<HousecallProJob> = {};
-    (Object.keys(jobData) as Array<keyof typeof jobData>).forEach(key => {
-      if (jobData[key] !== undefined && jobData[key] !== null) {
-        (cleanJobData as any)[key] = jobData[key];
+    if (propsValue['invoice_number'] !== undefined) {
+      jobData['invoice_number'] = propsValue['invoice_number'];
+    }
+
+    // Build schedule object if any schedule fields are provided
+    if (propsValue['scheduled_start'] || propsValue['scheduled_end'] || propsValue['arrival_window'] !== undefined) {
+      jobData['schedule'] = {};
+      if (propsValue['scheduled_start']) {
+        jobData['schedule']['scheduled_start'] = propsValue['scheduled_start'];
       }
-    });
+      if (propsValue['scheduled_end']) {
+        jobData['schedule']['scheduled_end'] = propsValue['scheduled_end'];
+      }
+      if (propsValue['arrival_window'] !== undefined) {
+        jobData['schedule']['arrival_window'] = propsValue['arrival_window'];
+      }
+    }
+
+    if (propsValue['assigned_employee_ids'] && propsValue['assigned_employee_ids'].length > 0) {
+      jobData['assigned_employee_ids'] = propsValue['assigned_employee_ids'] as string[];
+    }
+    if (propsValue['tags'] && propsValue['tags'].length > 0) {
+      jobData['tags'] = propsValue['tags'] as string[];
+    }
+    if (propsValue['lead_source']) {
+      jobData['lead_source'] = propsValue['lead_source'];
+    }
+    if (propsValue['notes']) {
+      jobData['notes'] = propsValue['notes'];
+    }
+    if (propsValue['line_items']) {
+      jobData['line_items'] = propsValue['line_items'];
+    }
+    if (propsValue['pricing_form']) {
+      jobData['pricing_form'] = propsValue['pricing_form'];
+    }
+    if (propsValue['job_fields']) {
+      jobData['job_fields'] = propsValue['job_fields'];
+    }
 
     const response = await makeHousecallProRequest(
       auth,
       '/jobs',
       HttpMethod.POST,
-      cleanJobData
+      jobData
     );
 
     return response.body;
