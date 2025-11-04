@@ -4,6 +4,7 @@ import { getDatasetItems } from './lib/actions/get-dataset-items';
 import { getActors } from './lib/actions/get-actors';
 import { getLastRun } from './lib/actions/get-last-run';
 import { startActor } from './lib/actions/start-actor';
+import { createApifyClient } from './lib/common';
 
 export const apifyAuth = PieceAuth.CustomAuth({
   description: 'Enter API key authentication details',
@@ -15,17 +16,24 @@ export const apifyAuth = PieceAuth.CustomAuth({
         'Find your API key on Apify in the settings, API & Integrations section.',
     }),
   },
-  // Optional Validation
   validate: async ({ auth }) => {
-    if (auth) {
+    try {
+      const client = createApifyClient(auth.apikey);
+      await client.user('me').get();
+      return { valid: true };
+    } catch (error: any) {
+      if (error.statusCode === 401) {
+        return {
+          valid: false,
+          error: 'Invalid API token. Please check your token in Apify account settings.'
+        };
+      }
+
       return {
-        valid: true,
+        valid: false,
+        error: 'Unable to validate API token. Please check your connection and try again.'
       };
     }
-    return {
-      valid: false,
-      error: 'Invalid Api Key',
-    };
   },
   required: true,
 });

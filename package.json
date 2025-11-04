@@ -140,6 +140,7 @@
     "@uiw/react-codemirror": "4.23.0",
     "@xyflow/react": "12.3.5",
     "ai": "5.0.104",
+    "apify-client": "2.19.0",
     "async-mutex": "0.4.0",
     "axios": "1.13.1",
     "axios-retry": "4.4.1",
