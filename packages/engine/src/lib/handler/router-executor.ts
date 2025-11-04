@@ -87,7 +87,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
             }
         }
         return executionState
-    });
+    })
     if (executionStateError) {
         console.error(executionStateError)
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
