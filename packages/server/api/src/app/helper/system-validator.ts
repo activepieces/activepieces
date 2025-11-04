@@ -159,7 +159,6 @@ const systemPropValidators: {
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
-    [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
 
     // MCP
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
