@@ -201,6 +201,7 @@
   "Form Data": "フォームデータ",
   "Send": "送信",
   "Generate Sample Data": "サンプルデータの生成",
+  "Can't find todo ID in the response": "",
   "Test Step": "ステップをテスト",
   "Test": "",
   "Logs": "ログ",
