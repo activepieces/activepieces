@@ -3,6 +3,7 @@ import { volubileAuth } from '../auth';
 import { ActionStatus, agentsDropdown, LiveWebhookActionConfig, TriggerType, volubileCommon } from '../common';
 
 
+
 export const liveCallTrigger = createTrigger({
   name: 'liveCallTrigger',
   displayName: 'Live Call Trigger',
@@ -85,7 +86,12 @@ export const liveCallTrigger = createTrigger({
     return [data];
   },
   async onEnable(context) {
-    const schema = context.propsValue.inputSchema ?? buildJsonSchema(context.propsValue.schemaProperties!);
+    let schema;
+    if (context.propsValue.inputSchema != null && typeof context.propsValue.inputSchema === 'object' && Object.keys(context.propsValue.inputSchema).length > 0) {
+      schema = context.propsValue.inputSchema;
+    } else {
+      schema = buildJsonSchema(context.propsValue.schemaProperties ?? []);
+    }
     const status = await context.store.get<ActionStatus>(
       `_prev_status`
     );
