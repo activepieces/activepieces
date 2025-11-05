@@ -12,10 +12,10 @@ import {
     PrivatePiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { PieceManager } from '..'
 import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
 import { PackageInfo, packageManager } from '../../package-manager'
 import { CacheState } from '../../worker-cache'
-import { PieceManager } from '..'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
@@ -90,7 +90,7 @@ export const registryPieceManager = (log: FastifyBaseLogger): PieceManager => ({
                 })
             }),
         )
-    }
+    },
 
 })
 

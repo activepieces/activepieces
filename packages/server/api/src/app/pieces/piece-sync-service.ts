@@ -1,6 +1,6 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
-import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { apVersionUtil } from '@activepieces/server-shared'
+import { ListVersionsResponse, PackageType, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -15,7 +15,6 @@ import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
-const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {

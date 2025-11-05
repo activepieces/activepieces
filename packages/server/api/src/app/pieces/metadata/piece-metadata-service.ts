@@ -13,14 +13,14 @@ import {
     PackageType,
     PieceCategory,
     PieceOrderBy,
+    PiecePackage,
     PieceSortBy,
     PieceType,
     PlatformId,
-    ProjectId,
-    SuggestionType,
-    PiecePackage,
     PrivatePiecePackage,
+    ProjectId,
     PublicPiecePackage,
+    SuggestionType,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -30,9 +30,9 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { system } from '../../helper/system/system'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { pieceListUtils } from './utils'
-import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { localPieceCache } from './local-piece-cache'
+import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
+import { pieceListUtils } from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -115,7 +115,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             return pieceTranslation.translatePiece<PieceMetadataModel>(piece, locale)
         },
         async getVersions({ name, release, platformId }: ListVersionsParams): Promise<ListVersionsResponse> {
-            const devPieces = await loadDevPiecesIfEnabled(log)
             const pieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 platformId,
                 release,
@@ -342,7 +341,7 @@ const increaseMajorVersion = (version: string): string => {
 async function findAllPiecesVersionsSortedByNameAscVersionDesc({
     platformId,
     release,
-    log
+    log,
 }: {
     platformId?: string
     release: string | undefined

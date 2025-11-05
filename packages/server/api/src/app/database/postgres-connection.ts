@@ -488,7 +488,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaximumConcurrentJobsPerProject1761245180906,
         RemoveTasksAndTasksLimit1761570485475,
         DeleteLastChangelogDismissedAt1762018344394,
-        RemoveProjectIdFromPieceMetadata1762177958823
+        RemoveProjectIdFromPieceMetadata1762177958823,
     ]
 
     const edition = system.getEdition()

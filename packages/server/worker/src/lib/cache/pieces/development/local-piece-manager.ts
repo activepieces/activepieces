@@ -1,13 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { ApLock, enrichErrorContext, filePiecesUtils, fileSystemUtils } from '@activepieces/server-shared'
-import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType, PiecePackage } from '@activepieces/shared'
+import { assertEqual, assertNotNullOrUndefined, isEmpty, PackageType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { PieceManager } from '..'
 import { workerMachine } from '../../../utils/machine'
 import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
 import { packageManager } from '../../package-manager'
 import { CacheState } from '../../worker-cache'
-import { PieceManager } from '..'
 
 export const localPieceManager = (log: FastifyBaseLogger): PieceManager => ({
 
@@ -25,7 +25,8 @@ export const localPieceManager = (log: FastifyBaseLogger): PieceManager => ({
                 projectPath,
                 pieces,
             })
-        } catch (error) {
+        }
+        catch (error) {
             const contextKey = '[PieceManager#install]'
             const contextValue = { projectPath }
 
@@ -40,7 +41,7 @@ export const localPieceManager = (log: FastifyBaseLogger): PieceManager => ({
     },
 
     installDependencies: async (
-        { projectPath, pieces }
+        { projectPath, pieces },
     ): Promise<void> => {
 
         let lock: ApLock | undefined
@@ -76,7 +77,7 @@ export const localPieceManager = (log: FastifyBaseLogger): PieceManager => ({
                 await lock.release()
             }
         }
-    }
+    },
 })
 
 const linkPackages = async (

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements MigrationInterface {
     name = 'RemoveProjectIdFromPieceMetadataSqlite1761904011591'
@@ -6,7 +6,7 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -33,7 +33,7 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "i18n" text,
                 CONSTRAINT "UQ_0f9b96e2f69449fb836dfeae559" UNIQUE ("archiveId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_piece_metadata"(
                     "id",
@@ -82,14 +82,14 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "projectUsage",
                 "i18n"
             FROM "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_piece_metadata"
                 RENAME TO "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -116,7 +116,7 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "i18n" text,
                 CONSTRAINT "UQ_0f9b96e2f69449fb836dfeae559" UNIQUE ("archiveId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_piece_metadata"(
                     "id",
@@ -165,20 +165,20 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "projectUsage",
                 "i18n"
             FROM "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_piece_metadata"
                 RENAME TO "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_platform_id_version" ON "piece_metadata" ("name", "version", "platformId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_platform_id_version"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -207,7 +207,7 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_piece_metadata"(
                     "id",
@@ -256,27 +256,27 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "projectUsage",
                 "i18n"
             FROM "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_piece_metadata"
                 RENAME TO "piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_platform_id_version" ON "piece_metadata" ("name", "version", "platformId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_platform_id_version"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "piece_metadata"
                 RENAME TO "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -303,7 +303,7 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "i18n" text,
                 CONSTRAINT "UQ_0f9b96e2f69449fb836dfeae559" UNIQUE ("archiveId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
@@ -352,20 +352,20 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "projectUsage",
                 "i18n"
             FROM "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_platform_id_version" ON "piece_metadata" ("name", "version", "platformId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_platform_id_version"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "piece_metadata"
                 RENAME TO "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -392,7 +392,7 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "i18n" text,
                 CONSTRAINT "UQ_0f9b96e2f69449fb836dfeae559" UNIQUE ("archiveId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
@@ -441,14 +441,14 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "projectUsage",
                 "i18n"
             FROM "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "piece_metadata"
                 RENAME TO "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -476,7 +476,7 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 CONSTRAINT "UQ_0f9b96e2f69449fb836dfeae559" UNIQUE ("archiveId"),
                 CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
@@ -525,13 +525,13 @@ export class RemoveProjectIdFromPieceMetadataSqlite1761904011591 implements Migr
                 "projectUsage",
                 "i18n"
             FROM "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
-        `);
+        `)
     }
 
 }

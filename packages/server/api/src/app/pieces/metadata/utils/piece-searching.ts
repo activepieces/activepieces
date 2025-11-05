@@ -28,13 +28,13 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
     const putActionsAndTriggersInAnArray = pieces.map((piece) => {
         const actions = suggestionType === SuggestionType.ACTION ||
                     suggestionType === SuggestionType.ACTION_AND_TRIGGER
-                    ? Object.values(piece.actions)
-                    : []
+            ? Object.values(piece.actions)
+            : []
 
         const triggers = suggestionType === SuggestionType.TRIGGER ||
                     suggestionType === SuggestionType.ACTION_AND_TRIGGER
-                    ? Object.values(piece.triggers)
-                    : []
+            ? Object.values(piece.triggers)
+            : []
         return {
             ...piece,
             actions,

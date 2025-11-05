@@ -1,10 +1,9 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil } from '@activepieces/shared'
 import { utils } from '../utils'
 import { EngineGenericError } from './execution-errors'
-import { getPieceNameFromAlias } from '@activepieces/shared'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -124,7 +123,8 @@ export const pieceLoader = {
         let piecePath = null
         if (devPieces.includes(getPieceNameFromAlias(packageName))) {
             piecePath = await loadPieceFromDistFolder(packageName)
-        } else {
+        }
+        else {
             piecePath = await traverseAllParentFoldersToFindPiece(packageName)
         }
 

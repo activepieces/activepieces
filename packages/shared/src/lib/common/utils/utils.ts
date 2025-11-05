@@ -134,7 +134,8 @@ export function partition<T>(array: T[], predicate: (item: T, index: number, arr
     array.forEach((item, idx) => {
         if (predicate(item, idx, array)) {
             truthy.push(item)
-        } else {
+        }
+        else {
             falsy.push(item)
         }
     })

@@ -1,15 +1,15 @@
+import { getPieceNameFromAlias, partition, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../../utils/machine'
 import { localPieceManager } from './development/local-piece-manager'
 import { registryPieceManager } from './production/registry-piece-manager'
-import { getPieceNameFromAlias, partition, PiecePackage } from '@activepieces/shared'
 
 type InstallParams = {
     projectPath: string
     pieces: PiecePackage[]
 }
 
-export interface PieceManager {
+export type PieceManager = {
     install: (params: InstallParams) => Promise<void>
     installDependencies: (params: InstallParams) => Promise<void>
 }

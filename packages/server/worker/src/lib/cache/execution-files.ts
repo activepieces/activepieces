@@ -6,8 +6,8 @@ import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './worker-cache'
 import { piecesInstaller } from './pieces'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './worker-cache'
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
 
