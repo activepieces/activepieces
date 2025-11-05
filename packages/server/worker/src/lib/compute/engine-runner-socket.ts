@@ -135,8 +135,9 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 onStdout(data)
             })
 
-            socket.on(EngineSocketEvent.ENGINE_STDERR, (data: EngineStderr) => {
+            socket.on(EngineSocketEvent.ENGINE_STDERR, (data: EngineStderr, callback: () => void) => {
                 onStderr(data)
+                callback()
             })
 
             socket.on(EngineSocketEvent.UPDATE_RUN_PROGRESS, async (data: UpdateRunProgressRequest, callback: () => void) => {
