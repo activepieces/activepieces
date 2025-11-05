@@ -3,11 +3,11 @@ import { OutputContext } from '@activepieces/pieces-framework'
 import { DEFAULT_MCP_DATA, EngineSocketEvent, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
-import { sendToWorkerWithAck } from '../../main'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { EngineGenericError } from '../helper/execution-errors'
 import { utils } from '../utils'
+import { workerSocket } from '../worker-socket'
 
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
@@ -133,7 +133,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
 
 const sendProgressUpdate = async (request: UpdateRunProgressRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() => 
-        sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, request),
+        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, request),
     )
     if (result.error) {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send progress update', result.error)
