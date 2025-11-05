@@ -558,6 +558,22 @@ It is strongly recommended that you add your credit card information to your Ope
         }],
         videoModels: [
             {
+                displayName: 'VEO 3 Preview (DEPRECATED)',
+                instance: { modelId: 'veo-3.0-generate-preview' },
+                pricing: {
+                    costPerSecond: 0.75,
+                },  
+                minimumDurationInSeconds: 8,
+            },
+            {
+                displayName: 'VEO 3 Fast Preview (DEPRECATED)',
+                instance: { modelId: 'veo-3.0-fast-generate-preview' },
+                pricing: {
+                    costPerSecond: 0.40,    
+                },
+                minimumDurationInSeconds: 8,
+            },
+            {
                 displayName: 'VEO 3.1 Preview',
                 instance: { modelId: 'veo-3.1-generate-preview' },
                 pricing: {
