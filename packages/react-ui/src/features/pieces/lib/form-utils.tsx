@@ -189,7 +189,7 @@ export const getDefaultValueForStep = ({
   return Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
-      //we specifically check for undefined because null is a valid value
+        //we specifically check for undefined because null is a valid value
         existingInput[propertyName] === undefined
           ? getDefaultPropertyValue({
               property,
