@@ -1,55 +1,57 @@
 import {
     ActivepiecesError,
-    assertNotNullOrUndefined,
+    AuthorizationType,
     ErrorCode,
-    PrincipalType,
+    ProjectAuthorization,
 } from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
 import { requestUtils } from '../../request/request-utils'
-import { BaseSecurityHandler } from '../security-handler'
+import { BaseAuthzHandler } from '../security-handler'
+import { AuthenticatedFastifyRequest } from '../../../../../types/fastify'
+import { projectMemberService } from '../../../ee/projects/project-members/project-member.service'
 
-export class ProjectAuthzHandler extends BaseSecurityHandler {
-    private static readonly IGNORED_ROUTES = [
-        '/v1/admin/pieces',
-        '/v1/admin/platforms',
-        '/v1/app-credentials',
-        '/v1/authentication/switch-project',
-        '/v1/authentication/switch-platform',
-        '/v1/webhooks',
-        '/v1/webhooks/:flowId',
-        '/v1/webhooks/:flowId/test',
-        '/v1/webhooks/:flowId/sync',
-        // This works for both platform and project, we have to check this manually
-        '/v1/user-invitations',
-        '/v1/audit-events',
-    ]
+export class ProjectAuthzHandler extends BaseAuthzHandler<ProjectAuthorizedRequest> {
 
-    protected canHandle(request: FastifyRequest): Promise<boolean> {
-        const routerPath = request.routeOptions.url
-        assertNotNullOrUndefined(routerPath, 'routerPath is undefined')
-        const requestMatches = !ProjectAuthzHandler.IGNORED_ROUTES.includes(
-            routerPath,
-        )
-        return Promise.resolve(requestMatches)
-    }
-
-    protected doHandle(request: FastifyRequest): Promise<void> {
-        const principal = request.principal
-        if (principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN) {
-            return Promise.resolve()
-        }
-
-        const projectId = requestUtils.extractProjectId(request)
-
-        if (projectId && projectId !== principal.projectId) {
+    protected canHandle(request: AuthenticatedFastifyRequest): request is ProjectAuthorizedRequest {
+        if (request.routeOptions.config.security.authorization.type !== AuthorizationType.PROJECT){
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid project id',
+                    message: 'invalid route for project',
+                },
+            })
+        }
+        return true
+    }
+
+    protected async doHandle(request: ProjectAuthorizedRequest): Promise<void> {
+        const projectId = request.routeOptions.config.security.authorization.project.projectId(request) ?? requestUtils.extractProjectId(request)
+        const userId = request.principal.id
+
+        const projectMemberExists = await projectMemberService(request.log).exists({
+            projectId,
+            userId,
+        })
+
+        if (!projectMemberExists) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'user is not a member of the project',
                 },
             })
         }
 
         return Promise.resolve()
+    }
+}
+
+
+type ProjectAuthorizedRequest = AuthenticatedFastifyRequest & {
+    routeOptions: {
+        config: {
+            security: {
+                authorization: ProjectAuthorization
+            }
+        }
     }
 }

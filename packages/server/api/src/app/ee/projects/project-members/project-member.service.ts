@@ -36,6 +36,19 @@ import {
 const repo = repoFactory(ProjectMemberEntity)
 
 export const projectMemberService = (log: FastifyBaseLogger) => ({
+    async exists({
+        projectId,
+        userId,
+    }: ExistsParams): Promise<boolean> {
+        const projectMember = await repo().findOneBy({
+            projectId,
+            userId,
+        })
+        if (isNil(projectMember)) {
+            return false
+        }
+        return true
+    },
     async upsert({
         userId,
         projectId,
@@ -273,4 +286,9 @@ async function enrichProjectMemberWithUser(
             updated: user.updated,
         },
     }
+}
+
+type ExistsParams = {
+    projectId: ProjectId
+    userId: UserId
 }

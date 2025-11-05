@@ -1,9 +1,9 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
-import { BaseSecurityHandler } from '../security-handler'
+import { BaseAuthnHandler } from '../security-handler'
 
-export class AccessTokenAuthnHandler extends BaseSecurityHandler {
+export class AccessTokenAuthnHandler extends BaseAuthnHandler {
     private static readonly HEADER_NAME = 'authorization'
     private static readonly HEADER_PREFIX = 'Bearer '
 
@@ -11,8 +11,7 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
         const header = request.headers[AccessTokenAuthnHandler.HEADER_NAME]
         const prefix = AccessTokenAuthnHandler.HEADER_PREFIX
         const routeMatches = header?.startsWith(prefix) ?? false
-        const skipAuth = request.routeOptions.config?.skipAuth ?? false
-        return Promise.resolve(routeMatches && !skipAuth)
+        return Promise.resolve(routeMatches)
     }
 
     protected async doHandle(request: FastifyRequest): Promise<void> {

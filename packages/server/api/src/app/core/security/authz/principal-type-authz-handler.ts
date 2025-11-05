@@ -1,32 +1,39 @@
 import {
     ActivepiecesError,
-    assertNotNullOrUndefined,
+    AuthorizationType,
     ErrorCode,
+    PrincipalType,
+    PlatformAuthorization,
+    ProjectAuthorization,
 } from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
-import { BaseSecurityHandler } from '../security-handler'
+import { BaseAuthzHandler } from '../security-handler'
+import { AuthenticatedFastifyRequest } from '../../../../../types/fastify'
 
-export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
-    private static readonly IGNORED_ROUTES = [
-        '/favicon.ico',
-        '/v1/docs',
-        '/redirect',
-    ]
-    protected canHandle(request: FastifyRequest): Promise<boolean> {
-        const routerPath = request.routeOptions.url
-        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
-        const requestMatches =
-      !PrincipalTypeAuthzHandler.IGNORED_ROUTES.includes(routerPath) &&
-      !routerPath.startsWith('/ui')
+const ALLOWED_PRINCIPAL_TYPES = [
+    PrincipalType.USER,
+    PrincipalType.ENGINE,
+    PrincipalType.SERVICE,
+]
 
-        return Promise.resolve(requestMatches)
+export class PrincipalTypeAuthzHandler extends BaseAuthzHandler<AuthenticatedRequestWithPrincipals> {
+    protected canHandle(request: AuthenticatedFastifyRequest): request is AuthenticatedRequestWithPrincipals {
+        const authType = request.routeOptions.config.security.authorization.type
+        const isPrincipalTypeValid = authType !== AuthorizationType.WORKER && authType !== AuthorizationType.NONE
+        if (!isPrincipalTypeValid){
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'invalid route for principal type',
+                },
+            })
+        }
+        return true
     }
 
-    protected doHandle(request: FastifyRequest): Promise<void> {
+    protected doHandle(request: AuthenticatedRequestWithPrincipals): Promise<void> {
         const principalType = request.principal.type
-        const configuredPrincipals = request.routeOptions.config?.allowedPrincipals
-        assertNotNullOrUndefined(configuredPrincipals, 'configuredPrincipals is undefined')
-        const principalTypeNotAllowed = !configuredPrincipals.includes(principalType)
+        const configuredPrincipals = request.routeOptions.config.security.authorization.allowedPrincipals
+        const principalTypeNotAllowed = !isPrincipalTypeAllowed(principalType, configuredPrincipals)
 
         if (principalTypeNotAllowed) {
             throw new ActivepiecesError({
@@ -38,5 +45,22 @@ export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
         }
 
         return Promise.resolve()
+    }
+}
+
+function isPrincipalTypeAllowed(principalType: PrincipalType, configuredPrincipals: PrincipalType[]): boolean {
+    if (!ALLOWED_PRINCIPAL_TYPES.includes(principalType)) {
+        return false
+    }
+    return configuredPrincipals.includes(principalType)
+}
+
+type AuthenticatedRequestWithPrincipals = AuthenticatedFastifyRequest & {
+    routeOptions: {
+        config: {
+            security: {
+                authorization: PlatformAuthorization | ProjectAuthorization
+            }
+        }
     }
 }

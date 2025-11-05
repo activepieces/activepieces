@@ -2,7 +2,7 @@ import { ApiKey } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-    EndpointScope,
+    AuthorizationType,
     ErrorCode,
     isNil,
     isObject,
@@ -11,7 +11,6 @@ import {
     Project,
     ProjectId,
 } from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
 import { nanoid } from 'nanoid'
 import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
 import { extractResourceName } from '../../../authentication/authorization'
@@ -23,21 +22,21 @@ import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { FolderEntity } from '../../../flows/folder/folder.entity'
 import { projectService } from '../../../project/project-service'
 import { requestUtils } from '../../request/request-utils'
-import { BaseSecurityHandler } from '../security-handler'
+import { BaseAuthnHandler } from '../security-handler'
+import { AuthenticatedFastifyRequest } from '../../../../../types/fastify'
 
-export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
+export class PlatformApiKeyAuthnHandler extends BaseAuthnHandler {
     private static readonly HEADER_NAME = 'authorization'
     private static readonly HEADER_PREFIX = 'Bearer '
     private static readonly API_KEY_PREFIX = 'sk-'
 
-    protected canHandle(request: FastifyRequest): Promise<boolean> {
+    protected canHandle(request: AuthenticatedFastifyRequest): Promise<boolean> {
         const prefix = `${PlatformApiKeyAuthnHandler.HEADER_PREFIX}${PlatformApiKeyAuthnHandler.API_KEY_PREFIX}`
         const routeMatches = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]?.startsWith(prefix) ?? false
-        const skipAuth = request.routeOptions.config?.skipAuth ?? false
-        return Promise.resolve(routeMatches && !skipAuth)
+        return Promise.resolve(routeMatches)
     }
 
-    protected async doHandle(request: FastifyRequest): Promise<void> {
+    protected async doHandle(request: AuthenticatedFastifyRequest): Promise<void> {
         const apiKeyValue = this.extractApiKeyValue(request)
         let apiKey: ApiKey | null = null
         try {
@@ -55,7 +54,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         request.principal = principal
     }
 
-    private extractApiKeyValue(request: FastifyRequest): string {
+    private extractApiKeyValue(request: AuthenticatedFastifyRequest): string {
         const header = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]
         const prefix = PlatformApiKeyAuthnHandler.HEADER_PREFIX
         const apiKeyValue = header?.substring(prefix.length)
@@ -73,7 +72,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     }
 
     private async createPrincipal(
-        request: FastifyRequest,
+        request: AuthenticatedFastifyRequest,
         apiKey: ApiKey,
     ): Promise<Principal> {
         const principal: Principal = {
@@ -85,7 +84,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             },
         }
 
-        if (request.routeOptions.config?.scope === EndpointScope.PLATFORM) {
+        if (request.routeOptions.config?.security.authorization.type === AuthorizationType.PLATFORM) {
             return principal
         }
 
@@ -110,7 +109,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     }
 
     private async extractProjectIdOrThrow(
-        request: FastifyRequest,
+        request: AuthenticatedFastifyRequest,
     ): Promise<ProjectId> {
         const projectIdFromRequest = requestUtils.extractProjectId(request)
         
@@ -152,7 +151,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     }
 
     private async extractProjectIdFromResource(
-        request: FastifyRequest,
+        request: AuthenticatedFastifyRequest,
     ): Promise<string | undefined> {
         const routerPath = request.routeOptions.url
         assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    

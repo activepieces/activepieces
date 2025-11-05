@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType } from '@activepieces/shared'
+import { AuthenticatedRoute, EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType, RouteSecurity } from '@activepieces/shared'
 import fastify, { 
     RouteShorthandOptions as BaseRouteShorthandOptions, 
     FastifyBaseLogger, 
@@ -12,6 +12,7 @@ import fastify, {
     RawServerBase,
     RawServerDefault,
     RouteGenericInterface,
+    FastifyRequest,
 } from 'fastify'
 import { Server } from 'socket.io'
 
@@ -27,8 +28,10 @@ declare module 'fastify' {
         Logger = unknown,
         RequestType = unknown,
     > {
-        principal: ContextConfig extends { allowedPrincipals: infer P extends readonly PrincipalType[] }
-            ? PrincipalForTypes<P>
+        principal: ContextConfig extends { security: AuthenticatedRoute }
+            ? ContextConfig['security']['authorization'] extends { allowedPrincipals: infer P extends readonly PrincipalType[] }
+                ? PrincipalForTypes<P>
+                : Principal
             : Principal
         rawBody?: string | Buffer
         isMultipart(): boolean
@@ -41,11 +44,7 @@ declare module 'fastify' {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     export interface FastifyContextConfig {
         rawBody?: boolean
-        skipAuth?: boolean
-        scope?: EndpointScope
-        permission?: Permission
-        allowedPrincipals: readonly PrincipalType[]
-        otel?: boolean
+        security: RouteSecurity
     }
 
     export type RouteShorthandOptions<
@@ -61,3 +60,13 @@ declare module 'fastify' {
         config?: ContextConfig
     }
 }
+
+export type AuthenticatedFastifyRequest = FastifyRequest<
+    RouteGenericInterface,
+    RawServerDefault,
+    RawRequestDefaultExpression<RawServerDefault>,
+    FastifySchema,
+    FastifyTypeProviderDefault,
+    { security: AuthenticatedRoute },
+    FastifyBaseLogger
+>
