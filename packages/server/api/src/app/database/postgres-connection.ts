@@ -1,4 +1,5 @@
 import { TlsOptions } from 'node:tls'
+import "pg"
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
