@@ -189,7 +189,7 @@ export const getDefaultValueForStep = ({
   return Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
-      //we specifically check for undefined and not null too because null is the reset value for optional dropdowns
+      //we specifically check for undefined because null is a valid value
         existingInput[propertyName] === undefined
           ? getDefaultPropertyValue({
               property,
@@ -307,7 +307,6 @@ export const formUtils = {
   buildPieceDefaultValue: (
     selectedStep: FlowAction | FlowTrigger,
     piece: PieceMetadata | null | undefined,
-    includeCurrentInput: boolean,
   ): FlowAction | FlowTrigger => {
     const { type } = selectedStep;
     const defaultErrorOptions = {
@@ -371,7 +370,7 @@ export const formUtils = {
         >;
         const defaultValues = getDefaultValueForStep({
           props: props ?? {},
-          existingInput: includeCurrentInput ? input : {},
+          existingInput: input,
           propertySettings: selectedStep.settings.propertySettings ?? {},
         });
         const propertySettings = selectedStep.settings.propertySettings;
@@ -405,7 +404,7 @@ export const formUtils = {
         >;
         const defaultValues = getDefaultValueForStep({
           props: props ?? {},
-          existingInput: includeCurrentInput ? input : {},
+          existingInput: input,
           propertySettings: selectedStep.settings.propertySettings ?? {},
         });
         const propertySettings = selectedStep.settings.propertySettings;

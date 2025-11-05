@@ -59,7 +59,7 @@ const StepSettingsContainer = () => {
   ]);
 
   const defaultValues = useMemo(() => {
-    return formUtils.buildPieceDefaultValue(selectedStep, pieceModel, true);
+    return formUtils.buildPieceDefaultValue(selectedStep, pieceModel);
   }, [selectedStep.name, pieceModel]);
 
   useEffect(() => {
