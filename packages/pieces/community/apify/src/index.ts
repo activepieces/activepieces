@@ -6,6 +6,7 @@ import { getLastRun } from './lib/actions/get-last-run';
 import { startActor } from './lib/actions/start-actor';
 import { createApifyClient } from './lib/common';
 import { getKeyValueStoreRecord } from './lib/actions/get-key-value-store-record';
+import { scrapeSingleUrl } from './lib/actions/scrape-single-url';
 
 export const apifyAuth = PieceAuth.CustomAuth({
   description: 'Enter API key authentication details',
@@ -47,6 +48,6 @@ export const apify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/apify.svg',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['buttonsbond'],
-  actions: [getDatasetItems, getActors, getLastRun, startActor, getKeyValueStoreRecord],
+  actions: [getDatasetItems, getActors, getLastRun, startActor, getKeyValueStoreRecord, scrapeSingleUrl],
   triggers: [],
 });
