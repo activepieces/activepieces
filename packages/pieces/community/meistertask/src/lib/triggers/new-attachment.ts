@@ -1,77 +1,86 @@
-import { createTrigger } from "@activepieces/pieces-framework";
-import { meisterTaskCommon, MEISTERTASK_API_URL } from "../common/common";
-import { meistertaskAuth } from "../../index";
-import { TriggerStrategy } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
+import { meistertaskAuth } from '../../index';
+import { makeRequest, meisterTaskCommon } from '../common/common';
+
+const getToken = (auth: any): string => {
+  return typeof auth === 'string' ? auth : (auth as any).access_token;
+};
+
+const newAttachmentPolling: Polling<
+  PiecePropValueSchema<typeof meistertaskAuth>,
+  { project: unknown; section: unknown }
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue }) => {
+    const token = getToken(auth);
+    const tasksResponse = await makeRequest(
+      HttpMethod.GET,
+      `/sections/${propsValue.section}/tasks`,
+      token
+    );
+
+    const tasks = tasksResponse.body || [];
+    const attachments: any[] = [];
+
+    for (const task of tasks) {
+      try {
+        const attachmentsResponse = await makeRequest(
+          HttpMethod.GET,
+          `/tasks/${task.id}/attachments`,
+          token
+        );
+        const taskAttachments = attachmentsResponse.body || [];
+        attachments.push(...taskAttachments);
+      } catch (error) {
+        console.error(`Error fetching attachments for task ${task.id}:`, error);
+      }
+    }
+
+    return attachments.map((attachment: any) => ({
+      epochMilliSeconds: dayjs(attachment.created_at).valueOf(),
+      data: attachment,
+    }));
+  },
+};
 
 export const newAttachment = createTrigger({
   auth: meistertaskAuth,
   name: 'new_attachment',
   displayName: 'New Attachment',
-  description: 'Triggers when an attachment is created',
+  description: 'Triggers when an attachment is created.',
   props: {
     project: meisterTaskCommon.project,
     section: meisterTaskCommon.section,
   },
-  type: TriggerStrategy.POLLING,
   sampleData: {
-    id: 123456,
-    name: 'document.pdf',
-    url: 'https://example.com/document.pdf',
-    task_id: 789,
-    created_at: '2024-01-15T10:30:00Z',
+    id: 55555555,
+    task_id: 12345678,
+    filename: 'document.pdf',
+    url: 'https://example.com/file.pdf',
+    created_at: '2024-01-15T12:00:00Z',
   },
-  
-  async onEnable(context) {
-    await context.store.put('_last_checked', new Date().toISOString());
-  },
-  
-  async onDisable(context) {
-    await context.store.delete('_last_checked');
-  },
-  
-  async run(context) {
-    const token = typeof context.auth === 'string' 
-      ? context.auth 
-      : (context.auth as any).access_token;
-    
-    const newAttachments: any[] = [];
-    
-    const tasksResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${MEISTERTASK_API_URL}/sections/${context.propsValue.section}/tasks`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: token,
-      },
-    });
-    
-    for (const task of tasksResponse.body) {
-      try {
-        const attachmentsResponse = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${MEISTERTASK_API_URL}/tasks/${task.id}/attachments`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: token,
-          },
-        });
-        
-        const recentAttachments = attachmentsResponse.body.filter((att: any) => {
-          return att.created_at;
-        });
-        
-        newAttachments.push(...recentAttachments);
-      } catch (error) {
-        console.error(`Failed to fetch attachments for task ${task.id}:`, error);
-      }
-    }
-    
-    await context.store.put('_last_checked', new Date().toISOString());
-    return newAttachments;
-  },
-  
+  type: TriggerStrategy.POLLING,
   async test(context) {
-    return [this.sampleData];
+    return await pollingHelper.test(newAttachmentPolling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(newAttachmentPolling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(newAttachmentPolling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(newAttachmentPolling, context);
   },
 });

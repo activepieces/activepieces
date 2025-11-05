@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { meisterTaskCommon, makeRequest } from '../common/common';
+import { makeRequest, meisterTaskCommon } from '../common/common';
 import { meistertaskAuth } from '../../index';
 import { HttpMethod } from '@activepieces/pieces-common';
 

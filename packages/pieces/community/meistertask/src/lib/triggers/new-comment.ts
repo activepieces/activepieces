@@ -1,76 +1,86 @@
-import { createTrigger } from "@activepieces/pieces-framework";
-import { meisterTaskCommon, MEISTERTASK_API_URL } from "../common/common";
-import { meistertaskAuth } from "../../index";
-import { TriggerStrategy } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
+import { meistertaskAuth } from '../../index';
+import { makeRequest, meisterTaskCommon } from '../common/common';
+
+const getToken = (auth: any): string => {
+  return typeof auth === 'string' ? auth : (auth as any).access_token;
+};
+
+const newCommentPolling: Polling<
+  PiecePropValueSchema<typeof meistertaskAuth>,
+  { project: unknown; section: unknown }
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue }) => {
+    const token = getToken(auth);
+    const tasksResponse = await makeRequest(
+      HttpMethod.GET,
+      `/sections/${propsValue.section}/tasks`,
+      token
+    );
+
+    const tasks = tasksResponse.body || [];
+    const comments: any[] = [];
+
+    for (const task of tasks) {
+      try {
+        const commentsResponse = await makeRequest(
+          HttpMethod.GET,
+          `/tasks/${task.id}/comments`,
+          token
+        );
+        const taskComments = commentsResponse.body || [];
+        comments.push(...taskComments);
+      } catch (error) {
+        console.error(`Error fetching comments for task ${task.id}:`, error);
+      }
+    }
+
+    return comments.map((comment: any) => ({
+      epochMilliSeconds: dayjs(comment.created_at).valueOf(),
+      data: comment,
+    }));
+  },
+};
 
 export const newComment = createTrigger({
   auth: meistertaskAuth,
   name: 'new_comment',
   displayName: 'New Comment',
-  description: 'Triggers when a new comment is created on a task',
+  description: 'Triggers when a new comment is created on a task.',
   props: {
     project: meisterTaskCommon.project,
     section: meisterTaskCommon.section,
   },
-  type: TriggerStrategy.POLLING,
   sampleData: {
-    id: 98765,
-    text: 'This is a comment',
-    task_id: 789,
-    person_id: 12345,
-    created_at: '2024-01-15T10:30:00Z',
+    id: 98765432,
+    task_id: 12345678,
+    text: 'This is a sample comment',
+    person_id: 11111111,
+    created_at: '2024-01-15T11:00:00Z',
   },
-  
-  async onEnable(context) {
-    await context.store.put('_last_checked', new Date().toISOString());
-  },
-  
-  async onDisable(context) {
-    await context.store.delete('_last_checked');
-  },
-  
-  async run(context) {
-    const token = typeof context.auth === 'string' 
-      ? context.auth 
-      : (context.auth as any).access_token;
-    const newComments: any[] = [];
-    
-    const tasksResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${MEISTERTASK_API_URL}/sections/${context.propsValue.section}/tasks`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: token,
-      },
-    });
-    
-    for (const task of tasksResponse.body) {
-      try {
-        const commentsResponse = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${MEISTERTASK_API_URL}/tasks/${task.id}/comments`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: token,
-          },
-        });
-        
-        const recentComments = commentsResponse.body.filter((comment: any) => {
-          return comment.created_at;
-        });
-        
-        newComments.push(...recentComments);
-      } catch (error) {
-        console.error(`Failed to fetch comments for task ${task.id}:`, error);
-      }
-    }
-    
-    await context.store.put('_last_checked', new Date().toISOString());
-    return newComments;
-  },
-  
+  type: TriggerStrategy.POLLING,
   async test(context) {
-    return [this.sampleData];
+    return await pollingHelper.test(newCommentPolling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(newCommentPolling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(newCommentPolling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(newCommentPolling, context);
   },
 });

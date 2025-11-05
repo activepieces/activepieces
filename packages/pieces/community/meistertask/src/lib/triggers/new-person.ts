@@ -1,70 +1,69 @@
-import { createTrigger } from "@activepieces/pieces-framework";
-import { meisterTaskCommon, MEISTERTASK_API_URL } from "../common/common";
-import { meistertaskAuth } from "../../index";
-import { TriggerStrategy } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
+import { meistertaskAuth } from '../../index';
+import { makeRequest, meisterTaskCommon } from '../common/common';
+
+const getToken = (auth: any): string => {
+  return typeof auth === 'string' ? auth : (auth as any).access_token;
+};
+
+const newPersonPolling: Polling<
+  PiecePropValueSchema<typeof meistertaskAuth>,
+  { project: unknown }
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue }) => {
+    const token = getToken(auth);
+    const response = await makeRequest(
+      HttpMethod.GET,
+      `/projects/${propsValue.project}/persons`,
+      token
+    );
+
+    const persons = response.body || [];
+    return persons.map((person: any) => ({
+      epochMilliSeconds: dayjs(person.created_at).valueOf(),
+      data: person,
+    }));
+  },
+};
 
 export const newPerson = createTrigger({
   auth: meistertaskAuth,
   name: 'new_person',
   displayName: 'New Person',
-  description: 'Triggers when a new person is added to a project',
+  description: 'Triggers when a new person is added to a project.',
   props: {
     project: meisterTaskCommon.project,
   },
-  type: TriggerStrategy.POLLING,
   sampleData: {
-    id: 12345,
+    id: 11111111,
     firstname: 'John',
     lastname: 'Doe',
     email: 'john.doe@example.com',
-    project_id: 67890,
-    created_at: '2024-01-15T10:30:00Z',
+    created_at: '2024-01-15T09:00:00Z',
   },
-  
-  async onEnable(context) {
-    await context.store.put('_last_checked', new Date().toISOString());
-  },
-  
-  async onDisable(context) {
-    await context.store.delete('_last_checked');
-  },
-  
-  async run(context) {
-    const token = typeof context.auth === 'string' 
-      ? context.auth 
-      : (context.auth as any).access_token;  
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${MEISTERTASK_API_URL}/projects/${context.propsValue.project}/persons`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: token,
-      },
-    });
-    
-    const newPersons = response.body.filter((person: any) => {
-      return person.created_at;
-    });
-    
-    await context.store.put('_last_checked', new Date().toISOString());
-    return newPersons;
-  },
-  
+  type: TriggerStrategy.POLLING,
   async test(context) {
-    const token = typeof context.auth === 'string' 
-      ? context.auth 
-      : (context.auth as any).access_token;
-    
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${MEISTERTASK_API_URL}/projects/${context.propsValue.project}/persons`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: token,
-      },
-    });
-    
-    return response.body.slice(0, 3);
+    return await pollingHelper.test(newPersonPolling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(newPersonPolling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(newPersonPolling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(newPersonPolling, context);
   },
 });

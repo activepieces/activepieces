@@ -1,69 +1,65 @@
-import { createTrigger } from "@activepieces/pieces-framework";
-import { meisterTaskCommon, MEISTERTASK_API_URL } from "../common/common";
-import { meistertaskAuth } from "../../index";
-import { TriggerStrategy } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import {
+  createTrigger,
+  TriggerStrategy,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
+import { meistertaskAuth } from '../../index';
+import { makeRequest, meisterTaskCommon } from '../common/common';
 
+const getToken = (auth: any): string => {
+  return typeof auth === 'string' ? auth : (auth as any).access_token;
+};
 
+const newProjectPolling: Polling<
+  PiecePropValueSchema<typeof meistertaskAuth>,
+  Record<string, never>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth }) => {
+    const token = getToken(auth);
+    const response = await makeRequest(
+      HttpMethod.GET,
+      `/projects`,
+      token
+    );
+
+    const projects = response.body || [];
+    return projects.map((project: any) => ({
+      epochMilliSeconds: dayjs(project.created_at).valueOf(),
+      data: project,
+    }));
+  },
+};
 
 export const newProject = createTrigger({
   auth: meistertaskAuth,
   name: 'new_project',
   displayName: 'New Project',
-  description: 'Triggers when a new project is created',
+  description: 'Triggers when a new project is created.',
   props: {},
-  type: TriggerStrategy.POLLING,
   sampleData: {
-    id: 67890,
-    name: 'New Project',
-    created_at: '2024-01-15T10:30:00Z',
-    updated_at: '2024-01-15T10:30:00Z',
+    id: 11223344,
+    name: 'Sample Project',
+    created_at: '2024-01-15T07:00:00Z',
   },
-  
-  async onEnable(context) {
-    await context.store.put('_last_checked', new Date().toISOString());
-  },
-  
-  async onDisable(context) {
-    await context.store.delete('_last_checked');
-  },
-  
-  async run(context) {
-    const token = typeof context.auth === 'string' 
-      ? context.auth 
-      : (context.auth as any).access_token;
-    
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${MEISTERTASK_API_URL}/projects`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: token,
-      },
-    });
-    
-    const newProjects = response.body.filter((project: any) => {
-      return project.created_at;
-    });
-    
-    await context.store.put('_last_checked', new Date().toISOString());
-    return newProjects;
-  },
-  
+  type: TriggerStrategy.POLLING,
   async test(context) {
-    const token = typeof context.auth === 'string' 
-      ? context.auth 
-      : (context.auth as any).access_token;
-    
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${MEISTERTASK_API_URL}/projects`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: token,
-      },
-    });
-    
-    return response.body.slice(0, 3);
+    return await pollingHelper.test(newProjectPolling, context);
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(newProjectPolling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(newProjectPolling, context);
+  },
+  async run(context) {
+    return await pollingHelper.poll(newProjectPolling, context);
   },
 });
