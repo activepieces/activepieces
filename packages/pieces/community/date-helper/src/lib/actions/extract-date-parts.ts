@@ -1,6 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
-  extendDayJs,
   optionalTimeFormats,
   timeFormat,
   timeParts,
@@ -57,8 +56,6 @@ export const extractDateParts = createAction({
     }),
   },
   async run(context) {
-    // Ensure all dayjs plugins are properly extended
-    extendDayJs();
     
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
@@ -73,7 +70,8 @@ export const extractDateParts = createAction({
           outputresponse[timeParts.year] = BeforeDate.year();
           break;
         case timeParts.month:
-          outputresponse[timeParts.month] = BeforeDate.month() + 1; // dayjs months are 0-indexed
+           // dayjs months are 0-indexed
+          outputresponse[timeParts.month] = BeforeDate.month() + 1;
           break;
         case timeParts.day:
           outputresponse[timeParts.day] = BeforeDate.date();

@@ -1,8 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import {
-  extendDayJs,
-  getCorrectedFormat,
+  apDayjs,
+   getCorrectedFormat,
   optionalTimeFormats,
   parseDate,
   timeFormat,
@@ -77,7 +77,7 @@ export const addSubtractDateAction = createAction({
   },
   async run(context) {
     // Ensure all dayjs plugins are properly extended
-    extendDayJs();
+   
     
     const inputDate = context.propsValue.inputDate;
     const inputDateFormat = getCorrectedFormat(context.propsValue.inputDateFormat);
@@ -100,7 +100,7 @@ export const addSubtractDateAction = createAction({
       let timeToSet = setTime;
       
       if (useCurrentTime) {
-        const now = dayjs().tz(timeZone);
+        const now = apDayjs().tz(timeZone);
         timeToSet = `${now.hour().toString().padStart(2, '0')}:${now.minute().toString().padStart(2, '0')}`;
       }
 
@@ -161,7 +161,7 @@ function addSubtractTime(date: Date, expression: string, timeZone?: string): day
   }
   
   // Create timezone-aware dayjs object if timezone is provided
-  let dayjsDate = timeZone ? dayjs(date).tz(timeZone) : dayjs(date);
+  let dayjsDate = timeZone ? apDayjs(date).tz(timeZone) : apDayjs(date);
   
   for (let i = 0; i < numbers.length; i++) {
     const val = units[i].toLowerCase() as timeParts;

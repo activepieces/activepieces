@@ -3,14 +3,13 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import {
-  extendDayJs,
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
   getCorrectedFormat,
+  apDayjs,
 } from '../common';
-import dayjs from 'dayjs';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
@@ -88,8 +87,6 @@ export const nextDayofYear = createAction({
     }),
   },
   async run(context) {
-    // Ensure all dayjs plugins are properly extended
-    extendDayJs();
     
     await propsValidation.validateZod(context.propsValue, {
       day: z.number().min(1).max(31),
@@ -103,26 +100,22 @@ export const nextDayofYear = createAction({
     const day = context.propsValue.day as number;
     let time = context.propsValue.time as string;
 
-    let nextOccurrence = dayjs().tz(timeZone);
+    let nextOccurrence = apDayjs().tz(timeZone);
 
     if (currentTime === true) {
       time = `${nextOccurrence.hour()}:${nextOccurrence.minute()}`;
     }
     const [hours, minutes] = time.split(':').map(Number);
 
-    // Validate inputs
     if (month < 1 || month > 12 || day < 1 || day > 31) {
       throw new Error(`Invalid input \nmonth: ${month} \nday: ${day}`);
     }
 
     const currentYear = nextOccurrence.year();
 
-    // Create a date object for the next occurrence
-    nextOccurrence = dayjs.tz(`${currentYear}-${month}-${day} ${hours}:${minutes}`, 'YYYY-M-D H:m', timeZone);
+    nextOccurrence = apDayjs.tz(`${currentYear}-${month}-${day} ${hours}:${minutes}`, 'YYYY-M-D H:m', timeZone);
 
-    // Check if the next occurrence is already past in the current year
-    if (nextOccurrence.isBefore(dayjs().tz(timeZone))) {
-      // Move to the next year
+    if (nextOccurrence.isBefore(apDayjs.tz(timeZone))) {
       nextOccurrence = nextOccurrence.add(1, 'year');
     }
 

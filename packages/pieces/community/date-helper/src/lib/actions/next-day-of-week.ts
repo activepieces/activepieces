@@ -3,14 +3,13 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import {
-  extendDayJs,
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
   getCorrectedFormat,
+  apDayjs,
 } from '../common';
-import dayjs from 'dayjs';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
@@ -76,10 +75,7 @@ export const nextDayofWeek = createAction({
       defaultValue: 'UTC',
     }),
   },
-  async run(context) {
-    // Ensure all dayjs plugins are properly extended
-    extendDayJs();
-    
+  async run(context) {    
     await propsValidation.validateZod(context.propsValue, {
       time: z.string().regex(/^\d\d:\d\d$/),
     });
@@ -90,7 +86,7 @@ export const nextDayofWeek = createAction({
     const currentTime = context.propsValue.currentTime as boolean;
     let time = context.propsValue.time as string;
 
-    let nextOccurrence = dayjs().tz(timeZone);
+    let nextOccurrence = apDayjs().tz(timeZone);
 
     if (currentTime === true) {
       time = `${nextOccurrence.hour()}:${nextOccurrence.minute()}`;
@@ -118,7 +114,7 @@ export const nextDayofWeek = createAction({
     let dayDiff = dayIndex - nextOccurrence.day();
     if (
       dayDiff < 0 ||
-      (dayDiff === 0 && nextOccurrence.isBefore(dayjs().tz(timeZone)))
+      (dayDiff === 0 && nextOccurrence.isBefore(apDayjs().tz(timeZone)))
     ) {
       // If it's a past day in the week or today but past time, move to next week
       dayDiff += 7;

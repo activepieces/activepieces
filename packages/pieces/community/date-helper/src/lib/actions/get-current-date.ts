@@ -1,12 +1,11 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
 import {
-  extendDayJs,
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
-  getCorrectedFormat
+  getCorrectedFormat,
+  apDayjs
 } from '../common';
 
 export const getCurrentDate = createAction({
@@ -40,12 +39,9 @@ export const getCurrentDate = createAction({
       defaultValue: 'UTC',
     }),
   },
-  async run(context) {
-    // Ensure all dayjs plugins are properly extended
-    extendDayJs();
-    
+  async run(context) {    
     const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);
     const timeZone = context.propsValue.timeZone;
-    return { result: dayjs().tz(timeZone).format(timeFormat) };
+    return { result: apDayjs().tz(timeZone).format(timeFormat) };
   },
 });
