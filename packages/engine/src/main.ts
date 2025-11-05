@@ -23,30 +23,15 @@ const WS_URL = 'http://127.0.0.1:12345'
 process.title = `engine-${WORKER_ID}`
 let socket: Socket | undefined
 
-export function sendToWorker(type: EngineSocketEvent, data: unknown): void {
-    socket?.emit(type, data)
-}
-
 export const sendToWorkerWithAck = async (
     type: EngineSocketEvent,
     data: unknown,
 ): Promise<void> => {
-    try {
-        await emitWithAck(socket, type, data, {
-            timeoutMs: 4000,
-            retries: 3,
-            retryDelayMs: 2000,
-        })
-    }
-    catch (error) {
-        console.error({
-            message: 'Failed to emit event',
-            event: type,
-            data,
-            error,
-        })
-        throw error
-    }
+    await emitWithAck(socket, type, data, {
+        timeoutMs: 4000,
+        retries: 3,
+        retryDelayMs: 2000,
+    })
 }
 
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {

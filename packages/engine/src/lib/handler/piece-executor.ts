@@ -1,7 +1,8 @@
 import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { sendToWorkerWithAck } from '../../main'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
@@ -9,7 +10,6 @@ import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
-import { workerService } from '../services/worker.service'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
@@ -154,7 +154,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
         if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
-            await workerService.sendFlowResponse({
+            await sendToWorkerWithAck(EngineSocketEvent.SEND_FLOW_RESPONSE, {
                 workerHandlerId: constants.serverHandlerId,
                 httpRequestId: constants.httpRequestId,
                 runResponse: {

@@ -1,7 +1,8 @@
 import { EngineHttpResponse, FlowRunResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, spreadIfDefined, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { appSocket, runsMetadataQueue } from '../../flow-worker'
+import { appSocket } from '../../app-socket'
+import { runsMetadataQueue } from '../../flow-worker'
 import { engineResponsePublisher } from '../../utils/engine-response-publisher'
 
 export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
