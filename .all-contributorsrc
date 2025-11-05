@@ -2084,6 +2084,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Dania02525",
+      "name": "Dania Es",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11240307?v=4",
+      "profile": "http://dania.es",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
