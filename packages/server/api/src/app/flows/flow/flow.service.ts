@@ -34,7 +34,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowVersionService, flowVersionRepo } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -569,20 +569,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
         projectId,
         connectionExternalId,
     }: GetFlowIdsByConnectionIdParams): Promise<FlowId[]> {
-        const queryBuilder = flowRepo()
-            .createQueryBuilder('ff')
-            .select('DISTINCT ff.id', 'id')
-            .leftJoin(
-                'flow_version',
-                'latest_version',
-                'latest_version."flowId" = ff.id AND latest_version.id = (SELECT id FROM flow_version WHERE "flowId" = ff.id ORDER BY created DESC LIMIT 1)',
-            )
-            .where('ff."projectId" = :projectId', { projectId })
+        const queryBuilder = flowVersionRepo()
+            .createQueryBuilder('fv')
+            .select('DISTINCT fv.flowId', 'flowId')
+            .innerJoin('flow', 'f', 'f.id = fv.flowId')
+            .where('f.projectId = :projectId', { projectId })
 
-        AddAPArrayContainsToQueryBuilder(queryBuilder, 'latest_version."connectionIds"', [connectionExternalId])
+        AddAPArrayContainsToQueryBuilder(queryBuilder, 'fv.connectionIds', [connectionExternalId])
 
-        const results = await queryBuilder.getRawMany<{ id: FlowId }>()
-        return results.map(result => result.id)
+        const results = await queryBuilder.getRawMany<{ flowId: FlowId }>()
+        return results.map(result => result.flowId)
     },
 })
 
