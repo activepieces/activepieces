@@ -40,6 +40,12 @@ export const slackSendMessageAction = createAction({
       defaultValue: false,
     }),
     mentionOriginFlow,
+    unfurlLinks: Property.Checkbox({
+      displayName: 'Unfurl Links',
+      description: 'Enable link unfurling for this message',
+      required: false,
+      defaultValue: true,
+    }),
     blocks,
   },
   async run(context) {
@@ -72,6 +78,7 @@ export const slackSendMessageAction = createAction({
       file,
       blocks: blockList,
       replyBroadcast,
+      unfurlLinks,
     });
   },
 });

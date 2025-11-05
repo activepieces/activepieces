@@ -2,7 +2,7 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { DimoClient } from '../../common/helpers';
+import { DimoClient, getNumberExpression } from '../../common/helpers';
 import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
 import { TriggerField } from '../../common/constants';
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
@@ -28,17 +28,11 @@ export const fuelAbsoluteTrigger = createTrigger({
 			description: 'The fuel level in liters to compare against.',
 			required: true,
 		}),
-		triggerFrequency: Property.StaticDropdown({
-			displayName: 'Trigger Frequency',
-			description: 'How often the webhook should fire when condition is met.',
+		coolDownPeriod: Property.Number({
+			displayName: 'Cool Down Period (seconds)',
+			description: 'Minimum number of seconds between successive webhook firings',
 			required: true,
-			defaultValue: 'Realtime',
-			options: {
-				options: [
-					{ label: 'Real-time', value: 'Realtime' },
-					{ label: 'Hourly', value: 'Hourly' },
-				],
-			},
+			defaultValue: 30,
 		}),
 		verificationToken: verificationTokenInput,
 	},
@@ -58,7 +52,7 @@ export const fuelAbsoluteTrigger = createTrigger({
 	async onEnable(context) {
 		const { clientId, apiKey, redirectUri } = context.auth;
 
-		const { vehicleTokenIds, operator, fuelLiters, triggerFrequency, verificationToken } =
+		const { vehicleTokenIds, operator, fuelLiters, coolDownPeriod, verificationToken } =
 			context.propsValue;
 
 		const dimo = new DimoClient({
@@ -73,18 +67,14 @@ export const fuelAbsoluteTrigger = createTrigger({
 				: [];
 
 		const webhookPayload: CreateWebhookParams = {
-			service: 'Telemetry',
-			data: TriggerField.PowertrainFuelSystemAbsoluteLevel,
-			trigger: {
-				field: TriggerField.PowertrainFuelSystemAbsoluteLevel,
-				operator,
-				value: fuelLiters,
-			},
-			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			service: 'telemetry.signals',
+			metricName: TriggerField.PowertrainFuelSystemAbsoluteLevel,
+			condition: getNumberExpression(operator, fuelLiters),
+			coolDownPeriod,
 			description: `Fuel absolute level trigger: ${operator} ${fuelLiters}L`,
-			target_uri: context.webhookUrl,
-			status: 'Active',
-			verification_token: verificationToken,
+			targetURL: context.webhookUrl,
+			status: 'enabled',
+			verificationToken: verificationToken,
 		};
 
 		try {
@@ -96,18 +86,12 @@ export const fuelAbsoluteTrigger = createTrigger({
 
 			const webhookId = createWebhookResponse.id;
 
-			if (ids.length === 0) {
-				await dimo.subscribeAllVehicles({
-					developerJwt,
-					webhookId,
-				});
-			} else {
-				await Promise.all(
-					ids.map(async (tokenId) => {
-						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
-					}),
-				);
-			}
+			await dimo.subscribeVehiclesToWebhook({
+				developerJwt,
+				webhookId,
+				vehicleTokenIds: ids,
+			});
+
 			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
 				webhookId,
 				verificationToken,

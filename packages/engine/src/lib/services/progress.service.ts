@@ -1,11 +1,11 @@
 import crypto from 'crypto'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined, DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, FlowActionType, GenericStepOutput, isNil, logSerializer, LoopStepOutput, SendFlowResponseRequest, StepOutput, StepOutputStatus, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { ProgressUpdateError } from '../helper/execution-errors'
+import { EngineGenericError, ProgressUpdateError } from '../helper/execution-errors'
 
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
@@ -99,9 +99,10 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             executionState: {
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
-            tasks: flowExecutorContext.tasks,
         })
-        assertNotNullOrUndefined(engineConstants.logsUploadUrl, 'logsUploadUrl is required')
+        if (isNil(engineConstants.logsUploadUrl)) {
+            throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
+        }
         const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
         if (!uploadLogResponse.ok) {
             throw new ProgressUpdateError('Failed to upload execution state', uploadLogResponse)

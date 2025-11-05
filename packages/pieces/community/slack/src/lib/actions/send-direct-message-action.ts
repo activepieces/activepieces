@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
@@ -25,10 +25,16 @@ export const slackSendDirectMessageAction = createAction({
     profilePicture,
     mentionOriginFlow,
     blocks,
+    unfurlLinks: Property.Checkbox({
+      displayName: 'Unfurl Links',
+      description: 'Enable link unfurling for this message',
+      required: false,
+      defaultValue: true,
+    }),
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, userId, blocks } = context.propsValue;
+    const { text, userId, blocks, unfurlLinks } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(text, 'text');
@@ -56,6 +62,7 @@ export const slackSendDirectMessageAction = createAction({
       profilePicture: context.propsValue.profilePicture,
       conversationId: userId,
       blocks:blockList,
+      unfurlLinks,
     });
   },
 });
