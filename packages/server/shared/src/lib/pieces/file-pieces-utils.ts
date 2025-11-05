@@ -72,7 +72,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
         if (deps.size > 0) {
             log.info(chalk.yellow(`Installing Pieces Dependencies: ${Array.from(deps).join(' ')}`))
-            await cmdRunner(`npm install ${Array.from(deps).join(' ')} --no-save`)
+            await cmdRunner(`bun install ${Array.from(deps).join(' ')} --no-save`)
         }
     }
 

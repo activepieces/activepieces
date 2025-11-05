@@ -8,6 +8,7 @@ import {
   userId,
   username,
   blocks,
+  mentionOriginFlow,
 } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 
@@ -22,6 +23,7 @@ export const slackSendDirectMessageAction = createAction({
     text,
     username,
     profilePicture,
+    mentionOriginFlow,
     blocks,
     unfurlLinks: Property.Checkbox({
       displayName: 'Unfurl Links',
@@ -32,14 +34,26 @@ export const slackSendDirectMessageAction = createAction({
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, userId, blocks, unfurlLinks } = context.propsValue;
+    const { text, userId, blocks, unfurlLinks, mentionOriginFlow } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
 
-    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+    const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
 
+    if(blocks && Array.isArray(blocks)) { 
+      blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
+    }
+
+    if(mentionOriginFlow) {
+      (blockList as KnownBlock[])?.push({ type: 'context', elements: [
+        {
+          "type": "mrkdwn",
+          "text": `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
+        }
+      ] })
+    }
 
     return slackSendMessage({
       token,

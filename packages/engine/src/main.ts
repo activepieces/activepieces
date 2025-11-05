@@ -1,6 +1,5 @@
 import { inspect } from 'util'
 import {
-    assertNotNullOrUndefined,
     emitWithAck,
     EngineOperation,
     EngineOperationType,
@@ -13,6 +12,7 @@ import {
     isNil,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
+import { EngineGenericError } from './lib/helper/execution-errors'
 import { execute } from './lib/operations'
 import { utils } from './lib/utils'
 
@@ -30,14 +30,12 @@ export function sendToWorker(type: EngineSocketEvent, data: unknown): void {
 export const sendToWorkerWithAck = async (
     type: EngineSocketEvent,
     data: unknown,
-    options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number },
 ): Promise<void> => {
     try {
         await emitWithAck(socket, type, data, {
             timeoutMs: 4000,
             retries: 3,
             retryDelayMs: 2000,
-            ...options,
         })
     }
     catch (error) {
@@ -58,7 +56,9 @@ async function executeFromSocket(operation: EngineOperation, operationType: Engi
 }
 
 function setupSocket() {
-    assertNotNullOrUndefined(WORKER_ID, 'WORKER_ID')
+    if (isNil(WORKER_ID)) {
+        throw new EngineGenericError('WorkerIdNotSetError', 'WORKER_ID environment variable is not set')
+    }
 
     socket = io(WS_URL, {
         path: '/worker/ws',
@@ -91,15 +91,20 @@ function setupSocket() {
         originalError.apply(console, sanitizedArgs)
     }
 
-    socket.on(EngineSocketEvent.ENGINE_OPERATION, (data: { operation: EngineOperation, operationType: EngineOperationType }) => {
-        executeFromSocket(data.operation, data.operationType).catch(e => {
+    socket.on(EngineSocketEvent.ENGINE_OPERATION, async (data: { operation: EngineOperation, operationType: EngineOperationType }) => {
+        const { error: resultError } = await utils.tryCatchAndThrowOnEngineError(() =>
+            executeFromSocket(data.operation, data.operationType),
+        )
+
+        if (resultError) {
             const engineError: EngineResponse = {
                 response: undefined,
                 status: EngineResponseStatus.INTERNAL_ERROR,
-                error: utils.formatError(e),
+                error: utils.formatError(resultError),
             }
+            console.error('Error handling operation:', engineError)
             socket?.emit(EngineSocketEvent.ENGINE_RESPONSE, engineError)
-        })
+        }
     })
 
     socket.on('disconnect', () => {
