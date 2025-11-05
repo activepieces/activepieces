@@ -19,10 +19,6 @@ const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
-        if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
-            log.info('Piece sync service is disabled')
-            return
-        }
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
             await pieceSyncService(log).sync()
         })
@@ -39,10 +35,6 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
         })
     },
     async sync(): Promise<void> {
-        if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
-            log.info('Piece sync service is disabled')
-            return
-        }
         try {
             log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
             const pieces = await listPieces()

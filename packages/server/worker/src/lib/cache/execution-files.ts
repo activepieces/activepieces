@@ -1,13 +1,13 @@
 import path from 'path'
-import { fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
 import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceManager } from '../cache/pieces'
 import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './worker-cache'
+import { piecesInstaller } from './pieces'
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
 
@@ -24,7 +24,6 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
 
-        const source = workerMachine.getSettings().PIECES_SOURCE as PiecesSource
         await fileSystemUtils.threadSafeMkdir(GLOBAL_CACHE_PATH_LATEST_VERSION)
 
         const startTimeCode = performance.now()
@@ -55,10 +54,9 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
         if (officialPieces.length > 0) {
             const startTime = performance.now()
-            await pieceManager(source).install({
+            await piecesInstaller(log, {
                 projectPath: GLOBAL_CACHE_COMMON_PATH,
                 pieces: officialPieces,
-                log,
             })
             log.info({
                 pieces: officialPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
@@ -70,11 +68,9 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const customPieces = pieces.filter(f => f.pieceType === PieceType.CUSTOM)
         if (customPieces.length > 0) {
             const startTime = performance.now()
-            await fileSystemUtils.threadSafeMkdir(customPiecesPath)
-            await pieceManager(source).install({
+            await piecesInstaller(log, {
                 projectPath: customPiecesPath,
                 pieces: customPieces,
-                log,
             })
             log.info({
                 customPieces: customPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),

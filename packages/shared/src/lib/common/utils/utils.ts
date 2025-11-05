@@ -127,3 +127,16 @@ export function chunk<T>(records: T[], size: number) {
     }
     return chunks
 }
+
+export function partition<T>(array: T[], predicate: (item: T, index: number, arr: T[]) => boolean): [T[], T[]] {
+    const truthy: T[] = []
+    const falsy: T[] = []
+    array.forEach((item, idx) => {
+        if (predicate(item, idx, array)) {
+            truthy.push(item)
+        } else {
+            falsy.push(item)
+        }
+    })
+    return [truthy, falsy]
+}

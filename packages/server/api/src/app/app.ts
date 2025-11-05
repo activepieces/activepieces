@@ -360,15 +360,11 @@ export async function appPostBoot(app: FastifyInstance): Promise<void> {
 The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
-    const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
-        app.log.warn(
-            `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
-        )
         app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
         )

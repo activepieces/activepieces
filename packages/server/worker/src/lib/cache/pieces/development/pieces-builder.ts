@@ -1,7 +1,7 @@
 import { spawn } from 'child_process'
 import fs from 'fs/promises'
-import { resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock, PiecesSource } from '@activepieces/server-shared'
+import path, { resolve } from 'path'
+import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar, { FSWatcher } from 'chokidar'
@@ -25,7 +25,9 @@ async function checkBuildTarget(nxProjectFilePath: string): Promise<string> {
     }
 }
 
-async function handleFileChange(packages: string[], pieceProjectName: string, piecePackageName: string, nxProjectFilePath: string, io: Server, log: FastifyBaseLogger): Promise<void> {
+async function handleFileChange(packages: string[], packageName: string, piecePackageName: string, nxProjectFilePath: string, io: Server, log: FastifyBaseLogger): Promise<void> {
+    const pieceProjectName = `pieces-${packageName}`
+
     log.info(
         chalk.blueBright.bold(
             '👀 Detected changes in pieces. Waiting... 👀 ' + pieceProjectName,
@@ -34,6 +36,7 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
     let lock: ApLock | undefined
     try {
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
+
 
         const buildTarget = await checkBuildTarget(nxProjectFilePath)
         log.info(chalk.blue.bold(`🤌 Building pieces with target: ${buildTarget} for ${pieceProjectName}... 🤌`))
@@ -47,6 +50,10 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         const startTime = Date.now()
         await runCommandWithLiveOutput(cmd)
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
+
+        const postBuildCommand = `bun install --cwd ${path.resolve('dist/packages/pieces/community', packageName)}`
+        await runCommandWithLiveOutput(postBuildCommand)
+
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
 
@@ -96,11 +103,7 @@ async function runCommandWithLiveOutput(cmd: string): Promise<void> {
     })
 }
 
-export async function pieceBuilder(app: FastifyInstance, io: Server, packages: string[], piecesSource: PiecesSource): Promise<void> {
-
-    const isFilePieces = piecesSource === PiecesSource.FILE
-    // Only run this script if the pieces source is file
-    if (!isFilePieces) return
+export async function pieceBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
 
     const watchers: FSWatcher[] = []
   
@@ -116,12 +119,11 @@ export async function pieceBuilder(app: FastifyInstance, io: Server, packages: s
         }
         app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
-        const pieceProjectName = `pieces-${packageName}`
         const packageJsonName = await filePiecesUtils(packages, app.log).getPackageNameFromFolderPath(pieceDirectory)
         const nxProjectJson = await filePiecesUtils(packages, app.log).getProjectJsonFromFolderPath(pieceDirectory)
 
         const debouncedHandleFileChange = debounce(() => {
-            handleFileChange(packages, pieceProjectName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)
+            handleFileChange(packages, packageName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)
         }, 2000)
 
         const watcher = chokidar.watch(resolve(pieceDirectory), {
