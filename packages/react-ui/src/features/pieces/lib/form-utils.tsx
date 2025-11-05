@@ -189,13 +189,15 @@ export const getDefaultValueForStep = ({
   return Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
-        existingInput[propertyName] ??
-        getDefaultPropertyValue({
-          property,
-          dynamicInputModeToggled:
-            propertySettings?.[propertyName]?.type ===
-            PropertyExecutionType.DYNAMIC,
-        });
+      //we specifically check for undefined and not null too because null is the reset value for optional dropdowns
+        existingInput[propertyName] === undefined
+          ? getDefaultPropertyValue({
+              property,
+              dynamicInputModeToggled:
+                propertySettings?.[propertyName]?.type ===
+                PropertyExecutionType.DYNAMIC,
+            })
+          : existingInput[propertyName];
       return defaultValues;
     },
     {},
@@ -299,6 +301,7 @@ export const formUtils = {
         ([_, value]) => value !== undefined,
       ),
     );
+    copiedStep.nextAction = null;
     return copiedStep;
   },
   buildPieceDefaultValue: (
