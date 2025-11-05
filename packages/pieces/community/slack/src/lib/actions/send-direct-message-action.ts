@@ -34,7 +34,7 @@ export const slackSendDirectMessageAction = createAction({
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, userId, blocks, unfurlLinks } = context.propsValue;
+    const { text, userId, blocks, unfurlLinks, mentionOriginFlow } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(text, 'text');

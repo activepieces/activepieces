@@ -50,7 +50,7 @@ export const slackSendMessageAction = createAction({
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast } =
+    const { text, channel, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
     
     const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
