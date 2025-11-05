@@ -564,6 +564,26 @@ export const flowService = (log: FastifyBaseLogger) => ({
         flow.updated = dayjs().toISOString()
         await flowRepo().save(flow)
     },
+
+    async getFlowIdsByConnectionId({
+        projectId,
+        connectionExternalId,
+    }: GetFlowIdsByConnectionIdParams): Promise<FlowId[]> {
+        const queryBuilder = flowRepo()
+            .createQueryBuilder('ff')
+            .select('DISTINCT ff.id', 'id')
+            .leftJoin(
+                'flow_version',
+                'latest_version',
+                'latest_version."flowId" = ff.id AND latest_version.id = (SELECT id FROM flow_version WHERE "flowId" = ff.id ORDER BY created DESC LIMIT 1)',
+            )
+            .where('ff."projectId" = :projectId', { projectId })
+
+        AddAPArrayContainsToQueryBuilder(queryBuilder, 'latest_version."connectionIds"', [connectionExternalId])
+
+        const results = await queryBuilder.getRawMany<{ id: FlowId }>()
+        return results.map(result => result.id)
+    },
 })
 
 
@@ -713,4 +733,9 @@ type UpdateMetadataParams = {
     id: FlowId
     projectId: ProjectId
     metadata: Metadata | null | undefined
+}
+
+type GetFlowIdsByConnectionIdParams = {
+    projectId: ProjectId
+    connectionExternalId: string
 }
