@@ -580,6 +580,60 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const results = await queryBuilder.getRawMany<{ flowId: FlowId }>()
         return results.map(result => result.flowId)
     },
+
+    async getFlowIdsByConnectionIds({
+        projectIds,
+        connectionExternalIds,
+    }: GetFlowIdsByConnectionIdsParams): Promise<Record<string, FlowId[]>> {
+        if (connectionExternalIds.length === 0 || projectIds.length === 0) {
+            return {}
+        }
+
+        // Query to get latest flow_version for each flow with matching connections
+        const queryBuilder = flowVersionRepo()
+            .createQueryBuilder('fv')
+            .select(['fv.flowId', 'fv.connectionIds'])
+            .innerJoin('flow', 'f', 'f.id = fv.flowId')
+            .innerJoin(
+                (qb) => {
+                    return qb
+                        .select('fv2.flowId', 'flowId')
+                        .addSelect('MAX(fv2.created)', 'maxCreated')
+                        .from('flow_version', 'fv2')
+                        .groupBy('fv2.flowId')
+                },
+                'latest',
+                'latest.flowId = fv.flowId AND latest.maxCreated = fv.created',
+            )
+            .where('f.projectId IN (:...projectIds)', { projectIds })
+
+        AddAPArrayContainsToQueryBuilder(queryBuilder, 'fv.connectionIds', connectionExternalIds)
+
+        const flowVersions = await queryBuilder.getMany()
+
+        // Build the mapping: connectionExternalId -> flowIds[]
+        const connectionToFlowIds: Record<string, Set<FlowId>> = {}
+        
+        for (const fv of flowVersions) {
+            const flowConnectionIds = fv.connectionIds || []
+            for (const connId of flowConnectionIds) {
+                if (connectionExternalIds.includes(connId)) {
+                    if (!connectionToFlowIds[connId]) {
+                        connectionToFlowIds[connId] = new Set()
+                    }
+                    connectionToFlowIds[connId].add(fv.flowId)
+                }
+            }
+        }
+
+        // Convert Sets to Arrays
+        const result: Record<string, FlowId[]> = {}
+        for (const [connId, flowIdSet] of Object.entries(connectionToFlowIds)) {
+            result[connId] = Array.from(flowIdSet)
+        }
+
+        return result
+    },
 })
 
 
@@ -734,4 +788,9 @@ type UpdateMetadataParams = {
 type GetFlowIdsByConnectionIdParams = {
     projectId: ProjectId
     connectionExternalId: string
+}
+
+type GetFlowIdsByConnectionIdsParams = {
+    projectIds: ProjectId[]
+    connectionExternalIds: string[]
 }

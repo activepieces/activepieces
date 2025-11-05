@@ -291,21 +291,34 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
+        // Collect all unique projectIds and connectionExternalIds for batch query
+        const allProjectIds = new Set<ProjectId>()
+        const allConnectionExternalIds = new Set<string>()
+        
+        for (const connection of data) {
+            allConnectionExternalIds.add(connection.externalId)
+            for (const projId of connection.projectIds) {
+                allProjectIds.add(projId)
+            }
+        }
+
+        // Single query to get all flow IDs for all connections
+        const connectionToFlowIds = await flowService(log).getFlowIdsByConnectionIds({
+            projectIds: Array.from(allProjectIds),
+            connectionExternalIds: Array.from(allConnectionExternalIds),
+        })
+
         const promises = data.map(async (encryptedConnection) => {
             const apConnection: AppConnection = await appConnectionHandler(log).decryptConnection(encryptedConnection)
             const owner = isNil(apConnection.ownerId) ? null : await userService.getMetaInformation({
                 id: apConnection.ownerId,
             })
-            const flowIds = await Promise.all(apConnection.projectIds.map(async (projectId) => {
-                return flowService(log).getFlowIdsByConnectionId({
-                    projectId,
-                    connectionExternalId: apConnection.externalId,
-                })
-            }))
+            // Look up flow IDs from the batch result
+            const flowIds = connectionToFlowIds[apConnection.externalId] || []
             return {
                 ...apConnection,
                 owner,
-                flowIds: flowIds.flat(),
+                flowIds,
             }
         })
         const refreshConnections = await Promise.all(promises)
