@@ -62,4 +62,128 @@ ctx.run.pause({
 });
 ```
 
-These flow hooks give you control over the execution of the piece by allowing you to stop the flow or pause it until a certain condition is met. You can use these hooks to customize the behavior and flow of your actions.
+## Cleanup Hook
+
+When using pause flow operations (webhook or delay), you may need to perform cleanup if the flow never resumes. The `onCleanup` hook allows you to run code when a paused flow is terminated due to timeout, cancellation, or other reasons.
+
+The cleanup hook is called when:
+- The flow times out (exceeds `AP_PAUSED_FLOW_TIMEOUT_DAYS`)
+- The flow fails while paused (quota exceeded, memory limit, internal error, etc.)
+
+**Example:**
+
+```typescript
+export const waitForWebhookAction = createAction({
+  name: 'waitForExternalWebhook',
+  displayName: 'Wait for an external webhook to resume',
+  async run(context) {
+    const externalApiClient = makeClient({ auth: context.auth });
+
+    // Creates a store key unique to the flow run
+    const webhookIdKey = `webhook_id_${context.run.id}`;
+
+    if (context.executionType === ExecutionType.BEGIN) {
+      // Generate resume URL for the external service to call
+      const resumeUrl = context.generateResumeUrl({
+        queryParams: { runId: context.run.id },
+      });
+
+      // Register webhook with external API
+      const webhook = await externalApiClient.createWebhook({
+        url: resumeUrl,
+        event: 'some.operation.is.successful',
+      });
+
+      // Store webhook ID in the store for later cleanup using the unique
+      // key we created earlier
+      await context.store.put(webhookIdKey, webhook.id, StoreScope.FLOW);
+
+      // Pause and wait for webhook
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
+      });
+
+      // ...
+      // Do something useful here
+      // ...
+
+      return {};
+    } else {
+      // RESUME phase - flow was resumed by webhook call
+
+      // Fetch the webhook ID back from the store
+      const webhookId = await context.store.get<string>(webhookIdKey, StoreScope.FLOW);
+
+      if (webhookId) {
+        // Unregister webhook from external API
+        await externalApiClient.deleteWebhook({ webhookId });
+
+        // Clean up store entry
+        await context.store.delete(webhookIdKey, StoreScope.FLOW);
+      }
+
+      // Return the webhook payload that triggered the resume phase
+      return context.resumePayload;
+    }
+  },
+
+  // Runs if flow never resumes (timeout/cancellation)
+  async onCleanup(context) {
+    const externalApiClient = makeClient({ auth: context.auth });
+
+    // Builds the same key as in the run hook
+    const webhookIdKey = `webhook_id_${context.run.id}`;
+
+    // Check if webhook ID exists in store
+    const webhookId = await context.store.get<string>(webhookIdKey, StoreScope.FLOW);
+
+    if (webhookId) {
+      try {
+        // Unregister webhook from external API
+        await externalApiClient.deleteWebhook({ webhookId });
+
+        // Clean up store entry
+        await context.store.delete(webhookIdKey, StoreScope.FLOW);
+      } catch (error) {
+        console.error(`Failed to cleanup webhook ${webhookId}:`, error)
+        // Note: Cleanup failures are logged but don't throw
+      }
+    }
+  },
+})
+```
+
+**Cleanup Context:**
+
+The cleanup context provides:
+- `auth`: Authentication credentials (if configured)
+- `propsValue`: The same input properties used during BEGIN phase
+- `store`: Access to flow/project storage
+- `connections`: Connection manager
+- `server`: Server URLs and token
+- `project`: Project information
+- `run.id`: Flow run ID
+- `run.reason`: Why cleanup was triggered (`CleanupReason.TIMEOUT` or `CleanupReason.FAILURE`)
+
+**Important Notes:**
+
+1. The `onCleanup` hook is **optional** - only add it if you need cleanup
+2. Cleanup runs with a 30-second timeout
+3. Cleanup failures are logged but don't prevent flow termination
+4. The hook does NOT have access to `run.pause()` or `run.stop()`
+5. Cleanup is best-effort - network issues may prevent execution
+6. **Store Accessibility:** The store remains accessible in `onCleanup` even after flow run execution data expires, because store data is scoped to the flow/project level and persists independently of flow run execution data.
+
+**Best Practices:**
+
+- Always use a unique store key per flow run (e.g., `webhook_id_${context.run.id}`)
+- Use `StoreScope.FLOW` for run-specific data to avoid conflicts across flow runs
+- Clean up store entries in both the RESUME phase and `onCleanup` hook
+- Handle cleanup failures gracefully with try-catch blocks
+
+## Conclusion
+
+These flow hooks give you control over the execution of the piece by allowing you to stop the flow, pause it until a certain condition is met, or clean up resources when a paused flow terminates.
