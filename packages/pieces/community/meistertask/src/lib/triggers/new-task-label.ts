@@ -20,22 +20,45 @@ const getToken = (auth: any): string => {
 
 const newTaskLabelPolling: Polling<
   PiecePropValueSchema<typeof meistertaskAuth>,
-  {  task_id: unknown }
+  { project: unknown; section: unknown }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const token = getToken(auth);
     
     try {
-      const response = await makeRequest(
+      const tasksResponse = await makeRequest(
         HttpMethod.GET,
-        `/tasks/${propsValue.task_id}/task_labels`,
+        `/sections/${propsValue.section}/tasks`,
         token
       );
 
-      const labels = response.body || [];
-      return labels.map((label: any) => ({
-        epochMilliSeconds: dayjs(label.created_at || new Date()).valueOf(),
+      const tasks = tasksResponse.body || [];
+      const taskLabels: any[] = [];
+
+      for (const task of tasks.slice(0, 10)) { 
+        try {
+          const labelsResponse = await makeRequest(
+            HttpMethod.GET,
+            `/tasks/${task.id}/task_labels`,
+            token
+          );
+          
+          if (labelsResponse.body && Array.isArray(labelsResponse.body)) {
+            taskLabels.push(...labelsResponse.body.map((label: any) => ({
+              ...label,
+              task_id: task.id,
+              task_name: task.name,
+            })));
+          }
+        } catch (error: any) {
+          if (error?.response?.status !== 404) {
+            console.error(`Error fetching labels for task ${task.id}:`, error);
+          }
+        }
+      }
+      return taskLabels.map((label: any) => ({
+        epochMilliSeconds: dayjs(label.created_at || label.updated_at || new Date()).valueOf(),
         data: label,
       }));
     } catch (error) {
@@ -51,10 +74,8 @@ export const newTaskLabel = createTrigger({
   displayName: 'New Task Label',
   description: 'Triggers when a task label is created.',
   props: {
-    task_id: Property.ShortText({
-      displayName: 'task id',
-      required: true
-    })
+    project: meisterTaskCommon.project,
+    section: meisterTaskCommon.section,
   },
   sampleData: {
     id: 44444444,

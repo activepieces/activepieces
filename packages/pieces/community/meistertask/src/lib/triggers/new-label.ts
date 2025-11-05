@@ -26,7 +26,7 @@ const newLabelPolling: Polling<
     const token = getToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
-      `/projects/${propsValue.project}/task_labels`,
+      `/projects/${propsValue.project}/labels`,
       token
     );
 

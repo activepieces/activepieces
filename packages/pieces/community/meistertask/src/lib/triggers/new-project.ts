@@ -19,7 +19,7 @@ const getToken = (auth: any): string => {
 
 const newProjectPolling: Polling<
   PiecePropValueSchema<typeof meistertaskAuth>,
-  Record<string, never>
+  Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {

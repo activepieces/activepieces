@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  Property,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -35,25 +36,34 @@ const newChecklistItemPolling: Polling<
       const tasks = tasksResponse.body || [];
       const checklistItems: any[] = [];
 
-      for (const task of tasks.slice(0, 10)) { // Limit to first 10 tasks to avoid timeout
+      for (const task of tasks.slice(0, 10)) { 
         try {
           const checklistResponse = await makeRequest(
             HttpMethod.GET,
             `/tasks/${task.id}/checklist_items`,
             token
           );
-          const items = checklistResponse.body || [];
-          checklistItems.push(...items.map((item: any) => ({
-            ...item,
-            task_id: task.id,
-          })));
-        } catch (error) {
-          console.error(error)
+          
+          if (checklistResponse.body && Array.isArray(checklistResponse.body)) {
+            checklistItems.push(...checklistResponse.body.map((item: any) => ({
+              ...item,
+              task_id: task.id,
+              task_name: task.name,
+            })));
+          }
+        } catch (error: any) {
+          if (error?.response?.status !== 404) {
+            console.error(`Error fetching checklist items for task ${task.id}:`, error);
+          }
         }
       }
 
+      if (checklistItems.length === 0) {
+        return [];
+      }
+
       return checklistItems.map((item: any) => ({
-        epochMilliSeconds: dayjs(item.created_at || new Date()).valueOf(),
+        epochMilliSeconds: dayjs(item.created_at || item.updated_at || new Date()).valueOf(),
         data: item,
       }));
     } catch (error) {
