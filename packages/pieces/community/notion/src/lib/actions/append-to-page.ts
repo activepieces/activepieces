@@ -8,6 +8,7 @@ import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
 import { notionCommon } from '../common';
 import { markdownToBlocks } from '@tryfabric/martian';
+import { BlockObjectRequest } from '@notionhq/client/build/src/api-endpoints';
 
 export const appendToPage = createAction({
   auth: notionAuth,
@@ -33,7 +34,7 @@ export const appendToPage = createAction({
 
     return await notion.blocks.children.append({
       block_id: pageId as string,
-      children: markdownToBlocks(content),
+      children: markdownToBlocks(content) as unknown as BlockObjectRequest[],
     });
   },
 });

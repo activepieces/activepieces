@@ -6,25 +6,45 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/smartsuite",
         "tsConfig": "packages/pieces/community/smartsuite/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/smartsuite/package.json",
         "main": "packages/pieces/community/smartsuite/src/index.ts",
-        "assets": ["packages/pieces/community/smartsuite/*.md",
-      {
+        "assets": [
+          "packages/pieces/community/smartsuite/*.md",
+          {
             "input": "packages/pieces/community/smartsuite/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
-          }],
+          }
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/smartsuite",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []

@@ -1,12 +1,11 @@
 import {
     AppCredential,
-    AppCredentialId,
     AppCredentialType,
     ListAppCredentialsRequest,
     UpsertAppCredentialRequest,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, SeekPage } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { ALL_PRINCIPAL_TYPES, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appCredentialService } from './app-credentials.service'
@@ -51,12 +50,11 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
             schema: {
                 body: UpsertAppCredentialRequest,
             },
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
         },
-        async (
-            request: FastifyRequest<{
-                Body: UpsertAppCredentialRequest
-            }>,
-        ) => {
+        async (request) => {
             return appCredentialService.upsert({
                 projectId: request.principal.projectId,
                 request: request.body,
@@ -66,14 +64,17 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.delete(
         '/:credentialId',
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    credentialId: AppCredentialId
-                }
-            }>,
-            reply,
-        ) => {
+        {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
+            schema: {
+                params: Type.Object({
+                    credentialId: Type.String(),
+                }),
+            },
+        },
+        async (request, reply) => {
             await appCredentialService.delete({
                 id: request.params.credentialId,
                 projectId: request.principal.projectId,

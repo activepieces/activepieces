@@ -284,6 +284,7 @@ import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/pos
 import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
 import { RemoveEligibleForTrial1761588441492 } from './migration/postgres/1761588441492-remove-eligible-for-trial'
 import { AddRunUsageForPlatformAnalyticsReport1761668284685 } from './migration/postgres/1761668284685-AddRunUsageForPlatformAnalyticsReport'
+import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgres/1762018344394-DeleteLastChangelogDismissedAt'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -485,6 +486,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveProjectNotifyStatus1761056570728,
         AddMaximumConcurrentJobsPerProject1761245180906,
         RemoveTasksAndTasksLimit1761570485475,
+        DeleteLastChangelogDismissedAt1762018344394,
     ]
 
     const edition = system.getEdition()
