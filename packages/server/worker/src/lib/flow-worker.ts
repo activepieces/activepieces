@@ -19,13 +19,12 @@ export const runsMetadataQueue = runsMetadataQueueFactory({
 })
 
 export const appSocket = (log: FastifyBaseLogger) => ({
-    emitWithAck: async (event: string, data: unknown, options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number }): Promise<void> => {
+    emitWithAck: async (event: string, data: unknown): Promise<void> => {
         try {
             await emitWithAck(socket, event, data, {
                 timeoutMs: 4000,
                 retries: 3,
                 retryDelayMs: 2000,
-                ...options,
             })
         }
         catch (error) {
