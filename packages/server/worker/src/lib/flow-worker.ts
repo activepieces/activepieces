@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-shared'
-import { WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { emitWithAck, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerCache } from './cache/worker-cache'
@@ -20,32 +20,21 @@ export const runsMetadataQueue = runsMetadataQueueFactory({
 
 export const appSocket = (log: FastifyBaseLogger) => ({
     emitWithAck: async (event: string, data: unknown, options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number }): Promise<void> => {
-        const timeoutMs = options?.timeoutMs ?? 10000
-        const retries = options?.retries ?? 3
-        const retryDelayMs = options?.retryDelayMs ?? 2000
-
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                if (!socket || !socket.connected) {
-                    throw new Error('Socket not connected')
-                }
-                await socket.timeout(timeoutMs).emitWithAck(event, data)
-                return
-            }
-            catch (error) {
-                if (attempt < retries) {
-                    await new Promise(resolve => setTimeout(resolve, retryDelayMs))
-                }
-                else {
-                    log.error({
-                        message: 'Failed to emit event',
-                        event,
-                        data,
-                        error,
-                    })
-                    throw error
-                }
-            }
+        try {
+            await emitWithAck(socket, event, data, {
+                timeoutMs: 4000,
+                retries: 3,
+                retryDelayMs: 2000,
+                ...options,
+            })
+        }
+        catch (error) {
+            log.error({
+                message: 'Failed to emit event',
+                event,
+                data,
+                error,
+            })
         }
     },
     isConnected: (): boolean => {

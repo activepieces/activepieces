@@ -45,3 +45,5 @@ export enum WebsocketServerEvent {
     EMIT_TEST_STEP_PROGRESS = 'EMIT_TEST_STEP_PROGRESS',
     EMIT_TEST_STEP_FINISHED = 'EMIT_TEST_STEP_FINISHED',
 }
+
+export * from './socket-utils'

@@ -1,6 +1,7 @@
 import { inspect } from 'util'
 import {
     assertNotNullOrUndefined,
+    emitWithAck,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -31,32 +32,22 @@ export const sendToWorkerWithAck = async (
     data: unknown,
     options?: { timeoutMs?: number, retries?: number, retryDelayMs?: number },
 ): Promise<void> => {
-    const timeoutMs = options?.timeoutMs ?? 5000
-    const retries = options?.retries ?? 3
-    const retryDelayMs = options?.retryDelayMs ?? 2000
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            if (!socket || !socket.connected) {
-                throw new Error('Socket not connected')
-            }
-            await socket.timeout(timeoutMs).emitWithAck(type, data)
-            return
-        }
-        catch (error) {
-            if (attempt < retries) {
-                await new Promise(resolve => setTimeout(resolve, retryDelayMs))
-            }
-            else {
-                console.error({
-                    message: 'Failed to emit event',
-                    event: type,
-                    data,
-                    error,
-                })
-                throw error
-            }
-        }
+    try {
+        await emitWithAck(socket, type, data, {
+            timeoutMs: 4000,
+            retries: 3,
+            retryDelayMs: 2000,
+            ...options,
+        })
+    }
+    catch (error) {
+        console.error({
+            message: 'Failed to emit event',
+            event: type,
+            data,
+            error,
+        })
+        throw error
     }
 }
 
