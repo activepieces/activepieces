@@ -87,7 +87,6 @@ export const nextDayofYear = createAction({
     }),
   },
   async run(context) {
-    
     await propsValidation.validateZod(context.propsValue, {
       day: z.number().min(1).max(31),
       time: z.string().regex(/^\d\d:\d\d$/),
@@ -113,9 +112,16 @@ export const nextDayofYear = createAction({
 
     const currentYear = nextOccurrence.year();
 
-    nextOccurrence = apDayjs.tz(`${currentYear}-${month}-${day} ${hours}:${minutes}`, 'YYYY-M-D H:m', timeZone);
+    nextOccurrence = apDayjs().tz(timeZone)
+      .year(currentYear)
+      .month(month - 1)
+      .date(day)
+      .hour(hours)
+      .minute(minutes)
+      .second(0)
+      .millisecond(0);
 
-    if (nextOccurrence.isBefore(apDayjs.tz(timeZone))) {
+    if (nextOccurrence.isBefore(apDayjs().tz(timeZone))) {
       nextOccurrence = nextOccurrence.add(1, 'year');
     }
 
