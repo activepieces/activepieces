@@ -6,6 +6,7 @@ import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { EngineProcess } from './engine-factory-types'
+import { workerMachine } from '../../../utils/machine'
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'
@@ -69,15 +70,11 @@ function getEnvironmentVariables(env: Record<string, string | undefined>, worker
 
 async function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: string, reusable: boolean): Promise<string[]> {
     const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
-    const basePath = path.resolve(__dirname.split('/dist')[0])
 
     const dirsToBind = [
         '--dir=/usr/bin/',
         `--dir=/etc/=${etcDir}`,
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
-        `--dir=${path.join(basePath, '.pnpm')}=/${path.join(basePath, '.pnpm')}:maybe`,
-        `--dir=${path.join(basePath, 'dist')}=/${path.join(basePath, 'dist')}:maybe`,
-        `--dir=${path.join(basePath, 'node_modules')}=/${path.join(basePath, 'node_modules')}:maybe`,
     ]
     
     if (reusable) {
@@ -92,6 +89,18 @@ async function getDirsToBindArgs(flowVersionId: string | undefined, customPieces
     
     if (customPiecesPath) {
         dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
+    }
+
+    const devPieces = workerMachine.getSettings().DEV_PIECES
+
+    if (devPieces.length > 0) {
+        const basePath = path.resolve(__dirname.split('/dist')[0])
+
+        dirsToBind.push(
+            `--dir=${path.join(basePath, '.pnpm')}=/${path.join(basePath, '.pnpm')}:maybe`,
+            `--dir=${path.join(basePath, 'dist')}=/${path.join(basePath, 'dist')}:maybe`,
+            `--dir=${path.join(basePath, 'node_modules')}=/${path.join(basePath, 'node_modules')}:maybe`,
+        )
     }
 
     return dirsToBind

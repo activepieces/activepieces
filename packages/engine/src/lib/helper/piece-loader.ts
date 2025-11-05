@@ -120,14 +120,9 @@ export const pieceLoader = {
     },
 
     getPiecePath: async ({ packageName, devPieces }: GetPiecePathParams): Promise<string> => {
-        let piecePath = null
-        if (devPieces.includes(getPieceNameFromAlias(packageName))) {
-            piecePath = await loadPieceFromDistFolder(packageName)
-        }
-        else {
-            piecePath = await traverseAllParentFoldersToFindPiece(packageName)
-        }
-
+        let piecePath = devPieces.includes(getPieceNameFromAlias(packageName)) 
+            ? await loadPieceFromDistFolder(packageName) 
+            : await traverseAllParentFoldersToFindPiece(packageName)
         if (isNil(piecePath)) {
             throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}`)
         }
