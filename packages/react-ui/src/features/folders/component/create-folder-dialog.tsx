@@ -47,7 +47,7 @@ type CreateFolderDialogProps = {
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter folder name'),
-    pattern: '.*\\S.*'
+    pattern: '.*\\S.*',
   }),
 });
 

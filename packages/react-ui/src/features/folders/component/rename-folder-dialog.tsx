@@ -25,7 +25,7 @@ import { foldersApi } from '../lib/folders-api';
 const RenameFolderSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter a folder name'),
-    pattern: '.*\\S.*'
+    pattern: '.*\\S.*',
   }),
 });
 
