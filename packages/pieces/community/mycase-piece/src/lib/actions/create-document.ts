@@ -6,8 +6,56 @@ export const createDocument = createAction({
   auth: mycaseAuth,
   name: 'create_document',
   displayName: 'Create Document',
-  description: 'Creates a new firm document in MyCase (not associated with a case)',
+  description: 'Creates a new document in MyCase',
   props: {
+    document_type: Property.StaticDropdown({
+      displayName: 'Document Type',
+      description: 'Choose whether to create a firm document or associate it with a specific case',
+      required: true,
+      options: {
+        options: [
+          { label: 'Firm Document', value: 'firm' },
+          { label: 'Case Document', value: 'case' },
+        ],
+      },
+      defaultValue: 'firm',
+    }),
+    case: Property.Dropdown({
+      displayName: 'Case',
+      description: 'Select the case to associate this document with',
+      required: false,
+      refreshers: ['document_type'],
+      options: async ({ auth, document_type }) => {
+        if (!auth || document_type !== 'case') {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select "Case Document" above to choose a case',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/cases', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((caseItem: any) => ({
+              label: `${caseItem.name}${caseItem.case_number ? ` (${caseItem.case_number})` : ''}`,
+              value: caseItem.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load cases',
+        };
+      },
+    }),
     path: Property.ShortText({
       displayName: 'Document Path',
       description: 'The relative path including document name (e.g., folder1/folder2/document_name). Folders will be created automatically.',
@@ -23,20 +71,59 @@ export const createDocument = createAction({
       description: 'The description of this document',
       required: false,
     }),
-    assigned_date: Property.ShortText({
+    assigned_date: Property.DateTime({
       displayName: 'Assigned Date',
-      description: 'The assigned date of this document (ISO 8601 date format: YYYY-MM-DD)',
+      description: 'The assigned date of this document',
       required: false,
     }),
-    staff_ids: Property.ShortText({
-      displayName: 'Staff IDs',
-      description: 'Comma-separated list of staff IDs to share this document with',
+    staff: Property.MultiSelectDropdown({
+      displayName: 'Staff',
+      description: 'Staff members to share this document with (only for firm documents)',
       required: false,
+      refreshers: ['document_type'],
+      options: async ({ auth, document_type }) => {
+        if (!auth || document_type === 'case') {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Only available for firm documents',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/staff', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((staff: any) => ({
+              label: `${staff.first_name} ${staff.last_name}`,
+              value: staff.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load staff',
+        };
+      },
     }),
   },
   async run(context) {
     const api = createMyCaseApi(context.auth);
-    
+
+    // Validate case selection for case documents
+    if (context.propsValue.document_type === 'case' && !context.propsValue.case) {
+      return {
+        success: false,
+        error: 'Case must be selected when creating a case document',
+      };
+    }
+
     // Build the request body
     const requestBody: any = {
       path: context.propsValue.path,
@@ -47,31 +134,37 @@ export const createDocument = createAction({
     if (context.propsValue.description) {
       requestBody.description = context.propsValue.description;
     }
-    
+
     if (context.propsValue.assigned_date) {
-      requestBody.assigned_date = context.propsValue.assigned_date;
+      // Convert DateTime to ISO date format
+      const date = new Date(context.propsValue.assigned_date);
+      requestBody.assigned_date = date.toISOString().split('T')[0];
     }
 
-    // Add staff if provided
-    if (context.propsValue.staff_ids) {
-      const staffIds = context.propsValue.staff_ids
-        .split(',')
-        .map(id => parseInt(id.trim()))
-        .filter(id => !isNaN(id));
-      
-      if (staffIds.length > 0) {
-        requestBody.staff = staffIds.map(id => ({ id }));
-      }
+    // Add staff if provided (only for firm documents)
+    if (context.propsValue.document_type === 'firm' && context.propsValue.staff && Array.isArray(context.propsValue.staff)) {
+      requestBody.staff = context.propsValue.staff.map(id => ({ id: parseInt(id) }));
     }
 
     try {
-      const response = await api.post('/documents', requestBody);
-      
+      let endpoint: string;
+      let successMessage: string;
+
+      if (context.propsValue.document_type === 'case') {
+        endpoint = `/cases/${context.propsValue.case}/documents`;
+        successMessage = `Case document "${context.propsValue.path}" created successfully`;
+      } else {
+        endpoint = '/documents';
+        successMessage = `Firm document "${context.propsValue.path}" created successfully`;
+      }
+
+      const response = await api.post(endpoint, requestBody);
+
       if (response.success) {
         return {
           success: true,
           document: response.data,
-          message: `Document "${context.propsValue.path}" created successfully`,
+          message: successMessage,
           upload_info: {
             put_url: response.data?.put_url,
             put_headers: response.data?.put_headers,

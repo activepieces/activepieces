@@ -88,15 +88,77 @@ export const findOrCreatePerson = createAction({
       description: 'Country (used only when creating)',
       required: false,
     }),
-    people_group_id: Property.Number({
-      displayName: 'People Group ID',
-      description: 'ID of the people group to associate (used only when creating)',
+    people_group: Property.Dropdown({
+      displayName: 'People Group',
+      description: 'The people group to associate (used only when creating)',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/people_groups', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((group: any) => ({
+              label: group.name,
+              value: group.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load people groups',
+        };
+      },
     }),
-    case_ids: Property.ShortText({
-      displayName: 'Case IDs',
-      description: 'Comma-separated list of case IDs to associate (used only when creating)',
+    cases: Property.MultiSelectDropdown({
+      displayName: 'Cases',
+      description: 'Cases to associate with the client (used only when creating)',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/cases', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((caseItem: any) => ({
+              label: `${caseItem.name}${caseItem.case_number ? ` (${caseItem.case_number})` : ''}`,
+              value: caseItem.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load cases',
+        };
+      },
     }),
   },
   async run(context) {
@@ -181,21 +243,16 @@ export const findOrCreatePerson = createAction({
         };
       }
 
-      if (context.propsValue.people_group_id) {
+      // Add people group if provided
+      if (context.propsValue.people_group) {
         requestBody.people_group = {
-          id: context.propsValue.people_group_id,
+          id: parseInt(context.propsValue.people_group),
         };
       }
 
-      if (context.propsValue.case_ids) {
-        const caseIds = context.propsValue.case_ids
-          .split(',')
-          .map(id => parseInt(id.trim()))
-          .filter(id => !isNaN(id));
-        
-        if (caseIds.length > 0) {
-          requestBody.cases = caseIds.map(id => ({ id }));
-        }
+      // Add cases if provided
+      if (context.propsValue.cases && Array.isArray(context.propsValue.cases)) {
+        requestBody.cases = context.propsValue.cases.map(id => ({ id: parseInt(id) }));
       }
 
       const createResponse = await api.post('/clients', requestBody);

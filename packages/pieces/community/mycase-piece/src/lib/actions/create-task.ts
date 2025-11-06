@@ -26,15 +26,46 @@ export const createTask = createAction({
       },
       defaultValue: 'Medium',
     }),
-    due_date: Property.ShortText({
+    due_date: Property.DateTime({
       displayName: 'Due Date',
-      description: 'Due date in ISO 8601 format (YYYY-MM-DD)',
+      description: 'The due date of this task',
       required: true,
     }),
-    staff_id: Property.Number({
-      displayName: 'Staff ID',
-      description: 'ID of staff member to assign this task to',
+    staff: Property.MultiSelectDropdown({
+      displayName: 'Staff',
+      description: 'Staff members to assign this task to',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/staff', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((staff: any) => ({
+              label: `${staff.first_name} ${staff.last_name}`,
+              value: staff.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load staff',
+        };
+      },
     }),
     description: Property.LongText({
       displayName: 'Description',
@@ -47,36 +78,75 @@ export const createTask = createAction({
       required: false,
       defaultValue: false,
     }),
-    case_id: Property.Number({
-      displayName: 'Case ID',
-      description: 'ID of the case to associate with this task',
+    case: Property.Dropdown({
+      displayName: 'Case',
+      description: 'The case to associate with this task',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/cases', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((caseItem: any) => ({
+              label: `${caseItem.name}${caseItem.case_number ? ` (${caseItem.case_number})` : ''}`,
+              value: caseItem.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load cases',
+        };
+      },
     }),
   },
   async run(context) {
     const api = createMyCaseApi(context.auth);
     
+    // Validate that staff is selected
+    if (!context.propsValue.staff || !Array.isArray(context.propsValue.staff) || context.propsValue.staff.length === 0) {
+      return {
+        success: false,
+        error: 'At least one staff member must be selected',
+      };
+    }
+
     // Build the request body
     const requestBody: any = {
       name: context.propsValue.name,
       priority: context.propsValue.priority,
-      due_date: context.propsValue.due_date,
-      staff: [{
-        id: context.propsValue.staff_id,
-      }],
+      due_date: new Date(context.propsValue.due_date).toISOString().split('T')[0],
+      staff: context.propsValue.staff.map((staffId: string) => ({
+        id: parseInt(staffId),
+      })),
     };
 
     // Add optional fields
     if (context.propsValue.description) {
       requestBody.description = context.propsValue.description;
     }
-    
+
     if (context.propsValue.completed !== undefined) {
       requestBody.completed = context.propsValue.completed;
     }
-    
-    if (context.propsValue.case_id) {
-      requestBody.case = { id: context.propsValue.case_id };
+
+    if (context.propsValue.case) {
+      requestBody.case = { id: parseInt(context.propsValue.case) };
     }
 
     try {

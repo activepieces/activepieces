@@ -47,15 +47,17 @@ export const mycaseAuth = PieceAuth.OAuth2({
   authUrl: 'https://auth.mycase.com/login_sessions/new',
   tokenUrl: 'https://auth.mycase.com/tokens',
   required: true,
-  scope: []
+  scope: [],
+  pkce: true
 });
 
 export const mycasePiece = createPiece({
   displayName: 'MyCase',
+  description: 'Automate legal case management workflows with MyCase. Create and manage cases, clients, companies, events, tasks, time entries, documents, and more. Get notified when cases, events, people, companies, or leads are added or updated.',
   auth: mycaseAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/mycase-piece.png',
-  authors: [],
+  authors: ["Fortunamide"],
   actions: [createCase, createCaseStage, createCompany, createCustomField, createDocument, createEvent, createExpense, createLead, createLocation, createNote, createPerson, createPracticeArea, createReferralSource, createTask, createTimeEntry, createCall, updateCase, updateCompany, updatePerson, makeRequest, findCase, findCall, findCaseStage, findCompany, findLocation, findPeopleGroup, findPerson, findPracticeArea, findReferralSource, findStaff, findOrCreateCase, findOrCreateCaseStage, findOrCreateCompany, findOrCreateLocation, findOrCreatePerson, findOrCreatePracticeArea, findOrCreateReferralSource],
   triggers: [caseAddedOrUpdated, eventAddedOrUpdated, personAddedOrUpdated, companyAddedOrUpdated, leadAddedOrUpdated]
 });

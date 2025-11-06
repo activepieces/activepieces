@@ -19,9 +19,9 @@ export const findStaff = createAction({
         ],
       },
     }),
-    updated_after: Property.ShortText({
+    updated_after: Property.DateTime({
       displayName: 'Updated After',
-      description: 'Filter staff updated after this date (ISO-8601: 2022-03-17T21:00:00Z)',
+      description: 'Filter staff updated after this date and time',
       required: false,
     }),
     page_size: Property.Number({
@@ -41,7 +41,8 @@ export const findStaff = createAction({
     }
     
     if (context.propsValue.updated_after) {
-      queryParams['filter[updated_after]'] = context.propsValue.updated_after;
+      // Convert DateTime to ISO string format
+      queryParams['filter[updated_after]'] = new Date(context.propsValue.updated_after).toISOString();
     }
     
     if (context.propsValue.page_size) {

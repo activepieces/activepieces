@@ -18,29 +18,91 @@ export const findOrCreateCase = createAction({
       description: 'An identifier for this case (used only when creating)',
       required: false
     }),
-    opened_date: Property.ShortText({
+    opened_date: Property.DateTime({
       displayName: 'Opened Date',
-      description: 'The date the case was created/opened (ISO-8601 format: YYYY-MM-DD, used only when creating)',
+      description: 'The date the case was created/opened (used only when creating)',
       required: false
     }),
-    case_stage: Property.ShortText({
+    case_stage: Property.Dropdown({
       displayName: 'Case Stage',
       description: 'The stage the case is currently in (used only when creating)',
-      required: false
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/case_stages', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((stage: any) => ({
+              label: stage.name,
+              value: stage.name,
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load case stages',
+        };
+      },
     }),
-    practice_area: Property.ShortText({
+    practice_area: Property.Dropdown({
       displayName: 'Practice Area',
       description: 'The practice area for this case (used only when creating)',
-      required: false
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/practice_areas', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((area: any) => ({
+              label: area.name,
+              value: area.name,
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load practice areas',
+        };
+      },
     }),
     description: Property.LongText({
       displayName: 'Description',
       description: 'A description for the case (used only when creating)',
       required: false
     }),
-    sol_date: Property.ShortText({
+    sol_date: Property.DateTime({
       displayName: 'Statute of Limitations Date',
-      description: 'The statute of limitations date (ISO-8601 date format: YYYY-MM-DD, used only when creating)',
+      description: 'The statute of limitations date (used only when creating)',
       required: false
     }),
     status: Property.StaticDropdown({
@@ -60,37 +122,233 @@ export const findOrCreateCase = createAction({
       description: 'The outstanding balance of this case (used only when creating)',
       required: false
     }),
-    billing_contact_id: Property.Number({
-      displayName: 'Billing Contact ID',
-      description: 'The ID of the client or company to assign as the billing contact (used only when creating)',
-      required: false
+    billing_contact: Property.Dropdown({
+      displayName: 'Billing Contact',
+      description: 'The client or company to assign as the billing contact (used only when creating)',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+
+        // Get clients
+        const clientsResponse = await api.get('/clients', { page_size: '50' });
+        const clientOptions = clientsResponse.success && Array.isArray(clientsResponse.data)
+          ? clientsResponse.data.map((client: any) => ({
+              label: `Client: ${client.first_name} ${client.last_name}${client.email ? ` (${client.email})` : ''}`,
+              value: `client_${client.id}`,
+            }))
+          : [];
+
+        // Get companies
+        const companiesResponse = await api.get('/companies', { page_size: '50' });
+        const companyOptions = companiesResponse.success && Array.isArray(companiesResponse.data)
+          ? companiesResponse.data.map((company: any) => ({
+              label: `Company: ${company.name}`,
+              value: `company_${company.id}`,
+            }))
+          : [];
+
+        return {
+          disabled: false,
+          options: [...clientOptions, ...companyOptions],
+        };
+      },
     }),
-    client_ids: Property.ShortText({
-      displayName: 'Client IDs',
-      description: 'Comma-separated list of client IDs to associate with the case (used only when creating)',
-      required: false
+    clients: Property.MultiSelectDropdown({
+      displayName: 'Clients',
+      description: 'Clients to associate with the case (used only when creating)',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/clients', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((client: any) => ({
+              label: `${client.first_name} ${client.last_name}${client.email ? ` (${client.email})` : ''}`,
+              value: client.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load clients',
+        };
+      },
     }),
-    company_ids: Property.ShortText({
-      displayName: 'Company IDs',
-      description: 'Comma-separated list of company IDs to associate with the case (used only when creating)',
-      required: false
+    companies: Property.MultiSelectDropdown({
+      displayName: 'Companies',
+      description: 'Companies to associate with the case (used only when creating)',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/companies', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((company: any) => ({
+              label: company.name,
+              value: company.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load companies',
+        };
+      },
     }),
-    staff_id: Property.Number({
-      displayName: 'Staff ID',
-      description: 'ID of staff member to associate with the case (used only when creating)',
-      required: false
+    staff: Property.MultiSelectDropdown({
+      displayName: 'Staff',
+      description: 'Staff members to associate with the case (used only when creating)',
+      required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/staff', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((staff: any) => ({
+              label: `${staff.first_name} ${staff.last_name}`,
+              value: staff.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load staff',
+        };
+      },
     }),
-    lead_lawyer: Property.Checkbox({
+    lead_lawyer: Property.Dropdown({
       displayName: 'Lead Lawyer',
-      description: 'Is the staff member the lead lawyer for this case? (used only when creating)',
+      description: 'Select the lead lawyer for this case (used only when creating)',
       required: false,
-      defaultValue: false
+      refreshers: ['staff'],
+      options: async ({ auth, staff }) => {
+        if (!auth || !staff || !Array.isArray(staff) || staff.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select staff members first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/staff', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          const selectedStaff = response.data.filter((s: any) =>
+            staff.includes(s.id.toString())
+          );
+
+          return {
+            disabled: false,
+            options: selectedStaff.map((s: any) => ({
+              label: `${s.first_name} ${s.last_name}`,
+              value: s.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load staff',
+        };
+      },
     }),
-    originating_lawyer: Property.Checkbox({
+    originating_lawyer: Property.Dropdown({
       displayName: 'Originating Lawyer',
-      description: 'Is the staff member the originating lawyer for this case? (used only when creating)',
+      description: 'Select the originating lawyer for this case (used only when creating)',
       required: false,
-      defaultValue: false
+      refreshers: ['staff'],
+      options: async ({ auth, staff }) => {
+        if (!auth || !staff || !Array.isArray(staff) || staff.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select staff members first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/staff', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          const selectedStaff = response.data.filter((s: any) =>
+            staff.includes(s.id.toString())
+          );
+
+          return {
+            disabled: false,
+            options: selectedStaff.map((s: any) => ({
+              label: `${s.first_name} ${s.last_name}`,
+              value: s.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load staff',
+        };
+      },
     })
   },
   async run(context) {
@@ -129,7 +387,9 @@ export const findOrCreateCase = createAction({
       }
 
       if (context.propsValue.opened_date) {
-        requestBody.opened_date = context.propsValue.opened_date;
+        // Convert DateTime to ISO date format
+        const date = new Date(context.propsValue.opened_date);
+        requestBody.opened_date = date.toISOString().split('T')[0];
       }
 
       if (context.propsValue.case_stage) {
@@ -145,7 +405,9 @@ export const findOrCreateCase = createAction({
       }
 
       if (context.propsValue.sol_date) {
-        requestBody.sol_date = context.propsValue.sol_date;
+        // Convert DateTime to ISO date format
+        const date = new Date(context.propsValue.sol_date);
+        requestBody.sol_date = date.toISOString().split('T')[0];
       }
 
       if (context.propsValue.status) {
@@ -156,42 +418,35 @@ export const findOrCreateCase = createAction({
         requestBody.outstanding_balance = context.propsValue.outstanding_balance;
       }
 
-      if (context.propsValue.billing_contact_id) {
-        requestBody.billing_contact = {
-          id: context.propsValue.billing_contact_id
-        };
-      }
-
-      if (context.propsValue.client_ids) {
-        const clientIds = context.propsValue.client_ids
-          .split(',')
-          .map((id) => parseInt(id.trim()))
-          .filter((id) => !isNaN(id));
-
-        if (clientIds.length > 0) {
-          requestBody.clients = clientIds.map((id) => ({ id }));
+      // Add billing contact if provided
+      if (context.propsValue.billing_contact) {
+        const [type, idStr] = context.propsValue.billing_contact.split('_');
+        const id = parseInt(idStr);
+        if (!isNaN(id)) {
+          requestBody.billing_contact = { id };
         }
       }
 
-      if (context.propsValue.company_ids) {
-        const companyIds = context.propsValue.company_ids
-          .split(',')
-          .map((id) => parseInt(id.trim()))
-          .filter((id) => !isNaN(id));
-
-        if (companyIds.length > 0) {
-          requestBody.companies = companyIds.map((id) => ({ id }));
-        }
+      // Add clients if provided
+      if (context.propsValue.clients && Array.isArray(context.propsValue.clients)) {
+        requestBody.clients = context.propsValue.clients.map(id => ({ id: parseInt(id) }));
       }
 
-      if (context.propsValue.staff_id) {
-        requestBody.staff = [
-          {
-            id: context.propsValue.staff_id,
-            lead_lawyer: context.propsValue.lead_lawyer || false,
-            originating_lawyer: context.propsValue.originating_lawyer || false
-          }
-        ];
+      // Add companies if provided
+      if (context.propsValue.companies && Array.isArray(context.propsValue.companies)) {
+        requestBody.companies = context.propsValue.companies.map(id => ({ id: parseInt(id) }));
+      }
+
+      // Add staff if provided
+      if (context.propsValue.staff && Array.isArray(context.propsValue.staff)) {
+        const leadLawyerId = context.propsValue.lead_lawyer ? parseInt(context.propsValue.lead_lawyer) : null;
+        const originatingLawyerId = context.propsValue.originating_lawyer ? parseInt(context.propsValue.originating_lawyer) : null;
+
+        requestBody.staff = context.propsValue.staff.map(staffId => ({
+          id: parseInt(staffId),
+          lead_lawyer: leadLawyerId === parseInt(staffId),
+          originating_lawyer: originatingLawyerId === parseInt(staffId),
+        }));
       }
 
       const createResponse = await api.post('/cases', requestBody);

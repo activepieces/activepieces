@@ -43,9 +43,9 @@ export const createLead = createAction({
       description: 'Home phone number',
       required: false,
     }),
-    birthdate: Property.ShortText({
+    birthdate: Property.DateTime({
       displayName: 'Birthdate',
-      description: 'Date of birth in ISO-8601 format (YYYY-MM-DD)',
+      description: 'Date of birth',
       required: false,
     }),
     drivers_license_number: Property.ShortText({
@@ -93,15 +93,81 @@ export const createLead = createAction({
       description: 'Country',
       required: false,
     }),
-    referral_source_id: Property.Number({
-      displayName: 'Referral Source ID',
-      description: 'ID of the referral source to associate with this lead',
+    referral_source: Property.Dropdown({
+      displayName: 'Referral Source',
+      description: 'The referral source to associate with this lead',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/referral_sources', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((source: any) => ({
+              label: source.name,
+              value: source.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load referral sources',
+        };
+      },
     }),
-    referred_by_id: Property.Number({
-      displayName: 'Referred By ID',
-      description: 'ID of the existing client or company who referred this lead',
+    referred_by: Property.Dropdown({
+      displayName: 'Referred By',
+      description: 'Existing client or company who referred this lead',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+
+        // Get clients
+        const clientsResponse = await api.get('/clients', { page_size: '50' });
+        const clientOptions = clientsResponse.success && Array.isArray(clientsResponse.data)
+          ? clientsResponse.data.map((client: any) => ({
+              label: `Client: ${client.first_name} ${client.last_name}${client.email ? ` (${client.email})` : ''}`,
+              value: `client_${client.id}`,
+            }))
+          : [];
+
+        // Get companies
+        const companiesResponse = await api.get('/companies', { page_size: '50' });
+        const companyOptions = companiesResponse.success && Array.isArray(companiesResponse.data)
+          ? companiesResponse.data.map((company: any) => ({
+              label: `Company: ${company.name}`,
+              value: `company_${company.id}`,
+            }))
+          : [];
+
+        return {
+          disabled: false,
+          options: [...clientOptions, ...companyOptions],
+        };
+      },
     }),
   },
   async run(context) {
@@ -135,7 +201,9 @@ export const createLead = createAction({
     }
     
     if (context.propsValue.birthdate) {
-      requestBody.birthdate = context.propsValue.birthdate;
+      // Convert DateTime to ISO date format
+      const date = new Date(context.propsValue.birthdate);
+      requestBody.birthdate = date.toISOString().split('T')[0];
     }
     
     if (context.propsValue.drivers_license_number) {
@@ -167,17 +235,19 @@ export const createLead = createAction({
     }
 
     // Add referral source if provided
-    if (context.propsValue.referral_source_id) {
+    if (context.propsValue.referral_source) {
       requestBody.referral_source_reference = {
-        id: context.propsValue.referral_source_id,
+        id: parseInt(context.propsValue.referral_source),
       };
     }
 
     // Add referred by if provided
-    if (context.propsValue.referred_by_id) {
-      requestBody.referred_by = {
-        id: context.propsValue.referred_by_id,
-      };
+    if (context.propsValue.referred_by) {
+      const [type, idStr] = context.propsValue.referred_by.split('_');
+      const id = parseInt(idStr);
+      if (!isNaN(id)) {
+        requestBody.referred_by = { id };
+      }
     }
 
     try {

@@ -68,15 +68,77 @@ export const createCompany = createAction({
       description: 'Additional information about the company (visible to firm members only)',
       required: false,
     }),
-    case_ids: Property.ShortText({
-      displayName: 'Case IDs',
-      description: 'Comma-separated list of case IDs to associate with the company',
+    cases: Property.MultiSelectDropdown({
+      displayName: 'Cases',
+      description: 'Cases to associate with the company',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/cases', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((caseItem: any) => ({
+              label: `${caseItem.name}${caseItem.case_number ? ` (${caseItem.case_number})` : ''}`,
+              value: caseItem.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load cases',
+        };
+      },
     }),
-    client_ids: Property.ShortText({
-      displayName: 'Client IDs',
-      description: 'Comma-separated list of client IDs to associate with the company',
+    clients: Property.MultiSelectDropdown({
+      displayName: 'Clients',
+      description: 'Clients to associate with the company',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/clients', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((client: any) => ({
+              label: `${client.first_name} ${client.last_name}${client.email ? ` (${client.email})` : ''}`,
+              value: client.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load clients',
+        };
+      },
     }),
   },
   async run(context) {
@@ -125,27 +187,13 @@ export const createCompany = createAction({
     }
 
     // Add cases if provided
-    if (context.propsValue.case_ids) {
-      const caseIds = context.propsValue.case_ids
-        .split(',')
-        .map(id => parseInt(id.trim()))
-        .filter(id => !isNaN(id));
-      
-      if (caseIds.length > 0) {
-        requestBody.cases = caseIds.map(id => ({ id }));
-      }
+    if (context.propsValue.cases && Array.isArray(context.propsValue.cases)) {
+      requestBody.cases = context.propsValue.cases.map(id => ({ id: parseInt(id) }));
     }
 
     // Add clients if provided
-    if (context.propsValue.client_ids) {
-      const clientIds = context.propsValue.client_ids
-        .split(',')
-        .map(id => parseInt(id.trim()))
-        .filter(id => !isNaN(id));
-      
-      if (clientIds.length > 0) {
-        requestBody.clients = clientIds.map(id => ({ id }));
-      }
+    if (context.propsValue.clients && Array.isArray(context.propsValue.clients)) {
+      requestBody.clients = context.propsValue.clients.map(id => ({ id: parseInt(id) }));
     }
 
     try {

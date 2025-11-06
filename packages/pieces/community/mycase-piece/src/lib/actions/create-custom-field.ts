@@ -44,10 +44,17 @@ export const createCustomField = createAction({
         ],
       },
     }),
-    list_options: Property.LongText({
+    list_options: Property.Array({
       displayName: 'List Options',
-      description: 'Comma-separated list of options (required if field type is "list")',
+      description: 'List of options for the custom field (required if field type is "list")',
       required: false,
+      properties: {
+        option: Property.ShortText({
+          displayName: 'Option Value',
+          description: 'The name of the list option',
+          required: true,
+        }),
+      },
     }),
   },
   async run(context) {
@@ -62,27 +69,22 @@ export const createCustomField = createAction({
 
     // Add list options if field type is list
     if (context.propsValue.field_type === 'list') {
-      if (!context.propsValue.list_options) {
+      if (!context.propsValue.list_options || !Array.isArray(context.propsValue.list_options)) {
         return {
           success: false,
           error: 'List options are required when field type is "list"',
         };
       }
       
-      const options = context.propsValue.list_options
-        .split(',')
-        .map(opt => opt.trim())
-        .filter(opt => opt.length > 0);
-      
-      if (options.length === 0) {
+      if (context.propsValue.list_options.length === 0) {
         return {
           success: false,
           error: 'At least one list option must be provided',
         };
       }
       
-      requestBody.list_options = options.map(option => ({
-        option_value: option,
+      requestBody.list_options = context.propsValue.list_options.map((item: any) => ({
+        option_value: item.option,
       }));
     }
 

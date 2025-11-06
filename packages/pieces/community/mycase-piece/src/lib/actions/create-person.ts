@@ -48,9 +48,9 @@ export const createPerson = createAction({
       description: 'Fax phone number',
       required: false,
     }),
-    birthdate: Property.ShortText({
+    birthdate: Property.DateTime({
       displayName: 'Birthdate',
-      description: 'Date of birth in ISO-8601 format (YYYY-MM-DD)',
+      description: 'Date of birth',
       required: false,
     }),
     notes: Property.LongText({
@@ -88,15 +88,77 @@ export const createPerson = createAction({
       description: 'Country',
       required: false,
     }),
-    people_group_id: Property.Number({
-      displayName: 'People Group ID',
-      description: 'ID of the people group to associate with this client',
+    people_group: Property.Dropdown({
+      displayName: 'People Group',
+      description: 'The people group to associate with this client',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/people_groups', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((group: any) => ({
+              label: group.name,
+              value: group.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load people groups',
+        };
+      },
     }),
-    case_ids: Property.ShortText({
-      displayName: 'Case IDs',
-      description: 'Comma-separated list of case IDs to associate with the client',
+    cases: Property.MultiSelectDropdown({
+      displayName: 'Cases',
+      description: 'Cases to associate with this client',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/cases', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((caseItem: any) => ({
+              label: `${caseItem.name}${caseItem.case_number ? ` (${caseItem.case_number})` : ''}`,
+              value: caseItem.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load cases',
+        };
+      },
     }),
   },
   async run(context) {
@@ -134,7 +196,9 @@ export const createPerson = createAction({
     }
     
     if (context.propsValue.birthdate) {
-      requestBody.birthdate = context.propsValue.birthdate;
+      // Convert DateTime to ISO date format
+      const date = new Date(context.propsValue.birthdate);
+      requestBody.birthdate = date.toISOString().split('T')[0];
     }
     
     if (context.propsValue.notes) {
@@ -158,22 +222,15 @@ export const createPerson = createAction({
     }
 
     // Add people group if provided
-    if (context.propsValue.people_group_id) {
+    if (context.propsValue.people_group) {
       requestBody.people_group = {
-        id: context.propsValue.people_group_id,
+        id: parseInt(context.propsValue.people_group),
       };
     }
 
     // Add cases if provided
-    if (context.propsValue.case_ids) {
-      const caseIds = context.propsValue.case_ids
-        .split(',')
-        .map(id => parseInt(id.trim()))
-        .filter(id => !isNaN(id));
-      
-      if (caseIds.length > 0) {
-        requestBody.cases = caseIds.map(id => ({ id }));
-      }
+    if (context.propsValue.cases && Array.isArray(context.propsValue.cases)) {
+      requestBody.cases = context.propsValue.cases.map(id => ({ id: parseInt(id) }));
     }
 
     try {

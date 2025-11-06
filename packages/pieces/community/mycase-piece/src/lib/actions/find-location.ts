@@ -8,9 +8,9 @@ export const findLocation = createAction({
   displayName: 'Find Location',
   description: 'Searches for locations with optional filters',
   props: {
-    updated_after: Property.ShortText({
+    updated_after: Property.DateTime({
       displayName: 'Updated After',
-      description: 'Filter locations updated after this date (ISO-8601: 2022-03-17T21:00:00Z)',
+      description: 'Filter locations updated after this date and time',
       required: false,
     }),
     page_size: Property.Number({

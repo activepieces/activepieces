@@ -13,14 +13,45 @@ export const createExpense = createAction({
       description: 'The activity name for this expense (will be created if it doesn\'t exist)',
       required: true,
     }),
-    case_id: Property.Number({
-      displayName: 'Case ID',
-      description: 'ID of the case to associate with this expense',
+    case: Property.Dropdown({
+      displayName: 'Case',
+      description: 'The case to associate with this expense',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/cases', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((caseItem: any) => ({
+              label: `${caseItem.name}${caseItem.case_number ? ` (${caseItem.case_number})` : ''}`,
+              value: caseItem.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load cases',
+        };
+      },
     }),
-    entry_date: Property.ShortText({
+    entry_date: Property.DateTime({
       displayName: 'Entry Date',
-      description: 'Entry date in ISO 8601 format (YYYY-MM-DD)',
+      description: 'The entry date of this expense',
       required: true,
     }),
     cost: Property.Number({
@@ -44,10 +75,41 @@ export const createExpense = createAction({
       description: 'Description of the expense',
       required: false,
     }),
-    staff_id: Property.Number({
-      displayName: 'Staff ID',
-      description: 'ID of the staff member associated with this expense',
+    staff: Property.Dropdown({
+      displayName: 'Staff',
+      description: 'The staff member associated with this expense',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/staff', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((staff: any) => ({
+              label: `${staff.first_name} ${staff.last_name}`,
+              value: staff.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load staff',
+        };
+      },
     }),
   },
   async run(context) {
@@ -56,8 +118,8 @@ export const createExpense = createAction({
     // Build the request body
     const requestBody: any = {
       activity_name: context.propsValue.activity_name,
-      case: { id: context.propsValue.case_id },
-      entry_date: context.propsValue.entry_date,
+      case: { id: parseInt(context.propsValue.case) },
+      entry_date: new Date(context.propsValue.entry_date).toISOString().split('T')[0],
       cost: context.propsValue.cost,
       units: context.propsValue.units,
       billable: context.propsValue.billable,
@@ -67,9 +129,9 @@ export const createExpense = createAction({
     if (context.propsValue.description) {
       requestBody.description = context.propsValue.description;
     }
-    
-    if (context.propsValue.staff_id) {
-      requestBody.staff = { id: context.propsValue.staff_id };
+
+    if (context.propsValue.staff) {
+      requestBody.staff = { id: parseInt(context.propsValue.staff) };
     }
 
     try {

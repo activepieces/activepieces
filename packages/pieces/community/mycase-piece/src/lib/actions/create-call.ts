@@ -8,9 +8,9 @@ export const createCall = createAction({
   displayName: 'Create Call',
   description: 'Creates a new call in the call log in MyCase',
   props: {
-    called_at: Property.ShortText({
+    called_at: Property.DateTime({
       displayName: 'Called At',
-      description: 'ISO 8601 timestamp of when the call happened (e.g., 2024-01-15T10:00:00Z)',
+      description: 'When the call happened',
       required: true,
     }),
     caller_phone_number: Property.ShortText({
@@ -18,30 +18,136 @@ export const createCall = createAction({
       description: 'The caller\'s phone number',
       required: true,
     }),
-    call_for_staff_id: Property.Number({
-      displayName: 'Call For Staff ID',
-      description: 'ID of the staff member this call is for',
+    call_for: Property.Dropdown({
+      displayName: 'Call For',
+      description: 'The staff member this call is associated with',
       required: true,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/staff', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((staff: any) => ({
+              label: `${staff.first_name} ${staff.last_name}`,
+              value: staff.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load staff',
+        };
+      },
     }),
     message: Property.LongText({
       displayName: 'Message',
       description: 'A description of the call',
       required: true,
     }),
+    caller_type: Property.StaticDropdown({
+      displayName: 'Caller Type',
+      description: 'Choose how to identify the caller',
+      required: true,
+      options: {
+        options: [
+          { label: 'Unknown (provide name)', value: 'unknown' },
+          { label: 'Existing Client', value: 'client' },
+          { label: 'Existing Lead', value: 'lead' },
+        ],
+      },
+      defaultValue: 'unknown',
+    }),
     caller_name: Property.ShortText({
       displayName: 'Caller Name',
-      description: 'The caller\'s name (use this OR client_id OR lead_id, not multiple)',
+      description: 'The caller\'s name',
       required: false,
     }),
-    client_id: Property.Number({
-      displayName: 'Client ID',
-      description: 'ID of the client (use this OR caller_name OR lead_id, not multiple)',
+    client: Property.Dropdown({
+      displayName: 'Client',
+      description: 'The existing client',
       required: false,
+      refreshers: ['caller_type'],
+      options: async ({ auth, caller_type }) => {
+        if (!auth || caller_type !== 'client') {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select "Existing Client" above to choose a client',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/clients', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((client: any) => ({
+              label: `${client.first_name} ${client.last_name}${client.email ? ` (${client.email})` : ''}`,
+              value: client.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load clients',
+        };
+      },
     }),
-    lead_id: Property.Number({
-      displayName: 'Lead ID',
-      description: 'ID of the lead (use this OR caller_name OR client_id, not multiple)',
+    lead: Property.Dropdown({
+      displayName: 'Lead',
+      description: 'The existing lead',
       required: false,
+      refreshers: ['caller_type'],
+      options: async ({ auth, caller_type }) => {
+        if (!auth || caller_type !== 'lead') {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select "Existing Lead" above to choose a lead',
+          };
+        }
+
+        const api = createMyCaseApi(auth);
+        const response = await api.get('/leads', {
+          page_size: '100',
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          return {
+            disabled: false,
+            options: response.data.map((lead: any) => ({
+              label: `${lead.first_name} ${lead.last_name}${lead.email ? ` (${lead.email})` : ''}`,
+              value: lead.id.toString(),
+            })),
+          };
+        }
+
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load leads',
+        };
+      },
     }),
     call_type: Property.StaticDropdown({
       displayName: 'Call Type',
@@ -64,42 +170,44 @@ export const createCall = createAction({
   },
   async run(context) {
     const api = createMyCaseApi(context.auth);
-    
-    // Validate mutually exclusive fields
-    const hasCallerName = !!context.propsValue.caller_name;
-    const hasClientId = !!context.propsValue.client_id;
-    const hasLeadId = !!context.propsValue.lead_id;
-    const count = [hasCallerName, hasClientId, hasLeadId].filter(Boolean).length;
-    
-    if (count === 0) {
+
+    // Validate caller identification based on type
+    if (context.propsValue.caller_type === 'unknown' && !context.propsValue.caller_name) {
       return {
         success: false,
-        error: 'Must provide one of: caller_name, client_id, or lead_id',
+        error: 'Caller name is required when caller type is "Unknown"',
       };
     }
-    
-    if (count > 1) {
+
+    if (context.propsValue.caller_type === 'client' && !context.propsValue.client) {
       return {
         success: false,
-        error: 'Can only provide one of: caller_name, client_id, or lead_id',
+        error: 'Client selection is required when caller type is "Existing Client"',
       };
     }
-    
+
+    if (context.propsValue.caller_type === 'lead' && !context.propsValue.lead) {
+      return {
+        success: false,
+        error: 'Lead selection is required when caller type is "Existing Lead"',
+      };
+    }
+
     // Build the request body
     const requestBody: any = {
-      called_at: context.propsValue.called_at,
+      called_at: new Date(context.propsValue.called_at).toISOString(),
       caller_phone_number: context.propsValue.caller_phone_number,
-      call_for: { id: context.propsValue.call_for_staff_id },
+      call_for: { id: parseInt(context.propsValue.call_for) },
       message: context.propsValue.message,
     };
 
     // Add the appropriate caller identification
-    if (context.propsValue.caller_name) {
+    if (context.propsValue.caller_type === 'unknown') {
       requestBody.caller_name = context.propsValue.caller_name;
-    } else if (context.propsValue.client_id) {
-      requestBody.client = { id: context.propsValue.client_id };
-    } else if (context.propsValue.lead_id) {
-      requestBody.lead = { id: context.propsValue.lead_id };
+    } else if (context.propsValue.caller_type === 'client') {
+      requestBody.client = { id: parseInt(context.propsValue.client) };
+    } else if (context.propsValue.caller_type === 'lead') {
+      requestBody.lead = { id: parseInt(context.propsValue.lead) };
     }
 
     // Add optional fields
