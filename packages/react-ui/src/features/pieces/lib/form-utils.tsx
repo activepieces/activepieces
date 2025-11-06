@@ -177,7 +177,7 @@ export const getDefaultPropertyValue = ({
   }
 };
 
-export const getDefaultValueForStep = ({
+export const getDefaultValueForProperties = ({
   props,
   existingInput,
   propertySettings,
@@ -368,7 +368,7 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep({
+        const defaultValues = getDefaultValueForProperties({
           props: props ?? {},
           existingInput: input,
           propertySettings: selectedStep.settings.propertySettings ?? {},
@@ -402,7 +402,7 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep({
+        const defaultValues = getDefaultValueForProperties({
           props: props ?? {},
           existingInput: input,
           propertySettings: selectedStep.settings.propertySettings ?? {},
@@ -629,6 +629,6 @@ export const formUtils = {
     }
     return Type.Object(propsSchema);
   },
-  getDefaultValueForStep,
+  getDefaultValueForProperties,
   buildConnectionSchema,
 };
