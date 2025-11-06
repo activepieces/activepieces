@@ -1,10 +1,11 @@
-import { ActivepiecesError, AuthenticatedRoute, AuthorizationType, ErrorCode, Principal, RouteKind } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { AccessTokenAuthnHandler } from './authn/access-token-authn-handler'
 import { PublicAuthnHandler } from './authn/public-authn-handler'
 import { PlatformApiKeyAuthnHandler } from './authn/platform-api-key-authn-handler'
 import { PrincipalTypeAuthzHandler } from './authz/principal-type-authz-handler'
 import { ProjectAuthzHandler } from './authz/project-authz-handler'
+import { AuthenticatedRoute, AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 const AUTHN_HANDLERS = [
     new AccessTokenAuthnHandler(),

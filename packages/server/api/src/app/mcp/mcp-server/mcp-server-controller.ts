@@ -1,9 +1,13 @@
-import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PlatformUsageMetric, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
+import { apId, ApId, CreateMcpRequestBody, DeleteMcpRequestParams, GetMcpRequestParams, isNil, ListMcpsRequest, McpWithTools, Nullable, Permission, PlatformUsageMetric, PrincipalType, ProjectId, RotateTokenRequestParams, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody, UpdateMcpRequestParams } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { AuthorizationType, ProjectAuthorization, RouteKind } from '@activepieces/server-shared'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { mcpService } from '../mcp-service'
+import { FastifyBaseLogger, FastifyRequest, RawServerDefault, RouteShorthandOptions } from 'fastify'
+import { IncomingMessage, ServerResponse } from 'http'
+import { ProjectAuthRouteOptions } from 'packages/server/api/types/fastify'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -75,16 +79,26 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-const CreateMcpRequest = {
+const CreateMcpRequest: ProjectAuthRouteOptions<{ Body: CreateMcpRequestBody }> = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER],
+                project: {
+                    projectId: async (request) => {
+                        return request.body.projectId
+                    },
+                    permission: Permission.WRITE_MCP,
+                },
+            },
+        },
     },
     schema: {
         tags: ['mcp'],
         description: 'Create a new MCP server',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: CreateMcpRequestBody,
         response: {
             [StatusCodes.OK]: Nullable(McpWithTools),
         },
@@ -93,8 +107,19 @@ const CreateMcpRequest = {
 
 const GetMcpsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.READ_MCP],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER],
+                project: {
+                    projectId: async (request: FastifyRequest<{ Querystring: ListMcpsRequest }>) => {
+                        return request.query.projectId
+                    },
+                    permission: Permission.READ_MCP,
+                },
+            },
+        },
     },
     schema: {
         tags: ['mcp'],
@@ -109,8 +134,19 @@ const GetMcpsRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER],
+                project: {
+                    projectId: async (request: FastifyRequest<{ Params: UpdateMcpRequestParams }>) => {
+                        return await getProjectIdFromMcpId(request.params.id, request.log)
+                    },
+                    permission: Permission.WRITE_MCP,
+                },
+            },
+        },
     },
     schema: {
         tags: ['mcp'],
@@ -128,16 +164,25 @@ export const UpdateMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.WRITE_MCP],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER],
+                project: {
+                    projectId: async (request: FastifyRequest<{ Params: RotateTokenRequestParams }>) => {
+                        return await getProjectIdFromMcpId(request.params.id, request.log)
+                    },
+                    permission: Permission.WRITE_MCP,
+                },
+            },
+        },
     },
     schema: {
         tags: ['mcp'],
         description: 'Rotate the MCP token',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
-        }),
+        params: RotateTokenRequestParams,
         response: {
             [StatusCodes.OK]: McpWithTools,
         },
@@ -146,8 +191,19 @@ const RotateTokenRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
-        permissions: [Permission.READ_MCP],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+                project: {
+                    projectId: async (request: FastifyRequest<{ Params: GetMcpRequestParams }>) => {
+                        return await getProjectIdFromMcpId(request.params.id, request.log)
+                    },
+                    permission: Permission.READ_MCP,
+                },
+            },
+        },
     },
     schema: {
         tags: ['mcp'],
@@ -164,8 +220,19 @@ const GetMcpRequest = {
 
 const DeleteMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER],
+                project: {
+                    projectId: async (request: FastifyRequest<{ Params: DeleteMcpRequestParams }>) => {
+                        return await getProjectIdFromMcpId(request.params.id, request.log)
+                    },
+                    permission: Permission.WRITE_MCP,
+                },
+            },
+        },
     },
     schema: {
         tags: ['mcp'],
@@ -178,4 +245,11 @@ const DeleteMcpRequest = {
             [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
+}
+
+async function getProjectIdFromMcpId(mcpId: ApId, log: FastifyBaseLogger): Promise<ProjectId | null> {
+    const mcp = await mcpService(log).getOneById({
+        id: mcpId,
+    })
+    return mcp?.projectId ?? null
 }

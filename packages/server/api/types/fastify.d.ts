@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AuthenticatedRoute, EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType, RouteSecurity } from '@activepieces/shared'
+import { AuthenticatedRoute, EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType, RouteKind, RouteSecurity } from '@activepieces/shared'
+import { AuthorizationType, ProjectAuthorization } from '@activepieces/server-shared'
 import fastify, { 
     RouteShorthandOptions as BaseRouteShorthandOptions, 
     FastifyBaseLogger, 
@@ -29,8 +30,8 @@ declare module 'fastify' {
         RequestType = unknown,
     > {
         principal: ContextConfig extends { security: AuthenticatedRoute }
-            ? ContextConfig['security']['authorization'] extends { allowedPrincipals: infer P extends readonly PrincipalType[] }
-                ? PrincipalForTypes<P>
+            ? ContextConfig['security']['authorization'] extends { allowedPrincipals: readonly (infer P extends PrincipalType)[] }
+                ? PrincipalForType<P>
                 : Principal
             : Principal
         rawBody?: string | Buffer
@@ -45,6 +46,7 @@ declare module 'fastify' {
     export interface FastifyContextConfig {
         rawBody?: boolean
         security: RouteSecurity
+        otel?: boolean
     }
 
     export type RouteShorthandOptions<
@@ -70,3 +72,31 @@ export type AuthenticatedFastifyRequest = FastifyRequest<
     { security: AuthenticatedRoute },
     FastifyBaseLogger
 >
+
+type SchemaFromRouteGeneric<TRouteGeneric extends RouteGenericInterface> = Omit<FastifySchema, 'body' | 'querystring' | 'params' | 'headers'> & {
+    body?: TRouteGeneric extends { Body: infer B } ? B : unknown
+    querystring?: TRouteGeneric extends { Querystring: infer Q } ? Q : unknown
+    params?: TRouteGeneric extends { Params: infer P } ? P : unknown
+    headers?: TRouteGeneric extends { Headers: infer H } ? H : unknown
+}
+
+export type ProjectAuthRouteOptions<
+    TRouteGeneric extends RouteGenericInterface = RouteGenericInterface
+> = Omit<BaseRouteShorthandOptions<
+    RawServerDefault,
+    RawRequestDefaultExpression<RawServerDefault>,
+    RawReplyDefaultExpression<RawServerDefault>,
+    TRouteGeneric,
+    FastifyContextConfig,
+    FastifySchema,
+    FastifyTypeProviderDefault,
+    FastifyBaseLogger
+>, 'config'> & {
+    config: {
+        security: {
+            kind: RouteKind.AUTHENTICATED
+            authorization: ProjectAuthorization<TRouteGeneric>
+        }
+    }
+    schema: SchemaFromRouteGeneric<TRouteGeneric>
+}

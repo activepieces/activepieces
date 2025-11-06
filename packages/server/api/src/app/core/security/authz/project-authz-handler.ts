@@ -1,13 +1,12 @@
 import {
     ActivepiecesError,
-    AuthorizationType,
     ErrorCode,
-    ProjectAuthorization,
 } from '@activepieces/shared'
 import { requestUtils } from '../../request/request-utils'
 import { BaseAuthzHandler } from '../security-handler'
 import { AuthenticatedFastifyRequest } from '../../../../../types/fastify'
 import { projectMemberService } from '../../../ee/projects/project-members/project-member.service'
+import { AuthorizationType, ProjectAuthorization } from '@activepieces/server-shared'
 
 export class ProjectAuthzHandler extends BaseAuthzHandler<ProjectAuthorizedRequest> {
 

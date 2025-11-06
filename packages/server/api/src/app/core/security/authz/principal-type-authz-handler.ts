@@ -1,13 +1,11 @@
 import {
     ActivepiecesError,
-    AuthorizationType,
     ErrorCode,
     PrincipalType,
-    PlatformAuthorization,
-    ProjectAuthorization,
 } from '@activepieces/shared'
 import { BaseAuthzHandler } from '../security-handler'
 import { AuthenticatedFastifyRequest } from '../../../../../types/fastify'
+import { AuthorizationType, PlatformAuthorization, ProjectAuthorization } from '@activepieces/server-shared'
 
 const ALLOWED_PRINCIPAL_TYPES = [
     PrincipalType.USER,

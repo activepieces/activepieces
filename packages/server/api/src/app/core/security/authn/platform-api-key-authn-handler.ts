@@ -2,7 +2,6 @@ import { ApiKey } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-    AuthorizationType,
     ErrorCode,
     isNil,
     isObject,
@@ -24,6 +23,7 @@ import { projectService } from '../../../project/project-service'
 import { requestUtils } from '../../request/request-utils'
 import { BaseAuthnHandler } from '../security-handler'
 import { AuthenticatedFastifyRequest } from '../../../../../types/fastify'
+import { AuthorizationType } from '@activepieces/server-shared'
 
 export class PlatformApiKeyAuthnHandler extends BaseAuthnHandler {
     private static readonly HEADER_NAME = 'authorization'
