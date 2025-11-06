@@ -14,7 +14,7 @@ export const fragment = createPiece({
   auth: fragmentAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/fragment.png',
-  authors: [],
+  authors: ["meenulekha-premakumar"],
   actions: [
     createTask,
     updateTask,
