@@ -127,8 +127,9 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             // Remove any existing listeners before adding new ones
             this.unsubscribe(workerId)
 
-            socket.on(EngineSocketEvent.ENGINE_RESPONSE, (data: EngineResponse<unknown>) => {
+            socket.on(EngineSocketEvent.ENGINE_RESPONSE, (data: EngineResponse<unknown>, callback: () => void) => {
                 onResult(data)
+                callback?.()
             })
 
             socket.on(EngineSocketEvent.ENGINE_STDOUT, (data: EngineStdout) => {
