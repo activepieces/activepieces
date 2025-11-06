@@ -80,10 +80,7 @@ export const workerSocket = {
             }
         })
 
-        socket.on('disconnect', () => {
-            console.log('Socket disconnected, exiting process')
-            process.exit(0)
-        })
+      
     },
 
     sendToWorkerWithAck: async (
@@ -106,12 +103,6 @@ export const workerSocket = {
             retries: 0,
             retryDelayMs: 0,
         })
-    },
-
-    disconnect: (): void => {
-        if (socket) {
-            socket.disconnect()
-        }
     },
 }
 
