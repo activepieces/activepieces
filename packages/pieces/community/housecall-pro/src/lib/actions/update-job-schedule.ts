@@ -5,8 +5,8 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const updateJobSchedule = createAction({
   auth: housecallProAuth,
   name: "update_job_schedule",
-  displayName: "Update job schedule",
-  description: "Update a job's schedule. Jobs with multi days feature containing more than 1 appointment can't be updated through this endpoint, must use appointments endpoints.",
+  displayName: "Update Job Schedule",
+  description: "Updates a job's schedule. Jobs with multi days feature containing more than 1 appointment can't be updated through this action.",
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

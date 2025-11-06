@@ -6,7 +6,7 @@ export const getCustomers = createAction({
   auth: housecallProAuth,
   name: 'get_customers',
   displayName: 'Get Customers',
-  description: 'Retrieve a list of customers from Housecall Pro.',
+  description: 'Retrieves a list of customers from Housecall Pro.',
   props: {
     page: Property.Number({
       displayName: 'Page',

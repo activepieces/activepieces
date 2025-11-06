@@ -6,7 +6,7 @@ export const getCustomerAddresses = createAction({
   auth: housecallProAuth,
   name: "get_customer_addresses",
   displayName: "Get All of a Customer's Addresses",
-  description: "Get all of a customer's addresses",
+  description: "Retrieves all of a customer's addresses.",
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

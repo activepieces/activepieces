@@ -1,43 +1,42 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { housecallProAuth, makeHousecallProRequest, HousecallProCustomer } from "../common";
+import { housecallProAuth, makeHousecallProRequest } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { z } from "zod";
 import { propsValidation } from "@activepieces/pieces-common";
+import { MarkdownVariant } from "@activepieces/shared";
 
 export const createCustomer = createAction({
   auth: housecallProAuth,
   name: 'create_customer',
   displayName: 'Create Customer',
-  description: 'Create a new customer in Housecall Pro.',
+  description: 'Creates a new customer in Housecall Pro.',
   props: {
+    info:Property.MarkDown({
+      value:'At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.',
+      variant:MarkdownVariant.INFO
+    }),
     first_name: Property.ShortText({
       displayName: 'First Name',
-      description: 'At least one of: first_name, last_name, email, mobile_number, home_number, work_number is required',
       required: false,
     }),
     last_name: Property.ShortText({
       displayName: 'Last Name',
-      description: 'At least one of: first_name, last_name, email, mobile_number, home_number, work_number is required',
       required: false,
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'At least one of: first_name, last_name, email, mobile_number, home_number, work_number is required',
       required: false,
     }),
     mobile_number: Property.ShortText({
       displayName: 'Mobile Number',
-      description: 'At least one of: first_name, last_name, email, mobile_number, home_number, work_number is required',
       required: false,
     }),
     home_number: Property.ShortText({
       displayName: 'Home Number',
-      description: 'At least one of: first_name, last_name, email, mobile_number, home_number, work_number is required',
       required: false,
     }),
     work_number: Property.ShortText({
       displayName: 'Work Number',
-      description: 'At least one of: first_name, last_name, email, mobile_number, home_number, work_number is required',
       required: false,
     }),
     company: Property.ShortText({
@@ -81,7 +80,7 @@ export const createCustomer = createAction({
       propsValue['work_number'];
 
     if (!hasRequiredField) {
-      throw new Error('At least one of: first_name, last_name, email, mobile_number, home_number, work_number is required');
+      throw new Error('At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required');
     }
 
     await propsValidation.validateZod(propsValue, {

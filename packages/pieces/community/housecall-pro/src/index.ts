@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { PieceCategory } from "@activepieces/shared";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import {
@@ -25,7 +25,7 @@ export const housecallPro = createPiece({
   description: "Manage your home service business with Housecall Pro CRM integration",
   auth: housecallProAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://static-assets.housecallpro.com/brand/logos/square-door-only.svg",
+  logoUrl: "https://cdn.activepieces.com/pieces/housecall-pro.png",
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ["Activepieces"],
   actions: [

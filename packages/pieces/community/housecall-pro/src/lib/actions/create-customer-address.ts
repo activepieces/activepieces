@@ -6,7 +6,7 @@ export const createCustomerAddress = createAction({
   auth: housecallProAuth,
   name: "create_customer_address",
   displayName: "Create an Address on a Customer",
-  description: "Create an address on a customer",
+  description: "Creates an address on a customer.",
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

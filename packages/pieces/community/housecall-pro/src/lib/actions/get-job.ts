@@ -6,7 +6,7 @@ export const getJob = createAction({
   auth: housecallProAuth,
   name: "get_job",
   displayName: "Get a Job",
-  description: "Retrieve a single job by ID from Housecall Pro",
+  description: "Retrieves a single job by ID from Housecall Pro.",
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

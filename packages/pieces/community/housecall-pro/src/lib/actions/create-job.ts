@@ -6,7 +6,7 @@ export const createJob = createAction({
   auth: housecallProAuth,
   name: 'create_job',
   displayName: 'Create Job',
-  description: 'Create a job with the ID for an already existing address and customer.',
+  description: 'Creates a job with the ID for an already existing address and customer.',
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

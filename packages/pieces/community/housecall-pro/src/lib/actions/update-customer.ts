@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { housecallProAuth, makeHousecallProRequest, HousecallProCustomer } from "../common";
+import { housecallProAuth, makeHousecallProRequest } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { z } from "zod";
 import { propsValidation } from "@activepieces/pieces-common";
@@ -8,11 +8,11 @@ export const updateCustomer = createAction({
   auth: housecallProAuth,
   name: 'update_customer',
   displayName: 'Update Customer',
-  description: 'Update an existing customer in Housecall Pro.',
+  description: 'Updates an existing customer in Housecall Pro.',
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',
-      description: 'The ID of the customer to update',
+      description: 'The ID of the customer to update.',
       required: true,
     }),
     first_name: Property.ShortText({

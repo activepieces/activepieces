@@ -6,11 +6,11 @@ export const getCustomer = createAction({
   auth: housecallProAuth,
   name: "get_customer",
   displayName: "Get Customer",
-  description: "Get the customer via ID",
+  description: "Retrieves the customer by ID.",
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",
-      description: "The ID of the customer to retrieve",
+      description: "The ID of the customer to retrieve.",
       required: true,
     }),
     expand: Property.StaticMultiSelectDropdown({
