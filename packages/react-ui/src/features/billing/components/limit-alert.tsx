@@ -93,7 +93,6 @@ export const LimitAlert = ({
                     projectId={project?.id}
                     initialValues={{
                       projectName: project?.displayName,
-                      tasks: project?.plan?.tasks?.toString() ?? '',
                       aiCredits: project?.plan?.aiCredits?.toString() ?? '',
                     }}
                   />

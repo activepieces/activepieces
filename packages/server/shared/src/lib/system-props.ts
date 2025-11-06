@@ -98,7 +98,6 @@ export enum AppSystemProp {
     SANDBOX_PROPAGATED_ENV_VARS = 'SANDBOX_PROPAGATED_ENV_VARS',
     SECRET_MANAGER_API_KEY = 'SECRET_MANAGER_API_KEY',
     SENTRY_DSN = 'SENTRY_DSN',
-    SHOW_CHANGELOG = 'SHOW_CHANGELOG',
     SKIP_PROJECT_LIMITS_CHECK = 'SKIP_PROJECT_LIMITS_CHECK',
     SMTP_HOST = 'SMTP_HOST',
     SMTP_PASSWORD = 'SMTP_PASSWORD',
@@ -160,7 +159,8 @@ export const environmentVariables = {
 export const apVersionUtil = {
     async getCurrentRelease(): Promise<string> {
         // eslint-disable-next-line @nx/enforce-module-boundaries
-        const packageJson = await import('package.json')
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const packageJson = require('package.json')
         return packageJson.version
     },
     async getLatestRelease(): Promise<string> {

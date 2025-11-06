@@ -4,11 +4,13 @@ import {
     ProjectMemberWithUser,
 } from '@activepieces/ee-shared'
 import {
+    ActivepiecesError,
     ApEdition,
     ApId,
     apId,
     Cursor,
     DefaultProjectRole,
+    ErrorCode,
     isNil,
     PlatformId,
     PlatformRole,
@@ -163,12 +165,18 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             name: params.role,
             platformId: params.platformId,
         })
-        await repo().update({
+        const updateResult = await repo().update({
             id: params.id,
             projectId: params.projectId,
         }, {
             projectRoleId: projectRole.id,
         })
+        if (updateResult.affected === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'project_member', entityId: params.id, message: 'Project member not found' },
+            })
+        }
         return repo().findOneByOrFail({
             id: params.id,
             projectId: params.projectId,

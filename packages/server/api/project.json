@@ -7,25 +7,34 @@
   "implicitDependencies": ["engine"],
   "targets": {
     "build": {
-      "executor": "@nx/webpack:webpack",
+      "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
-        "target": "node",
-        "compiler": "tsc",
-        "outputPath": "dist/packages/server/api",
         "main": "packages/server/api/src/main.ts",
+        "outputPath": "dist/packages/server/api",
+        "outputFileName": "main.js",
         "tsConfig": "packages/server/api/tsconfig.app.json",
-        "assets": ["packages/server/api/src/assets"],
-        "webpackConfig": "packages/server/api/webpack.config.js",
-        "babelUpwardRootMode": true,
-        "sourceMap": true
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true,
+        "sourcemap": true,
+        "generatePackageJson": true,
+        "assets": [
+          {
+            "glob": "packages/server/api/README.md",
+            "input": ".",
+            "output": "."
+          },
+          "packages/server/api/src/assets"
+        ]
       },
       "configurations": {
+        "development": {
+          "minify": false
+        },
         "production": {
-          "generatePackageJson": true,
-          "optimization": true,
-          "extractLicenses": true,
-          "inspect": false
+          "minify": false
         }
       }
     },
@@ -75,7 +84,7 @@
         "jestConfig": "packages/server/api/jest.config.ts",
         "passWithNoTests": false,
         "bail": true,
-        "testPathPatterns": ["packages/server/api/test/integration/cloud/ai"]
+        "testPathPatterns": ["packages/server/api/test/integration/cloud"]
       }
     },
     "test-ee-command": {

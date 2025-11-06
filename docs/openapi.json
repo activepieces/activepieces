@@ -13680,9 +13680,6 @@
                         "plan": {
                           "type": "string"
                         },
-                        "tasksLimit": {
-                          "type": "number"
-                        },
                         "includedAiCredits": {
                           "type": "number"
                         },

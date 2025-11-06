@@ -66,7 +66,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        tasks: request.plan.tasks ?? null,
                         aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
@@ -194,7 +193,6 @@ async function enrichProject(
     const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
 
     const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
-    const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
     const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
@@ -203,7 +201,6 @@ async function enrichProject(
         ),
         usage: {
             aiCredits: projectAICreditUsage,
-            tasks: projectTasksUsage,
             nextLimitResetDate: endDate,
         },
         analytics: {

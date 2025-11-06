@@ -24,7 +24,6 @@ interface ProjectSettingsDialogProps {
   projectId?: string;
   initialValues?: {
     projectName?: string;
-    tasks?: string;
     aiCredits?: string;
     externalId?: string;
   };
@@ -32,7 +31,6 @@ interface ProjectSettingsDialogProps {
 
 type FormValues = {
   projectName: string;
-  tasks: string;
   aiCredits: string;
   externalId?: string;
 };
@@ -53,7 +51,6 @@ export function ProjectSettingsDialog({
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
-      tasks: initialValues?.tasks || '',
       aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },

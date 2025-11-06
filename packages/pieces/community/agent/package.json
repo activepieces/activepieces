@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-agent",
-  "version": "0.3.2"
+  "version": "0.3.4",
+  "dependencies": {
+    "@ai-sdk/anthropic": "2.0.3",
+    "@ai-sdk/google": "2.0.6"
+  }
 }

@@ -1,4 +1,4 @@
-import { getPlatformQueueName, getProjectMaxConcurrentJobsKey, QueueName } from '@activepieces/server-shared'
+import { getPlatformQueueName, QueueName } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     ConsumeJobResponseStatus,
@@ -10,7 +10,6 @@ import {
     JOB_PRIORITY,
     JobData,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    ProjectId,
     RATE_LIMIT_PRIORITY,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -20,7 +19,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
-import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
+import { workerRedisConnections } from '../utils/worker-redis'
 import { jobConsmer } from './job-consmer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
 
@@ -29,7 +28,6 @@ let worker: Worker<JobData>
 export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     async start(workerToken: string): Promise<void> {
         if (!isNil(worker)) {
-            worker.resume()
             return
         }
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
@@ -107,12 +105,6 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         log.info({
             message: 'Job queue worker started',
         })
-    },
-    async pause(): Promise<void> {
-        if (isNil(worker)) {
-            return
-        }
-        await worker.pause()
     },
     async close(): Promise<void> {
         if (isNil(worker)) {

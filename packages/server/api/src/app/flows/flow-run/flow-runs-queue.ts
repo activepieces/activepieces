@@ -81,7 +81,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
                                     ...spreadIfDefined('duration', runMetadata.duration),
-                                    ...spreadIfDefined('tasks', runMetadata.tasks),
                                     ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
                                     ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
@@ -191,7 +190,7 @@ async function markParentRunAsFailed({
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')
 
-    const callbackUrl = await domainHelper.getPublicApiUrl({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
+    const callbackUrl = await domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
     const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
     await apAxios.post(callbackUrl, {
         status: 'error',

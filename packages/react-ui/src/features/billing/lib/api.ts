@@ -8,7 +8,6 @@ import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
-  StartTrialParams,
 } from '@activepieces/ee-shared';
 import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
@@ -34,12 +33,6 @@ export const platformBillingApi = {
   toggleAiCreditsOverageEnabled(params: ToggleAiCreditsOverageEnabledParams) {
     return api.post<PlatformPlan>(
       '/v1/platform-billing/update-ai-overage-state',
-      params,
-    );
-  },
-  startTrial(params: StartTrialParams) {
-    return api.post<{ success: boolean }>(
-      '/v1/platform-billing/start-trial',
       params,
     );
   },

@@ -28,8 +28,16 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
                 return false        
             },
             installFn: async () => {
+                const startTime = performance.now()
                 const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
                     version: pieceVersion,
+                })
+                log.info({
+                    message: '[pieceWorkerCache] Cached piece',
+                    pieceName,
+                    pieceVersion,
+                    projectId,
+                    timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
                 })
                 return JSON.stringify(pieceMetadata)
             },
