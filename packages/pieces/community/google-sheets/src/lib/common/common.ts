@@ -302,33 +302,30 @@ export enum Dimension {
 }
 
 
-export async function createGoogleSheetClient(auth: PiecePropValueSchema<typeof googleSheetsOAuth2 | typeof googleSheetsServiceAccountAuth>) {
+export async function createGoogleAuthForClient(auth: PiecePropValueSchema<typeof googleSheetsOAuth2 | typeof googleSheetsServiceAccountAuth>) {
 	if ('ServiceKey' in auth) {
-		return createGoogleSheetServiceAccountClient(auth);
+		return createGoogleServiceAccountClient(auth);
 	}
-	return createGoogleSheetOAuthClient(auth);
+	return createGoogleOAuth2Client(auth);
 }
 
-export async function createGoogleSheetOAuthClient(auth: PiecePropValueSchema<OAuth2Property<any>>) {
+export async function createGoogleOAuth2Client(auth: PiecePropValueSchema<OAuth2Property<any>>) {
 	const authClient = new OAuth2Client();
 	authClient.setCredentials(auth);
-
-	const googleSheetClient = google.sheets({ version: 'v4', auth: authClient });
-	return googleSheetClient;
+	return authClient;
 }
 
-export async function createGoogleSheetServiceAccountClient(auth: PiecePropValueSchema<CustomAuthProperty<{
+export async function createGoogleServiceAccountClient(auth: PiecePropValueSchema<CustomAuthProperty<{
 	ServiceKey: ShortTextProperty<true>
 }>>) {
 	const serviceAccount = JSON.parse(auth.ServiceKey);
-	const client = new google.auth.JWT(
+	return  new google.auth.JWT(
 		serviceAccount.client_email,
 		undefined,
 		serviceAccount.private_key,
-		googleSheetsOAuth2.scope
+		googleSheetsOAuth2.scope,
+		
 	  );
-	  const googleSheetClient = google.sheets({ version: 'v4', auth: client });
-	  return googleSheetClient;
 }
 
 export function areSheetIdsValid(spreadsheetId: string | null | undefined, sheetId: string | number | null | undefined): boolean {

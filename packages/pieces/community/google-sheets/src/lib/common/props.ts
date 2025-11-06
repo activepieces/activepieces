@@ -1,8 +1,7 @@
-import { googleSheetsOAuth2 } from '../../index';
+import { googleSheetsOAuth2, googleSheetsServiceAccountAuth } from '../../index';
 import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { google, drive_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { columnToLabel, getHeaderRow, googleSheetsCommon } from './common';
+import { columnToLabel, createGoogleAuthForClient, getHeaderRow, googleSheetsCommon } from './common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 
@@ -28,11 +27,9 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 					placeholder: 'Please authenticate first',
 				};
 			}
-			const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
+			const googleAuth = await createGoogleAuthForClient(auth as PiecePropValueSchema<typeof googleSheetsOAuth2 | typeof googleSheetsServiceAccountAuth>);
 
-			const authClient = new OAuth2Client();
-
-			const drive = google.drive({ version: 'v3', auth: authClient });
+			const drive = google.drive({ version: 'v3', auth: googleAuth });
 
 			const q = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed = false'];
 
@@ -86,14 +83,9 @@ export const sheetIdProp = (displayName: string, description: string, required =
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
-
-			const authClient = new OAuth2Client();
-			authClient.setCredentials(authValue);
-
-			const sheets = google.sheets({ version: 'v4', auth: authClient });
-
-			const response = await sheets.spreadsheets.get({
+			const googleAuth = await createGoogleAuthForClient(auth as PiecePropValueSchema<typeof googleSheetsOAuth2 | typeof googleSheetsServiceAccountAuth>);
+;
+			const response = await google.sheets({ version: 'v4', auth: googleAuth }).spreadsheets.get({
 				spreadsheetId: spreadsheetId as unknown as string,
 			});
 

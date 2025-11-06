@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createGoogleSheetClient } from '../common/common';
+import { createGoogleAuthForClient } from '../common/common';
 import { googleSheetsOAuth2, googleSheetsServiceAccountAuth } from '../..';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
+import { google } from 'googleapis';
 const auth = [googleSheetsOAuth2, googleSheetsServiceAccountAuth];
 export const createWorksheetAction = createAction({
   auth,
@@ -25,9 +26,9 @@ export const createWorksheetAction = createAction({
   async run(context){
     const {spreadsheetId,title} = context.propsValue;
     const headers = context.propsValue.headers as string[] ?? [];
-	  const googleSheetClient = await createGoogleSheetClient(context.auth);
+	  const googleClient = await createGoogleAuthForClient(context.auth);
 
-    const sheet = await googleSheetClient.spreadsheets.batchUpdate({
+    const sheet = await google.sheets({ version: 'v4', auth: googleClient }).spreadsheets.batchUpdate({
         spreadsheetId:spreadsheetId,
         requestBody:{
             requests:[
@@ -42,7 +43,7 @@ export const createWorksheetAction = createAction({
             ]
         }
     });
-    const addHeadersResponse = await googleSheetClient.spreadsheets.values.append({
+    const addHeadersResponse = await google.sheets({ version: 'v4', auth: googleClient }).spreadsheets.values.append({
         spreadsheetId,
         range:`${context.propsValue.title}!A1`,
         valueInputOption:'RAW',

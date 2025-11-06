@@ -246,7 +246,7 @@ const CreateOrEditConnectionSection = (
               <div className="mx-5 flex justify-end gap-2">
                {
                 showBackButton && (
-                    <Button variant="outline" onClick={onBack}>
+                    <Button type="button" variant="outline" onClick={onBack}>
                       {t('Back')}
                     </Button>
                 )

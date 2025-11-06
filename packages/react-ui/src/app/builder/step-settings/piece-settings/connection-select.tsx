@@ -106,9 +106,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               />
             </div>
           )}
-          {!isLoadingConnections && (
+          {!isLoadingConnections && selectedAuth && (
             <AutoFormFieldWrapper
-              property={selectedAuth!}
+              property={{...selectedAuth, displayName: t('Connection')}}
               propertyName="auth"
               field={field as unknown as ControllerRenderProps}
               disabled={params.disabled}
