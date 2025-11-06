@@ -2,6 +2,7 @@ import { meistertaskAuth } from '../../index';
 import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { Project } from '@activepieces/shared';
 
 export const updateTask = createAction({
   auth: meistertaskAuth,
@@ -9,10 +10,8 @@ export const updateTask = createAction({
   displayName: 'Update Task',
   description: 'Updates an existing task',
   props: {
-    task_id: Property.Number({
-      displayName: 'Task ID',
-      required: true,
-    }),
+    Project: meisterTaskCommon.project,
+    task_id: meisterTaskCommon.task_id,
     name: Property.ShortText({
       displayName: 'Task Name',
       required: false,
@@ -33,10 +32,7 @@ export const updateTask = createAction({
         ],
       },
     }),
-    assigned_to: Property.Number({
-      displayName: 'Assigned To (Person ID)',
-      required: false,
-    }),
+    assigned_to: meisterTaskCommon.person,
     due_date: Property.DateTime({
       displayName: 'Due Date',
       required: false,

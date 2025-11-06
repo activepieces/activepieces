@@ -9,10 +9,7 @@ export const findOrCreateAttachment = createAction({
   displayName: 'Find or Create Attachment',
   description: 'Finds an attachment by searching, or creates one if it doesn\'t exist',
   props: {
-    task_id: Property.Number({
-      displayName: 'Task ID',
-      required: true,
-    }),
+    task_id: meisterTaskCommon.task_id,
     name: Property.ShortText({
       displayName: 'Attachment Name',
       required: true,

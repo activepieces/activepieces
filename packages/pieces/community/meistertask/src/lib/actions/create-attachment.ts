@@ -2,6 +2,7 @@ import { meistertaskAuth } from '../../index';
 import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { Project } from '@activepieces/shared';
 
 export const createAttachment = createAction({
   auth: meistertaskAuth,
@@ -9,10 +10,7 @@ export const createAttachment = createAction({
   displayName: 'Create Attachment',
   description: 'Creates a new attachment',
   props: {
-    task_id: Property.Number({
-      displayName: 'Task ID',
-      required: true,
-    }),
+    task_id: meisterTaskCommon.task_id,
     file_url: Property.File({
       displayName: 'File URL',
       description: 'URL of the file to attach',

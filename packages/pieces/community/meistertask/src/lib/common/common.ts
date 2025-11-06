@@ -93,10 +93,52 @@ export const meisterTaskCommon = {
       }
     },
   }),
+  task_id: Property.Dropdown({
+    displayName: 'Task',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a  first',
+        };
+      }
+
+      try {
+        const token = typeof auth === 'string' ? auth : (auth as any).access_token;
+
+        const response = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: `${MEISTERTASK_API_URL}/tasks`,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: token,
+          },
+        });
+
+        return {
+          disabled: false,
+          options: response.body.map((task: any) => ({
+            label: task.name,
+            value: task.id,
+          })),
+        };
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading tasks',
+        };
+      }
+    },
+  }),
 
   label: Property.Dropdown({
     displayName: 'Label',
-    required: false,
+    required: true,
     refreshers: ['project'],
     options: async ({ auth, project }) => {
       if (!auth || !project) {

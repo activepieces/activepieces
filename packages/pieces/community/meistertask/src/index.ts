@@ -22,7 +22,7 @@ import { findOrCreateAttachment } from './lib/actions/find-or-create-attachment'
 import { findOrCreateTask } from './lib/actions/find-or-create-task';
 import { findOrCreateLabel } from './lib/actions/find-or-create-label';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, AuthenticationType, createCustomApiCallAction } from '@activepieces/pieces-common';
 import { MEISTERTASK_API_URL } from './lib/common/common';
 
 
@@ -64,7 +64,7 @@ export const meistertask = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/meistertask.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['Ani-4x'],
+  authors: ['Ani-4x', 'sanket-a11y'],
   actions: [
     createLabel,
     createTaskLabel,
@@ -78,6 +78,15 @@ export const meistertask = createPiece({
     findOrCreateAttachment,
     findOrCreateTask,
     findOrCreateLabel,
+    createCustomApiCallAction({
+      auth: meistertaskAuth,
+      baseUrl: () => MEISTERTASK_API_URL,
+      authMapping: async (auth) => {
+        return {
+          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        };
+      },
+    }),
   ],
   triggers: [
     newAttachment,

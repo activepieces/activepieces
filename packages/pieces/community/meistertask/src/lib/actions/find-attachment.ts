@@ -9,10 +9,7 @@ export const findAttachment = createAction({
   displayName: 'Find Attachment',
   description: 'Finds an attachment by searching',
   props: {
-    task_id: Property.Number({
-      displayName: 'Task ID',
-      required: true,
-    }),
+    task_id: meisterTaskCommon.task_id,
     name: Property.ShortText({
       displayName: 'Attachment Name',
       required: false,

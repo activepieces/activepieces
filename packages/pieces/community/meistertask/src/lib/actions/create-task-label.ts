@@ -10,10 +10,7 @@ export const createTaskLabel = createAction({
   description: 'Creates a new task label',
   props: {
     project: meisterTaskCommon.project,
-    task_id: Property.Number({
-      displayName: 'Task ID',
-      required: true,
-    }),
+    task_id: meisterTaskCommon.task_id,
     label: meisterTaskCommon.label,
   },
   async run(context) {
@@ -22,7 +19,7 @@ export const createTaskLabel = createAction({
 
     const response = await makeRequest(
       HttpMethod.POST,
-      `/tasks/${task_id}/labels`,
+      `/tasks/${task_id}/task_labels`,
       token,
       { label_id: label }
     );
