@@ -10,7 +10,6 @@ export type EngineProcessOptions =  {
     resourceLimits: {
         maxOldGenerationSizeMb: number
         maxYoungGenerationSizeMb: number
-        stackSizeMb: number
     }
     execArgv: string[]
 }

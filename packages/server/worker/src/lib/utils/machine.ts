@@ -73,8 +73,7 @@ export const workerMachine = {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
-                maxYoungGenerationSizeMb: memoryLimit,
-                stackSizeMb: memoryLimit,
+                maxYoungGenerationSizeMb: memoryLimit
             },
             execArgv: [],
         }, log)
