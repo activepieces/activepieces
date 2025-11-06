@@ -156,6 +156,10 @@ spec:
             - name: AP_ENVIRONMENT
               value: {{ .Values.activepieces.environment | quote }}
             {{- end }}
+            {{- if .Values.activepieces.edition }}
+            - name: AP_EDITION
+              value: {{ .Values.activepieces.edition | quote }}
+            {{- end }}
             {{- if .Values.activepieces.executionMode }}
             - name: AP_EXECUTION_MODE
               value: {{ .Values.activepieces.executionMode | quote }}
