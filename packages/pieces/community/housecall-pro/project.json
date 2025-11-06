@@ -38,7 +38,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/housecall-pro",
-        "command": "bun install --no-save"
+        "command": "npm install --no-save"
       }
     },
     "nx-release-publish": {

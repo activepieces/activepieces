@@ -13,12 +13,12 @@ export const updateJobSchedule = createAction({
       description: "The ID of the job to update schedule for",
       required: true,
     }),
-    start_time: Property.ShortText({
+    start_time: Property.DateTime({
       displayName: "Start Time",
       description: "Start time of job in ISO8601 format (e.g., 2021-01-14T20:14:00)",
       required: true,
     }),
-    end_time: Property.ShortText({
+    end_time: Property.DateTime({
       displayName: "End Time",
       description: "End time of job in ISO8601 format (e.g., 2021-01-14T21:14:00)",
       required: true,

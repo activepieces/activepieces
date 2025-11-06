@@ -1,4 +1,4 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { PieceCategory } from "@activepieces/shared";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import {
@@ -18,6 +18,36 @@ import {
   getJob,
   updateJobSchedule,
   deleteJobSchedule,
+  addJobAttachment,
+  getJobLineItems,
+  addJobLineItem,
+  bulkUpdateJobLineItems,
+  updateJobLineItem,
+  deleteJobLineItem,
+  dispatchJobToEmployees,
+  getJobInputMaterials,
+  bulkUpdateJobInputMaterials,
+  addJobTag,
+  addJobNote,
+  deleteJobNote,
+  removeJobTag,
+  createJobLink,
+  lockJob,
+  lockJobs,
+  // Job appointment actions
+  getJobAppointments,
+  createJobAppointment,
+  updateJobAppointment,
+  deleteJobAppointment,
+  // Estimate actions
+  getEstimates,
+  createEstimate,
+  getEstimate,
+  updateEstimateOptionSchedule,
+  createEstimateOptionLink,
+  createEstimateOptionNote,
+  deleteEstimateOptionNote,
+  createEstimateOptionAttachment,
 } from "./lib/common";
 
 export const housecallPro = createPiece({
@@ -43,6 +73,36 @@ export const housecallPro = createPiece({
     getJob,
     updateJobSchedule,
     deleteJobSchedule,
+    addJobAttachment,
+    getJobLineItems,
+    addJobLineItem,
+    bulkUpdateJobLineItems,
+    updateJobLineItem,
+    deleteJobLineItem,
+    dispatchJobToEmployees,
+    getJobInputMaterials,
+    bulkUpdateJobInputMaterials,
+    addJobTag,
+    addJobNote,
+    deleteJobNote,
+    removeJobTag,
+    createJobLink,
+    lockJob,
+    lockJobs,
+    // Job appointment actions
+    getJobAppointments,
+    createJobAppointment,
+    updateJobAppointment,
+    deleteJobAppointment,
+    // Estimate actions
+    getEstimates,
+    createEstimate,
+    getEstimate,
+    updateEstimateOptionSchedule,
+    createEstimateOptionLink,
+    createEstimateOptionNote,
+    deleteEstimateOptionNote,
+    createEstimateOptionAttachment,
     // Custom API Call
     createCustomApiCallAction({
       baseUrl: () => baseUrl,
