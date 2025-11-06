@@ -91,7 +91,8 @@ export const agentCommon = {
     getModelById(modelId: string): AIModel {
         const model = AI_MODELS.find(m => m.id === modelId);
         if (!model) {
-            throw new Error(`Model ${modelId} not found`);
+            const availableModels = AI_MODELS.map(m => m.id).join(', ');
+            throw new Error(`Model "${modelId}" not found. Available models: ${availableModels}`);
         }
         return model;
     },
