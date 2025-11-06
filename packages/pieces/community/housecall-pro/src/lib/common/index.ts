@@ -51,6 +51,15 @@ export { createEstimateOptionNote } from "../actions/create-estimate-option-note
 export { deleteEstimateOptionNote } from "../actions/delete-estimate-option-note";
 export { createEstimateOptionAttachment } from "../actions/create-estimate-option-attachment";
 
+// Invoice actions
+export { getJobInvoices } from "../actions/get-job-invoices";
+
+// Lead actions
+export { createLead } from "../actions/create-lead";
+export { getLeads } from "../actions/get-leads";
+export { getLead } from "../actions/get-lead";
+export { convertLeadToEstimateOrJob } from "../actions/convert-lead-to-estimate-or-job";
+
 export const baseUrl = "https://api.housecallpro.com";
 
 export const housecallProAuth = PieceAuth.SecretText({

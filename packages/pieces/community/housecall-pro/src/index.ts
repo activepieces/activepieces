@@ -48,6 +48,13 @@ import {
   createEstimateOptionNote,
   deleteEstimateOptionNote,
   createEstimateOptionAttachment,
+  // Invoice actions
+  getJobInvoices,
+  // Lead actions
+  createLead,
+  getLeads,
+  getLead,
+  convertLeadToEstimateOrJob,
 } from "./lib/common";
 
 export const housecallPro = createPiece({
@@ -103,6 +110,13 @@ export const housecallPro = createPiece({
     createEstimateOptionNote,
     deleteEstimateOptionNote,
     createEstimateOptionAttachment,
+    // Invoice actions
+    getJobInvoices,
+    // Lead actions
+    createLead,
+    getLeads,
+    getLead,
+    convertLeadToEstimateOrJob,
     // Custom API Call
     createCustomApiCallAction({
       baseUrl: () => baseUrl,
