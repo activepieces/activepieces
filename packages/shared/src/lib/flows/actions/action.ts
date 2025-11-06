@@ -222,25 +222,17 @@ const BranchConditionValid = (addMinLength: boolean) =>
 export const ValidBranchCondition = BranchConditionValid(true)
 export type ValidBranchCondition = Static<typeof ValidBranchCondition>
 
-// TODO remove this and use ValidBranchCondition everywhere
-export const BranchCondition = BranchConditionValid(false)
-export type BranchCondition = Static<typeof BranchCondition>
-
-export const BranchTextCondition = BranchTextConditionValid(false)
+export const BranchTextCondition = BranchTextConditionValid(true)
 export type BranchTextCondition = Static<typeof BranchTextCondition>
 
-export const BranchNumberCondition = BranchNumberConditionValid(false)
+export const BranchNumberCondition = BranchNumberConditionValid(true)
 export type BranchNumberCondition = Static<typeof BranchNumberCondition>
 
-export const BranchDateCondition = BranchDateConditionValid(false)
+export const BranchDateCondition = BranchDateConditionValid(true)
 export type BranchDateCondition = Static<typeof BranchDateCondition>
 
-export const BranchSingleValueCondition =
-  BranchSingleValueConditionValid(false)
-export type BranchSingleValueCondition = Static<
-  typeof BranchSingleValueCondition
->
-
+export const BranchSingleValueCondition = BranchSingleValueConditionValid(true)
+export type BranchSingleValueCondition = Static<typeof BranchSingleValueCondition>
 
 export const RouterBranchesSchema = (addMinLength: boolean) =>
     Type.Array(

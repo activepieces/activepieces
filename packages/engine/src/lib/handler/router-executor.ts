@@ -1,4 +1,4 @@
-import { BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ValidBranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { EngineGenericError } from '../helper/execution-errors'
 import { utils } from '../utils'
@@ -98,7 +98,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
 }
 
 
-export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
+export function evaluateConditions(conditionGroups: ValidBranchCondition[][]): boolean {
     let orOperator = false
     for (const conditionGroup of conditionGroups) {
         let andGroup = true

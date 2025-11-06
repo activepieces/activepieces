@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../common'
 import { Metadata } from '../../common/metadata'
-import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema, ValidBranchCondition } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { SaveSampleDataRequest } from '../sample-data'
@@ -53,7 +53,7 @@ export const DeleteBranchRequest = Type.Object({
 export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
-    conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
+    conditions: Type.Optional(Type.Array(Type.Array(ValidBranchCondition))),
     branchName: Type.String(),
 })
 export const MoveBranchRequest = Type.Object({

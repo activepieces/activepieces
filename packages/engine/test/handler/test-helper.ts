@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, ValidBranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
@@ -57,7 +57,7 @@ export function buildSimpleLoopAction({
     }
 }
 
-export function buildRouterWithOneCondition({ children, conditions, executionType, skip }: { children: FlowAction[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): FlowAction {
+export function buildRouterWithOneCondition({ children, conditions, executionType, skip }: { children: FlowAction[], conditions: (ValidBranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): FlowAction {
     return {
         name: 'router',
         displayName: 'Your Router Name',
