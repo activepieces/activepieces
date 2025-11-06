@@ -94,12 +94,9 @@ export const drupal = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/drupal.png',
   categories: [
-    PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.BUSINESS_INTELLIGENCE,
     PieceCategory.COMMERCE,
     PieceCategory.CONTENT_AND_FILES,
-    PieceCategory.DEVELOPER_TOOLS,
-    PieceCategory.FLOW_CONTROL,
     PieceCategory.FORMS_AND_SURVEYS,
     PieceCategory.MARKETING,
   ],

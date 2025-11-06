@@ -26,6 +26,7 @@ async function prepareInput(
         case ExecutionType.BEGIN: {
 
             return {
+                platformId: jobData.platformId,
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
@@ -49,6 +50,7 @@ async function prepareInput(
         case ExecutionType.RESUME: {
 
             return {
+                platformId: jobData.platformId,
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
@@ -158,10 +160,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 engineToken,
                 input,
             )
-            if (
-                result.status === FlowRunStatus.INTERNAL_ERROR ||
-                status === EngineResponseStatus.INTERNAL_ERROR
-            ) {
+            if (status === EngineResponseStatus.INTERNAL_ERROR) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {

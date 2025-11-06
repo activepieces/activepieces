@@ -5,6 +5,7 @@ import {
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
+    PrincipalType,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -32,7 +33,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
         return res.status(StatusCodes.CREATED).send(newSigningKey)
     })
 
-    app.get('/', {}, async (req) => {
+    app.get('/', ListSigningKeysRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return signingKeyService.list({
@@ -68,13 +69,24 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+const ListSigningKeysRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+}
 const AddSigningKeyRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
     schema: {
         body: AddSigningKeyRequestBody,
     },
 }
 
 const GetSigningKeyRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
     schema: {
         params: Type.Object({
             id: ApId,
@@ -83,6 +95,9 @@ const GetSigningKeyRequest = {
 }
 
 const DeleteSigningKeyRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
     schema: {
         params: Type.Object({
             id: ApId,

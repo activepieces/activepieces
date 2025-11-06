@@ -4,7 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { type Schema as AiSchema, tool, experimental_createMCPClient } from "ai";
-import z, { ZodRawShape, ZodSchema } from "zod";
+import z, { ZodSchema } from "zod";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 export const AI_MODELS: AIModel[] = SUPPORTED_AI_PROVIDERS.flatMap(provider =>
@@ -24,7 +24,7 @@ export type AIModel = {
 }
 
 async function getStructuredOutput(outputFields: AgentOutputField[]): Promise<ZodSchema> {
-    const shape: ZodRawShape = {}
+    const shape: Record<string, z.ZodType> = {}
     for (const field of outputFields) {
         switch (field.type) {
             case AgentOutputFieldType.TEXT:
@@ -91,7 +91,8 @@ export const agentCommon = {
     getModelById(modelId: string): AIModel {
         const model = AI_MODELS.find(m => m.id === modelId);
         if (!model) {
-            throw new Error(`Model ${modelId} not found`);
+            const availableModels = AI_MODELS.map(m => m.id).join(', ');
+            throw new Error(`Model "${modelId}" not found. Available models: ${availableModels}`);
         }
         return model;
     },

@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-google-gemini",
-  "version": "0.0.18"
+  "version": "0.0.19",
+  "dependencies": {
+    "@google/generative-ai": "0.21.0"
+  }
 }

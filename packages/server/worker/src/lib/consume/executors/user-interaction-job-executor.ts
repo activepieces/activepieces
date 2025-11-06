@@ -27,6 +27,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 break
             case WorkerJobType.EXECUTE_TRIGGER_HOOK:
                 response = await engineRunner(log).executeTrigger(engineToken, {
+                    platformId: jobData.platformId,
                     hookType: jobData.hookType,
                     flowVersion: jobData.flowVersion,
                     webhookUrl: await webhookUtils(log).getWebhookUrl({
@@ -42,6 +43,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 break
             case WorkerJobType.EXECUTE_TOOL:
                 response =  await engineRunner(log).excuteTool(engineToken, {
+                    platformId: jobData.platformId,
                     actionName: jobData.actionName,
                     pieceName: jobData.pieceName,
                     pieceVersion: jobData.pieceVersion,
@@ -52,6 +54,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 break
             case WorkerJobType.EXECUTE_PROPERTY:
                 response = await engineRunner(log).executeProp(engineToken, {
+                    platformId: jobData.platformId,
                     piece: jobData.piece,
                     flowVersion: jobData.flowVersion,
                     propertyName: jobData.propertyName,

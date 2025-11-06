@@ -26,7 +26,7 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
         const routerPath = request.routeOptions.url
-        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined')
         const requestMatches = !ProjectAuthzHandler.IGNORED_ROUTES.includes(
             routerPath,
         )
@@ -34,12 +34,14 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
     }
 
     protected doHandle(request: FastifyRequest): Promise<void> {
-        if (request.principal.type === PrincipalType.WORKER) {
+        const principal = request.principal
+        if (principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN) {
             return Promise.resolve()
         }
+
         const projectId = requestUtils.extractProjectId(request)
 
-        if (projectId && projectId !== request.principal.projectId) {
+        if (projectId && projectId !== principal.projectId) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {

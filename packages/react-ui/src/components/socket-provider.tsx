@@ -39,10 +39,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           if (!toastIdRef.current) {
             const { id } = toast({
               itemID: 'websocket-disconnected',
-              title: 'Websocket Disconnected',
-              description: 'Reconnecting...',
+              title: 'Connection Lost',
+              description: 'We are trying to reconnect...',
               duration: Infinity,
-              variant: 'destructive',
+              variant: 'default',
             });
             toastIdRef.current = id;
           }
