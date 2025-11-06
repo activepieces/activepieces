@@ -25,6 +25,7 @@ import { foldersApi } from '../lib/folders-api';
 const RenameFolderSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter a folder name'),
+    pattern: '.*\\S.*',
   }),
 });
 
@@ -49,7 +50,7 @@ const RenameFolderDialog = ({
   const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
     mutationFn: async (data) => {
       return await foldersApi.renameFolder(folderId, {
-        displayName: data.displayName,
+        displayName: data.displayName.trim(),
       });
     },
     onSuccess: () => {

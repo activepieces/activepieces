@@ -47,6 +47,7 @@ type CreateFolderDialogProps = {
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter folder name'),
+    pattern: '.*\\S.*',
   }),
 });
 
@@ -71,7 +72,7 @@ export const CreateFolderDialog = ({
   >({
     mutationFn: async (data) => {
       return await foldersApi.create({
-        displayName: data.displayName,
+        displayName: data.displayName.trim(),
         projectId: authenticationSession.getProjectId()!,
       });
     },
