@@ -53,6 +53,8 @@
       ],
       "@activepieces/piece-fathom": [
         "packages/pieces/community/fathom/src/index.ts"
+      "@activepieces/piece-housecall-pro": [
+        "packages/pieces/community/housecall-pro/src/index.ts"
       ]
     },
     "resolveJsonModule": true
