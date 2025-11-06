@@ -1,9 +1,9 @@
-import { BranchCondition, BranchOperator, RouterExecutionType } from '@activepieces/shared'
+import { ValidBranchCondition, BranchOperator, RouterExecutionType } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildRouterWithOneCondition, generateMockEngineConstants } from './test-helper'
 
-function executeBranchActionWithOneCondition(condition: BranchCondition): Promise<FlowExecutorContext> {
+function executeBranchActionWithOneCondition(condition: ValidBranchCondition): Promise<FlowExecutorContext> {
     return flowExecutor.execute({
         action: buildRouterWithOneCondition({
             conditions: [condition],
