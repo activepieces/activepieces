@@ -1,4 +1,4 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { BillingCycle, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -14,6 +14,7 @@ import {
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId,
+    UserStatus,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -26,18 +27,12 @@ import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
-
-
 export const platformService = {
-    async hasAnyPlatforms(): Promise<boolean> {
-        const count = await platformRepo().count()
-        return count > 0
-    },
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
         const users = await userService.getByIdentityId({ identityId: params.identityId })
 
         const platformsWithProjects = await Promise.all(users.map(async (user) => {
-            if (isNil(user.platformId)) {
+            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
                 return null
             }
             const hasProjects = await projectService.userHasProjects({
@@ -79,7 +74,6 @@ export const platformService = {
         }
 
         const savedPlatform = await platformRepo().save(newPlatform)
-
         await userService.addOwnerToPlatform({
             id: ownerId,
             platformId: savedPlatform.id,
@@ -87,7 +81,6 @@ export const platformService = {
 
         return savedPlatform
     },
-
     async getAll(): Promise<Platform[]> {
         return platformRepo().find()
     },
@@ -105,13 +98,8 @@ export const platformService = {
             ...platform.federatedAuthProviders,
             ...(params.federatedAuthProviders ?? {}),
         }
-        const copilotSettings = params.copilotSettings ? {
-            ...platform.copilotSettings,
-            ...params.copilotSettings,
-        } : platform.copilotSettings
         const updatedPlatform: Platform = {
             ...platform,
-            copilotSettings,
             federatedAuthProviders,
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
@@ -138,7 +126,6 @@ export const platformService = {
         }
         return platformRepo().save(updatedPlatform)
     },
-
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
         const platform = await platformRepo().findOneBy({
             id,
@@ -164,11 +151,18 @@ export const platformService = {
         }
         return {
             ...platform,
-            usage: await platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id),
+            usage: await getUsage(platform),
             plan: await getPlan(platform),
         }
     },
-    async getOneWithPlanOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
+    async getOneWithPlanOrThrow(id: PlatformId): Promise<Omit<PlatformWithoutSensitiveData, 'usage'>> {
+        const platform = await this.getOneOrThrow(id)
+        return {
+            ...platform,
+            plan: await getPlan(platform),
+        }
+    },
+    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
@@ -182,7 +176,6 @@ export const platformService = {
         })
     },
 }
-
 
 async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
     const edition = system.getEdition()
@@ -199,6 +192,7 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             ...OPEN_SOURCE_PLAN,
             stripeSubscriptionStartDate: 0,
             stripeSubscriptionEndDate: 0,
+            stripeBillingCycle: BillingCycle.MONTHLY,
         }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
@@ -219,7 +213,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     plan?: Partial<PlatformPlanLimits>
 }
-
 
 type ListPlatformsForIdentityParams = {
     identityId: string

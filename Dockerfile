@@ -1,4 +1,4 @@
-FROM node:18.20.5-bullseye-slim AS base
+FROM node:20.19-bullseye-slim AS base
 
 # Use a cache mount for apt to speed up the process
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         procps && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.15.0
+RUN npm i -g bun@1.3.1 npm@9.9.3 pnpm@9.15.0 pm2@6.0.10 typescript@4.9.4
 
 # Set the locale
 ENV LANG en_US.UTF-8
@@ -31,11 +31,10 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && npm i isolated-vm@5.0.1
+RUN cd /usr/src && bun i isolated-vm@5.0.1
 
 RUN pnpm store add @tsconfig/node18@1.0.0
 RUN pnpm store add @types/node@18.17.1
-
 RUN pnpm store add typescript@4.9.4
 
 ### STAGE 1: Build ###
@@ -44,16 +43,19 @@ FROM base AS build
 # Set up backend
 WORKDIR /usr/src/app
 
-COPY .npmrc package.json package-lock.json ./
-RUN npm ci
+COPY .npmrc package.json bun.lock ./
+RUN bun install
 
 COPY . .
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui
+# Set NX_NO_CLOUD environment variable
+ENV NX_NO_CLOUD=true
+
+RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
+RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
 
 # Install backend production dependencies
-RUN cd dist/packages/server/api && npm install --production --force
+RUN cd dist/packages/server/api && bun install --production --force
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -80,7 +82,7 @@ COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/
 COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
 COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
 
-RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --force
+RUN cd /usr/src/app/dist/packages/server/api/ && bun install --production --force
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages

@@ -62,6 +62,7 @@ export const response = createAction({
         method: HttpMethod.POST,
         url: callbackUrl,
         body: {
+          status: 'success',
           data: response
         },
         retries: 10,

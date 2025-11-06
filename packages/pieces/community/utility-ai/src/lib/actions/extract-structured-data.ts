@@ -1,9 +1,10 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { createAIProvider, MarkdownVariant } from '@activepieces/shared';
-import { aiProps } from '@activepieces/pieces-common';
-import { generateText, tool, LanguageModel, jsonSchema, CoreMessage, CoreUserMessage } from 'ai';
+import { AIUsageFeature, createAIModel } from '@activepieces/common-ai';
+import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
+import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import Ajv from 'ajv';
+import { aiProps } from '@activepieces/common-ai';
 
 export const extractStructuredData = createAction({
 	name: 'extractStructuredData',
@@ -116,7 +117,7 @@ export const extractStructuredData = createAction({
 				};
 			},
 		}),
-		maxTokens: Property.Number({
+		maxOutputTokens: Property.Number({
 			displayName: 'Max Tokens',
 			required: false,
 			defaultValue: 2000,
@@ -124,12 +125,12 @@ export const extractStructuredData = createAction({
 	},
 	async run(context) {
 		const providerName = context.propsValue.provider as string;
-		const modelInstance = context.propsValue.model as LanguageModel;
+		const modelInstance = context.propsValue.model as LanguageModelV2;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
 		const prompt = context.propsValue.prompt;
 		const schema = context.propsValue.schama;
-		const maxTokens = context.propsValue.maxTokens;
+		const maxOutputTokens = context.propsValue.maxOutputTokens;
 
 		if (!text && !files.length) {
 			throw new Error('Please provide text or image/PDF to extract data from.');
@@ -137,11 +138,14 @@ export const extractStructuredData = createAction({
 
 		const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
 		const engineToken = context.server.token;
-		const provider = createAIProvider({
+		const model = createAIModel({
 			providerName,
 			modelInstance,
-			apiKey: engineToken,
+			engineToken,
 			baseURL,
+			metadata: {
+				feature: AIUsageFeature.UTILITY_AI,
+			},
 		});
 
 		let schemaDefinition: any;
@@ -170,8 +174,12 @@ export const extractStructuredData = createAction({
 
 			const properties: Record<string, any> = {};
 			const required: string[] = [];
-			
+
 			fields.forEach((field) => {
+				if (!/^[a-zA-Z0-9_.-]+$/.test(field.name)) {
+					throw new Error(`Invalid field name: ${field.name}. Field names can only contain letters, numbers, underscores, dots and hyphens.`);
+				}
+
 				properties[field.name] = {
 					type: field.type,
 					description: field.description,
@@ -193,18 +201,16 @@ export const extractStructuredData = createAction({
 
 		const extractionTool = tool({
 			description: 'Extract structured data from the provided content',
-			parameters: schemaDefinition,
+			inputSchema: schemaDefinition,
 			execute: async (data) => {
 				return data;
 			},
 		});
 
-		const messages: Array<CoreMessage> = [];
+		const messages: Array<ModelMessage> = [];
 
-		// Prepare content parts array
-		const contentParts: CoreUserMessage['content']= [];
+		const contentParts: UserModelMessage['content']= [];
 
-		// Add the main prompt message
 		let textContent = prompt || 'Extract the following data from the provided data.';
 		if (text) {
 			textContent += `\n\nText to analyze:\n${text}`;
@@ -215,7 +221,6 @@ export const extractStructuredData = createAction({
 			text: textContent,
 		});
 
-		// Handle file processing similar to previous implementation
 		if (files.length > 0) {
 			for (const fileWrapper of files) {
 				const file = fileWrapper.file;
@@ -224,40 +229,47 @@ export const extractStructuredData = createAction({
 				}
 				const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
 
-				if (fileType && fileType.startsWith('image') && file.base64) {
+				if (fileType && fileType.startsWith('image')  && file.base64) {
 					contentParts.push({
 						type: 'image',
 						image: `data:${fileType};base64,${file.base64}`,
 					});
+				} else if (fileType && fileType.startsWith('application/pdf') && file.base64) {
+					contentParts.push({
+                        type: 'file',
+						data: `data:${fileType};base64,${file.base64}`,
+                        mediaType: fileType,
+						filename: file.filename,
+                    });
 				}
 			}
 		}
 
-		// Add the message with all content parts
 		messages.push({
 			role: 'user',
 			content: contentParts,
 		});
 
 		try {
-			// Use Vercel AI SDK to generate text with tool calling
 			const result = await generateText({
-				model: provider,
-				maxTokens,
+				model,
+				maxOutputTokens,
 				tools: {
 					extractData: extractionTool,
 				},
 				toolChoice: 'required',
 				messages,
+				headers: {
+					'Authorization': `Bearer ${engineToken}`,
+				},
 			});
 
-			// Extract the tool call result
 			const toolCalls = result.toolCalls;
 			if (!toolCalls || toolCalls.length === 0) {
 				throw new Error('No structured data could be extracted from the input.');
 			}
 
-			const extractedData = toolCalls[0].args;
+			const extractedData = toolCalls[0].input;
 			return extractedData;
 
 		} catch (error) {

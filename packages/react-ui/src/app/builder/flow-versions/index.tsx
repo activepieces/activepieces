@@ -46,7 +46,7 @@ const FlowVersionsList = () => {
             {flowVersionPage.data.map((flowVersion, index) => (
               <FlowVersionDetailsCard
                 selected={flowVersion.id === selectedFlowVersion?.id}
-                published={flow.publishedVersionId === flowVersion.id}
+                publishedVersionId={flow.publishedVersionId}
                 flowVersion={flowVersion}
                 flowVersionNumber={flowVersionPage.data.length - index}
                 key={flowVersion.id}

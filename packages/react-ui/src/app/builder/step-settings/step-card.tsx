@@ -2,21 +2,18 @@ import React from 'react';
 
 import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
   isNil,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
-import { EditAgentInFlowBuilderButton } from './edit-agent-inside-flow-builder-button';
-
 type StepCardProps = {
-  step: Action | Trigger;
+  step: FlowAction | FlowTrigger;
 };
 
 const StepCard: React.FC<StepCardProps> = ({ step }) => {
@@ -25,8 +22,8 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
   });
 
   const isPiece =
-    stepMetadata?.type === ActionType.PIECE ||
-    stepMetadata?.type === TriggerType.PIECE;
+    stepMetadata?.type === FlowActionType.PIECE ||
+    stepMetadata?.type === FlowTriggerType.PIECE;
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
@@ -37,7 +34,6 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
         actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
       }`
     : null;
-  const agentId = stepUtils.getAgentId(step);
 
   return (
     <div className="flex items-center justify-center gap-4 min-h-[48px]">
@@ -70,7 +66,6 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           </div>
         </div>
         <div className="flex  items-center gap-2">
-          {agentId && <EditAgentInFlowBuilderButton agentId={agentId} />}
           {pieceVersion && (
             <div className="text-xs text-muted-foreground flex justify-center items-center">
               v{pieceVersion}

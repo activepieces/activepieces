@@ -1,5 +1,4 @@
 {
-  "Google Gemini": "Google Gemini",
   "Use the new Gemini models from Google": "Use the new Gemini models from Google",
   "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://makersuite.google.com/app/apikey\n2. Once on the website, locate and click on the option to obtain your API Key.\nPlease note this piece uses a API in the beta phase that may change at any time.\n": "\nFollow these instructions to get your API Key:\n1. Visit the following website: https://makersuite.google.com/app/apikey\n2. Once on the website, locate and click on the option to obtain your API Key.\nPlease note this piece uses a API in the beta phase that may change at any time.\n",
   "Generate Content": "Generate Content",
@@ -18,6 +17,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The prompt to generate content from.": "The prompt to generate content from.",
@@ -25,6 +25,7 @@
   "The image to generate content from.": "The image to generate content from.",
   "A memory key that will keep the chat history. Keep it empty to leave Gemini without memory of previous messages.": "A memory key that will keep the chat history. Keep it empty to leave Gemini without memory of previous messages.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

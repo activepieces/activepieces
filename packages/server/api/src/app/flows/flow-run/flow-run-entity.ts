@@ -2,6 +2,7 @@ import {
     File,
     Flow,
     FlowRun,
+    FlowVersion,
     Project,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
@@ -17,6 +18,7 @@ import {
 type FlowRunSchema = FlowRun & {
     project: Project
     flow: Flow
+    flowVersion: FlowVersion
     logsFile: File
 }
 
@@ -31,12 +33,18 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
             nullable: true,
         },
-        flowDisplayName: {
-            type: String,
-        },
         logsFileId: { 
             ...ApIdSchema, 
             nullable: true,
+        },
+        parentRunId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        failParentOnFailure: {
+            type: Boolean,
+            nullable: false,
+            default: true,
         },
         status: {
             type: String,
@@ -47,10 +55,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             nullable: true,
         },
         duration: {
-            nullable: true,
-            type: Number,
-        },
-        tasks: {
             nullable: true,
             type: Number,
         },
@@ -66,6 +70,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             nullable: true,
         },
         failedStepName: {
+            type: String,
+            nullable: true,
+        },
+        stepNameToTest: {
             type: String,
             nullable: true,
         },
@@ -99,6 +107,14 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             name: 'idx_flow_run_flow_failed_step',
             columns: ['flowId', 'failedStepName'],
         },
+        {
+            name: 'idx_run_parent_run_id',
+            columns: ['parentRunId'],
+        },
+        {
+            name: 'idx_run_flow_version_id',
+            columns: ['flowVersionId'],
+        },
     ],
     relations: {
         project: {
@@ -119,6 +135,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             joinColumn: {
                 name: 'flowId',
                 foreignKeyConstraintName: 'fk_flow_run_flow_id',
+            },
+        },
+        flowVersion: {
+            type: 'many-to-one',
+            target: 'flow_version',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'flowVersionId',
+                foreignKeyConstraintName: 'fk_flow_run_flow_version_id',
             },
         },
         logsFile: {

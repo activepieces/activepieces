@@ -16,10 +16,11 @@ export const getCustomer = createAction({
     }),
   },
   async run(context) {
-    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } = context.auth;
+    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
+      context.auth;
     const { customerId } = context.propsValue;
 
-    const baseUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/customer/${customerId}`;
+    const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/customer/${customerId}`;
     const httpMethod = HttpMethod.GET;
 
     const authHeader = createOAuthHeader(
@@ -28,20 +29,20 @@ export const getCustomer = createAction({
       consumerSecret,
       tokenId,
       tokenSecret,
-      baseUrl,
+      requestUrl,
       httpMethod
     );
 
     const response = await httpClient.sendRequest({
       method: httpMethod,
-      url: baseUrl,
+      url: requestUrl,
       headers: {
         Authorization: authHeader,
-        'prefer': 'transient',
-        'Cookie': 'NS_ROUTING_VERSION=LAGGING',
+        prefer: 'transient',
+        Cookie: 'NS_ROUTING_VERSION=LAGGING',
       },
     });
 
     return response.body;
   },
-}); 
+});

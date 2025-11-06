@@ -3,7 +3,7 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/lib/piece-selector-utils';
 import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { ActionType, TriggerType } from '@activepieces/shared';
+import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
   hidePieceIconAndDescription: boolean;
@@ -12,7 +12,10 @@ type GenericActionOrTriggerItemProps = {
 };
 
 const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
-  if (item.type === ActionType.PIECE || item.type === TriggerType.PIECE) {
+  if (
+    item.type === FlowActionType.PIECE ||
+    item.type === FlowTriggerType.PIECE
+  ) {
     return {
       displayName: item.actionOrTrigger.displayName,
       description: item.actionOrTrigger.description,
@@ -39,6 +42,7 @@ const GenericActionOrTriggerItem = ({
     : {
         minHeight: '54px',
       };
+  const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
   return (
     <CardListItem
       className={cn('p-2 w-full ', {
@@ -61,12 +65,12 @@ const GenericActionOrTriggerItem = ({
           />
         </div>
         <div className="flex flex-col gap-0.5">
-          <div className="text-sm">
-            {getPieceSelectorItemInfo(item).displayName}
-          </div>
+          <div className="text-sm">{pieceSelectorItemInfo.displayName}</div>
           {!hidePieceIconAndDescription && (
             <div className="text-xs text-muted-foreground">
-              {getPieceSelectorItemInfo(item).description}
+              {pieceSelectorItemInfo.description.endsWith('.')
+                ? pieceSelectorItemInfo.description.slice(0, -1)
+                : pieceSelectorItemInfo.description}
             </div>
           )}
         </div>

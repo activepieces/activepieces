@@ -25,8 +25,10 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     isFetching,
   } = projectHooks.useSwitchToProjectInParams();
+
   const { checkAccess } = useAuthorization();
-  if (isNil(projectIdFromParams) || isNil(projectIdFromParams)) {
+
+  if (isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
   const failedToSwitchToProject =
@@ -76,7 +78,6 @@ const RedirectToCurrentProjectRoute: React.FC<
   const pathWithParamsAndSearchParams = `${pathWithParams}${
     searchParamsString ? `?${searchParamsString}` : ''
   }`;
-
   return (
     <Navigate
       to={`/projects/${currentProjectId}${pathWithParamsAndSearchParams}`}
@@ -115,9 +116,6 @@ export const ProjectRouterWrapper = ({
 ];
 
 export const projectSettingsRoutes = {
-  general: '/settings/general',
-  team: '/settings/team',
   pieces: '/settings/pieces',
   environments: '/settings/environments',
-  alerts: '/settings/alerts',
 } as const;

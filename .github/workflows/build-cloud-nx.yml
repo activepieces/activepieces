@@ -5,22 +5,29 @@ on:
 permissions:
   actions: read
   contents: read
+  
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
 jobs:
   main:
     runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'npm'
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-      - run: npm ci
+   
+      - run: bun install
 
       - run: npx nx reset 
 
@@ -50,30 +57,48 @@ jobs:
           echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
 
       - name: Lint affected projects excluding pieces
-        run: npx nx affected --target=lint --exclude="pieces-*" --agents --parallel
+        run: npx nx affected --target=lint --exclude="pieces-*"
+      
       - name: Lint changed pieces projects
         if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
+        run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
       
       - name: Lint all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx nx run-many --target=lint --projects="pieces-*" --agents --parallel
+        run: npx nx run-many --target=lint --projects="pieces-*"
         
       - name: Build affected projects excluding pieces
-        run: npx nx affected --target=build -c production --exclude="pieces-*" --agents --parallel
+        run: npx nx affected --target=build -c production --exclude="pieces-*"
     
       - name: Build changed pieces projects
         if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
+        run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
       
       - name: Build all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx nx run-many --target=build -c production --projects="pieces-*" --agents --parallel
-        
+        run: npx nx run-many --target=build -c production --projects="pieces-*"
+      
       - name: Run all tests in parallel
         run: |
-          npx nx run-many --target=test --projects=engine,shared --agents --parallel &
+          set -euo pipefail
+          pids=()
+
+          npx nx run-many --target=test --projects=engine,shared &
+          pids+=($!)
+
           npx nx run server-api:test-ce &
+          pids+=($!)
+
           npx nx run server-api:test-ee &
+          pids+=($!)
+
           npx nx run server-api:test-cloud &
-          wait
+          pids+=($!)
+
+          status=0
+          for pid in "${pids[@]}"; do
+            if ! wait "$pid"; then
+              status=1
+            fi
+          done
+          exit $status

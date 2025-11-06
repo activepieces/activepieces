@@ -122,21 +122,21 @@ export const tablesCommon = {
 
         switch (field.type) {
           case FieldType.NUMBER:
-            fields[field.id] = Property.Number({
+            fields[field.externalId] = Property.Number({
               displayName: field.name,
               description,
               required: false,
             });
             break;
           case FieldType.DATE:
-            fields[field.id] = Property.DateTime({
+            fields[field.externalId] = Property.DateTime({
               displayName: field.name,
               description,
               required: false,
             });
             break;
           case FieldType.STATIC_DROPDOWN:
-            fields[field.id] = Property.StaticDropdown({
+            fields[field.externalId] = Property.StaticDropdown({
               displayName: field.name,
               description,
               defaultValue:'',
@@ -147,7 +147,7 @@ export const tablesCommon = {
             });
             break;
           default:
-            fields[field.id] = Property.ShortText({
+            fields[field.externalId] = Property.ShortText({
               displayName: field.name,
               description,
               required: false,

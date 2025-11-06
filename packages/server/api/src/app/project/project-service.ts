@@ -1,3 +1,4 @@
+import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -6,7 +7,6 @@ import {
     ErrorCode,
     isNil,
     Metadata,
-    NotificationStatus,
     PlatformRole,
     PlatformUsageMetric,
     Project,
@@ -16,6 +16,7 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { distributedStore } from '../database/redis-connections'
 import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
@@ -36,18 +37,20 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
+            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
+        if (!isNil(params.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        }
         return savedProject
     },
     async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {
         return projectRepo().findOneBy({
             ownerId: params.ownerId,
             platformId: params.platformId,
-            deleted: IsNull(),
         })
     },
 
@@ -58,7 +61,6 @@ export const projectService = {
 
         return projectRepo().findOneBy({
             id: projectId,
-            deleted: IsNull(),
         })
     },
 
@@ -69,7 +71,6 @@ export const projectService = {
             },
             where: {
                 platformId,
-                deleted: IsNull(),
             },
         })
 
@@ -83,14 +84,13 @@ export const projectService = {
         await projectRepo().update(
             {
                 id: projectId,
-                deleted: IsNull(),
             },
             {
                 ...spreadIfDefined('externalId', externalId),
                 ...spreadIfDefined('displayName', request.displayName),
-                ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
+                ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -162,7 +162,6 @@ export const projectService = {
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
             id: projectId,
-            deleted: IsNull(),
         }
 
         const update = {
@@ -179,7 +178,6 @@ export const projectService = {
         return projectRepo().findOneBy({
             platformId,
             externalId,
-            deleted: IsNull(),
         })
     },
 }
@@ -193,7 +191,6 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     if (isPrivilegedUser) {
         // Platform admins and operators can see all projects in their platform
         return [{
-            deleted: IsNull(),
             platformId: params.platformId,
             ...displayNameFilter,
         }]
@@ -207,7 +204,6 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     
     // Regular members can only see projects they're members of
     return [{
-        deleted: IsNull(),
         platformId: params.platformId,
         id: In(projectIds),
         ...displayNameFilter,
@@ -218,7 +214,6 @@ async function assertExternalIdIsUnique(externalId: string | undefined | null, p
         const externalIdAlreadyExists = await projectRepo().existsBy({
             id: Not(projectId),
             externalId,
-            deleted: IsNull(),
         })
 
         if (externalIdAlreadyExists) {
@@ -252,9 +247,9 @@ type ExistsParams = {
 type UpdateParams = {
     displayName?: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
     metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type CreateParams = {
@@ -262,8 +257,8 @@ type CreateParams = {
     displayName: string
     platformId: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type GetByPlatformIdAndExternalIdParams = {

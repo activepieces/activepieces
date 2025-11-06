@@ -1,5 +1,4 @@
 {
-  "Stability AI": "Stability AI",
   "Generative AI video model based on the image model Stable Diffusion.": "Generative AI video model based on the image model Stable Diffusion.",
   "API Key": "API Key",
   "Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key": "Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key",
@@ -21,6 +20,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The text to transform in image.": "The text to transform in image.",
@@ -31,6 +31,7 @@
   "Number of diffusion steps to run (MIN:10; MAX:150)": "Number of diffusion steps to run (MIN:10; MAX:150)",
   "Pass in a style preset to guide the image model towards a particular style.": "Pass in a style preset to guide the image model towards a particular style.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "NONE": "NONE",
   "FAST_BLUE": "FAST_BLUE",
   "FAST_GREEN": "FAST_GREEN",

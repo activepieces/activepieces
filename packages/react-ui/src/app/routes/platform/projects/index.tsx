@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { EditProjectDialog } from '@/app/routes/platform/projects/edit-project-dialog';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,13 +24,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
+import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { isNil, ProjectWithLimits } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../components/custom/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -52,22 +51,6 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     },
   },
   {
-    accessorKey: 'tasks',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Used Tasks')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-          {row.original.plan.tasks
-            ? formatUtils.formatNumber(row.original.plan.tasks)
-            : t('Unlimited')}
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: 'ai-tokens',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
@@ -76,7 +59,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       return (
         <div className="text-left">
           {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
-          {row.original.plan.aiCredits
+          {!isNil(row.original.plan.aiCredits)
             ? formatUtils.formatNumber(row.original.plan.aiCredits)
             : '-'}
         </div>
@@ -178,13 +161,7 @@ export default function ProjectsPage() {
     onSuccess: () => {
       refetch();
     },
-    onError: (error) => {
-      toast({
-        title: t('Error'),
-        description: errorToastMessage(error),
-        duration: 3000,
-      });
-    },
+    onError: () => {},
   });
 
   const columnsWithCheckbox: ColumnDef<
@@ -335,21 +312,6 @@ export default function ProjectsPage() {
           );
         },
       },
-      {
-        render: () => {
-          return (
-            <NewProjectDialog onCreate={() => refetch()}>
-              <Button
-                size="sm"
-                className="flex items-center justify-center gap-2"
-              >
-                <Plus className="size-4" />
-                {t('New Project')}
-              </Button>
-            </NewProjectDialog>
-          );
-        },
-      },
     ],
     [selectedRows, currentProject, bulkDeleteMutation],
   );
@@ -383,7 +345,6 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
-                    tasks: row.plan?.tasks?.toString() ?? '',
                     aiCredits: row.plan?.aiCredits?.toString() ?? '',
                   });
                   setEditDialogProjectId(row.id);
@@ -411,11 +372,20 @@ export default function ProjectsPage() {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
     >
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row">
-          <TableTitle description={t('Manage your automation projects')}>
-            {t('Projects')}
-          </TableTitle>
-        </div>
+        <DashboardPageHeader
+          title={t('Projects')}
+          description={t('Manage your automation projects')}
+        >
+          <NewProjectDialog onCreate={() => refetch()}>
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              <Plus className="size-4" />
+              {t('New Project')}
+            </Button>
+          </NewProjectDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No projects found')}
           emptyStateTextDescription={t(
@@ -431,7 +401,6 @@ export default function ProjectsPage() {
               type: 'input',
               title: t('Name'),
               accessorKey: 'displayName',
-              options: [],
               icon: CheckIcon,
             },
           ]}

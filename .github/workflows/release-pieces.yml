@@ -9,6 +9,13 @@ on:
       - 'packages/pieces/**'
       - 'packages/shared/**'
 
+concurrency:
+  group: release-pieces
+  cancel-in-progress: false
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  
 jobs:
   Release-Pieces:
     if: github.repository == 'activepieces/activepieces'
@@ -22,40 +29,71 @@ jobs:
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: bun-
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: build packages
-        run: npx nx run-many --target=build
+        run: bun install
 
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
       - name: publish shared package
-        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
+        run: npx nx run-many --target=build --projects=shared && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
 
       - name: publish pieces-common package
-        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
+        run: npx nx run-many --target=build --projects=common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+
       - name: publish pieces-framework package
-        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
+        run: npx nx run-many --target=build --projects=pieces-framework && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+
+      - name: publish common-ai package
+        run: npx nx run-many --target=build --projects=common-ai && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common-ai
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}          
+          
+      - name: build packages
+        run: npx nx run-many --target=build
 
       - name: publish pieces packages
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+
+      - name: Check available memory
+        run: free -h
+
       - name: update pieces metadata
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/community/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
+          NODE_OPTIONS: "--max-old-space-size=8192"
+
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚨 **Release Pieces Workflow Failed** 🚨\\n\\n**Repository:** ${{ github.repository }}\\n**Branch:** ${{ github.ref_name }}\\n**Commit:** ${{ github.sha }}\\n**Action URL:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\nThe release pieces workflow has failed. Please check the logs for more details.\"}" \
+            ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}

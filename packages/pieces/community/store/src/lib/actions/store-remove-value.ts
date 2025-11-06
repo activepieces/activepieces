@@ -1,11 +1,35 @@
 import {
+  ActionContext,
   createAction,
+  PieceAuthProperty,
   Property,
+  ShortTextProperty,
+  StaticDropdownProperty,
   StoreScope,
 } from '@activepieces/pieces-framework';
-import { common, getScopeAndKey } from './common';
+import { common, getScopeAndKey, PieceStoreScope } from './common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+
+async function executeStorageRemoveValue(context: ActionContext<PieceAuthProperty, {
+  key: ShortTextProperty<true>;
+  store_scope: StaticDropdownProperty<PieceStoreScope, true>;
+}>, isTestMode = false) {
+  await propsValidation.validateZod(context.propsValue, {
+    key: z.string().max(128),
+  });
+
+  const { key, scope } = getScopeAndKey({
+    runId: context.run.id,
+    key: context.propsValue['key'],
+    scope: context.propsValue.store_scope,
+    isTestMode,
+  });
+  await context.store.delete(key, scope);
+  return {
+    success: true,
+  };
+}
 
 export const storageRemoveValue = createAction({
   name: 'remove_value',
@@ -27,18 +51,9 @@ export const storageRemoveValue = createAction({
     store_scope: common.store_scope,
   },
   async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      key: z.string().max(128),
-    });
-
-    const { key, scope } = getScopeAndKey({
-      runId: context.run.id,
-      key: context.propsValue['key'],
-      scope: context.propsValue.store_scope,
-    });
-    await context.store.delete(key, scope);
-    return {
-      success: true,
-    };
+    return await executeStorageRemoveValue(context, false);
+  },
+  async test(context) {
+    return await executeStorageRemoveValue(context, true);
   },
 });

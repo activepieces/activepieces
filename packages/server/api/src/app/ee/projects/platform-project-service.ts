@@ -17,10 +17,11 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, ILike, In } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -31,7 +32,6 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { platformUsageService } from '../platform/platform-usage-service'
-import { platformProjectSideEffects } from './platform-project-side-effects'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
@@ -66,7 +66,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        tasks: request.plan.tasks ?? null,
                         aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
@@ -81,36 +80,35 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         return enrichProject(
             await projectRepo().findOneByOrFail({
                 id: projectId,
-                deleted: IsNull(),
             }),
             log,
         )
     },
 
-    async softDelete({ id, platformId }: SoftDeleteParams): Promise<void> {
+
+    async hardDelete({ id, platformId }: HardDeleteParams): Promise<void> {
         await transaction(async (entityManager) => {
             await assertAllProjectFlowsAreDisabled({
                 projectId: id,
                 entityManager,
             }, log)
 
-            await softDeleteOrThrow({
+            const allFlows = await flowRepo(entityManager).find({
+                where: {
+                    projectId: id,
+                },
+                select: {
+                    id: true,
+                },
+            })
+            await Promise.all(allFlows.map((flow) => flowService(log).delete({ id: flow.id, projectId: id })))
+            await appConnectionService(log).deleteAllProjectConnections(id)
+            await projectRepo().delete({
                 id,
                 platformId,
-                entityManager,
-            })
-
-            await platformProjectSideEffects(log).onSoftDelete({
-                id,
             })
         })
-    },
 
-    async hardDelete({ id }: HardDeleteParams): Promise<void> {
-        await projectRepo().delete({
-            id,
-        })
-        await appConnectionService(log).deleteAllProjectConnections(id)
     },
 })
 
@@ -129,7 +127,6 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
     const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
     const filters = {
         platformId: Equal(platformId),
-        deleted: IsNull(),
         ...spreadIfDefined('externalId', externalId),
         ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
@@ -177,7 +174,10 @@ async function enrichProject(
         .createQueryBuilder('project_member')
         .leftJoin('user', 'user', 'user.id = project_member."userId"')
         .groupBy('user.id')
-        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
+        .where('user.status = :activeStatus and project_member."projectId" = :projectId', {
+            activeStatus: UserStatus.ACTIVE,
+            projectId: project.id,
+        })
         .getCount()
 
     const totalFlows = await flowService(log).count({
@@ -193,7 +193,6 @@ async function enrichProject(
     const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
 
     const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
-    const projectTasksUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'tasks', startDate, endDate })
     const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
@@ -202,7 +201,6 @@ async function enrichProject(
         ),
         usage: {
             aiCredits: projectAICreditUsage,
-            tasks: projectTasksUsage,
             nextLimitResetDate: endDate,
         },
         analytics: {
@@ -236,41 +234,10 @@ const assertAllProjectFlowsAreDisabled = async (
     }
 }
 
-const softDeleteOrThrow = async ({
-    id,
-    platformId,
-    entityManager,
-}: SoftDeleteOrThrowParams): Promise<void> => {
-    const deleteResult = await projectRepo(entityManager).softDelete({
-        id,
-        platformId,
-        deleted: IsNull(),
-    })
-
-    if (deleteResult.affected !== 1) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                entityId: id,
-                entityType: 'project',
-            },
-        })
-    }
-}
-
 type UpdateParams = {
     projectId: ProjectId
     request: UpdateProjectPlatformRequest
     platformId?: PlatformId
-}
-
-type SoftDeleteParams = {
-    id: ProjectId
-    platformId: PlatformId
-}
-
-type SoftDeleteOrThrowParams = SoftDeleteParams & {
-    entityManager: EntityManager
 }
 
 type AssertAllProjectFlowsAreDisabledParams = {
@@ -280,4 +247,5 @@ type AssertAllProjectFlowsAreDisabledParams = {
 
 type HardDeleteParams = {
     id: ProjectId
+    platformId: PlatformId
 }

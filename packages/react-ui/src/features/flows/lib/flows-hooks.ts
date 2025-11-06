@@ -1,8 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useSocket } from '@/components/socket-provider';
 import { toast } from '@/components/ui/use-toast';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
@@ -12,22 +14,29 @@ import { downloadFile } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
+  FlowRun,
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
   ListFlowsRequest,
   PopulatedFlow,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
 
+const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
 export const flowsHooks = {
+  invalidateFlowsQuery: (queryClient: QueryClient) => {
+    queryClient.invalidateQueries({
+      queryKey: createFlowsQueryKey(authenticationSession.getProjectId()!),
+    });
+  },
   useFlows: (request: Omit<ListFlowsRequest, 'projectId'>) => {
     return useQuery({
-      queryKey: ['flows', authenticationSession.getProjectId()],
+      queryKey: createFlowsQueryKey(authenticationSession.getProjectId()!),
       queryFn: async () => {
         return await flowsApi.list({
           ...request,
@@ -74,6 +83,12 @@ export const flowsHooks = {
         setIsPublishing(false);
       },
       onError: (err: Error) => {
+        toast({
+          title: t('Error'),
+          description: t('Failed to publish flow, please contact support.'),
+          variant: 'destructive',
+        });
+        console.error('Failed to publish flow', err);
         setIsPublishing(false);
       },
     });
@@ -162,13 +177,13 @@ export const flowsHooks = {
           stepName: 'trigger',
           pieceSelectorItem: {
             actionOrTrigger: trigger,
-            type: TriggerType.PIECE,
+            type: FlowTriggerType.PIECE,
             pieceMetadata: stepUtils.mapPieceToMetadata({
               piece: mcpPiece,
               type: 'trigger',
             }),
           },
-        }) as Trigger;
+        }) as FlowTrigger;
         await flowsApi.update(flow.id, {
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData,
@@ -192,6 +207,25 @@ export const flowsHooks = {
         }
       },
       staleTime: 0,
+    });
+  },
+  useTestFlow: ({
+    flowVersionId,
+    onUpdateRun,
+  }: {
+    flowVersionId: string;
+    onUpdateRun: (run: FlowRun) => void;
+  }) => {
+    const socket = useSocket();
+    return useMutation<void>({
+      mutationFn: () =>
+        flowRunsApi.testFlow(
+          socket,
+          {
+            flowVersionId,
+          },
+          onUpdateRun,
+        ),
     });
   },
 };

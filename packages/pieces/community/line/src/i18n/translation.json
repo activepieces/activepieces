@@ -1,5 +1,4 @@
 {
-  "Line Bot": "Line Bot",
   "Build chatbots for LINE": "Build chatbots for LINE",
   "Push Message": "Push Message",
   "Custom API Call": "Custom API Call",
@@ -11,10 +10,12 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The user id can be obtained from the webhook payload": "The user id can be obtained from the webhook payload",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "GET": "GET",
   "POST": "POST",
   "PATCH": "PATCH",

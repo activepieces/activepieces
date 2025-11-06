@@ -1,5 +1,5 @@
 
-import { PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_REGEX, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,11 +7,11 @@ import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
+import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './helper/local-piece-cache'
 import { PieceMetadataService } from './piece-metadata-service'
 import { pieceListUtils } from './utils'
@@ -39,13 +39,28 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
                 }
             })
             const piecesWithTags = await enrichTags(params.platformId, latestVersionOfEachPiece, params.includeTags)
+            const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, params.locale))
             const filteredPieces = await pieceListUtils.filterPieces({
                 ...params,
-                pieces: piecesWithTags,
+                pieces: translatedPieces,
                 suggestionType: params.suggestionType,
             })
-            const translatedPieces = filteredPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataModel>(piece, params.locale))
-            return toPieceMetadataModelSummary(translatedPieces, piecesWithTags, params.suggestionType)
+
+            return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
+        },
+        async registry(params): Promise<PiecePackageInformation[]> {
+            const allPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
+                release: params.release,
+                projectId: undefined,
+                platformId: params.platformId,
+                log,
+            })
+            return allPieces.map((piece) => {
+                return {
+                    name: piece.name,
+                    version: piece.version,
+                }
+            })
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)

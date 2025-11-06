@@ -2,19 +2,16 @@ import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
+import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateSubscriptionParams,
 } from '@activepieces/ee-shared';
-import {
-  ApErrorParams,
-  ErrorCode,
-  ListAICreditsUsageRequest,
-} from '@activepieces/shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 
@@ -109,26 +106,6 @@ export const billingMutations = {
           variant: 'default',
           duration: 5000,
         });
-      },
-    });
-  },
-  useStartTrial: () => {
-    return useMutation({
-      mutationFn: () => platformBillingApi.startTrial(),
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.VALIDATION) {
-            toast({
-              title: t('Starting trial failed'),
-              description: t(apError.params.message),
-              variant: 'default',
-              duration: 5000,
-            });
-            return;
-          }
-        }
-        toast(INTERNAL_ERROR_TOAST);
       },
     });
   },

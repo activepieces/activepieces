@@ -1,5 +1,5 @@
 import { insertAt } from '../../common'
-import { ActionType, RouterAction } from '../actions/action'
+import { FlowActionType, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { AddBranchRequest } from '.'
@@ -7,7 +7,7 @@ import { AddBranchRequest } from '.'
 
 function _addBranch(flowVersion: FlowVersion, request: AddBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.name !== request.stepName || parentStep.type !== ActionType.ROUTER) {
+        if (parentStep.name !== request.stepName || parentStep.type !== FlowActionType.ROUTER) {
             return parentStep
         }
         const routerAction = parentStep as RouterAction

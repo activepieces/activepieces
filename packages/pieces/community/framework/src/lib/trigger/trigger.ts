@@ -3,15 +3,11 @@ import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../con
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
-import { isNil, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
+import { isNil, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
+export { TriggerStrategy }
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
 
-export enum TriggerStrategy {
-  POLLING = 'POLLING',
-  WEBHOOK = 'WEBHOOK',
-  APP_WEBHOOK = "APP_WEBHOOK",
-}
 
 
 export enum WebhookRenewStrategy {

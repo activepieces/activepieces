@@ -62,7 +62,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 
 const DeleteRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         permission: Permission.WRITE_PROJECT_RELEASE,
     },
     schema: {
@@ -79,7 +79,7 @@ const DeleteRepoRequestSchema = {
 
 const PushRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         permission: Permission.WRITE_PROJECT_RELEASE,
     },
     schema: {

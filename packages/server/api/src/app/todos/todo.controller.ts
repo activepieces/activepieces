@@ -63,7 +63,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             socket: app.io,
         })
     })
-    
+
     app.all('/:id/resolve', RequestResolveTodoRequest, async (request) => {
         const { id } = request.params
         const { status, isTest } = request.query
@@ -101,7 +101,7 @@ const DeleteTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
@@ -114,7 +114,7 @@ const ListTodoAssigneesRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
 
 }
@@ -134,7 +134,7 @@ const CreateTodoRequest = {
         body: CreateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.ENGINE] as const,
     },
 }
 
@@ -157,7 +157,7 @@ const GetTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE] as const,
     },
 }
 
@@ -169,6 +169,6 @@ const UpdateTodoRequest = {
         body: UpdateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }

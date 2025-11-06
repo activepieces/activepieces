@@ -10,9 +10,14 @@ export enum FileType {
     PACKAGE_ARCHIVE = 'PACKAGE_ARCHIVE',
     FLOW_STEP_FILE = 'FLOW_STEP_FILE',
     SAMPLE_DATA = 'SAMPLE_DATA',
+    /* 
+    @deprecated activepieces no longer stores trigger payload 
+    */
+    TRIGGER_PAYLOAD = 'TRIGGER_PAYLOAD',
     SAMPLE_DATA_INPUT = 'SAMPLE_DATA_INPUT',
     TRIGGER_EVENT_FILE = 'TRIGGER_EVENT_FILE',
     PROJECT_RELEASE = 'PROJECT_RELEASE',
+    FLOW_VERSION_BACKUP = 'FLOW_VERSION_BACKUP',
 }
 export enum FileCompression {
     NONE = 'NONE',

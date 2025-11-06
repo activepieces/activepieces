@@ -165,8 +165,13 @@ activepieces:
   maxFileSizeMb: ""
   sandboxMemoryLimit: ""
   sandboxPropagatedEnvVars: ""
-  triggerFailuresThreshold: ""
   engineExecutablePath: "dist/packages/engine/main.js"
+
+  # OpenTelemetry Configuration
+  otel:
+    enabled: false
+    exporterOtlpEndpoint: ""
+    exporterOtlpHeaders: ""
 
 postgresql:
   enabled: true

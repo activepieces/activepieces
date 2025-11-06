@@ -5,10 +5,11 @@
   "projectType": "library",
   "release": {
     "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/{projectRoot}",
-        "currentVersionResolver": "git-tag"
-      }
+      "currentVersionResolver": "git-tag",
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ]
     }
   },
   "tags": [],
@@ -34,32 +35,10 @@
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       },
-      "dependsOn": ["prebuild", "^build"]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/mailchain",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-mailchain:prebuild",
-          "nx run pieces-mailchain:build",
-          "nx run pieces-mailchain:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/mailchain",
-        "command": "npm install"
-      }
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "nx-release-publish": {
       "options": {
@@ -70,6 +49,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/mailchain",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   }

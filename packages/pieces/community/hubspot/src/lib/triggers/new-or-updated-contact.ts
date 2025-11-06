@@ -19,7 +19,7 @@ const polling: Polling<
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];

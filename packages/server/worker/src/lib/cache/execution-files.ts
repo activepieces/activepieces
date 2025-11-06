@@ -1,23 +1,21 @@
 import path from 'path'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH, GLOBAL_CODE_CACHE_PATH, PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
+import { fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
 import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceManager } from '../piece-manager'
-import { CodeArtifact } from '../runner/engine-runner-types'
+import { pieceManager } from '../cache/pieces'
+import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './worker-cache'
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
 
-    getCustomPiecesPath(params: { projectId: string } | { platformId: string }): string {
-        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED) {
-            if ('projectId' in params) {
-                return path.resolve(GLOBAL_CACHE_PATH, 'custom_pieces', params.projectId)
-            }
-            return path.resolve(GLOBAL_CACHE_PATH, 'custom_pieces', params.platformId)
+    getCustomPiecesPath(params: { platformId: string }): string {
+        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
+            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', params.platformId)
         }
-        return GLOBAL_CACHE_PATH
+        return GLOBAL_CACHE_PATH_LATEST_VERSION
     },
     async provision({
         pieces,
@@ -27,10 +25,10 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const startTime = performance.now()
 
         const source = workerMachine.getSettings().PIECES_SOURCE as PiecesSource
-        await threadSafeMkdir(GLOBAL_CACHE_PATH)
+        await fileSystemUtils.threadSafeMkdir(GLOBAL_CACHE_PATH_LATEST_VERSION)
 
         const startTimeCode = performance.now()
-        await threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
+        await fileSystemUtils.threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
         // This is sequential to ensure the worker machine is not overloaded
         for (const artifact of codeSteps) {
             await codeBuilder(log).processCodeStep({
@@ -45,12 +43,13 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         }, 'Installed code in sandbox')
 
         const startTimeEngine = performance.now()
-        await engineInstaller(log).install({
+        const { cacheHit } = await engineInstaller(log).install({
             path: GLOBAL_CACHE_COMMON_PATH,
         })
         log.info({
             path: GLOBAL_CACHE_COMMON_PATH,
             timeTaken: `${Math.floor(performance.now() - startTimeEngine)}ms`,
+            cacheHit,
         }, 'Installed engine in sandbox')
 
         const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
@@ -71,7 +70,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const customPieces = pieces.filter(f => f.pieceType === PieceType.CUSTOM)
         if (customPieces.length > 0) {
             const startTime = performance.now()
-            await threadSafeMkdir(customPiecesPath)
+            await fileSystemUtils.threadSafeMkdir(customPiecesPath)
             await pieceManager(source).install({
                 projectPath: customPiecesPath,
                 pieces: customPieces,

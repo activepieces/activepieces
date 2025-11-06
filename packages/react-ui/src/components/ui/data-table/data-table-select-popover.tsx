@@ -39,7 +39,7 @@ const DataTableSelectPopover = ({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button variant="outline" className="border-dashed">
           <ListFilterIcon className="mr-2 size-4" />
           {title}
           {selectedValues?.size > 0 && (

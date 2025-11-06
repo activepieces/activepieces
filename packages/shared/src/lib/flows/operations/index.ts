@@ -5,7 +5,7 @@ import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceAction
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
+import { EmptyTrigger, FlowTrigger, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -15,7 +15,6 @@ import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
-import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
 import { _moveBranch } from './move-branch'
 import { _getOperationsForPaste } from './paste-operations'
@@ -96,7 +95,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: Trigger,
+    trigger: FlowTrigger,
     schemaVersion: Nullable(Type.String()),
 })
 
@@ -420,13 +419,7 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
-                const migratedFlow = flowMigrations.apply({
-                    ...clonedVersion,
-                    trigger: operation.request.trigger,
-                    displayName: operation.request.displayName,
-                    schemaVersion: operation.request.schemaVersion,
-                })
-                const operations = _importFlow(clonedVersion, migratedFlow)
+                const operations = _importFlow(clonedVersion, operation.request)
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })

@@ -1,4 +1,5 @@
-import { AIProviderWithoutSensitiveData, CreateAIProviderRequest, PrincipalType, SeekPage } from '@activepieces/shared'
+import { AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
+import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'
@@ -21,7 +22,7 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAIProviders = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
     },
     schema: {
         response: {
@@ -32,7 +33,7 @@ const ListAIProviders = {
 
 const CreateAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         body: CreateAIProviderRequest,
@@ -41,7 +42,7 @@ const CreateAIProvider = {
 
 const DeleteAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({

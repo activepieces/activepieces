@@ -1,0 +1,20 @@
+{
+  "Delay": "Задержка",
+  "Use it to delay the execution of the next action": "Используйте его для задержки выполнения следующего действия",
+  "Delay For": "Задержка на",
+  "Delay Until": "Задержка до",
+  "Delays the execution of the next action for a given duration": "Задержка выполнения следующего действия на заданную длительность",
+  "Delays the execution of the next action until a given timestamp": "Задержка выполнения следующего действия до заданной отметки времени",
+  "Markdown": "Markdown",
+  "Unit": "Единица измерения",
+  "Amount": "Сумма",
+  "Date and Time": "Дата и время",
+  "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n": "\n**Примечание:** Максимальная продолжительность каждого шага составляет {{pausedFlowTimeoutDays}} дней.\n",
+  "The unit of time to delay the execution of the next action": "Единица времени для отсрочки выполнения следующего действия",
+  "The number of units to delay the execution of the next action": "Число единиц для задержки выполнения следующего действия",
+  "Specifies the date and time until which the execution of the next action should be delayed. It supports multiple formats, including ISO format.": "Определяет дату и время, до которого выполнение следующего действия должно быть задержано. Поддерживает несколько форматов, в том числе формат ISO.",
+  "Seconds": "Секунды",
+  "Minutes": "Минут",
+  "Hours": "Часы",
+  "Days": "Дней"
+}

@@ -126,6 +126,16 @@ const updateProjectJsonConfig = async (
     '[updateProjectJsonConfig] targets.build.options is required'
   );
 
+  projectJson.targets.build.dependsOn = ['prebuild', '^build'];
+  projectJson.targets.prebuild = {
+    dependsOn: ['^build'],
+    executor: 'nx:run-commands',
+    options: {
+      cwd: `packages/pieces/${pieceType}/${pieceName}`,
+      command: 'bun install --no-save'
+    }
+  };
+
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType =
     'dependencies';
   projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson =
@@ -156,11 +166,37 @@ const updateProjectJsonConfig = async (
     projectJson
   );
 };
-
+const addEslintFile = async (pieceName: string, pieceType: string) => {
+  const eslintFile ={
+    "extends": ["../../../../.eslintrc.base.json"],
+    "ignorePatterns": ["!**/*"],
+    "overrides": [
+      {
+        "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+        "rules": {}
+      },
+      {
+        "files": ["*.ts", "*.tsx"],
+        "rules": {}
+      },
+      {
+        "files": ["*.js", "*.jsx"],
+        "rules": {}
+      }
+    ]
+  }
+  
+ 
+  await writePackageEslint(
+    `packages/pieces/${pieceType}/${pieceName}`,
+    eslintFile
+  );
+};
 const setupGeneratedLibrary = async (pieceName: string, pieceType: string) => {
   await removeUnusedFiles(pieceName, pieceType);
   await generateIndexTsFile(pieceName, pieceType);
   await updateProjectJsonConfig(pieceName, pieceType);
+  await addEslintFile(pieceName, pieceType);
 };
 
 export const createPiece = async (

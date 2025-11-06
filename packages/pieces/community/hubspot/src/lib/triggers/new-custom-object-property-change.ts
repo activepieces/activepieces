@@ -11,6 +11,7 @@ import {
 	standardObjectPropertiesDropdown,
 } from '../common/props';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { chunk } from '@activepieces/shared';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -24,7 +25,7 @@ type Props = {
 const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		const customObjectType = propsValue.customObjectType as string;
 		const propertyToCheck = propsValue.propertyName?.['values'] as string;
@@ -77,21 +78,29 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			return [];
 		}
 
-		// Fetch custom objects with property history
-		const updatedCustomObjectsWithPropertyHistory = await client.crm.objects.batchApi.read(
-			customObjectType,
-			{
-				propertiesWithHistory: [propertyToCheck],
-				properties: propertiesToRetrieve,
-				inputs: updatedCustomObjects.map((customObject) => {
-					return {
-						id: customObject.id,
-					};
-				}),
-			},
-		);
+    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
+    const batchApiChunks = chunk(updatedCustomObjects, 50);
 
-		for (const customObject of updatedCustomObjectsWithPropertyHistory.results) {
+    // Fetch custom objects with property history
+    const batchApiResps = await Promise.all(
+      batchApiChunks.map((batch) => {
+        return client.crm.objects.batchApi.read(customObjectType, {
+          propertiesWithHistory: [propertyToCheck],
+          properties: propertiesToRetrieve,
+          inputs: batch.map((customObject) => {
+            return {
+              id: customObject.id,
+            };
+          }),
+        });
+      })
+    );
+
+    const updatedCustomObjectsWithPropertyHistory = batchApiResps.flatMap(
+      (resp) => resp.results
+    );
+
+		for (const customObject of updatedCustomObjectsWithPropertyHistory) {
 			const history = customObject.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;

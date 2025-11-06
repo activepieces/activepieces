@@ -225,6 +225,7 @@
                 "icon": "user",
                 "pages": [
                   "endpoints/users/schema",
+                  "endpoints/users/update",
                   "endpoints/users/list"
                 ]
               },
@@ -352,6 +353,13 @@
                   "endpoints/mcp-servers/rotate",
                   "endpoints/mcp-servers/update"
                 ]
+              },
+              {
+                "group": "Queue Metrics",
+                "icon": "gauge-high",
+                "pages": [
+                  "endpoints/queue-metrics/metrics"
+                ]
               }
             ]
           }
@@ -416,16 +424,11 @@
             "icon": "users",
             "pages": [
               "handbook/teams/overview",
-              "handbook/teams/ai",
-              "handbook/teams/content",
-              "handbook/teams/developer-experience",
-              "handbook/teams/embed-sdk",
-              "handbook/teams/flow-builder",
-              "handbook/teams/management-features",
-              "handbook/teams/human-in-loop",
+              "handbook/teams/product",
+              "handbook/teams/platform",
               "handbook/teams/pieces",
-              "handbook/teams/sales",
-              "handbook/teams/tables"
+              "handbook/teams/content",
+              "handbook/teams/sales"
             ]
           },
           {

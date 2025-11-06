@@ -98,12 +98,19 @@ export const props = {
       description: 'Labels for the Issue',
       displayName: 'Labels',
       required,
-      refreshers: ['auth'],
-      options: async ({ auth }) => {
+      refreshers: ['auth', 'team_id'],
+      options: async ({ auth, team_id }) => {
         if (!auth) {
           return {
             disabled: true,
             placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        if (!team_id) {
+          return {
+            disabled: true,
+            placeholder: 'select a team to load labels',
             options: [],
           };
         }
@@ -115,6 +122,13 @@ export const props = {
 
         do {
           const labels = await client.listIssueLabels({
+            filter: {
+              team: {
+                id: {
+                  eq: team_id as string,
+                },
+              },
+            },
             orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
             first: 100,
             after: cursor,

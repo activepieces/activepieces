@@ -5,6 +5,7 @@ import {
 	identityApiActions,
 	telemetryApiActions,
 	tokenExchangeApiActions,
+    vehicleEventsApiActions,
 } from './lib/actions';
 import {
 	batteryChargingTrigger,
@@ -19,7 +20,7 @@ import {
 } from './lib/triggers';
 
 export const dimoAuth = PieceAuth.CustomAuth({
-	description: `You can obtain following credentials by creating a Developer License by visiting the [Developer Console](https://console.dimo.org/).`,
+	description: `You can obtain following credentials by creating Developer License at [Developer Console](https://console.dimo.org/).`,
 	required: true,
 	props: {
 		clientId: Property.ShortText({
@@ -51,6 +52,7 @@ export const dimo = createPiece({
 		...tokenExchangeApiActions,
 		...identityApiActions,
 		...telemetryApiActions,
+		...vehicleEventsApiActions,
 	],
 	triggers: [
 		batteryChargingTrigger,

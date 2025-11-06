@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { ApEdition, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
     DataSource,
@@ -9,13 +9,12 @@ import {
     Raw,
     SelectQueryBuilder,
 } from 'typeorm'
-import { AgentEntity } from '../agents/agent-entity'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
-import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
+import { PlatformAnalyticsReportEntity } from '../ee/analytics/platform-analytics-report.entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
@@ -39,12 +38,13 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { IssueEntity } from '../flows/issues/issues-entity'
-import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
-import { McpEntity } from '../mcp/mcp-entity'
 import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
+import { McpEntity } from '../mcp/mcp-server/mcp-entity'
 import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
+import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
+import { TagEntity } from '../pieces/tags/tag-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
@@ -53,13 +53,13 @@ import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
-import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
-import { TagEntity } from '../tags/tag-entity'
 import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
+import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
+import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
+import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
-import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
@@ -81,7 +81,6 @@ function getEntities(): EntitySchema<unknown>[] {
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
-        WebhookSimulationEntity,
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,
@@ -101,11 +100,11 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         TodoEntity,
         McpEntity,
-        AgentEntity,
         TodoActivityEntity,
         McpToolEntity,
         McpRunEntity,
         AIUsageEntity,
+        TriggerSourceEntity,
     ]
 
     switch (edition) {
@@ -123,7 +122,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
-
+                PlatformAnalyticsReportEntity,
                 // CLOUD
                 AppSumoEntity,
                 ConnectionKeyEntity,
@@ -141,20 +140,9 @@ function getEntities(): EntitySchema<unknown>[] {
     return entities
 }
 
-const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-
-    const value: Partial<Record<ApEnvironment, boolean>> = {
-        [ApEnvironment.TESTING]: true,
-    }
-
-    return value[env] ?? false
-}
-
 export const commonProperties = {
     subscribers: [],
     entities: getEntities(),
-    synchronize: getSynchronize(),
 }
 
 let _databaseConnection: DataSource | null = null

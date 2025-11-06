@@ -19,14 +19,16 @@ export const CreateMcpRequestBody = Type.Object({
 
 export type CreateMcpRequestBody = Static<typeof CreateMcpRequestBody>
 
-const McpToolRequest = DiscriminatedUnion('type', [
+export const McpToolRequest = DiscriminatedUnion('type', [
     Type.Object({
         type: Type.Literal(McpToolType.PIECE),
         pieceMetadata: McpPieceToolData,
+        toolName: Type.String(),
     }),
     Type.Object({
         type: Type.Literal(McpToolType.FLOW),
         flowId: Type.String(),
+        toolName: Type.String(),
     }),
 ])
 export type McpToolRequest = Static<typeof McpToolRequest>

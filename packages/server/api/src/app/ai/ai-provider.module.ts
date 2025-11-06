@@ -1,6 +1,7 @@
 import { Writable } from 'stream'
+import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/common-ai'
 import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/shared'
+import { ActivepiecesError, EnginePrincipal, ErrorCode, isNil, PlatformUsageMetric, PrincipalType } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -17,22 +18,28 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         prefix: '/v1/ai-providers/proxy/:provider',
         upstream: '',
         disableRequestLogging: false,
+        config: {
+            allowedPrincipals: [PrincipalType.ENGINE],
+        },
         replyOptions: {
             rewriteRequestHeaders: (_request, headers) => {
                 headers['accept-encoding'] = 'identity'
                 return headers
             },
             getUpstream(request, _base) {
-                const params = request.params as Record<string, string> | null
-                const provider = params?.['provider']
-                const providerConfig = getProviderConfigOrThrow(provider)
-                return providerConfig.baseUrl
+                return (request as ModifiedFastifyRequest).customUpstream
             },
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onResponse: async (request, reply, response) => {
-                request.body = (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody
-                const projectId = request.principal.projectId
+                request.body = (request as ModifiedFastifyRequest).originalBody
+
+                const principal = request.principal as EnginePrincipal
+                const projectId = principal.projectId
                 const { provider } = request.params as { provider: string }
+                if (aiProviderService.isNonUsageRequest(provider, request)) {
+                    return reply.send(response.stream)
+                }
+
                 const isStreaming = aiProviderService.isStreaming(provider, request)
                 let streamingParser: StreamingParser
                 if (isStreaming) {
@@ -57,7 +64,17 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                             reply.raw.end()
                         }
                         else {
-                            await reply.send(JSON.parse(buffer.toString()))
+                            try {
+                                await reply.send(JSON.parse(buffer.toString()))
+                            }
+                            catch (error) {
+                                app.log.error({
+                                    projectId,
+                                    request,
+                                    response: buffer.toString(),
+                                }, 'Error response from AI provider')
+                                return
+                            }
                         }
 
                         try {
@@ -70,7 +87,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 return
                             }
 
-                            let usage: Usage
+                            let usage: Usage | null
                             if (isStreaming) {
                                 const finalResponse = streamingParser.onEnd()
                                 if (!finalResponse) {
@@ -82,7 +99,21 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                                 const completeResponse = JSON.parse(buffer.toString())
                                 usage = aiProviderService.calculateUsage(provider, request, completeResponse)
                             }
-                            await platformUsageService(app.log).increaseAiCreditUsage({ projectId, platformId: request.principal.platform.id, provider, model: usage.model, cost: usage.cost })
+
+                            if (usage) {
+                                const metadata = {
+                                    ...usage.metadata,
+                                    ...buildAIUsageMetadata(request.headers),
+                                }
+                                await platformUsageService(app.log).increaseAiCreditUsage({
+                                    projectId,
+                                    platformId: principal!.platform.id,
+                                    provider,
+                                    model: usage.model,
+                                    cost: usage.cost,
+                                    metadata,
+                                })
+                            }
                         }
                         catch (error) {
                             exceptionHandler.handle({
@@ -102,38 +133,13 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         preHandler: async (request) => {
-            if (![PrincipalType.ENGINE, PrincipalType.USER].includes(request.principal.type)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
-                    params: {
-                        message: 'invalid route for principal type',
-                    },
-                })
-            }
-
+            const principal = request.principal as EnginePrincipal
             const provider = (request.params as { provider: string }).provider
-            if (aiProviderService.isStreaming(provider, request) && !aiProviderService.providerSupportsStreaming(provider)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
-                    params: {
-                        message: 'Streaming is not supported for this provider',
-                    },
-                })
-            }
+            aiProviderService.validateRequest(provider, request)
 
-            const model = aiProviderService.extractModelId(provider, request)
-            if (!model || !aiProviderService.isModelSupported(provider, model)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
-                    params: {
-                        provider,
-                        model: model ?? 'unknown',
-                    },
-                })
-            }
-
-            const projectId = request.principal.projectId
-            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit(projectId)
+            const projectId = principal.projectId
+            const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
+            const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring: videoModelRequestCost })
             if (exceededLimit) {
                 throw new ActivepiecesError({
                     code: ErrorCode.QUOTA_EXCEEDED,
@@ -143,18 +149,20 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
 
-            const userPlatformId = request.principal.platform.id
+
+            const userPlatformId = principal.platform.id
             const providerConfig = getProviderConfigOrThrow(provider)
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)
-            const apiKey = await aiProviderService.getApiKey(provider, platformId)
+            const config = await aiProviderService.getConfig(provider, platformId);
 
-            if (providerConfig.auth.bearer) {
-                request.headers[providerConfig.auth.headerName] = `Bearer ${apiKey}`
-            }
-            else {
-                request.headers[providerConfig.auth.headerName] = apiKey
-            }
+            (request as ModifiedFastifyRequest).customUpstream = aiProviderService.getBaseUrl(provider, config)
+            request.raw.url = aiProviderService.rewriteUrl(provider, config, request.url)
+
+            const authHeaders = aiProviderService.getAuthHeaders(provider, config)
+            Object.entries(authHeaders).forEach(([key, value]) => {
+                request.headers[key] = value
+            })
 
             if (providerConfig.auth.headerName !== 'Authorization') {
                 delete request.headers['Authorization']
@@ -165,7 +173,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             }
         },
         preValidation: (request, _reply, done) => {
-            (request as FastifyRequest & { originalBody: Record<string, unknown> }).originalBody = request.body as Record<string, unknown>
+            (request as ModifiedFastifyRequest).originalBody = request.body as Record<string, unknown>
             done()
         },
     })
@@ -183,3 +191,24 @@ function getProviderConfigOrThrow(provider: string | undefined): SupportedAIProv
     }
     return providerConfig
 }
+
+function buildAIUsageMetadata(headers: Record<string, string | string[] | undefined>): AIUsageMetadata {
+    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
+    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
+    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
+
+    if (!feature) {
+        return { feature: AIUsageFeature.UNKNOWN }
+    }
+
+    switch (feature) {
+        case AIUsageFeature.AGENTS:
+            return { feature: AIUsageFeature.AGENTS, agentid: agentId! }
+        case AIUsageFeature.MCP:
+            return { feature: AIUsageFeature.MCP, mcpid: mcpId! }
+        default:
+            return { feature }
+    }
+}
+
+type ModifiedFastifyRequest = FastifyRequest & { customUpstream: string, originalBody: Record<string, unknown> }

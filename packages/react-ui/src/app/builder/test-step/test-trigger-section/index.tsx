@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { Trigger, isNil } from '@activepieces/shared';
+import { FlowTrigger, isNil } from '@activepieces/shared';
 
 import { ChatDrawerSource, useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
@@ -27,11 +27,11 @@ type TestTriggerSectionProps = {
 
 const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
-    const form = useFormContext<Trigger>();
+    const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
     const abortControllerRef = useRef<AbortController>(new AbortController());
-    const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
+    const lastTestDate = formValues.settings.sampleData?.lastTestDate;
     const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
@@ -49,14 +49,14 @@ const TestTriggerSection = React.memo(
     const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
       useBuilderStateContext((state) => {
         return {
-          sampleData: state.sampleData[formValues.name],
-          sampleDataInput: state.sampleDataInput[formValues.name],
+          sampleData: state.outputSampleData[formValues.name],
+          sampleDataInput: state.inputSampleData[formValues.name],
           setChatDrawerOpenSource: state.setChatDrawerOpenSource,
         };
       });
 
     const onTestSuccess = async () => {
-      form.setValue(`settings.inputUiInfo.lastTestDate`, dayjs().toISOString());
+      form.setValue(`settings.sampleData.lastTestDate`, dayjs().toISOString());
       await refetch();
     };
 
@@ -90,7 +90,7 @@ const TestTriggerSection = React.memo(
     const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const isTestedBefore = !isNil(
-      form.getValues().settings.inputUiInfo?.lastTestDate,
+      form.getValues().settings.sampleData?.lastTestDate,
     );
     const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
@@ -142,7 +142,13 @@ const TestTriggerSection = React.memo(
               </p>
               <ManualWebhookTestButton
                 isWebhookTestingDialogOpen={isTestingDialogOpen}
-                setIsWebhookTestingDialogOpen={setIsTestingDialogOpen}
+                setIsWebhookTestingDialogOpen={(value) => {
+                  setIsTestingDialogOpen(value);
+                  if (!value) {
+                    abortControllerRef.current.abort();
+                    abortControllerRef.current = new AbortController();
+                  }
+                }}
               />
             </div>
           );

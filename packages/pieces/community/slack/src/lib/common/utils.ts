@@ -10,6 +10,8 @@ export const slackSendMessage = async ({
   threadTs,
   token,
   file,
+  replyBroadcast,
+  unfurlLinks,
 }: SlackSendMessageParams) => {
   const client = new WebClient(token);
 
@@ -26,14 +28,24 @@ export const slackSendMessage = async ({
       ],
     });
   } else {
-    return await client.chat.postMessage({
+    const messageParams: any = {
       text,
       channel: conversationId,
       username,
       icon_url: profilePicture,
       blocks: blocks as Block[],
       thread_ts: threadTs,
-    });
+    };
+
+    if (replyBroadcast) {
+      messageParams.reply_broadcast = replyBroadcast;
+    }
+
+    if (unfurlLinks === false) {
+      messageParams.unfurl_links = false;
+    }
+
+    return await client.chat.postMessage(messageParams);
   }
 };
 
@@ -46,6 +58,8 @@ type SlackSendMessageParams = {
   text: string;
   file?: ApFile;
   threadTs?: string;
+  replyBroadcast?: boolean;
+  unfurlLinks?: boolean;
 };
 
 export function processMessageTimestamp(input: string) {

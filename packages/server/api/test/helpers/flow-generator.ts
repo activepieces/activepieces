@@ -1,4 +1,4 @@
-import { Action, ActionType, apId, FlowStatus, FlowVersion, FlowVersionState, PackageType, PieceType, PopulatedFlow, Trigger, TriggerType } from '@activepieces/shared'
+import { apId, FlowAction, FlowActionType, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 
@@ -42,16 +42,17 @@ const flowVersionGenerator = {
             },
             state: FlowVersionState.DRAFT,
             connectionIds: [],
+            agentIds: [],
         }
     },
 }
 
-function randomizeTriggerMetadata(trigger: Trigger): Trigger {
+function randomizeTriggerMetadata(trigger: FlowTrigger): FlowTrigger {
     return {
         ...trigger,
         settings: {
             ...trigger.settings,
-            inputUiInfo: {
+            propertySettings: {
                 server: faker.internet.url(),
                 port: faker.color.cmyk(),
                 username: faker.internet.userName(),
@@ -60,46 +61,34 @@ function randomizeTriggerMetadata(trigger: Trigger): Trigger {
         },
     }
 }
-function generateAction(): Action {
+function generateAction(): FlowAction {
     return {
-        type: ActionType.PIECE,
+        type: FlowActionType.PIECE,
         displayName: faker.hacker.noun(),
         name: apId(),
         skip: false,
         settings: {
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
+            input: {},
             pieceName: faker.helpers.arrayElement(['@activepieces/piece-schedule', '@activepieces/piece-webhook']),
             pieceVersion: faker.system.semver(),
             actionName: faker.hacker.noun(),
-            input: {
-
-            },
-            inputUiInfo: {
-
-            },
+            propertySettings: {},
         },
         valid: true,
     }
 }
 
-function generateTrigger(): Trigger {
+function generateTrigger(): FlowTrigger {
     return {
-        type: TriggerType.PIECE,
+        type: FlowTriggerType.PIECE,
         displayName: faker.hacker.noun(),
         name: apId(),
         settings: {
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
             pieceName: faker.helpers.arrayElement(['@activepieces/piece-schedule', '@activepieces/piece-webhook']),
             pieceVersion: faker.system.semver(),
             triggerName: faker.hacker.noun(),
-            input: {
-
-            },
-            inputUiInfo: {
-
-            },
+            input: {},
+            propertySettings: {},
         },
         valid: true,
     }

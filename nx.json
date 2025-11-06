@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "cli": {
+    "packageManager": "bun"
+  },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
@@ -32,6 +35,14 @@
       "cache": true
     },
     "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    },
+    "e2e": {
+      "cache": true
+    },
+    "@nx/esbuild:esbuild": {
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
@@ -74,7 +85,6 @@
       }
     }
   },
-  "nxCloudAccessToken": "Y2Y3YzhhNjYtZWI4OC00M2Y0LWIwY2ItMWJhNTBjYzA3ZDA0fHJlYWQtb25seQ==",
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
@@ -101,12 +111,7 @@
   ],
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["lint", "test", "e2e"],
-        "parallel": 3,
-        "useDaemonProcess": false,
-        "cacheDirectory": ".nx/cache",
         "runtimeCacheInputs": ["node -v"]
       }
     }
@@ -116,5 +121,8 @@
       "preVersionCommand": "npx nx run-many -t build"
     }
   },
-  "useLegacyCache": true
+  "useDaemonProcess": false,
+  "parallel": 3,
+  "cacheDirectory": ".nx/cache",
+  "nxCloudId": "642638e2fe2ac16f0fb09003"
 }

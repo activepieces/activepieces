@@ -1,0 +1,144 @@
+name: E2E Tests
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled]
+    branches:
+      - main
+      - gh-actions-test-branch
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-label:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run-e2e: ${{ steps.check-if-pr-has-label.outputs.run-e2e }}
+    steps:
+      - name: Check if PR exists with ready-for-e2e label for this SHA
+        id: check-if-pr-has-label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Always run on manual workflow dispatch
+            if (context.eventName === 'workflow_dispatch') {
+              core.setOutput('run-e2e', true);
+              return;
+            }
+            
+            let labels = [];
+            if (context.payload.pull_request) {
+              labels = context.payload.pull_request.labels;
+            } else {
+              try {
+                const sha = context.sha;
+                const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  commit_sha: sha
+                });
+                if (prs.length === 0) {
+                  core.setOutput('run-e2e', false);
+                  return;
+                }
+                const pr = prs[0];
+                labels = pr.labels;
+              } catch (e) {
+                core.setOutput('run-e2e', false);
+                return;
+              }
+            }
+
+            const labelFound = labels.map(l => l.name).includes('ready-for-e2e');
+            core.setOutput('run-e2e', labelFound);
+
+  test-e2e-ee:
+    needs: check-label
+    if: needs.check-label.outputs.should-run-e2e == 'true'
+    uses: ./.github/workflows/tests-e2e-ee.yml
+
+  test-e2e-ce:
+    needs: check-label
+    if: needs.check-label.outputs.should-run-e2e == 'true'
+    uses: ./.github/workflows/tests-e2e-ce.yml
+
+  notify-on-completion:
+    needs: [check-label, test-e2e-ce, test-e2e-ee]
+    if: always() && needs.check-label.outputs.should-run-e2e == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          pattern: "*"
+          merge-multiple: false
+
+      - name: Re-upload consolidated artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-artifacts-all
+          path: ./artifacts/
+          retention-days: 30
+
+      - name: Comment on PR with test results
+        if: always() && github.event_name == 'pull_request_target'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Determine which tests failed
+            const results = {
+              ee: '${{ needs.test-e2e-ee.result }}',
+              ce: '${{ needs.test-e2e-ce.result }}'
+            };
+            
+            const failed = Object.entries(results).filter(([_, status]) => status === 'failure');
+            const passed = Object.entries(results).filter(([_, status]) => status === 'success');
+            const skipped = Object.entries(results).filter(([_, status]) => status === 'skipped');
+            
+            // Build status summary
+            let summary = "## 🧪 E2E Test Results\n\n";
+            
+            if (failed.length > 0) {
+              summary += "### ❌ Failed Tests\n";
+              failed.forEach(([edition, _]) => {
+                summary += `- **${edition.toUpperCase()} Edition**\n`;
+              });
+              summary += "\n";
+            }
+            
+            if (passed.length > 0) {
+              summary += "### ✅ Passed Tests\n";
+              passed.forEach(([edition, _]) => {
+                summary += `- **${edition.toUpperCase()} Edition**\n`;
+              });
+              summary += "\n";
+            }
+            
+            if (skipped.length > 0) {
+              summary += "### ⏭️ Skipped Tests\n";
+              skipped.forEach(([edition, _]) => {
+                summary += `- **${edition.toUpperCase()} Edition**\n`;
+              });
+              summary += "\n";
+            }
+
+            summary += `🤖 Automated E2E test results from [workflow run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });

@@ -3,6 +3,7 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/file-helper/src",
   "projectType": "library",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -24,12 +25,10 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
-    },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-filesHelper {args.ver} {args.tag}",
+      },
       "dependsOn": [
-        "build"
+        "prebuild",
+        "^build"
       ]
     },
     "lint": {
@@ -37,7 +36,25 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "jestConfig": "packages/pieces/community/file-helper/jest.config.ts"
+      }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/file-helper",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
-  },
-  "tags": []
+  }
 }

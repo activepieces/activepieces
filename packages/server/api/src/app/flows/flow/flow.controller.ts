@@ -11,6 +11,8 @@ import {
     FlowStatus,
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
+    FlowTrigger,
+    FlowVersionState,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     isNil,
@@ -21,7 +23,6 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    Trigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -35,13 +36,13 @@ import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-r
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
+import { flowMigrations } from '../flow-version/migrations'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.principal.projectId,
@@ -58,9 +59,52 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.CREATED).send(newFlow)
     })
 
-    app.post('/:id', UpdateFlowRequestOptions, async (request) => {
-
-
+    app.post('/:id', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+            permission: Permission.UPDATE_FLOW_STATUS,
+        },
+        schema: {
+            tags: ['flows'],
+            description: 'Apply an operation to a flow',
+            security: [SERVICE_KEY_SECURITY_OPENAPI],
+            body: FlowOperationRequest,
+            params: Type.Object({
+                id: ApId,
+            }),
+        },
+        preValidation: (request, _, done) => {
+            if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
+                flowMigrations.apply({
+                    agentIds: [],
+                    connectionIds: [],
+                    created: new Date().toISOString(),
+                    displayName: '',
+                    flowId: '',
+                    id: '',
+                    updated: new Date().toISOString(),
+                    updatedBy: '',
+                    valid: false,
+                    trigger: request.body.request.trigger,
+                    state: FlowVersionState.DRAFT,
+                    schemaVersion: request.body.request.schemaVersion,
+                }).then((migratedFlowVersion) => {
+                    request.body.request = {
+                        ...request.body.request,
+                        trigger: migratedFlowVersion.trigger,
+                        schemaVersion: migratedFlowVersion.schemaVersion,
+                    }
+                    done()
+                }).catch((error) => {
+                    request.log.error(error)
+               
+                })
+            }
+            else {
+                done()
+            }
+        },
+    }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
 
@@ -106,7 +150,9 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             status: request.query.status,
             name: request.query.name,
             versionState: request.query.versionState,
+            externalIds: request.query.externalIds,
             connectionExternalIds: request.query.connectionExternalIds,
+            agentExternalIds: request.query.agentExternalIds,
         })
     })
 
@@ -147,7 +193,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,
-            idOrExternalId: request.params.id,
+            externalId: flow.externalId,
             userId: request.principal.id,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
@@ -163,8 +209,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
     if (operation.type === FlowOperationType.IMPORT_FLOW) {
-        const clearInputUiInfo = {
-            currentSelectedData: undefined,
+        const clearSampleData = {
             sampleDataFileId: undefined,
             sampleDataInputFileId: undefined,
             lastTestDate: undefined,
@@ -174,13 +219,13 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                 ...step,
                 settings: {
                     ...step.settings,
-                    inputUiInfo: {
-                        ...step.settings.inputUiInfo,
-                        ...clearInputUiInfo,
+                    sampleData: {
+                        ...step.settings.sampleData,
+                        ...clearSampleData,
                     },
                 },
             }
-        }) as Trigger
+        }) as FlowTrigger
         return {
             ...operation,
             request: {
@@ -189,9 +234,9 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
                     ...trigger,
                     settings: {
                         ...trigger.settings,
-                        inputUiInfo: {
-                            ...trigger.settings.inputUiInfo,
-                            ...clearInputUiInfo,
+                        sampleData: {
+                            ...trigger.settings.sampleData,
+                            ...clearSampleData,
                         },
                     },
                 },
@@ -224,7 +269,7 @@ async function assertThatFlowIsNotBeingUsed(
 
 const CreateFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_FLOW,
     },
     schema: {
@@ -238,24 +283,10 @@ const CreateFlowRequestOptions = {
     },
 }
 
-const UpdateFlowRequestOptions = {
-    config: {
-        permission: Permission.UPDATE_FLOW_STATUS,
-    },
-    schema: {
-        tags: ['flows'],
-        description: 'Apply an operation to a flow',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: FlowOperationRequest,
-        params: Type.Object({
-            id: ApId,
-        }),
-    },
-}
 
 const ListFlowsRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_FLOW,
     },
     schema: {
@@ -270,6 +301,10 @@ const ListFlowsRequestOptions = {
 }
 
 const CountFlowsRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.READ_FLOW,
+    },
     schema: {
         querystring: CountFlowsRequest,
     },
@@ -277,7 +312,7 @@ const CountFlowsRequestOptions = {
 
 const GetFlowTemplateRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_FLOW,
     },
     schema: {
@@ -296,7 +331,7 @@ const GetFlowTemplateRequestOptions = {
 
 const GetFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_FLOW,
     },
     schema: {
@@ -315,7 +350,7 @@ const GetFlowRequestOptions = {
 
 const DeleteFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_FLOW,
     },
     schema: {
@@ -330,3 +365,5 @@ const DeleteFlowRequestOptions = {
         },
     },
 }
+
+

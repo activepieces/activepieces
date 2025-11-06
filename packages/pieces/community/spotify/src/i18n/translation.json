@@ -1,5 +1,4 @@
 {
-  "Spotify": "Spotify",
   "Music for everyone": "Music for everyone",
   "\nTo obtain a client ID and client secret for Spotify, follow these simple steps:\n\n1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/).\n2. **Log in** to your Spotify account.\n3. Click on the **\"Create an App\"** button.\n4. Fill in the required information, such as the **App Name** and **App Description**.\n5. Once your app is created, you will see the **client ID** and **client secret** on the app's dashboard.\n6. **Copy** the client ID and client secret and **paste** them below.\n": "\nTo obtain a client ID and client secret for Spotify, follow these simple steps:\n\n1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/).\n2. **Log in** to your Spotify account.\n3. Click on the **\"Create an App\"** button.\n4. Fill in the required information, such as the **App Name** and **App Description**.\n5. Once your app is created, you will see the **client ID** and **client secret** on the app's dashboard.\n6. **Copy** the client ID and client secret and **paste** them below.\n",
   "Search": "Search",
@@ -55,6 +54,7 @@
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
   "The word or phrase you are searching for": "The word or phrase you are searching for",
@@ -67,6 +67,7 @@
   "URI's of the items to add": "URI's of the items to add",
   "URI's of the items to remove": "URI's of the items to remove",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "Albums": "Albums",
   "Artists": "Artists",
   "Playlists": "Playlists",

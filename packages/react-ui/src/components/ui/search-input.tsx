@@ -22,6 +22,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           ref={ref}
           {...props}
           onChange={(e) => props.onChange(e.target.value)}
+          data-testid="pieces-search-input"
         />
         {props.value !== '' && (
           <SelectUtilButton

@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-docusign",
-  "version": "0.0.3"
+  "version": "0.0.12",
+  "dependencies": {
+    "docusign-esign": "8.1.0"
+  }
 }

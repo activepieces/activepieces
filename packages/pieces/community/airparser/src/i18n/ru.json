@@ -1,0 +1,20 @@
+{
+  "Airparser": "Аэропорт",
+  "Extract structured data from emails, PDFs, or documents with Airparser.": "Извлеките структурированные данные из электронной почты, PDF или документов с Airparser.",
+  "You can find your API key in the Airparser dashboard under Account Settings.": "API ключ можно найти в панели управления Airparser в настройках аккаунта.",
+  "Get Data from Document": "Получить данные из документа",
+  "Upload Document": "Загрузить документ",
+  "Retrieves parsed JSON data from a specific document.": "Получает обработанные JSON данные из конкретного документа.",
+  "Upload a document to an Airparser inbox for parsing.": "Загрузите документ в папку «Входящие» Airparser.",
+  "Inbox": "Входящие",
+  "Document": "Документ",
+  "File": "Файл",
+  "File Name": "Имя файла",
+  "Metadata": "Метаданные",
+  "The document file to upload for parsing.": "Файл документа, который необходимо загрузить для анализа.",
+  "Optional metadata to associate with the document.": "Необязательные метаданные для связи с документом.",
+  "Document Parsed": "Обновлен документ",
+  "Triggers when a new document is parsed in a specific inbox.": "Триггеры при разборе нового документа в определенном почтовом ящике.",
+  "Markdown": "Markdown",
+  "## Airparser Webhook Setup\n\t\t\tTo use this trigger, you need to manually set up a webhook in your Airparser account:\n\n\t\t\t1. Login to your Airparser account.\n\t\t\t2. Navigate to **Integrations** > **Webhooks** in the left sidebar.\n\t\t\t3. Enter the following URL in the webhooks field and select **Document Parsed** as webhook trigger:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Click Save to register the webhook.\n\t\t\t": "## Настройка Airparser Webhook\n\t\t\tДля использования этого триггера вам нужно вручную настроить вебхук в вашем аккаунте Airparser:\n\n\t\t\t1. Войдите в свой аккаунт Airparser.\n\t\t\t2. Перейдите в **Интеграции** > **Webhooks** в левой боковой панели.\n\t\t\t3. Введите следующий URL в поле webhooks и выберите **Parsed** в качестве триггера webhook:\n\t\t\t```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n\t\t\t4. Нажмите кнопку Сохранить, чтобы зарегистрировать вебхук.\n\t\t\t"
+}

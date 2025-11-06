@@ -3,8 +3,10 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
+    ApEdition,
     EndpointScope,
     ErrorCode,
+    isNil,
     ListFlowTemplatesRequest,
     Principal,
     PrincipalType,
@@ -14,11 +16,13 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { communityTemplates } from '../../flows/templates/community-flow-template.module'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { flowTemplateService } from './flow-template.service'
 
+const edition = system.getEdition()
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
 }
@@ -35,7 +39,10 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
     })
 
     fastify.get('/', ListFlowParams, async (request) => {
-        const platformId = await resolveTemplatesPlatformId(request.principal, request.principal.platform.id)
+        const platformId = await resolveTemplatesPlatformId(request.principal)
+        if (isNil(platformId)) {
+            return communityTemplates.get(request.query)
+        }
         return flowTemplateService.list(platformId, request.query)
     })
 
@@ -73,13 +80,17 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
-async function resolveTemplatesPlatformId(principal: Principal, platformId: string): Promise<string> {
-    if (principal.type === PrincipalType.UNKNOWN) {
+
+async function resolveTemplatesPlatformId(principal: Principal): Promise<string | null> {
+    if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
         return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    const platform = await platformService.getOneWithPlanOrThrow(principal.platform.id)
     if (!platform.plan.manageTemplatesEnabled) {
-        return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        if (edition === ApEdition.CLOUD) {
+            return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        }
+        return null
     }
     return platform.id
 }
@@ -112,7 +123,7 @@ const ListFlowParams = {
 
 const DeleteParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -125,7 +136,7 @@ const DeleteParams = {
 
 const CreateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {

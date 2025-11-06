@@ -37,8 +37,12 @@ import { FieldsMapping } from '../lib/utils';
 import { useTableState } from './ap-table-state-provider';
 import { FieldsMappingControl } from './fields-mapping';
 
-const ImportCsvDialog = () => {
-  const [isOpen, setIsOpen] = useState(false);
+type ImportCsvDialogProps = {
+  open: boolean;
+  setIsOpen: (open: boolean) => void;
+};
+
+const ImportCsvDialog = ({ open, setIsOpen }: ImportCsvDialogProps) => {
   const [tableId, setRecords, serverFields, serverRecords, recordsCount] =
     useTableState((state) => [
       state.table.id,
@@ -114,7 +118,7 @@ const ImportCsvDialog = () => {
 
   return (
     <Dialog
-      open={isOpen}
+      open={open}
       onOpenChange={(value) => {
         setIsOpen(value);
         setCsvColumns([]);

@@ -1,5 +1,5 @@
 import { ApplicationEventName, ProjectMemberWithUser } from '@activepieces/ee-shared'
-import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, Permission, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../../helper/application-events'
@@ -86,6 +86,9 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const GetProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
     schema: {
         params: Type.Object({
             id: ApId,
@@ -94,6 +97,9 @@ const GetProjectRoleRequest = {
 }
 
 const ListProjectRolesRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectRole),
@@ -102,6 +108,9 @@ const ListProjectRolesRequest = {
 }
 
 const CreateProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
     schema: {
         body: CreateProjectRoleRequestBody,
         response: {
@@ -111,6 +120,9 @@ const CreateProjectRoleRequest = {
 }
 
 const UpdateProjectRoleRequest = {
+    config: {   
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
     schema: {
         body: UpdateProjectRoleRequestBody,
         params: Type.Object({
@@ -123,6 +135,9 @@ const UpdateProjectRoleRequest = {
 }
 
 const DeleteProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
     schema: {
         params: Type.Object({
             name: Type.String(),
@@ -135,8 +150,7 @@ const DeleteProjectRoleRequest = {
 
 const ListProjectMembersForProjectRoleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_PROJECT_MEMBER,
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
     },
     schema: {
         tags: ['project-members'],

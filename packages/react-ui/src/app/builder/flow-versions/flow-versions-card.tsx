@@ -102,7 +102,7 @@ UseAsDraftDropdownMenuOption.displayName = 'UseAsDraftDropdownMenuOption';
 type FlowVersionDetailsCardProps = {
   flowVersion: FlowVersionMetadata;
   selected: boolean;
-  published: boolean;
+  publishedVersionId: string | undefined | null;
   flowVersionNumber: number;
 };
 const FlowVersionDetailsCard = React.memo(
@@ -110,7 +110,7 @@ const FlowVersionDetailsCard = React.memo(
     flowVersion,
     flowVersionNumber,
     selected,
-    published,
+    publishedVersionId,
   }: FlowVersionDetailsCardProps) => {
     const { checkAccess } = useAuthorization();
     const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
@@ -180,19 +180,11 @@ const FlowVersionDetailsCard = React.memo(
             </Tooltip>
           )}
 
-          {flowVersion.state === FlowVersionState.DRAFT && (
-            <FlowVersionStateDot
-              state={flowVersion.state}
-              versionId={flowVersion.id}
-            ></FlowVersionStateDot>
-          )}
-
-          {published && flowVersion.state === FlowVersionState.LOCKED && (
-            <FlowVersionStateDot
-              state={flowVersion.state}
-              versionId={flowVersion.id}
-            ></FlowVersionStateDot>
-          )}
+          <FlowVersionStateDot
+            state={flowVersion.state}
+            versionId={flowVersion.id}
+            publishedVersionId={publishedVersionId}
+          ></FlowVersionStateDot>
 
           <DropdownMenu
             onOpenChange={(open) => setDropdownMenuOpen(open)}

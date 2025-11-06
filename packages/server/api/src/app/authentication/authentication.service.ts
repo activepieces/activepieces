@@ -217,6 +217,7 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     })
 
     const cloudEdition = system.getEdition()
+
     switch (cloudEdition) {
         case ApEdition.CLOUD:
             await otpService(log).createAndSend({

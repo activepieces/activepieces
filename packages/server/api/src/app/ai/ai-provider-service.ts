@@ -1,17 +1,23 @@
+import {
+    AI_USAGE_AGENT_ID_HEADER,
+    AI_USAGE_FEATURE_HEADER,
+    AI_USAGE_MCP_ID_HEADER,
+    AIProvider,
+    AIProviderWithoutSensitiveData,
+    AIUsageFeature,
+    CreateAIProviderRequest,
+    SUPPORTED_AI_PROVIDERS,
+    SupportedAIProvider,
+} from '@activepieces/common-ai'
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    AIProvider,
-    AIProviderWithoutSensitiveData,
     ApEdition,
     apId,
-    CreateAIProviderRequest,
     ErrorCode,
     isNil,
     PlatformId,
     SeekPage,
-    SUPPORTED_AI_PROVIDERS,
-    SupportedAIProvider,
 } from '@activepieces/shared'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
@@ -56,10 +62,22 @@ export const aiProviderService = {
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
         assertOnlyCloudPlatformCanEditOnCloud(platformId)
 
+        if (request.useAzureOpenAI && system.getEdition() !== ApEdition.ENTERPRISE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Azure OpenAI is only available for enterprise customers',
+                },
+            })
+        }
+
         await aiProviderRepo().upsert({
             id: apId(),
-            config: encryptUtils.encryptObject({
+            config: await encryptUtils.encryptObject({
                 apiKey: request.apiKey,
+                azureOpenAI: request.useAzureOpenAI ? {
+                    resourceName: request.resourceName,
+                } : undefined,
             }),
             provider: request.provider,
             platformId,
@@ -75,7 +93,7 @@ export const aiProviderService = {
         })
     },
 
-    async getApiKey(provider: string, platformId: PlatformId): Promise<string> {
+    async getConfig(provider: string, platformId: PlatformId): Promise<AIProvider['config']> {
         const aiProvider = await aiProviderRepo().findOneOrFail({
             where: {
                 provider,
@@ -89,7 +107,7 @@ export const aiProviderService = {
             },
         })
 
-        return encryptUtils.decryptObject<AIProvider['config']>(aiProvider.config).apiKey
+        return encryptUtils.decryptObject(aiProvider.config)
     },
 
     async getAIProviderPlatformId(userPlatformId: string): Promise<string> {
@@ -103,8 +121,24 @@ export const aiProviderService = {
         return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
     },
 
+    getBaseUrl(provider: string, config: AIProvider['config']): string {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy?.getBaseUrl) {
+            return providerStrategy.getBaseUrl(config)
+        }
+        const providerConfig = getProviderConfig(provider)!
+        return providerConfig.baseUrl
+    },
 
-    calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage {
+    isNonUsageRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy?.isNonUsageRequest) {
+            return providerStrategy.isNonUsageRequest(request)
+        }
+        return false
+    },
+
+    calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage | null {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.calculateUsage(request, response)
     },
@@ -115,11 +149,28 @@ export const aiProviderService = {
         return providerStrategy.extractModelId(request)
     },
 
-    isModelSupported(provider: string, model: string): boolean {
+    isModelSupported(provider: string, model: string | null, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
         const providerConfig = getProviderConfig(provider)!
-        return !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) || !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model))
+        if (this.isNonUsageRequest(provider, request)) {
+            return true
+        }
+        return (
+            !isNil(model) &&
+            !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) ||
+            !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model)) ||
+            !isNil(providerConfig.videoModels.find((m) => m.instance.modelId === model))
+        )
     },
-
+    getVideoModelCost({ provider, request }: { provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase> }) {
+        const providerStrategy = aiProvidersStrategies[provider]
+        const modelConfig = providerStrategy.extractModelId(request)
+        const providerConfig = getProviderConfig(provider)
+        const videoModelConfig = providerConfig?.videoModels.find((m) => m.instance.modelId === modelConfig)
+        if (videoModelConfig) {
+            return videoModelConfig.pricing.costPerSecond * videoModelConfig.minimumDurationInSeconds
+        }
+        return 0
+    },
     isStreaming(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.isStreaming(request)
@@ -133,6 +184,55 @@ export const aiProviderService = {
     streamingParser(provider: string): StreamingParser {
         const providerStrategy = aiProvidersStrategies[provider]
         return providerStrategy.streamingParser!()
+    },
+
+    rewriteUrl(provider: string, config: AIProvider['config'], originalUrl: string): string {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy?.rewriteUrl) {
+            return providerStrategy.rewriteUrl(config, originalUrl)
+        }
+        return originalUrl
+    },
+
+    getAuthHeaders(provider: string, config: AIProvider['config']): Record<string, string> {
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy.getAuthHeaders) {
+            return providerStrategy.getAuthHeaders(config)
+        }
+
+        const providerConfig = getProviderConfig(provider)!
+        return {
+            [providerConfig.auth.headerName]: providerConfig.auth.bearer ? `Bearer ${config.apiKey}` : config.apiKey,
+        }
+    },
+
+    validateRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): void {
+        validateAIUsageHeaders(request.headers)
+
+        if (this.isStreaming(provider, request) && !this.providerSupportsStreaming(provider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                params: {
+                    message: 'Streaming is not supported for this provider',
+                },
+            })
+        }
+
+        const model = this.extractModelId(provider, request)
+        if (!this.isModelSupported(provider, model, request)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
+                params: {
+                    provider,
+                    model: model ?? 'unknown',
+                },
+            })
+        }
+
+        const providerStrategy = aiProvidersStrategies[provider]
+        if (providerStrategy.validateRequest) {
+            providerStrategy.validateRequest(request)
+        }
     },
 }
 
@@ -157,4 +257,40 @@ function getProviderConfig(provider: string | undefined): SupportedAIProvider | 
         return undefined
     }
     return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
+}
+
+
+function validateAIUsageHeaders(headers: Record<string, string | string[] | undefined>): void {
+    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
+    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
+    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
+
+    // Validate feature header
+    const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
+    if (feature && !supportedFeatures.includes(feature)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
+            },
+        })
+    }
+
+    if (feature === AIUsageFeature.AGENTS && !agentId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_AGENT_ID_HEADER} header is required when feature is ${AIUsageFeature.AGENTS}`,
+            },
+        })
+    }
+
+    if (feature === AIUsageFeature.MCP && !mcpId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `${AI_USAGE_MCP_ID_HEADER} header is required when feature is ${AIUsageFeature.MCP}`,
+            },
+        })
+    }
 }

@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
-import { PackageType, PieceCategory, PieceType } from '../piece'
+import { PackageType, PieceCategory } from '../piece'
 
 export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
 export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
@@ -59,6 +59,14 @@ export const ListPiecesRequestQuery = Type.Object({
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
 
+
+export const RegistryPiecesRequestQuery = Type.Object({
+    release: ExactVersionType,
+    edition: Type.Enum(ApEdition),
+})
+
+export type RegistryPiecesRequestQuery = Static<typeof RegistryPiecesRequestQuery>
+
 export const ListVersionRequestQuery = Type.Object({
     release: ExactVersionType,
     name: Type.String(),
@@ -79,8 +87,6 @@ export type ListVersionsResponse = Static<typeof ListVersionsResponse>
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>
 
 export const PieceOptionRequest = Type.Object({
-    packageType: Type.Enum(PackageType),
-    pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionOrTriggerName: Type.String({}),

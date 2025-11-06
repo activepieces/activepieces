@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { TableTitle } from '@/components/custom/table-title';
+import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -36,15 +36,12 @@ const ProjectRolePage = () => {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
       <div className="flex-col w-full">
-        <div className="flex items-center justify-between mb-4">
-          <TableTitle
-            description={t(
-              'Define custom roles and permissions that can be assigned to your team members',
-            )}
-          >
-            {t('Project Role Management')}
-          </TableTitle>
-
+        <DashboardPageHeader
+          title={t('Project Role Management')}
+          description={t(
+            'Define custom roles and permissions that can be assigned to your team members',
+          )}
+        >
           {!platform.plan.customRolesEnabled && (
             <Tooltip>
               <TooltipTrigger>
@@ -70,7 +67,7 @@ const ProjectRolePage = () => {
               </Button>
             </ProjectRoleDialog>
           )}
-        </div>
+        </DashboardPageHeader>
 
         <ProjectRolesTable
           projectRoles={data}

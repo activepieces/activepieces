@@ -96,3 +96,9 @@ export class FetchError extends ExecutionError {
         super('FetchError', formatMessage(`Failed to fetch from ${url}`), ExecutionErrorType.ENGINE, cause)
     }
 }
+
+export class EngineGenericError extends ExecutionError {
+    constructor(name: string, message: string, cause?: unknown) {
+        super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
+    }
+}

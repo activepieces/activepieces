@@ -4,7 +4,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 export const addExecutionTag = createAction({
   auth: wedofAuth,
   name: 'addExecutionTag',
-  displayName: "Associer l'exécution à wedof",
+  displayName: 'Associer le run à wedof',
   description:
     "Permet d'associer une exécution de workflow à un ou plusieurs dossiers de (formations / certifications) dans wedof",
   errorHandlingOptions: {

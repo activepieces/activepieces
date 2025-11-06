@@ -1,11 +1,10 @@
-import { ApSubscriptionStatus, BUSINESS_CLOUD_PLAN, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlanName, PlatformPlanWithOnlyLimits, PLUS_CLOUD_PLAN } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, UserWithMetaInformation } from '@activepieces/shared'
+import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlanName, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 import { repoFactory } from '../../../core/db/repo-factory'
-import { apDayjs } from '../../../helper/dayjs-helper'
-import { distributedLock } from '../../../helper/lock'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
@@ -20,40 +19,22 @@ type UpdatePlatformBillingParams = {
 
 const edition = system.getEdition()
 
-function getPlanLimits(planName: PlanName): Partial<PlatformPlanLimits> {
-    switch (planName) {
-        case PlanName.FREE:
-            return FREE_CLOUD_PLAN
-        case PlanName.PLUS:
-            return PLUS_CLOUD_PLAN
-        case PlanName.BUSINESS:
-            return BUSINESS_CLOUD_PLAN
-        default:
-            throw new Error(`Invalid plan name: ${planName}`)
-    }
-}
-
 export const platformPlanService = (log: FastifyBaseLogger) => ({
+ 
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(platformPlan)) return platformPlan
 
-        const lock = await distributedLock.acquireLock({
+        return distributedLock(log).runExclusive({
             key: `platform_plan_${platformId}`,
-            timeout: 5000,
-            log,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const platformPlan = await platformPlanRepo().findOneBy({ platformId })
+                if (!isNil(platformPlan)) return platformPlan
+
+                return createInitialBilling(platformId, log)
+            },
         })
-
-        try {
-
-            const platformPlan = await platformPlanRepo().findOneBy({ platformId })
-            if (!isNil(platformPlan)) return platformPlan
-
-            return await createInitialBilling(platformId, log)
-        }
-        finally {
-            await lock.release()
-        }
     },
 
     async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
@@ -62,7 +43,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if ( isNil(startDate) || isNil(endDate)) {
             return { startDate: apDayjs().startOf('month').unix(), endDate: apDayjs().endOf('month').unix() }
         }
-
         return { startDate, endDate }
     },
 
@@ -79,6 +59,9 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         )
 
         const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
+        if (!isNil(updatedPlatformPlan.plan)) {
+            await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
+        }
         return updatedPlatformPlan
     },
 
@@ -99,15 +82,43 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             stripeSubscriptionCancelDate: cancelDate,
             stripePaymentMethod, 
         })
-
         return platformPlanRepo().findOneByOrFail({ stripeCustomerId: customerId })
     },
+    async getNextBillingAmount(params: GetBillingAmountParams): Promise<number> {
+        const { plan, subscriptionId } = params
+        const stripe = stripeHelper(log).getStripe()
+        if (isNil(stripe)) {
+            return 0
+        }
 
-    getPlanLimits,
+        try {
+            const upcomingInvoice = await stripe.invoices.createPreview({
+                subscription: subscriptionId,
+            })
+
+            return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
+        }
+        catch {
+            switch (plan) {
+                case PlanName.PLUS: {
+                    return 25
+                }
+                case PlanName.BUSINESS: {
+                    return 150
+                }
+                default: {
+                    return 0
+                }
+            }
+        }
+    },
+    async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
+        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
+        return isCloudPlanButNotEnterprise(platformPlan.plan)
+    },
 })
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
-
     const platform = await platformService.getOneOrThrow(platformId)
     const user = await userService.getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
@@ -123,10 +134,15 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeCustomerId,
         stripeSubscriptionStartDate: defaultStartDate,
         stripeSubscriptionEndDate: defaultEndDate,
+        stripeBillingCycle: BillingCycle.MONTHLY,
         ...plan,
     }
+    const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
+    if (!isNil(savedPlatformPlan.plan)) {
+        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan)
+    }
 
-    return platformPlanRepo().save(platformPlan)
+    return savedPlatformPlan
 }
 
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
@@ -139,8 +155,6 @@ function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
     }
 }
 
-
-
 async function createInitialCustomer(user: UserWithMetaInformation, platformId: string, log: FastifyBaseLogger): Promise<string | undefined> {
     const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
     if (edition !== ApEdition.CLOUD || environment === ApEnvironment.TESTING) {
@@ -150,10 +164,8 @@ async function createInitialCustomer(user: UserWithMetaInformation, platformId: 
         user,
         platformId,
     )
-
     return stripeCustomerId
 }
-
 
 type UpdateByCustomerId = {
     customerId: string
@@ -163,4 +175,9 @@ type UpdateByCustomerId = {
     endDate: number
     cancelDate?: number
     stripePaymentMethod?: string
+}
+
+type GetBillingAmountParams = {
+    subscriptionId?: string
+    plan: string
 }

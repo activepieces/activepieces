@@ -31,11 +31,12 @@ type Props = {
 const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultDealProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);
-		const propertiesToRetrieve = [...defaultDealProperties, ...additionalProperties];
+		const triggerProperties = ['hs_v2_date_entered_current_stage'];
+		const propertiesToRetrieve = [...defaultDealProperties, ...additionalProperties, ...triggerProperties];
 
 		const items = [];
 		let after;
@@ -45,7 +46,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			const response = await client.crm.deals.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
 				properties: propertiesToRetrieve,
-				sorts: ['-hs_lastmodifieddate'],
+				sorts: ['-hs_v2_date_entered_current_stage'],
 				after,
 				filterGroups: [
 					{
@@ -60,6 +61,11 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 								operator: FilterOperatorEnum.Eq,
 								value: propsValue.stageId,
 							},
+							{
+								propertyName: 'hs_v2_date_entered_current_stage',
+								operator: FilterOperatorEnum.Gt,
+								value: lastFetchEpochMS.toString(),
+							},
 						],
 					},
 				],
@@ -72,7 +78,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		} while (after);
 
 		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
+			epochMilliSeconds: dayjs(item.properties['hs_v2_date_entered_current_stage']).valueOf(),
 			data: item,
 		}));
 	},
@@ -98,7 +104,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
 																
-							dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
+							dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id, hs_v2_date_entered_current_stage
 									
 							**Specify here a list of additional properties to retrieve**`,
 		}),
@@ -140,6 +146,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 			hs_lastmodifieddate: '2024-03-13T11:29:16.078Z',
 			hs_object_id: '18011922225',
 			pipeline: 'default',
+			hs_v2_date_entered_current_stage: '2024-03-13T11:29:16.078Z',
 		},
 		createdAt: '2024-03-13T11:28:40.586Z',
 		updatedAt: '2024-03-13T11:29:16.078Z',

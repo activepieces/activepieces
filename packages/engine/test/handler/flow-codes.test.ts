@@ -1,4 +1,4 @@
-import { Action } from '@activepieces/shared'
+import { FlowAction } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
@@ -28,7 +28,7 @@ describe('codeExecutor', () => {
         })
         expect(result.verdict).toBe(ExecutionVerdict.FAILED)
         expect(result.steps.runtime.status).toEqual('FAILED')
-        expect(result.steps.runtime.errorMessage).toEqual('Custom Runtime Error')
+        expect(result.steps.runtime.errorMessage).toContain('Custom Runtime Error')
     })
 
     it('should skip code action', async () => {
@@ -43,7 +43,7 @@ describe('codeExecutor', () => {
         expect(result.steps.echo_step).toBeUndefined()
     })
     it('should skip flow action', async () => {
-        const flow: Action = {
+        const flow: FlowAction = {
             ...buildCodeAction({
                 name: 'echo_step',
                 skip: true,

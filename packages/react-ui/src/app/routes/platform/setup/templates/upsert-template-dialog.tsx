@@ -182,8 +182,10 @@ export const UpsertTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const json = JSON.parse(text) as FlowTemplate;
-                            field.onChange(json.template);
+                            const migratedTemplate = JSON.parse(
+                              text,
+                            ) as FlowTemplate;
+                            field.onChange(migratedTemplate.template);
                           } catch (e) {
                             form.setError('template', {
                               message: t('Invalid JSON'),

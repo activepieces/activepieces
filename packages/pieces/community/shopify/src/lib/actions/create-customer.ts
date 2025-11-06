@@ -43,6 +43,10 @@ export const createCustomerAction = createAction({
       description: 'A string of comma-separated tags for filtering and search',
       required: false,
     }),
+    acceptsMarketing:Property.Checkbox({
+      displayName:'Accepts Marketing ?',
+      required:false
+    })
   },
   async run({ auth, propsValue }) {
     const {
@@ -53,6 +57,7 @@ export const createCustomerAction = createAction({
       lastName,
       phoneNumber,
       tags,
+      acceptsMarketing
     } = propsValue;
 
     return await createCustomer(
@@ -64,6 +69,10 @@ export const createCustomerAction = createAction({
         last_name: lastName,
         phone: phoneNumber,
         tags,
+        email_marketing_consent:{
+          state:acceptsMarketing?'subscribed':'not_subscribed',
+          opt_in_level:"unknown"
+        }
       },
       auth
     );

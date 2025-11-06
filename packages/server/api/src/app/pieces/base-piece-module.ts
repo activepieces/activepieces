@@ -1,8 +1,9 @@
-import { PieceMetadataModel  } from '@activepieces/pieces-framework'
-import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { apVersionUtil } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
+    EndpointScope,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
@@ -13,7 +14,9 @@ import {
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
+    RegistryPiecesRequestQuery,
     SampleDataFileType,
+    WorkerJobType,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -37,10 +40,10 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
         return pieceMetadataService(req.log).getVersions({
             name: req.query.name,
-            projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
+            projectId: req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId,
             release: req.query.release,
             edition: req.query.edition ?? ApEdition.COMMUNITY,
-            platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
+            platformId: req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
         })
     })
 
@@ -52,38 +55,35 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.get(
-        '/',
-        ListPiecesRequest,
-        async (req) => {
-            const latestRelease = await apVersionUtil.getCurrentRelease()
-            const includeTags = req.query.includeTags ?? false
-            const release = req.query.release ?? latestRelease
-            const edition = req.query.edition ?? ApEdition.COMMUNITY
-            const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
-            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
-            const pieceMetadataSummary = await pieceMetadataService(req.log).list({
-                release,
-                includeHidden: req.query.includeHidden ?? false,
-                projectId,
-                platformId,
-                edition,
-                includeTags,
-                categories: req.query.categories,
-                searchQuery: req.query.searchQuery,
-                sortBy: req.query.sortBy,
-                orderBy: req.query.orderBy,
-                suggestionType: req.query.suggestionType,
-                locale: req.query.locale as LocalesEnum | undefined,
-            })
-            return pieceMetadataSummary.map((piece) => {
-                return {
-                    ...piece,
-                    i18n: undefined,
-                }
-            })
-        },
-    )
+    app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
+        const latestRelease = await apVersionUtil.getCurrentRelease()
+        const query = req.query
+        const includeTags = query.includeTags ?? false
+        const release = query.release ?? latestRelease
+        const edition = query.edition ?? ApEdition.COMMUNITY
+        const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
+        const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER || req.principal.type === PrincipalType.SERVICE ? undefined : req.principal.projectId
+        const pieceMetadataSummary = await pieceMetadataService(req.log).list({
+            release,
+            includeHidden: query.includeHidden ?? false,
+            projectId,
+            platformId,
+            edition,
+            includeTags,
+            categories: query.categories,
+            searchQuery: query.searchQuery,
+            sortBy: query.sortBy,
+            orderBy: query.orderBy,
+            suggestionType: query.suggestionType,
+            locale: query.locale as LocalesEnum | undefined,
+        })
+        return pieceMetadataSummary.map((piece) => {
+            return {
+                ...piece,
+                i18n: undefined,
+            }
+        })
+    })
 
     app.get(
         '/:scope/:name',
@@ -94,8 +94,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
-            const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
+            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
+            const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
             return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
@@ -113,8 +113,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const { name } = req.params
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
-            const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
+            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
+            const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
             return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
@@ -124,6 +124,16 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             })
         },
     )
+
+    app.get('/registry', RegistryPiecesRequest, async (req) => {
+        const pieces = await pieceMetadataService(req.log).registry({
+            release: req.query.release,
+            edition: req.query.edition,
+            platformId: req.principal.type === PrincipalType.UNKNOWN 
+            || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
+        })
+        return pieces
+    })
 
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync())
 
@@ -139,13 +149,15 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
             const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
-                jobType: UserInteractionJobType.EXECUTE_PROPERTY,
+                jobType: WorkerJobType.EXECUTE_PROPERTY,
+                platformId: platform.id,
                 projectId,
                 flowVersion: flow.version,
                 propertyName: req.body.propertyName,
                 actionOrTriggerName: req.body.actionOrTriggerName,
                 input: req.body.input,
                 sampleData,
+                searchValue: req.body.searchValue,
                 piece: await getPiecePackageWithoutArchive(req.log, projectId, platform.id, req.body),
             })
             return result
@@ -154,15 +166,25 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-const ListPiecesRequest = {
+const RegistryPiecesRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        querystring: ListPiecesRequestQuery,
-     
+        querystring: RegistryPiecesRequestQuery,
     },
- 
+}
+
+const ListPiecesRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
+    },
+    schema: {
+        querystring: ListPiecesRequestQuery,
+
+    },
+
 }
 const GetPieceParamsRequest = {
     config: {
@@ -171,9 +193,9 @@ const GetPieceParamsRequest = {
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
-    
+
     },
-   
+
 }
 
 const GetPieceParamsWithScopeRequest = {
@@ -198,6 +220,9 @@ const ListCategoriesRequest = {
 const OptionsPieceRequest = {
     schema: {
         body: PieceOptionRequest,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 

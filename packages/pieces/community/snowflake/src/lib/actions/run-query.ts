@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import snowflake from 'snowflake-sdk';
 import { snowflakeAuth } from '../../index';
+import { configureConnection } from '../common';
 
 const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
@@ -38,19 +39,11 @@ export const runQuery = createAction({
     }),
   },
   async run(context) {
-    const { username, password, role, database, warehouse, account } =
-      context.auth;
-
-    const connection = snowflake.createConnection({
-      application: context.propsValue.application,
-      timeout: context.propsValue.timeout,
-      username,
-      password,
-      role,
-      database,
-      warehouse,
-      account,
-    });
+    const connection = configureConnection(
+      context.auth,
+      context.propsValue.application,
+      context.propsValue.timeout
+    );
 
     return new Promise((resolve, reject) => {
       connection.connect(function (err, conn) {

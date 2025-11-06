@@ -78,7 +78,7 @@ export const createSubmission = createAction({
               switch (field.type?.toLowerCase()) {
                 case 'select':
                 case 'radio':
-                case 'checkbox':
+                case 'checkbox':{
                   const optionsData = field.options || field.choices || field.option_choices;
                   
                   if (optionsData) {
@@ -148,7 +148,7 @@ export const createSubmission = createAction({
                     });
                   }
                   break;
-
+                }
                 case 'text':
                   fields[fieldKey] = Property.ShortText({
                     displayName: fieldLabel,
@@ -210,16 +210,6 @@ export const createSubmission = createAction({
                     required: isRequired,
                   });
                   break;
-
-                case 'checkbox':
-                  fields[fieldKey] = Property.Checkbox({
-                    displayName: fieldLabel,
-                    description: field.description || field.hint || undefined,
-                    required: isRequired,
-                    defaultValue: field.default === '1' || field.default === 'true',
-                  });
-                  break;
-
                 case 'file':
                   fields[fieldKey] = Property.File({
                     displayName: fieldLabel,
@@ -228,7 +218,7 @@ export const createSubmission = createAction({
                   });
                   break;
 
-                case 'name':
+                case 'name':{
                   const nameSubfields = field.visible_subfields || ['first', 'last'];
                   
                   if (nameSubfields.includes('prefix')) {
@@ -279,8 +269,8 @@ export const createSubmission = createAction({
                     });
                   }
                   break;
-
-                case 'address':
+                }
+                case 'address': {
                   const addressSubfields = field.visible_subfields || ['address', 'city', 'state', 'zip'];
                   
                   if (addressSubfields.includes('address')) {
@@ -331,7 +321,7 @@ export const createSubmission = createAction({
                     });
                   }
                   break;
-
+                }
 
 
                 default:

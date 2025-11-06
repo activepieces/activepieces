@@ -21,7 +21,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger): PieceMetadataServi
     const source = system.getOrThrow<PiecesSource>(AppSystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
-        case PiecesSource.CLOUD_AND_DB:
             return FastDbPieceMetadataService(log)
         case PiecesSource.FILE:
             return FilePieceMetadataService(log)
@@ -32,7 +31,7 @@ export const getPiecePackageWithoutArchive = async (
     log: FastifyBaseLogger,
     projectId: string | undefined,
     platformId: PlatformId | undefined,
-    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
+    pkg: Omit<PublicPiecePackage, 'directoryPath' | 'pieceType' | 'packageType'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive' | 'pieceType' | 'packageType'>,
 ): Promise<PiecePackage> => {
     const pieceMetadata = await pieceMetadataService(log).getOrThrow({
         name: pkg.pieceName,
@@ -40,13 +39,13 @@ export const getPiecePackageWithoutArchive = async (
         projectId,
         platformId,
     })
-    switch (pkg.packageType) {
+    switch (pieceMetadata.packageType) {
         case PackageType.ARCHIVE: {
             return {
                 packageType: PackageType.ARCHIVE,
                 pieceName: pkg.pieceName,
                 pieceVersion: pieceMetadata.version,
-                pieceType: pkg.pieceType,
+                pieceType: pieceMetadata.pieceType,
                 archiveId: pieceMetadata.archiveId!,
                 archive: undefined,
             }
@@ -56,7 +55,7 @@ export const getPiecePackageWithoutArchive = async (
                 packageType: PackageType.REGISTRY,
                 pieceName: pkg.pieceName,
                 pieceVersion: pieceMetadata.version,
-                pieceType: pkg.pieceType,
+                pieceType: pieceMetadata.pieceType,
             }
         }
     }

@@ -43,9 +43,10 @@ export const ApplyButton = ({
     },
     onSuccess: (plan) => {
       if (
-        (!plan.operations || plan.operations.length === 0) &&
+        (!plan.flows || plan.flows.length === 0) &&
         (!plan.tables || plan.tables.length === 0)
       ) {
+        setSyncPlan(null); // Reset syncPlan when plan is empty
         setLoadingRequestId(null);
         return;
       }
@@ -53,6 +54,7 @@ export const ApplyButton = ({
       setLoadingRequestId(null);
     },
     onError: () => {
+      setSyncPlan(null); // Reset syncPlan on error
       setLoadingRequestId(null);
       toast(INTERNAL_ERROR_TOAST);
     },

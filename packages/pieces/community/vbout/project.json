@@ -24,7 +24,11 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-vbout {args.ver} {args.tag}",
@@ -36,6 +40,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/vbout",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   },

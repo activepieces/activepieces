@@ -18,13 +18,29 @@ export const askSpace = createAction({
       options: {
         options: [
           {
-            label: 'Single AI Agent',
+            label: 'MedullaryAI Agent',
             value: 'single_agent',
           },
           {
-            label: 'Basic AI Chat',
-            value: 'chat',
+            label: 'MedullaryAI Agent (xAI Grok)',
+            value: 'single_agent_xai',
           },
+          {
+            label: 'MedullaryAI Fact Check',
+            value: 'fact_check_agent',
+          },
+          {
+            label: 'MedullaryAI Researcher',
+            value: 'research_agent',
+          },
+          {
+            label: 'MedullaryAI Sales Researcher',
+            value: 'sales_research_agent',
+          },
+          {
+            label: 'MedullaryAI Search Agent',
+            value: '`search_agent`',
+          }
         ],
       },
     }),
@@ -49,9 +65,9 @@ export const askSpace = createAction({
       // if no chatId is selected, create a new one
       const chatResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${medullarCommon.exploratorUrl}/chats/`,
+        url: `${medullarCommon.aiUrl}/chats/`,
         body: {
-          name: 'automated',
+          name: 'activepieces automated',
           space: {
             uuid: context.propsValue['spaceId'],
           },
@@ -65,16 +81,12 @@ export const askSpace = createAction({
 
     const messageResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${medullarCommon.exploratorUrl}/messages/?chat=${chatId}`,
+      url: `${medullarCommon.aiUrl}/messages/get_response/?chat=${chatId}`,
       body: {
-        name: 'automated',
         chat: {
           uuid: chatId,
         },
         text: context.propsValue['text'],
-        user_email: userData.email,
-        user_uuid: userData.uuid,
-        user_name: userData.name,
         is_bot: false,
         is_reasoning_selected: context.propsValue['isReasoning'],
         selected_mode: context.propsValue['selectedMode'],

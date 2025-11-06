@@ -20,8 +20,9 @@ export type McpPieceToolData = Static<typeof McpPieceToolData>
 
 const McpToolBase = {
     ...BaseModelSchema,
-    toolName: Type.Optional(Type.String()),
-    mcpId: ApId,
+    externalId: Type.String(),
+    toolName: Type.String(),
+    mcpId: Type.String(),
 }
 export const McpPieceTool = Type.Object({
     type: Type.Literal(McpToolType.PIECE),
@@ -43,3 +44,26 @@ export const McpTool = DiscriminatedUnion('type', [
 ])
 
 export type McpTool = Static<typeof McpTool>
+
+export const  McpToolsListResult = Type.Object({
+    result: Type.Object({
+        tools: Type.Array(Type.Object({
+            name: Type.String(),
+            description: Type.Optional(Type.String()),
+            inputSchema: Type.Record(Type.String(), Type.Any()),
+        })),
+    }),
+})
+export type McpToolsListResult = Static<typeof McpToolsListResult>
+
+export const McpToolCallResult = Type.Object({
+    result: Type.Object({
+        success: Type.Optional(Type.Boolean()),
+        content: Type.Optional(Type.Array(Type.Object({
+            text: Type.Optional(Type.String()),
+        }))),
+    }),
+})
+export type McpToolCallResult = Static<typeof McpToolCallResult>
+
+export type McpResult = McpToolsListResult | McpToolCallResult

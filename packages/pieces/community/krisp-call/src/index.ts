@@ -18,7 +18,7 @@ export const krispcallAuth = PieceAuth.CustomAuth({
     try {
       await httpClient.sendRequest<string[]>({
         method: HttpMethod.GET,
-        url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/me',
+        url: 'https://app.krispcall.com/api/v3/platform/activepiece/me',
         headers: {
           'X-API-KEY': auth.apiKey,
         },

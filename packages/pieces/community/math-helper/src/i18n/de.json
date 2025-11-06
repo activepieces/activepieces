@@ -1,0 +1,17 @@
+{
+  "\nPerform mathematical operations.\n": "\nFühre mathematische Operationen aus.\n",
+  "Addition": "Hinzufügen",
+  "Subtraction": "Abzug",
+  "Multiplication": "Multiplikation",
+  "Division": "Division",
+  "Modulo": "Modulo",
+  "Generate Random Number": "Zufällige Nummer generieren",
+  "Add the first number and the second number": "Die erste und die zweite Zahl hinzufügen",
+  "Subtract the first number from the second number": "Die erste Zahl von der zweiten Zahl abziehen",
+  "Multiply first number by the second number": "Die erste Zahl mit der zweiten Zahl multiplizieren",
+  "Divide first number by the second number": "Erste Zahl durch die zweite Zahl teilen",
+  "Get the remainder of the first number divided by second number": "Erhalte den Rest der ersten Zahl geteilt durch die zweite Zahl",
+  "Generate random number between two numbers (inclusive)": "Generiere zufällige Zahl zwischen zwei Zahlen (inklusive)",
+  "First Number": "Erste Nummer",
+  "Second Number": "Zweite Nummer"
+}

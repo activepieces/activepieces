@@ -1,7 +1,12 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
-import { enrichErrorContext, execPromise, fileExists, memoryLock } from '@activepieces/server-shared'
-import { isEmpty } from '@activepieces/shared'
+import {
+    enrichErrorContext,
+    execPromise,
+    fileSystemUtils,
+    memoryLock,
+} from '@activepieces/server-shared'
+import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 type PackageManagerOutput = {
@@ -23,6 +28,11 @@ export type PackageInfo = {
    * where to get the package from, could be an npm tag, a local path, or a tarball.
    */
     spec: string
+
+    /**
+   * if the package is standalone, it means it get installed in it's own folder
+   */
+    standalone?: boolean
 }
 
 const runCommand = async (
@@ -33,6 +43,8 @@ const runCommand = async (
 ): Promise<PackageManagerOutput> => {
     try {
         log.debug({ path, command, args }, '[PackageManager#execute]')
+
+        await fileSystemUtils.threadSafeMkdir(path)
 
         const commandLine = `pnpm ${command} ${args.join(' ')}`
         return await execPromise(commandLine, { cwd: path })
@@ -52,7 +64,11 @@ const runCommand = async (
 }
 
 export const packageManager = (log: FastifyBaseLogger) => ({
-    async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
+    async add({
+        path,
+        dependencies,
+        installDir,
+    }: AddParams): Promise<PackageManagerOutput> {
         if (isEmpty(dependencies)) {
             return {
                 stdout: '',
@@ -66,28 +82,38 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
         ]
+        if (!isNil(installDir)) {
+            config.push(`--dir=${installDir}`)
+        }
 
         const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
         return runCommand(path, 'add', log, ...dependencyArgs, ...config)
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        const lock = await memoryLock.acquire(`pnpm-init-${path}`)
-        try {
-            const fExists = await fileExists(fsPath.join(path, 'package.json'))
-            if (fExists) {
-                return {
-                    stdout: 'N/A',
-                    stderr: 'N/A',
-                }
+        const packageJsonPath = fsPath.join(path, 'package.json')
+        const fExists = await fileSystemUtils.fileExists(packageJsonPath)
+        if (fExists) {
+            return {
+                stdout: 'N/A',
+                stderr: 'N/A',
             }
-            // It must be awaited so it only releases the lock after the command is done
-            const result = await runCommand(path, 'init', log)
-            return result
         }
-        finally {
-            await lock.release()
-        }
+        return memoryLock.runExclusive({
+            key: `pnpm-init-${path}`,
+            fn: async () => {
+                const fExists = await fileSystemUtils.fileExists(packageJsonPath)
+                if (fExists) {
+                    return {
+                        stdout: 'N/A',
+                        stderr: 'N/A',
+                    }
+                }
+                // It must be awaited so it only releases the lock after the command is done
+                const result = await runCommand(path, 'init', log)
+                return result
+            },
+        })
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
@@ -112,9 +138,12 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     },
 })
 
-const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: FastifyBaseLogger) => {
+const replaceRelativeSystemLinkWithAbsolute = async (
+    filePath: string,
+    log: FastifyBaseLogger,
+) => {
     try {
-        // Inside the isolate sandbox, the relative path is not valid
+    // Inside the isolate sandbox, the relative path is not valid
 
         const stats = await fs.stat(filePath)
 
@@ -133,6 +162,7 @@ const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: Fast
 type AddParams = {
     path: string
     dependencies: PackageInfo[]
+    installDir?: string
 }
 
 type InitParams = {

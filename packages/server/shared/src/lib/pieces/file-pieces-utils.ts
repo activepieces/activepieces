@@ -5,6 +5,7 @@ import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
+import chalk from 'chalk'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
 import { exceptionHandler } from '../exception-handler'
@@ -17,15 +18,13 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         const paths = []
         const files = await readdir(folderPath)
 
+        const ignoredFiles = ['node_modules', 'dist', 'framework', 'common', 'common-ai']
         for (const file of files) {
             const filePath = join(folderPath, file)
             const fileStats = await stat(filePath)
             if (
                 fileStats.isDirectory() &&
-                file !== 'node_modules' &&
-                file !== 'dist' &&
-                file !== 'framework' &&
-                file !== 'common'
+                !ignoredFiles.includes(file)
             ) {
                 paths.push(...(await findAllPiecesFolder(filePath)))
             }
@@ -43,6 +42,38 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
     async function getProjectJsonFromFolderPath(folderPath: string): Promise<string> {
         return join(folderPath, 'project.json')
+    }
+
+    async function getPieceDependencies(folderPath: string): Promise<Record<string, string> | null> {
+        try {
+            const packageJson =  await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
+            if (!packageJson.dependencies) {
+                return null
+            }
+            return packageJson.dependencies
+        }
+        catch (e) {
+            return null
+        }
+    }
+
+    async function installPiecesDependencies(packageNames: string[], cmdRunner: (cmd: string) => Promise<void>): Promise<void> {
+        const deps = new Set<string>()
+
+        for (const packageName of packageNames) {
+            const folderPath = await findPieceDirectoryByFolderName(packageName)
+            if (!folderPath) continue
+
+            const pieceDependencies = await getPieceDependencies(folderPath)
+            if (!pieceDependencies) continue
+
+            Object.keys(pieceDependencies).forEach((key) => deps.add(`${key}@${pieceDependencies[key as keyof typeof pieceDependencies]}`))
+        }
+
+        if (deps.size > 0) {
+            log.info(chalk.yellow(`Installing Pieces Dependencies: ${Array.from(deps).join(' ')}`))
+            await cmdRunner(`bun install ${Array.from(deps).join(' ')} --no-save`)
+        }
     }
 
     async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
@@ -124,7 +155,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 pieceVersion,
             })
             const originalMetadata = piece.metadata()
-            const i18n = await pieceTranslation.initializeI18n(pieceName)
+            const i18n = await pieceTranslation.initializeI18n(folderPath)
             const metadata: PieceMetadata = {
                 ...originalMetadata,
                 name: pieceName,
@@ -164,5 +195,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         clearPieceCache,
         getPackageNameFromFolderPath,
         getProjectJsonFromFolderPath,
+        installPiecesDependencies,
     }
 }

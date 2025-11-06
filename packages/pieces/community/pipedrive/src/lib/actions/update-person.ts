@@ -1,13 +1,15 @@
 import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { personCommonProps, personIdProp } from '../common/props';
+import { personCommonProps, personIdProp, customFieldsProp } from '../common/props';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
+	pipedriveParseCustomFields,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { GetField, PersonCreateResponse } from '../common/types';
+import { GetField, GetPersonResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { isEmpty } from '@activepieces/shared';
 
 export const updatePersonAction = createAction({
 	auth: pipedriveAuth,
@@ -33,12 +35,31 @@ export const updatePersonAction = createAction({
 			firstName,
 			lastName,
 		} = context.propsValue;
-		const phone = (context.propsValue.phone as string[]) ?? [];
-		const email = (context.propsValue.email as string[]) ?? [];
+
+		const rawPhones = (context.propsValue.phone as string[]) ?? [];
+		const rawEmails = (context.propsValue.email as string[]) ?? [];
 		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 		const customFields = context.propsValue.customfields ?? {};
 
-		const personDefaultFields: Record<string, any> = {
+
+        
+		if ((firstName && !lastName) || (!firstName && lastName)) {
+			throw new Error('If First Name is provided, Last Name must be provided as well.');
+		}
+
+		const phones = rawPhones.map((value, index) => ({
+			value,
+			label: 'work',
+			primary: index === 0,
+		}));
+
+		const emails = rawEmails.map((value, index) => ({
+			value,
+			label: 'work',
+			primary: index === 0,
+		}));
+
+		const personPayload: Record<string, any> = {
 			name: name,
 			owner_id: ownerId,
 			org_id: organizationId,
@@ -48,51 +69,40 @@ export const updatePersonAction = createAction({
 			last_name: lastName,
 		};
 
-		if (phone.length > 0) {
-			personDefaultFields.phone = phone;
-		}
+		// Phones and emails
+		if (phones.length) personPayload.phones = phones;
+		if (emails.length) personPayload.emails = emails;
+		if (labelIds.length) personPayload.label_ids = labelIds;
 
-		if (email.length > 0) {
-			personDefaultFields.email = email;
-		}
-
-		if (labelIds.length > 0) {
-			personDefaultFields.label_ids = labelIds;
-		}
-
-		const personCustomFields: Record<string, string> = {};
-
-		Object.entries(customFields).forEach(([key, value]) => {
-			// Format values if they are arrays
-			personCustomFields[key] = Array.isArray(value) && value.length > 0 ? value.join(',') : value;
-		});
-
-		const updatedPersonResponse = await pipedriveApiCall<PersonCreateResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.PUT,
-			resourceUri: `/persons/${personId}`,
-			body: {
-				...personDefaultFields,
-				...personCustomFields,
-			},
-		});
-
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/personFields',
+			resourceUri: '/v1/personFields',
 		});
 
-		const updatedPersonProperties = pipedriveTransformCustomFields(
+		const personCustomFields = pipedriveParseCustomFields(customFieldsResponse, customFields);
+
+		if (!isEmpty(personCustomFields)) {
+			personPayload.custom_fields = personCustomFields;
+		}
+
+		const updatedPersonResponse = await pipedriveApiCall<GetPersonResponse>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.PATCH,
+			resourceUri: `/v2/persons/${personId}`,
+			body: personPayload,
+		});
+
+		const transformedPersonProperties = pipedriveTransformCustomFields(
 			customFieldsResponse,
 			updatedPersonResponse.data,
 		);
 
 		return {
 			...updatedPersonResponse,
-			data: updatedPersonProperties,
+			data: transformedPersonProperties,
 		};
 	},
 });
