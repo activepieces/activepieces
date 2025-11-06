@@ -24,7 +24,7 @@ let socket: Socket | undefined
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
-    socket?.emit(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
+    await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
 }
 
 export const workerSocket = {
@@ -76,7 +76,7 @@ export const workerSocket = {
                     error: utils.formatError(resultError),
                 }
                 console.error('Error handling operation:', engineError)
-                socket?.emit(EngineSocketEvent.ENGINE_RESPONSE, engineError)
+                await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, engineError)
             }
         })
 
