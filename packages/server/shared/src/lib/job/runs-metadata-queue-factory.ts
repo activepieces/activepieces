@@ -61,6 +61,10 @@ export const runsMetadataQueueFactory = ({
             }
             return queueInstance
         },
+
+        isInitialized(): boolean {
+            return queueInstance !== undefined
+        },
     }
 }
 export type RunsMetadataJobData = {

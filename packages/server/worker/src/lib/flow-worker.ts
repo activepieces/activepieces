@@ -38,7 +38,7 @@ export const flowWorker = (log: FastifyBaseLogger): {
         await engineRunnerSocket(log).disconnect()
         appSocket(log).disconnect()
 
-        if (runsMetadataQueue.get()) {
+        if (runsMetadataQueue.isInitialized()) {
             await runsMetadataQueue.get().close()
         }
 
