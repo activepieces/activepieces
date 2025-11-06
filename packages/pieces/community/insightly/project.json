@@ -36,6 +36,7 @@
         "updateBuildableProjectDepsInPackageJson": true
       },
       "dependsOn": [
+        "^build",
         "prebuild"
       ]
     },
@@ -54,8 +55,11 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/insightly",
-        "command": "npm install --no-save"
-      }
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

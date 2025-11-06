@@ -89,9 +89,16 @@ describe('Project Member API', () => {
                 },
             })
 
+            const mockProjectTwo = createMockProject({
+                platformId: mockPlatformOne.id,
+                ownerId: viewerUser.id,
+            })
+            await databaseConnection().getRepository('project').save(mockProjectTwo)
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: viewerUser.id,
+                projectId: mockProjectTwo.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -150,6 +157,7 @@ describe('Project Member API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: adminOfProjectTwo.id,
+                projectId: projectTwo.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -185,7 +193,6 @@ describe('Project Member API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
             })
-
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })

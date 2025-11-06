@@ -20,7 +20,8 @@
         "updateBuildableProjectDepsInPackageJson": true
       },
       "dependsOn": [
-        "prebuild"
+        "prebuild",
+        "^build"
       ]
     },
     "lint": {
@@ -30,10 +31,13 @@
       ]
     },
     "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/common",
-        "command": "npm install --no-save"
+        "command": "bun install --no-save"
       }
     }
   },

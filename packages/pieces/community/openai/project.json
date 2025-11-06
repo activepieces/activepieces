@@ -40,8 +40,11 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/openai",
-        "command": "npm install --no-save"
-      }
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []

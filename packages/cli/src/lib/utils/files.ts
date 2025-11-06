@@ -17,6 +17,7 @@ export type ProjectJson = {
   targets?: {
     prebuild?: {
       executor: string;
+      dependsOn?: string[];
       options: {
         cwd: string;
         command: string;
