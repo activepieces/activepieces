@@ -22,7 +22,7 @@ export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
         return
     }
-    await assertRoleHasPermission(req.principal, req.routeOptions.config?.permission, req.log)
+    await assertRoleHasPermission(req.principal, req.routeOptions.config?.security?.authorization?.permission, req.log)
 }
 
 export async function assertUserHasPermissionToFlow(
@@ -95,7 +95,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
         return true
     }
 
-    return req.routeOptions.config?.permission === undefined
+    return req.routeOptions.config?.security?.authorization?.permission === undefined
 }
 
 export const getPrincipalRoleOrThrow = async (principal: UserPrincipal, log: FastifyBaseLogger): Promise<ProjectRole> => {
