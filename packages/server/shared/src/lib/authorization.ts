@@ -1,7 +1,7 @@
-import { FastifyRequest, RouteGenericInterface } from 'fastify'
+import { RouteGenericInterface } from 'fastify'
 import { PrincipalType } from '../../../../shared/src/lib/authentication/model/principal-type'
 import { Permission } from '../../../../shared/src/lib/common/security/permission'
-import { ProjectId } from '@activepieces/shared'
+import { ProjectId } from 'packages/shared/src/lib/project/project'
 
 export enum AuthorizationType {
     PLATFORM = 'PLATFORM',
@@ -22,10 +22,7 @@ export type PlatformAuthorization = {
 export type ProjectAuthorization<T extends RouteGenericInterface = RouteGenericInterface> = {
     type: AuthorizationType.PROJECT
     allowedPrincipals: (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
-    project: {
-        projectId: (request: FastifyRequest<T>) => Promise<ProjectId>
-        permission?: Permission
-    }
+    permission?: Permission
 }
 
 export type NoneAuthorization = {
