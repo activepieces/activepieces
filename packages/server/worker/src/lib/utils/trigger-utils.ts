@@ -74,7 +74,7 @@ async function getTriggerPayloadsAndStatus(
 ): Promise<ExtractPayloadsResult> {
     const { payload, flowVersion, projectId, simulate, timeoutInSeconds } = params
     try {
-        const { status, result } = await engineRunner(log).executeTrigger(engineToken, {
+        const { status, result, standardError } = await engineRunner(log).executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
             flowVersion,
             triggerPayload: payload,
@@ -98,7 +98,7 @@ async function getTriggerPayloadsAndStatus(
         return {
             payloads: [],
             status: TriggerRunStatus.FAILED,
-            errorMessage: result.message,
+            errorMessage: result?.message ?? standardError,
         }
     }
     catch (e) {
