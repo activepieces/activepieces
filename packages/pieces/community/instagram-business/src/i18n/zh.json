@@ -1,14 +1,14 @@
 {
-  "Grow your business on Instagram": "在 Instagram 上扩展您的业务",
+  "Grow your business on Instagram": "Grow your business on Instagram",
   "\nTo Obtain the following credentials:\n1. Visit https://developers.facebook.com/\n2. Create an application, Select Other for Usecase.\n3. Select Business as App Type.\n4. Copy App Id and App Secret from Basic Settings.\n": "\nTo Obtain the following credentials:\n1. Visit https://developers.facebook.com/\n2. Create an application, Select Other for Usecase.\n3. Select Business as App Type.\n4. Copy App Id and App Secret from Basic Settings.\n",
-  "Upload Photo": "上传照片",
-  "Upload Reel": "上传reel",
-  "Upload a photo to an Instagram Professional Account": "上传照片到 Instagram 专业帐户",
-  "Upload a reel to an Instagram Professional Account": "上传reel 到 Instagram 专业帐户",
-  "Page": "页",
-  "Photo": "照片",
-  "Caption": "标题",
-  "Video": "视频",
-  "A URL we can access for the photo (JPG only)": "我们可以访问照片的 URL (只有JPG 才能)",
-  "A URL we can access for the video (Limit: 1GB or 15 minutes)": "我们可以访问视频的 URL (限制：1GB 或 15 分钟)"
+  "Upload Photo": "Upload Photo",
+  "Upload Reel": "Upload Reel",
+  "Upload a photo to an Instagram Professional Account": "Upload a photo to an Instagram Professional Account",
+  "Upload a reel to an Instagram Professional Account": "Upload a reel to an Instagram Professional Account",
+  "Page": "Page",
+  "Photo": "Photo",
+  "Caption": "Caption",
+  "Video": "Video",
+  "A URL we can access for the photo (JPG only)": "A URL we can access for the photo (JPG only)",
+  "A URL we can access for the video (Limit: 1GB or 15 minutes)": "A URL we can access for the video (Limit: 1GB or 15 minutes)"
 }
