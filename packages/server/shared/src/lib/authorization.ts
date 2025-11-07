@@ -1,6 +1,4 @@
-
-import { PrincipalType } from '../../../../shared/src/lib/authentication/model/principal-type'
-import { Permission } from '../../../../shared/src/lib/common/security/permission'
+import { PrincipalType, Permission } from '@activepieces/shared'
 
 export enum AuthorizationType {
     PLATFORM = 'PLATFORM',
