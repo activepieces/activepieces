@@ -2,6 +2,7 @@ import { inspect } from 'util'
 import { triggerRunStats } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    EngineResponseStatus,
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
@@ -34,7 +35,7 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
             }
         }
         const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
-        
+
         const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, flowVersion)
         await triggerRunStats(log, await workerRedisConnections.useExisting()).save({
             platformId,
@@ -73,7 +74,7 @@ async function getTriggerPayloadsAndStatus(
 ): Promise<ExtractPayloadsResult> {
     const { payload, flowVersion, projectId, simulate, timeoutInSeconds } = params
     try {
-        const { result } = await engineRunner(log).executeTrigger(engineToken, {
+        const { status, result } = await engineRunner(log).executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
             flowVersion,
             triggerPayload: payload,
@@ -88,18 +89,16 @@ async function getTriggerPayloadsAndStatus(
             timeoutInSeconds,
         })
 
-        if (result.success) {
+        if (status === EngineResponseStatus.OK && result.success) {
             return {
                 payloads: result.output as unknown[],
                 status: TriggerRunStatus.COMPLETED,
             }
         }
-        else {
-            return {
-                payloads: [],
-                status: TriggerRunStatus.FAILED,
-                errorMessage: result.message,
-            }
+        return {
+            payloads: [],
+            status: TriggerRunStatus.FAILED,
+            errorMessage: result.message,
         }
     }
     catch (e) {
