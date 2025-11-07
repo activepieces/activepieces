@@ -17,14 +17,14 @@ import { execute } from './operations'
 import { utils } from './utils'
 
 const WORKER_ID = process.env.WORKER_ID
-const WS_URL = 'http://127.0.0.1:12345'
+const WS_URL = 'ws://127.0.0.1:12345'
 
 let socket: Socket | undefined
 
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
-    socket?.emit(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
+    await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
 }
 
 export const workerSocket = {
@@ -38,6 +38,8 @@ export const workerSocket = {
             auth: {
                 workerId: WORKER_ID,
             },
+            autoConnect: true,
+            reconnection: true,
         })
 
         // Redirect console.log/error to socket
@@ -50,7 +52,7 @@ export const workerSocket = {
             originalLog.apply(console, args)
         }
 
-        const originalError = console.error 
+        const originalError = console.error
         console.error = function (...args): void {
             let sanitizedArgs = [...args]
             if (typeof args[0] === 'string' && ERROR_MESSAGES_TO_REDACT.some(errorMessage => args[0].includes(errorMessage))) {
@@ -60,7 +62,7 @@ export const workerSocket = {
                 message: sanitizedArgs.join(' ') + '\n',
             }
             socket?.emit(EngineSocketEvent.ENGINE_STDERR, engineStderr)
-           
+
             originalError.apply(console, sanitizedArgs)
         }
 
@@ -76,14 +78,11 @@ export const workerSocket = {
                     error: utils.formatError(resultError),
                 }
                 console.error('Error handling operation:', engineError)
-                socket?.emit(EngineSocketEvent.ENGINE_RESPONSE, engineError)
+                await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, engineError)
             }
         })
 
-        socket.on('disconnect', () => {
-            console.log('Socket disconnected, exiting process')
-            process.exit(0)
-        })
+
     },
 
     sendToWorkerWithAck: async (
@@ -92,8 +91,8 @@ export const workerSocket = {
     ): Promise<void> => {
         await emitWithAck(socket, type, data, {
             timeoutMs: 4000,
-            retries: 3,
-            retryDelayMs: 2000,
+            retries: 4,
+            retryDelayMs: 1000,
         })
     },
 
@@ -103,15 +102,9 @@ export const workerSocket = {
         }
         await emitWithAck(socket, EngineSocketEvent.ENGINE_STDERR, engineStderr, {
             timeoutMs: 3000,
-            retries: 0,
-            retryDelayMs: 0,
+            retries: 4,
+            retryDelayMs: 1000,
         })
-    },
-
-    disconnect: (): void => {
-        if (socket) {
-            socket.disconnect()
-        }
     },
 }
 

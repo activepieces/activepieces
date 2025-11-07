@@ -10,12 +10,12 @@ if (!isNil(WORKER_ID)) {
 
 process.on('uncaughtException', (error) => {
     void workerSocket.sendError(error).catch().finally(() => {
-        process.exit(1)
+        process.exit(3)
     })
 })
 
 process.on('unhandledRejection', (reason) => {
     void workerSocket.sendError(reason).catch().finally(() => {
-        process.exit(1)
+        process.exit(4)
     })
 })
