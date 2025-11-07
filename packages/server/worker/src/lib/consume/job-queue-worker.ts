@@ -90,16 +90,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-        {
-            connection: await workerRedisConnections.create(),
-            telemetry: isOtpEnabled
-                ? new BullMQOtel(QueueName.WORKER_JOBS)
-                : undefined,
-            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-            autorun: true,
-            stalledInterval: 30000,
-            maxStalledCount: 5,
-        },
+            {
+                connection: await workerRedisConnections.create(),
+                telemetry: isOtpEnabled
+                    ? new BullMQOtel(QueueName.WORKER_JOBS)
+                    : undefined,
+                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+                autorun: true,
+                stalledInterval: 30000,
+                maxStalledCount: 5,
+            },
         )
         await worker.waitUntilReady()
         log.info({
@@ -131,15 +131,12 @@ async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
         }
     }
     const schemaVersion = 'schemaVersion' in job.data ? job.data.schemaVersion : 0
-    if (schemaVersion === LATEST_JOB_DATA_SCHEMA_VERSION) {
-        return {
-            shouldSkip: false,
-        }
+    if (schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION) {
+        const newJobData = await workerApiService(workerToken).migrateJob({
+            jobData: job.data,
+        })
+        await job.updateData(newJobData)
     }
-    const newJobData = await workerApiService(workerToken).migrateJob({
-        jobData: job.data,
-    })
-    await job.updateData(newJobData)
     return {
         shouldSkip: false,
     }
