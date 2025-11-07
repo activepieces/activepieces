@@ -17,7 +17,7 @@ import { execute } from './operations'
 import { utils } from './utils'
 
 const WORKER_ID = process.env.WORKER_ID
-const WS_URL = 'http://127.0.0.1:12345'
+const WS_URL = 'ws://127.0.0.1:12345'
 
 let socket: Socket | undefined
 
