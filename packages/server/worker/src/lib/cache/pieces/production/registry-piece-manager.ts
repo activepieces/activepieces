@@ -12,18 +12,22 @@ import {
     PrivatePiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { PieceManager } from '..'
 import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
 import { PackageInfo, packageManager } from '../../package-manager'
 import { CacheState } from '../../worker-cache'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
-export const registryPieceManager = (log: FastifyBaseLogger): PieceManager => ({
+type InstallParams = {
+    projectPath: string
+    pieces: PiecePackage[]
+}
+
+export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({
         projectPath,
         pieces,
-    }): Promise<void> => {
+    }: InstallParams): Promise<void> => {
         try {
             if (isEmpty(pieces)) {
                 return
@@ -53,7 +57,7 @@ export const registryPieceManager = (log: FastifyBaseLogger): PieceManager => ({
     installDependencies: async ({
         projectPath,
         pieces,
-    }): Promise<void> => {
+    }: InstallParams): Promise<void> => {
         await savePackageArchivesToDiskIfNotCached(pieces)
 
         const cache = cacheState(projectPath, log)

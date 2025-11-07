@@ -1,12 +1,12 @@
 import path from 'path'
 import { fileSystemUtils } from '@activepieces/server-shared'
-import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
+import { ExecutionMode, getPieceNameFromAlias, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
-import { piecesInstaller } from './pieces'
+import { registryPieceManager } from './pieces/production/registry-piece-manager'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './worker-cache'
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
@@ -51,10 +51,13 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
             cacheHit,
         }, 'Installed engine in sandbox')
 
-        const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
+        const devPieces = workerMachine.getSettings().DEV_PIECES || []
+        const nonDevPieces = pieces.filter((p) => !devPieces.includes(getPieceNameFromAlias(p.pieceName)))
+
+        const officialPieces = nonDevPieces.filter(f => f.pieceType === PieceType.OFFICIAL)
         if (officialPieces.length > 0) {
             const startTime = performance.now()
-            await piecesInstaller(log, {
+            await registryPieceManager(log).install({
                 projectPath: GLOBAL_CACHE_COMMON_PATH,
                 pieces: officialPieces,
             })
@@ -65,10 +68,10 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
             }, 'Installed official pieces in sandbox')
         }
 
-        const customPieces = pieces.filter(f => f.pieceType === PieceType.CUSTOM)
+        const customPieces = nonDevPieces.filter(f => f.pieceType === PieceType.CUSTOM)
         if (customPieces.length > 0) {
             const startTime = performance.now()
-            await piecesInstaller(log, {
+            await registryPieceManager(log).install({
                 projectPath: customPiecesPath,
                 pieces: customPieces,
             })

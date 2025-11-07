@@ -1,7 +1,6 @@
-import { spawn } from 'child_process'
 import fs from 'fs/promises'
-import path, { resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
+import { resolve } from 'path'
+import { ApLock, filePiecesUtils, memoryLock, runCommandWithLiveOutput } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar, { FSWatcher } from 'chokidar'
@@ -9,6 +8,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
 import { cacheState } from '../../cache-state'
 import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
+import { devPiecesInstaller } from './dev-pieces-installer'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -25,8 +25,8 @@ async function checkBuildTarget(nxProjectFilePath: string): Promise<string> {
     }
 }
 
-async function handleFileChange(packages: string[], packageName: string, piecePackageName: string, nxProjectFilePath: string, io: Server, log: FastifyBaseLogger): Promise<void> {
-    const pieceProjectName = `pieces-${packageName}`
+async function handleFileChange(packages: string[], pieceName: string, packageName: string, nxProjectFilePath: string, io: Server, log: FastifyBaseLogger): Promise<void> {
+    const pieceProjectName = `pieces-${pieceName}`
 
     log.info(
         chalk.blueBright.bold(
@@ -45,28 +45,25 @@ async function handleFileChange(packages: string[], packageName: string, piecePa
             throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
 
-        const cmd = `npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`
-
         const startTime = Date.now()
-        await runCommandWithLiveOutput(cmd)
-        await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
-
-        const postBuildCommand = `bun install --cwd ${path.resolve('dist/packages/pieces/community', packageName)}`
-        await runCommandWithLiveOutput(postBuildCommand)
-
+        await runCommandWithLiveOutput(`npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`)
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
 
-        await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
+
+        await filePiecesUtils(packages, log).clearPieceCache(packageName)
+        await devPiecesInstaller(packages, log).linkSharedActivepiecesPackagesToPiece(packageName)
+        await devPiecesInstaller(packages, log).linkSharedActivepiecesPackagesToEachOther()
+     
 
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH, log)
         await cache.saveCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.saveCache('@activepieces/pieces-common', CacheState.PENDING)
         await cache.saveCache('@activepieces/shared', CacheState.PENDING)
         await cache.saveCache('@activepieces/common-ai', CacheState.PENDING)
-        await cache.saveCache(piecePackageName, CacheState.PENDING)
+        await cache.saveCache(packageName, CacheState.PENDING)
 
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
@@ -85,29 +82,11 @@ async function handleFileChange(packages: string[], packageName: string, piecePa
     }
 }
 
-async function runCommandWithLiveOutput(cmd: string): Promise<void> {
-    const [command, ...args] = cmd.split(' ')
-
-    return new Promise<void>((resolve, reject) => {
-        const child = spawn(command, args, { stdio: 'inherit', shell: true })
-
-        child.on('error', reject)
-        child.on('close', code => {
-            if (code === 0) {
-                resolve()
-            }
-            else {
-                reject(new Error(`Process exited with code ${code}`))
-            }
-        })
-    })
-}
-
-export async function pieceBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
+export async function devPiecesBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
 
     const watchers: FSWatcher[] = []
   
-    await filePiecesUtils(packages, app.log).installPiecesDependencies(packages, runCommandWithLiveOutput)
+    await devPiecesInstaller(packages, app.log).installPiecesDependencies(packages)
 
     for (const packageName of packages) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
@@ -126,6 +105,8 @@ export async function pieceBuilder(app: FastifyInstance, io: Server, packages: s
             handleFileChange(packages, packageName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)
         }, 2000)
 
+        await handleFileChange(packages, packageName, packageJsonName, nxProjectJson, io, app.log)
+
         const watcher = chokidar.watch(resolve(pieceDirectory), {
             ignored: [/^\./, /node_modules/, /dist/],
             persistent: true,
@@ -135,7 +116,6 @@ export async function pieceBuilder(app: FastifyInstance, io: Server, packages: s
                 pollInterval: 200,
             },
         })
-        watcher.on('ready', debouncedHandleFileChange)
         watcher.on('all', (event, path) => {
             if (path.endsWith('.ts') || path.endsWith('package.json')) {
                 debouncedHandleFileChange()

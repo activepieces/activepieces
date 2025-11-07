@@ -5,8 +5,8 @@ import { execPromise, fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
-import { EngineProcess } from './engine-factory-types'
 import { workerMachine } from '../../../utils/machine'
+import { EngineProcess } from './engine-factory-types'
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'
