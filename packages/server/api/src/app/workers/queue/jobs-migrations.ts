@@ -19,7 +19,7 @@ const enrichFlowIdAndLogsUrl: JobMigration = {
             return {
                 ...job,
                 flowId: flowVersion!.flowId,
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                schemaVersion: 4,
                 logsFileId,
                 logsUploadUrl,
             }
