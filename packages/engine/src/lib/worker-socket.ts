@@ -38,7 +38,6 @@ export const workerSocket = {
             auth: {
                 workerId: WORKER_ID,
             },
-            transports: ['websocket'],
             autoConnect: true,
             reconnection: true,
         })

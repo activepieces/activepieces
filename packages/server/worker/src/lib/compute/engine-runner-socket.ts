@@ -13,6 +13,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             try {
                 io = new SocketIOServer({
                     path: '/worker/ws',
+                    maxHttpBufferSize: 1e8,
                 })
 
                 io.listen(12345)
