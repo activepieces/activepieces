@@ -8,7 +8,7 @@
   "Structured Output": "Gestructureerde uitgang",
   "Max steps": "Max stappen",
   "Describe what you want the assistant to do.": "Beschrijf wat u wilt dat de assistent doet.",
-  "Choose your AI model and provider": "Kies uw AI-model en -provider",
+  "Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.": "Kies jouw AI model en provider. Verschillende modellen bieden verschillende capaciteiten, snelheden en kosten. OpenAI-modellen zijn het beste voor algemene taken, antropische uitwassen om te analyseren en Google Gemini biedt concurrerende prijzen.",
   "The numbder of interations the agent can do": "De numbder van interacties die de agent kan doen",
   "(openai) GPT-5": "(openai) GPT-5",
   "(openai) GPT-5 Chat": "(openai) GPT-5 Chat",
