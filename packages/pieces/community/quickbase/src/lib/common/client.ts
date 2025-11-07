@@ -8,8 +8,10 @@ import { QuickbaseApiError } from './types';
 export class QuickbaseClient {
   private readonly baseUrl = 'https://api.quickbase.com/v1';
   private readonly userToken: string;
+  private readonly realmHostname: string;
 
-  constructor(userToken: string) {
+  constructor(realmHostname: string, userToken: string) {
+    this.realmHostname = realmHostname;
     this.userToken = userToken;
   }
 
@@ -24,7 +26,8 @@ export class QuickbaseClient {
       method,
       url,
       headers: {
-        'QB-USER-TOKEN': this.userToken,
+        'QB-Realm-Hostname': this.realmHostname,
+        'Authorization': `QB-USER-TOKEN ${this.userToken}`,
         'Content-Type': 'application/json',
       },
       body: data ? data : undefined,

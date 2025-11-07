@@ -25,7 +25,7 @@ export interface QuickbaseTable {
 export interface QuickbaseField {
   id: number;
   label: string;
-  type: string;
+  fieldType: string;
   mode?: string;
   required?: boolean;
   unique?: boolean;

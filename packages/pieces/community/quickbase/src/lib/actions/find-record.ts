@@ -20,7 +20,7 @@ export const findRecord = createAction({
   },
   async run(context) {
     const { appId, tableId, filters, sortField, sortOrder, maxRecords } = context.propsValue;
-    const client = new QuickbaseClient(context.auth);
+    const client = new QuickbaseClient(context.auth.realmHostname, context.auth.userToken);
 
     const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
     const whereClause = filters ? buildWhereClause(filters) : '';

@@ -49,7 +49,7 @@ export const createUpdateRecordsBulk = createAction({
   async run(context) {
     const { appId, tableId, mergeField, records, mergeFieldBehavior } =
       context.propsValue;
-    const client = new QuickbaseClient(context.auth);
+    const client = new QuickbaseClient(context.auth.realmHostname, context.auth.userToken);
 
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error('Records array is required and cannot be empty');

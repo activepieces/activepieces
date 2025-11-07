@@ -31,7 +31,7 @@ export const findOrCreateRecord = createAction({
   },
   async run(context) {
     const { appId, tableId, mergeField, fields } = context.propsValue;
-    const client = new QuickbaseClient(context.auth);
+    const client = new QuickbaseClient(context.auth.realmHostname, context.auth.userToken);
 
     const tableFields = await client.get<QuickbaseField[]>(
       `/fields?tableId=${tableId}`
@@ -69,7 +69,9 @@ export const findOrCreateRecord = createAction({
           success: true,
         };
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log(error)
+    }
 
     const requiredFields = tableFields
       .filter((f) => f.required)

@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createRecord } from './lib/actions/create-record';
 import { updateRecord } from './lib/actions/update-record';
 import { deleteRecord } from './lib/actions/delete-record';
@@ -29,49 +29,20 @@ Your user token needs access to:
 **Security Note:** Keep your user token secure - it provides access to your Quickbase data.
 `;
 
-export const quickbaseAuth = PieceAuth.SecretText({
-  displayName: 'User Token',
+export const quickbaseAuth = PieceAuth.CustomAuth({
   description: markdown,
   required: true,
-  validate: async ({ auth }) => {
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://api.quickbase.com/v1/apps',
-        headers: {
-          'QB-USER-TOKEN': auth,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.status === 200) {
-        return { valid: true };
-      }
-
-      if (response.status === 401) {
-        return {
-          valid: false,
-          error: 'Invalid user token. Please check your token and try again.',
-        };
-      }
-
-      if (response.status === 403) {
-        return {
-          valid: false,
-          error: 'Access denied. Please ensure your user token has the required permissions.',
-        };
-      }
-
-      return {
-        valid: false,
-        error: `HTTP ${response.status}. Please verify your user token.`,
-      };
-    } catch (error) {
-      return {
-        valid: false,
-        error: `Failed to validate token: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      };
-    }
+  props: {
+    realmHostname: Property.ShortText({
+      displayName: 'Realm Hostname',
+      description: 'Enter your Quickbase Realm Hostname (e.g., yourrealm.quickbase.com)',
+      required: true,
+    }),
+    userToken: Property.ShortText({
+      displayName: 'User Token',
+      description: 'Enter your Quickbase User Token',
+      required: true,
+    }),
   },
 });
 
@@ -81,7 +52,7 @@ export const quickbase = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/quickbase.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['sparkybug'],
+  authors: ['sparkybug','sanket-a11y'],
   actions: [
     createRecord,
     updateRecord,
@@ -89,6 +60,19 @@ export const quickbase = createPiece({
     findRecord,
     findOrCreateRecord,
     createUpdateRecordsBulk,
+    createCustomApiCallAction({
+      auth: quickbaseAuth,
+      baseUrl: (auth) => {
+        return `https://api.quickbase.com/v1`;
+      },
+      authMapping: async (auth) => {
+        return {
+          'QB-Realm-Hostname': (auth as any).realmHostname,
+          'Authorization': `QB-USER-TOKEN ${(auth as any).userToken}`,
+          'Content-Type': 'application/json',
+        };
+      },
+    })
   ],
   triggers: [newRecord, newOrUpdatedRecord],
 });

@@ -16,7 +16,7 @@ export const deleteRecord = createAction({
   },
   async run(context) {
     const { appId, tableId, recordId } = context.propsValue;
-    const client = new QuickbaseClient(context.auth);
+    const client = new QuickbaseClient(context.auth.realmHostname, context.auth.userToken);
 
     const response = await client.delete<QuickbaseDeleteRecordResponse>('/records', {
       from: tableId,

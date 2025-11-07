@@ -18,7 +18,7 @@ export const updateRecord = createAction({
   },
   async run(context) {
     const { appId, tableId, recordId, fields } = context.propsValue;
-    const client = new QuickbaseClient(context.auth);
+    const client = new QuickbaseClient(context.auth.realmHostname, context.auth.userToken);
 
     const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
     
@@ -34,7 +34,7 @@ export const updateRecord = createAction({
       }
     }
 
-    const response = await client.patch<QuickbaseUpdateRecordResponse>('/records', {
+    const response = await client.post<QuickbaseUpdateRecordResponse>('/records', {
       to: tableId,
       data: [recordData],
       fieldsToReturn: tableFields.map(f => f.id),

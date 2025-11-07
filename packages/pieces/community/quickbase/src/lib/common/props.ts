@@ -26,38 +26,44 @@ export const createDynamicFieldsMapperProp = () => Property.DynamicProperties({
     }
 
     try {
-      const client = new QuickbaseClient(auth as unknown as string);
+      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
-      
+
       const props: Record<string, any> = {};
-      
+      console.log("fields", JSON.stringify(fields, null, 2));
       for (const field of fields) {
         if (field.id === 3) continue;
-        
+
         const propKey = `field_${field.id}`;
         const isRequired = field.required || false;
-        
-        if (field.type === 'checkbox') {
+
+        if (field.fieldType === 'checkbox') {
           props[propKey] = Property.Checkbox({
             displayName: `${field.label}${isRequired ? ' *' : ''}`,
-            description: `${field.type} field${isRequired ? ' (required)' : ''}`,
+            description: `${field.fieldType} field${isRequired ? ' (required)' : ''}`,
             required: isRequired,
           });
-        } else if (field.type === 'number') {
+        } else if (field.fieldType === 'number') {
           props[propKey] = Property.Number({
             displayName: `${field.label}${isRequired ? ' *' : ''}`,
-            description: `${field.type} field${isRequired ? ' (required)' : ''}`,
+            description: `${field.fieldType} field${isRequired ? ' (required)' : ''}`,
+            required: isRequired,
+          });
+        } else if (field.fieldType === 'date ' || field.fieldType === 'timestamp') {
+          props[propKey] = Property.DateTime({
+            displayName: `${field.label}${isRequired ? ' *' : ''}`,
+            description: `${field.fieldType} field${isRequired ? ' (required)' : ''}`,
             required: isRequired,
           });
         } else {
           props[propKey] = Property.ShortText({
             displayName: `${field.label}${isRequired ? ' *' : ''}`,
-            description: `${field.type} field${isRequired ? ' (required)' : ''}`,
+            description: `${field.fieldType} field${isRequired ? ' (required)' : ''}`,
             required: isRequired,
           });
         }
       }
-      
+
       return props;
     } catch (error) {
       return {};
@@ -77,12 +83,6 @@ export const recordsArrayProp = Property.Array({
   required: true,
 });
 
-export const pollingIntervalProp = Property.Number({
-  displayName: 'Polling Interval (minutes)',
-  description: 'How often to check for new records',
-  required: false,
-  defaultValue: 5,
-});
 
 export const maxRecordsProp = Property.Number({
   displayName: 'Maximum Records',
@@ -107,9 +107,9 @@ export const createAppIdProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient(auth as string);
+      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
       const apps = await client.get<QuickbaseApp[]>('/apps');
-      
+
       return {
         options: apps.map(app => ({
           label: app.name,
@@ -141,9 +141,9 @@ export const createTableIdProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient(auth as string);
+      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
       const tables = await client.get<QuickbaseTable[]>(`/tables?appId=${appId}`);
-      
+
       return {
         options: tables.map(table => ({
           label: table.name,
@@ -175,12 +175,12 @@ export const createMergeFieldProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient(auth as string);
+      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
-      
+
       return {
         options: fields
-          .filter(field => field.unique || field.type === 'text' || field.type === 'email')
+          .filter(field => field.unique || field.fieldType === 'text' || field.fieldType === 'email')
           .map(field => ({
             label: field.label,
             value: field.id.toString(),
@@ -212,16 +212,16 @@ export const createSortFieldProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient(auth as string);
+      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
-      
+
       return {
         options: [
           { label: 'No sorting', value: '' },
           ...fields
-            .filter(field => ['text', 'number', 'date', 'timestamp'].includes(field.type))
+            .filter(field => ['text', 'number', 'date', 'timestamp'].includes(field.fieldType))
             .map(field => ({
-              label: `${field.label} (${field.type})`,
+              label: `${field.label} (${field.fieldType})`,
               value: field.id.toString(),
             }))
         ],
@@ -264,13 +264,12 @@ export const createRecordIdProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient(auth as string);
-      
+      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
 
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
-      const displayField = fields.find(f => f.type === 'text' && f.label.toLowerCase().includes('name')) 
-                         || fields.find(f => f.type === 'text')
-                         || fields[1];
+      const displayField = fields.find(f => f.fieldType === 'text' && f.label.toLowerCase().includes('name'))
+        || fields.find(f => f.fieldType === 'text')
+        || fields[1];
 
 
       const query = {
@@ -280,7 +279,7 @@ export const createRecordIdProp = () => Property.Dropdown({
       };
 
       const response = await client.post<any>('/records/query', query);
-      
+
       return {
         options: response.data.map((record: any) => {
           const recordId = record['3']?.value;
