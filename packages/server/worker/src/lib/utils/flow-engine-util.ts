@@ -6,7 +6,7 @@ import {
     getPackageArchivePathForPiece, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, Step,
 } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
-import { PACKAGE_ARCHIVE_PATH } from '../cache/pieces/piece-manager'
+import { PACKAGE_ARCHIVE_PATH } from '../cache/pieces/production/registry-piece-manager'
 import { CodeArtifact } from '../compute/engine-runner-types'
 
 export const pieceEngineUtil = {

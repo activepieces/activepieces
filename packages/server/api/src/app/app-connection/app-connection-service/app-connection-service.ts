@@ -42,7 +42,7 @@ import { system } from '../../helper/system/system'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,
-} from '../../pieces/piece-metadata-service'
+} from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'

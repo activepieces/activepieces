@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { arch } from 'node:process'
-import { execPromise, fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
+import { execPromise, fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
@@ -91,9 +91,9 @@ async function getDirsToBindArgs(flowVersionId: string | undefined, customPieces
         dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
     }
 
-    const piecesSource = workerMachine.getSettings().PIECES_SOURCE
+    const devPieces = workerMachine.getSettings().DEV_PIECES
 
-    if (piecesSource === PiecesSource.FILE) {
+    if (devPieces.length > 0) {
         const basePath = path.resolve(__dirname.split('/dist')[0])
 
         dirsToBind.push(

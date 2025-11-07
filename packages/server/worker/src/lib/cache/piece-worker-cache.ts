@@ -1,6 +1,6 @@
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AppSystemProp, environmentVariables, PiecesSource } from '@activepieces/server-shared'
+import { AppSystemProp, environmentVariables } from '@activepieces/server-shared'
 import { ApEnvironment, ProjectId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
@@ -21,8 +21,8 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
                 if (environment === ApEnvironment.TESTING) {
                     return true
                 }
-                const piecesSource = workerMachine.getSettings().PIECES_SOURCE
-                if (piecesSource === PiecesSource.FILE) {
+                const devPieces = workerMachine.getSettings().DEV_PIECES
+                if (devPieces.includes(pieceName)) {
                     return true
                 }
                 return false        

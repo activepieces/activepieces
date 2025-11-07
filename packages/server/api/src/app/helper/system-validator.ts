@@ -1,4 +1,4 @@
-import { AppSystemProp, ContainerType, PiecesSource, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { s3Helper } from '../file/s3-helper'
@@ -56,7 +56,6 @@ const systemPropValidators: {
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
-    [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
     [AppSystemProp.SENTRY_DSN]: urlValidator,
     [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: numberValidator,
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,

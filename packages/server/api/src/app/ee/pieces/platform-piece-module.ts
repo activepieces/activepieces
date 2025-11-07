@@ -13,7 +13,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { pieceService } from '../../pieces/piece-service'
+import { pieceInstallService } from '../../pieces/piece-install-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -30,7 +30,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
         const platformId = req.principal.platform.id
         assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-        await pieceService(req.log).installPiece(
+        await pieceInstallService(req.log).installPiece(
             platformId,
             undefined,
             req.body,

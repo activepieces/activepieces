@@ -8,7 +8,7 @@ import { LanguageModelV2 } from '@ai-sdk/provider'
 import { type Schema as AiSchema, generateObject } from 'ai'
 import { z, ZodRawShape } from 'zod'
 import { system } from '../../helper/system/system'
-import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { toolUtils } from './tool-utils'
 
 const logger = system.globalLogger()

@@ -9,6 +9,10 @@ export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): 
     return `${pieceName}-${pieceVersion}`
 }
 
+export const getPieceNameFromAlias = (alias: string): string => {
+    return alias.split('-').slice(1).join('-')
+}
+
 export const getPackageSpecForPiece = (packageArchivePath: string, params: PiecePackage): string => {
     const { packageType, pieceName, pieceVersion } = params
 
