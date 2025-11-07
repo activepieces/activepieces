@@ -10,7 +10,7 @@ export const updateCustomer = createAction({
   displayName: 'Update Customer',
   description: 'Update an existing customer in Housecall Pro.',
   props: {
-    customer_id: Property.ShortText({
+    customer_id: Property.Number({
       displayName: 'Customer ID',
       description: 'The ID of the customer to update',
       required: true,
@@ -27,20 +27,32 @@ export const updateCustomer = createAction({
       displayName: 'Email',
       required: false,
     }),
-    mobile_number: Property.ShortText({
-      displayName: 'Mobile Number',
+    phone: Property.ShortText({
+      displayName: 'Phone',
       required: false,
     }),
-    home_number: Property.ShortText({
-      displayName: 'Home Number',
-      required: false,
-    }),
-    work_number: Property.ShortText({
-      displayName: 'Work Number',
+    mobile: Property.ShortText({
+      displayName: 'Mobile',
       required: false,
     }),
     company: Property.ShortText({
       displayName: 'Company',
+      required: false,
+    }),
+    address: Property.ShortText({
+      displayName: 'Address',
+      required: false,
+    }),
+    city: Property.ShortText({
+      displayName: 'City',
+      required: false,
+    }),
+    state: Property.ShortText({
+      displayName: 'State',
+      required: false,
+    }),
+    zip: Property.ShortText({
+      displayName: 'ZIP Code',
       required: false,
     }),
     notes: Property.LongText({
@@ -52,37 +64,22 @@ export const updateCustomer = createAction({
       description: 'Array of tags to assign to the customer (replaces existing tags)',
       required: false,
     }),
-    notifications_enabled: Property.Checkbox({
-      displayName: 'Notifications Enabled',
-      description: 'Will the customer receive notifications',
-      required: false,
-    }),
-    lead_source: Property.ShortText({
-      displayName: 'Lead Source',
-      required: false,
-    }),
-    addresses: Property.Array({
-      displayName: 'Addresses',
-      description: 'Array of address objects (if provided, each address must include an id)',
-      required: false,
-    }),
   },
 
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       email: z.string().email().optional(),
-      mobile_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      home_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-      work_number: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
+      phone: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
+      mobile: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
     });
 
     const { customer_id, ...updateData } = propsValue;
 
     // Remove undefined values to avoid sending empty strings
-    const cleanUpdateData: Record<string, any> = {};
+    const cleanUpdateData: Partial<HousecallProCustomer> = {};
     (Object.keys(updateData) as Array<keyof typeof updateData>).forEach(key => {
       if (updateData[key] !== undefined && updateData[key] !== null) {
-        cleanUpdateData[key] = updateData[key];
+        (cleanUpdateData as any)[key] = updateData[key];
       }
     });
 
