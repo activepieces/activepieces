@@ -1,7 +1,6 @@
-import { RouteGenericInterface } from 'fastify'
+
 import { PrincipalType } from '../../../../shared/src/lib/authentication/model/principal-type'
 import { Permission } from '../../../../shared/src/lib/common/security/permission'
-import { ProjectId } from 'packages/shared/src/lib/project/project'
 
 export enum AuthorizationType {
     PLATFORM = 'PLATFORM',
@@ -19,7 +18,7 @@ export type PlatformAuthorization = {
     allowedPrincipals: (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
 }
 
-export type ProjectAuthorization<T extends RouteGenericInterface = RouteGenericInterface> = {
+export type ProjectAuthorization = {
     type: AuthorizationType.PROJECT
     allowedPrincipals: (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
     permission?: Permission
@@ -30,10 +29,10 @@ export type NoneAuthorization = {
     reason: string
 }
 
-export type AuthorizationRule<T extends RouteGenericInterface = RouteGenericInterface> =
+export type AuthorizationRule =
     | WorkerAuthorization
     | PlatformAuthorization
-    | ProjectAuthorization<T>
+    | ProjectAuthorization
     | NoneAuthorization
 
 
@@ -42,14 +41,14 @@ export enum RouteKind {
     PUBLIC = 'PUBLIC',
 }
 
-export type AuthenticatedRoute<T extends RouteGenericInterface = RouteGenericInterface> = {
+export type AuthenticatedRoute = {
     kind: RouteKind.AUTHENTICATED
-    authorization: AuthorizationRule<T>
+    authorization: AuthorizationRule
 }
 
 export type PublicRoute = {
     kind: RouteKind.PUBLIC
 }
 
-export type RouteSecurity<T extends RouteGenericInterface = RouteGenericInterface> = AuthenticatedRoute<T> | PublicRoute
+export type RouteSecurity = AuthenticatedRoute | PublicRoute
 
