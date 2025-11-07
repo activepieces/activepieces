@@ -1,8 +1,8 @@
 import { apId, JobData, LATEST_JOB_DATA_SCHEMA_VERSION, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { system } from '../../helper/system/system'
-import { FastifyBaseLogger } from 'fastify'
 
 const enrichFlowIdAndLogsUrl: JobMigration = {
     runAtSchemaVersion: 0,
@@ -58,6 +58,6 @@ function getSchemaVersion(job: JobData): number {
 
 
 type JobMigration = {
-    runAtSchemaVersion: number,
+    runAtSchemaVersion: number
     migrate: (job: JobData) => Promise<JobData>
 }
