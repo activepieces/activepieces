@@ -1,13 +1,14 @@
 import { AppConnection, AppConnectionStatus, AppConnectionType, BasicAuthConnectionValue, CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
-
+import { utils } from '../utils'
+    
 export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
     return {
         async obtain(externalId: string): Promise<ConnectionValue> {
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
-            try {
+            const { data: connectionValue, error: connectionValueError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
@@ -26,17 +27,18 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                     throw new ConnectionExpiredError(externalId)
                 }
                 return getConnectionValue(connection)
-            }
-            catch (e) {
-                if (e instanceof ExecutionError) {
-                    throw e
+            }))
+            
+            if (connectionValueError) {
+                if (connectionValueError instanceof ExecutionError) {
+                    throw connectionValueError
                 }
-
                 return handleFetchError({
                     url,
-                    cause: e,
+                    cause: connectionValueError,
                 })
             }
+            return connectionValue
         },
     }
 }
@@ -66,7 +68,7 @@ const getConnectionValue = (connection: AppConnection): ConnectionValue => {
     }
 }
 
-type ConnectionValue =
+export type ConnectionValue =
     | OAuth2ConnectionValueWithApp
     | CloudOAuth2ConnectionValue
     | BasicAuthConnectionValue

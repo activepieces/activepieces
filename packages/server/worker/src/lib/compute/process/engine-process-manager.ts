@@ -7,6 +7,7 @@ import treeKill from 'tree-kill'
 import { executionFiles } from '../../cache/execution-files'
 import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
+import { engineSocketHandlers } from './engine-socket-handlers'
 import { EngineProcessOptions } from './factory/engine-factory-types'
 import { engineProcessFactory } from './factory/index'
 
@@ -66,10 +67,12 @@ export const engineProcessManager = {
             }, 'Acquired worker')
             assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
-            const workerIsDead = isNil(processes[workerIndex]) || !processes[workerIndex]?.connected || isWorkerNotResuable()
+            const workerIsDisconnected = isNil(processes[workerIndex]) || !engineSocketServer.isConnected(processIds[workerIndex])
+            const workerIsDead = workerIsDisconnected || !isWorkerReusable()
             if (workerIsDead) {
                 log.info({
                     workerIndex,
+                    workerIsDisconnected,
                 }, 'Worker is not available, creating a new one')
                 if (!isNil(processes[workerIndex])) {
                     await forceTerminate(processes[workerIndex], log)
@@ -81,9 +84,12 @@ export const engineProcessManager = {
                 processes[workerIndex] = await engineProcessFactory(log).create({
                     workerId,
                     workerIndex,
-                    customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
+                    customPiecesPath: executionFiles(log).getCustomPiecesPath({
+                        platformId: operation.platformId,
+                    }),
                     flowVersionId: getFlowVersionId(operation, operationType),
                     options,
+                    reusable: isWorkerReusable(),
                 })
                 const connection = await engineSocketServer.waitForConnect(workerId)
                 if (!connection) {
@@ -159,7 +165,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 stdError += stderr.message
             }
 
-            engineSocketServer.subscribe(workerId, onResult, onStdout, onStderr)
+            engineSocketServer.subscribe({
+                workerId,
+                onResult,
+                onStdout,
+                onStderr,
+                ...engineSocketHandlers(log),
+            })
 
             worker.on('error', (error) => {
                 log.info({
@@ -232,7 +244,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
         if (!isNil(timeoutWorker)) {
             clearTimeout(timeoutWorker)
         }
-        if (isWorkerNotResuable()) {
+        if (!isWorkerReusable()) {
             if (!isNil(processes[workerIndex])) {
                 await forceTerminate(processes[workerIndex], log)
             }
@@ -284,8 +296,16 @@ async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger
 }
 
 
-function isWorkerNotResuable(): boolean {
-    const isDevelopment = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-    const isSandboxed = workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED
-    return isDevelopment || isSandboxed
+function isWorkerReusable(): boolean {
+    const settings = workerMachine.getSettings()
+    const isDev = settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT
+    if (isDev) {
+        return false
+    }
+    const isDedicated = workerMachine.isDedicatedWorker()
+    if (isDedicated) {
+        return true
+    }
+    const trustedEnvironment = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED].includes(settings.EXECUTION_MODE as ExecutionMode)
+    return trustedEnvironment
 }

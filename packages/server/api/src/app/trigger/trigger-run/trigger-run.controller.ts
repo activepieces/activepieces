@@ -12,6 +12,6 @@ export const triggerRunController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetStatusReportSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }

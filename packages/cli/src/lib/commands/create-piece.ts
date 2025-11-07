@@ -126,6 +126,16 @@ const updateProjectJsonConfig = async (
     '[updateProjectJsonConfig] targets.build.options is required'
   );
 
+  projectJson.targets.build.dependsOn = ['prebuild', '^build'];
+  projectJson.targets.prebuild = {
+    dependsOn: ['^build'],
+    executor: 'nx:run-commands',
+    options: {
+      cwd: `packages/pieces/${pieceType}/${pieceName}`,
+      command: 'bun install --no-save'
+    }
+  };
+
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType =
     'dependencies';
   projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson =

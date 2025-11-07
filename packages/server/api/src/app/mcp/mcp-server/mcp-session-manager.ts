@@ -2,7 +2,7 @@ import { apId, isNil } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore } from '../../helper/key-value'
+import { distributedStore } from '../../database/redis-connections'
 import { pubsub } from '../../helper/pubsub'
 
 type SessionData = {

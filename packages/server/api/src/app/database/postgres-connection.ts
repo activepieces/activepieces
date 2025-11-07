@@ -1,4 +1,5 @@
 import { TlsOptions } from 'node:tls'
+import 'pg'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
@@ -274,7 +275,17 @@ import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759
 import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
 import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
 import { RestrictOnDeleteProjectForFlow1760376319952 } from './migration/postgres/1760376319952-RestrictOnDeleteProjectForFlow'
+import { RemoveAgentidFromMcpEntity1760452015041 } from './migration/postgres/1760452015041-remove-agentid-from-mcp-entity'
+import { RemoveAgentLimitFromPlatfromPlanEntity1760607967671 } from './migration/postgres/1760607967671-remove-agent-limit-from-platfrom-plan-entity'
 import { RemoveTriggerRunEntity1760993216501 } from './migration/postgres/1760993216501-RemoveTriggerRunEntity'
+import { AddDedicatedWorkersToPlatformPlanPostgres1760998784106 } from './migration/postgres/1760998784106-AddDedicatedWorkersToPlatformPlanPostgres'
+import { RemoveProjectNotifyStatus1761056570728 } from './migration/postgres/1761056570728-RemoveProjectNotifyStatus'
+import { DeprecateCopilot1761221158764 } from './migration/postgres/1761221158764-DeprecateCopilot'
+import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/postgres/1761245180906-AddMaximumConcurrentJobsPerProject'
+import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
+import { RemoveEligibleForTrial1761588441492 } from './migration/postgres/1761588441492-remove-eligible-for-trial'
+import { AddRunUsageForPlatformAnalyticsReport1761668284685 } from './migration/postgres/1761668284685-AddRunUsageForPlatformAnalyticsReport'
+import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgres/1762018344394-DeleteLastChangelogDismissedAt'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -465,12 +476,18 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowIndexToTriggerSource1757555419075,
         AddIndexOnTriggerRun1757557714045,
         DeleteHandshakeFromTriggerSource1758108135968,
+        RemoveAgentidFromMcpEntity1760452015041,
         AddIndexForAppEvents1759392852559,
         RemoveFlowRunDisplayName1759772332795,
         AddFlowVersionBackupFile1759964470862,
         AddRunFlowVersionIdForForeignKeyPostgres1760346454506,
         RestrictOnDeleteProjectForFlow1760376319952,
         RemoveTriggerRunEntity1760993216501,
+        DeprecateCopilot1761221158764,
+        RemoveProjectNotifyStatus1761056570728,
+        AddMaximumConcurrentJobsPerProject1761245180906,
+        RemoveTasksAndTasksLimit1761570485475,
+        DeleteLastChangelogDismissedAt1762018344394,
     ]
 
     const edition = system.getEdition()
@@ -570,6 +587,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformAnalyticsReportEntity1753091760355,
                 AddBillingCycle1754559781173,
                 EligibileForTrial1754852385518,
+                RemoveAgentLimitFromPlatfromPlanEntity1760607967671,
+                AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
+                RemoveEligibleForTrial1761588441492,
+                AddRunUsageForPlatformAnalyticsReport1761668284685,
             )
             break
         case ApEdition.COMMUNITY:

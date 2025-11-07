@@ -1,7 +1,7 @@
 import { apDayjsDuration } from '@activepieces/server-shared'
 import {  FlowExecutionState, flowExecutionStateKey, FlowId, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedStore } from '../../helper/key-value'
+import { distributedStore } from '../../database/redis-connections'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { handshakeHandler } from '../../webhooks/handshake-handler'

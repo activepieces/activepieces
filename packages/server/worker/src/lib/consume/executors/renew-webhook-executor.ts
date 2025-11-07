@@ -22,6 +22,7 @@ export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
         log.info({ flowVersionId: data.flowVersionId }, '[FlowQueueConsumer#consumeRenewWebhookJob]')
         const simulate = false
         await engineRunner(log).executeTrigger(engineToken, {
+            platformId: data.platformId,
             hookType: TriggerHookType.RENEW,
             flowVersion,
             webhookUrl: await webhookUtils(log).getWebhookUrl({

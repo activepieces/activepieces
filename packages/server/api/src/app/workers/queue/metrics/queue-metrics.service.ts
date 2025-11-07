@@ -1,13 +1,14 @@
 import { isNil, QueueMetricsResponse, WorkerJobStats } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { workerJobsQueue } from '../job-queue'
+import { jobQueue } from '../job-queue'
 
-export const queueMetricService = (_log: FastifyBaseLogger) => ({
+export const queueMetricService = (log: FastifyBaseLogger) => ({
     getMetrics: async (): Promise<QueueMetricsResponse> => {
-        if (isNil(workerJobsQueue)) {
+        const sharedQueue = jobQueue(log).getSharedQueue()
+        if (isNil(sharedQueue)) {
             throw Error('BullMQ queue is not initialized')
         }
-        const counts = await workerJobsQueue.getJobCounts()
+        const counts = await sharedQueue.getJobCounts()
         return {
             stats: counts as WorkerJobStats,
         }

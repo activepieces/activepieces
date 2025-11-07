@@ -35,7 +35,6 @@ export const FlowRun = Type.Object({
         displayName: Type.Optional(Type.String()),
     })),
     logsFileId: Nullable(Type.String()),
-    tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),
     duration: Type.Optional(Type.Number()),
     startTime: Type.String(),

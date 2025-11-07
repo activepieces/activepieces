@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
   Tooltip,
 } from '@/components/ui/tooltip';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -36,6 +37,8 @@ import {
   FlowOperationType,
   FlowTemplate,
   PopulatedFlow,
+  isNil,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import { flowsApi } from '../lib/flows-api';
@@ -43,8 +46,13 @@ import { flowsApi } from '../lib/flows-api';
 type TemplateCardProps = {
   template: FlowTemplate;
   onSelectTemplate: (template: FlowTemplate) => void;
+  folderId: string;
 };
-const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
+const TemplateCard = ({
+  template,
+  onSelectTemplate,
+  folderId,
+}: TemplateCardProps) => {
   const selectTemplate = (template: FlowTemplate) => {
     onSelectTemplate(template);
   };
@@ -57,9 +65,14 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
     FlowTemplate
   >({
     mutationFn: async (template: FlowTemplate) => {
+      const folder =
+        !isNil(folderId) && folderId !== UncategorizedFolderId
+          ? await foldersApi.get(folderId)
+          : undefined;
       const newFlow = await flowsApi.create({
         displayName: template.name,
         projectId: authenticationSession.getProjectId()!,
+        folderName: folder?.displayName,
       });
       return await flowsApi.update(newFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
@@ -118,8 +131,10 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
 
 const SelectFlowTemplateDialog = ({
   children,
+  folderId,
 }: {
   children: React.ReactNode;
+  folderId: string;
 }) => {
   const [search, setSearch] = useState<string>('');
 
@@ -205,6 +220,7 @@ const SelectFlowTemplateDialog = ({
                             <TemplateCard
                               key={template.id}
                               template={template}
+                              folderId={folderId}
                               onSelectTemplate={(template) => {
                                 setSelectedTemplate(template);
                                 carousel.current?.scrollNext();
