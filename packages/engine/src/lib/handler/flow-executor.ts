@@ -11,15 +11,18 @@ import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
 
-const executeFunction: Record<FlowActionType, BaseExecutor<FlowAction>> = {
-    [FlowActionType.CODE]: codeExecutor,
-    [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
-    [FlowActionType.PIECE]: pieceExecutor,
-    [FlowActionType.ROUTER]: routerExecuter,
+function getExecuteFunction(): Record<FlowActionType, BaseExecutor<FlowAction>> {
+    return {
+        [FlowActionType.CODE]: codeExecutor,
+        [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
+        [FlowActionType.PIECE]: pieceExecutor,
+        [FlowActionType.ROUTER]: routerExecuter,
+    }
 }
 
 export const flowExecutor = {
     getExecutorForAction(type: FlowActionType): BaseExecutor<FlowAction> {
+        const executeFunction = getExecuteFunction()
         const executor = executeFunction[type]
 
         if (isNil(executor)) {
