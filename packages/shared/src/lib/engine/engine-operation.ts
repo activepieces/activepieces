@@ -40,6 +40,8 @@ export const enum EngineSocketEvent {
     ENGINE_STDERR = 'engine-stderr',
     ENGINE_READY = 'engine-ready',
     ENGINE_OPERATION = 'engine-operation',
+    UPDATE_RUN_PROGRESS = 'update-run-progress',
+    SEND_FLOW_RESPONSE = 'send-flow-response',
 }
 
 

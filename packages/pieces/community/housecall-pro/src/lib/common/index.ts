@@ -53,7 +53,7 @@ export const housecallProAuth = PieceAuth.SecretText({
     } catch (error) {
       return {
         valid: false,
-        error: "Unable to validate API key. Please check your internet connection.",
+        error: "Unable to validate API key. Please check your API credentials.",
       };
     }
   },
@@ -68,7 +68,6 @@ export async function makeHousecallProRequest(
   queryParams?: Record<string, string>
 ) {
   const fullUrl = `${baseUrl}${endpoint}`;
-  console.log(`🔍 Housecall Pro API Call: ${method} ${fullUrl}`);
 
   return await httpClient.sendRequest({
     url: fullUrl,

@@ -5,12 +5,12 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const deleteJobSchedule = createAction({
   auth: housecallProAuth,
   name: "delete_job_schedule",
-  displayName: "Delete job schedule",
-  description: "Erase schedule on a job",
+  displayName: "Delete Job Schedule",
+  description: "Deletes schedule on a job.",
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",
-      description: "The ID of the job to delete schedule from",
+      description: "The ID of the job to delete schedule from.",
       required: true,
     }),
   },
@@ -19,7 +19,7 @@ export const deleteJobSchedule = createAction({
 
     const response = await makeHousecallProRequest(
       auth,
-      `/jobs/${propsValue.job_id}/schedule`,
+      `/jobs/${propsValue['job_id']}/schedule`,
       HttpMethod.DELETE
     );
 

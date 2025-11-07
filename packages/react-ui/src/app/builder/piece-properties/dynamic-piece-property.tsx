@@ -120,7 +120,7 @@ const DynamicPropertiesImplementation = React.memo(
             const currentValue = form.getValues(
               `settings.input.${props.propertyName}`,
             );
-            const defaultValue = formUtils.getDefaultValueForStep({
+            const defaultValue = formUtils.getDefaultValueForProperties({
               props: response.options,
               existingInput: currentValue ?? {},
               propertySettings:

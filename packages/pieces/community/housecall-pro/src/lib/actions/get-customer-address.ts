@@ -6,7 +6,7 @@ export const getCustomerAddress = createAction({
   auth: housecallProAuth,
   name: "get_customer_address",
   displayName: "Get a Customer's Address",
-  description: "Get a customer's address via customer ID and address ID",
+  description: "Retrieves a customer's address by customer ID and address ID.",
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

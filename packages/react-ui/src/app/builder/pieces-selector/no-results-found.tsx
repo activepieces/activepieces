@@ -23,11 +23,7 @@ const NoResultsFound = () => {
           variant="default"
           size="sm"
           onClick={() => {
-            window.open(
-              `${feedbackUrl}`,
-              '_blank',
-              'noopener noreferrer',
-            );
+            window.open(`${feedbackUrl}`, '_blank', 'noopener noreferrer');
           }}
         >
           {t('Request Piece')}

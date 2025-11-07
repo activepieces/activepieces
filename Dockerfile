@@ -43,7 +43,7 @@ FROM base AS build
 # Set up backend
 WORKDIR /usr/src/app
 
-COPY .npmrc package.json package-lock.json ./
+COPY .npmrc package.json bun.lock ./
 RUN bun install
 
 COPY . .

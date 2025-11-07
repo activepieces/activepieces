@@ -450,6 +450,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/im-soohyun"><img src="https://avatars.githubusercontent.com/u/127273427?v=4?s=100" width="100px;" alt="Kim SooHyun"/><br /><sub><b>Kim SooHyun</b></sub></a><br /><a href="#security-im-soohyun" title="Security">🛡️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/srimalleswari205"><img src="https://avatars.githubusercontent.com/u/235991945?v=4?s=100" width="100px;" alt="Sri malleswari"/><br /><sub><b>Sri malleswari</b></sub></a><br /><a href="#plugin-srimalleswari205" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/SinghaAnirban005"><img src="https://avatars.githubusercontent.com/u/143536290?v=4?s=100" width="100px;" alt="Anirban Singha"/><br /><sub><b>Anirban Singha</b></sub></a><br /><a href="#plugin-SinghaAnirban005" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://dania.es"><img src="https://avatars.githubusercontent.com/u/11240307?v=4?s=100" width="100px;" alt="Dania Es"/><br /><sub><b>Dania Es</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Dania02525" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

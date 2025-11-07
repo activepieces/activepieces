@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/form';
 import { CodeAction, MarkdownVariant } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditor } from './code-editor';
@@ -32,9 +31,7 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
-  const [refreshStepFormSettingsToggle] = useBuilderStateContext((state) => [
-    state.refreshStepFormSettingsToggle,
-  ]);
+
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -72,7 +69,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         render={({ field }) => (
           <FormItem>
             <CodeEditor
-              animateBorderColorToggle={refreshStepFormSettingsToggle}
               sourceCode={field.value}
               onChange={field.onChange}
               readonly={readonly}
