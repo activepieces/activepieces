@@ -1,4 +1,4 @@
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ErrorCode, FileType, isNil, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, FileType, isNil, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -54,7 +54,8 @@ export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
             type: FileType.FLOW_RUN_LOG,
         })
         if (decodedToken.behavior === UploadLogsBehavior.REDIRECT_TO_S3) {
-            const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(file.s3Key!, file.fileName!)
+            assertNotNullOrUndefined(file.s3Key, 's3Key')
+            const s3SignedUrl = await s3Helper(request.log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
             return reply.redirect(s3SignedUrl)
         }
         const logs = await flowRunLogsService(request.log).getLogs(decodedToken)

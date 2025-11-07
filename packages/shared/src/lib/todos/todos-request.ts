@@ -42,7 +42,6 @@ export const CreateTodoRequestBody = Type.Object({
     assigneeId: Type.Optional(ApId),
     resolveUrl: Type.Optional(Type.String()),
     environment: Type.Optional(Type.Enum(TodoEnvironment)),
-    agentId: Type.Optional(ApId),
 })
 export type CreateTodoRequestBody = Static<typeof CreateTodoRequestBody>
 

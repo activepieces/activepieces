@@ -1,8 +1,7 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { Agent, AgentRun, ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, McpWithTools, RunAgentRequestBody, UpdateAgentRunRequestBody, UpdateRunProgressRequest } from '@activepieces/shared'
+import { MigrateJobsRequest, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
-import { FastifyBaseLogger } from 'fastify'
 import fetchRetry from 'fetch-retry'
 import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
@@ -101,9 +100,6 @@ export const workerApiService = (workerToken: string) => {
                 }
             })
         },
-        async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
-            await client.post('/v1/workers/send-engine-update', request)
-        },
     }
 }
 
@@ -138,9 +134,6 @@ export const engineApiService = (engineToken: string) => {
                 responseType: 'arraybuffer',
             })
         },
-        async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
-            await client.post('/v1/engine/update-run', request)
-        },
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
@@ -150,28 +143,6 @@ export const engineApiService = (engineToken: string) => {
             return client.get<FlowVersion | null>('/v1/engine/flows', {
                 params: request,
             })
-        },
-    }
-}
-
-export const agentsApiService = (workerToken: string, _log: FastifyBaseLogger) => {
-    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
-    const client = new ApAxiosClient(apiUrl, workerToken)
-
-    return {
-        async getAgent(agentId: string): Promise<Agent> {
-            return client.get<Agent>(`/v1/agents/${agentId}`, {})
-        },
-
-        async getMcp(mcpId: string): Promise<McpWithTools> {
-            return client.get<McpWithTools>(`/v1/mcp-servers/${mcpId}`, {})
-        },
-
-        async createAgentRun(agentRun: RunAgentRequestBody): Promise<AgentRun> {
-            return client.post<AgentRun>('/v1/agent-runs', agentRun)
-        },
-        async updateAgentRun(agentRunId: string, agentRun: UpdateAgentRunRequestBody): Promise<AgentRun> {
-            return client.post<AgentRun>(`/v1/agent-runs/${agentRunId}/update`, agentRun)
         },
     }
 }

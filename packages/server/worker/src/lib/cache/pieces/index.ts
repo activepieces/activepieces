@@ -5,7 +5,6 @@ import { RegistryPieceManager } from './production/registry-piece-manager'
 
 const pieceManagerVariant: Record<PiecesSource, new () => PieceManager> = {
     [PiecesSource.FILE]: LocalPieceManager,
-    [PiecesSource.CLOUD_AND_DB]: RegistryPieceManager,
     [PiecesSource.DB]: RegistryPieceManager,
 }
 

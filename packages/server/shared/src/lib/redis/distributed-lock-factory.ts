@@ -44,6 +44,12 @@ export const distributedLockFactory = (
                 async () => fn(),
             )
         },
+        destroy: async (): Promise<void> => {
+            if (redLock) {
+                await redLock.quit()
+                redLock = undefined
+            }
+        },
     })
 }
 

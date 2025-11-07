@@ -86,10 +86,6 @@ spec:
             - name: AP_FEATUREBASE_API_KEY
               value: {{ .Values.activepieces.featurebaseApiKey | quote }}
             {{- end }}
-            {{- if .Values.activepieces.showChangelog }}
-            - name: AP_SHOW_CHANGELOG
-              value: {{ .Values.activepieces.showChangelog | quote }}
-            {{- end }}
             {{- if .Values.activepieces.enableFlowOnPublish }}
             - name: AP_ENABLE_FLOW_ON_PUBLISH
               value: {{ .Values.activepieces.enableFlowOnPublish | quote }}
@@ -159,6 +155,10 @@ spec:
             {{- if .Values.activepieces.environment }}
             - name: AP_ENVIRONMENT
               value: {{ .Values.activepieces.environment | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.edition }}
+            - name: AP_EDITION
+              value: {{ .Values.activepieces.edition | quote }}
             {{- end }}
             {{- if .Values.activepieces.executionMode }}
             - name: AP_EXECUTION_MODE

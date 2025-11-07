@@ -41,11 +41,14 @@ afterAll(async () => {
 describe('Flow API', () => {
     describe('Create Flow endpoint', () => {
         it('Adds an empty flow', async () => {
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const mockCreateFlowRequest = {

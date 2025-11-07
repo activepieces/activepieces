@@ -21,7 +21,7 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UserId,
+    SeekPage, TelemetryEventName, UncategorizedFolderId, UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -105,7 +105,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const queryWhere: Record<string, unknown> = { projectId }
 
         if (folderId !== undefined) {
-            queryWhere.folderId = folderId === 'NULL' ? IsNull() : folderId
+            queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
         }
 
         if (status !== undefined) {
@@ -160,7 +160,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
-
+    async exists(id: FlowId): Promise<boolean> {
+        return flowRepo().existsBy({
+            id,
+        })
+    },
     async getOneById(id: string): Promise<Flow | null> {
         const flow = await flowRepo().findOneBy({
             id,
@@ -455,11 +459,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     id,
                     projectId,
                 })
-    
+
                 rejectedPromiseHandler(flowSideEffects(log).preDelete({
                     flowToDelete,
                 }), log)
-    
+
                 await flowRepo().delete({ id })
                 await flowExecutionCache(log).delete(id)
             },
@@ -476,6 +480,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId: flow.projectId,
             versionId: flow.publishedVersionId ?? undefined,
         })))
+    },
+    async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
+        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
+        const flows = await flowRepo().findBy({
+            projectId: In(projectIds),
+        })
+        await Promise.all(flows.map((flow) => this.delete({ id: flow.id, projectId: flow.projectId })))
     },
 
     async getTemplate({
@@ -509,7 +520,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         return flowRepo().countBy({
-            folderId: folderId !== 'NULL' ? folderId : IsNull(),
+            folderId: folderId !== UncategorizedFolderId ? folderId : IsNull(),
             projectId,
             status,
         })

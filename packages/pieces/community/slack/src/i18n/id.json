@@ -60,6 +60,7 @@
   "Block Kit blocks": "Block Kit blocks",
   "Attachment": "Attachment",
   "Thread ts": "Thread ts",
+  "Unfurl Links": "Unfurl Links",
   "Action Buttons": "Action Buttons",
   "Title": "Title",
   "Filename": "Filename",
@@ -152,5 +153,6 @@
   "If no channel is selected, the flow will be triggered for username mentions in all channels": "If no channel is selected, the flow will be triggered for username mentions in all channels",
   "Select emojis to trigger on": "Select emojis to trigger on",
   "List of valid commands that the bot should respond to (e.g., help, ocr, remind)": "List of valid commands that the bot should respond to (e.g., help, ocr, remind)",
+  "Enable link unfurling for this message": "Enable link unfurling for this message",
   "If no channel is selected, the flow will be triggered for commands in all channels": "If no channel is selected, the flow will be triggered for commands in all channels"
 }

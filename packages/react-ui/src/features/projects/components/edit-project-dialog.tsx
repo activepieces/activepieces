@@ -40,7 +40,6 @@ interface EditProjectDialogProps {
   projectId: string;
   initialValues?: {
     projectName?: string;
-    tasks?: string;
     aiCredits?: string;
     externalId?: string;
   };
@@ -48,7 +47,6 @@ interface EditProjectDialogProps {
 
 type FormValues = {
   projectName: string;
-  tasks: string;
   aiCredits: string;
   externalId?: string;
 };
@@ -69,7 +67,6 @@ export function EditProjectDialog({
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
-      tasks: initialValues?.tasks || '',
       aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },
@@ -88,7 +85,7 @@ export function EditProjectDialog({
     {
       displayName: string;
       externalId?: string;
-      plan: { tasks: number | undefined; aiCredits?: number | undefined };
+      plan: { aiCredits?: number | undefined };
     }
   >({
     mutationFn: (request) => {
@@ -144,7 +141,6 @@ export function EditProjectDialog({
                 displayName: values.projectName,
                 externalId: values.externalId,
                 plan: {
-                  tasks: values.tasks ? parseInt(values.tasks) : undefined,
                   aiCredits: values.aiCredits
                     ? parseInt(values.aiCredits)
                     : undefined,
@@ -169,67 +165,35 @@ export function EditProjectDialog({
             />
 
             {platform.plan.manageProjectsEnabled && (
-              <>
-                <FormField
-                  name="tasks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="tasks">{t('Tasks')}</Label>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="number"
-                          id="tasks"
-                          placeholder={t('Tasks')}
-                          className="rounded-sm pr-16"
-                        />
-                        {!field.disabled && (
-                          <Button
-                            variant="link"
-                            type="button"
-                            tabIndex={-1}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                            onClick={() => form.setValue('tasks', '')}
-                          >
-                            {t('Clear')}
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  name="aiCredits"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="number"
-                          id="aiCredits"
-                          placeholder={t('AI Credits')}
-                          className="rounded-sm pr-16"
-                        />
-                        {!field.disabled && (
-                          <Button
-                            variant="link"
-                            type="button"
-                            tabIndex={-1}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                            onClick={() => form.setValue('aiCredits', '')}
-                          >
-                            {t('Clear')}
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
+              <FormField
+                name="aiCredits"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type="number"
+                        id="aiCredits"
+                        placeholder={t('AI Credits')}
+                        className="rounded-sm pr-16"
+                      />
+                      {!field.disabled && (
+                        <Button
+                          variant="link"
+                          type="button"
+                          tabIndex={-1}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                          onClick={() => form.setValue('aiCredits', '')}
+                        >
+                          {t('Clear')}
+                        </Button>
+                      )}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             {platform.plan.embeddingEnabled &&

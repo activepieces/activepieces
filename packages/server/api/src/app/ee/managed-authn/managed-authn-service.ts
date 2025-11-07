@@ -3,7 +3,6 @@ import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     isNil,
-    NotificationStatus,
     PiecesFilterType,
     PlatformRole,
     PrincipalType,
@@ -47,7 +46,6 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             projectId: project.id,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
-            tasks: externalPrincipal.tasks,
             aiCredits: externalPrincipal.aiCredits,
             log,
             isNewProject,
@@ -98,14 +96,13 @@ type UpdateProjectLimitsParams =
         projectId: string
         piecesTags: string[]
         piecesFilterType: PiecesFilterType
-        tasks: number | undefined
         aiCredits: number | undefined
         log: FastifyBaseLogger
         isNewProject: boolean
     }
 
 const updateProjectLimits = async (
-    { platformId, projectId, piecesTags, piecesFilterType, tasks, aiCredits, log, isNewProject }:
+    { platformId, projectId, piecesTags, piecesFilterType, aiCredits, log, isNewProject }:
     UpdateProjectLimitsParams,
 ): Promise<void> => {
     const pieces = await getPiecesList({
@@ -114,13 +111,10 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
-    const includedTasks = isNewProject ? (tasks ?? 1000) : tasks
     const aiCreditsLimit = isNewProject ? (aiCredits ?? 200) : aiCredits
     await projectLimitsService(log).upsert({
         nickname: 'default-embeddings-limit',
-        tasks: includedTasks,
         aiCredits: aiCreditsLimit,
-
         pieces,
         piecesFilterType,
     }, projectId)
@@ -188,7 +182,6 @@ const getOrCreateProject = async ({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,
-        notifyStatus: NotificationStatus.NEVER,
         externalId: externalProjectId,
     })
 

@@ -24,6 +24,15 @@ export type AnalyticsProjectReportItem = Static<typeof AnalyticsProjectReportIte
 export const AnalyticsProjectReport = Type.Array(AnalyticsProjectReportItem)
 export type AnalyticsProjectReport = Static<typeof AnalyticsProjectReport>
 
+export const AnalyticsRunsUsageItem = Type.Object({
+    day: Type.String(),
+    totalRuns: Type.Number(),
+})
+export type AnalyticsRunsUsageItem = Static<typeof AnalyticsRunsUsageItem>
+
+export const AnalyticsRunsUsage = Type.Array(AnalyticsRunsUsageItem)
+export type AnalyticsRunsUsage = Static<typeof AnalyticsRunsUsage>
+
 export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
     totalFlows: Type.Number(),
@@ -35,11 +44,8 @@ export const PlatformAnalyticsReport = Type.Object({
     uniquePiecesUsed: Type.Number(),
     activeFlowsWithAI: Type.Number(),
     topPieces: AnalyticsPieceReport,
-    tasksUsage: Type.Array(Type.Object({
-        day: Type.String(),
-        totalTasks: Type.Number(),
-    })),
     topProjects: AnalyticsProjectReport,
+    runsUsage: AnalyticsRunsUsage,
     platformId: Type.String(),
 })
 export type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>

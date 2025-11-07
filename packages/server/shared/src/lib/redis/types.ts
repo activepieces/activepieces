@@ -7,13 +7,6 @@ export enum RedisType {
     STANDALONE = 'STANDALONE',
 }
 
-
-export enum QueueMode {
-    REDIS = 'REDIS',
-    MEMORY = 'MEMORY',
-}
-
-
 export const RedisConnectionSettings = Type.Object({
     REDIS_TYPE: Type.String(),
     REDIS_SSL_CA_FILE: Type.Union([Type.String(), Type.Undefined()]),

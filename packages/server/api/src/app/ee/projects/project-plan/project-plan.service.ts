@@ -1,5 +1,5 @@
 import { ProjectPlanLimits, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AiOverageState,
@@ -32,7 +32,6 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
     ): Promise<ProjectPlan> {
         const projectPlan = await this.getOrCreateDefaultPlan(projectId)
         await projectPlanRepo().update(projectPlan.id, {
-            ...spreadIfNotUndefined('tasks', planLimits.tasks),
             ...spreadIfNotUndefined('aiCredits', planLimits.aiCredits),
             ...spreadIfDefined('name', planLimits.nickname),
             ...spreadIfDefined('locked', planLimits.locked),
@@ -64,48 +63,12 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             pieces: [],
             piecesFilterType: PiecesFilterType.NONE,
             locked: false,
-            tasks: null,
             aiCredits: null,
             name: 'free',
         }, ['projectId'])
 
         return projectPlanRepo().findOneByOrFail({ projectId })
     },
-
-    async checkTasksExceededLimit(projectId: string): Promise<boolean> {
-        if (edition === ApEdition.COMMUNITY) {
-            return false
-        }
-        const skipProjectLimitsCheck = system.getBoolean(AppSystemProp.SKIP_PROJECT_LIMITS_CHECK)
-        if (skipProjectLimitsCheck) {
-            return false
-        }
-
-        const projectPlan = await this.ensureProjectUnlockedAndGetPlatformPlan(projectId)
-
-        try {
-            const platformId = await projectService.getPlatformId(projectId)
-            const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-            const { startDate, endDate } = await platformPlanService(log).getBillingDates(platformPlan)
-
-            const [platformTasksUsage, projectTasksUsage] = await Promise.all([
-                platformUsageService(log).getPlatformUsage({ platformId, metric: 'tasks', startDate, endDate }),
-                platformUsageService(log).getProjectUsage({ projectId, metric: 'tasks', startDate, endDate }),
-            ])
-
-            const [tasksPlatformLimit, tasksPorjectLimit] = await Promise.all([
-                platformReachedLimit({ platformPlan, platformUsage: platformTasksUsage, log, usageType: 'tasks' }),
-                projectReachedLimit({ projectPlan, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectTasksUsage, log, usageType: 'tasks' }),
-            ])
-
-            return tasksPorjectLimit || tasksPlatformLimit
-        }
-        catch (e) {
-            exceptionHandler.handle(e, log)
-            return false
-        }
-    },
-
 
     async checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring }: { projectId: string, requestCostBeforeFiring: number }): Promise<boolean> {
         if (edition === ApEdition.COMMUNITY) {
@@ -122,8 +85,8 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId, metric: 'ai_credits', startDate, endDate }) + requestCostBeforeFiring
             const platformAICreditUsage = await platformUsageService(log).getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }) + requestCostBeforeFiring
 
-            const aiCreditPlatformLimit = await platformReachedLimit({ platformPlan, platformUsage: platformAICreditUsage, log, usageType: 'ai_credits' })
-            const aiCreditPorjectLimit = await projectReachedLimit({ projectPlan, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectAICreditUsage, log, usageType: 'ai_credits' })
+            const aiCreditPlatformLimit = await platformReachedLimit({ platformPlan, platformUsage: platformAICreditUsage, log })
+            const aiCreditPorjectLimit = await projectReachedLimit({ projectPlan, manageProjectsEnabled: platformPlan.manageProjectsEnabled, projectUsage: projectAICreditUsage, log })
 
             return aiCreditPlatformLimit || aiCreditPorjectLimit
         }
@@ -151,11 +114,11 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
 })
 
 async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): Promise<boolean> {
-    const { manageProjectsEnabled, projectPlan, projectUsage, usageType } = params
+    const { manageProjectsEnabled, projectPlan, projectUsage } = params
     if (!manageProjectsEnabled) {
         return false
     }
-    const projectLimit = usageType === 'tasks' ? projectPlan.tasks ?? undefined : projectPlan.aiCredits
+    const projectLimit = projectPlan.aiCredits
 
     if (isNil(projectLimit)) {
         return false
@@ -168,29 +131,26 @@ async function platformReachedLimit(params: LimitReachedFromPlatformBillingParam
         return false
     }
 
-    const { platformPlan, platformUsage, usageType } = params
+    const { platformPlan, platformUsage } = params
     const isOverageEnabled = platformPlan.aiCreditsOverageState === AiOverageState.ALLOWED_AND_ON
 
-    const platformLimit = usageType === 'tasks'
-        ? platformPlan.tasksLimit
-        : platformPlan.includedAiCredits
+    const platformLimit = platformPlan.includedAiCredits
 
     if (isNil(platformLimit)) {
         return false
     }
 
-    const totalLimit = usageType === 'ai_credits' && isOverageEnabled
+    const totalLimit = isOverageEnabled
         ? platformLimit + (platformPlan.aiCreditsOverageLimit ?? 0)
         : platformLimit
 
     return platformUsage >= totalLimit
 }
 
-function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan): { tasks: number | undefined, aiCredits: number | undefined } {
+function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan): { aiCredits: number | undefined } {
     if (edition !== ApEdition.CLOUD) {
         return {
             aiCredits: projectPlan.aiCredits ?? undefined,
-            tasks: projectPlan.tasks ?? undefined,
         }
     }
 
@@ -201,12 +161,10 @@ function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan):
     if (!platformPlan.manageProjectsEnabled) {
         return {
             aiCredits: aiCreditsLimit,
-            tasks: platformPlan?.tasksLimit,
         }
     }
 
     return {
-        tasks: projectPlan.tasks ?? platformPlan?.tasksLimit,
         aiCredits: projectPlan.aiCredits ?? aiCreditsLimit,
     }
 
@@ -215,14 +173,12 @@ function getProjectLimits(projectPlan: ProjectPlan, platformPlan: PlatformPlan):
 type LimitReachedFromProjectPlanParams = {
     projectPlan: ProjectPlan
     manageProjectsEnabled: boolean
-    usageType: 'tasks' | 'ai_credits'
     log: FastifyBaseLogger
     projectUsage: number
 }
 
 type LimitReachedFromPlatformBillingParams = {
     platformPlan: PlatformPlan
-    usageType: 'tasks' | 'ai_credits'
     log: FastifyBaseLogger
     platformUsage: number
 }

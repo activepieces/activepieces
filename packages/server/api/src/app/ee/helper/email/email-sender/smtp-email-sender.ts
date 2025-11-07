@@ -97,7 +97,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
             return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
         },
         renderIssues() {
-            if (templateData.name === 'issues-reminder') {
+            if (templateData.name === 'issues-summary') {
                 return JSON.parse(templateData.vars.issues)
             }
         },
@@ -128,17 +128,10 @@ const initSmtpClient = (smtp: SMTPInformation | undefined | null): Transporter =
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': 'You have been invited to a team',
-        '3-days-left-on-trial': 'Unlock More with 10 Automation Templates',
-        '1-day-left-on-trial': 'Your Plus Trial Ends Today - Upgrade ',
-        '7-days-in-trial': '7 Days in – 15 Automation Ideas to Inspire You 🚀',
-        'welcome-to-trial': 'Welcome to Activepieces + 4 Resources to Get Started ',
-        'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
-        'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
-        'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
-        'issues-reminder': `You have unresolved issues for ${vars.projectName}`,
+        'issues-summary': `Your issues summary for ${vars.projectName}`,
         'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
     }
 

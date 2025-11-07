@@ -1,4 +1,4 @@
-import { QueueName } from '@activepieces/server-shared'
+import { getPlatformQueueName, QueueName } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     ConsumeJobResponseStatus,
@@ -28,11 +28,11 @@ let worker: Worker<JobData>
 export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     async start(workerToken: string): Promise<void> {
         if (!isNil(worker)) {
-            worker.resume()
             return
         }
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
-        worker = new Worker<JobData>(QueueName.WORKER_JOBS, async (job, token) => {
+        const queueName = getWorkerQueueName()
+        worker = new Worker<JobData>(queueName, async (job, token) => {
             try {
                 const jobId = job.id
                 const { shouldSkip } = await preHandler(workerToken, job)
@@ -106,12 +106,6 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
             message: 'Job queue worker started',
         })
     },
-    async pause(): Promise<void> {
-        if (isNil(worker)) {
-            return
-        }
-        await worker.pause()
-    },
     async close(): Promise<void> {
         if (isNil(worker)) {
             return
@@ -166,3 +160,12 @@ async function shouldSkipDisabledFlow(data: JobData): Promise<boolean> {
     }
     return false
 }
+
+function getWorkerQueueName(): string {
+    const platformIdForDedicatedWorker = workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER
+    if (!isNil(platformIdForDedicatedWorker)) {
+        return getPlatformQueueName(platformIdForDedicatedWorker)
+    }
+    return QueueName.WORKER_JOBS
+}
+
