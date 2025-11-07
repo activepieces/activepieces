@@ -151,7 +151,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
 
 
             const onResult = (result: EngineResponse<unknown>) => {
-
+                log.info({ result: result.status }, 'Received engine response')
                 resolve({
                     engine: result,
                     stdOut,
