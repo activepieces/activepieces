@@ -25,38 +25,16 @@ const newTaskLabelPolling: Polling<
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const token = getToken(auth);
-    
+
     try {
       const tasksResponse = await makeRequest(
         HttpMethod.GET,
-        `/sections/${propsValue.section}/tasks`,
+        `/task/${propsValue.section}/task_labels`,
         token
       );
 
-      const tasks = tasksResponse.body || [];
-      const taskLabels: any[] = [];
+      const taskLabels = tasksResponse.body || [];
 
-      for (const task of tasks.slice(0, 10)) { 
-        try {
-          const labelsResponse = await makeRequest(
-            HttpMethod.GET,
-            `/tasks/${task.id}/task_labels`,
-            token
-          );
-          
-          if (labelsResponse.body && Array.isArray(labelsResponse.body)) {
-            taskLabels.push(...labelsResponse.body.map((label: any) => ({
-              ...label,
-              task_id: task.id,
-              task_name: task.name,
-            })));
-          }
-        } catch (error: any) {
-          if (error?.response?.status !== 404) {
-            console.error(`Error fetching labels for task ${task.id}:`, error);
-          }
-        }
-      }
       return taskLabels.map((label: any) => ({
         epochMilliSeconds: dayjs(label.created_at || label.updated_at || new Date()).valueOf(),
         data: label,
@@ -78,11 +56,9 @@ export const newTaskLabel = createTrigger({
     section: meisterTaskCommon.section,
   },
   sampleData: {
-    id: 44444444,
-    task_id: 12345678,
-    name: 'High Priority',
-    color: '#FF0000',
-    created_at: '2024-01-15T13:00:00Z',
+    "id": 364,
+    "label_id": 25,
+    "task_id": 123
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

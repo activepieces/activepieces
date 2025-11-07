@@ -21,7 +21,7 @@ const newLabelPolling: Polling<
   PiecePropValueSchema<typeof meistertaskAuth>,
   { project: unknown }
 > = {
-  strategy: DedupeStrategy.TIMEBASED,
+  strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
     const token = getToken(auth);
     const response = await makeRequest(
@@ -32,7 +32,7 @@ const newLabelPolling: Polling<
 
     const labels = response.body || [];
     return labels.map((label: any) => ({
-      epochMilliSeconds: dayjs(label.created_at).valueOf(),
+      id: label.id,
       data: label,
     }));
   },
@@ -47,11 +47,10 @@ export const newLabel = createTrigger({
     project: meisterTaskCommon.project,
   },
   sampleData: {
-    id: 22222222,
-    name: 'Bug',
-    color: '#FF5733',
-    project_id: 11223344,
-    created_at: '2024-01-15T15:00:00Z',
+    "id": 24,
+    "project_id": 42,
+    "name": "Bug",
+    "color": "d93651"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

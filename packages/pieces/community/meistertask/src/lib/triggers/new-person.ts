@@ -47,11 +47,14 @@ export const newPerson = createTrigger({
     project: meisterTaskCommon.project,
   },
   sampleData: {
-    id: 11111111,
-    firstname: 'John',
-    lastname: 'Doe',
-    email: 'john.doe@example.com',
-    created_at: '2024-01-15T09:00:00Z',
+    "id": 8,
+    "firstname": "Jane",
+    "lastname": "Demo",
+    "email": "jane@example.com",
+    "avatar": "https://www.example.com/files/avatars/jane.jpg",
+    "avatar_thumb": "https://www.example.com/files/avatars/jane.jpg",
+    "created_at": "2017-04-02T03:14:15.926535Z",
+    "updated_at": "2017-04-02T03:14:15.926535Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

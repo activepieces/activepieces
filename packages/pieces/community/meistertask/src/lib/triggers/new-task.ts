@@ -19,20 +19,20 @@ const getToken = (auth: any): string => {
 
 const newTaskPolling: Polling<
   PiecePropValueSchema<typeof meistertaskAuth>,
-  { project: unknown; section: unknown }
+  Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const token = getToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
-      `/sections/${propsValue.section}/tasks`,
+      `/tasks`,
       token
     );
 
     const tasks = response.body || [];
     return tasks.map((task: any) => ({
-      epochMilliSeconds: dayjs(task.updated_at || task.created_at).valueOf(),
+      epochMilliSeconds: dayjs(task.updated_at).valueOf(),
       data: task,
     }));
   },
@@ -44,18 +44,23 @@ export const newTask = createTrigger({
   displayName: 'New Task',
   description: 'Triggers when a task is created or changed.',
   props: {
-    project: meisterTaskCommon.project,
-    section: meisterTaskCommon.section,
   },
   sampleData: {
-    id: 12345678,
-    name: 'Sample Task',
-    notes: 'This is a sample task description',
-    status: 1,
-    section_id: 87654321,
-    project_id: 11223344,
-    created_at: '2024-01-15T10:30:00Z',
-    updated_at: '2024-01-15T10:30:00Z',
+    "id": 15,
+    "token": "gvuUs17f",
+    "name": "Task Name",
+    "notes": "Here are some task notes",
+    "status": 1,
+    "status_updated_at": "2019-05-09T14:49:18.303930Z",
+    "section_id": 1,
+    "section_name": "Open",
+    "project_id": 15,
+    "sequence": 100,
+    "assigned_to_id": 1,
+    "tracked_time": 3600,
+    "due": null,
+    "created_at": "2019-02-06T17:01:33.635649Z",
+    "updated_at": "2019-05-09T14:49:18.304227Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

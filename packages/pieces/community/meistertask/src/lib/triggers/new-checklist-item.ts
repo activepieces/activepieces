@@ -2,7 +2,6 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
-  Property,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -10,7 +9,6 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
 import { meistertaskAuth } from '../../index';
 import { makeRequest, meisterTaskCommon } from '../common/common';
 
@@ -20,50 +18,28 @@ const getToken = (auth: any): string => {
 
 const newChecklistItemPolling: Polling<
   PiecePropValueSchema<typeof meistertaskAuth>,
-  { project: unknown; section: unknown }
+  { task_id: unknown }
 > = {
-  strategy: DedupeStrategy.TIMEBASED,
+  strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
     const token = getToken(auth);
-    
+
     try {
       const tasksResponse = await makeRequest(
         HttpMethod.GET,
-        `/sections/${propsValue.section}/tasks`,
+        `/task/${propsValue.task_id}/checklist_items`,
         token
       );
 
       const tasks = tasksResponse.body || [];
       const checklistItems: any[] = [];
 
-      for (const task of tasks.slice(0, 10)) { 
-        try {
-          const checklistResponse = await makeRequest(
-            HttpMethod.GET,
-            `/tasks/${task.id}/checklist_items`,
-            token
-          );
-          
-          if (checklistResponse.body && Array.isArray(checklistResponse.body)) {
-            checklistItems.push(...checklistResponse.body.map((item: any) => ({
-              ...item,
-              task_id: task.id,
-              task_name: task.name,
-            })));
-          }
-        } catch (error: any) {
-          if (error?.response?.status !== 404) {
-            console.error(`Error fetching checklist items for task ${task.id}:`, error);
-          }
-        }
-      }
-
-      if (checklistItems.length === 0) {
+      if (tasks.length === 0) {
         return [];
       }
 
-      return checklistItems.map((item: any) => ({
-        epochMilliSeconds: dayjs(item.created_at || item.updated_at || new Date()).valueOf(),
+      return tasks.map((item: any) => ({
+        id: item.id,
         data: item,
       }));
     } catch (error) {
@@ -79,15 +55,14 @@ export const newChecklistItem = createTrigger({
   displayName: 'New Checklist Item',
   description: 'Triggers when a new checklist item is added to a task.',
   props: {
-    project: meisterTaskCommon.project,
-    section: meisterTaskCommon.section,
+    task_id: meisterTaskCommon.task_id,
   },
   sampleData: {
-    id: 33333333,
-    task_id: 12345678,
-    name: 'Review document',
-    status: 0,
-    created_at: '2024-01-15T14:00:00Z',
+    "id": 26,
+    "name": "Checklist A",
+    "sequence": 100000,
+    "task_id": 12,
+    "project_id": 6
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

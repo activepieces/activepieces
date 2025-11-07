@@ -19,14 +19,14 @@ const getToken = (auth: any): string => {
 
 const newSectionPolling: Polling<
   PiecePropValueSchema<typeof meistertaskAuth>,
-  { project: unknown }
+  Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const token = getToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
-      `/projects/${propsValue.project}/sections`,
+      `/sections`,
       token
     );
 
@@ -44,13 +44,18 @@ export const newSection = createTrigger({
   displayName: 'New Section',
   description: 'Triggers when a new section is created.',
   props: {
-    project: meisterTaskCommon.project,
   },
   sampleData: {
-    id: 87654321,
-    name: 'To Do',
-    project_id: 11223344,
-    created_at: '2024-01-15T08:00:00Z',
+    "id": 119,
+    "name": "Intermediate",
+    "description": null,
+    "color": "30bfbf",
+    "indicator": 7,
+    "status": 1,
+    "project_id": 66,
+    "sequence": -1,
+    "created_at": "2017-01-25T13:22:34.559759Z",
+    "updated_at": "2017-02-01T09:24:48.453184Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

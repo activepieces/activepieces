@@ -44,10 +44,14 @@ export const newProject = createTrigger({
   displayName: 'New Project',
   description: 'Triggers when a new project is created.',
   props: {},
-  sampleData: {
-    id: 11223344,
-    name: 'Sample Project',
-    created_at: '2024-01-15T07:00:00Z',
+  sampleData:  {
+    "id": 123,
+    "token": "s3i5reaF",
+    "name": "Getting Started with MeisterTask",
+    "notes": "This is just a demo project",
+    "status": 1,
+    "created_at": "2017-01-13T09:29:36.360375Z",
+    "updated_at": "2017-01-16T10:10:21.460697Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

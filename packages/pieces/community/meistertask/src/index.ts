@@ -59,7 +59,7 @@ export const meistertaskAuth = PieceAuth.OAuth2({
 
 export const meistertask = createPiece({
   displayName: 'MeisterTask',
-  description: 'Intuitive online task manager for teams',
+  description: 'Intuitive online task manager for teams, personal productivity, and everything in between.',
   auth: meistertaskAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/meistertask.png',
