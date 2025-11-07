@@ -97,7 +97,7 @@ const rateLimitOptions: RateLimitOptions = {
 
 const SwitchProjectRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -107,7 +107,7 @@ const SwitchProjectRequestOptions = {
 
 const SwitchPlatformRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         rateLimit: rateLimitOptions,
     },
     schema: {

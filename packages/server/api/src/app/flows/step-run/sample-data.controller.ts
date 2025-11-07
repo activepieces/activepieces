@@ -32,7 +32,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const GetSampleDataRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
     },
     schema: {
         tags: ['sample-data'],
@@ -43,7 +43,7 @@ const GetSampleDataRequestParams = {
 
 const TestSampleDataRequestBody = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
     },
     schema: {
         tags: ['sample-data'],

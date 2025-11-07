@@ -1,13 +1,13 @@
 import { AppConnectionValue, UserInteractionJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { workerApiService } from '../../api/server-api.service'
 import { engineRunner } from '../../compute'
 import { EngineHelperResponse, EngineHelperResult } from '../../compute/engine-runner-types'
+import { engineResponsePublisher } from '../../utils/engine-response-publisher'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
-    async execute(jobData: UserInteractionJobData, engineToken: string, workerToken: string, timeoutInSeconds: number): Promise<void> {
+    async execute(jobData: UserInteractionJobData, engineToken: string, timeoutInSeconds: number): Promise<void> {
         let response: EngineHelperResponse<EngineHelperResult>
         switch (jobData.jobType) {
             case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
@@ -27,6 +27,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 break
             case WorkerJobType.EXECUTE_TRIGGER_HOOK:
                 response = await engineRunner(log).executeTrigger(engineToken, {
+                    platformId: jobData.platformId,
                     hookType: jobData.hookType,
                     flowVersion: jobData.flowVersion,
                     webhookUrl: await webhookUtils(log).getWebhookUrl({
@@ -42,6 +43,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 break
             case WorkerJobType.EXECUTE_TOOL:
                 response =  await engineRunner(log).excuteTool(engineToken, {
+                    platformId: jobData.platformId,
                     actionName: jobData.actionName,
                     pieceName: jobData.pieceName,
                     pieceVersion: jobData.pieceVersion,
@@ -52,6 +54,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 break
             case WorkerJobType.EXECUTE_PROPERTY:
                 response = await engineRunner(log).executeProp(engineToken, {
+                    platformId: jobData.platformId,
                     piece: jobData.piece,
                     flowVersion: jobData.flowVersion,
                     propertyName: jobData.propertyName,
@@ -64,10 +67,10 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 })
                 break
         }
-        await workerApiService(workerToken).sendUpdate({
-            workerServerId: jobData.webserverId,
-            requestId: jobData.requestId,
+        await engineResponsePublisher(log).publish(
+            jobData.requestId,
+            jobData.webserverId,
             response,
-        })
+        )
     },
 })

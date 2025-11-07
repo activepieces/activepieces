@@ -60,7 +60,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
 const GetCurrentProjectMemberRoleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
 
@@ -69,7 +69,7 @@ const GetCurrentProjectMemberRoleRequest = {
 
 const UpdateProjectMemberRoleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
@@ -85,7 +85,7 @@ const UpdateProjectMemberRoleRequest = {
 
 const ListProjectMembersRequestQueryOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
@@ -100,7 +100,7 @@ const ListProjectMembersRequestQueryOptions = {
 
 const DeleteProjectMemberRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {

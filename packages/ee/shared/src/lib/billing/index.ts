@@ -1,4 +1,4 @@
-import { AiOverageState, PiecesFilterType, PlanName, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export enum BillingCycle {
@@ -359,4 +359,11 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
+}
+
+export const isCloudPlanButNotEnterprise = (plan: string | undefined): boolean => {
+    if (isNil(plan)) {
+        return false
+    }
+    return plan === PlanName.PLUS || plan === PlanName.BUSINESS || plan === PlanName.FREE
 }

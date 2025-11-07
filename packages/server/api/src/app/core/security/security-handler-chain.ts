@@ -2,15 +2,11 @@ import { Principal } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { AccessTokenAuthnHandler } from './authn/access-token-authn-handler'
 import { AnonymousAuthnHandler } from './authn/anonymous-authn-handler'
-import { AppSumoAuthnHandler } from './authn/app-sumo-authn-handler'
-import { GlobalApiKeyAuthnHandler } from './authn/global-api-key-authn-handler'
 import { PlatformApiKeyAuthnHandler } from './authn/platform-api-key-authn-handler'
 import { PrincipalTypeAuthzHandler } from './authz/principal-type-authz-handler'
 import { ProjectAuthzHandler } from './authz/project-authz-handler'
 
 const AUTHN_HANDLERS = [
-    new AppSumoAuthnHandler(),
-    new GlobalApiKeyAuthnHandler(),
     new PlatformApiKeyAuthnHandler(),
     new AccessTokenAuthnHandler(),
     new AnonymousAuthnHandler(),

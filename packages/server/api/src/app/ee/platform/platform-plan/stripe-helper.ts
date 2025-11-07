@@ -172,6 +172,23 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             return '/platform/setup/billing/error'
         }
     },
+    deleteCustomer: async (subscriptionId: string): Promise<void> => {
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+        const invoices = await stripe.invoices.list({ subscription: subscriptionId })
+        for (const invoice of invoices.data) {
+            if (invoice.id) {
+                await stripe.invoices.pay(invoice.id)
+            }
+        }
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        if (typeof subscription.customer === 'string') {
+            await stripe.customers.del(subscription.customer)
+        }
+        else {
+            await stripe.customers.del(subscription.customer.id)
+        }
+    },
 })
 
 async function updateSubscription(params: UpdateSubscriptionParams): Promise<void> {

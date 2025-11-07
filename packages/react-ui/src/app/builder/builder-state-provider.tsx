@@ -14,8 +14,8 @@ type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 
 export function BuilderStateProvider({
   children,
-  sampleData,
-  sampleDataInput,
+  outputSampleData: sampleData,
+  inputSampleData: sampleDataInput,
   ...props
 }: BuilderStateProviderProps) {
   const storeRef = useRef<BuilderStore>();
@@ -26,8 +26,8 @@ export function BuilderStateProvider({
     storeRef.current = createBuilderStore({
       ...props,
       readonly,
-      sampleData,
-      sampleDataInput,
+      outputSampleData: sampleData,
+      inputSampleData: sampleDataInput,
     });
   }
 

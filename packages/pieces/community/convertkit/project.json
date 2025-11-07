@@ -24,7 +24,11 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-convertkit {args.ver} {args.tag}",
@@ -42,6 +46,16 @@
           "packages/pieces/community/convertkit/**/*.ts"
         ]
       }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/convertkit",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []

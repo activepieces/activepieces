@@ -2,7 +2,7 @@ import {
     ApiKeyResponseWithoutValue,
     ApiKeyResponseWithValue,
     CreateApiKeyRequest } from '@activepieces/ee-shared'
-import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
+import { ApId, assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
@@ -50,6 +50,9 @@ export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const ListRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ApiKeyResponseWithoutValue),
@@ -58,6 +61,9 @@ const ListRequest = {
 }
 
 const CreateRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
     schema: {
         body: CreateApiKeyRequest,
         response: {
@@ -67,6 +73,9 @@ const CreateRequest = {
 }
 
 const DeleteRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
     schema: {
         params: Type.Object({
             id: ApId,

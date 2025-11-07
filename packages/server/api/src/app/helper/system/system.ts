@@ -61,7 +61,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
-    [AppSystemProp.SHOW_CHANGELOG]: 'true',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',

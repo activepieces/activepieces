@@ -185,7 +185,7 @@ export const UpsertTemplateDialog = ({
                             const migratedTemplate = JSON.parse(
                               text,
                             ) as FlowTemplate;
-                            field.onChange(migratedTemplate);
+                            field.onChange(migratedTemplate.template);
                           } catch (e) {
                             form.setError('template', {
                               message: t('Invalid JSON'),
