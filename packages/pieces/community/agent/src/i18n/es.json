@@ -8,7 +8,7 @@
   "Structured Output": "Salida estructurada",
   "Max steps": "Máximo de pasos",
   "Describe what you want the assistant to do.": "Describe lo que quieres que haga el asistente.",
-  "Choose your AI model and provider": "Elija su modelo de IA y proveedor",
+  "Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.": "Elige tu modelo y proveedor de IA. Diferentes modelos ofrecen diferentes capacidades, velocidades y costes. Los modelos OpenAI son los mejores para tareas generales, Anthropic destaca en el análisis, y Google Gemini ofrece precios competitivos.",
   "The numbder of interations the agent can do": "El numero de interaciones que el agente puede hacer",
   "(openai) GPT-5": "(openai) GPT-5",
   "(openai) GPT-5 Chat": "(openai) Chat GPT-5",
