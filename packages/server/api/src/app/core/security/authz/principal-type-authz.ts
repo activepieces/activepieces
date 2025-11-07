@@ -8,7 +8,7 @@ const ALLOWED_PRINCIPAL_TYPES = [
     PrincipalType.SERVICE,
 ]
 
-const isPrincipalTypeAllowed = (principalType: PrincipalType, configuredPrincipals: PrincipalType[]): boolean => {
+const isPrincipalTypeAllowed = (principalType: PrincipalType, configuredPrincipals: ReadonlyArray<PrincipalType>): boolean => {
     if (!ALLOWED_PRINCIPAL_TYPES.includes(principalType)) {
         return false
     }

@@ -15,14 +15,23 @@ import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
+import { AuthorizationType, RouteKind, RouteSecurity } from '@activepieces/server-shared'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
+
+const getPermissionFromRouteSecurity = (security: RouteSecurity): Permission | undefined => {
+    if (security.kind === RouteKind.PUBLIC) {
+        return undefined
+    }
+    return security.authorization.type === AuthorizationType.PROJECT ? security.authorization.permission : undefined
+}
 
 export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
         return
     }
-    await assertRoleHasPermission(req.principal, req.routeOptions.config?.security?.authorization?.permission, req.log)
+    const permission = getPermissionFromRouteSecurity(req.routeOptions.config.security)
+    await assertRoleHasPermission(req.principal, permission, req.log)
 }
 
 export async function assertUserHasPermissionToFlow(
@@ -95,7 +104,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
         return true
     }
 
-    return req.routeOptions.config?.security?.authorization?.permission === undefined
+    return getPermissionFromRouteSecurity(req.routeOptions.config.security) === undefined
 }
 
 export const getPrincipalRoleOrThrow = async (principal: UserPrincipal, log: FastifyBaseLogger): Promise<ProjectRole> => {

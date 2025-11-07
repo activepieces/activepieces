@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AuthenticatedRoute, EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType, RouteKind, RouteSecurity } from '@activepieces/shared'
-import { AuthorizationType, ProjectAuthorization } from '@activepieces/server-shared'
+import { EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType } from '@activepieces/shared'
+import { AuthorizationType, ProjectAuthorization, RouteSecurity, RouteKind, AuthenticatedRoute } from '@activepieces/server-shared'
 import fastify, { 
     RouteShorthandOptions as BaseRouteShorthandOptions, 
     FastifyBaseLogger, 
@@ -59,6 +59,6 @@ declare module 'fastify' {
         TypeProvider extends FastifyTypeProvider = FastifyTypeProviderDefault,
         Logger extends FastifyBaseLogger = FastifyBaseLogger,
     > = {
-        config?: ContextConfig
+        config: ContextConfig
     }
 }

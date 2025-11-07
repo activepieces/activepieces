@@ -13,12 +13,12 @@ export type WorkerAuthorization = {
 
 export type PlatformAuthorization = {
     type: AuthorizationType.PLATFORM
-    allowedPrincipals: (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
+    allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
 }
 
 export type ProjectAuthorization = {
     type: AuthorizationType.PROJECT
-    allowedPrincipals: (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
+    allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
     permission?: Permission
 }
 

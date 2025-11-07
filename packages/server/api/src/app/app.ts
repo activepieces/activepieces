@@ -12,7 +12,6 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { rateLimitModule } from './core/security/rate-limit'
-import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
@@ -86,6 +85,8 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import { authenticationMiddleware } from './core/security/authentication-middleware'
+import { authorizationMiddleware } from './core/security/authorization-middleware'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -174,7 +175,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         }
     })
 
-    app.addHook('preHandler', securityHandlerChain)
+    app.addHook('preHandler', authenticationMiddleware)
+    app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
     await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
