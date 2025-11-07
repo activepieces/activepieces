@@ -2,6 +2,7 @@ import { apId, JobData, LATEST_JOB_DATA_SCHEMA_VERSION, UploadLogsBehavior, Work
 import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { system } from '../../helper/system/system'
+import { FastifyBaseLogger } from 'fastify'
 
 const enrichFlowIdAndLogsUrl: JobMigration = {
     runAtSchemaVersion: 0,
@@ -33,9 +34,14 @@ const enrichFlowIdAndLogsUrl: JobMigration = {
 const migrations: JobMigration[] = [
     enrichFlowIdAndLogsUrl,
 ]
-export const jobMigrations = {
+export const jobMigrations = (log: FastifyBaseLogger) => ({
     apply: async (job: Record<string, unknown>): Promise<JobData> => {
         let jobData = job as JobData
+        log.info({
+            schemaVersion: jobData.schemaVersion,
+            jobType: jobData.jobType,
+            projectId: jobData.projectId,
+        }, '[jobMigrations] Apply migration for job')
         for (const migration of migrations) {
             const schemaVersion = getSchemaVersion(jobData)
             if (schemaVersion === migration.runAtSchemaVersion) {
@@ -44,7 +50,7 @@ export const jobMigrations = {
         }
         return jobData
     },
-}
+})
 
 function getSchemaVersion(job: JobData): number {
     return 'schemaVersion' in job ? job.schemaVersion : 0
