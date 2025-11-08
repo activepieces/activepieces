@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   AiOverageState,
   PlatformBillingInformation,
@@ -22,6 +23,7 @@ import {
 import { billingMutations } from '../lib/billing-hooks';
 
 import { AiCreditsUsageTable } from './ai-credits-usage-table';
+import { EnableAIOverageDialog } from './enable-ai-credits-overage';
 
 interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
@@ -31,10 +33,14 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const queryClient = useQueryClient();
   const { plan, usage } = platformSubscription;
 
+  const [isOpen, setIsOpen] = useState(false);
+
   const planIncludedCredits = plan.includedAiCredits;
   const overageLimit = plan.aiCreditsOverageLimit;
   const totalCreditsUsed = usage.aiCredits;
 
+  const hasActiveSubscription =
+    plan.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE;
   const aiOverrageState =
     plan.aiCreditsOverageState ?? AiOverageState.NOT_ALLOWED;
 
@@ -101,14 +107,18 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
       ? AiOverageState.ALLOWED_BUT_OFF
       : AiOverageState.ALLOWED_AND_ON;
 
-    toggleAiCreditsOverageEnabled(
-      { state: newState },
-      {
-        onSuccess: () => {
-          setUsageBasedEnabled(!usageBasedEnabled);
+    if (!hasActiveSubscription) {
+      setIsOpen(true);
+    } else {
+      toggleAiCreditsOverageEnabled(
+        { state: newState },
+        {
+          onSuccess: () => {
+            setUsageBasedEnabled(!usageBasedEnabled);
+          },
         },
-      },
-    );
+      );
+    }
   }, [usageBasedEnabled, toggleAiCreditsOverageEnabled]);
 
   useEffect(() => {
@@ -294,6 +304,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
 
         <Separator />
         <AiCreditsUsageTable />
+        <EnableAIOverageDialog isOpen={isOpen} onOpenChange={setIsOpen} />
       </CardContent>
     </Card>
   );

@@ -28,7 +28,7 @@ export const SubscriptionInfo = ({ info }: SubscriptionInfoProps) => {
         <div className="text-sm text-muted-foreground flex items-center gap-2">
           <CalendarDays className="w-4 h-4" />
           <span>
-            {t('Next billing date')}
+            {t('Next billing date ')}
             <span className="font-semibold">
               {dayjs(dayjs.unix(info.nextBillingDate).toISOString()).format(
                 'MMM D, YYYY',

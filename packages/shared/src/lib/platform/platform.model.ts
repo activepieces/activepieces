@@ -23,17 +23,11 @@ export type SMTPInformation = Static<typeof SMTPInformation>
 export enum PlatformUsageMetric {
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
-    PROJECTS = 'projects',
-    TABLES = 'tables',
-    MCPS = 'mcps',
 }
 
 export const PlatformUsage = Type.Object({
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
-    tables: Type.Number(),
-    mcps: Type.Number(),
-    projects: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
@@ -41,7 +35,7 @@ export type PlatformUsage = Static<typeof PlatformUsage>
 export enum AiOverageState {
     NOT_ALLOWED = 'not_allowed',
     ALLOWED_BUT_OFF = 'allowed_but_off',
-    ALLOWED_AND_ON = 'allowed_an_on',
+    ALLOWED_AND_ON = 'allowed_and_on',
 }
 
 export enum PlanName {

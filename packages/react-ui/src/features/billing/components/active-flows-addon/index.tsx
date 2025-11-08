@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 import { CircleHelp, Zap } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -10,8 +9,10 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PRICE_PER_EXTRA_5_ACTIVE_FLOWS } from '@activepieces/ee-shared';
+import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
+
+import { PurchaseExtraFlowsDialog } from './purchase-active-flows-dialog';
 
 type BusinessActiveFlowsProps = {
   platformSubscription: PlatformBillingInformation;
@@ -43,13 +44,11 @@ export function ActiveFlowAddon({
               </p>
             </div>
           </div>
-          {/** Louai: fix this next */}
-          <Button
-            variant="link"
-            onClick={() => console.log('Purshace more flows experience')}
-          >
-            {t('Extra Flows?')}
-          </Button>
+          <PurchaseExtraFlowsDialog
+            currentActiveFlows={currentActiveFlows}
+            activeFlowsLimit={activeFlowsLimit}
+            platformPlan={platformSubscription.plan}
+          />
         </div>
       </CardHeader>
       <CardContent className="p-6">
@@ -63,7 +62,7 @@ export function ActiveFlowAddon({
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
                   {t(
-                    `Count of active flows, $${PRICE_PER_EXTRA_5_ACTIVE_FLOWS} for extra 5 active flows`,
+                    `Count of active flows, $${PRICE_PER_EXTRA_ACTIVE_FLOWS} for extra 5 active flows`,
                   )}
                 </TooltipContent>
               </Tooltip>
@@ -72,8 +71,8 @@ export function ActiveFlowAddon({
           <div className="rounded-lg space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
-                {currentActiveFlows.toLocaleString()}{' '}
-                {`/ ${activeFlowsLimit.toLocaleString()}`}
+                {currentActiveFlows.toLocaleString()} /{' '}
+                {activeFlowsLimit.toLocaleString()}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {t('Plan Limit')}
@@ -82,7 +81,7 @@ export function ActiveFlowAddon({
             <Progress value={usagePercentage} className="w-full" />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {`${usagePercentage}% of plan allocation used`}
+                {usagePercentage}% of plan allocation used
               </span>
               {usagePercentage > 80 && (
                 <span className="text-destructive font-medium">

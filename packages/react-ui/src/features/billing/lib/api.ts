@@ -6,6 +6,8 @@ import {
 import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
+  UpdateActiveFlowsLimitParams,
+  CreateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
@@ -15,6 +17,15 @@ export const platformBillingApi = {
   },
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
+  },
+  updateActiveFlowsLimits(params: UpdateActiveFlowsLimitParams) {
+    return api.post<string>(
+      '/v1/platform-billing/update-active-flows-limit',
+      params,
+    );
+  },
+  createSubscription(params: CreateSubscriptionParams) {
+    return api.post<string>('/v1/platform-billing/create-subscription', params);
   },
   setAiCreditsOverageLimit(params: SetAiCreditsOverageLimitParams) {
     return api.post<PlatformPlan>(

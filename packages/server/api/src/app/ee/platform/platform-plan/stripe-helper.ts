@@ -3,10 +3,10 @@ import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } f
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
-import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID } from './platform-plan-helper'
-import { platformPlanService } from './platform-plan.service'
+import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(AppSystemProp.STRIPE_WEBHOOK_SECRET)!
+const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
 
 export const stripeHelper = (log: FastifyBaseLogger) => ({
     getStripe: (): Stripe | undefined => {
@@ -44,6 +44,95 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
         return session.url
     },
+    async startSubscription(params: StartSubscriptionParams): Promise<string> {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { customerId, platformId, extraActiveFlows } = params
+
+        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+            {
+                price: AI_CREDIT_PRICE_ID,
+            },
+        ]
+
+        if (!isNil(extraActiveFlows) && extraActiveFlows > 0) {
+            lineItems.push({
+                price: ACTIVE_FLOW_PRICE_ID,
+                quantity: extraActiveFlows,
+            })
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: lineItems,
+            mode: 'subscription',
+            subscription_data: {
+                metadata: {
+                    platformId,
+                },
+            },
+            allow_promotion_codes: true,
+            customer: customerId,
+            success_url: `${frontendUrl}/platform/setup/billing/success?action=create`,
+            cancel_url: `${frontendUrl}/platform/setup/billing/error`,
+        })
+        
+        return session.url!
+    },
+    handleSubscriptionUpdate: async (params: HandleSubscriptionUpdateParams): Promise<string> => {
+        const { extraActiveFlows, isUpgrade, subscriptionId, isFreeDowngrade } = params
+
+        const stripe = stripeHelper(log).getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        try {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+                expand: ['items.data.price'],
+            })
+
+            const schedules = await stripe.subscriptionSchedules.list({
+                customer: subscription.customer as string,
+                limit: 10,
+            })
+        
+            const relevantSchedules = schedules.data.filter(schedule => 
+                schedule.subscription === subscription.id || 
+            schedule.status === 'active' || 
+            schedule.status === 'not_started',
+            )
+
+            if (isUpgrade) {
+                for (const schedule of relevantSchedules) {
+                    await stripe.subscriptionSchedules.release(schedule.id)
+                }
+
+                await updateSubscription({ stripe, subscription, extraActiveFlows })
+            }
+            else {
+                if (relevantSchedules.length > 0) {
+                    const schedule = relevantSchedules[0]
+                    await updateSubscriptionSchedule({ stripe, scheduleId: schedule.id, subscription, logger: log, extraActiveFlows, isFreeDowngrade })
+                
+                    for (let i = 1; i < relevantSchedules.length; i++) {
+                        await stripe.subscriptionSchedules.release(relevantSchedules[i].id)
+                    }
+                }
+                else {
+                    await createSubscriptionSchedule({ stripe, subscription, logger: log, extraActiveFlows, isFreeDowngrade })
+                }
+            }
+            return `/platform/setup/billing/success?action=${isUpgrade ? 'upgrade' : 'downgrade'}`
+     
+        }
+        catch (error) {
+            log.error({ 
+                error,
+                subscriptionId, 
+            }, 'Failed to handle subscription scheduling')
+            return '/platform/setup/billing/error'
+        }
+    },
     async getSubscriptionCycleDates(subscription: Stripe.Subscription): Promise<{ startDate: number, endDate: number, cancelDate?: number }> {
         const defaultStartDate = apDayjs().startOf('month').unix()
         const defaultEndDate = apDayjs().endOf('month').unix()
@@ -77,3 +166,122 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+async function updateSubscription(params: UpdateSubscriptionParams): Promise<void> {
+    const { extraActiveFlows, stripe, subscription }  = params
+    const items: Stripe.SubscriptionUpdateParams.Item[] = []
+    const currentActiveFlowsItem = subscription.items.data.find(item => ACTIVE_FLOW_PRICE_ID === item.price.id)
+
+    if (currentActiveFlowsItem?.id) {
+        items.push({
+            id: currentActiveFlowsItem.id,
+            deleted: true,
+        })
+    }
+
+    if (extraActiveFlows > 0) {
+        items.push({
+            price: ACTIVE_FLOW_PRICE_ID,
+            quantity: extraActiveFlows,
+        })
+    }
+    
+    await stripe.subscriptions.update(subscription.id, {
+        items,
+        proration_behavior: 'always_invoice',
+    })
+}
+
+async function updateSubscriptionSchedule(params: UpdateSubscriptionScheduleParams): Promise<void> {
+    const { extraActiveFlows, logger, scheduleId, stripe, subscription, isFreeDowngrade } = params
+    const { startDate: currentPeriodStart, endDate: currentPeriodEnd } = await stripeHelper(logger).getSubscriptionCycleDates(subscription)
+
+    const currentPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = subscription.items.data.map(item => ({
+        price: item.price.id,
+        quantity: !isNil(item.quantity) ? item.quantity : undefined,
+    }))
+    
+    const nextPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = [
+        { price: AI_CREDIT_PRICE_ID },
+    ]
+    if (extraActiveFlows > 0) {
+        nextPhaseItems.push({
+            price: ACTIVE_FLOW_PRICE_ID, quantity: extraActiveFlows,
+        })
+    }
+
+    const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = [
+        {
+            items: currentPhaseItems,
+            start_date: currentPeriodStart,
+            end_date: currentPeriodEnd,
+        },
+    ]
+
+    if (!isFreeDowngrade) {
+        phases.push({
+            items: nextPhaseItems,
+            start_date: currentPeriodEnd,
+        })
+    }
+
+    await stripe.subscriptionSchedules.update(scheduleId, {
+        phases,
+        end_behavior: isFreeDowngrade ? 'cancel' : 'release',
+    })
+
+    logger.info({
+        scheduleId,
+        subscriptionId: subscription.id,
+        effectiveDate: new Date(currentPeriodEnd * 1000).toISOString(),
+        willCancel: isFreeDowngrade,
+    }, 'Updated subscription schedule for plan change')
+}
+
+async function createSubscriptionSchedule(params: CreateSubscriptionScheduleParams): Promise<Stripe.SubscriptionSchedule> {
+    const { extraActiveFlows, logger, stripe, subscription, isFreeDowngrade } = params
+
+    const schedule = await stripe.subscriptionSchedules.create({
+        from_subscription: subscription.id,
+    })
+
+    await updateSubscriptionSchedule({ stripe, scheduleId: schedule.id, subscription, logger, extraActiveFlows, isFreeDowngrade })
+    return schedule
+}
+
+
+type StartSubscriptionParams = {
+    platformId: string
+    customerId: string
+    extraActiveFlows?: number
+}
+
+type HandleSubscriptionUpdateParams = {
+    subscriptionId: string
+    extraActiveFlows: number
+    isUpgrade: boolean
+    isFreeDowngrade: boolean
+}
+
+type UpdateSubscriptionParams = {
+    stripe: Stripe
+    subscription: Stripe.Subscription
+    extraActiveFlows: number
+}
+
+type UpdateSubscriptionScheduleParams = {
+    stripe: Stripe
+    scheduleId: string
+    subscription: Stripe.Subscription
+    extraActiveFlows: number
+    logger: FastifyBaseLogger
+    isFreeDowngrade: boolean
+}
+
+type CreateSubscriptionScheduleParams = {
+    stripe: Stripe
+    subscription: Stripe.Subscription
+    extraActiveFlows: number
+    logger: FastifyBaseLogger
+    isFreeDowngrade: boolean
+}

@@ -1,7 +1,7 @@
 import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
-export const PRICE_PER_EXTRA_5_ACTIVE_FLOWS = 15
+export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
 
 export const AI_CREDITS_USAGE_THRESHOLD = 15000
 
@@ -20,17 +20,12 @@ export enum ApSubscriptionStatus {
 
 export const METRIC_TO_LIMIT_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlowsLimit',
-    [PlatformUsageMetric.PROJECTS]: 'projectsLimit',
 } as const
 
 export const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
-    [PlatformUsageMetric.PROJECTS]: 'projects',
 } as const
 
-export const RESOURCE_TO_MESSAGE_MAPPING = {
-    [PlatformUsageMetric.PROJECTS]: 'Project limit reached. Delete old projects or upgrade to create new ones.',
-}
 
 export const SetAiCreditsOverageLimitParamsSchema = Type.Object({
     limit: Type.Number({ minimum: 10 }),
@@ -41,8 +36,19 @@ export type SetAiCreditsOverageLimitParams = Static<typeof SetAiCreditsOverageLi
 export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
     state: Type.Enum(AiOverageState),
 })
-
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
+
+export const UpdateActiveFlowsLimitParamsSchema = Type.Object({
+    newActiveFlowsLimit: Type.Number(),
+})
+export type UpdateActiveFlowsLimitParams = Static<typeof UpdateActiveFlowsLimitParamsSchema>
+
+export const CreateSubscriptionParamsSchema = Type.Object({
+    newActiveFlowsLimit: Type.Number(),
+})
+export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
+
+
 
 export enum PRICE_NAMES {
     AI_CREDITS = 'ai-credit',
@@ -55,8 +61,8 @@ export const PRICE_ID_MAP = {
         prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
     },
     [PRICE_NAMES.ACTIVE_FLOWS]: {
-        dev: 'price_1RsK9qQN93Aoq4f8nhN9xvvu',
-        prod: 'price_1RsK79KZ0dZRqLEKRGbtT1Pn',
+        dev: 'price_1SQbbYQN93Aoq4f8WK2JC4sf',
+        prod: 'price_1SQbcvKZ0dZRqLEKHV5UepRx',
     },
 }
 
@@ -90,16 +96,47 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     ssoEnabled: false,
 }
 
+export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
+    embeddingEnabled: false,
+
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+
+    mcpsEnabled: true,
+    tablesEnabled: true,
+    todosEnabled: true,
+    agentsEnabled: true,
+    includedAiCredits: 0,
+    aiCreditsOverageLimit: undefined,
+    aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
+    environmentsEnabled: false,
+    analyticsEnabled: false,
+    showPoweredBy: false,
+
+    auditLogEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    projectRolesEnabled: false,
+    customDomainsEnabled: false,
+    apiKeysEnabled: false,
+    ssoEnabled: false,
+    stripeCustomerId: undefined,
+    stripeSubscriptionId: undefined,
+    stripeSubscriptionStatus: undefined,
+}
+
 export const APPSUMO_PLAN:  PlatformPlanWithOnlyLimits = {
     ...STANDARD_CLOUD_PLAN,
     plan: PlanName.APPSUMO_ACTIVEPIECES,
-    activeFlowsLimit: undefined
+    activeFlowsLimit: undefined,
 }
 
-export const isCloudPlanButNotEnterprise = (plan: string | undefined): boolean => {
+export const isCloudPlanButNotEnterprise = (plan?: string): boolean => {
     if (isNil(plan)) {
         return false
     }
-    // Louai: to be determined later
-    return true
+
+    return plan === PlanName.STANDARD
 }

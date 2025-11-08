@@ -99,6 +99,12 @@ const SidebarUsageLimits = React.memo(() => {
             max={project.plan.aiCredits}
             variant={'success'}
           />
+          <UsageProgress
+            name={t('Active Flows')}
+            value={12}
+            max={30}
+            variant={'success'}
+          />
         </div>
         <div className="text-xs text-muted-foreground flex justify-between w-full">
           <span>
