@@ -186,6 +186,17 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 ...pieceMetadata,
             })
         },
+
+        async bulkCreate(pieces: BulkCreateParams): Promise<PieceMetadataSchema[]> {
+            const data = await Promise.all(pieces.map(async (piece) => ({
+                id: apId(),
+                created: await findOldestCreatedDate({
+                    name: piece.name,
+                }),
+                ...piece,
+            })))
+            return repo().save(data)
+        },
     }
 }
 
@@ -264,7 +275,7 @@ const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMeta
     }))
 }
 
-const findOldestCreatedDate = async ({ name, platformId }: { name: string, platformId: string | undefined }): Promise<string> => {
+const findOldestCreatedDate = async ({ name, platformId }: { name: string, platformId?: string }): Promise<string> => {
     const piece = await repo().findOne({
         where: {
             name,
@@ -399,19 +410,19 @@ type ListParams = {
 
 type GetOrThrowParams = {
     name: string
-    version: string | undefined
+    version?: string
     entityManager?: EntityManager
-    projectId: string | undefined
-    platformId: string | undefined
+    projectId?: string
+    platformId?: string
     locale?: LocalesEnum
 }
 
 type ListVersionsParams = {
     name: string
-    projectId: string | undefined
-    release: string | undefined
+    projectId?: string
+    release?: string
     edition: ApEdition
-    platformId: string | undefined
+    platformId?: string
 }
 
 type CreateParams = {
@@ -440,3 +451,5 @@ type RegistryParams = {
     platformId?: string
     edition: ApEdition
 }
+
+type BulkCreateParams = PieceMetadataModel[]
