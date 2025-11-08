@@ -131,15 +131,12 @@ async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
         }
     }
     const schemaVersion = 'schemaVersion' in job.data ? job.data.schemaVersion : 0
-    if (schemaVersion === LATEST_JOB_DATA_SCHEMA_VERSION) {
-        return {
-            shouldSkip: false,
-        }
+    if (schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION) {
+        const newJobData = await workerApiService(workerToken).migrateJob({
+            jobData: job.data,
+        })
+        await job.updateData(newJobData)
     }
-    const newJobData = await workerApiService(workerToken).migrateJob({
-        jobData: job.data,
-    })
-    await job.updateData(newJobData)
     return {
         shouldSkip: false,
     }
