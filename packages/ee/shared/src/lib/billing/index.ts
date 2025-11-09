@@ -2,7 +2,6 @@ import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnly
 import { Static, Type } from '@sinclair/typebox'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
-
 export const AI_CREDITS_USAGE_THRESHOLD = 15000
 
 export type ProjectPlanLimits = {
@@ -48,8 +47,6 @@ export const CreateCheckoutSessionParamsSchema = Type.Object({
 })
 export type CreateSubscriptionParams = Static<typeof CreateCheckoutSessionParamsSchema>
 
-
-
 export enum PRICE_NAMES {
     AI_CREDITS = 'ai-credit',
     ACTIVE_FLOWS = 'active-flow',
@@ -78,7 +75,6 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     todosEnabled: true,
     mcpsEnabled: true,
-
     embeddingEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
@@ -98,10 +94,8 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     embeddingEnabled: false,
-
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
-
     mcpsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
@@ -112,7 +106,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     environmentsEnabled: false,
     analyticsEnabled: false,
     showPoweredBy: false,
-
     auditLogEnabled: false,
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
@@ -127,11 +120,10 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     stripeSubscriptionStatus: undefined,
 }
 
-export const APPSUMO_PLAN:  PlatformPlanWithOnlyLimits = {
+export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
     ...STANDARD_CLOUD_PLAN,
-    plan: PlanName.APPSUMO_ACTIVEPIECES,
     activeFlowsLimit: undefined,
-}
+})
 
 export const isCloudPlanButNotEnterprise = (plan?: string): boolean => {
     if (isNil(plan)) {

@@ -41,7 +41,12 @@ export enum AiOverageState {
 export enum PlanName {
     STANDARD = 'standard',
     ENTERPRISE = 'enterprise',
-    APPSUMO_ACTIVEPIECES = 'appsumo_activepieces',
+    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
+    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
+    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
+    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
+    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
+    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
 }
 
 export const PlatformPlan = Type.Object({
