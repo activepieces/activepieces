@@ -36,6 +36,9 @@
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"
       ],
+      "@activepieces/piece-meistertask": [
+        "packages/pieces/community/meistertask/src/index.ts"
+      ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
@@ -55,7 +58,8 @@
         "packages/pieces/community/fathom/src/index.ts"
       "@activepieces/piece-housecall-pro": [
         "packages/pieces/community/housecall-pro/src/index.ts"
-      ]
+      ],
+      
     },
     "resolveJsonModule": true
   },
