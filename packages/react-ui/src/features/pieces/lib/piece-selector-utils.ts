@@ -25,7 +25,6 @@ import {
   FlowTriggerType,
   PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
-  spreadIfDefined,
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';

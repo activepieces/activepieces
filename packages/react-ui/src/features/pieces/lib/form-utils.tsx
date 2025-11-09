@@ -7,7 +7,6 @@ import {
   PieceAuthProperty,
   PieceMetadata,
   PieceMetadataModel,
-  PieceMetadataModelSummary,
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
@@ -209,9 +208,7 @@ export const getDefaultValueForProperties = ({
   );
 };
 
-const buildConnectionSchema = (
-  auth:PieceAuthProperty 
-) => {
+const buildConnectionSchema = (auth: PieceAuthProperty) => {
   if (isNil(auth)) {
     return Type.Object({
       request: Type.Composite([

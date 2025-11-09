@@ -16,9 +16,9 @@ import {
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
+    isNil,
     OAuth2ConnectionValueWithApp,
     SecretTextConnectionValue,
-    isNil,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -131,7 +131,7 @@ export const pieceHelper = {
             apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
             publicUrl: params.publicApiUrl,
         }
-       //TODO: handle array of auths validation
+        //TODO: handle array of auths validation
         if (isNil(piece.auth) || Array.isArray(piece.auth) || piece.auth.validate === undefined) {
             return {
                 valid: true,

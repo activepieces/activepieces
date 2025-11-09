@@ -1,29 +1,32 @@
-import { cn } from "@/lib/utils";
-import { CardListItem } from "./card-list";
+import { cn } from '@/lib/utils';
 
-const RadioGroupList = <T extends unknown>({
-    items,
-    onChange,
-    value,
-    onHover,
-    className,
+import { CardListItem } from './card-list';
+
+const RadioGroupList = <T,>({
+  items,
+  onChange,
+  value,
+  onHover,
+  className,
 }: {
-    items: {
-        label: string;
-        value: T;
-        labelExtra?: React.ReactNode;
-        description?: string;
-    }[];
-    onChange: (value: T) => void;
-    value: T | null;
-    onHover?: (value: T | null) => void;
-    className?: string;
+  items: {
+    label: string;
+    value: T;
+    labelExtra?: React.ReactNode;
+    description?: string;
+  }[];
+  onChange: (value: T) => void;
+  value: T | null;
+  onHover?: (value: T | null) => void;
+  className?: string;
 }) => {
-    return (
-      <div className={cn("space-y-4", className)}>
-          {items.map((item)=>{
-        const selected = item.value === value
-         return  <CardListItem
+  return (
+    <div className={cn('space-y-4', className)}>
+      {items.map((item, index) => {
+        const selected = item.value === value;
+        return (
+          <CardListItem
+            key={index}
             className={cn(
               `p-4 rounded-lg border  block hover:border-primary/50 hover:bg-muted/50`,
               item.value === value && 'border-primary bg-primary/5',
@@ -52,12 +55,11 @@ const RadioGroupList = <T extends unknown>({
             </div>
             <p className="text-sm text-muted-foreground">{item.description}</p>
           </CardListItem>
-        })}
-      </div>
-      
-       )
-}
-
+        );
+      })}
+    </div>
+  );
+};
 
 RadioGroupList.displayName = 'RadioGroupList';
 export { RadioGroupList };

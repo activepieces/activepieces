@@ -70,3 +70,5 @@ export const PieceAuth = {
     return undefined;
   },
 };
+
+export type ExtractPieceAuthPropertyTypeForMethods<T extends PieceAuthProperty | PieceAuthProperty[]> = T extends PieceAuthProperty[] ? T[number] : T;

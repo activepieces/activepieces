@@ -8,8 +8,7 @@ import {
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
-import path from 'path';
-import fs from 'fs/promises';
+import { InputPropertyMap } from './property';
 
 export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = PieceAuthProperty | PieceAuthProperty[]>
   implements Omit<PieceBase, 'version' | 'name'>
@@ -22,8 +21,8 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = P
     public readonly logoUrl: string,
     public readonly authors: string[],
     public readonly events: PieceEventProcessors | undefined,
-    actions: Action<PieceAuth>[],
-    triggers: Trigger<PieceAuth>[],
+    actions: Action[],
+    triggers: Trigger[],
     public readonly categories: PieceCategory[],
     public readonly auth?: PieceAuth,
     public readonly minimumSupportedRelease?: string,
@@ -92,12 +91,12 @@ type CreatePieceParams<
   logoUrl: string;
   authors: string[];
   description?: string;
-  auth?: PieceAuth;
+  auth: PieceAuth | undefined;
   events?: PieceEventProcessors;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
-  actions: Action<PieceAuth>[];
-  triggers: Trigger<PieceAuth>[];
+  actions: Action[];
+  triggers: Trigger[];
   categories?: PieceCategory[];
 };
 

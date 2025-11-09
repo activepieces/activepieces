@@ -5,7 +5,7 @@ import { useState } from 'react';
 import ActivepiecesCreateTodoGuide from '@/assets/img/custom/ActivepiecesCreateTodoGuide.png';
 import ActivepiecesTodo from '@/assets/img/custom/ActivepiecesTodo.png';
 import ExternalChannelTodo from '@/assets/img/custom/External_Channel_Todo.png';
-import { CardListItem } from '@/components/custom/card-list';
+import { RadioGroupList } from '@/components/custom/radio-group-list';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/tooltip';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { isNil, TodoType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -32,7 +31,6 @@ import {
   createWaitForApprovalStep,
 } from './custom-piece-selector-items-utils';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
-import { RadioGroupList } from '@/components/custom/radio-group-list';
 
 type AddTodoStepDialogProps = {
   pieceSelectorItem: PieceSelectorPieceItem;
@@ -110,11 +108,11 @@ const AddTodoStepDialog = ({
                   {t('Where would you like the todo to be reviewed?')}
                 </h3>
                 <div className="space-y-4">
-                 <TodoRadioGroup
-                  setTodoType={setTodoType}
-                  setHoveredOption={setHoveredTodoType}
-                  selectedTodoType={todoType}
-                 />
+                  <TodoRadioGroup
+                    setTodoType={setTodoType}
+                    setHoveredOption={setHoveredTodoType}
+                    selectedTodoType={todoType}
+                  />
                 </div>
               </div>
               <div className="md:w-1/2 flex flex-col items-center justify-center">
@@ -187,7 +185,6 @@ const TodoRadioGroup = ({
   setHoveredOption: (todoType: TodoType | null) => void;
   selectedTodoType: TodoType;
 }) => {
- 
   const openNewWindow = useNewWindow();
 
   return (
@@ -198,34 +195,36 @@ const TodoRadioGroup = ({
           label: t('Internal Todos'),
           value: TodoType.INTERNAL,
           description: t('Users will manage tasks directly in our interface'),
-          labelExtra: (<Tooltip delayDuration={100}>
-            <TooltipTrigger asChild>
-              <InfoIcon className="w-4 h-4" />
-            </TooltipTrigger>
-            <TooltipContent side="right" className="w-[550px]">
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm select-none">
-                    {t('Users will manage tasks directly in our interface')}
-                  </span>{' '}
-                  <span
-                    className="text-sm text-primary underline cursor-pointer"
-                    onClick={() => openNewWindow('/todos')}
-                  >
-                    {t('here')}
-                  </span>
-                </div>
+          labelExtra: (
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <InfoIcon className="w-4 h-4" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="w-[550px]">
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-sm select-none">
+                      {t('Users will manage tasks directly in our interface')}
+                    </span>{' '}
+                    <span
+                      className="text-sm text-primary underline cursor-pointer"
+                      onClick={() => openNewWindow('/todos')}
+                    >
+                      {t('here')}
+                    </span>
+                  </div>
 
-                <div className="bg-muted rounded p-1">
-                  <img
-                    src={ActivepiecesTodo}
-                    alt="Todo UI"
-                    className="w-full h-auto rounded"
-                  />
+                  <div className="bg-muted rounded p-1">
+                    <img
+                      src={ActivepiecesTodo}
+                      alt="Todo UI"
+                      className="w-full h-auto rounded"
+                    />
+                  </div>
                 </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>)
+              </TooltipContent>
+            </Tooltip>
+          ),
         },
         {
           label: t('External Channel (Slack, Teams, Email, ...)'),
@@ -233,11 +232,10 @@ const TodoRadioGroup = ({
           description: t(
             'Send notifications with approval links via external channels like Slack, Teams or Email. Best for collaborating with external stakeholders.',
           ),
-          
         },
       ]}
       onChange={setTodoType}
       onHover={setHoveredOption}
     />
-    );
+  );
 };

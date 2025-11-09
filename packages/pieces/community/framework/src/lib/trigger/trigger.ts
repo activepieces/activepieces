@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
-import { PieceAuthProperty } from '../property/authentication';
+import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 import { isNil, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy } from '@activepieces/shared';
 export { TriggerStrategy }
 
@@ -15,7 +15,7 @@ export enum WebhookRenewStrategy {
   NONE = 'NONE',
 }
 
-type OnStartRunner<PieceAuth extends PieceAuthProperty | PieceAuthProperty[], TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
+type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
 
 
@@ -48,11 +48,11 @@ type BaseTriggerParams<
   auth?: PieceAuth
   props: TriggerProps
   type: TS
-  onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
-  onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
-  run: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
-  onStart?: OnStartRunner<PieceAuth, TriggerProps>,
+  onEnable: (context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>
+  onDisable: (context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>
+  run: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>
+  test?: (context: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
+  onStart?: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
   sampleData: unknown
 }
 
@@ -62,9 +62,9 @@ TriggerProps extends InputPropertyMap,
 TS extends TriggerStrategy,
 > = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
   handshakeConfiguration?: WebhookHandshakeConfiguration
-  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
+  onHandshake?: (context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<WebhookResponse>,
   renewConfiguration?: WebhookRenewConfiguration
-  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
+  onRenew?(context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>): Promise<void>,
 }
 
 type CreateTriggerParams<
@@ -88,14 +88,14 @@ export class ITrigger<
     public readonly props: TriggerProps,
     public readonly type: TS,
     public readonly handshakeConfiguration: WebhookHandshakeConfiguration,
-    public readonly onHandshake: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
+    public readonly onHandshake: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<WebhookResponse>,
     public readonly renewConfiguration: WebhookRenewConfiguration,
-    public readonly onRenew: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
-    public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
-    public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
-    public readonly onStart: OnStartRunner<PieceAuth, TriggerProps>,
-    public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
-    public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
+    public readonly onRenew: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>,
+    public readonly onEnable: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>,
+    public readonly onDisable: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>,
+    public readonly onStart: OnStartRunner<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps>,
+    public readonly run: (ctx: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
+    public readonly test: (ctx: TestOrRunHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
   ) { }
