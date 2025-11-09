@@ -289,7 +289,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         executionState: FlowExecutorContext.empty(),
     })
 
-    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, propertySettings)
+    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, propertySettings)
 
     if (Object.keys(errors).length > 0) {
         throw new Error(JSON.stringify(errors, null, 2))

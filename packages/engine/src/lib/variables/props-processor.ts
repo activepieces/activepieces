@@ -1,4 +1,4 @@
-import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { InputPropertyMap, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
@@ -14,8 +14,6 @@ export const propsProcessor = {
     applyProcessorsAndValidators: async (
         resolvedInput: StaticPropsValue<PiecePropertyMap>,
         props: InputPropertyMap,
-        auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
-        requireAuth: boolean,
         propertySettings: Record<string, PropertySettings>,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
         let dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined = undefined
@@ -36,8 +34,6 @@ export const propsProcessor = {
                 const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
                     value,
                     dynamaicPropertiesSchema[key],
-                    undefined,
-                    false,
                     {},
                 )
                 processedInput[key] = itemProcessedInput
@@ -53,8 +49,6 @@ export const propsProcessor = {
                     const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
                         item,
                         property.properties,
-                        undefined,
-                        false,
                         {},
                     )
                     processedArray.push(itemProcessedInput)
