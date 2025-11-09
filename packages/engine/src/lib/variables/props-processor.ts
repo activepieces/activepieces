@@ -25,21 +25,7 @@ export const propsProcessor = {
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
 
-        //TODO: handle array of auths validation
-        const authRequiresValidation = auth && !Array.isArray(auth) && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props) && requireAuth
-        if (authRequiresValidation) {
-            const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
-                resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-                auth.props,
-                undefined,
-                requireAuth,
-                {},
-            )
-            processedInput.auth = authProcessedInput
-            if (Object.keys(authErrors).length > 0) {
-                errors.auth = authErrors
-            }
-        }
+       
 
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]

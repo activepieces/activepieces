@@ -187,19 +187,19 @@ export type BaseActionContext<
 };
 
 type BeginExecutionActionContext<
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>;
 
 type ResumeExecutionActionContext<
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
   resumePayload: ResumePayload;
 };
 
 export type ActionContext<
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > =
   | BeginExecutionActionContext<PieceAuth, ActionProps>

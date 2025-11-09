@@ -3,6 +3,7 @@ import {
     DynamicProperties,
     ExecutePropsResult,
     MultiSelectDropdownProperty,
+    PieceAuthProperty,
     PieceMetadata,
     PiecePropertyMap,
     pieceTranslation,
@@ -10,15 +11,13 @@ import {
     StaticPropsValue,
 } from '@activepieces/pieces-framework'
 import {
-    BasicAuthConnectionValue,
-    CustomAuthConnectionValue,
+    AppConnectionType,
+    AppConnectionValue,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     isNil,
-    OAuth2ConnectionValueWithApp,
-    SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -131,49 +130,12 @@ export const pieceHelper = {
             apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
             publicUrl: params.publicApiUrl,
         }
-        //TODO: handle array of auths validation
-        if (isNil(piece.auth) || Array.isArray(piece.auth) || piece.auth.validate === undefined) {
-            return {
-                valid: true,
-            }
-        }
+        return  validateAuth({
+            authValue: params.auth,
+            pieceAuth: piece.auth,
+            server,
+        })
 
-        switch (piece.auth.type) {
-            case PropertyType.BASIC_AUTH: {
-                const con = params.auth as BasicAuthConnectionValue
-                return piece.auth.validate({
-                    auth: {
-                        username: con.username,
-                        password: con.password,
-                    },
-                    server,
-                })
-            }
-            case PropertyType.SECRET_TEXT: {
-                const con = params.auth as SecretTextConnectionValue
-                return piece.auth.validate({
-                    auth: con.secret_text,
-                    server,
-                })
-            }
-            case PropertyType.CUSTOM_AUTH: {
-                const con = params.auth as CustomAuthConnectionValue
-                return piece.auth.validate({
-                    auth: con.props,
-                    server,
-                })
-            }
-            case PropertyType.OAUTH2: {
-                const con = params.auth as OAuth2ConnectionValueWithApp
-                return piece.auth.validate({
-                    auth: con,
-                    server,
-                })
-            }
-            default: {
-                throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
-            }
-        }
     },
 
     async extractPieceMetadata({ pieceSource, params }: { pieceSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
@@ -195,3 +157,89 @@ export const pieceHelper = {
 
 type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, pieceSource: string, constants: EngineConstants }
 
+
+const validateAuth = async ({
+    server,
+    authValue,
+    pieceAuth,
+}: {
+    server: {
+        apiUrl: string
+        publicUrl: string
+    }
+    authValue: AppConnectionValue
+    pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}): Promise<ExecuteValidateAuthResponse> => {
+    if (isNil(authValue) || isNil(pieceAuth)) {
+        return {
+            valid: true,
+        }
+    }
+    const usedPieceAuth = Array.isArray(pieceAuth) ? pieceAuth.find(auth => {
+        switch (auth.type) {
+            case PropertyType.BASIC_AUTH:
+                return authValue.type === AppConnectionType.BASIC_AUTH
+            case PropertyType.SECRET_TEXT:
+                return authValue.type === AppConnectionType.SECRET_TEXT
+            case PropertyType.OAUTH2:
+                return authValue.type === AppConnectionType.OAUTH2 || authValue.type === AppConnectionType.CLOUD_OAUTH2 || authValue.type === AppConnectionType.PLATFORM_OAUTH2
+            case PropertyType.CUSTOM_AUTH:
+                return authValue.type === AppConnectionType.CUSTOM_AUTH
+        }
+    }) : pieceAuth
+
+    if (isNil(usedPieceAuth)) {
+        return {
+            valid: false,
+            error: 'No piece auth found for auth value',
+        }
+    }
+    if (isNil(usedPieceAuth.validate)) {
+        return {
+            valid: true,
+        }
+    }
+    const mismatchAuthTypeErrorMessage = (pieceAuthType: PropertyType, connectionType: AppConnectionType)=> ({
+        valid: false,
+        error: `Connection value type does not match piece auth type: ${pieceAuthType} !== ${connectionType}`,
+    })
+
+    switch (usedPieceAuth.type) {
+        case PropertyType.OAUTH2:{
+            if (authValue.type !== AppConnectionType.OAUTH2 && authValue.type !== AppConnectionType.CLOUD_OAUTH2 && authValue.type !== AppConnectionType.PLATFORM_OAUTH2) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue,
+                server,
+            })
+        }
+        case PropertyType.BASIC_AUTH:{
+            if (authValue.type !== AppConnectionType.BASIC_AUTH) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue,
+                server,
+            })
+        }
+        case PropertyType.SECRET_TEXT:{
+            if (authValue.type !== AppConnectionType.SECRET_TEXT) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue.secret_text,
+                server,
+            })
+        }
+        case PropertyType.CUSTOM_AUTH:{
+            if (authValue.type !== AppConnectionType.CUSTOM_AUTH) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue.props,
+                server,
+            })
+        }
+    }
+}
