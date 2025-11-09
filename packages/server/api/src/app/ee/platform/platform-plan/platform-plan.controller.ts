@@ -142,7 +142,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.id)
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
         const { newActiveFlowsLimit } = request.body
@@ -158,7 +158,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     })
 
     fastify.post('/update-active-flows-addon', UpdateActiveFlowsAddonRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.id)
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
         const { newActiveFlowsLimit } = request.body
@@ -235,7 +235,7 @@ const UpdateActiveFlowsAddonRequest = {
         body: UpdateActiveFlowsAddonParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
@@ -244,6 +244,6 @@ const CreateCheckoutSessionRequest = {
         body: CreateCheckoutSessionParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
