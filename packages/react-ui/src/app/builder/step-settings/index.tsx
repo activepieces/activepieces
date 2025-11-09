@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -46,7 +46,6 @@ const StepSettingsContainer = () => {
     flowVersion,
     selectedBranchIndex,
     setSelectedBranchIndex,
-    refreshStepFormSettingsToggle,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -55,35 +54,18 @@ const StepSettingsContainer = () => {
     state.flowVersion,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
-    state.refreshStepFormSettingsToggle,
   ]);
-
-  const defaultValues = useMemo(() => {
-    return formUtils.buildPieceDefaultValue(selectedStep, pieceModel, true);
-  }, [selectedStep.name, pieceModel]);
-
-  useEffect(() => {
-    currentValuesRef.current = defaultValues;
-    form.reset(defaultValues);
-    form.trigger();
-  }, [defaultValues]);
-
-  //Needed to show new code from Ask AI
-  useEffect(() => {
-    form.reset(selectedStep);
-    form.trigger();
-  }, [refreshStepFormSettingsToggle]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step: selectedStep,
   });
 
-  const currentValuesRef = useRef<FlowAction | FlowTrigger>(defaultValues);
+  const currentValuesRef = useRef<FlowAction | FlowTrigger>(selectedStep);
   const form = useForm<FlowAction | FlowTrigger>({
     mode: 'all',
     disabled: readonly,
     reValidateMode: 'onChange',
-    defaultValues,
+    defaultValues: selectedStep,
     resolver: async (values, context, options) => {
       const result = await typeboxResolver(formSchema)(
         values,

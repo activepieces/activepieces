@@ -127,7 +127,7 @@ const SidebarUsageLimits = React.memo(() => {
 });
 
 type UsageProgressProps = {
-  value: number;
+  value: number | null;
   max: number | undefined | null;
   name: string;
   variant: 'success' | 'primary';
@@ -135,7 +135,7 @@ type UsageProgressProps = {
 
 const UsageProgress = ({ value, max, name, variant }: UsageProgressProps) => {
   const isUnlimited = isNil(max);
-  const usagePercentage = isUnlimited ? 0 : (value / max) * 100;
+  const usagePercentage = isUnlimited || isNil(value) ? 0 : (value / max) * 100;
 
   return (
     <div className="flex items-center flex-col justify-between gap-3  w-full">
@@ -144,10 +144,12 @@ const UsageProgress = ({ value, max, name, variant }: UsageProgressProps) => {
           {name}
         </span>
         <div className="text-xs">
-          <span>
-            {formatUtils.formatNumber(value)}
-            {' / '}
-          </span>
+          {!isNil(value) && (
+            <span>
+              {formatUtils.formatNumber(value)}
+              {' / '}
+            </span>
+          )}
           <span>
             {!isNil(max) ? formatUtils.formatNumber(max) : t('Unlimited')}
           </span>

@@ -12,7 +12,7 @@ import { userService } from '../../user/user-service'
 
 export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWithoutSensitiveData) => boolean): onRequestAsyncHookHandler =>
     async (request, _res) => {
-        const platformId = request.principal.platform.id
+        const platformId = 'platform' in request.principal ? request.principal.platform.id : null
 
         if (isNil(platformId)) {
             throw new ActivepiecesError({
@@ -77,7 +77,16 @@ const checkIfPlatformIsOwnedByUser = async (platformId: string, request: Fastify
 }
 export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
     async (request, _res) => {
-        const platformId = request.principal.platform.id
+        const principal = request.principal
+        if (principal.type !== PrincipalType.USER && principal.type !== PrincipalType.SERVICE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are unauthenticated and cannot access this resource',
+                },
+            })
+        }
+        const platformId = principal.platform.id
         await checkIfPlatformIsOwnedByUser(platformId, request)
         
     }

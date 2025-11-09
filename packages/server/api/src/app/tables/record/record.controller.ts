@@ -91,7 +91,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         body: CreateRecordsRequest,
@@ -103,7 +103,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({
@@ -118,7 +118,7 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {
@@ -138,7 +138,7 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {
@@ -154,7 +154,7 @@ const DeleteRecordRequest = {
 
 const ListRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.READ_TABLE,
     },
     schema: {

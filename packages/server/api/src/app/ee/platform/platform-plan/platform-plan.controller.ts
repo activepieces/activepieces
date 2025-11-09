@@ -2,7 +2,6 @@ import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepi
 import { CreateCheckoutSessionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
@@ -13,7 +12,7 @@ import { stripeHelper } from './stripe-helper'
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
-    fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
+    fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
         const [platformPlan, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
@@ -35,7 +34,11 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         return response
     })
 
-    fastify.post('/portal', {}, async (request) => {
+    fastify.post('/portal', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER] as const,
+        },
+    }, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
     })
 
@@ -190,7 +193,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
 const InfoRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
@@ -202,7 +205,7 @@ const SetAiCreditsOverageLimitRequest = {
         body: SetAiCreditsOverageLimitParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
@@ -211,13 +214,13 @@ const EnableAiCreditsOverageRequest = {
         body: ToggleAiCreditsOverageEnabledParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
 const ListAIUsageRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         querystring: ListAICreditsUsageRequest,

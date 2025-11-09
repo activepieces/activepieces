@@ -1,20 +1,25 @@
-import { IncomingMessage } from 'http'
-import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil, SendFlowResponseRequest, UpdateRunProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { WebSocket, WebSocketServer } from 'ws'
+import { type Socket, Server as SocketIOServer } from 'socket.io'
 
-let wss: WebSocketServer | null = null
-const sockets: Record<string, WebSocket> = {}
+let io: SocketIOServer | null = null
+const sockets: Record<string, Socket> = {}
 const resolvePromises: Record<string, (value: boolean) => void> = {}
+
 
 export const engineRunnerSocket = (log: FastifyBaseLogger) => {
     return {
         async init(): Promise<void> {
             try {
-                wss = new WebSocketServer({ port: 12345, path: '/worker/ws' })
+                io = new SocketIOServer({
+                    path: '/worker/ws',
+                    maxHttpBufferSize: 1e8,
+                })
 
-                wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-                    const workerId = req.headers['worker-id'] as string
+                io.listen(12345)
+
+                io.on('connection', (socket: Socket) => {
+                    const workerId = socket.handshake.auth['workerId'] as string
                     log.info('Client connected to engine socket server ' + workerId)
 
                     // Clean up any existing socket for this workerId
@@ -22,7 +27,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                         this.cleanupSocket(workerId)
                     }
 
-                    sockets[workerId] = ws
+                    sockets[workerId] = socket
 
                     if (!isNil(resolvePromises[workerId])) {
                         resolvePromises[workerId](true)
@@ -30,39 +35,23 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                         delete resolvePromises[workerId]
                     }
 
-                    ws.on('close', () => {
+                    socket.on('disconnect', () => {
                         log.info({ workerId }, 'Client disconnected from engine socket server')
                         this.cleanupSocket(workerId)
                     })
 
-                    ws.on('error', (error) => {
+                    socket.on('error', (error) => {
                         log.error({ error, workerId }, 'Socket error occurred')
                         this.cleanupSocket(workerId)
                     })
-
-                    ws.on('message', (data: string) => {
-                        try {
-                            const message = JSON.parse(data)
-                            if (message.type === EngineSocketEvent.ENGINE_OPERATION) {
-                                // Forward the operation to the worker
-                                ws.send(JSON.stringify({
-                                    type: EngineSocketEvent.ENGINE_OPERATION,
-                                    data: message.data,
-                                }))
-                            }
-                        }
-                        catch (error) {
-                            log.error({ error }, 'Error parsing message')
-                        }
-                    })
                 })
 
-                process.on('SIGTERM', async () => {
-                    await this.disconnect()
+                process.on('SIGTERM', () => {
+                    void this.disconnect()
                 })
 
-                process.on('SIGINT', async () => {
-                    await this.disconnect()
+                process.on('SIGINT', () => {
+                    void this.disconnect()
                 })
             }
             catch (error) {
@@ -72,14 +61,14 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
         },
         isConnected(workerId: string): boolean {
             const socket = sockets[workerId]
-            return !isNil(socket) && socket.readyState === WebSocket.OPEN
+            return !isNil(socket) && socket.connected
         },
 
         cleanupSocket(workerId: string): void {
             const socket = sockets[workerId]
             if (socket) {
                 socket.removeAllListeners()
-                socket.close()
+                socket.disconnect()
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete sockets[workerId]
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -89,7 +78,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
 
         async waitForConnect(workerId: string): Promise<boolean> {
             if (!isNil(sockets[workerId])) {
-                return sockets[workerId].readyState === WebSocket.OPEN
+                return sockets[workerId].connected
             }
 
             const promise = new Promise<boolean>((resolve) => {
@@ -99,7 +88,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                     resolve(false)
                 }, 30000)
 
-                resolvePromises[workerId] = (value: boolean) => {
+                resolvePromises[workerId] = (value: boolean): void => {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete resolvePromises[workerId]
                     clearTimeout(timeout)
@@ -112,67 +101,77 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
         send(workerId: string, message: unknown): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'socket')
-            if (socket.readyState !== WebSocket.OPEN) {
+            if (!socket.connected) {
                 throw new Error(`Socket for worker ${workerId} is not connected`)
             }
-            socket.send(JSON.stringify({
-                type: EngineSocketEvent.ENGINE_OPERATION,
-                data: message,
-            }))
+            socket.emit(EngineSocketEvent.ENGINE_OPERATION, message)
         },
 
-        subscribe(
-            workerId: string,
-            onResult: (result: EngineResponse<unknown>) => void,
-            onStdout: (stdout: EngineStdout) => void,
-            onStderr: (stderr: EngineStderr) => void,
-        ): void {
+        subscribe({
+            workerId,
+            onResult,
+            onStdout,
+            onStderr,
+            updateRunProgress,
+            sendFlowResponse,
+        }: {
+            workerId: string
+            onResult: (result: EngineResponse<unknown>) => void
+            onStdout: (stdout: EngineStdout) => void
+            onStderr: (stderr: EngineStderr) => void
+            updateRunProgress: (data: UpdateRunProgressRequest, log: FastifyBaseLogger) => Promise<void>
+            sendFlowResponse: (data: SendFlowResponseRequest, log: FastifyBaseLogger) => Promise<void>
+        }): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'sockets[workerId]')
 
             // Remove any existing listeners before adding new ones
             this.unsubscribe(workerId)
 
-            const messageHandler = (data: string) => {
-                try {
-                    const message = JSON.parse(data)
-                    switch (message.type) {
-                        case EngineSocketEvent.ENGINE_RESPONSE:
-                            onResult(message.data)
-                            break
-                        case EngineSocketEvent.ENGINE_STDOUT:
-                            onStdout(message.data)
-                            break
-                        case EngineSocketEvent.ENGINE_STDERR:
-                            onStderr(message.data)
-                            break
-                    }
-                }
-                catch (error) {
-                    log.error({ error }, 'Error parsing message')
-                }
-            }
+            socket.on(EngineSocketEvent.ENGINE_RESPONSE, (data: EngineResponse<unknown>, callback: () => void) => {
+                onResult(data)
+                callback?.()
+            })
 
-            socket.on('message', messageHandler)
+            socket.on(EngineSocketEvent.ENGINE_STDOUT, (data: EngineStdout) => {
+                onStdout(data)
+            })
+
+            socket.on(EngineSocketEvent.ENGINE_STDERR, (data: EngineStderr, callback: () => void) => {
+                onStderr(data)
+                callback?.()
+            })
+
+            socket.on(EngineSocketEvent.UPDATE_RUN_PROGRESS, async (data: UpdateRunProgressRequest, callback: () => void) => {
+                await updateRunProgress(data, log)
+                callback()
+            })
+
+            socket.on(EngineSocketEvent.SEND_FLOW_RESPONSE, async (data: SendFlowResponseRequest, callback: () => void) => {
+                await sendFlowResponse(data, log)
+                callback()
+            })
         },
 
         unsubscribe(workerId: string): void {
             const socket = sockets[workerId]
             if (socket) {
-                socket.removeAllListeners('message')
+                socket.removeAllListeners(EngineSocketEvent.ENGINE_RESPONSE)
+                socket.removeAllListeners(EngineSocketEvent.ENGINE_STDOUT)
+                socket.removeAllListeners(EngineSocketEvent.ENGINE_STDERR)
+                socket.removeAllListeners(EngineSocketEvent.UPDATE_RUN_PROGRESS)
+                socket.removeAllListeners(EngineSocketEvent.SEND_FLOW_RESPONSE)
             }
         },
 
         async disconnect(): Promise<void> {
-            if (wss) {
+            if (io) {
                 // Clean up all sockets
                 Object.keys(sockets).forEach(workerId => {
                     this.cleanupSocket(workerId)
                 })
-                await new Promise<void>((resolve) => {
-                    wss?.close(() => resolve())
-                })
-                wss = null
+                await io.close()
+                io = null
             }
         },
     }

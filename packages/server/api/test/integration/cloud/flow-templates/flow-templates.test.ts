@@ -34,12 +34,13 @@ describe('Flow Templates', () => {
     describe('List Flow Templates', () => {
         it('should list platform templates only', async () => {
             // arrange
-            const { mockPlatform, mockUser, mockPlatformTemplate } =
+            const { mockPlatform, mockUser, mockProject, mockPlatformTemplate } =
                 await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -95,6 +96,7 @@ describe('Flow Templates', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -135,11 +137,12 @@ describe('Flow Templates', () => {
     describe('Delete Flow Template', () => {
         it('should not be able delete platform template as member', async () => {
             // arrange
-            const { mockUser, mockPlatform, mockPlatformTemplate } =
+            const { mockUser, mockPlatform, mockProject, mockPlatformTemplate } =
                 await createMockPlatformTemplate({ platformId: apId() })
             const testToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -157,12 +160,13 @@ describe('Flow Templates', () => {
 
         it('should be able delete platform template as owner', async () => {
             // arrange
-            const { mockPlatform, mockOwner, mockPlatformTemplate } =
+            const { mockPlatform, mockOwner, mockProject, mockPlatformTemplate } =
                 await createMockPlatformTemplate({ platformId: apId() })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
