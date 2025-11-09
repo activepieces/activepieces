@@ -15,12 +15,17 @@ import { SidebarUser } from '../sidebar-user';
 
 import { FlowsNavigation } from './flows-navigation';
 import { TablesNavigation } from './tables-navigation';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export function BuilderNavigationSidebar({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
 
   return (
@@ -39,7 +44,10 @@ export function BuilderNavigationSidebar({
             </SidebarFooter>
           </Sidebar>
         )}
-        <SidebarInset>{children}</SidebarInset>
+        <SidebarInset>
+          {children}
+          {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+        </SidebarInset>
       </SidebarProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );

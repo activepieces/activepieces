@@ -42,10 +42,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
-        stripePaymentMethod: {
-            type: String,
-            nullable: true,
-        },
         environmentsEnabled: {
             type: Boolean,
         },

@@ -7,8 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { platformUsageService } from '../platform-usage-service'
-import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID } from './platform-plan-helper'
-import { platformPlanService } from './platform-plan.service'
+import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -44,41 +43,41 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             await addThresholdOnAiCreditsItem(stripe, subscription)
                         }
 
-                        request.log.info({
-                            webhookType: webhook.type,
-                            subscriptionStatus: subscription.status,
-                        }, 'Processing subscription event')
-
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
-                        const { stripeSubscriptionId } = await platformPlanService(request.log).updateByCustomerId({
-                            subscriptionId: subscription.id,
-                            customerId: subscription.customer.toString(),
-                            status: subscription.status as ApSubscriptionStatus,
-                            startDate,
-                            endDate,
-                            cancelDate,
-                            stripePaymentMethod: subscription.default_payment_method as string ?? undefined,
-                        })
 
                         const extraActiveFlows = subscription.items.data.find(item => ACTIVE_FLOW_PRICE_ID === item.price.id)?.quantity ?? 0
-
                         const newLimits = { ...STANDARD_CLOUD_PLAN }
-                        const isAddonUpgrade =  extraActiveFlows > 0
-                        const shouldResetPlatfromUsage = isAddonUpgrade
 
-                        if (isAddonUpgrade) {
-                            newLimits.activeFlowsLimit = (newLimits.activeFlowsLimit ?? 0) + extraActiveFlows
+                        const subscriptionEnded = webhook.type === 'customer.subscription.deleted'
+                        if (subscriptionEnded) {
+                            await platformUsageService(request.log).resetPlatformUsage(platformId)
+                            await platformPlanService(request.log).update({ 
+                                ...newLimits,
+                                platformId,
+                                stripeSubscriptionStatus: ApSubscriptionStatus.CANCELED,
+                                aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+                                stripeSubscriptionId: undefined,
+                                stripeSubscriptionStartDate: undefined,
+                                stripeSubscriptionEndDate: undefined,
+                                stripeSubscriptionCancelDate: undefined,
+                            })
+                            break
                         }
 
-                        if (shouldResetPlatfromUsage) {
-                            await platformUsageService(request.log).resetPlatformUsage(platformId)
+                        if (extraActiveFlows > 0) {
+                            newLimits.activeFlowsLimit = (newLimits.activeFlowsLimit ?? 0) + extraActiveFlows
                         }
 
                         await platformPlanService(request.log).update({ 
                             ...newLimits,
                             platformId,
-                            stripeSubscriptionId,
-                            aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
+                            stripeSubscriptionId: subscription.id,
+                            stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
+                            aiCreditsOverageState: AiOverageState.ALLOWED_AND_ON,
+                            aiCreditsOverageLimit: 500,
+                            stripeSubscriptionStartDate: startDate,
+                            stripeSubscriptionEndDate: endDate,
+                            stripeSubscriptionCancelDate: cancelDate,
                         })
                         break
                     }

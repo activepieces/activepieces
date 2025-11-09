@@ -1,5 +1,6 @@
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
@@ -7,6 +8,8 @@ import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
+  UpdateActiveFlowsAddonParams,
+  CreateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
@@ -25,6 +28,45 @@ export const billingMutations = {
       mutationFn: async () => {
         const portalLink = await platformBillingApi.getPortalLink();
         window.open(portalLink, '_blank');
+      },
+    });
+  },
+  useUpdateActiveFlowsLimit: (setIsOpen?: (isOpen: boolean) => void) => {
+    const navigate = useNavigate();
+    return useMutation({
+      mutationFn: (params: UpdateActiveFlowsAddonParams) =>
+        platformBillingApi.updateActiveFlowsLimits(params),
+      onSuccess: (url) => {
+        setIsOpen?.(false);
+        navigate(url);
+        toast({
+          title: t('Success'),
+          description: t('Plan updated successfully'),
+        });
+      },
+      onError: () => {
+        navigate(`/platform/setup/billing/error`);
+      },
+    });
+  },
+  useCreateSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
+    return useMutation({
+      mutationFn: async (params: CreateSubscriptionParams) => {
+        const checkoutSessionURl = await platformBillingApi.createSubscription(
+          params,
+        );
+        window.open(checkoutSessionURl, '_blank');
+      },
+      onSuccess: () => {
+        setIsOpen?.(false);
+      },
+      onError: (error) => {
+        toast({
+          title: t('Starting Subscription failed'),
+          description: t(error.message),
+          variant: 'default',
+          duration: 5000,
+        });
       },
     });
   },

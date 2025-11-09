@@ -12,6 +12,7 @@ import { cn, formatUtils } from '@/lib/utils';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
@@ -46,6 +47,7 @@ const getTimeUntilNextReset = (nextResetDate: number) => {
 
 const SidebarUsageLimits = React.memo(() => {
   const { project, isPending } = projectHooks.useCurrentProject();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -97,6 +99,12 @@ const SidebarUsageLimits = React.memo(() => {
             name={t('AI Credits')}
             value={project.usage.aiCredits}
             max={project.plan.aiCredits}
+            variant={'success'}
+          />
+          <UsageProgress
+            name={t('Active Flows')}
+            value={platform.usage?.activeFlows!}
+            max={platform?.plan.activeFlowsLimit!}
             variant={'success'}
           />
         </div>

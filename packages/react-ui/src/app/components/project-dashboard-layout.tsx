@@ -2,13 +2,13 @@ import React, { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { AiCreditsLimitAlert } from '@/features/billing/components/ai-credits-limit-alert';
 import { projectHooks } from '@/hooks/project-hooks';
 import { isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { ProjectDashboardSidebar } from './sidebar/dashboard';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 
 const ProjectChangedRedirector = ({
   currentProjectId,
@@ -49,13 +49,10 @@ export function ProjectDashboardLayout({
         <SidebarProvider>
           <ProjectDashboardSidebar />
           <SidebarInset className={`relative overflow-auto px-4 pb-4`}>
-            <div className="flex flex-col gap-2 mt-2">
-              <AiCreditsLimitAlert />
-            </div>
-
             {children}
           </SidebarInset>
         </SidebarProvider>
+        <PurchaseExtraFlowsDialog />
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );

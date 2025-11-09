@@ -6,8 +6,12 @@ import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { PlatformSidebar } from './sidebar/platform';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
 
   return (
@@ -22,6 +26,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
       ) : (
         <Navigate to="/" />
       )}
+      {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

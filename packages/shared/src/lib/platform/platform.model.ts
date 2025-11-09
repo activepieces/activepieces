@@ -23,17 +23,11 @@ export type SMTPInformation = Static<typeof SMTPInformation>
 export enum PlatformUsageMetric {
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
-    PROJECTS = 'projects',
-    TABLES = 'tables',
-    MCPS = 'mcps',
 }
 
 export const PlatformUsage = Type.Object({
     aiCredits: Type.Number(),
     activeFlows: Type.Number(),
-    tables: Type.Number(),
-    mcps: Type.Number(),
-    projects: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
@@ -41,13 +35,18 @@ export type PlatformUsage = Static<typeof PlatformUsage>
 export enum AiOverageState {
     NOT_ALLOWED = 'not_allowed',
     ALLOWED_BUT_OFF = 'allowed_but_off',
-    ALLOWED_AND_ON = 'allowed_an_on',
+    ALLOWED_AND_ON = 'allowed_and_on',
 }
 
 export enum PlanName {
     STANDARD = 'standard',
     ENTERPRISE = 'enterprise',
-    APPSUMO_ACTIVEPIECES = 'appsumo_activepieces',
+    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
+    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
+    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
+    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
+    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
+    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
 }
 
 export const PlatformPlan = Type.Object({
@@ -86,7 +85,6 @@ export const PlatformPlan = Type.Object({
     stripeSubscriptionStartDate: Type.Optional(Type.Number()),
     stripeSubscriptionEndDate: Type.Optional(Type.Number()),
     stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
-    stripePaymentMethod: Type.Optional(Type.String()),
 
     projectsLimit: Nullable(Type.Number()),
     activeFlowsLimit: Nullable(Type.Number()),
