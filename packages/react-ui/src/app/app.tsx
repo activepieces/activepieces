@@ -32,6 +32,7 @@ const queryClient = new QueryClient({
       console.error(err);
       if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
         const error = err.response?.data as QuotaExceededParams;
+        console.log(error);
         toast({
           title: t('Limit Exceeded'),
           description: t(
@@ -39,6 +40,7 @@ const queryClient = new QueryClient({
           ),
         });
       } else if (isNil(mutation.options.onError)) {
+        console.log('here also bro');
         toast(INTERNAL_ERROR_TOAST);
       }
     },

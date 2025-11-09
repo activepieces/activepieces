@@ -8,7 +8,7 @@ import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
-  UpdateActiveFlowsLimitParams,
+  UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
@@ -34,7 +34,7 @@ export const billingMutations = {
   useUpdateActiveFlowsLimit: (setIsOpen?: (isOpen: boolean) => void) => {
     const navigate = useNavigate();
     return useMutation({
-      mutationFn: (params: UpdateActiveFlowsLimitParams) =>
+      mutationFn: (params: UpdateActiveFlowsAddonParams) =>
         platformBillingApi.updateActiveFlowsLimits(params),
       onSuccess: (url) => {
         setIsOpen?.(false);

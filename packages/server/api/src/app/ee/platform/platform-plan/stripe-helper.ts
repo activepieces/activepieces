@@ -44,17 +44,13 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
         return session.url
     },
-    async startSubscription(params: StartSubscriptionParams): Promise<string> {
+    async createNewSubscriptionCheckoutSession(params: StartSubscriptionParams): Promise<string> {
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
         const { customerId, platformId, extraActiveFlows } = params
 
-        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
-            {
-                price: AI_CREDIT_PRICE_ID,
-            },
-        ]
+        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{ price: AI_CREDIT_PRICE_ID }]
 
         if (!isNil(extraActiveFlows) && extraActiveFlows > 0) {
             lineItems.push({
@@ -86,6 +82,8 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
+        const successUrl = `/platform/setup/billing/success?action=${isUpgrade ? 'upgrade' : 'downgrade'}`
+
         try {
             const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
                 expand: ['items.data.price'],
@@ -96,34 +94,33 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 limit: 10,
             })
         
-            const relevantSchedules = schedules.data.filter(schedule => 
+            const activeSchedules = schedules.data.filter(schedule => 
                 schedule.subscription === subscription.id || 
             schedule.status === 'active' || 
-            schedule.status === 'not_started',
-            )
+            schedule.status === 'not_started')
 
             if (isUpgrade) {
-                for (const schedule of relevantSchedules) {
+                for (const schedule of activeSchedules) {
                     await stripe.subscriptionSchedules.release(schedule.id)
                 }
 
                 await updateSubscription({ stripe, subscription, extraActiveFlows })
+                return successUrl
             }
-            else {
-                if (relevantSchedules.length > 0) {
-                    const schedule = relevantSchedules[0]
-                    await updateSubscriptionSchedule({ stripe, scheduleId: schedule.id, subscription, logger: log, extraActiveFlows, isFreeDowngrade })
-                
-                    for (let i = 1; i < relevantSchedules.length; i++) {
-                        await stripe.subscriptionSchedules.release(relevantSchedules[i].id)
-                    }
+
+            const hasActiveSchedules = activeSchedules.length  > 0
+            if (hasActiveSchedules) {
+                const currentActiveSchedule = activeSchedules[0]
+                await updateSubscriptionSchedule({ stripe, scheduleId: currentActiveSchedule.id, subscription, logger: log, extraActiveFlows, isFreeDowngrade })
+            
+                for (let i = 1; i < activeSchedules.length; i++) {
+                    await stripe.subscriptionSchedules.release(activeSchedules[i].id)
                 }
-                else {
-                    await createSubscriptionSchedule({ stripe, subscription, logger: log, extraActiveFlows, isFreeDowngrade })
-                }
+                return successUrl
             }
-            return `/platform/setup/billing/success?action=${isUpgrade ? 'upgrade' : 'downgrade'}`
-     
+
+            await createSubscriptionSchedule({ stripe, subscription, logger: log, extraActiveFlows, isFreeDowngrade })
+            return successUrl
         }
         catch (error) {
             log.error({ 

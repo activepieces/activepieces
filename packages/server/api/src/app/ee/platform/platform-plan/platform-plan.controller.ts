@@ -1,5 +1,5 @@
 import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/common-ai'
-import { CreateSubscriptionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsLimitParamsSchema } from '@activepieces/ee-shared'
+import { CreateCheckoutSessionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -138,7 +138,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         })
     })
 
-    fastify.post('/create-subscription', CreateSubscriptionRequest, async (request) => {
+    fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
         const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
@@ -147,14 +147,14 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
         const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
 
-        return stripeHelper(request.log).startSubscription({
+        return stripeHelper(request.log).createNewSubscriptionCheckoutSession({
             platformId: platformPlan.platformId,
             customerId,
             extraActiveFlows,
         })
     })
 
-    fastify.post('/update-active-flows-limit', UpdateActiveFlowsLimitRequest, async (request) => {
+    fastify.post('/update-active-flows-addon', UpdateActiveFlowsAddonRequest, async (request) => {
         const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
@@ -166,6 +166,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const isFreeDowngrade = newActiveFlowsLimit === baseActiveFlowsLimit
 
         assertNotNullOrUndefined(platformPlan.stripeSubscriptionId, 'Subscription doesnt exist')
+
         const isUpgrade = newActiveFlowsLimit > currentActiveFlowsLimit
         return stripeHelper(request.log).handleSubscriptionUpdate({
             subscriptionId: platformPlan.stripeSubscriptionId,
@@ -226,18 +227,18 @@ const ListAIUsageRequest = {
     },
 } 
 
-const UpdateActiveFlowsLimitRequest = {
+const UpdateActiveFlowsAddonRequest = {
     schema: {
-        body: UpdateActiveFlowsLimitParamsSchema,
+        body: UpdateActiveFlowsAddonParamsSchema,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },
 }
 
-const CreateSubscriptionRequest = {
+const CreateCheckoutSessionRequest = {
     schema: {
-        body: CreateSubscriptionParamsSchema,
+        body: CreateCheckoutSessionParamsSchema,
     },
     config: {
         allowedPrincipals: [PrincipalType.USER],

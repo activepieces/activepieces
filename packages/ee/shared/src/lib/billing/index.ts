@@ -38,15 +38,15 @@ export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
 })
 export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
 
-export const UpdateActiveFlowsLimitParamsSchema = Type.Object({
+export const UpdateActiveFlowsAddonParamsSchema = Type.Object({
     newActiveFlowsLimit: Type.Number(),
 })
-export type UpdateActiveFlowsLimitParams = Static<typeof UpdateActiveFlowsLimitParamsSchema>
+export type UpdateActiveFlowsAddonParams = Static<typeof UpdateActiveFlowsAddonParamsSchema>
 
-export const CreateSubscriptionParamsSchema = Type.Object({
+export const CreateCheckoutSessionParamsSchema = Type.Object({
     newActiveFlowsLimit: Type.Number(),
 })
-export type CreateSubscriptionParams = Static<typeof CreateSubscriptionParamsSchema>
+export type CreateSubscriptionParams = Static<typeof CreateCheckoutSessionParamsSchema>
 
 
 
