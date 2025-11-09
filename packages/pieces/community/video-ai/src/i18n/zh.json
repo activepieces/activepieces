@@ -1,9 +1,9 @@
 {
-  "Generate Video": "生成视频",
-  "Provider": "提供商",
-  "Model": "模型",
+  "Generate Video": "Generate Video",
+  "Provider": "Provider",
+  "Model": "Model",
   "Prompt": "Prompt",
-  "First Frame Image": "第一帧图像",
-  "Advanced Options": "高级选项",
-  "The first frame that the video will start with.": "视频开始的第一个框架。"
+  "First Frame Image": "First Frame Image",
+  "Advanced Options": "Advanced Options",
+  "The first frame that the video will start with.": "The first frame that the video will start with."
 }
