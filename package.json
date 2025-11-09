@@ -124,7 +124,7 @@
     "@uiw/codemirror-theme-github": "4.23.0",
     "@uiw/react-codemirror": "4.23.0",
     "@xyflow/react": "12.3.5",
-    "ai": "5.0.12",
+    "ai": "5.0.52",
     "async-mutex": "0.4.0",
     "axios": "1.8.3",
     "axios-retry": "4.4.1",
