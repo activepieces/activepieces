@@ -2,13 +2,13 @@ import React, { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 import { projectHooks } from '@/hooks/project-hooks';
 import { isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { ProjectDashboardSidebar } from './sidebar/dashboard';
-import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 
 const ProjectChangedRedirector = ({
   currentProjectId,

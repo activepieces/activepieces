@@ -9,7 +9,6 @@ import {
     isNil,
     ListUserInvitationsRequest,
     Permission,
-    PlatformUsageMetric,
     Principal,
     PrincipalType,
     ProjectRole,

@@ -6,8 +6,10 @@ interface ActiveFlowsAddonDialogStore {
   closeDialog: () => void;
 }
 
-export const useManagePlanDialogStore = create<ActiveFlowsAddonDialogStore>((set) => ({
-  isOpen: false,
-  openDialog: () => set({ isOpen: true }),
-  closeDialog: () => set({ isOpen: false }),
-}));
+export const useManagePlanDialogStore = create<ActiveFlowsAddonDialogStore>(
+  (set) => ({
+    isOpen: false,
+    openDialog: () => set({ isOpen: true }),
+    closeDialog: () => set({ isOpen: false }),
+  }),
+);

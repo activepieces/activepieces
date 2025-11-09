@@ -149,7 +149,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
            
-            const userPlatformId = request.principal.platform.id
+            const userPlatformId = request.principal.id
             const providerConfig = getProviderConfigOrThrow(provider)
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)

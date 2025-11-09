@@ -8,6 +8,9 @@ import {
   SidebarProvider,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../../allow-logged-in-user-only-guard';
 import { AppSidebarHeader } from '../sidebar-header';
@@ -15,16 +18,12 @@ import { SidebarUser } from '../sidebar-user';
 
 import { FlowsNavigation } from './flows-navigation';
 import { TablesNavigation } from './tables-navigation';
-import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export function BuilderNavigationSidebar({
   children,
 }: {
   children: React.ReactNode;
 }) {
-
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
 

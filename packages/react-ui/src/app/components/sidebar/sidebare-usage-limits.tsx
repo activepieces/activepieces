@@ -7,12 +7,12 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { cn, formatUtils } from '@/lib/utils';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();

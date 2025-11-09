@@ -122,6 +122,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
 
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
     ...STANDARD_CLOUD_PLAN,
+    plan: planName,
     activeFlowsLimit: undefined,
 })
 

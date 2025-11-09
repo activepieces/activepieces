@@ -16,6 +16,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/components/refresh-analytics-provider';
 import { api } from '@/lib/api';
 import { ErrorCode, isNil } from '@activepieces/shared';
@@ -23,7 +24,6 @@ import { ErrorCode, isNil } from '@activepieces/shared';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
-import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({

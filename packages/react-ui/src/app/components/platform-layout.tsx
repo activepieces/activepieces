@@ -2,13 +2,13 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { PlatformSidebar } from './sidebar/platform';
-import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);

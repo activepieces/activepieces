@@ -14,28 +14,25 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 import {
   ApSubscriptionStatus,
   PRICE_PER_EXTRA_ACTIVE_FLOWS,
 } from '@activepieces/ee-shared';
 
-import { billingMutations, billingQueries } from '../../lib/billing-hooks';
 import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { billingMutations, billingQueries } from '../../lib/billing-hooks';
 
 export function PurchaseExtraFlowsDialog() {
   const { closeDialog, isOpen } = useManagePlanDialogStore();
   const { platform } = platformHooks.useCurrentPlatform();
-  const {
-    data: platformPlanInfo,
-    isLoading: isPlatformSubscriptionLoading,
-  } = billingQueries.usePlatformSubscription(platform.id);
+  const { data: platformPlanInfo, isLoading: isPlatformSubscriptionLoading } =
+    billingQueries.usePlatformSubscription(platform.id);
 
-
-  const activeFlowsUsage = platformPlanInfo?.usage?.activeFlows!
-  const activeFlowsLimit = platformPlanInfo?.plan.activeFlowsLimit!
-  const platformPlan = platformPlanInfo?.plan!
+  const activeFlowsUsage = platformPlanInfo?.usage?.activeFlows!;
+  const activeFlowsLimit = platformPlanInfo?.plan.activeFlowsLimit!;
+  const platformPlan = platformPlanInfo?.plan!;
 
   const [selectedLimit, setSelectedLimit] = useState(activeFlowsLimit);
 
@@ -93,14 +90,10 @@ export function PurchaseExtraFlowsDialog() {
       dayjs.unix(platformPlan.stripeSubscriptionEndDate!).toISOString(),
     ).format('MMM D, YYYY');
 
-
-  if (isPlatformSubscriptionLoading) return null
+  if (isPlatformSubscriptionLoading) return null;
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => !open && closeDialog()}
-    >
+    <Dialog open={isOpen} onOpenChange={(open) => !open && closeDialog()}>
       <DialogContent
         className={cn(
           'max-w-[480px] transition-all  border duration-300 ease-in-out',

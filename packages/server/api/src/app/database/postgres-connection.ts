@@ -285,8 +285,8 @@ import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/pos
 import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
 import { RemoveEligibleForTrial1761588441492 } from './migration/postgres/1761588441492-remove-eligible-for-trial'
 import { AddRunUsageForPlatformAnalyticsReport1761668284685 } from './migration/postgres/1761668284685-AddRunUsageForPlatformAnalyticsReport'
-import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgres/1762018344394-DeleteLastChangelogDismissedAt'
 import { RemoveUserSeatsLimitColumn1761762177701 } from './migration/postgres/1761762177701-remove-user-seats-limit-column'
+import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgres/1762018344394-DeleteLastChangelogDismissedAt'
 import { RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 } from './migration/postgres/1762103191643-remove-mcp-and-tables-limits-and-billing-cycles'
 import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postgres/1762709208569-remove-unused-payment-method-coloumn'
 
@@ -596,7 +596,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddRunUsageForPlatformAnalyticsReport1761668284685,
                 RemoveUserSeatsLimitColumn1761762177701,
                 RemoveMcpAndTablesLimitsAndBillingCycles1762103191643,
-                RemoveUnusedPaymentMethodColoumn1762709208569
+                RemoveUnusedPaymentMethodColoumn1762709208569,
             )
             break
         case ApEdition.COMMUNITY:

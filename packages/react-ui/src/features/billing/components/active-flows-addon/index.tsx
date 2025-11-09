@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { CircleHelp, Plus, Zap } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -13,7 +14,6 @@ import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
-import { Button } from '@/components/ui/button';
 
 type BusinessActiveFlowsProps = {
   platformSubscription: PlatformBillingInformation;
@@ -47,9 +47,13 @@ export function ActiveFlowAddon({
               </p>
             </div>
           </div>
-          <Button variant="default" className="gap-2" onClick={() => {
-            openDialog()
-          }}>
+          <Button
+            variant="default"
+            className="gap-2"
+            onClick={() => {
+              openDialog();
+            }}
+          >
             <Plus className="w-4 h-4" />
             {t('Manage Active Flows')}
           </Button>
