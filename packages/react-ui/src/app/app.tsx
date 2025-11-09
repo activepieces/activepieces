@@ -7,7 +7,6 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query';
-import { t } from 'i18next';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,28 +18,21 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/components/refresh-analytics-provider';
 import { api } from '@/lib/api';
-import { ErrorCode, isNil, QuotaExceededParams } from '@activepieces/shared';
+import { ErrorCode, isNil } from '@activepieces/shared';
 
 import { ChangelogProvider } from './components/changelog-provider';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
+import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     onError: (err: Error, _, __, mutation) => {
-      console.error(err);
       if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-        const error = err.response?.data as QuotaExceededParams;
-        console.log(error);
-        toast({
-          title: t('Limit Exceeded'),
-          description: t(
-            `You have exceeded your: ${error.params.metric} limit`,
-          ),
-        });
+        const { openDialog } = useManagePlanDialogStore();
+        openDialog();
       } else if (isNil(mutation.options.onError)) {
-        console.log('here also bro');
         toast(INTERNAL_ERROR_TOAST);
       }
     },

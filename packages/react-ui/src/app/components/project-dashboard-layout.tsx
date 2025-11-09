@@ -8,6 +8,7 @@ import { isNil } from '@activepieces/shared';
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { ProjectDashboardSidebar } from './sidebar/dashboard';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 
 const ProjectChangedRedirector = ({
   currentProjectId,
@@ -51,6 +52,7 @@ export function ProjectDashboardLayout({
             {children}
           </SidebarInset>
         </SidebarProvider>
+        <PurchaseExtraFlowsDialog />
       </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );

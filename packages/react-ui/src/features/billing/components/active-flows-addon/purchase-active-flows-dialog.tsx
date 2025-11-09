@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Zap, Plus, Info, Loader2 } from 'lucide-react';
+import { Zap, Info, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -19,22 +19,24 @@ import {
   ApSubscriptionStatus,
   PRICE_PER_EXTRA_ACTIVE_FLOWS,
 } from '@activepieces/ee-shared';
-import { PlatformPlan } from '@activepieces/shared';
 
-import { billingMutations } from '../../lib/billing-hooks';
+import { billingMutations, billingQueries } from '../../lib/billing-hooks';
+import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
+import { platformHooks } from '@/hooks/platform-hooks';
 
-type PurchaseExtraFlowsDialogProps = {
-  currentActiveFlows: number;
-  activeFlowsLimit: number;
-  platformPlan: PlatformPlan;
-};
+export function PurchaseExtraFlowsDialog() {
+  const { closeDialog, isOpen } = useManagePlanDialogStore();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const {
+    data: platformPlanInfo,
+    isLoading: isPlatformSubscriptionLoading,
+  } = billingQueries.usePlatformSubscription(platform.id);
 
-export function PurchaseExtraFlowsDialog({
-  currentActiveFlows,
-  activeFlowsLimit,
-  platformPlan,
-}: PurchaseExtraFlowsDialogProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const activeFlowsUsage = platformPlanInfo?.usage?.activeFlows!
+  const activeFlowsLimit = platformPlanInfo?.plan.activeFlowsLimit!
+  const platformPlan = platformPlanInfo?.plan!
+
   const [selectedLimit, setSelectedLimit] = useState(activeFlowsLimit);
 
   const flowPrice = PRICE_PER_EXTRA_ACTIVE_FLOWS;
@@ -61,15 +63,15 @@ export function PurchaseExtraFlowsDialog({
   const {
     mutate: updateActiveFlowsLimit,
     isPending: isUpdateActiveFlowsLimitPending,
-  } = billingMutations.useUpdateActiveFlowsLimit(setIsDialogOpen);
+  } = billingMutations.useUpdateActiveFlowsLimit(() => closeDialog());
   const {
     mutate: createSubscription,
     isPending: isCreatingSubscriptionPending,
-  } = billingMutations.useCreateSubscription(setIsDialogOpen);
+  } = billingMutations.useCreateSubscription(() => closeDialog());
 
   useEffect(() => {
     setSelectedLimit(activeFlowsLimit);
-  }, [isDialogOpen]);
+  }, [isOpen]);
 
   const isLoading =
     isUpdateActiveFlowsLimitPending || isCreatingSubscriptionPending;
@@ -91,15 +93,14 @@ export function PurchaseExtraFlowsDialog({
       dayjs.unix(platformPlan.stripeSubscriptionEndDate!).toISOString(),
     ).format('MMM D, YYYY');
 
-  return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default" className="gap-2">
-          <Plus className="w-4 h-4" />
-          {t('Manage Active Flows')}
-        </Button>
-      </DialogTrigger>
 
+  if (isPlatformSubscriptionLoading) return null
+
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && closeDialog()}
+    >
       <DialogContent
         className={cn(
           'max-w-[480px] transition-all  border duration-300 ease-in-out',
@@ -107,12 +108,12 @@ export function PurchaseExtraFlowsDialog({
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
-            {t('Adjust Active Flows Limit')}
+            {t('Purchase Extra Active Flows')}
           </DialogTitle>
           <DialogDescription>
             {t(
               'Currently using {currentActiveFlows} of {activeFlowsLimit} flows',
-              { currentActiveFlows, activeFlowsLimit },
+              { activeFlowsUsage, activeFlowsLimit },
             )}
           </DialogDescription>
         </DialogHeader>
@@ -270,7 +271,7 @@ export function PurchaseExtraFlowsDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => setIsDialogOpen(false)}
+            onClick={() => closeDialog()}
             disabled={isLoading}
           >
             {t('Cancel')}
