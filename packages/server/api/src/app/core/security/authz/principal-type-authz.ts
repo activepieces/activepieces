@@ -22,18 +22,8 @@ const authorize = async (request: FastifyRequest, security: AuthenticatedRoute):
         return
     }
 
-    const principal = request.principal
-    if (!principal) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'principal not found',
-            },
-        })
-    }
-
     const configuredPrincipals = security.authorization.allowedPrincipals
-    const principalTypeNotAllowed = !isPrincipalTypeAllowed(principal.type, configuredPrincipals)
+    const principalTypeNotAllowed = !isPrincipalTypeAllowed(request.principal.type, configuredPrincipals)
 
     if (principalTypeNotAllowed) {
         throw new ActivepiecesError({

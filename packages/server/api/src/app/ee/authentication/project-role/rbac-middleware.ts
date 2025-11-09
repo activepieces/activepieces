@@ -108,10 +108,10 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
 }
 
 export const getPrincipalRoleOrThrow = async (principal: UserPrincipal, log: FastifyBaseLogger): Promise<ProjectRole> => {
-    const { id: userId, projectId } = principal
+    const { id: userId, project } = principal
 
     const projectRole = await projectMemberService(log).getRole({
-        projectId,
+        projectId: project.id,
         userId,
     })
 
@@ -121,7 +121,7 @@ export const getPrincipalRoleOrThrow = async (principal: UserPrincipal, log: Fas
             params: {
                 message: 'No role found for the user',
                 userId,
-                projectId,
+                projectId: project.id,
             },
         })
     }
@@ -151,7 +151,7 @@ const throwPermissionDenied = (projectRole: ProjectRole, principal: UserPrincipa
         code: ErrorCode.PERMISSION_DENIED,
         params: {
             userId: principal.id,
-            projectId: principal.projectId,
+            projectId: principal.project.id,
             projectRole,
             permission,
         },

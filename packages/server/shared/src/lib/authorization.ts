@@ -7,6 +7,29 @@ export enum AuthorizationType {
     NONE = 'NONE',
 }
 
+export enum ProjectResourceType {
+    TABLE = 'TABLE',
+    QUERY = 'QUERY',
+    BODY = 'BODY',
+}
+
+export type ProjectTableResource = {
+    type: ProjectResourceType.TABLE
+    tableName: string
+}
+
+export type ProjectQueryResource = {
+    type: ProjectResourceType.QUERY
+    key: string
+}
+
+export type ProjectBodyResource = {
+    type: ProjectResourceType.BODY
+    key: string
+}
+
+export type ProjectResource = ProjectTableResource | ProjectQueryResource | ProjectBodyResource
+
 export type WorkerAuthorization = {
     type: AuthorizationType.WORKER
 }
@@ -19,6 +42,7 @@ export type PlatformAuthorization = {
 export type ProjectAuthorization = {
     type: AuthorizationType.PROJECT
     allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
+    projectResource: ProjectResource
     permission?: Permission
 }
 

@@ -7,14 +7,6 @@ import {
 } from '@activepieces/shared'
 import { preSerializationHookHandler } from 'fastify'
 
-export function extractResourceName(url: string): string | undefined {
-    const urlPath = url.split('?')[0]
-    const resourceRegex = /\/v1\/(.+?)(\/|$)/
-    const resourceMatch = urlPath.match(resourceRegex)
-    const resource = resourceMatch ? resourceMatch[1] : undefined
-    return resource
-}
-
 /**
  * Throws an authz error if response entities contain a `projectId` property and
  * the `projectId` property value does not match the principal's `projectId`.
@@ -28,8 +20,7 @@ Payload | null
         'entitiesMustBeOwnedByCurrentProject',
     )
     const principalProjectId = request.principal.type === PrincipalType.USER
-    || request.principal.type === PrincipalType.ENGINE
-        ? request.principal.projectId : undefined
+        ? request.principal.project.id : request.principal.type === PrincipalType.ENGINE ? request.principal.projectId : undefined
 
     if (isObject(payload) && !isNil(principalProjectId)) {
         let verdict: AuthzVerdict = 'ALLOW'

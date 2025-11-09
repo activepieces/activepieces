@@ -33,7 +33,9 @@ const createPrincipal = (apiKey: ApiKey): Principal => {
     return {
         id: apiKey.id,
         type: PrincipalType.SERVICE,
-        projectId: 'ANONYMOUS_' + nanoid(),
+        project: {
+            id: 'ANONYMOUS_' + nanoid(),
+        },
         platform: {
             id: apiKey.platformId,
         },

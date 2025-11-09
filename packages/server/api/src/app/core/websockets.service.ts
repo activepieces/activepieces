@@ -31,9 +31,9 @@ export const websocketService = {
                 log.info({
                     message: 'User connected',
                     userId: principal.id,
-                    projectId: principal.projectId,
+                    projectId: principal.project.id,
                 })
-                await socket.join(principal.projectId)
+                await socket.join(principal.project.id)
                 break
             }
             case PrincipalType.WORKER: {
