@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -30,8 +29,8 @@ export function PurchaseExtraFlowsDialog() {
   const { data: platformPlanInfo, isLoading: isPlatformSubscriptionLoading } =
     billingQueries.usePlatformSubscription(platform.id);
 
-  const activeFlowsUsage = platformPlanInfo?.usage?.activeFlows!;
-  const activeFlowsLimit = platformPlanInfo?.plan.activeFlowsLimit!;
+  const activeFlowsUsage = platformPlanInfo?.usage?.activeFlows ?? 0;
+  const activeFlowsLimit = platformPlanInfo?.plan.activeFlowsLimit ?? 0;
   const platformPlan = platformPlanInfo?.plan!;
 
   const [selectedLimit, setSelectedLimit] = useState(activeFlowsLimit);
