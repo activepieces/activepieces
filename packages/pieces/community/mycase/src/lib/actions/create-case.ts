@@ -45,13 +45,14 @@ export const createCaseAction = createAction({
       context.auth as OAuth2PropertyValue
     );
 
-    const data = {
+    const data: Record<string, unknown> = {
       name: context.propsValue.name,
-      description: context.propsValue.description,
-      case_number: context.propsValue.case_number,
-      practice_area_id: context.propsValue.practice_area_id,
-      status: context.propsValue.status,
     };
+    
+    if (context.propsValue.description) data.description = context.propsValue.description;
+    if (context.propsValue.case_number) data.case_number = context.propsValue.case_number;
+    if (context.propsValue.practice_area_id) data.practice_area_id = context.propsValue.practice_area_id;
+    if (context.propsValue.status) data.status = context.propsValue.status;
 
     return await client.createCase(data);
   },

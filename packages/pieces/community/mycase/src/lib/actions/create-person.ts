@@ -38,13 +38,14 @@ export const createPersonAction = createAction({
       context.auth as OAuth2PropertyValue
     );
 
-    const data = {
+    const data: Record<string, unknown> = {
       first_name: context.propsValue.first_name,
       last_name: context.propsValue.last_name,
-      email: context.propsValue.email,
-      phone: context.propsValue.phone,
-      address: context.propsValue.address,
     };
+    
+    if (context.propsValue.email) data.email = context.propsValue.email;
+    if (context.propsValue.phone) data.phone = context.propsValue.phone;
+    if (context.propsValue.address) data.address = context.propsValue.address;
 
     return await client.createPerson(data);
   },

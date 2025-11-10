@@ -17,11 +17,14 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     const client = new MyCaseClient(auth);
     
     // Fetch leads updated since last poll
-    const leads = await client.findPersonContact({
-      updated_since: lastFetchEpochMS ? new Date(lastFetchEpochMS).toISOString() : undefined,
-    }) as any;
+    const params: Record<string, unknown> = {};
+    if (lastFetchEpochMS) {
+      params.updated_since = new Date(lastFetchEpochMS).toISOString();
+    }
+    
+    const leads = await client.findLead(params) as any;
 
-    const items = Array.isArray(leads) ? leads : leads.data || [];
+    const items = Array.isArray(leads) ? leads : (leads?.data || []);
     
     return items.map((lead: any) => ({
       epochMilliSeconds: lead.updated_at ? new Date(lead.updated_at).getTime() : Date.now(),

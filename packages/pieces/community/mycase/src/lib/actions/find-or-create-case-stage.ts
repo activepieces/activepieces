@@ -12,8 +12,11 @@ export const findOrCreateCaseStageAction = createAction({
   },
   async run(context) {
     const client = new MyCaseClient(context.auth as OAuth2PropertyValue);
-    const existing = await client.findCaseStage({ search: context.propsValue.search });
-    if (existing && (existing as any).length > 0) return existing;
+    const existing = await client.findCaseStage({ search: context.propsValue.search }) as any;
+    const existingItems = Array.isArray(existing) ? existing : (existing?.data || []);
+    if (existingItems && existingItems.length > 0) {
+      return existingItems[0];
+    }
     return await client.createCaseStage({ name: context.propsValue.search });
   },
 });

@@ -38,13 +38,14 @@ export const createLeadAction = createAction({
       context.auth as OAuth2PropertyValue
     );
 
-    const data = {
+    const data: Record<string, unknown> = {
       first_name: context.propsValue.first_name,
       last_name: context.propsValue.last_name,
-      email: context.propsValue.email,
-      phone: context.propsValue.phone,
-      source: context.propsValue.source,
     };
+    
+    if (context.propsValue.email) data.email = context.propsValue.email;
+    if (context.propsValue.phone) data.phone = context.propsValue.phone;
+    if (context.propsValue.source) data.source = context.propsValue.source;
 
     return await client.createLead(data);
   },

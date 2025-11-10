@@ -76,7 +76,7 @@ export const mycase = createPiece({
   auth: mycaseAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mycase.png',
-  authors: ['ActivepiecesBot'],
+  authors: [],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     // Create Actions

@@ -103,53 +103,91 @@ export class MyCaseClient {
   }
 
   async findCase(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `cases?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `cases?${queryString}` : 'cases');
   }
 
   async findCaller(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `callers?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `callers?${queryString}` : 'callers');
   }
 
   async findCaseStage(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `case_stages?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `case_stages?${queryString}` : 'case_stages');
   }
 
   async findCompanyContact(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `contacts/companies?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `contacts/companies?${queryString}` : 'contacts/companies');
   }
 
   async findLocation(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `locations?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `locations?${queryString}` : 'locations');
   }
 
   async findPeopleGroup(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `people_groups?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `people_groups?${queryString}` : 'people_groups');
   }
 
   async findPersonContact(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `contacts/people?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `contacts/people?${queryString}` : 'contacts/people');
   }
 
   async findPracticeArea(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `practice_areas?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `practice_areas?${queryString}` : 'practice_areas');
   }
 
   async findReferralSource(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `referral_sources?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `referral_sources?${queryString}` : 'referral_sources');
   }
 
   async findStaff(params: Record<string, unknown>) {
-    const queryString = new URLSearchParams(params as any).toString();
-    return this.makeRequest('GET', `staff?${queryString}`);
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `staff?${queryString}` : 'staff');
+  }
+
+  async findLead(params: Record<string, unknown>) {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(filteredParams as any).toString();
+    return this.makeRequest('GET', queryString ? `leads?${queryString}` : 'leads');
   }
 }
 
