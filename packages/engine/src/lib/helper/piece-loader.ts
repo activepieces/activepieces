@@ -120,7 +120,7 @@ export const pieceLoader = {
     },
 
     getPiecePath: async ({ packageName, devPieces }: GetPiecePathParams): Promise<string> => {
-        let piecePath = devPieces.includes(getPieceNameFromAlias(packageName)) 
+        const piecePath = devPieces.includes(getPieceNameFromAlias(packageName)) 
             ? await loadPieceFromDistFolder(packageName) 
             : await traverseAllParentFoldersToFindPiece(packageName)
         if (isNil(piecePath)) {
