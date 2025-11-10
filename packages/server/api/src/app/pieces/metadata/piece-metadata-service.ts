@@ -362,8 +362,7 @@ async function findAllPiecesVersionsSortedByNameAscVersionDesc({
     const piecesFromDevelopment = await loadDevPiecesIfEnabled(log)
     const allPieces = [...piecesFromDevelopment, ...piecesFromDatabase]
 
-    return allPieces.filter((piece) => isOfficialPiece(piece) || isCustomPiece(platformId, piece))
-        .filter((piece) => isSupportedRelease(release, piece))
+    return allPieces.filter((piece) => (isOfficialPiece(piece) || isCustomPiece(platformId, piece)) && isSupportedRelease(release, piece))
 }
 
 function isSupportedRelease(release: string | undefined, piece: PieceMetadataSchema): boolean {

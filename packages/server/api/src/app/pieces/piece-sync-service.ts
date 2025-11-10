@@ -63,7 +63,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
             const pieces = await listPieces()
             const limit = pLimit(200)
-            const promises: Promise<PieceMetadataModel[] | undefined>[] = []
+            const promises: Promise<void>[] = []
 
             for (const summary of pieces) {
                 const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
@@ -80,7 +80,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function syncPiece(name: string, log: FastifyBaseLogger): Promise<PieceMetadataModel[] | undefined> {
+async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
     try {
         const pieceVersionsMetadata: PieceMetadataModel[] = []
         log.info({ name }, 'Syncing piece metadata into database')
@@ -94,11 +94,9 @@ async function syncPiece(name: string, log: FastifyBaseLogger): Promise<PieceMet
         }
         await pieceMetadataService(log).bulkCreate(pieceVersionsMetadata)
         log.info({ name }, 'Piece metadata synced into database')
-        return pieceVersionsMetadata
     }
     catch (error) {
         log.error(error, 'Error syncing piece, please upgrade the activepieces to latest version')
-        return undefined
     }
 
 }
