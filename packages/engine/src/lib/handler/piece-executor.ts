@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -11,6 +11,7 @@ import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
+import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
@@ -153,7 +154,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
         if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
-            await progressService.sendFlowResponse(constants, {
+            await workerSocket.sendToWorkerWithAck(EngineSocketEvent.SEND_FLOW_RESPONSE, {
                 workerHandlerId: constants.serverHandlerId,
                 httpRequestId: constants.httpRequestId,
                 runResponse: {

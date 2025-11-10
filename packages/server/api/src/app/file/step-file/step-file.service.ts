@@ -54,7 +54,7 @@ async function constructDownloadUrl(platformId: string, file: File): Promise<str
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
         key: await jwtUtils.getJwtSecret(),
     })
-    return domainHelper.getApiUrlForWorker({
+    return domainHelper.getPublicApiUrl({
         path: `v1/step-files/signed?token=${accessToken}`,
         platformId,
     })

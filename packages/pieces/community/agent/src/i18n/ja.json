@@ -8,7 +8,7 @@
   "Structured Output": "構造化された出力",
   "Max steps": "最大歩数",
   "Describe what you want the assistant to do.": "アシスタントに何をさせたいのか説明してください。",
-  "Choose your AI model and provider": "AIモデルとプロバイダを選択",
+  "Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.": "AIモデルとプロバイダを選択してください。異なるモデルは、さまざまな機能、速度、コストを提供します。 OpenAIモデルは一般的なタスクに最適です。Anthropicは分析に優れており、Google Geminiは競争力のある価格設定を提供します。",
   "The numbder of interations the agent can do": "エージェントが行うことができる干渉のしびれです",
   "(openai) GPT-5": "(openai) GPT-5",
   "(openai) GPT-5 Chat": "(openai) GPT-5 チャット",
