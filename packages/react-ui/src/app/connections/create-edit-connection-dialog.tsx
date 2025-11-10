@@ -150,13 +150,10 @@ const CreateOrEditConnectionSection = ({
       </DialogHeader>
 
       <Form {...form}>
-        <form
-          onSubmit={() => console.log('submitted')}
-          className="flex flex-col gap-4"
-        >
+        <form className="flex flex-col gap-3 ">
           <ScrollArea
             className="px-2"
-            viewPortClassName="max-h-[calc(70vh-180px)] px-4"
+            viewPortClassName="max-h-[calc(70vh-180px)] px-4 mb-1"
           >
             {' '}
             <ApMarkdown markdown={selectedAuth?.description}></ApMarkdown>
@@ -231,20 +228,19 @@ const CreateOrEditConnectionSection = ({
                 />
               </div>
             )}
-            {showSelectAuthButton && (
-              <Button
-                size="sm"
-                variant={'link'}
-                className="text-xs mt-1"
-                type="button"
-                onClick={onShowSelectAuthButtonClicked}
-              >
-                {t('I would like to use a different authentication method')}
-              </Button>
-            )}
           </ScrollArea>
           <DialogFooter className="mt-0">
-            <div className="mx-5 flex justify-end gap-2">
+            <div className="mx-5 flex gap-2 w-full">
+              {showSelectAuthButton && (
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={onShowSelectAuthButtonClicked}
+                >
+                  {t('Try another method')}
+                </Button>
+              )}
+              <div className="grow"></div>
               <DialogClose asChild>
                 <Button variant="outline">{t('Cancel')}</Button>
               </DialogClose>
@@ -298,10 +294,10 @@ const CreateOrEditConnectionDialogContent = React.memo(
           Array.isArray(piece.auth) &&
           selectedAuth && (
             <SelectAuthTypeSection
-              initiallySelectedAuth={selectedAuth}
+              selectedAuth={selectedAuth}
               pieceAuth={piece.auth}
-              onChange={(auth) => {
-                setSelectedAuth(auth);
+              setSelectedAuth={setSelectedAuth}
+              confirmSelectedAuth={() => {
                 setShowSelectAuthDialog(false);
               }}
             />
@@ -357,17 +353,15 @@ const getInitiallySelectedAuth = (
 
 const SelectAuthTypeSection = ({
   pieceAuth,
-  onChange,
-  initiallySelectedAuth,
+  setSelectedAuth,
+  selectedAuth,
+  confirmSelectedAuth,
 }: {
   pieceAuth: PieceAuthProperty[];
-  onChange: (auth: PieceAuthProperty) => void;
-  initiallySelectedAuth: PieceAuthProperty;
+  setSelectedAuth: (auth: PieceAuthProperty) => void;
+  selectedAuth: PieceAuthProperty;
+  confirmSelectedAuth: () => void;
 }) => {
-  const [selectedAuth, setSelectedAuth] = useState<PieceAuthProperty>(
-    initiallySelectedAuth,
-  );
-
   return (
     <>
       <DialogHeader className="mb-0">
@@ -395,7 +389,7 @@ const SelectAuthTypeSection = ({
           <Button
             variant="default"
             disabled={isNil(selectedAuth)}
-            onClick={() => onChange(selectedAuth!)}
+            onClick={() => confirmSelectedAuth()}
           >
             {t('Continue')}
           </Button>

@@ -403,7 +403,7 @@ const OAuth2ConnectionSettingsForm = ({
               type="button"
               onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
             >
-              {t('I would like to use my own App Credentials')}
+              {t('Use my own app credentials')}
             </Button>
           </div>
         )}
@@ -419,7 +419,7 @@ const OAuth2ConnectionSettingsForm = ({
               type="button"
               onClick={() => setOAuth2Type(predefinedApp.type)}
             >
-              {t('I would like to use predefined App Credentials')}
+              {t('Use predefined app credentials')}
             </Button>
           </div>
         )}
