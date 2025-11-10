@@ -21,6 +21,9 @@ export const extractStructuredDataAction = createAction({
 			options: {
 				disabled: false,
 				options: [
+					{value:'claude-sonnet-4-5-20250929', label:'Claude Sonnet 4.5'},
+          			{ value:'claude-haiku-4-5-20251001', label:'Claude Haiku 4.5'},
+          			{ value:'claude-opus-4-1-20250805', label:'Claude Opus 4.1'},
 					{ value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
 					{ value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
 					{ value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
