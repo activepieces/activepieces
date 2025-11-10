@@ -2,6 +2,7 @@ import {
     DropdownProperty,
     DynamicProperties,
     ExecutePropsResult,
+    getAuthPropertyForValue,
     MultiSelectDropdownProperty,
     PieceAuthProperty,
     PieceMetadata,
@@ -175,26 +176,11 @@ const validateAuth = async ({
             valid: true,
         }
     }
-    const usedPieceAuth = Array.isArray(pieceAuth) ? pieceAuth.find(auth => {
-        switch (auth.type) {
-            case PropertyType.BASIC_AUTH:
-                return authValue.type === AppConnectionType.BASIC_AUTH
-            case PropertyType.SECRET_TEXT:
-                return authValue.type === AppConnectionType.SECRET_TEXT
-            case PropertyType.OAUTH2:
-                return authValue.type === AppConnectionType.OAUTH2 || authValue.type === AppConnectionType.CLOUD_OAUTH2 || authValue.type === AppConnectionType.PLATFORM_OAUTH2
-            case PropertyType.CUSTOM_AUTH:
-            {
-                if (authValue.type !== AppConnectionType.CUSTOM_AUTH) {
-                    return false
-                }
-                const authValueKeys = Object.keys(authValue.props).sort()
-                const authKeys = Object.keys(auth.props).sort()
-                return authValueKeys.every((key)=> authKeys.includes(key))
-
-            }
-        }
-    }) : pieceAuth
+    
+    const usedPieceAuth = getAuthPropertyForValue({
+        authValueType: authValue.type,
+        pieceAuth,
+    })
 
     if (isNil(usedPieceAuth)) {
         return {

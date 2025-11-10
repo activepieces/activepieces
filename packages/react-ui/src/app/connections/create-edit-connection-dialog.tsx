@@ -31,6 +31,7 @@ import { Separator } from '@/components/ui/separator';
 import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
 import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import {
+  getAuthPropertyForValue,
   PieceAuthProperty,
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -229,6 +230,14 @@ const CreateOrEditConnectionSection = ({
               </div>
             )}
           </ScrollArea>
+          {errorMessage && (
+            <FormError
+              formMessageId="create-connection-server-error-message"
+              className="text-left px-6"
+            >
+              {errorMessage}
+            </FormError>
+          )}
           <DialogFooter className="mt-0">
             <div className="mx-5 flex gap-2 w-full">
               {showSelectAuthButton && (
@@ -256,15 +265,6 @@ const CreateOrEditConnectionSection = ({
           </DialogFooter>
         </form>
       </Form>
-
-      {errorMessage && (
-        <FormError
-          formMessageId="create-connection-server-error-message"
-          className="text-left mt-4  px-5 "
-        >
-          {errorMessage}
-        </FormError>
-      )}
     </>
   );
 };
@@ -276,7 +276,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
       (Array.isArray(piece.auth) && piece.auth.length === 1) ||
       (piece.auth && !Array.isArray(piece.auth));
     const [selectedAuth, setSelectedAuth] = useState<PieceAuthProperty | null>(
-      getInitiallySelectedAuth(piece.auth),
+      getInitiallySelectedAuth(piece.auth, props.reconnectConnection),
     );
     const [showSelectAuthDialog, setShowSelectAuthDialog] = useState(false);
     return (
@@ -347,8 +347,23 @@ export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };
 
 const getInitiallySelectedAuth = (
   auth: PieceAuthProperty[] | PieceAuthProperty | undefined,
+  reconnectConnection: AppConnectionWithoutSensitiveData | null,
 ) => {
-  return (Array.isArray(auth) ? auth[0] : auth) ?? null;
+  if (!Array.isArray(auth)) {
+    return auth ?? null;
+  }
+  if (auth.length === 0) {
+    return null;
+  }
+  if (reconnectConnection) {
+    return (
+      getAuthPropertyForValue({
+        authValueType: reconnectConnection.type,
+        pieceAuth: auth,
+      }) ?? null
+    );
+  }
+  return auth[0] ?? null;
 };
 
 const SelectAuthTypeSection = ({
