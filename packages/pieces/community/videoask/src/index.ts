@@ -1,13 +1,18 @@
 
-import { createPiece, Piece, Property } from "@activepieces/pieces-framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { createContact } from "./lib/actions/create-contact";
 import { videoaskAuth } from "./lib/common/auth";
-import { newReplyFromRespondent } from "./lib/triggers/new-reply-from-respondent";
-import { newReplyFromVideoasker } from "./lib/triggers/new-reply-from-videoasker";
-import { newResponseFormRespondent } from "./lib/triggers/new-response-form-respondent";
 import { createCustomApiCallAction, HttpMethod } from "@activepieces/pieces-common";
 import { makeRequest } from "./lib/common/client";
 import { PieceCategory } from "@activepieces/shared";
+import { formContactMessage } from "./lib/triggers/form-contact-message";
+import { formTranscribed } from "./lib/triggers/form-transcribed";
+import { newFormResponse } from "./lib/triggers/new-form-response";
+import { newFormAuthorResponse } from "./lib/triggers/new-form-author-response";
+import { addTagToContact } from "./lib/actions/add-tag-to-contact";
+import { removeTagFromContact } from "./lib/actions/remove-tag-from-contact";
+import { searchForm } from "./lib/actions/search-form";
+import { updateContact } from "./lib/actions/update-contact";
 
 export const videoask = createPiece({
   displayName: "VideoAsk",
@@ -17,10 +22,14 @@ export const videoask = createPiece({
   authors: ['sanket-a11y'],
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [
+    addTagToContact,
     createContact,
+    removeTagFromContact,
+    searchForm,
+    updateContact,
     createCustomApiCallAction({
       auth: videoaskAuth,
-      baseUrl: () => "https://api.videoask.com/v1",
+      baseUrl: () => "https://api.videoask.com",
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as any).access_token}`,
@@ -40,8 +49,9 @@ export const videoask = createPiece({
     })
   ],
   triggers: [
-    newReplyFromRespondent,
-    newReplyFromVideoasker,
-    newResponseFormRespondent
+    formContactMessage,
+    formTranscribed,
+    newFormResponse,
+    newFormAuthorResponse
   ],
 });

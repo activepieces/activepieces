@@ -1,26 +1,31 @@
-
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+    createTrigger,
+    Property,
+    TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { organizationIdDropdown, videoaskIdDropdown } from '../common/props';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { videoaskAuth } from '../common/auth';
-export const newReplyFromVideoasker = createTrigger({
+export const formContactMessage = createTrigger({
     auth: videoaskAuth,
-    name: 'newReplyFromVideoasker',
-    displayName: 'new reply from videoasker',
-    description: '',
+    name: 'formContactMessage',
+    displayName: 'Form contact message',
+    description: 'Triggers when a contact sends a message via a form',
     props: {
         organizationId: organizationIdDropdown,
-        videoaskId: videoaskIdDropdown,
+        formId: videoaskIdDropdown,
         tag: Property.ShortText({
             displayName: 'Tag',
-            description: 'A unique tag to identify the webhook',
+            description:
+                'A short, unique identifier for this webhook. Tags help you easily distinguish webhooks when you need to retrieve, update, or delete them.',
             required: true,
         }),
     },
     sampleData: {
-        "event_id": "a69aeb109cd0c1408e71c3836e84e74f",
-        "event_type": "form_author_message",
+        "event_id": "35f63f63c4c31d04a938d5b279a6a4e6",
+        "event_type": "form_contact_message",
+        "interaction_id": "386bbc0b-bb60-4b62-82fa-d630d0d2b83b",
         "contact": {
             "contact_id": "6f0cde71-546c-499b-8cdb-c661300fb7f3",
             "name": "John Doe",
@@ -195,6 +200,20 @@ export const newReplyFromVideoasker = createTrigger({
                         }
                     ],
                     "type": "video"
+                },
+                {
+                    "author_type": "contact",
+                    "created_at": "2020-08-13T09:32:21.909981Z",
+                    "is_public": false,
+                    "media_type": "text",
+                    "message_id": "511bfc20-691e-471f-9f73-02e1d9888b41",
+                    "share_id": "mqre28jqxifto11ejkxhvln4c3akaks8ejciqlk1",
+                    "share_url": "https://www.videoask.com/mqre28jqxifto11ejkxhvln4c3akaks8ejciqlk1",
+                    "thread_id": "95ae6155-f970-4d18-9116-191777fef28a",
+                    "transcode_status": "completed",
+                    "transcription": "Because they look good, they smell good and they taste good! \nThey're even a great source of nutrition and antioxidants.",
+                    "type": "text",
+                    "input_text": "Because they look good, they smell good and they taste good! \nThey're even a great source of nutrition and antioxidants."
                 }
             ],
             "platform": "desktop",
@@ -307,169 +326,42 @@ export const newReplyFromVideoasker = createTrigger({
             }
         },
         "message": {
-            "author_type": "form_author",
-            "created_at": "2020-08-13T09:09:47.351432Z",
-            "gif": "https://media.videoask.com/transcoded/b3286b15-8722-44ad-99dd-ef643f0bb9da/thumbnails/preview.gif?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJtZWRpYV9pZCI6ImIzMjg2YjE1LTg3MjItNDRhZC05OWRkLWVmNjQzZjBiYjlkYSIsImV4cCI6MTU5NzkxNDU4N30.sUyDJaJVDlaCTtwXIeytwRwNS9wHLSTge15owz3La2deuJLJd1xLuEEyS35F2hfPLdVsoQl6Whn9fugdCGRl9KUllPYMyJuqJwSh9bzQTsJ_VO7A3kEna13P3VOP5G3skq-XfWn3PWdmNy90HeiDikAbV4RTaxGx6OLlV6s7swqT--lQUhn8NjRYElkPBkhOKtdt_sTGXDfEcvuCB2ymvRjLxHjSB3W0o0MThiizKevEhOuwo4z6su2EECmoQ_ahGVo-f64qgSYGflflYAWtvwLntjEa1uJQ8oCbSJaffk34VHenTLj4bc-rCfbGjXK4azw_HxTm7l8em-hxpoGEm_QzNMar0NGY5hn2nZove6ekDLHUp5DpcwuAhN2nbuswRjCeI3i4f2e8EUa4w_PNHvlMk5vBTErMqNTA-28pyfz5OD1MyEQ7fH5vSnsLvRWvpYFTl-1J22krPTurN_TxPGBaEEyHSJHdK_5rqBE4kwJBwDWY-tPJrRJKKQaRF7AtvtYBhiRFlcU1eX5tWiSJvVKK5jwCLpd8nq58cx1xo5bWDspidNbAWDAh_xTQ6YFQcBX4gVDUPtse-tOBiXFjX-7O7EL3ykkWDlybRUgOw__HcemaneydY1fytJBcK_AUbB46pO0aNct11cP2-S92ie-HTwibymWuoU-YhLDEid4",
-            "is_public": true,
-            "media_duration": 9,
-            "media_type": "video",
-            "media_url": "https://media.videoask.com/transcoded/b3286b15-8722-44ad-99dd-ef643f0bb9da/video.mp4?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJtZWRpYV9pZCI6ImIzMjg2YjE1LTg3MjItNDRhZC05OWRkLWVmNjQzZjBiYjlkYSIsImV4cCI6MTU5NzkxNDU4N30.sUyDJaJVDlaCTtwXIeytwRwNS9wHLSTge15owz3La2deuJLJd1xLuEEyS35F2hfPLdVsoQl6Whn9fugdCGRl9KUllPYMyJuqJwSh9bzQTsJ_VO7A3kEna13P3VOP5G3skq-XfWn3PWdmNy90HeiDikAbV4RTaxGx6OLlV6s7swqT--lQUhn8NjRYElkPBkhOKtdt_sTGXDfEcvuCB2ymvRjLxHjSB3W0o0MThiizKevEhOuwo4z6su2EECmoQ_ahGVo-f64qgSYGflflYAWtvwLntjEa1uJQ8oCbSJaffk34VHenTLj4bc-rCfbGjXK4azw_HxTm7l8em-hxpoGEm_QzNMar0NGY5hn2nZove6ekDLHUp5DpcwuAhN2nbuswRjCeI3i4f2e8EUa4w_PNHvlMk5vBTErMqNTA-28pyfz5OD1MyEQ7fH5vSnsLvRWvpYFTl-1J22krPTurN_TxPGBaEEyHSJHdK_5rqBE4kwJBwDWY-tPJrRJKKQaRF7AtvtYBhiRFlcU1eX5tWiSJvVKK5jwCLpd8nq58cx1xo5bWDspidNbAWDAh_xTQ6YFQcBX4gVDUPtse-tOBiXFjX-7O7EL3ykkWDlybRUgOw__HcemaneydY1fytJBcK_AUbB46pO0aNct11cP2-S92ie-HTwibymWuoU-YhLDEid4",
-            "message_id": "e4d547ca-e29b-47cb-9096-8f8bbafedde2",
-            "share_id": "mctlhdikwzcxs0f618gu5mn247pexyxuqpbvodny",
-            "share_url": "https://www.videoask.com/mctlhdikwzcxs0f618gu5mn247pexyxuqpbvodny",
+            "author_type": "contact",
+            "created_at": "2020-08-13T09:32:21.909981Z",
+            "is_public": false,
+            "media_type": "text",
+            "message_id": "511bfc20-691e-471f-9f73-02e1d9888b41",
+            "share_id": "mqre28jqxifto11ejkxhvln4c3akaks8ejciqlk1",
+            "share_url": "https://www.videoask.com/mqre28jqxifto11ejkxhvln4c3akaks8ejciqlk1",
             "thread_id": "95ae6155-f970-4d18-9116-191777fef28a",
-            "thumbnail": "https://media.videoask.com/transcoded/b3286b15-8722-44ad-99dd-ef643f0bb9da/thumbnails/image.0000001.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJtZWRpYV9pZCI6ImIzMjg2YjE1LTg3MjItNDRhZC05OWRkLWVmNjQzZjBiYjlkYSIsImV4cCI6MTU5NzkxNDU4N30.sUyDJaJVDlaCTtwXIeytwRwNS9wHLSTge15owz3La2deuJLJd1xLuEEyS35F2hfPLdVsoQl6Whn9fugdCGRl9KUllPYMyJuqJwSh9bzQTsJ_VO7A3kEna13P3VOP5G3skq-XfWn3PWdmNy90HeiDikAbV4RTaxGx6OLlV6s7swqT--lQUhn8NjRYElkPBkhOKtdt_sTGXDfEcvuCB2ymvRjLxHjSB3W0o0MThiizKevEhOuwo4z6su2EECmoQ_ahGVo-f64qgSYGflflYAWtvwLntjEa1uJQ8oCbSJaffk34VHenTLj4bc-rCfbGjXK4azw_HxTm7l8em-hxpoGEm_QzNMar0NGY5hn2nZove6ekDLHUp5DpcwuAhN2nbuswRjCeI3i4f2e8EUa4w_PNHvlMk5vBTErMqNTA-28pyfz5OD1MyEQ7fH5vSnsLvRWvpYFTl-1J22krPTurN_TxPGBaEEyHSJHdK_5rqBE4kwJBwDWY-tPJrRJKKQaRF7AtvtYBhiRFlcU1eX5tWiSJvVKK5jwCLpd8nq58cx1xo5bWDspidNbAWDAh_xTQ6YFQcBX4gVDUPtse-tOBiXFjX-7O7EL3ykkWDlybRUgOw__HcemaneydY1fytJBcK_AUbB46pO0aNct11cP2-S92ie-HTwibymWuoU-YhLDEid4",
             "transcode_status": "completed",
-            "transcribe_status": "completed",
-            "transcription": "Hello, John. Thank you so much for your response. Can you please explain have it better? Why do you love strawberries? Thank you.",
-            "transcription_data": [
-                {
-                    "transcript": "Hello, John. Thank you so much for your response. Can you please explain have it better? Why do you love strawberries? Thank you.",
-                    "confidence": 0.90139115,
-                    "words": [
-                        {
-                            "word": "Hello,",
-                            "start_time": 0.8,
-                            "end_time": 1.1
-                        },
-                        {
-                            "word": "John.",
-                            "start_time": 1.1,
-                            "end_time": 1.5
-                        },
-                        {
-                            "word": "Thank",
-                            "start_time": 1.5,
-                            "end_time": 1.7
-                        },
-                        {
-                            "word": "you",
-                            "start_time": 1.7,
-                            "end_time": 1.8
-                        },
-                        {
-                            "word": "so",
-                            "start_time": 1.8,
-                            "end_time": 1.9
-                        },
-                        {
-                            "word": "much",
-                            "start_time": 1.9,
-                            "end_time": 2.1
-                        },
-                        {
-                            "word": "for",
-                            "start_time": 2.1,
-                            "end_time": 2.3
-                        },
-                        {
-                            "word": "your",
-                            "start_time": 2.3,
-                            "end_time": 2.4
-                        },
-                        {
-                            "word": "response.",
-                            "start_time": 2.4,
-                            "end_time": 3.1
-                        },
-                        {
-                            "word": "Can",
-                            "start_time": 3.9,
-                            "end_time": 4
-                        },
-                        {
-                            "word": "you",
-                            "start_time": 4,
-                            "end_time": 4.1
-                        },
-                        {
-                            "word": "please",
-                            "start_time": 4.1,
-                            "end_time": 4.8
-                        },
-                        {
-                            "word": "explain",
-                            "start_time": 4.8,
-                            "end_time": 5.3
-                        },
-                        {
-                            "word": "have",
-                            "start_time": 5.3,
-                            "end_time": 5.5
-                        },
-                        {
-                            "word": "it",
-                            "start_time": 5.5,
-                            "end_time": 5.6
-                        },
-                        {
-                            "word": "better?",
-                            "start_time": 5.6,
-                            "end_time": 6.1
-                        },
-                        {
-                            "word": "Why",
-                            "start_time": 6.1,
-                            "end_time": 6.3
-                        },
-                        {
-                            "word": "do",
-                            "start_time": 6.3,
-                            "end_time": 6.4
-                        },
-                        {
-                            "word": "you",
-                            "start_time": 6.4,
-                            "end_time": 6.5
-                        },
-                        {
-                            "word": "love",
-                            "start_time": 6.5,
-                            "end_time": 6.7
-                        },
-                        {
-                            "word": "strawberries?",
-                            "start_time": 6.7,
-                            "end_time": 7.5
-                        },
-                        {
-                            "word": "Thank",
-                            "start_time": 8,
-                            "end_time": 8.2
-                        },
-                        {
-                            "word": "you.",
-                            "start_time": 8.2,
-                            "end_time": 8.5
-                        }
-                    ]
-                }
-            ],
-            "type": "video"
+            "transcription": "Because they look good, they smell good and they taste good! \nThey're even a great source of nutrition and antioxidants.",
+            "type": "text",
+            "input_text": "Because they look good, they smell good and they taste good! \nThey're even a great source of nutrition and antioxidants."
         }
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         await makeRequest(
             context.propsValue.organizationId as string,
-            (context.auth as { access_token: string }).access_token,
+            (context.auth as any).access_token as string,
             HttpMethod.PUT,
-            `forms/${context.propsValue.videoaskId}/webhooks/${context.propsValue.tag}`,
+            `/forms/${context.propsValue.formId}/webhooks/${context.propsValue.tag}`,
             {
                 url: context.webhookUrl,
-                event_types: ['form_author_message'],
+                event_types: ['form_contact_message'],
             }
         );
     },
     async onDisable(context) {
         await makeRequest(
             context.propsValue.organizationId as string,
-            (context.auth as { access_token: string }).access_token,
+            (context.auth as any).access_token as string,
             HttpMethod.DELETE,
-            `forms/${context.propsValue.videoaskId}/webhooks/${context.propsValue.tag}`
+            `/forms/${context.propsValue.formId}/webhooks/${context.propsValue.tag}`
         );
     },
     async run(context) {
-        return [context.payload.body]
-    }
-})
+        return [context.payload.body];
+    },
+});

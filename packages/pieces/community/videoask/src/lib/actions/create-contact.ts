@@ -8,7 +8,7 @@ export const createContact = createAction({
   auth: videoaskAuth,
   name: 'createContact',
   displayName: 'create contact',
-  description: '',
+  description: 'Create a new respondent (contact)',
   props: {
     organizationId: organizationIdDropdown,
     name: Property.ShortText({

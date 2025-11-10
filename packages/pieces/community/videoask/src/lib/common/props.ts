@@ -75,3 +75,43 @@ export const videoaskIdDropdown = Property.Dropdown({
         }
     },
 });
+
+export const tagIdDropdown = Property.Dropdown({
+    displayName: 'Tag ID',
+    description: 'Select the tag',
+    required: true,
+    refreshers: ['auth', 'organizationId'],
+    options: async ({ auth, organizationId }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'Please connect your account first',
+            };
+        }
+        if (!organizationId) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'Please select organization first',
+            };
+        }
+
+        try {
+            const tags = await makeRequest(organizationId as string, (auth as any).access_token, HttpMethod.GET, '/tags');
+            return {
+                disabled: false,
+                options: tags.results.map((tag: any) => ({
+                    label: tag.title,
+                    value: tag.tag_id,
+                })),
+            };
+        } catch (error) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'Error loading tags',
+            };
+        }
+    },
+});
