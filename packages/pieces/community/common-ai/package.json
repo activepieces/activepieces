@@ -13,6 +13,7 @@
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
     "ai": "5.0.12",
-    "@sinclair/typebox": "0.34.11"
+    "@sinclair/typebox": "0.34.11",
+    "@ai-sdk/provider-utils": "3.0.3"
   }
 }
