@@ -367,7 +367,7 @@ const SelectAuthTypeSection = ({
       <DialogHeader className="mb-0">
         <DialogTitle className="px-5">
           <div className="flex items-center gap-2">
-            {t('Select Connection Type')}
+            {t('Choose Authentication Method')}
           </div>
         </DialogTitle>
       </DialogHeader>
