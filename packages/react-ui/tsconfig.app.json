@@ -25,7 +25,8 @@
       ],
       "@activepieces/common-ai": [
         "../../packages/pieces/community/common-ai/src"
-      ]
+      ],
+      "@avalant/automationx-widgets": ["../../packages/widgets/src/index.ts"]
     }
   },
   "exclude": [

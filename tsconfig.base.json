@@ -597,9 +597,6 @@
       "@activepieces/piece-kimai": [
         "packages/pieces/community/kimai/src/index.ts"
       ],
-      "@avalant/piece-kimi-k2": [
-        "packages/pieces/community/kimi-k2/src/index.ts"
-      ],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
@@ -1289,8 +1286,12 @@
       ],
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@avalant/automationx-widgets": ["packages/widgets/src/index.ts"],
       "@avalant/piece-facebook-messenger": [
         "packages/pieces/community/facebook-messenger/src/index.ts"
+      ],
+      "@avalant/piece-kimi-k2": [
+        "packages/pieces/community/kimi-k2/src/index.ts"
       ],
       "@avalant/piece-knowledge-base": [
         "packages/pieces/community/knowledge-base/src/index.ts"

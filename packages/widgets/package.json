@@ -1,0 +1,32 @@
+{
+  "name": "@avalant/automationx-widgets",
+  "description": "Embeddable widgets for AutomationX",
+  "keywords": [
+    "automationx",
+    "avalant",
+    "chat",
+    "widget"
+  ],
+  "author": {
+    "name": "Rupal",
+    "url": "https://github.com/rupalbarman"
+  },
+  "homepage": "https://github.com/avalang-global/AutomationX",
+  "version": "0.0.5",
+  "type": "module",
+  "module": "index.esm.js",
+  "main": "index.umd.js",
+  "types": "index.d.ts",
+  "dependencies": {},
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "unpkg": "index.umd.js",
+  "jsdelivr": "index.umd.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  }
+}

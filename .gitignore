@@ -72,3 +72,7 @@ scratch.md
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Vite
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
