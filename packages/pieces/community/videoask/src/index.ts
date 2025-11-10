@@ -10,7 +10,7 @@ import { makeRequest } from "./lib/common/client";
 import { PieceCategory } from "@activepieces/shared";
 
 export const videoask = createPiece({
-  displayName: "Videoask",
+  displayName: "VideoAsk",
   auth: videoaskAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/videoask.png",
