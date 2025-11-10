@@ -52,8 +52,6 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                     version: pieceInformation.version,
                     i18n: pieceInformation.i18n,
                 },
-                // TODO (@abuaboud) delete after migrating everyone to their own platform
-                projectId: undefined,
                 packageType: params.packageType,
                 platformId,
                 pieceType: PieceType.CUSTOM,

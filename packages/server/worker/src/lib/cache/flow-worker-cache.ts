@@ -1,5 +1,5 @@
 import path from 'path'
-import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_SCHEMA_VERSION } from '@activepieces/shared'
+import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ApAxiosClient } from '../api/ap-axios'
 import { engineApiService } from '../api/server-api.service'
@@ -18,7 +18,7 @@ export const flowWorkerCache = (log: FastifyBaseLogger) => ({
                         return true
                     }
                     const parsedFlow = JSON.parse(flow) as FlowVersion
-                    return parsedFlow.schemaVersion !== LATEST_SCHEMA_VERSION
+                    return parsedFlow.schemaVersion !== LATEST_FLOW_SCHEMA_VERSION
                 },
                 installFn: async () => {
                     const startTime = performance.now()
