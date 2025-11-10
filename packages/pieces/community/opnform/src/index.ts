@@ -19,7 +19,7 @@ export const opnformAuth = PieceAuth.CustomAuth({
   },
   validate: async (auth): Promise<{ valid: true } | { valid: false, error: string }> => {
     try {
-      const isValid = await opnformCommon.validateAuth(auth.auth.apiKey as string);
+      const isValid = await opnformCommon.validateAuth(auth.auth as any);
       if(isValid) {
         return { valid: true };
       }

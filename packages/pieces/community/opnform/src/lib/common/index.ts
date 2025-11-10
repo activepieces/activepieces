@@ -9,8 +9,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-// export const API_URL_DEFAULT = 'https://api.opnform.com';
-export const API_URL_DEFAULT = 'https://opnform.test';
+export const API_URL_DEFAULT = 'https://api.opnform.com';
 
 type WorkspaceListResponse = {
   id: string;
@@ -139,13 +138,13 @@ export const opnformCommon = {
   getBaseUrl: (auth: any) => {
     return auth.baseApiUrl || API_URL_DEFAULT;
   },
-  validateAuth: async (auth: string) => {
+  validateAuth: async (auth: any) => {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${opnformCommon.getBaseUrl(auth)}/open/workspaces`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth,
+        token: (auth as any).apiKey,
       },
     });
     return response.status === 200;
