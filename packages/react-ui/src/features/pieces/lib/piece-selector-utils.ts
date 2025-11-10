@@ -124,8 +124,6 @@ const getInitalStepInput = (pieceSelectorItem: PieceSelectorItem) => {
   }
   return formUtils.getDefaultValueForProperties({
     props: {
-      //TODO: add auth to the props
-      // ...spreadIfDefined('auth', pieceSelectorItem.pieceMetadata.auth),
       ...pieceSelectorItem.actionOrTrigger.props,
     },
     existingInput: {},

@@ -184,7 +184,15 @@ const validateAuth = async ({
             case PropertyType.OAUTH2:
                 return authValue.type === AppConnectionType.OAUTH2 || authValue.type === AppConnectionType.CLOUD_OAUTH2 || authValue.type === AppConnectionType.PLATFORM_OAUTH2
             case PropertyType.CUSTOM_AUTH:
-                return authValue.type === AppConnectionType.CUSTOM_AUTH && Object.keys(authValue.props).sort().concat() === Object.keys(auth.props).sort().concat()
+            {
+                if (authValue.type !== AppConnectionType.CUSTOM_AUTH) {
+                    return false
+                }
+                const authValueKeys = Object.keys(authValue.props).sort()
+                const authKeys = Object.keys(auth.props).sort()
+                return authValueKeys.every((key)=> authKeys.includes(key))
+
+            }
         }
     }) : pieceAuth
 
