@@ -43,7 +43,7 @@ export const PiecePropertyMap = Type.Record(Type.String(), PieceProperty)
 export interface PiecePropertyMap {
   [name: string]: PieceProperty;
 }
-
+export type { InputProperty } from './input';
 export const InputPropertyMap = Type.Record(Type.String(), InputProperty)
 export interface InputPropertyMap {
   [name: string]: InputProperty;
