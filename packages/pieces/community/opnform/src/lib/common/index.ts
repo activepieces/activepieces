@@ -9,8 +9,8 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-// export const API_URL = 'https://api.opnform.com';
-export const API_URL = 'https://opnform.test';
+// export const API_URL_DEFAULT = 'https://api.opnform.com';
+export const API_URL_DEFAULT = 'https://opnform.test';
 
 type WorkspaceListResponse = {
   id: string;
@@ -47,12 +47,12 @@ export const workspaceIdProp = Property.Dropdown<string>({
       };
     }
 
-    const accessToken = auth as string;
+    const accessToken = (auth as any).apiKey;
     const options: DropdownOption<string>[] = [];
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${API_URL}/open/workspaces`,
+      url: `${opnformCommon.getBaseUrl(auth)}/open/workspaces`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
@@ -95,7 +95,7 @@ export const formIdProp = Property.Dropdown<string>({
       };
     }
 
-    const accessToken = auth as string;
+    const accessToken = (auth as any).apiKey;
 
     const options: DropdownOption<string>[] = [];
     let hasMore = true;
@@ -104,7 +104,7 @@ export const formIdProp = Property.Dropdown<string>({
     do {
       const request: HttpRequest = {
         method: HttpMethod.GET,
-        url: `${API_URL}/open/workspaces/${workspaceId}/forms`,
+        url: `${opnformCommon.getBaseUrl(auth)}/open/workspaces/${workspaceId}/forms`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: accessToken,
@@ -136,19 +136,32 @@ export const formIdProp = Property.Dropdown<string>({
 });
 
 export const opnformCommon = {
-  baseUrl: API_URL,
+  getBaseUrl: (auth: any) => {
+    return auth.baseApiUrl || API_URL_DEFAULT;
+  },
+  validateAuth: async (auth: string) => {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `${opnformCommon.getBaseUrl(auth)}/open/workspaces`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth,
+      },
+    });
+    return response.status === 200;
+  },
   checkExistsIntegration: async (
+    auth: any,
     formId: string,
     flowUrl: string,
-    accessToken: string
   ) => {
     // Fetch all integrations for this form
     const allIntegrations = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${opnformCommon.baseUrl}/open/forms/${formId}/integrations`,
+      url: `${opnformCommon.getBaseUrl(auth)}/open/forms/${formId}/integrations`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
+        token: (auth as any).apiKey,
       },
     });
     const integration = allIntegrations.body.some((integration: any) =>
@@ -157,20 +170,20 @@ export const opnformCommon = {
     return integration ? integration.id : null;
   },
   createIntegration: async (
+    auth: any,
     formId: string,
     webhookUrl: string,
     flowUrl: string,
-    accessToken: string
   ) => {
     // Check if the integration already exists
-    const existingIntegrationId = await opnformCommon.checkExistsIntegration(formId, flowUrl, accessToken);
+    const existingIntegrationId = await opnformCommon.checkExistsIntegration(auth, formId, flowUrl);
     if(existingIntegrationId){
       return existingIntegrationId;
     }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${opnformCommon.baseUrl}/open/forms/${formId}/integrations`,
+      url: `${opnformCommon.getBaseUrl(auth)}/open/forms/${formId}/integrations`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -184,7 +197,7 @@ export const opnformCommon = {
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
+        token: (auth as any).apiKey,
       },
       queryParams: {},
     };
@@ -193,19 +206,19 @@ export const opnformCommon = {
     return (response as any)?.form_integration?.id as number || null;
   },
   deleteIntegration: async (
+    auth: any,
     formId: string,
     integrationId: number,
-    accessToken: string
   ) => {
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
-      url: `${opnformCommon.baseUrl}/open/forms/${formId}/integrations/${integrationId}`,
+      url: `${opnformCommon.getBaseUrl(auth)}/open/forms/${formId}/integrations/${integrationId}`,
       headers: {
         'Content-Type': 'application/json',
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
+        token: (auth as any).apiKey,
       },
     };
     return await httpClient.sendRequest(request);

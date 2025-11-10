@@ -41,10 +41,10 @@ export const opnformNewSubmission = createTrigger({
     const flowUrl = `${ new URL(context.server.publicUrl).origin }/projects/${ context.project.id }/flows/${ context.flows.current.id }`;
       
     const integrationId = await opnformCommon.createIntegration(
+      context.auth,
       formId,
       webhookUrl,
-      flowUrl,
-      context.auth as string
+      flowUrl
     );
     if(integrationId){
         await context.store?.put<WebhookInformation>('_new_submission_trigger', {
@@ -64,9 +64,9 @@ export const opnformNewSubmission = createTrigger({
         throw new Error('Form is required');
       }
       await opnformCommon.deleteIntegration(
+        context.auth,
         formId,
-        response.integrationId,
-        context.auth as string
+        response.integrationId
       );
     }
   },
