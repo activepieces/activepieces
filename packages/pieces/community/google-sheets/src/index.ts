@@ -43,14 +43,14 @@ export const googleSheetsOAuth2 = PieceAuth.OAuth2({
 
 export const googleSheetsServiceAccountAuth = PieceAuth.CustomAuth({
   displayName: 'Service Account',
-  description: 'You can connect without signing in with your personal Google account. Use a Google Service Account to provide secure access to the necessary resources on your behalf.',
+  description: 'Use a Google Service Account to provide secure access to the necessary resources on your behalf, without signing in with your personal Google account',
   required: true,
   props: {
     ServiceKey: Property.ShortText({
       displayName: 'Service Account JSON Key',
       required: true,
     })
-  }
+  },
 })
 
 export const googleSheets = createPiece({
@@ -70,10 +70,10 @@ export const googleSheets = createPiece({
     'geekyme',
   ],
   auth: [googleSheetsOAuth2, googleSheetsServiceAccountAuth],
+  triggers: [newWorksheetTrigger],
   actions: [
     createWorksheetAction,
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [],
 });
