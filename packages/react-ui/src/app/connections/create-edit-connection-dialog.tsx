@@ -76,8 +76,8 @@ type CreateOrEditConnectionDialogContentProps = {
 type CreateOrEditConnectionSectionProps =
   CreateOrEditConnectionDialogContentProps & {
     selectedAuth: PieceAuthProperty;
-    onBack: () => void;
-    showBackButton: boolean;
+    onShowSelectAuthButtonClicked: () => void;
+    showSelectAuthButton: boolean;
   };
 
 const CreateOrEditConnectionSection = ({
@@ -87,8 +87,8 @@ const CreateOrEditConnectionSection = ({
   externalIdComingFromSdk,
   setOpen,
   selectedAuth,
-  onBack,
-  showBackButton,
+  onShowSelectAuthButtonClicked,
+  showSelectAuthButton,
 }: CreateOrEditConnectionSectionProps) => {
   const formSchema = formUtils.buildConnectionSchema(selectedAuth);
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
@@ -231,20 +231,23 @@ const CreateOrEditConnectionSection = ({
                 />
               </div>
             )}
+            {showSelectAuthButton && (
+              <Button
+                size="sm"
+                variant={'link'}
+                className="text-xs mt-1"
+                type="button"
+                onClick={onShowSelectAuthButtonClicked}
+              >
+                {t('I would like to use a different authentication method')}
+              </Button>
+            )}
           </ScrollArea>
           <DialogFooter className="mt-0">
             <div className="mx-5 flex justify-end gap-2">
-              {showBackButton && (
-                <Button type="button" variant="outline" onClick={onBack}>
-                  {t('Back')}
-                </Button>
-              )}
-
-              {!showBackButton && (
-                <DialogClose asChild>
-                  <Button variant="outline">{t('Cancel')}</Button>
-                </DialogClose>
-              )}
+              <DialogClose asChild>
+                <Button variant="outline">{t('Cancel')}</Button>
+              </DialogClose>
               <Button
                 onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
                 loading={isPending}
@@ -279,23 +282,28 @@ const CreateOrEditConnectionDialogContent = React.memo(
     const [selectedAuth, setSelectedAuth] = useState<PieceAuthProperty | null>(
       getInitiallySelectedAuth(piece.auth),
     );
-    const showSelectAuthTypeSection = !isSingleAuth && isNil(selectedAuth);
+    const [showSelectAuthDialog, setShowSelectAuthDialog] = useState(false);
     return (
       <>
-        {!showSelectAuthTypeSection && selectedAuth && (
+        {!showSelectAuthDialog && selectedAuth && (
           <CreateOrEditConnectionSection
             {...props}
             selectedAuth={selectedAuth}
-            onBack={() => setSelectedAuth(null)}
-            showBackButton={!isSingleAuth}
+            onShowSelectAuthButtonClicked={() => setShowSelectAuthDialog(true)}
+            showSelectAuthButton={!isSingleAuth}
           />
         )}
-        {showSelectAuthTypeSection &&
+        {showSelectAuthDialog &&
           piece.auth &&
-          Array.isArray(piece.auth) && (
+          Array.isArray(piece.auth) &&
+          selectedAuth && (
             <SelectAuthTypeSection
+              initiallySelectedAuth={selectedAuth}
               pieceAuth={piece.auth}
-              onChange={setSelectedAuth}
+              onChange={(auth) => {
+                setSelectedAuth(auth);
+                setShowSelectAuthDialog(false);
+              }}
             />
           )}
       </>
@@ -344,22 +352,20 @@ export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };
 const getInitiallySelectedAuth = (
   auth: PieceAuthProperty[] | PieceAuthProperty | undefined,
 ) => {
-  if (!isNil(auth) && Array.isArray(auth) && auth.length === 1) {
-    return auth[0];
-  }
-
-  return null;
+  return (Array.isArray(auth) ? auth[0] : auth) ?? null;
 };
 
 const SelectAuthTypeSection = ({
   pieceAuth,
   onChange,
+  initiallySelectedAuth,
 }: {
   pieceAuth: PieceAuthProperty[];
   onChange: (auth: PieceAuthProperty) => void;
+  initiallySelectedAuth: PieceAuthProperty;
 }) => {
-  const [selectedAuth, setSelectedAuth] = useState<PieceAuthProperty | null>(
-    getInitiallySelectedAuth(pieceAuth),
+  const [selectedAuth, setSelectedAuth] = useState<PieceAuthProperty>(
+    initiallySelectedAuth,
   );
 
   return (
@@ -387,7 +393,7 @@ const SelectAuthTypeSection = ({
             <Button variant="outline">{t('Cancel')}</Button>
           </DialogClose>
           <Button
-            variant="outline"
+            variant="default"
             disabled={isNil(selectedAuth)}
             onClick={() => onChange(selectedAuth!)}
           >
