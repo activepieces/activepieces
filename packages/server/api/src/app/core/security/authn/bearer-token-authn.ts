@@ -26,13 +26,13 @@ const extractAccessToken = (request: FastifyRequest): string => {
     return accessToken
 }
 
-const authenticate = async (request: FastifyRequest): Promise<Principal> => {
+const authenticateOrThrow = async (request: FastifyRequest): Promise<Principal> => {
     const accessToken = extractAccessToken(request)
     return await accessTokenManager.verifyPrincipal(accessToken)
 }
 
 export const bearerTokenAuthn = {
     isBearerToken,
-    authenticate,
+    authenticateOrThrow,
 }
 

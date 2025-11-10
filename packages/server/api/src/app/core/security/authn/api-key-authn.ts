@@ -1,7 +1,6 @@
 import { ApiKey } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
-import { nanoid } from 'nanoid'
 import { apiKeyService } from '../../../ee/api-keys/api-key-service'
 
 const HEADER_NAME = 'authorization'
@@ -33,16 +32,13 @@ const createPrincipal = (apiKey: ApiKey): Principal => {
     return {
         id: apiKey.id,
         type: PrincipalType.SERVICE,
-        project: {
-            id: 'ANONYMOUS_' + nanoid(),
-        },
         platform: {
             id: apiKey.platformId,
         },
     }
 }
 
-const authenticate = async (request: FastifyRequest): Promise<Principal> => {
+const authenticateOrThrow = async (request: FastifyRequest): Promise<Principal> => {
     const apiKeyValue = extractApiKeyValue(request)
     
     try {
@@ -61,6 +57,6 @@ const authenticate = async (request: FastifyRequest): Promise<Principal> => {
 
 export const apiKeyAuthn = {
     isApiKey,
-    authenticate,
+    authenticateOrThrow,
 }
 

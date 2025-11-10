@@ -9,13 +9,10 @@ const ALLOWED_PRINCIPAL_TYPES = [
 ]
 
 const isPrincipalTypeAllowed = (principalType: PrincipalType, configuredPrincipals: ReadonlyArray<PrincipalType>): boolean => {
-    if (!ALLOWED_PRINCIPAL_TYPES.includes(principalType)) {
-        return false
-    }
-    return configuredPrincipals.includes(principalType)
+    return ALLOWED_PRINCIPAL_TYPES.includes(principalType) && configuredPrincipals.includes(principalType)
 }
 
-const authorize = async (request: FastifyRequest, security: AuthenticatedRoute): Promise<void> => {
+const authorizeOrThrow = async (request: FastifyRequest, security: AuthenticatedRoute): Promise<void> => {
     const authType = security.authorization.type
 
     if (authType === AuthorizationType.WORKER || authType === AuthorizationType.NONE) {
@@ -36,6 +33,6 @@ const authorize = async (request: FastifyRequest, security: AuthenticatedRoute):
 }
 
 export const principalTypeAuthz = {
-    authorize,
+    authorizeOrThrow,
 }
 

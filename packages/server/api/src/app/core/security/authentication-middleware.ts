@@ -13,12 +13,12 @@ export const authenticationMiddleware = async (request: FastifyRequest): Promise
     }
 
     if (apiKeyAuthn.isApiKey(request)) {
-        request.principal = await apiKeyAuthn.authenticate(request)
+        request.principal = await apiKeyAuthn.authenticateOrThrow(request)
         return
     }
 
     if (bearerTokenAuthn.isBearerToken(request)) {
-        request.principal = await bearerTokenAuthn.authenticate(request)
+        request.principal = await bearerTokenAuthn.authenticateOrThrow(request)
         return
     }
 

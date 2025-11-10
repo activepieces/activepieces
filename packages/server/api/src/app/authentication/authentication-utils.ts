@@ -65,9 +65,6 @@ export const authenticationUtils = {
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            project: {
-                id: project.id,
-            },
             platform: {
                 id: params.platformId,
             },

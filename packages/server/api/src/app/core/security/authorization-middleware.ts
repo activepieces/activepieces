@@ -1,22 +1,37 @@
 import { FastifyRequest } from 'fastify'
 import { principalTypeAuthz } from './authz/principal-type-authz'
-import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationType, ProjectAuthorization, RouteKind } from '@activepieces/server-shared'
 import { securityUtils } from './utils'
-import { PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PrincipalType } from '@activepieces/shared'
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
-    const security = request.routeOptions.config?.security
-    
-    if (security.kind === RouteKind.PUBLIC) {
+    if (request.routeOptions.config?.security.kind === RouteKind.PUBLIC) {
         return
     }
 
-    await principalTypeAuthz.authorize(request, security)
-    
-    if (security.authorization.type === AuthorizationType.PROJECT && (request.principal.type === PrincipalType.USER || request.principal.type === PrincipalType.SERVICE)) {
-        request.principal.project = {
-            id: await securityUtils.getProjectIdFromRequest(request),
-        }   
+    switch (request.routeOptions.config?.security.authorization.type) {
+        case AuthorizationType.PROJECT:
+            await principalTypeAuthz.authorizeOrThrow(request, request.routeOptions.config?.security)
+            await populateProjectInRequestOrThrow(request, request.routeOptions.config?.security.authorization)
+            break
+        case AuthorizationType.PLATFORM:
+            await principalTypeAuthz.authorizeOrThrow(request, request.routeOptions.config?.security)
+            break
+        case AuthorizationType.WORKER:
+        case AuthorizationType.NONE:
+            break
     }
 }
 
+async function populateProjectInRequestOrThrow(request: FastifyRequest, projectAuthorization: ProjectAuthorization): Promise<void> {
+    const projectId = await securityUtils.getProjectIdFromRequest(request, projectAuthorization)
+    if (isNil(projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'project id is not available for this route',
+            },
+        })
+    }
+    Object.assign(request.project { id: projectId })
+}

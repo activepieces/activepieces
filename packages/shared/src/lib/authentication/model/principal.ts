@@ -16,9 +16,6 @@ export type AnnonymousPrincipal = {
 export type ServicePrincipal = {
     id: ApId
     type: PrincipalType.SERVICE
-    project: {
-        id: string
-    }
     platform: {
         id: ApId
     }
@@ -27,9 +24,6 @@ export type ServicePrincipal = {
 export type UserPrincipal = {
     id: ApId
     type: PrincipalType.USER
-    project: {
-        id: ProjectId
-    }
     platform: {
         id: ApId
     }
