@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-mycase",
+  "version": "0.0.1",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:^",
+    "@activepieces/pieces-framework": "workspace:^",
+    "@activepieces/shared": "workspace:^"
+  },
+  "devDependencies": {
+    "tsup": "8.3.0",
+    "typescript": "5.4.5"
+  }
+}
+
