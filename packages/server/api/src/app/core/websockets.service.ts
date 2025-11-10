@@ -1,18 +1,19 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AuthorizationType, ProjectResourceType, rejectedPromiseHandler, RouteKind } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { app } from '../server'
+import { authorizeOrThrow } from './security/authorize'
 
-export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER> 
-= (socket: Socket) => (data: T, principal: PrincipalForType<PR>, callback?: (data: unknown) => void) => Promise<void>
+export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER>
+    = (socket: Socket) => (data: T, principal: PrincipalForType<PR>, callback?: (data: unknown) => void) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
 
 const listener = {
-    [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER  >,
+    [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER>,
     [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
 }
 
@@ -21,6 +22,7 @@ export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)
+
         const type = principal.type
         if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
             return

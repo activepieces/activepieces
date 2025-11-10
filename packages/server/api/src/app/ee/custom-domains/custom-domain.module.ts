@@ -12,6 +12,7 @@ import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 const GetOneRequest = Type.Object({
     id: Type.String(),
@@ -25,37 +26,39 @@ export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post(
-        '/',
-        {
-            schema: {
-                body: AddDomainRequest,
-            },
-            config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+    app.post('/', {
+        schema: {
+            body: AddDomainRequest,
+        },
+        config: {
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.PLATFORM,
+                    allowedPrincipals: [PrincipalType.USER] as const,
+                },
             },
         },
-        async (request, reply) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
+    }, async (request, reply) => {
+        const platformId = request.principal.platform.id
 
-            const domain = await customDomainService.getOneByDomain({
-                domain: request.body.domain,
+        const domain = await customDomainService.getOneByDomain({
+            domain: request.body.domain,
+        })
+
+        if (domain) {
+            return reply.status(HttpStatusCode.Conflict).send({
+                message: `Domain ${request.body.domain} already exists`,
             })
+        }
 
-            if (domain) {
-                return reply.status(HttpStatusCode.Conflict).send({
-                    message: `Domain ${request.body.domain} already exists`,
-                })
-            }
+        const customDomain = await customDomainService.create({
+            domain: request.body.domain,
+            platformId,
+        })
 
-            const customDomain = await customDomainService.create({
-                domain: request.body.domain,
-                platformId,
-            })
-
-            return reply.status(StatusCodes.CREATED).send(customDomain)
-        },
+        return reply.status(StatusCodes.CREATED).send(customDomain)
+    },
     )
 
     app.get(

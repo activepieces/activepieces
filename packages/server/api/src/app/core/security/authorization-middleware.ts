@@ -1,37 +1,97 @@
-import { FastifyRequest } from 'fastify'
-import { principalTypeAuthz } from './authz/principal-type-authz'
-import { AuthorizationType, ProjectAuthorization, RouteKind } from '@activepieces/server-shared'
-import { securityUtils } from './utils'
-import { ActivepiecesError, ErrorCode, isNil, PrincipalType } from '@activepieces/shared'
+import { ProjectResourceType, ProjectTableResource, ProjectBodyResource, ProjectQueryResource, RouteKind, AuthorizationType, RouteSecurity } from "@activepieces/server-shared"
+import { FastifyRequest } from "fastify"
+import { assertNotNullOrUndefined, isObject } from "@activepieces/shared"
+import { databaseConnection } from "../../database/database-connection"
+import { authorizeOrThrow } from "./authorize"
+
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
-    if (request.routeOptions.config?.security.kind === RouteKind.PUBLIC) {
-        return
-    }
+    const securityAccessRequest = await convertToSecurityAccessRequest(request)
+    await authorizeOrThrow(request.principal, securityAccessRequest)
+}
 
-    switch (request.routeOptions.config?.security.authorization.type) {
+async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<RouteSecurity<RawProjectResource>> {
+    const security = request.routeOptions.config?.security
+    if (security.kind === RouteKind.PUBLIC) {
+        return {
+            kind: RouteKind.PUBLIC,
+        }
+    }
+    switch (security.authorization.type) {
         case AuthorizationType.PROJECT:
-            await principalTypeAuthz.authorizeOrThrow(request, request.routeOptions.config?.security)
-            await populateProjectInRequestOrThrow(request, request.routeOptions.config?.security.authorization)
-            break
+            return {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.PROJECT,
+                    allowedPrincipals: security.authorization.allowedPrincipals,
+                    projectResource: {
+                        type: ProjectResourceType.RAW,
+                        projectId: await getProjectIdFromRequest(request),
+                    },
+                },
+            }
         case AuthorizationType.PLATFORM:
-            await principalTypeAuthz.authorizeOrThrow(request, request.routeOptions.config?.security)
-            break
-        case AuthorizationType.WORKER:
         case AuthorizationType.NONE:
-            break
+        case AuthorizationType.WORKER:
+            return security
     }
 }
 
-async function populateProjectInRequestOrThrow(request: FastifyRequest, projectAuthorization: ProjectAuthorization): Promise<void> {
-    const projectId = await securityUtils.getProjectIdFromRequest(request, projectAuthorization)
-    if (isNil(projectId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'project id is not available for this route',
-            },
-        })
+async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
+    const security = request.routeOptions.config?.security
+    if (security.kind === RouteKind.PUBLIC) {
+        return undefined
     }
-    Object.assign(request.project { id: projectId })
+    if (security.authorization.type !== AuthorizationType.PROJECT) {
+        return undefined
+    }
+    const projectResource = security.authorization.projectResource
+    switch (projectResource.type) {
+        case ProjectResourceType.TABLE:
+            return await extractProjectIdFromTable(request, projectResource)
+        case ProjectResourceType.QUERY:
+            return extractProjectIdFromQuery(request, projectResource)
+        case ProjectResourceType.BODY:
+            return extractProjectIdFromBody(request, projectResource)
+    }
+}
+
+async function extractProjectIdFromTable(
+    request: FastifyRequest,
+    projectTableResource: ProjectTableResource,
+): Promise<string | undefined> {
+    const routerPath = request.routeOptions.url
+    assertNotNullOrUndefined(routerPath, 'routerPath is undefined')
+
+    const hasIdParam = routerPath.includes(':id') &&
+        isObject(request.params) &&
+        'id' in request.params &&
+        typeof request.params.id === 'string'
+
+    if (!hasIdParam) {
+        return undefined
+    }
+
+    const { id } = request.params as { id: string }
+
+    const entity = await databaseConnection().getRepository(projectTableResource.tableName).findOneBy({
+        id,
+    })
+    return entity?.projectId ?? undefined
+}
+
+function extractProjectIdFromBody(request: FastifyRequest, projectBodyResource: ProjectBodyResource): string | undefined {
+    if (isObject(request.body) && projectBodyResource.key in request.body) {
+        return request.body[projectBodyResource.key] as string
+    }
+
+    return undefined
+}
+
+function extractProjectIdFromQuery(request: FastifyRequest, projectQueryResource: ProjectQueryResource): string | undefined {
+    if (isObject(request.query) && projectQueryResource.key in request.query) {
+        return request.query[projectQueryResource.key] as string
+    }
+
+    return undefined
 }
