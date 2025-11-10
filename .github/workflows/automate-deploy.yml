@@ -73,12 +73,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm install -g bun && bun install
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
       - name: Run Checkly Deploy
         run: npx checkly deploy --config=packages/tests-e2e/checkly.config.ts --force
         env:
