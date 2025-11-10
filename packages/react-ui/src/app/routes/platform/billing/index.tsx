@@ -1,12 +1,10 @@
 import { t } from 'i18next';
-import { Wand, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { Wand } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { ActiveFlowAddon } from '@/features/billing/components/active-flows-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
 import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
@@ -23,8 +21,6 @@ import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil, PlanName } from '@activepieces/shared';
 
 export default function Billing() {
-  const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
-    useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
 
   const {
@@ -68,18 +64,6 @@ export default function Billing() {
         beta={true}
       >
         <div className="flex items-center gap-2">
-          {isEnterprise && (
-            <Button
-              variant="default"
-              onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
-            >
-              <Zap className="w-4 h-4" />
-              {platform.plan.licenseKey
-                ? t('Update License')
-                : t('Activate License')}
-            </Button>
-          )}
-
           {!isEnterprise && isSubscriptionActive && (
             <Button variant="outline" onClick={() => redirectToPortalSession()}>
               {t('Access Billing Portal')}
@@ -107,7 +91,7 @@ export default function Billing() {
         )}
 
         {isEnterprise ? (
-          <LicenseKey platform={platform} />
+          <LicenseKey platform={platform} isEnterprise={isEnterprise} />
         ) : (
           <Card>
             <CardHeader className="border-b">
@@ -134,10 +118,6 @@ export default function Billing() {
             </CardContent>
           </Card>
         )}
-        <ActivateLicenseDialog
-          isOpen={isActivateLicenseKeyDialogOpen}
-          onOpenChange={setIsActivateLicenseKeyDialogOpen}
-        />
       </section>
     </>
   );

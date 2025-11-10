@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
 
@@ -26,9 +26,9 @@ export function ActiveFlowAddon({
 
   const { plan, usage } = platformSubscription;
   const currentActiveFlows = usage.activeFlows || 0;
-  const activeFlowsLimit = plan.activeFlowsLimit ?? 10;
+  const activeFlowsLimit = plan.activeFlowsLimit;
   const usagePercentage =
-    activeFlowsLimit > 0
+    !isNil(activeFlowsLimit) && activeFlowsLimit > 0
       ? Math.round((currentActiveFlows / activeFlowsLimit) * 100)
       : 0;
 
@@ -80,7 +80,9 @@ export function ActiveFlowAddon({
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
                 {currentActiveFlows.toLocaleString()} /{' '}
-                {activeFlowsLimit.toLocaleString()}
+                {isNil(activeFlowsLimit)
+                  ? 'Unlimited'
+                  : activeFlowsLimit.toLocaleString()}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {t('Plan Limit')}

@@ -103,8 +103,8 @@ const SidebarUsageLimits = React.memo(() => {
           />
           <UsageProgress
             name={t('Active Flows')}
-            value={platform.usage?.activeFlows!}
-            max={platform?.plan.activeFlowsLimit!}
+            value={platform.usage?.activeFlows ?? 0}
+            max={platform?.plan.activeFlowsLimit}
             variant={'success'}
           />
         </div>

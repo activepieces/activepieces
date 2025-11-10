@@ -25,13 +25,13 @@ export function EnableAIOverageDialog({
       <DialogContent className="sm:max-w-[420px] p-8 text-center">
         <div className="flex flex-col items-center">
           <div className="rounded-full bg-purple-50 p-4 mb-6">
-            <Info className="w-10 h-10 text-purple-600" />
+            <Info className="w-10 h-10 text-primary" />
           </div>
 
-          <h2 className="text-2xl font-semibold text-gray-900">
+          <h2 className="text-2xl font-semibold">
             {t('Start a Subscription')}
           </h2>
-          <p className="mt-2 text-sm text-gray-600 max-w-sm">
+          <p className="mt-2 text-sm max-w-sm">
             {t(
               'To enable AI credit overage and unlock advanced features, please start your subscription first.',
             )}
@@ -42,7 +42,7 @@ export function EnableAIOverageDialog({
               onClick={() => createSubscription({ newActiveFlowsLimit: 0 })}
               disabled={isCreatingSubscriptionPending}
               loading={isCreatingSubscriptionPending}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-lg shadow-sm"
+              className="w-full"
             >
               {t('Start Subscription (Free)')}
             </Button>

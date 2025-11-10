@@ -29,7 +29,7 @@ const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     onError: (err: Error, _, __, mutation) => {
       if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-        const { openDialog } = useManagePlanDialogStore();
+        const { openDialog } = useManagePlanDialogStore.getState();
         openDialog();
       } else if (isNil(mutation.options.onError)) {
         toast(INTERNAL_ERROR_TOAST);

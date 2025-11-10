@@ -19,6 +19,7 @@ import {
   ApSubscriptionStatus,
   PRICE_PER_EXTRA_ACTIVE_FLOWS,
 } from '@activepieces/ee-shared';
+import { PlatformPlan } from '@activepieces/shared';
 
 import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';
@@ -31,7 +32,7 @@ export function PurchaseExtraFlowsDialog() {
 
   const activeFlowsUsage = platformPlanInfo?.usage?.activeFlows ?? 0;
   const activeFlowsLimit = platformPlanInfo?.plan.activeFlowsLimit ?? 0;
-  const platformPlan = platformPlanInfo?.plan!;
+  const platformPlan = platformPlanInfo?.plan as PlatformPlan;
 
   const [selectedLimit, setSelectedLimit] = useState(activeFlowsLimit);
 
@@ -104,7 +105,7 @@ export function PurchaseExtraFlowsDialog() {
           </DialogTitle>
           <DialogDescription>
             {t(
-              'Currently using {currentActiveFlows} of {activeFlowsLimit} flows',
+              'Currently using {activeFlowsUsage} of {activeFlowsLimit} flows',
               { activeFlowsUsage, activeFlowsLimit },
             )}
           </DialogDescription>
