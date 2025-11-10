@@ -32,10 +32,10 @@ export function createChat(options: ChatOptions) {
   theme.headerColor = theme.headerColor ?? '#333';
   theme.headerTextColor = theme.headerTextColor ?? '#fff';
   theme.backgroundColor = theme.backgroundColor ?? '#fff';
-  theme.botMessageColor = theme.botMessageColor ?? '#333';
-  theme.botMessageTextColor = theme.botMessageTextColor ?? '#fff';
   theme.userMessageColor = theme.userMessageColor ?? '#ccc';
   theme.userMessageTextColor = theme.userMessageTextColor ?? '#333';
+  theme.botMessageColor = theme.botMessageColor ?? '#333';
+  theme.botMessageTextColor = theme.botMessageTextColor ?? '#fff';
   theme.buttonColor = theme.buttonColor ?? '#333';
   theme.buttonTextColor = theme.buttonTextColor ?? '#fff';
   theme.inputBorderColor = theme.inputBorderColor ?? '#ccc';

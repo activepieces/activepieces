@@ -96,8 +96,10 @@ Ones with "?" can be left empty as they will fallback to default values
 
 ### Look & Feel
 
+When collapsed
 ![Collapsed Chat Window](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/default-collapsed.png)
 
+When expanded
 ![Expanded Chat Window](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/default-expanded.png)
 
 ## Building
