@@ -54,6 +54,7 @@ export const generatePresentations = createAction({
       displayName: 'Slides markdown',
       description: 'An array of markdown strings for each slide (optional).',
       required: false,
+      defaultValue: [],
     }),
     markdown_emphasis: Property.Checkbox({
       displayName: 'Markdown emphasis',
@@ -134,6 +135,7 @@ export const generatePresentations = createAction({
       description:
         'Array of file identifiers uploaded via Presenton files API (optional).',
       required: false,
+      defaultValue: [],
     }),
     export_as: Property.StaticDropdown({
       displayName: 'Export as',
@@ -206,7 +208,7 @@ export const generatePresentations = createAction({
         '/ppt/presentation/generate/async',
         body
       );
-      console.log(response);
+     
       const pollIntervalSeconds = 5;
 
       const taskId = response.id;
