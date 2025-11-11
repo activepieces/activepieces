@@ -41,11 +41,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-                            log.info({
-                                jobId: job.id,
-                                runId: job.data.runId,
-                            }, '[runsMetadataQueue#worker] Acquired lock')
-
+                      
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
@@ -99,7 +95,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('startTime', startTime),
                                 })
                             }
-
 
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {

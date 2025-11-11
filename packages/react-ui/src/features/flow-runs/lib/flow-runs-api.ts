@@ -10,8 +10,8 @@ import {
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
-  BulkRetryFlowRequestBody,
   SeekPage,
+  BulkActionOnRunsRequestBody,
 } from '@activepieces/shared';
 
 type TestStepParams = {
@@ -35,8 +35,11 @@ export const flowRunsApi = {
   getPopulated(id: string): Promise<FlowRun> {
     return api.get<FlowRun>(`/v1/flow-runs/${id}`);
   },
-  bulkRetry(request: BulkRetryFlowRequestBody): Promise<FlowRun[]> {
+  bulkRetry(request: BulkActionOnRunsRequestBody): Promise<FlowRun[]> {
     return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
+  },
+  bulkArchive(request: BulkActionOnRunsRequestBody): Promise<void> {
+    return api.post<void>('/v1/flow-runs/archive', request);
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);

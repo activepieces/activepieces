@@ -1,8 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { system } from '../../../helper/system/system'
 
-export class AddFailedStepAndDurationToRunSqlite1762877962975 implements MigrationInterface {
-    name = 'AddFailedStepAndDurationToRunSqlite1762877962975'
+export class AddFailedStepAndDurationToRunSqlite1762881581871 implements MigrationInterface {
+    name = 'AddFailedStepAndDurationToRunSqlite1762881581871'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -262,9 +261,6 @@ export class AddFailedStepAndDurationToRunSqlite1762877962975 implements Migrati
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
         `)
-        system.globalLogger().info({
-            name: this.name,
-        }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
