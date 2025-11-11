@@ -3,7 +3,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createReplicate } from '@ai-sdk/replicate'
-import { ImageModel, Tool } from 'ai'
+import { ImageModel, ToolSet } from 'ai'
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata } from './types'
 import { spreadIfDefined } from '@activepieces/shared'
@@ -113,7 +113,7 @@ function buildUserLocation(options: UserLocationOptions): (UserLocationOptions &
     }
 }
 
-export function createWebSearchTool(provider: string, options: WebSearchOptions = {}): Record<string, Tool> {
+export function createWebSearchTool(provider: string, options: WebSearchOptions = {}): ToolSet{
     const defaultMaxUses = 5
 
     switch (provider) {
