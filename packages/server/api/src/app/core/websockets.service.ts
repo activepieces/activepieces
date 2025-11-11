@@ -27,15 +27,23 @@ export const websocketService = {
         if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
             return
         }
+        await authorizeOrThrow(principal, {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER],
+                projectId: socket.handshake.auth.projectId,
+            },
+        }, log)
         const castedType = type as keyof typeof listener
         switch (type) {
             case PrincipalType.USER: {
                 log.info({
                     message: 'User connected',
                     userId: principal.id,
-                    projectId: principal.project.id,
+                    projectId: socket.handshake.auth.projectId,
                 })
-                await socket.join(principal.project.id)
+                await socket.join(socket.handshake.auth.projectId)
                 break
             }
             case PrincipalType.WORKER: {
