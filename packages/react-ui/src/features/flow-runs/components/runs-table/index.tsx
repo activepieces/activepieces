@@ -7,6 +7,7 @@ import {
   ChevronDown,
   History,
   X,
+  Archive,
 } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -48,6 +49,7 @@ import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
 } from './retried-runs-snackbar';
+import { isDateInterval } from 'react-day-picker';
 
 type SelectedRow = {
   id: string;
@@ -196,15 +198,74 @@ export const RunsTable = () => {
     },
   });
 
+  const archiveRuns = useMutation({
+    mutationFn: (retryParams: {
+      runIds: string[];
+    }) => {
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
+      const createdAfter = searchParams.get('createdAfter') || undefined;
+      const createdBefore = searchParams.get('createdBefore') || undefined;
+      const failedStepName = searchParams.get('failedStepName') || undefined;
+      return flowRunsApi.bulkArchive({
+        projectId: authenticationSession.getProjectId()!,
+        flowRunIds: selectedAll ? undefined : retryParams.runIds,
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status,
+        flowId,
+        createdAfter,
+        createdBefore,
+        failedStepName,
+      });
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
   const bulkActions: BulkAction<FlowRun>[] = useMemo(
     () => [
-      {
+        {
         render: (_, resetSelection) => {
           const allFailed = selectedRows.every((row) =>
             isFailedState(row.status),
           );
+
           const isDisabled =
-            selectedRows.length === 0 || !userHasPermissionToRetryRun;
+            selectedRows.length === 0 || !userHasPermissionToRetryRun || !allFailed;
+
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+                <Button disabled={isDisabled} variant='outline' className="h-9 w-full" onClick={() => {
+                    archiveRuns.mutate({
+                      runIds: selectedRows.map((row) => row.id)
+                    });
+                    resetSelection();
+                    setSelectedRows([]);
+                }}>
+                  <Archive className='size-4 mr-1'/>
+                  {selectedRows.length > 0
+                    ? `${t('Archive')} ${!isDisabled ? (
+                        selectedAll
+                          ? excludedRows.size > 0
+                            ? `${t('all except')} ${excludedRows.size}`
+                            : t('all')
+                          : `(${selectedRows.length})`
+                      ) : ''}`
+              
+                    : t('Archive')}
+                </Button>
+            </div>
+          );
+        },
+      },
+      {
+        render: (_, resetSelection) => {
+          const allSuccess = selectedRows.every((row) =>
+            !isFailedState(row.status),
+          );
+          const isDisabled =
+            selectedRows.length === 0 || !userHasPermissionToRetryRun || !allSuccess;
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -214,16 +275,18 @@ export const RunsTable = () => {
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild disabled={isDisabled}>
                     <Button disabled={isDisabled} className="h-9 w-full">
+                      <RotateCw className='size-4 mr-1' />
                       {selectedRows.length > 0
-                        ? `${t('Retry')} ${
+                        ? `${t('Retry')} ${!isDisabled ? (
                             selectedAll
                               ? excludedRows.size > 0
                                 ? `${t('all except')} ${excludedRows.size}`
                                 : t('all')
                               : `(${selectedRows.length})`
-                          }`
+                          ) : ''}`
+                  
                         : t('Retry')}
-                      <ChevronDown className="h-3 w-4 ml-2" />
+                      <ChevronDown className="h-3 w-4 ml-1" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -254,10 +317,10 @@ export const RunsTable = () => {
                         message={t(
                           'Only failed runs can be retried from failed step',
                         )}
-                        isDisabled={!allFailed}
+                        isDisabled={!allSuccess}
                       >
                         <DropdownMenuItem
-                          disabled={!userHasPermissionToRetryRun || !allFailed}
+                          disabled={!userHasPermissionToRetryRun || !allSuccess}
                           onClick={() => {
                             retryRuns.mutate({
                               runIds: selectedRows.map((row) => row.id),
@@ -284,6 +347,7 @@ export const RunsTable = () => {
           );
         },
       },
+      
     ],
     [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
   );
