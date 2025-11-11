@@ -48,7 +48,6 @@
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
-
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
@@ -65,7 +64,7 @@
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
-      "cashfree-payments": [
+      "activepieces/piece-cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
@@ -82,6 +81,9 @@
       ],
       "@activepieces/piece-presenton": [
         "packages/pieces/community/presenton/src/index.ts"
+      ],
+      "@activepieces/piece-formspark": [
+        "packages/pieces/community/formspark/src/index.ts"
       ]
     },
     "resolveJsonModule": true
