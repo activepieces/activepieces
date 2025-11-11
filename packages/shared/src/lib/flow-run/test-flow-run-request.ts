@@ -30,3 +30,17 @@ export const BulkActionOnRunsRequestBody = Type.Object({
 })
 
 export type BulkActionOnRunsRequestBody = Static<typeof BulkActionOnRunsRequestBody>
+
+export const BulkArchiveActionOnRunsRequestBody = Type.Object({
+    projectId: ApId,
+    flowRunIds: Type.Optional(Type.Array(ApId)),
+    excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
+    status: Type.Optional(Type.Array(Type.Enum(FlowRunStatus))),
+    flowId: Type.Optional(Type.Array(ApId)),
+    createdAfter: Type.Optional(Type.String()),
+    createdBefore: Type.Optional(Type.String()),
+    failedStepName: Type.Optional(Type.String()),
+})
+
+export type BulkArchiveActionOnRunsRequestBody = Static<typeof BulkArchiveActionOnRunsRequestBody>
+

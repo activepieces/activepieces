@@ -166,7 +166,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async existsBy(runId: FlowRunId): Promise<boolean> {
         return flowRunRepo().existsBy({ id: runId })
     },
-    async bulkArchive(params: BulkActionParams): Promise<void> {
+    async bulkArchive(params: BulkArchiveActionParams): Promise<void> {
         const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(params)
         await flowRunRepo().update({
             id: In(filteredFlowRunIds),
@@ -398,7 +398,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function filterFlowRunsAndApplyFilters(params: BulkActionParams): Promise<FlowRunId[]> {
+async function filterFlowRunsAndApplyFilters(params: BulkArchiveActionParams): Promise<FlowRunId[]> {
     let query = flowRunRepo().createQueryBuilder('flow_run').select('id').where({
         projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
@@ -628,6 +628,19 @@ type BulkActionParams = {
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string
 }
+
+type BulkArchiveActionParams = {
+    projectId: ProjectId
+    flowRunIds?: FlowRunId[]
+    status?: FlowRunStatus[]
+    flowId?: FlowId[]
+    createdAfter?: string
+    archived?: boolean
+    createdBefore?: string
+    excludeFlowRunIds?: FlowRunId[]
+    failedStepName?: string
+}
+
 type ResumeWebhookParams = {
     flowRunId: FlowRunId
     requestId?: string

@@ -3,6 +3,7 @@ import {
     ALL_PRINCIPAL_TYPES,
     ApId,
     BulkActionOnRunsRequestBody,
+    BulkArchiveActionOnRunsRequestBody,
     ErrorCode,
     ExecutionType,
     FlowRun,
@@ -124,7 +125,6 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: req.principal.projectId,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
-            strategy: req.body.strategy,
             status: req.body.status,
             flowId: req.body.flowId,
             createdAfter: req.body.createdAfter,
@@ -203,7 +203,7 @@ const ArchiveFlowRunRequest = {
         permission: Permission.WRITE_RUN,
     },
     schema: {
-        body: BulkActionOnRunsRequestBody,
+        body: BulkArchiveActionOnRunsRequestBody,
     },
 }
 

@@ -12,6 +12,7 @@ import {
   StepRunResponse,
   SeekPage,
   BulkActionOnRunsRequestBody,
+  BulkArchiveActionOnRunsRequestBody,
 } from '@activepieces/shared';
 
 type TestStepParams = {
@@ -38,7 +39,7 @@ export const flowRunsApi = {
   bulkRetry(request: BulkActionOnRunsRequestBody): Promise<FlowRun[]> {
     return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
   },
-  bulkArchive(request: BulkActionOnRunsRequestBody): Promise<void> {
+  bulkArchive(request: BulkArchiveActionOnRunsRequestBody): Promise<void> {
     return api.post<void>('/v1/flow-runs/archive', request);
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
