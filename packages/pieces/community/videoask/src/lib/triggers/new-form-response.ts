@@ -5,10 +5,10 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { videoaskAuth } from '../common/auth';
 export const newFormResponse = createTrigger({
-    // auth: videoaskAuth,
+    auth: videoaskAuth,
     name: 'newFormResponse',
     displayName: 'new form response',
-    description: '',
+    description: 'Trigger when a new form response is submitted',
     props: {
         organizationId: organizationIdDropdown,
         formId: videoaskIdDropdown,
@@ -146,7 +146,7 @@ export const newFormResponse = createTrigger({
     async onEnable(context) {
         await makeRequest(
             context.propsValue.organizationId as string,
-            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ik1UTkJRamhFUmpZd05VRXlRakpFUkRGRk5rSXpPRGc0T0RZMlFqWTNSamd3TURoRVFUVTROZyJ9.eyJodHRwczovL3ZpZGVvYXNrLmNvbS9sb2dpbnNfY291bnQiOjIsImh0dHBzOi8vdmlkZW9hc2suY29tL2Nvbm5lY3Rpb24iOiJVc2VybmFtZS1QYXNzd29yZC1BdXRoZW50aWNhdGlvbiIsImlzcyI6Imh0dHBzOi8vYXV0aC52aWRlb2Fzay5jb20vIiwic3ViIjoiYXV0aDB8NjkxMTczNzZiYWZkMDAxZTAwM2IwOTY4IiwiYXVkIjpbImh0dHBzOi8vYXBpLnZpZGVvYXNrLmNvbS8iLCJodHRwczovL3ZpZGVvYXNrLmV1LmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NjI3NzUyOTksImV4cCI6MTc2Mjc3NjE5OSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImF6cCI6InAzTW0zOGpSaWRlaFNNTU9BOTdsVHZKMjdQQ25uR0poIn0.sSnp_U2x6MYcdwfHOmEm6XS_4uhQSli9VmkMVnaVzd_Uk8NVYu95r6Xl1xpP6aQMHLr4decnzbJWTR_kGCUjqjc4Yv4B93nx3FDZS1mzzbmY1FPWjp4XGU9-xPwvYocuiI4RC1bsSNGyiZpWrg8KfDya5qqcY3QD7yJZ5ihVRDT6o-N8iyej0BOdpC-NkmL8x4TfobPMNpkRItdAGJr9vVuId5uL0Vvy7G-1rGF3yr83k1i9R_lBFEhAUbqrMKkchyTubqZSFxK-jeOVJMuW-LtJz1tPW8X0TNMWiOnswD792hbnOOTDo67hzBNqoLJm8CFO1W-qLNcE-h34us4L3g",
+            (context.auth as any).access_token as string,
             HttpMethod.PUT,
             `/forms/${context.propsValue.formId}/webhooks/${context.propsValue.tag}`,
             {

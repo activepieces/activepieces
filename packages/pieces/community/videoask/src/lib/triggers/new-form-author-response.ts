@@ -11,8 +11,8 @@ import { makeRequest } from '../common/client';
 export const newFormAuthorResponse = createTrigger({
     auth: videoaskAuth,
     name: 'newFormAuthorResponse',
-    displayName: 'new form author response',
-    description: '',
+    displayName: 'New form author response',
+    description: 'Trigger when a form author responds to a contact message',
     props: {
         organizationId: organizationIdDropdown,
         formId: videoaskIdDropdown,
