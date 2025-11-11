@@ -17,6 +17,7 @@ import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
 import { FlowRun, FlowRunStatus, SeekPage } from '@activepieces/shared';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type SelectedRow = {
   id: string;
@@ -201,7 +202,7 @@ export const runsTableColumns = ({
   {
     accessorKey: 'created',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Start Time')} />
+      <DataTableColumnHeader column={column} title={t('Run Time')} />
     ),
     cell: ({ row }) => {
       return (
@@ -218,10 +219,28 @@ export const runsTableColumns = ({
     ),
     cell: ({ row }) => {
       return (
-        <div className="text-left">
-          {row.original.finishTime &&
-            formatUtils.formatDuration(row.original.duration)}
-        </div>
+        <Tooltip>
+            <TooltipTrigger>
+              <div className="text-left">
+                {row.original.finishTime &&
+                  formatUtils.formatDuration(row.original.duration)}
+              </div>
+          </TooltipTrigger>
+          <TooltipContent side='bottom'>
+            {t(`Waiting time: ${row.original.waitDuration} second`)}
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
+  },
+  {
+    accessorKey: 'failedStep',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Failed Step')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">{row.original.failedStep?.displayName ?? '-'}</div>
       );
     },
   },
