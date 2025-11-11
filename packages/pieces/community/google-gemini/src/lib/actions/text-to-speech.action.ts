@@ -114,9 +114,9 @@ export const textToSpeechAction = createAction({
 
 export async function pcmToWavBuffer(
   pcmBuffer: Buffer,
-  channels: number = 1,
-  rate: number = 24000,
-  sampleWidth: number = 2
+  channels = 1,
+  rate = 24000,
+  sampleWidth = 2
 ): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
     const wavBuffers: Buffer[] = [];
