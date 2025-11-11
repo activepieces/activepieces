@@ -1,6 +1,6 @@
 import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
 import { apDayjsDuration } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode , SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -180,8 +180,8 @@ type IssueParams = {
 
 
 type IssueToAlert = {
-    flowVersionId: string;
-    projectId: string;
-    flowId: string;
-    created: string;
+    flowVersionId: string
+    projectId: string
+    flowId: string
+    created: string
 }

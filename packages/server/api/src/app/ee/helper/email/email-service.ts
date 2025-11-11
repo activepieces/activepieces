@@ -2,6 +2,7 @@ import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { ApEdition, assertNotNullOrUndefined, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { redisConnections } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -9,7 +10,6 @@ import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { redisConnections } from '../../../database/redis-connections'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -147,13 +147,14 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const parsedAlerts = storedAlerts.map((a) => {
             try {
                 return JSON.parse(a)
-            } catch {
+            }
+            catch {
                 return null
             }
         }).filter((a) => !isNil(a))
 
         const issuesForProject = parsedAlerts.filter(
-            (a) => a.projectId === job.projectId
+            (a) => a.projectId === job.projectId,
         )
 
         if (issuesForProject.length === 0) {

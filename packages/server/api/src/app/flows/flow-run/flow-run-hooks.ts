@@ -1,8 +1,8 @@
 import { ApEdition, FlowRun, isFailedState, isFlowRunStateTerminal, isNil, RunEnvironment } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { system } from '../../helper/system/system'
-import dayjs from 'dayjs'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -19,7 +19,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
                 projectId: flowRun.projectId,
                 flowVersionId: flowRun.flowVersionId,
                 flowId: flowRun.flowId,
-                created: date
+                created: date,
             }
 
             if (paidEditions) {

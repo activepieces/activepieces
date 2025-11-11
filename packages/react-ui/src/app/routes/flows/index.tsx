@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { History, CircleAlert, Workflow } from 'lucide-react';
+import { History, Workflow } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -62,9 +62,7 @@ const FlowsPage = () => {
       <DashboardPageHeader
         tutorialTab="flows"
         title={t('Flows')}
-        description={t(
-          'Create and manage your flows and run history',
-        )}
+        description={t('Create and manage your flows and run history')}
       ></DashboardPageHeader>
       <Tabs
         value={activeTab}
