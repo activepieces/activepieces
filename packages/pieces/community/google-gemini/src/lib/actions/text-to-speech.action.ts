@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleGeminiAuth } from '../..';
 import { GoogleGenAI } from '@google/genai';
+import wav from 'wav';
+import { Writable } from 'stream';
 
 export const textToSpeechAction = createAction({
   name: 'text-to-speech',
@@ -95,14 +97,13 @@ export const textToSpeechAction = createAction({
         throw new Error('No audio data returned from model response.');
       }
 
-      const audioBuffer = Buffer.from(data, 'base64');
+      const pcmBuffer = Buffer.from(data, 'base64');
+      const wavBuffer = await pcmToWavBuffer(pcmBuffer, 1, 24000, 2);
 
       return await context.files.write({
-        data: audioBuffer,
-        fileName: 'audio.pcm',
+        data: wavBuffer,
+        fileName: 'audio.wav',
       });
-
-    // return response;
 
     } catch (error) {
       console.error('Error in generate content from image:', error);
@@ -110,3 +111,38 @@ export const textToSpeechAction = createAction({
     }
   },
 });
+
+export async function pcmToWavBuffer(
+  pcmBuffer: Buffer,
+  channels: number = 1,
+  rate: number = 24000,
+  sampleWidth: number = 2
+): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const wavBuffers: Buffer[] = [];
+
+    const writer = new wav.Writer({
+      channels,
+      sampleRate: rate,
+      bitDepth: sampleWidth * 8,
+    });
+
+    const writable = new Writable({
+      write(chunk: Buffer, _encoding, callback) {
+        wavBuffers.push(chunk);
+        callback();
+      },
+    });
+
+    writer.pipe(writable);
+    writer.write(pcmBuffer);
+    writer.end();
+
+    writer.on('finish', () => {
+      const fullWavBuffer = Buffer.concat(wavBuffers);
+      resolve(fullWavBuffer);
+    });
+
+    writer.on('error', (err) => reject(err));
+  });
+}
