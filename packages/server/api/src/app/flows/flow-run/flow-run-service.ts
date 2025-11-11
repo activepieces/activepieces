@@ -159,7 +159,16 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async existsBy(runId: FlowRunId): Promise<boolean> {
         return flowRunRepo().existsBy({ id: runId })
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkRetryParams): Promise<(FlowRun | null)[]> {
+    async bulkArchive({ projectId, flowRunIds }: BulkActionParams): Promise<void> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds)
+        await flowRunRepo().update({
+            id: In(filteredFlowRunIds),
+            projectId,
+        }, {
+            archivedAt: new Date().toISOString(),
+        })
+    },
+    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkActionParams): Promise<(FlowRun | null)[]> {
         const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName)
         return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
@@ -387,7 +396,7 @@ async function filterFlowRunsAndApplyFilters(
     excludeFlowRunIds?: FlowRunId[],
     failedStepName?: string,
 ): Promise<FlowRunId[]> {
-    let query = flowRunRepo().createQueryBuilder('flow_run').where({
+    let query = flowRunRepo().createQueryBuilder('flow_run').select('id').where({
         projectId,
         environment: RunEnvironment.PRODUCTION,
     })
@@ -429,7 +438,7 @@ async function filterFlowRunsAndApplyFilters(
         })
     }
 
-    const flowRuns = await query.getMany()
+    const flowRuns = await query.getRawMany()
     return flowRuns.map(flowRun => flowRun.id)
 }
 
@@ -562,6 +571,7 @@ type AddToQueueParams = {
     sampleData?: Record<string, unknown>
 }
 
+
 type StartParams = {
     flowId: FlowId
     payload: unknown
@@ -595,7 +605,7 @@ type RetryParams = {
     projectId: ProjectId
 }
 
-type BulkRetryParams = {
+type BulkActionParams = {
     projectId: ProjectId
     flowRunIds?: FlowRunId[]
     strategy: FlowRetryStrategy
