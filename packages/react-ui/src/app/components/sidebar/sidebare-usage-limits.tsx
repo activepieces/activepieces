@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { cn, formatUtils } from '@/lib/utils';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
@@ -46,6 +47,7 @@ const getTimeUntilNextReset = (nextResetDate: number) => {
 
 const SidebarUsageLimits = React.memo(() => {
   const { project, isPending } = projectHooks.useCurrentProject();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -100,9 +102,9 @@ const SidebarUsageLimits = React.memo(() => {
             variant={'success'}
           />
           <UsageProgress
-            name={t('Executions')}
-            value={null}
-            max={null}
+            name={t('Active Flows')}
+            value={platform.usage?.activeFlows ?? 0}
+            max={platform?.plan.activeFlowsLimit}
             variant={'success'}
           />
         </div>

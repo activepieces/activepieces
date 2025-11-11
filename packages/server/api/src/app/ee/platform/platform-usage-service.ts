@@ -1,6 +1,6 @@
 import { AIUsage, AIUsageMetadata } from '@activepieces/common-ai'
 import { apDayjs, AppSystemProp } from '@activepieces/server-shared'
-import { AiOverageState, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage, UserStatus } from '@activepieces/shared'
+import { AiOverageState, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, PlatformUsage, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
@@ -14,10 +14,7 @@ import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { mcpRepo } from '../../mcp/mcp-service'
 import { projectService } from '../../project/project-service'
-import { tableRepo } from '../../tables/table/table.service'
-import { userRepo } from '../../user/user-service'
 import { platformPlanService } from './platform-plan/platform-plan.service'
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
@@ -41,20 +38,12 @@ export const platformUsageService = (_log?: FastifyBaseLogger) => ({
         const [
             platformAICreditUsage,
             activeFlows,
-            mcps,
-            projects,
-            seats,
-            tables,
         ] = await Promise.all([
             this.getPlatformUsage({ platformId, metric: 'ai_credits', startDate, endDate }),
             getActiveFlows(platformId),
-            getMCPsCount(platformId),
-            getProjectsCount(platformId),
-            getActiveUsers(platformId),
-            getTables(platformId),
         ])
 
-        return { aiCredits: platformAICreditUsage, activeFlows, mcps, projects, seats, tables }
+        return { aiCredits: platformAICreditUsage, activeFlows }
     },
 
     async resetPlatformUsage(platformId: string): Promise<void> {
@@ -236,41 +225,6 @@ async function getActiveFlows(platformId: string): Promise<number> {
         },
     })
     return activeFlows
-}
-
-async function getTables(platformId: string): Promise<number> {
-    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-    const tables = await tableRepo().count({
-        where: {
-            projectId: In(projectIds),
-        },
-    })
-    return tables
-}
-
-async function getProjectsCount(platformId: string): Promise<number> {
-    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-    return projectIds.length
-}
-
-async function getMCPsCount(platformId: string): Promise<number> {
-    const projectIds = await projectService.getProjectIdsByPlatform(platformId)
-    const mcpIds = await mcpRepo().count({
-        where: {
-            projectId: In(projectIds),
-        },
-    })
-    return mcpIds
-}
-
-async function getActiveUsers(platformId: string): Promise<number> {
-    const activeUsers = await userRepo().count({
-        where: {
-            platformId,
-            status: UserStatus.ACTIVE,
-        },
-    })
-    return activeUsers
 }
 
 function roundToDecimals(value: number, decimals: number): number {
