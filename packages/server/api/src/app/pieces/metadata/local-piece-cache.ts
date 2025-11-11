@@ -3,8 +3,8 @@ import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
-import { repoFactory } from '../../../core/db/repo-factory'
-import { PieceMetadataEntity, PieceMetadataSchema } from '../../piece-metadata-entity'
+import { repoFactory } from '../../core/db/repo-factory'
+import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 
 let cache: PieceMetadataSchema[] = []
 

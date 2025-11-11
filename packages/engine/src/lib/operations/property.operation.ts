@@ -14,7 +14,7 @@ export const propertyOperation = {
         const input = operation as ExecutePropsOptions
         const output = await pieceHelper.executeProps({
             params: input,
-            pieceSource: EngineConstants.PIECE_SOURCES,
+            devPieces: EngineConstants.DEV_PIECES,
             executionState: await testExecutionContext.stateFromFlowVersion({
                 apiUrl: input.internalApiUrl,
                 flowVersion: input.flowVersion,

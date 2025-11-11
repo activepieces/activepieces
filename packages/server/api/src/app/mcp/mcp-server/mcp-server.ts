@@ -27,7 +27,7 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'

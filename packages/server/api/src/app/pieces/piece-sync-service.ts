@@ -10,8 +10,8 @@ import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { PieceMetadataEntity } from './piece-metadata-entity'
-import { pieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataEntity } from './metadata/piece-metadata-entity'
+import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
@@ -19,10 +19,6 @@ const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
-        if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
-            log.info('Piece sync service is disabled')
-            return
-        }
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
             await pieceSyncService(log).sync()
         })

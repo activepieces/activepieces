@@ -10,7 +10,7 @@ import {
     RefreshOAuth2Request,
 } from '../../app-connection/app-connection-service/oauth2/oauth2-service'
 import { credentialsOauth2Service } from '../../app-connection/app-connection-service/oauth2/services/credentials-oauth2-service'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { oauthAppService } from '../oauth-apps/oauth-app.service'
 
 export const platformOAuth2Service = (log: FastifyBaseLogger) => ({
