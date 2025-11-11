@@ -102,9 +102,9 @@ export async function publishPieceFromFolder(
     } catch (error) {
      
         if (axios.isAxiosError(error)) {
-            if (error.response.status === 409) {
+            if (error.response?.status === 409) {
                 console.info(chalk.yellow(`Piece '${packageJson.name}' and '${packageJson.version}' already published.`));
-            } else if (Math.floor(error.response.status / 100) !== 2) {
+            } else if (error.response && Math.floor(error.response.status / 100) !== 2) {
                 console.info(chalk.red(`Error publishing piece '${packageJson.name}',  ${error}` ));
                 if (failOnError) {
                     console.info(chalk.yellow(`Terminating process due to publish failure for piece '${packageJson.name}' (fail-on-error is enabled)`));
