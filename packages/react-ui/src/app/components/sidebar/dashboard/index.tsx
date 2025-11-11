@@ -45,6 +45,7 @@ import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
 import SidebarUsageLimits from '../sidebare-usage-limits';
 
+// Refactor sidebar to new design
 export function ProjectDashboardSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
