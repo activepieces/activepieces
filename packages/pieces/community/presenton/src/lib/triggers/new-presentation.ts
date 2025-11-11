@@ -19,10 +19,6 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    if (lastFetchEpochMS === undefined || lastFetchEpochMS === null) {
-      lastFetchEpochMS = 0;
-    }
-
     const apiKey = auth as string;
 
     const response: any = await makeRequest(
@@ -31,7 +27,7 @@ const polling: Polling<
       '/ppt/presentation/all'
     );
 
-    const itemsArray = response?.results ?? response;
+    const itemsArray = response.results;
 
     return itemsArray.map((item: any) => ({
       epochMilliSeconds: dayjs(item.created_at).valueOf(),
@@ -44,7 +40,7 @@ export const newPresentation = createTrigger({
   auth: presentonAuth,
   name: 'newPresentation',
   displayName: 'New Presentation',
-  description: '',
+  description: 'Triggers when a new presentation is created in Presenton.',
   props: {},
   sampleData: {
     id: '93d4092b-2a20-4637-bbe7-2addb6273761',

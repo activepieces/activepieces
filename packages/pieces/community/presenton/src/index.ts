@@ -4,6 +4,7 @@ import { generatePresentations } from './lib/actions/generate-presentations';
 import { presentonAuth } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';
 import { newPresentation } from './lib/triggers/new-presentation';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const presentation = createPiece({
   displayName: 'Presenton',
@@ -17,6 +18,17 @@ export const presentation = createPiece({
     PieceCategory.CONTENT_AND_FILES,
   ],
   authors: ['sanket-a11y'],
-  actions: [generatePresentations],
+  actions: [
+    generatePresentations,
+    createCustomApiCallAction({
+      auth: presentonAuth,
+      baseUrl: () => 'https://api.presenton.ai/api/v1',
+      authMapping: async (auth) => {
+        return {
+          Authorization: `Bearer ${auth}`,
+        };
+      },
+    }),
+  ],
   triggers: [newPresentation],
 });
