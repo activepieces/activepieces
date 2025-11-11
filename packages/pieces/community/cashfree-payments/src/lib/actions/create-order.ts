@@ -263,20 +263,11 @@ export const createOrder = createAction({
   },
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret } = context.auth as {
-      authType: string;
+    const { clientId, clientSecret } = context.auth as {
       clientId?: string;
       clientSecret?: string;
     };
     
-    // Validate authentication - only client credentials supported for payment operations
-    if (authType !== 'client_credentials') {
-      return {
-        success: false,
-        error: 'Invalid authentication type for payment operations',
-        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
-      };
-    }
     
     if (!clientId || !clientSecret) {
       return {

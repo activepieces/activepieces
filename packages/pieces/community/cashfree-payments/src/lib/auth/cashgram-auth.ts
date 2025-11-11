@@ -24,7 +24,7 @@ export function generateCfSignature(clientId: string, publicKey: string): { sign
     const data = `${clientId}.${timestamp}`;
 
     // Parse the public key exactly like the Java code
-    let publicKeyContent = publicKey.trim();
+    let publicKeyContent = (publicKey).trim();
 
     // Remove all whitespace and header/footer like Java code
     publicKeyContent = publicKeyContent
@@ -90,28 +90,28 @@ export async function generateCashgramToken(
       : 'https://payout-gamma.cashfree.com/payout/v1/authorize';
 
     // Generate x-cf-signature using crypto
-    let signature: string;
-    let timestamp: number;
+    // let signature: string;
+    // let timestamp: number;
 
-    try {
-      const sigResult = generateCfSignature(credentials.clientId, credentials.publicKey);
-      signature = sigResult.signature;
-      timestamp = sigResult.timestamp;
-    } catch (signatureError: any) {
-      console.error('Signature generation error:', signatureError);
-      return {
-        success: false,
-        error: signatureError,
-        message: `Failed to generate x-cf-signature: ${signatureError?.message || 'Unknown error'}. Please check your public key format.`,
-      };
-    }
+    // try {
+    //   const sigResult = generateCfSignature(credentials.clientId, credentials.publicKey);
+    //   signature = sigResult.signature;
+    //   timestamp = sigResult.timestamp;
+    // } catch (signatureError: any) {
+    //   console.error('Signature generation error:', signatureError);
+    //   return {
+    //     success: false,
+    //     error: signatureError,
+    //     message: `Failed to generate x-cf-signature: ${signatureError?.message || 'Unknown error'}. Please check your public key format.`,
+    //   };
+    // }
 
     // Build headers with the generated signature and timestamp
     const headers = {
       'x-client-id': credentials.clientId,
       'x-client-secret': credentials.clientSecret,
-      'x-cf-signature': signature,
-      'x-cf-timestamp': timestamp.toString(),
+      // 'x-cf-signature': signature,
+      // 'x-cf-timestamp': timestamp.toString(),
       'Content-Type': 'application/json',
     };
 
@@ -121,7 +121,7 @@ export async function generateCashgramToken(
       headers: headers,
       body: {},
     });
-
+    
     if (response.status === 200 && response.body?.data?.token) {
       return {
         success: true,
@@ -157,48 +157,48 @@ export function validateAuthCredentials(authType: string, credentials: {
   error?: string;
 } {
   if (authType === 'client_credentials') {
-    if (!credentials.clientId || credentials.clientId.trim().length === 0) {
+    if (!credentials.clientId || (credentials.clientId).trim().length === 0) {
       return {
         isValid: false,
         error: 'Client ID is required for Client Credentials authentication',
       };
     }
 
-    if (!credentials.clientSecret || credentials.clientSecret.trim().length === 0) {
+    if (!credentials.clientSecret || (credentials.clientSecret).trim().length === 0) {
       return {
         isValid: false,
         error: 'Client Secret is required for Client Credentials authentication',
       };
     }
   } else if (authType === 'client_credentials_with_public_key') {
-    if (!credentials.clientId || credentials.clientId.trim().length === 0) {
+    if (!credentials.clientId || (credentials.clientId).trim().length === 0) {
       return {
         isValid: false,
         error: 'Client ID is required for Client Credentials + Public Key authentication',
       };
     }
 
-    if (!credentials.clientSecret || credentials.clientSecret.trim().length === 0) {
+    if (!credentials.clientSecret || (credentials.clientSecret).trim().length === 0) {
       return {
         isValid: false,
         error: 'Client Secret is required for Client Credentials + Public Key authentication',
       };
     }
 
-    if (!credentials.publicKey || credentials.publicKey.trim().length === 0) {
+    if (!credentials.publicKey || (credentials.publicKey).trim().length === 0) {
       return {
         isValid: false,
         error: 'Public Key is required for Client Credentials + Public Key authentication',
       };
     }
 
-    // Basic validation for PEM format
-    if (!credentials.publicKey.includes('-----BEGIN') || !credentials.publicKey.includes('-----END')) {
-      return {
-        isValid: false,
-        error: 'Public Key must be in PEM format (including BEGIN/END markers)',
-      };
-    }
+    // // Basic validation for PEM format
+    // if (!credentials.publicKey.includes('-----BEGIN') || !credentials.publicKey.includes('-----END')) {
+    //   return {
+    //     isValid: false,
+    //     error: 'Public Key must be in PEM format (including BEGIN/END markers)',
+    //   };
+    // }
   }
 
   return {

@@ -27,7 +27,7 @@ export const createCashgram = createAction({
         ],
       },
     }),
-    
+
     // Required Fields
     cashgramId: Property.ShortText({
       displayName: 'Cashgram ID',
@@ -54,7 +54,7 @@ export const createCashgram = createAction({
       description: 'Date to expire the cashgram link. Format: YYYY/MM/DD (maximum 30 days from creation)',
       required: true,
     }),
-    
+
     // Optional Fields
     email: Property.ShortText({
       displayName: 'Email',
@@ -73,25 +73,25 @@ export const createCashgram = createAction({
       defaultValue: true,
     }),
   },
-  
+
   async run(context) {
     // Get authentication values from piece-level auth
-    const { 
-      authType, 
+    const {
+
       clientId,
       clientSecret,
       publicKey
     } = context.auth as {
-      authType: string;
+
       clientId?: string;
       clientSecret?: string;
       publicKey?: string;
     };
 
-    let finalBearerToken: string;
+    // const finalBearerToken: string;
 
     // Validate credentials based on auth type
-    const validation = validateAuthCredentials(authType, {
+    const validation = validateAuthCredentials("client_credentials", {
       clientId,
       clientSecret,
       publicKey,
@@ -105,47 +105,29 @@ export const createCashgram = createAction({
       };
     }
 
-    // Handle different authentication types
-    if (authType === 'client_credentials') {
-      // For regular payment operations - not supported for Cashgram
+    const { environment } = context.propsValue;
+
+    const tokenResponse = await generateCashgramToken(
+      {
+        clientId: clientId!,
+        clientSecret: clientSecret!,
+        publicKey: publicKey!,
+      },
+      environment as 'sandbox' | 'production'
+    );
+
+    if (!tokenResponse.success || !tokenResponse.token) {
       return {
         success: false,
-        error: 'Invalid authentication type for Cashgram API',
-        message: 'Cashgram operations require "Client Credentials + Public Key" authentication. Please select the appropriate authentication method and provide your public key.',
-      };
-    } else if (authType === 'client_credentials_with_public_key') {
-      // Generate bearer token using client credentials and public key
-      const { environment } = context.propsValue;
-
-      const tokenResponse = await generateCashgramToken(
-        {
-          clientId: clientId!,
-          clientSecret: clientSecret!,
-          publicKey: publicKey!,
-        },
-        environment as 'sandbox' | 'production'
-      );
-
-      if (!tokenResponse.success || !tokenResponse.token) {
-        return {
-          success: false,
-          error: tokenResponse.error,
-          message: tokenResponse.message || 'Failed to generate bearer token for Cashgram authentication',
-        };
-      }
-
-      finalBearerToken = tokenResponse.token;
-    } else {
-      return {
-        success: false,
-        error: 'Invalid authentication type for Cashgram API',
-        message: 'Cashgram API requires "Client Credentials + Public Key" authentication.',
+        error: tokenResponse.error,
+        message: tokenResponse.message || 'Failed to generate bearer token for Cashgram authentication',
       };
     }
 
-    // Get action-specific values from props
+    const finalBearerToken = tokenResponse.token;
+
     const {
-      environment,
+
       cashgramId,
       amount,
       name,
@@ -243,7 +225,7 @@ export const createCashgram = createAction({
     }
 
     // Determine the base URL based on environment
-    const baseUrl = environment === 'production' 
+    const baseUrl = environment === 'production'
       ? 'https://payout-api.cashfree.com/payout/v1/createCashgram'
       : 'https://payout-gamma.cashfree.com/payout/v1/createCashgram';
 
@@ -259,7 +241,7 @@ export const createCashgram = createAction({
     // Add optional fields
     if (email) requestBody.email = email;
     if (remarks) requestBody.remarks = remarks;
-    if (notifyCustomer !== undefined) requestBody.notifyCustomer = notifyCustomer;
+    if (notifyCustomer !== undefined) requestBody.notifyCustomer = notifyCustomer ? 1 : 0;
 
     // Build headers
     const headers: any = {
@@ -281,23 +263,7 @@ export const createCashgram = createAction({
         return {
           success: true,
           data: responseData,
-          message: responseData?.message || 'Cashgram created successfully',
-          
-          // Response details
-          status: responseData?.status,
-          subCode: responseData?.subCode,
-          referenceId: responseData?.data?.referenceId,
-          cashgramLink: responseData?.data?.cashgramLink,
-          
-          // Request details for reference
-          cashgramId: cashgramId,
-          amount: amount,
-          contactName: name,
-          contactPhone: phone,
-          contactEmail: email,
-          linkExpiryDate: linkExpiry,
-          remarks: remarks,
-          customerNotified: notifyCustomer,
+
         };
       } else {
         // Handle specific error cases

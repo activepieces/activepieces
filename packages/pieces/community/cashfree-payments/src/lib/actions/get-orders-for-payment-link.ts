@@ -26,14 +26,14 @@ export const getOrdersForPaymentLink = createAction({
         ],
       },
     }),
-    
+
     // Required Fields
     linkId: Property.ShortText({
       displayName: 'Payment Link ID',
       description: 'The payment link ID for which you want to view the order details',
       required: true,
     }),
-    
+
     // Optional Query Parameters
     status: Property.StaticDropdown({
       displayName: 'Order Status Filter',
@@ -54,7 +54,7 @@ export const getOrdersForPaymentLink = createAction({
         ],
       },
     }),
-    
+
     // Optional Headers
     requestId: Property.ShortText({
       displayName: 'Request ID',
@@ -67,24 +67,16 @@ export const getOrdersForPaymentLink = createAction({
       required: false,
     }),
   },
-  
+
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret } = context.auth as {
+    const { clientId, clientSecret } = context.auth as {
       authType: string;
       clientId?: string;
       clientSecret?: string;
     };
-    
-    // Validate authentication - only client credentials supported for payment operations
-    if (authType !== 'client_credentials') {
-      return {
-        success: false,
-        error: 'Invalid authentication type for payment operations',
-        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
-      };
-    }
-    
+
+
     if (!clientId || !clientSecret) {
       return {
         success: false,
@@ -112,7 +104,7 @@ export const getOrdersForPaymentLink = createAction({
     }
 
     // Determine the base URL based on environment
-    let baseUrl = environment === 'production' 
+    let baseUrl = environment === 'production'
       ? `https://api.cashfree.com/pg/links/${linkId}/orders`
       : `https://sandbox.cashfree.com/pg/links/${linkId}/orders`;
 
@@ -121,7 +113,7 @@ export const getOrdersForPaymentLink = createAction({
     if (status && status !== 'PAID') {
       queryParams.append('status', status);
     }
-    
+
     if (queryParams.toString()) {
       baseUrl += `?${queryParams.toString()}`;
     }
@@ -147,17 +139,17 @@ export const getOrdersForPaymentLink = createAction({
 
       if (response.status === 200) {
         const ordersData = response.body;
-        
+
         // Extract orders array and metadata
         const orders = Array.isArray(ordersData) ? ordersData : ordersData?.orders || [];
         const totalOrders = orders.length;
-        
+
         // Calculate summary statistics
         let totalAmount = 0;
         let paidAmount = 0;
         let paidOrdersCount = 0;
         const orderStatuses = new Set();
-        
+
         orders.forEach((order: any) => {
           if (order.order_amount) totalAmount += parseFloat(order.order_amount);
           if (order.order_status) orderStatuses.add(order.order_status);
@@ -171,7 +163,7 @@ export const getOrdersForPaymentLink = createAction({
           success: true,
           data: ordersData,
           message: `Found ${totalOrders} order(s) for payment link`,
-          
+
           // Summary information
           summary: {
             totalOrders: totalOrders,
@@ -180,14 +172,14 @@ export const getOrdersForPaymentLink = createAction({
             paidAmount: paidAmount,
             orderStatuses: Array.from(orderStatuses),
           },
-          
+
           // Individual orders
           orders: orders,
-          
+
           // Request parameters for reference
           linkId: linkId,
           statusFilter: status || 'PAID',
-          
+
           // Quick access to key order information
           orderIds: orders.map((order: any) => order.order_id).filter(Boolean),
           customerIds: [...new Set(orders.map((order: any) => order.customer_details?.customer_id).filter(Boolean))],

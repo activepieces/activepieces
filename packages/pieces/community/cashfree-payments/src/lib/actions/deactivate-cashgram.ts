@@ -27,7 +27,7 @@ export const deactivateCashgram = createAction({
         ],
       },
     }),
-    
+
     // Required Fields
     cashgramId: Property.ShortText({
       displayName: 'Cashgram ID',
@@ -35,25 +35,25 @@ export const deactivateCashgram = createAction({
       required: true,
     }),
   },
-  
+
   async run(context) {
     // Get authentication values from piece-level auth
-    const { 
-      authType, 
+    const {
+      
       clientId,
       clientSecret,
       publicKey
     } = context.auth as {
-      authType: string;
+     
       clientId?: string;
       clientSecret?: string;
       publicKey?: string;
     };
 
-    let finalBearerToken: string;
+
 
     // Validate credentials based on auth type
-    const validation = validateAuthCredentials(authType, {
+    const validation = validateAuthCredentials('client_credentials', {
       clientId,
       clientSecret,
       publicKey,
@@ -66,50 +66,27 @@ export const deactivateCashgram = createAction({
         message: validation.error,
       };
     }
+    const { environment, cashgramId } = context.propsValue;
 
-    // Handle different authentication types
-    if (authType === 'client_credentials') {
-      // For regular payment operations - not supported for Cashgram
+    const tokenResponse = await generateCashgramToken(
+      {
+        clientId: clientId!,
+        clientSecret: clientSecret!,
+        publicKey: publicKey!,
+      },
+      environment as 'sandbox' | 'production'
+    );
+
+    if (!tokenResponse.success || !tokenResponse.token) {
       return {
         success: false,
-        error: 'Invalid authentication type for Cashgram API',
-        message: 'Cashgram operations require "Client Credentials + Public Key" authentication. Please select the appropriate authentication method and provide your public key.',
-      };
-    } else if (authType === 'client_credentials_with_public_key') {
-      // Generate bearer token using client credentials and public key
-      const { environment } = context.propsValue;
-
-      const tokenResponse = await generateCashgramToken(
-        {
-          clientId: clientId!,
-          clientSecret: clientSecret!,
-          publicKey: publicKey!,
-        },
-        environment as 'sandbox' | 'production'
-      );
-
-      if (!tokenResponse.success || !tokenResponse.token) {
-        return {
-          success: false,
-          error: tokenResponse.error,
-          message: tokenResponse.message || 'Failed to generate bearer token for Cashgram authentication',
-        };
-      }
-
-      finalBearerToken = tokenResponse.token;
-    } else {
-      return {
-        success: false,
-        error: 'Invalid authentication type for Cashgram API',
-        message: 'Cashgram API requires "Client Credentials + Public Key" authentication.',
+        error: tokenResponse.error,
+        message: tokenResponse.message || 'Failed to generate bearer token for Cashgram authentication',
       };
     }
 
-    // Get action-specific values from props
-    const {
-      environment,
-      cashgramId,
-    } = context.propsValue;
+    const finalBearerToken = tokenResponse.token;
+
 
     // Validate cashgram ID format
     if (!cashgramId || cashgramId.trim().length === 0) {
@@ -139,7 +116,7 @@ export const deactivateCashgram = createAction({
     }
 
     // Determine the base URL based on environment
-    const baseUrl = environment === 'production' 
+    const baseUrl = environment === 'production'
       ? 'https://payout-api.cashfree.com/payout/v1/deactivateCashgram'
       : 'https://payout-gamma.cashfree.com/payout/v1/deactivateCashgram';
 
@@ -169,15 +146,7 @@ export const deactivateCashgram = createAction({
           success: true,
           data: responseData,
           message: responseData?.message || 'Cashgram deactivated successfully',
-          
-          // Response details
-          status: responseData?.status,
-          subCode: responseData?.subCode,
-          
-          // Request details for reference
-          cashgramId: cashgramId,
-          deactivatedAt: new Date().toISOString(),
-          environment: environment,
+
         };
       } else {
         // Handle specific error cases

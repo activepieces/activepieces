@@ -26,7 +26,7 @@ export const createRefund = createAction({
         ],
       },
     }),
-    
+
     // Required Fields
     orderId: Property.ShortText({
       displayName: 'Order ID',
@@ -43,7 +43,7 @@ export const createRefund = createAction({
       description: 'An unique ID to associate the refund with. Provide alphanumeric values (3-40 characters)',
       required: true,
     }),
-    
+
     // Optional Fields
     refundNote: Property.ShortText({
       displayName: 'Refund Note',
@@ -69,21 +69,21 @@ export const createRefund = createAction({
         ],
       },
     }),
-    
+
     // Refund Splits
     refundSplits: Property.LongText({
       displayName: 'Refund Splits',
       description: 'JSON array for vendor splits. Example: [{"vendor_id":"vendor1","amount":100},{"vendor_id":"vendor2","percentage":25}]',
       required: false,
     }),
-    
+
     // Custom Tags
     tags: Property.LongText({
       displayName: 'Custom Tags',
       description: 'Custom Tags in JSON format {"key":"value"}. Maximum 10 tags allowed. Example: {"refund_reason":"customer_request","processed_by":"admin"}',
       required: false,
     }),
-    
+
     // Request Headers
     requestId: Property.ShortText({
       displayName: 'Request ID',
@@ -96,24 +96,17 @@ export const createRefund = createAction({
       required: false,
     }),
   },
-  
+
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret } = context.auth as {
-      authType: string;
+    const { clientId, clientSecret } = context.auth as {
+
       clientId?: string;
       clientSecret?: string;
     };
-    
-    // Validate authentication - only client credentials supported for payment operations
-    if (authType !== 'client_credentials') {
-      return {
-        success: false,
-        error: 'Invalid authentication type for payment operations',
-        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
-      };
-    }
-    
+
+
+
     if (!clientId || !clientSecret) {
       return {
         success: false,
@@ -164,7 +157,7 @@ export const createRefund = createAction({
     }
 
     // Determine the base URL based on environment
-    const baseUrl = environment === 'production' 
+    const baseUrl = environment === 'production'
       ? `https://api.cashfree.com/pg/orders/${orderId}/refunds`
       : `https://sandbox.cashfree.com/pg/orders/${orderId}/refunds`;
 
@@ -173,7 +166,7 @@ export const createRefund = createAction({
     if (refundSplits) {
       try {
         parsedRefundSplits = JSON.parse(refundSplits);
-        
+
         // Validate refund splits structure
         if (!Array.isArray(parsedRefundSplits)) {
           return {
@@ -182,7 +175,7 @@ export const createRefund = createAction({
             message: 'Refund splits must be a JSON array',
           };
         }
-        
+
         // Validate each split entry
         for (const split of parsedRefundSplits) {
           if (!split.vendor_id) {
@@ -192,7 +185,7 @@ export const createRefund = createAction({
               message: 'Each refund split must have a vendor_id',
             };
           }
-          
+
           if (!split.amount && !split.percentage) {
             return {
               success: false,
@@ -215,7 +208,7 @@ export const createRefund = createAction({
     if (tags) {
       try {
         parsedTags = JSON.parse(tags);
-        
+
         // Validate tags structure
         if (typeof parsedTags !== 'object' || Array.isArray(parsedTags)) {
           return {
@@ -224,7 +217,7 @@ export const createRefund = createAction({
             message: 'Tags must be a JSON object',
           };
         }
-        
+
         // Validate maximum 10 tags
         if (Object.keys(parsedTags).length > 10) {
           return {
@@ -279,22 +272,7 @@ export const createRefund = createAction({
         return {
           success: true,
           data: response.body,
-          message: 'Refund initiated successfully',
-          cf_refund_id: response.body?.cf_refund_id,
-          refund_id: response.body?.refund_id,
-          order_id: response.body?.order_id,
-          refund_status: response.body?.refund_status,
-          refund_amount: response.body?.refund_amount,
-          refund_note: response.body?.refund_note,
-          refund_speed: response.body?.refund_speed,
-          status_description: response.body?.status_description,
-          metadata: response.body?.metadata,
-          refund_splits: response.body?.refund_splits,
-          refund_arn: response.body?.refund_arn,
-          refund_charge: response.body?.refund_charge,
-          refund_mode: response.body?.refund_mode,
-          created_at: response.body?.created_at,
-          processed_at: response.body?.processed_at,
+          message: 'Refund created successfully',
         };
       } else {
         return {

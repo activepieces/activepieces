@@ -49,20 +49,13 @@ export const fetchPaymentLinkDetails = createAction({
   
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret } = context.auth as {
-      authType: string;
+    const {  clientId, clientSecret } = context.auth as {
+      
       clientId?: string;
       clientSecret?: string;
     };
     
-    // Validate authentication - only client credentials supported for payment operations
-    if (authType !== 'client_credentials') {
-      return {
-        success: false,
-        error: 'Invalid authentication type for payment operations',
-        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
-      };
-    }
+    
     
     if (!clientId || !clientSecret) {
       return {
@@ -120,40 +113,6 @@ export const fetchPaymentLinkDetails = createAction({
           data: linkData,
           message: 'Payment link details fetched successfully',
           
-          // Main link information
-          cf_link_id: linkData?.cf_link_id,
-          link_id: linkData?.link_id,
-          link_status: linkData?.link_status,
-          link_currency: linkData?.link_currency,
-          link_amount: linkData?.link_amount,
-          link_amount_paid: linkData?.link_amount_paid,
-          link_partial_payments: linkData?.link_partial_payments,
-          link_minimum_partial_amount: linkData?.link_minimum_partial_amount,
-          link_purpose: linkData?.link_purpose,
-          link_created_at: linkData?.link_created_at,
-          link_expiry_time: linkData?.link_expiry_time,
-          link_notes: linkData?.link_notes,
-          link_auto_reminders: linkData?.link_auto_reminders,
-          
-          // Customer details
-          customer_details: linkData?.customer_details,
-          
-          // Link configuration
-          link_notify: linkData?.link_notify,
-          link_meta: linkData?.link_meta,
-          
-          // Financial details
-          order_splits: linkData?.order_splits,
-          
-          // Payment URL
-          link_url: linkData?.link_url,
-          
-          // Additional metadata
-          tags: linkData?.tags,
-          
-          // Link activity summary
-          link_qr_code: linkData?.link_qr_code,
-          link_utm: linkData?.link_utm,
         };
       } else {
         // Handle specific error cases

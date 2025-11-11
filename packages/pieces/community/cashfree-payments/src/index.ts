@@ -14,27 +14,27 @@ import { deactivateCashgram } from "./lib/actions/deactivate-cashgram"
 export const cashfreeTriggers = createPiece({
   displayName: "Cashfree Payments",
   auth: PieceAuth.CustomAuth({
-    description: 'Choose your Cashfree authentication method',
+    description: `Enter  your Cashfree authentication method. Each Cashfree product requires its own unique client ID and client secret. For example, if you are using both the Payments API and the Payouts API, you must generate separate credentials for each. This means one set of keys for the Payments API and a different set of keys for the Payouts API.`,
     props: {
-      authType: Property.StaticDropdown({
-        displayName: 'Authentication Type',
-        description: 'Choose authentication method based on your use case',
-        required: true,
-        defaultValue: 'client_credentials',
-        options: {
-          disabled: false,
-          options: [
-            {
-              label: 'Client Credentials',
-              value: 'client_credentials',
-            },
-            {
-              label: 'Client Credentials + Public Key',
-              value: 'client_credentials_with_public_key',
-            },
-          ],
-        },
-      }),
+      // authType: Property.StaticDropdown({
+      //   displayName: 'Authentication Type',
+      //   description: 'Choose authentication method based on your use case',
+      //   required: true,
+      //   defaultValue: 'client_credentials',
+      //   options: {
+      //     disabled: false,
+      //     options: [
+      //       {
+      //         label: 'Client Credentials',
+      //         value: 'client_credentials',
+      //       },
+      //       {
+      //         label: 'Client Credentials + Public Key',
+      //         value: 'client_credentials_with_public_key',
+      //       },
+      //     ],
+      //   },
+      // }),
       clientId: Property.ShortText({
         displayName: 'Cashfree Client ID',
         description: 'Your Cashfree Client ID',
@@ -45,17 +45,17 @@ export const cashfreeTriggers = createPiece({
         description: 'Your Cashfree Client Secret',
         required: false,
       }),
-      publicKey: Property.LongText({
-        displayName: 'Public Key',
-        description: 'Your Cashfree public key in PEM format (required for Cashgram operations)',
-        required: false,
-      }),
+      // publicKey: Property.LongText({
+      //   displayName: 'Public Key',
+      //   description: 'Your Cashfree public key in PEM format (required for Cashgram operations)',
+      //   required: false,
+      // }),
     },
     required: true,
   }),
   minimumSupportedRelease: '0.36.1',
   logoUrl:
-    'https://cdn.activepieces.com/pieces/cashfreepayments.png',
+    'https://cdn.activepieces.com/pieces/cashfree-payments.png',
   authors: ['kartikvyas','sanket-a11y'],
   actions: [
     createOrder,

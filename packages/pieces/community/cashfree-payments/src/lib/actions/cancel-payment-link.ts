@@ -49,20 +49,11 @@ export const cancelPaymentLink = createAction({
   
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret } = context.auth as {
-      authType: string;
+    const {  clientId, clientSecret } = context.auth as {
+     
       clientId?: string;
       clientSecret?: string;
     };
-    
-    // Validate authentication - only client credentials supported for payment operations
-    if (authType !== 'client_credentials') {
-      return {
-        success: false,
-        error: 'Invalid authentication type for payment operations',
-        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
-      };
-    }
     
     if (!clientId || !clientSecret) {
       return {
@@ -119,23 +110,6 @@ export const cancelPaymentLink = createAction({
           success: true,
           data: response.body,
           message: 'Payment link cancelled successfully',
-          cf_link_id: response.body?.cf_link_id,
-          link_id: response.body?.link_id,
-          link_status: response.body?.link_status,
-          link_currency: response.body?.link_currency,
-          link_amount: response.body?.link_amount,
-          link_amount_paid: response.body?.link_amount_paid,
-          link_partial_payments: response.body?.link_partial_payments,
-          link_minimum_partial_amount: response.body?.link_minimum_partial_amount,
-          link_purpose: response.body?.link_purpose,
-          link_created_at: response.body?.link_created_at,
-          link_expiry_time: response.body?.link_expiry_time,
-          link_notes: response.body?.link_notes,
-          link_auto_reminders: response.body?.link_auto_reminders,
-          link_notify: response.body?.link_notify,
-          customer_details: response.body?.customer_details,
-          link_meta: response.body?.link_meta,
-          order_splits: response.body?.order_splits,
         };
       } else {
         // Handle specific error cases

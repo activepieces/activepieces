@@ -26,14 +26,14 @@ export const getAllRefundsForOrder = createAction({
         ],
       },
     }),
-    
+
     // Required Fields
     orderId: Property.ShortText({
       displayName: 'Order ID',
       description: 'The ID which uniquely identifies your order',
       required: true,
     }),
-    
+
     // Optional Headers
     requestId: Property.ShortText({
       displayName: 'Request ID',
@@ -46,24 +46,16 @@ export const getAllRefundsForOrder = createAction({
       required: false,
     }),
   },
-  
+
   async run(context) {
     // Get authentication values from piece-level auth
-    const { authType, clientId, clientSecret } = context.auth as {
-      authType: string;
+    const { clientId, clientSecret } = context.auth as {
+
       clientId?: string;
       clientSecret?: string;
     };
-    
-    // Validate authentication - only client credentials supported for payment operations
-    if (authType !== 'client_credentials') {
-      return {
-        success: false,
-        error: 'Invalid authentication type for payment operations',
-        message: 'Payment operations require "Client Credentials" authentication. Please select the appropriate authentication method.',
-      };
-    }
-    
+
+
     if (!clientId || !clientSecret) {
       return {
         success: false,
@@ -90,7 +82,7 @@ export const getAllRefundsForOrder = createAction({
     }
 
     // Determine the base URL based on environment
-    const baseUrl = environment === 'production' 
+    const baseUrl = environment === 'production'
       ? `https://api.cashfree.com/pg/orders/${orderId}/refunds`
       : `https://sandbox.cashfree.com/pg/orders/${orderId}/refunds`;
 
@@ -115,11 +107,11 @@ export const getAllRefundsForOrder = createAction({
 
       if (response.status === 200) {
         const refundsData = response.body;
-        
+
         // Extract refunds array and metadata
         const refunds = Array.isArray(refundsData) ? refundsData : refundsData?.refunds || [];
         const totalRefunds = refunds.length;
-        
+
         // Calculate summary statistics
         let totalRefundAmount = 0;
         let successfulRefunds = 0;
@@ -128,17 +120,17 @@ export const getAllRefundsForOrder = createAction({
         const refundStatuses = new Set();
         const refundModes = new Set();
         const refundSpeeds = new Set();
-        
+
         refunds.forEach((refund: any) => {
           // Calculate amounts
           if (refund.refund_amount) {
             totalRefundAmount += parseFloat(refund.refund_amount);
           }
-          
+
           // Track statuses
           if (refund.refund_status) {
             refundStatuses.add(refund.refund_status);
-            
+
             // Count by status
             const status = refund.refund_status.toUpperCase();
             if (status === 'SUCCESS' || status === 'PROCESSED') {
@@ -149,7 +141,7 @@ export const getAllRefundsForOrder = createAction({
               failedRefunds++;
             }
           }
-          
+
           // Track refund modes and speeds
           if (refund.refund_mode) refundModes.add(refund.refund_mode);
           if (refund.refund_speed) refundSpeeds.add(refund.refund_speed);
@@ -165,7 +157,7 @@ export const getAllRefundsForOrder = createAction({
           success: true,
           data: refundsData,
           message: `Found ${totalRefunds} refund(s) for order ${orderId}`,
-          
+
           // Summary information
           summary: {
             totalRefunds: totalRefunds,
@@ -178,18 +170,18 @@ export const getAllRefundsForOrder = createAction({
             refundModes: Array.from(refundModes),
             refundSpeeds: Array.from(refundSpeeds),
           },
-          
+
           // Individual refunds
           refunds: refunds,
-          
+
           // Request parameters for reference
           orderId: orderId,
-          
+
           // Quick access to key refund information
           refundIds: refundIds,
           latestRefund: refunds.length > 0 ? refunds[refunds.length - 1] : null,
           oldestRefund: refunds.length > 0 ? refunds[0] : null,
-          
+
           // Financial summary
           financialSummary: {
             totalRefunded: totalRefundAmount,
