@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { CircleHelp, Zap } from 'lucide-react';
+import { CircleHelp, Plus, Zap } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -10,13 +10,10 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  BillingCycle,
-  PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP,
-} from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
-import { useManagePlanDialogStore } from './upgrade-dialog/store';
+import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
 
 type BusinessActiveFlowsProps = {
   platformSubscription: PlatformBillingInformation;
@@ -25,16 +22,13 @@ type BusinessActiveFlowsProps = {
 export function ActiveFlowAddon({
   platformSubscription,
 }: BusinessActiveFlowsProps) {
-  const PRICE_PER_EXTRA_5_ACTIVE_FLOWS =
-    PRICE_PER_EXTRA_5_ACTIVE_FLOWS_MAP[
-      platformSubscription.plan.stripeBillingCycle as BillingCycle
-    ];
-  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
+  const { openDialog } = useManagePlanDialogStore();
+
   const { plan, usage } = platformSubscription;
   const currentActiveFlows = usage.activeFlows || 0;
-  const activeFlowsLimit = plan.activeFlowsLimit ?? 10;
+  const activeFlowsLimit = plan.activeFlowsLimit;
   const usagePercentage =
-    activeFlowsLimit > 0
+    !isNil(activeFlowsLimit) && activeFlowsLimit > 0
       ? Math.round((currentActiveFlows / activeFlowsLimit) * 100)
       : 0;
 
@@ -53,8 +47,15 @@ export function ActiveFlowAddon({
               </p>
             </div>
           </div>
-          <Button variant="link" onClick={() => openDialog({ step: 2 })}>
-            {t('Extra Flows?')}
+          <Button
+            variant="default"
+            className="gap-2"
+            onClick={() => {
+              openDialog();
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            {t('Manage Active Flows')}
           </Button>
         </div>
       </CardHeader>
@@ -69,7 +70,7 @@ export function ActiveFlowAddon({
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
                   {t(
-                    `Count of active flows, $${PRICE_PER_EXTRA_5_ACTIVE_FLOWS} for extra 5 active flows`,
+                    `Count of active flows, $${PRICE_PER_EXTRA_ACTIVE_FLOWS} for extra 5 active flows`,
                   )}
                 </TooltipContent>
               </Tooltip>
@@ -78,8 +79,10 @@ export function ActiveFlowAddon({
           <div className="rounded-lg space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">
-                {currentActiveFlows.toLocaleString()}{' '}
-                {`/ ${activeFlowsLimit.toLocaleString()}`}
+                {currentActiveFlows.toLocaleString()} /{' '}
+                {isNil(activeFlowsLimit)
+                  ? 'Unlimited'
+                  : activeFlowsLimit.toLocaleString()}
               </span>
               <span className="text-xs font-medium text-muted-foreground">
                 {t('Plan Limit')}
@@ -88,7 +91,7 @@ export function ActiveFlowAddon({
             <Progress value={usagePercentage} className="w-full" />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {`${usagePercentage}% of plan allocation used`}
+                {usagePercentage}% of plan allocation used
               </span>
               {usagePercentage > 80 && (
                 <span className="text-destructive font-medium">
