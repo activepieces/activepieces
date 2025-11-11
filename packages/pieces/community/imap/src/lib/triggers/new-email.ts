@@ -57,6 +57,16 @@ const polling: Polling<
   },
 };
 
+// This wrapper's only purpose is to reverse the messages array to ensure that
+// test polling returns the 5 most recent messages.
+const testPolling: typeof polling = {
+  ...polling,
+  items: async (...args) => {
+    const messages = await polling.items(...args);
+    return messages.reverse();
+  },
+};
+
 export const newEmail = createTrigger({
   auth: imapAuth,
   name: 'new_email',
@@ -66,7 +76,7 @@ export const newEmail = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async test(context) {
-    const messages = await pollingHelper.test(polling, context);
+    const messages = await pollingHelper.test(testPolling, context);
     return enrichAttachments(messages as Message[], context.files);
   },
 

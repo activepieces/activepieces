@@ -1,12 +1,11 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, ProgressUpdateType, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowRun, FlowStatus, FlowVersionId, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProgressUpdateType, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
-import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue/job-queue'
@@ -48,9 +47,8 @@ export const webhookHandler = {
             },
         }, async (span) => {
             try {
-                const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure } = params
+                const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure, platformId } = params
 
-                const platformId = await projectService.getPlatformId(flow.projectId)
                 span.setAttribute('webhook.platformId', platformId)
                 
                 // Inject trace context for propagation across queue boundary
@@ -103,7 +101,7 @@ export const webhookHandler = {
             },
         }, async (span) => {
             try {
-                const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure } = params
+                const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData, flowVersionToRun, parentRunId, failParentOnFailure, platformId } = params
 
                 if (saveSampleData) {
                     rejectedPromiseHandler(savePayload({
@@ -111,6 +109,7 @@ export const webhookHandler = {
                         logger,
                         webhookRequestId,
                         payload,
+                        platformId,
                         flowVersionIdToRun,
                         runEnvironment,
                         parentRunId,
@@ -130,6 +129,7 @@ export const webhookHandler = {
                 }
 
                 const createdRun = await flowRunService(logger).start({
+                    platformId,
                     environment: runEnvironment,
                     flowId: flow.id,
                     flowVersionId: flowVersionIdToRun,
@@ -161,7 +161,7 @@ export const webhookHandler = {
 }
 
 async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | 'webhookHeader' | 'execute'>): Promise<void> {
-    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, parentRunId, failParentOnFailure } = params
+    const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, runEnvironment, parentRunId, failParentOnFailure, platformId } = params
     await webhookHandler.handleAsync({
         flow,
         logger,
@@ -172,6 +172,7 @@ async function savePayload(params: Omit<AsyncWebhookParams, 'saveSampleData' | '
         runEnvironment,
         execute: false,
         webhookHeader: '',
+        platformId,
         parentRunId,
         failParentOnFailure,
     })
@@ -183,6 +184,7 @@ type AsyncWebhookParams = {
     flow: Flow
     logger: FastifyBaseLogger
     webhookRequestId: string
+    platformId: PlatformId
     payload: unknown
     flowVersionIdToRun: FlowVersionId
     webhookHeader: string
@@ -199,6 +201,7 @@ type SyncWebhookParams = {
     saveSampleData: boolean
     projectId: ProjectId
     runEnvironment: RunEnvironment
+    platformId: PlatformId
     flowVersionToRun: WebhookFlowVersionToRun
     flow: Flow
     logger: FastifyBaseLogger

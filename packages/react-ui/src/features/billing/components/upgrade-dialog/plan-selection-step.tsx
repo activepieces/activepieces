@@ -5,8 +5,8 @@ import { FC } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { BillingCycle, PlanName } from '@activepieces/ee-shared';
-import { isNil } from '@activepieces/shared';
+import { BillingCycle } from '@activepieces/ee-shared';
+import { isNil, PlanName } from '@activepieces/shared';
 
 import { planData } from './data';
 

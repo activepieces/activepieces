@@ -1,8 +1,7 @@
 import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/common-ai'
-import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, PlanName, SetAiCreditsOverageLimitParamsSchema, StartTrialParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
+import { BillingCycle, CreateSubscriptionParamsSchema, getPlanLimits, SetAiCreditsOverageLimitParamsSchema, ToggleAiCreditsOverageEnabledParamsSchema, UpdateSubscriptionParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlanName, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
@@ -14,7 +13,7 @@ import { stripeHelper } from './stripe-helper'
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
-    fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
+    fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
         const [platformPlan, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
@@ -36,7 +35,11 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         return response
     })
 
-    fastify.post('/portal', {}, async (request) => {
+    fastify.post('/portal', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER] as const,
+        },
+    }, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
     })
 
@@ -220,27 +223,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         })
     })
 
-    fastify.post('/start-trial', StartTrialRequest, async (request) => {
-        const { plan } = request.body
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        
-        if (isNil(platformBilling.eligibleForTrial)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Platform is not eligible for trial',
-                },
-            })
-        }
-
-        const customerId = platformBilling.stripeCustomerId
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-
-        await stripeHelper(request.log).startTrial({ customerId, platformId: platformBilling.platformId, plan, existingSubscriptionId: platformBilling.stripeSubscriptionId })
-
-        return { success: true }
-    })
-
     fastify.get('/ai-credits-usage', ListAIUsageRequest, async (request) => {
         const { limit, cursor } = request.query
         const platformId = request.principal.platform.id
@@ -255,7 +237,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
 const InfoRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
@@ -267,7 +249,7 @@ const UpgradeRequest = {
         body: UpdateSubscriptionParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
@@ -276,7 +258,7 @@ const CreateSubscriptionRequest = {
         body: CreateSubscriptionParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
@@ -285,7 +267,7 @@ const SetAiCreditsOverageLimitRequest = {
         body: SetAiCreditsOverageLimitParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
@@ -294,27 +276,13 @@ const EnableAiCreditsOverageRequest = {
         body: ToggleAiCreditsOverageEnabledParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-    },
-}
-
-const StartTrialRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
-    },
-    schema: {
-        body: StartTrialParamsSchema,
-    },
-    response: {
-        [StatusCodes.OK]: Type.Object({
-            success: Type.Boolean(),
-        }),
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
 const ListAIUsageRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         querystring: ListAICreditsUsageRequest,

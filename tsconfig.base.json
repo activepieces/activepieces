@@ -1287,28 +1287,22 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/community/framework/src/index.ts"
       ],
+      "@activepieces/piece-meistertask": [
+        "packages/pieces/community/meistertask/src/index.ts"
+      ],
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
-      "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
-      "activepieces/piece-microsoft-dynamics-365-business-central": [
-        "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
-      ],
-      "activepieces/piece-microsoft-dynamics-crm": [
-        "packages/pieces/community/microsoft-dynamics-crm/src/index.ts"
-      ],
-      "activepieces/piece-microsoft-sharepoint": [
-        "packages/pieces/community/microsoft-sharepoint/src/index.ts"
-      ],
-      "activepieces/piece-snowflake": [
-        "packages/pieces/community/snowflake/src/index.ts"
-      ],
-      "activepieces/piece-zuora": [
-        "packages/pieces/community/zuora/src/index.ts"
-      ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
+      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
+      "@activepieces/piece-kissflow": [
+        "packages/pieces/community/kissflow/src/index.ts"
+      ],
+      "@activepieces/piece-housecall-pro": [
+        "packages/pieces/community/housecall-pro/src/index.ts"
+      ],
+      
     },
     "resolveJsonModule": true
   },

@@ -99,7 +99,7 @@ const SignedFileRequest = {
 
 const UpsertStepFileRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         body: StepFileUpsertRequest,

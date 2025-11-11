@@ -1,11 +1,10 @@
-import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, OPEN_SOURCE_PLAN, PlanName } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, apId, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
+import { ApSubscriptionStatus, BillingCycle, FREE_CLOUD_PLAN, isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, apId, isNil, PlanName, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 import { repoFactory } from '../../../core/db/repo-factory'
-import { apDayjs } from '../../../helper/dayjs-helper'
-import { distributedLock } from '../../../helper/lock'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
@@ -21,26 +20,21 @@ type UpdatePlatformBillingParams = {
 const edition = system.getEdition()
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
+ 
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(platformPlan)) return platformPlan
 
-        const lock = await distributedLock.acquireLock({
+        return distributedLock(log).runExclusive({
             key: `platform_plan_${platformId}`,
-            timeout: 60000,
-            log,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const platformPlan = await platformPlanRepo().findOneBy({ platformId })
+                if (!isNil(platformPlan)) return platformPlan
+
+                return createInitialBilling(platformId, log)
+            },
         })
-
-        try {
-
-            const platformPlan = await platformPlanRepo().findOneBy({ platformId })
-            if (!isNil(platformPlan)) return platformPlan
-
-            return await createInitialBilling(platformId, log)
-        }
-        finally {
-            await lock.release()
-        }
     },
 
     async getBillingDates(platformPlan: PlatformPlan): Promise<{ startDate: number, endDate: number }> {
@@ -65,6 +59,9 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         )
 
         const updatedPlatformPlan = await platformPlanRepo().save({ ...platformPlan, ...normalizedUpdate })
+        if (!isNil(updatedPlatformPlan.plan)) {
+            await distributedStore.put(getPlatformPlanNameKey(platformId), updatedPlatformPlan.plan)
+        }
         return updatedPlatformPlan
     },
 
@@ -115,6 +112,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             }
         }
     },
+    async isCloudNonEnterprisePlan(platformId: string): Promise<boolean> {
+        const platformPlan = await platformPlanRepo().findOneByOrFail({ platformId })
+        return isCloudPlanButNotEnterprise(platformPlan.plan)
+    },
 })
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
@@ -136,7 +137,12 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeBillingCycle: BillingCycle.MONTHLY,
         ...plan,
     }
-    return platformPlanRepo().save(platformPlan)
+    const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
+    if (!isNil(savedPlatformPlan.plan)) {
+        await distributedStore.put(getPlatformPlanNameKey(platformId), savedPlatformPlan.plan)
+    }
+
+    return savedPlatformPlan
 }
 
 function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {

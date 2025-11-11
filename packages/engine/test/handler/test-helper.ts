@@ -29,7 +29,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             httpRequestId: params?.httpRequestId ?? null,
             resumePayload: params?.resumePayload,
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
-            testSingleStepMode: params?.testSingleStepMode ?? false,
+            stepNameToTest: params?.stepNameToTest ?? undefined,
         })
 }
 

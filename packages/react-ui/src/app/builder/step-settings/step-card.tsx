@@ -7,13 +7,10 @@ import { PieceStepMetadata } from '@/lib/types';
 import {
   FlowAction,
   FlowActionType,
-  flowStructureUtil,
   isNil,
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
-
-import { EditAgentInFlowBuilderButton } from './edit-agent-inside-flow-builder-button';
 
 type StepCardProps = {
   step: FlowAction | FlowTrigger;
@@ -37,7 +34,6 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
         actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
       }`
     : null;
-  const externalAgentId = flowStructureUtil.getExternalAgentId(step);
 
   return (
     <div className="flex items-center justify-center gap-4 min-h-[48px]">
@@ -70,9 +66,6 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           </div>
         </div>
         <div className="flex  items-center gap-2">
-          {externalAgentId && (
-            <EditAgentInFlowBuilderButton externalAgentId={externalAgentId} />
-          )}
           {pieceVersion && (
             <div className="text-xs text-muted-foreground flex justify-center items-center">
               v{pieceVersion}

@@ -19,10 +19,6 @@ export class AnonymousAuthnHandler extends BaseSecurityHandler {
             request.principal = {
                 id: `ANONYMOUS_${apId()}`,
                 type: PrincipalType.UNKNOWN,
-                projectId: `ANONYMOUS_${apId()}`,
-                platform: {
-                    id: `ANONYMOUS_${apId()}`,
-                },
             }
         }
 

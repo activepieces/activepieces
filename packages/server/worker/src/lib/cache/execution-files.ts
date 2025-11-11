@@ -2,8 +2,8 @@ import path from 'path'
 import { fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
 import { ExecutionMode, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceManager } from '../piece-manager'
-import { CodeArtifact } from '../runner/engine-runner-types'
+import { pieceManager } from '../cache/pieces'
+import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { codeBuilder } from './code-builder'
 import { engineInstaller } from './engine-installer'
@@ -11,11 +11,8 @@ import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
 
-    getCustomPiecesPath(params: { projectId: string } | { platformId: string }): string {
-        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOXED) {
-            if ('projectId' in params) {
-                return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', params.projectId)
-            }
+    getCustomPiecesPath(params: { platformId: string }): string {
+        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
             return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', params.platformId)
         }
         return GLOBAL_CACHE_PATH_LATEST_VERSION

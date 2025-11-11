@@ -24,6 +24,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
+import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
@@ -33,9 +34,10 @@ export const pieceHelper = {
             pieceSource,
         })
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
-            throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
+            throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property.type} for ${property.displayName}`)
         }
-        try {
+
+        const { data: executePropsResult, error: executePropsError } = await utils.tryCatchAndThrowOnEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
                 projectId: params.projectId,
@@ -58,6 +60,9 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
+                step: {
+                    name: params.actionOrTriggerName,
+                },
                 connections: utils.createConnectionManager({
                     projectId: params.projectId,
                     engineToken: params.engineToken,
@@ -65,7 +70,7 @@ export const pieceHelper = {
                     target: 'properties',
                 }),
             }
-
+        
             switch (property.type) {
                 case PropertyType.DYNAMIC: {
                     const dynamicProperty = property as DynamicProperties<boolean>
@@ -94,10 +99,14 @@ export const pieceHelper = {
                         options,
                     }
                 }
+                default: {
+                    throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property}`)
+                }
             }
-        }
-        catch (e) {
-            console.error(e)
+        }))
+        
+        if (executePropsError) {
+            console.error(executePropsError)
             return {
                 type: property.type,
                 options: {
@@ -107,6 +116,8 @@ export const pieceHelper = {
                 },
             }
         }
+
+        return executePropsResult
     },
 
     async executeValidateAuth(
@@ -158,7 +169,7 @@ export const pieceHelper = {
                 })
             }
             default: {
-                throw new Error('Invalid auth type')
+                throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
             }
         }
     },
@@ -179,7 +190,6 @@ export const pieceHelper = {
         }
     },
 }
-
 
 type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, pieceSource: string, constants: EngineConstants }
 

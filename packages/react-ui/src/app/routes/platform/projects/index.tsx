@@ -1,12 +1,9 @@
-import { isNil, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-
-import { NewProjectDialog } from './new-project-dialog';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
@@ -32,6 +29,9 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
+import { isNil, ProjectWithLimits } from '@activepieces/shared';
+
+import { NewProjectDialog } from './new-project-dialog';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
@@ -46,22 +46,6 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
         <div className="text-left flex items-center justify-start ">
           {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
           {row.original.displayName}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'tasks',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Used Tasks')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-          {!isNil(row.original.plan.tasks)
-            ? formatUtils.formatNumber(row.original.plan.tasks)
-            : t('Unlimited')}
         </div>
       );
     },
@@ -361,7 +345,6 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
-                    tasks: row.plan?.tasks?.toString() ?? '',
                     aiCredits: row.plan?.aiCredits?.toString() ?? '',
                   });
                   setEditDialogProjectId(row.id);
