@@ -12,6 +12,7 @@ export enum FlowRunStatus {
     SUCCEEDED = 'SUCCEEDED',
     MEMORY_LIMIT_EXCEEDED = 'MEMORY_LIMIT_EXCEEDED',
     TIMEOUT = 'TIMEOUT',
+    CANCELED = 'CANCELED',
 }
 
 export enum PauseType {
@@ -90,6 +91,7 @@ export const FlowRunResponse = Type.Union([
             Type.Literal(FlowRunStatus.INTERNAL_ERROR),
             Type.Literal(FlowRunStatus.MEMORY_LIMIT_EXCEEDED),
             Type.Literal(FlowRunStatus.QUEUED),
+            Type.Literal(FlowRunStatus.CANCELED),
         ]),
     }),
 ])
@@ -103,6 +105,7 @@ export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status
         case FlowRunStatus.FAILED:
         case FlowRunStatus.QUOTA_EXCEEDED:
         case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
+        case FlowRunStatus.CANCELED:
             return true
         case FlowRunStatus.INTERNAL_ERROR:
             return !ignoreInternalError

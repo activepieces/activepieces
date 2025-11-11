@@ -104,6 +104,14 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         return flowRun
     })
 
+    app.post('/:id/cancel', CancelFlowRequest, async (req, reply) => {
+        await flowRunService(req.log).cancel({
+            flowRunId: req.params.id,
+            projectId: req.principal.projectId,
+        })
+        return reply.status(StatusCodes.OK).send()
+    })
+
     app.post('/retry', BulkRetryFlowRequest, async (req) => {
         return flowRunService(req.log).bulkRetry({
             projectId: req.principal.projectId,
@@ -179,6 +187,21 @@ const RetryFlowRequest = {
             id: ApId,
         }),
         body: RetryFlowRequestBody,
+    },
+}
+
+const CancelFlowRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.WRITE_RUN,
+    },
+    schema: {
+        tags: ['flow-runs'],
+        description: 'Cancel a paused flow run',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: Type.Object({
+            id: ApId,
+        }),
     },
 }
 
