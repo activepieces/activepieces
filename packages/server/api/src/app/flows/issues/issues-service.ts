@@ -30,7 +30,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
                 flowVersionId: flowRun.flowVersionId,
                 id: issueId,
                 lastOccurrence: date,
-                stepName: flowRun.failedStepName,
+                stepName: flowRun.failedStep?.name,
                 status: IssueStatus.UNRESOLVED,
                 created: date,
                 updated: date,
@@ -46,7 +46,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
         const issue = await repo().findOneByOrFail({
             projectId: flowRun.projectId,
             flowId: flowRun.flowId,
-            stepName: flowRun.failedStepName,
+            stepName: flowRun.failedStep?.name,
             status: IssueStatus.UNRESOLVED,
         })
         return enrichIssue(issue, log)
@@ -168,7 +168,7 @@ async function resolveIssueWithZeroCount(projectId: string, log: FastifyBaseLogg
                 .select('1')
                 .from(FlowRunEntity, 'flow_run')
                 .where('flow_run."flowId" = issue."flowId"')
-                .andWhere('flow_run."failedStepName" = issue."stepName"')
+                .andWhere('flow_run."failedStep"->>"name" = issue."stepName"')
                 .andWhere('flow_run.status IN (:...statuses)')
                 .getQuery()
             return `NOT EXISTS (${subQuery})`
@@ -193,7 +193,10 @@ async function enrichIssue(issue: Issue, log: FastifyBaseLogger) {
     const count = await flowRunRepo().countBy({
         flowId: issue.flowId,
         flowVersionId: issue.flowVersionId,
-        failedStepName: issue.stepName,
+        failedStep: {
+            name: issue.stepName,
+            displayName: issue.stepName,
+        },
         status: In([FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT]),
     })
     return {

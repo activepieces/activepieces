@@ -13,7 +13,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         })) {
             return
         }
-        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStepName)) {
+        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStep?.name)) {
             const issue = await issuesService(log).add(flowRun)
             if (paidEditions) {
                 await alertsService(log).sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })

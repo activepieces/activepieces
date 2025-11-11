@@ -6,7 +6,7 @@ import { flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
 import { engineSocketHandlers } from '../../compute/process/engine-socket-handlers'
-import { workerMachine } from '../../utils/machine'
+import { runsMetadataQueue } from '../../flow-worker'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
@@ -18,7 +18,7 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-    > {
+> {
     const previousExecutionFile = (jobData.executionType === ExecutionType.RESUME || attempsStarted > 1) ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
 
@@ -78,11 +78,8 @@ async function handleMemoryIssueError(
     log: FastifyBaseLogger,
 ): Promise<void> {
     await engineSocketHandlers(log).updateRunProgress({
-        runDetails: {
-            duration: 0,
-            status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
-            tags: [],
-        },
+        finishTime: dayjs().toISOString(),
+        status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -95,13 +92,9 @@ async function handleTimeoutError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    const timeoutFlowInSeconds =
-        workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
     await engineSocketHandlers(log).updateRunProgress({
-        runDetails: {
-            duration: timeoutFlowInSeconds,
-            status: FlowRunStatus.TIMEOUT,
-        },
+        finishTime: dayjs().toISOString(),
+        status: FlowRunStatus.TIMEOUT,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -115,11 +108,8 @@ async function handleInternalError(
     log: FastifyBaseLogger,
 ): Promise<void> {
     await engineSocketHandlers(log).updateRunProgress({
-        runDetails: {
-            duration: 0,
-            status: FlowRunStatus.INTERNAL_ERROR,
-            tags: [],
-        },
+        finishTime: dayjs().toISOString(),
+        status: FlowRunStatus.INTERNAL_ERROR,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -146,6 +136,13 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     status: ConsumeJobResponseStatus.OK,
                 }
             }
+            await runsMetadataQueue.add({
+                id: jobData.runId,
+                projectId: jobData.projectId,
+                startTime: dayjs().toISOString(),
+                status: FlowRunStatus.RUNNING,
+            })
+
             const runLog = pinoLogging.createRunContextLog({
                 log,
                 runId: jobData.runId,
@@ -160,7 +157,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 attemptsStarted,
                 timeoutInSeconds,
             )
-            const { result, status } = await engineRunner(runLog).executeFlow(
+            const { result, status, delayInSeconds } = await engineRunner(runLog).executeFlow(
                 engineToken,
                 input,
             )
@@ -172,22 +169,13 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            if (result.status === FlowRunStatus.PAUSED &&
-                result.pauseMetadata?.type === PauseType.DELAY
-                && isNil(jobData.stepNameToTest)
-            ) {
-                const diffInSeconds = dayjs(result.pauseMetadata.resumeDateTime).diff(
-                    dayjs(),
-                    'seconds',
-                )
+            if (!isNil(delayInSeconds) && delayInSeconds > 0) {
                 return {
                     status: ConsumeJobResponseStatus.OK,
-                    delayInSeconds: diffInSeconds,
+                    delayInSeconds: delayInSeconds,
                 }
             }
-            return {
-                status: ConsumeJobResponseStatus.OK,
-            }
+            return { status: ConsumeJobResponseStatus.OK }
         }
         catch (e) {
             const isTimeoutError =

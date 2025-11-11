@@ -13,7 +13,6 @@ import {
     FlowRunId,
     FlowRunStatus,
     FlowVersionId,
-    isFlowRunStateTerminal,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
@@ -24,7 +23,6 @@ import {
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
-    spreadIfDefined,
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -206,38 +204,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         await flowRunSideEffects(log).onResume(flowRun)
         return flowRun
-    },
-    async updateRun({
-        flowRunId,
-        status,
-        projectId,
-        tags,
-        duration,
-        failedStepName,
-        pauseMetadata,
-        logsFileId,
-    }: UpdateRunParams): Promise<void> {
-        log.info({
-            runId: flowRunId,
-            status,
-            duration,
-            failedStepName,
-        }, '[FlowRunService#updateRun]')
-
-        await runsMetadataQueue(log).add({
-            id: flowRunId,
-            status,
-            failedStepName,
-            logsFileId,
-            projectId,
-            tags,
-            ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
-            ...spreadIfDefined('pauseMetadata', pauseMetadata),
-            finishTime: isFlowRunStateTerminal({
-                status,
-                ignoreInternalError: true,
-            }) ? new Date().toISOString() : undefined,
-        })
     },
 
     async start({
@@ -537,7 +503,6 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
         flowId: params.flowId,
         flowVersionId: params.flowVersionId,
         environment: params.environment,
-        startTime: now,
         parentRunId: params.parentRunId,
         failParentOnFailure: params.failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
@@ -555,17 +520,6 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-
-type UpdateRunParams = {
-    flowRunId: FlowRunId
-    projectId: string
-    status: FlowRunStatus
-    duration: number | undefined
-    pauseMetadata?: PauseMetadata
-    tags: string[]
-    failedStepName?: string | undefined
-    logsFileId: string | undefined
-}
 
 
 type CreateParams = {
