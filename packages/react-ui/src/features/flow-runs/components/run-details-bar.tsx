@@ -1,21 +1,21 @@
-import { QuestionMarkIcon } from '@radix-ui/react-icons';
-import { t } from 'i18next';
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-
-import { Button } from '@/components/ui/button';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { cn, formatUtils } from '@/lib/utils';
 import {
   ApFlagId,
   FlowRun,
   FlowRunStatus,
   Permission,
 } from '@activepieces/shared';
+import { QuestionMarkIcon } from '@radix-ui/react-icons';
+import { t } from 'i18next';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuthorization } from '../../../hooks/authorization-hooks';
 import { flowRunUtils } from '../lib/flow-run-utils';
+
+import { Button } from '@/components/ui/button';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+import { cn, formatUtils } from '@/lib/utils';
 
 type RunDetailsBarProps = {
   run: FlowRun | null;
@@ -54,6 +54,8 @@ function getStatusText(
       });
     case FlowRunStatus.INTERNAL_ERROR:
       return t('Run failed for an unknown reason, contact support.');
+    case FlowRunStatus.CANCELED:
+      return t('Run Cancelled');
   }
 }
 

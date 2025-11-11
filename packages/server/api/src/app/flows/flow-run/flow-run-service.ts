@@ -158,7 +158,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async cancel({ flowRunId, projectId }: CancelParams): Promise<void> {
+    async cancel({ flowRunId, projectId, platformId }: CancelParams): Promise<void> {
         log.info({
             runId: flowRunId,
         }, '[FlowRunService#cancel] canceling paused flow run')
@@ -176,8 +176,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-
-        const platformId = await projectService.getPlatformId(flowRun.projectId)
 
         await jobQueue(log).removeOneTimeJob({
             jobId: flowRun.id,
@@ -739,6 +737,7 @@ type RetryParams = {
 type CancelParams = {
     flowRunId: FlowRunId
     projectId: ProjectId
+    platformId: PlatformId
 }
 
 type CancelChildFlowsParams = {

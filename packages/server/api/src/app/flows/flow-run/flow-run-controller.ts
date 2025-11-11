@@ -108,6 +108,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         await flowRunService(req.log).cancel({
             flowRunId: req.params.id,
             projectId: req.principal.projectId,
+            platformId: req.principal.platform.id,
         })
         return reply.status(StatusCodes.OK).send()
     })

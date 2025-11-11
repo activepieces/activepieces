@@ -166,6 +166,11 @@ const FlowRunCard = React.memo(
               {t('Queued')}...
             </p>
           )}
+          {run.status === FlowRunStatus.CANCELED && (
+            <p className="flex gap-1 text-xs text-muted-foreground">
+              {t('Canceled')}
+            </p>
+          )}
         </div>
         <div className="ml-auto font-medium">
           {(isFetchingRun || isRetryingRun) && (
