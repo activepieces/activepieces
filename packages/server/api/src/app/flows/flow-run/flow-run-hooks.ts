@@ -13,7 +13,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
         })) {
             return
         }
-        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStepName)) {
+        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStep?.name)) {
             const date = dayjs(flowRun.created).toISOString()
             const issueToAlert = {
                 projectId: flowRun.projectId,

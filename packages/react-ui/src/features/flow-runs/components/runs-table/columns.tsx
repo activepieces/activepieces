@@ -206,7 +206,7 @@ export const runsTableColumns = ({
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.startTime))}
+          {formatUtils.formatDate(new Date(row.original.created ?? new Date()))}
         </div>
       );
     },

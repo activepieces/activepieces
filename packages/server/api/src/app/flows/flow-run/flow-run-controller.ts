@@ -2,7 +2,7 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
-    BulkRetryFlowRequestBody,
+    BulkActionOnRunsRequestBody,
     ErrorCode,
     ExecutionType,
     FlowRun,
@@ -37,6 +37,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
             flowRunIds: request.query.flowRunIds,
+            archived: request.query.archived,
         })
     })
 
@@ -118,10 +119,24 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.post('/archive', ArchiveFlowRunRequest, async (req) => {
+        return flowRunService(req.log).bulkArchive({
+            projectId: req.principal.projectId,
+            flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
+            strategy: req.body.strategy,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
+            failedStepName: req.body.failedStepName,
+        })
+    })
+
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])
-const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata', 'steps'])
+const FlowRunFiltered = Type.Omit(FlowRun, ['pauseMetadata'])
+const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['pauseMetadata', 'steps'])
 
 const ListRequest = {
     config: {
@@ -182,12 +197,22 @@ const RetryFlowRequest = {
     },
 }
 
+const ArchiveFlowRunRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.WRITE_RUN,
+    },
+    schema: {
+        body: BulkActionOnRunsRequestBody,
+    },
+}
+
 const BulkRetryFlowRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_RUN,
     },
     schema: {
-        body: BulkRetryFlowRequestBody,
+        body: BulkActionOnRunsRequestBody,
     },
 }

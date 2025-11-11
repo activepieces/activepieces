@@ -13,7 +13,6 @@ import {
     FlowRunId,
     FlowRunStatus,
     FlowVersionId,
-    isFlowRunStateTerminal,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
@@ -24,14 +23,14 @@ import {
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
-    spreadIfDefined,
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { In, Not, Repository, SelectQueryBuilder } from 'typeorm'
+import pLimit from 'p-limit'
+import { In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -76,6 +75,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
             environment: RunEnvironment.PRODUCTION,
         })
+
+        if (!isNil(params.archived)) {
+            query = query.andWhere({
+                archivedAt: params.archived ? IsNull() : Not(IsNull()),
+            })
+        }
 
         if (params.flowId) {
             query = query.andWhere({
@@ -161,9 +166,23 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async existsBy(runId: FlowRunId): Promise<boolean> {
         return flowRunRepo().existsBy({ id: runId })
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkRetryParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName)
-        return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
+    async bulkArchive(params: BulkActionParams): Promise<void> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(params)
+        await flowRunRepo().update({
+            id: In(filteredFlowRunIds),
+            projectId: params.projectId,
+        }, {
+            archivedAt: new Date().toISOString(),
+        })
+    },
+    async bulkRetry(params: BulkActionParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(params)
+        const limit = pLimit(10)
+        return Promise.all(
+            filteredFlowRunIds.map(flowRunId =>
+                limit(() => this.retry({ flowRunId, strategy: params.strategy, projectId: params.projectId })),
+            ),
+        )
     },
     async resume({
         flowRunId,
@@ -206,38 +225,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         await flowRunSideEffects(log).onResume(flowRun)
         return flowRun
-    },
-    async updateRun({
-        flowRunId,
-        status,
-        projectId,
-        tags,
-        duration,
-        failedStepName,
-        pauseMetadata,
-        logsFileId,
-    }: UpdateRunParams): Promise<void> {
-        log.info({
-            runId: flowRunId,
-            status,
-            duration,
-            failedStepName,
-        }, '[FlowRunService#updateRun]')
-
-        await runsMetadataQueue(log).add({
-            id: flowRunId,
-            status,
-            failedStepName,
-            logsFileId,
-            projectId,
-            tags,
-            ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
-            ...spreadIfDefined('pauseMetadata', pauseMetadata),
-            finishTime: isFlowRunStateTerminal({
-                status,
-                ignoreInternalError: true,
-            }) ? new Date().toISOString() : undefined,
-        })
     },
 
     async start({
@@ -411,59 +398,57 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function filterFlowRunsAndApplyFilters(
-    projectId: ProjectId,
-    flowRunIds?: FlowRunId[],
-    status?: FlowRunStatus[],
-    flowId?: FlowId[],
-    createdAfter?: string,
-    createdBefore?: string,
-    excludeFlowRunIds?: FlowRunId[],
-    failedStepName?: string,
-): Promise<FlowRunId[]> {
-    let query = flowRunRepo().createQueryBuilder('flow_run').where({
-        projectId,
+async function filterFlowRunsAndApplyFilters(params: BulkActionParams): Promise<FlowRunId[]> {
+    let query = flowRunRepo().createQueryBuilder('flow_run').select('id').where({
+        projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
     })
 
-    if (!isNil(flowRunIds) && flowRunIds.length > 0) {
+    if (!isNil(params.flowRunIds) && params.flowRunIds.length > 0) {
         query = query.andWhere({
-            id: In(flowRunIds),
+            id: In(params.flowRunIds),
         })
     }
-    if (flowId && flowId.length > 0) {
+
+    if (!isNil(params.archived)) {
         query = query.andWhere({
-            flowId: In(flowId),
+            archivedAt: params.archived ? IsNull() : Not(IsNull()),
         })
     }
-    if (status && status.length > 0) {
+
+    if (params.flowId && params.flowId.length > 0) {
         query = query.andWhere({
-            status: In(status),
+            flowId: In(params.flowId),
         })
     }
-    if (createdAfter) {
+    if (params.status && params.status.length > 0) {
+        query = query.andWhere({
+            status: In(params.status),
+        })
+    }
+    if (params.createdAfter) {
         query = query.andWhere('flow_run.created >= :createdAfter', {
-            createdAfter,
+            createdAfter: params.createdAfter,
         })
     }
-    if (createdBefore) {
+    if (params.createdBefore) {
         query = query.andWhere('flow_run.created <= :createdBefore', {
-            createdBefore,
+            createdBefore: params.createdBefore,
         })
     }
-    if (excludeFlowRunIds && excludeFlowRunIds.length > 0) {
+    if (params.excludeFlowRunIds && params.excludeFlowRunIds.length > 0) {
         query = query.andWhere({
-            id: Not(In(excludeFlowRunIds)),
+            id: Not(In(params.excludeFlowRunIds)),
         })
     }
 
-    if (failedStepName) {
+    if (params.failedStepName) {
         query = query.andWhere('flow_run.failedStepName = :failedStepName', {
-            failedStepName,
+            failedStepName: params.failedStepName,
         })
     }
 
-    const flowRuns = await query.getMany()
+    const flowRuns = await query.getRawMany()
     return flowRuns.map(flowRun => flowRun.id)
 }
 
@@ -537,7 +522,6 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
         flowId: params.flowId,
         flowVersionId: params.flowVersionId,
         environment: params.environment,
-        startTime: now,
         parentRunId: params.parentRunId,
         failParentOnFailure: params.failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
@@ -555,17 +539,6 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-
-type UpdateRunParams = {
-    flowRunId: FlowRunId
-    projectId: string
-    status: FlowRunStatus
-    duration: number | undefined
-    pauseMetadata?: PauseMetadata
-    tags: string[]
-    failedStepName?: string | undefined
-    logsFileId: string | undefined
-}
 
 
 type CreateParams = {
@@ -589,6 +562,7 @@ type ListParams = {
     createdBefore?: string
     failedStepName?: string
     flowRunIds?: FlowRunId[]
+    archived?: boolean
 }
 
 type GetOneParams = {
@@ -607,6 +581,7 @@ type AddToQueueParams = {
     progressUpdateType: ProgressUpdateType
     sampleData?: Record<string, unknown>
 }
+
 
 type StartParams = {
     flowId: FlowId
@@ -641,13 +616,14 @@ type RetryParams = {
     projectId: ProjectId
 }
 
-type BulkRetryParams = {
+type BulkActionParams = {
     projectId: ProjectId
     flowRunIds?: FlowRunId[]
     strategy: FlowRetryStrategy
     status?: FlowRunStatus[]
     flowId?: FlowId[]
     createdAfter?: string
+    archived?: boolean
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string

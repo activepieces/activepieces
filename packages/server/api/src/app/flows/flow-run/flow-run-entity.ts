@@ -58,6 +58,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             nullable: true,
             type: Number,
         },
+        waitDuration: {
+            nullable: true,
+            type: Number,
+        },
         startTime: {
             type: TIMESTAMP_COLUMN_TYPE,
         },
@@ -69,8 +73,8 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
-        failedStepName: {
-            type: String,
+        failedStep: {
+            type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
         stepNameToTest: {
@@ -102,10 +106,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_logs_file_id',
             columns: ['logsFileId'],
-        },
-        {
-            name: 'idx_flow_run_flow_failed_step',
-            columns: ['flowId', 'failedStepName'],
         },
         {
             name: 'idx_run_parent_run_id',
