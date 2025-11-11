@@ -28,7 +28,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import {
@@ -48,6 +55,7 @@ export function SidebarUser() {
   const [projectSettingsOpen, setProjectSettingsOpen] = useState(false);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
+  const { state } = useSidebar();
   const location = useLocation();
   const { project } = projectHooks.useCurrentProject();
   const { data: user } = userHooks.useCurrentUser();
@@ -58,6 +66,7 @@ export function SidebarUser() {
     Permission.WRITE_INVITATION,
   );
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
+  const isCollapsed = state === 'collapsed';
 
   if (!user || embedState.isEmbedded) {
     return null;
@@ -73,28 +82,48 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex items-center gap-2 w-full text-left text-sm">
-                <UserAvatar
-                  name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
-                  size={32}
-                  disableTooltip={true}
-                />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {user.firstName}
-                  </span>
-                  <span className="truncate text-xs">{user.email}</span>
+          {isCollapsed ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger className="flex items-center justify-center size-9 rounded-md hover:bg-accent cursor-pointer">
+                    <UserAvatar
+                      name={user.firstName + ' ' + user.lastName}
+                      email={user.email}
+                      size={28}
+                      disableTooltip={true}
+                    />
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center">
+                  {user.firstName}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <div className="flex items-center gap-2 w-full text-left text-sm">
+                  <UserAvatar
+                    name={user.firstName + ' ' + user.lastName}
+                    email={user.email}
+                    size={32}
+                    disableTooltip={true}
+                  />
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {user.firstName}
+                    </span>
+                    <span className="truncate text-xs">{user.email}</span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
                 </div>
-                <ChevronsUpDown className="ml-auto size-4" />
-              </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+          )}
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side="right"

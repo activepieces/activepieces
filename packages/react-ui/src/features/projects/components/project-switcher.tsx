@@ -1,10 +1,11 @@
 import { CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, Menu } from 'lucide-react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -18,7 +19,13 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -30,6 +37,7 @@ export function ProjectSwitcher() {
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
+  const { state } = useSidebar();
 
   const filterProjects = React.useCallback(
     (value: string, search: string) => {
@@ -48,14 +56,31 @@ export function ProjectSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <SidebarMenuButton className="px-2 h-9 gap-x-3">
-          <h1 className="truncate font-semibold">
-            {currentProject?.displayName}
-          </h1>
-          <ChevronsUpDown className="ml-auto" />
-        </SidebarMenuButton>
-      </DropdownMenuTrigger>
+      {state === 'collapsed' ? (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="size-5" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center">
+              {t('Switch Project')}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuButton className="px-2 h-9 gap-x-3">
+            <h1 className="truncate font-semibold">
+              {currentProject?.displayName}
+            </h1>
+            <ChevronsUpDown className="ml-auto" />
+          </SidebarMenuButton>
+        </DropdownMenuTrigger>
+      )}
 
       <DropdownMenuContent
         className="w-56 p-0 rounded-lg"

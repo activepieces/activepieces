@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -51,24 +50,6 @@ const EnvironmentPage = () => {
       )}
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
-        <DashboardPageHeader
-          title={t('Environments')}
-          description={
-            <span className="text-muted-foreground text-md">
-              {t(
-                'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
-              )}
-              <a
-                href="https://www.activepieces.com/docs/operations/git-sync"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                {t('Environments & Releases')}
-              </a>
-            </span>
-          }
-        />
         <Card className="w-full p-4">
           <div className="flex w-full">
             {!isLoading && (

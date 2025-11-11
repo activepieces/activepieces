@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { RequestTrial } from '@/app/components/request-trial';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -126,10 +125,6 @@ const ProjectPiecesPage = () => {
 
   return (
     <div className="w-fullj flex-col">
-      <DashboardPageHeader
-        title={t('Pieces')}
-        description={'Manage project pieces'}
-      />
       {!platform.plan.managePiecesEnabled && (
         <LockedAlert
           title={t('Control Pieces')}

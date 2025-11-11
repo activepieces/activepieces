@@ -5,7 +5,6 @@ import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -222,12 +221,6 @@ const McpServersPage = () => {
       lockDescription={t('Create and manage your MCP servers')}
     >
       <div className="flex flex-col h-full">
-        <DashboardPageHeader
-          title={t('MCP Servers')}
-          description={t('Create and manage your MCP servers')}
-          tutorialTab="mcpServers"
-        ></DashboardPageHeader>
-
         <DataTable
           filters={[]}
           emptyStateIcon={<Table2 className="size-14" />}

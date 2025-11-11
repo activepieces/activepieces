@@ -7,6 +7,8 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -22,15 +24,30 @@ export const AppSidebarHeader = () => {
     edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
+  const { state } = useSidebar();
 
   return (
-    <SidebarHeader>
+    <SidebarHeader className="relative" onClick={(e) => e.stopPropagation()}>
       <SidebarMenu>
-        {showSwitcher ? (
-          <SidebarMenuItem className="flex items-center justify-center gap-1">
+        <SidebarMenuItem className="flex items-center justify-between gap-1">
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              state === 'collapsed' ? 'flex-col' : 'flex-row',
+            )}
+          >
+            {state === 'collapsed' && (
+              <SidebarTrigger
+                iconClassName="size-5"
+                className="hidden group-hover/sidebar-hover:flex group-hover/sidebar-hover:opacity-100 p-4"
+              />
+            )}
             <Link
               to={defaultRoute}
-              className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
+              className={cn(
+                buttonVariants({ variant: 'ghost', size: 'icon' }),
+                state === 'collapsed' && 'group-hover/sidebar-hover:!hidden',
+              )}
             >
               <img
                 src={branding.logos.logoIconUrl}
@@ -38,20 +55,10 @@ export const AppSidebarHeader = () => {
                 className="h-5 w-5 object-contain"
               />
             </Link>
-            <ProjectSwitcher />
-          </SidebarMenuItem>
-        ) : (
-          <Link
-            to={defaultRoute}
-            className={cn(buttonVariants({ variant: 'ghost' }))}
-          >
-            <img
-              src={branding.logos.fullLogoUrl}
-              alt={t('home')}
-              className="object-contain w-40"
-            />
-          </Link>
-        )}
+            {showSwitcher && <ProjectSwitcher />}
+          </div>
+          {state === 'expanded' && <SidebarTrigger />}
+        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>
   );
