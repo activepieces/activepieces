@@ -460,41 +460,50 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 async function cancelChildFlows(params: CancelChildFlowsParams, log: FastifyBaseLogger): Promise<void> {
     const childFlows = await flowRunRepo().findBy({
         parentRunId: params.parentRunId,
-        status: FlowRunStatus.PAUSED,
+        status: In([FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]),
     })
 
     log.info({
         parentRunId: params.parentRunId,
         childFlowCount: childFlows.length,
-    }, '[cancelChildFlows] Found paused child flows to cancel')
+    }, '[cancelChildFlows] Found running or paused child flows to cancel')
 
-    for (const childFlow of childFlows) {
-        try {
-            await jobQueue(log).removeOneTimeJob({
-                jobId: childFlow.id,
-                platformId: params.platformId,
-            })
+    await Promise.all(
+        childFlows.map(async (childFlow) => {
+            try {
+                await jobQueue(log).removeOneTimeJob({
+                    jobId: childFlow.id,
+                    platformId: params.platformId,
+                })
 
-            await flowRunService(log).updateRun({
-                flowRunId: childFlow.id,
-                projectId: childFlow.projectId,
-                status: FlowRunStatus.CANCELED,
-                duration: Date.now() - new Date(childFlow.startTime).getTime(),
-            })
+                await cancelChildFlows({
+                    parentRunId: childFlow.id,
+                    projectId: childFlow.projectId,
+                    platformId: params.platformId,
+                }, log)
 
-            log.info({
-                parentRunId: params.parentRunId,
-                childFlowId: childFlow.id,
-            }, '[cancelChildFlows] Canceled child flow')
-        }
-        catch (error) {
-            log.error({
-                parentRunId: params.parentRunId,
-                childFlowId: childFlow.id,
-                error,
-            }, '[cancelChildFlows] Failed to cancel child flow')
-        }
-    }
+                await flowRunService(log).updateRun({
+                    flowRunId: childFlow.id,
+                    projectId: childFlow.projectId,
+                    status: FlowRunStatus.CANCELED,
+                    duration: Date.now() - new Date(childFlow.startTime).getTime(),
+                })
+
+                log.info({
+                    parentRunId: params.parentRunId,
+                    childFlowId: childFlow.id,
+                }, '[cancelChildFlows] Canceled child flow')
+            }
+            catch (error) {
+                log.error({
+                    parentRunId: params.parentRunId,
+                    childFlowId: childFlow.id,
+                    error,
+                }, '[cancelChildFlows] Failed to cancel child flow')
+                throw error
+            }
+        }),
+    )
 }
 
 async function filterFlowRunsAndApplyFilters(
