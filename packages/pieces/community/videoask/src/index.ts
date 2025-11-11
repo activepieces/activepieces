@@ -13,6 +13,7 @@ import { addTagToContact } from "./lib/actions/add-tag-to-contact";
 import { removeTagFromContact } from "./lib/actions/remove-tag-from-contact";
 import { searchForm } from "./lib/actions/search-form";
 import { updateContact } from "./lib/actions/update-contact";
+import { organizationIdDropdown } from "./lib/common/props";
 
 export const videoask = createPiece({
   displayName: "VideoAsk",
@@ -30,21 +31,15 @@ export const videoask = createPiece({
     createCustomApiCallAction({
       auth: videoaskAuth,
       baseUrl: () => "https://api.videoask.com",
-      authMapping: async (auth) => {
+      authMapping: async (auth, propsValue) => {
         return {
           Authorization: `Bearer ${(auth as any).access_token}`,
           "Content-Type": "application/json",
-          "organization-id": await (async () => {
-            const access_token = (auth as any).access_token;
-            const organizations = await makeRequest(
-              '',
-              access_token,
-              HttpMethod.GET,
-              '/organizations'
-            );
-            return organizations.results[0].organization_id;
-          })(),
+          "organization-id": propsValue['organizationId'],
         };
+      },
+      extraProps: {
+        organizationId: organizationIdDropdown,
       }
     })
   ],
