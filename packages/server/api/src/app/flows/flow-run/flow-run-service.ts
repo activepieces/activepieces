@@ -29,7 +29,8 @@ import {
 import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { In, Not, Repository, SelectQueryBuilder } from 'typeorm'
+import pLimit from 'p-limit'
+import { In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -74,6 +75,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
             environment: RunEnvironment.PRODUCTION,
         })
+
+        if (!isNil(params.archived)) {
+            query = query.andWhere({
+                archivedAt: params.archived ? IsNull() : Not(IsNull()),
+            })
+        }
 
         if (params.flowId) {
             query = query.andWhere({
@@ -159,18 +166,23 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     async existsBy(runId: FlowRunId): Promise<boolean> {
         return flowRunRepo().existsBy({ id: runId })
     },
-    async bulkArchive({ projectId, flowRunIds }: BulkActionParams): Promise<void> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds)
+    async bulkArchive(params: BulkActionParams): Promise<void> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(params)
         await flowRunRepo().update({
             id: In(filteredFlowRunIds),
-            projectId,
+            projectId: params.projectId,
         }, {
             archivedAt: new Date().toISOString(),
         })
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkActionParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName)
-        return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
+    async bulkRetry(params: BulkActionParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(params)
+        const limit = pLimit(10)
+        return Promise.all(
+            filteredFlowRunIds.map(flowRunId =>
+                limit(() => this.retry({ flowRunId, strategy: params.strategy, projectId: params.projectId })),
+            ),
+        )
     },
     async resume({
         flowRunId,
@@ -386,55 +398,53 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function filterFlowRunsAndApplyFilters(
-    projectId: ProjectId,
-    flowRunIds?: FlowRunId[],
-    status?: FlowRunStatus[],
-    flowId?: FlowId[],
-    createdAfter?: string,
-    createdBefore?: string,
-    excludeFlowRunIds?: FlowRunId[],
-    failedStepName?: string,
-): Promise<FlowRunId[]> {
+async function filterFlowRunsAndApplyFilters(params: BulkActionParams): Promise<FlowRunId[]> {
     let query = flowRunRepo().createQueryBuilder('flow_run').select('id').where({
-        projectId,
+        projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
     })
 
-    if (!isNil(flowRunIds) && flowRunIds.length > 0) {
+    if (!isNil(params.flowRunIds) && params.flowRunIds.length > 0) {
         query = query.andWhere({
-            id: In(flowRunIds),
-        })
-    }
-    if (flowId && flowId.length > 0) {
-        query = query.andWhere({
-            flowId: In(flowId),
-        })
-    }
-    if (status && status.length > 0) {
-        query = query.andWhere({
-            status: In(status),
-        })
-    }
-    if (createdAfter) {
-        query = query.andWhere('flow_run.created >= :createdAfter', {
-            createdAfter,
-        })
-    }
-    if (createdBefore) {
-        query = query.andWhere('flow_run.created <= :createdBefore', {
-            createdBefore,
-        })
-    }
-    if (excludeFlowRunIds && excludeFlowRunIds.length > 0) {
-        query = query.andWhere({
-            id: Not(In(excludeFlowRunIds)),
+            id: In(params.flowRunIds),
         })
     }
 
-    if (failedStepName) {
+    if (!isNil(params.archived)) {
+        query = query.andWhere({
+            archivedAt: params.archived ? IsNull() : Not(IsNull()),
+        })
+    }
+
+    if (params.flowId && params.flowId.length > 0) {
+        query = query.andWhere({
+            flowId: In(params.flowId),
+        })
+    }
+    if (params.status && params.status.length > 0) {
+        query = query.andWhere({
+            status: In(params.status),
+        })
+    }
+    if (params.createdAfter) {
+        query = query.andWhere('flow_run.created >= :createdAfter', {
+            createdAfter: params.createdAfter,
+        })
+    }
+    if (params.createdBefore) {
+        query = query.andWhere('flow_run.created <= :createdBefore', {
+            createdBefore: params.createdBefore,
+        })
+    }
+    if (params.excludeFlowRunIds && params.excludeFlowRunIds.length > 0) {
+        query = query.andWhere({
+            id: Not(In(params.excludeFlowRunIds)),
+        })
+    }
+
+    if (params.failedStepName) {
         query = query.andWhere('flow_run.failedStepName = :failedStepName', {
-            failedStepName,
+            failedStepName: params.failedStepName,
         })
     }
 
@@ -552,6 +562,7 @@ type ListParams = {
     createdBefore?: string
     failedStepName?: string
     flowRunIds?: FlowRunId[]
+    archived?: boolean
 }
 
 type GetOneParams = {
@@ -612,6 +623,7 @@ type BulkActionParams = {
     status?: FlowRunStatus[]
     flowId?: FlowId[]
     createdAfter?: string
+    archived?: boolean
     createdBefore?: string
     excludeFlowRunIds?: FlowRunId[]
     failedStepName?: string

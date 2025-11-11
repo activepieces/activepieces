@@ -1,4 +1,4 @@
-import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, spreadIfDefined, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appSocket } from '../../app-socket'

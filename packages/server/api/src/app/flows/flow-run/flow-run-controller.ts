@@ -2,7 +2,6 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
-    ArchiveFlowRunRequestBody,
     BulkActionOnRunsRequestBody,
     ErrorCode,
     ExecutionType,
@@ -38,6 +37,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
             flowRunIds: request.query.flowRunIds,
+            archived: request.query.archived,
         })
     })
 
@@ -135,8 +135,8 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])
-const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata', 'steps'])
+const FlowRunFiltered = Type.Omit(FlowRun, ['pauseMetadata'])
+const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['pauseMetadata', 'steps'])
 
 const ListRequest = {
     config: {

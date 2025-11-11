@@ -14,7 +14,7 @@ export type CodeArtifact = {
 }
 
 
-export type EngineHelperFlowResult = {}
+export type EngineHelperFlowResult = Record<string, never>
 
 export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,
