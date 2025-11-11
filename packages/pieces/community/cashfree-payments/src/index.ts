@@ -13,9 +13,32 @@ import { deactivateCashgram } from "./lib/actions/deactivate-cashgram"
 
 export const cashfreeTriggers = createPiece({
   displayName: "Cashfree Payments",
-  description:'Cashfree Payments integration for processing payments, refunds, and managing payment links and cashgrams.',
+  description: 'Cashfree Payments integration for processing payments, refunds, and managing payment links and cashgrams.',
   auth: PieceAuth.CustomAuth({
-    description: `Enter  your Cashfree authentication method. Each Cashfree product requires its own unique client ID and client secret. For example, if you are using both the Payments API and the Payouts API, you must generate separate credentials for each. This means one set of keys for the Payments API and a different set of keys for the Payouts API.`,
+    description: `Connect your Cashfree account
+
+  This connector requires Cashfree API credentials (Client ID and Client Secret). Important: each Cashfree product is a separate product and requires its own credentials. For example, the Payments API and the Payouts API each need their own Client ID / Client Secret pairs.
+
+  Create two connections (recommended)
+  - For clarity and security we recommend creating two separate Activepieces connections:
+    1. **Payments connection** — use the Payments API Client ID / Client Secret. Use this connection for payments-related actions (create order, payment links, refunds, etc.).
+    2. **Payouts connection** — use the Payouts API Client ID / Client Secret. Use this connection for Cashgram and other payouts-related actions.
+
+  Which keys to use
+  - Payments API: use the credentials generated for the Payments product.
+  - Payouts API (required by Cashgram actions): use credentials generated from the Payouts dashboard.
+
+  How to generate API keys:
+  1. Sign in to your Cashfree account and open the *Payouts* dashboard.
+  2. In the navigation panel select **Developers**.
+  3. Click **API Keys**.
+  4. Click **Generate API Keys** on the API Keys screen.
+  5. The **New API Keys** popup displays the Client ID and Client Secret.
+  6. Click **Download API Keys** to save the keys locally. Keep these secret — do not share them.
+
+
+
+`,
     props: {
       // authType: Property.StaticDropdown({
       //   displayName: 'Authentication Type',
@@ -57,7 +80,7 @@ export const cashfreeTriggers = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl:
     'https://cdn.activepieces.com/pieces/cashfree-payments.png',
-  authors: ['kartikvyas','sanket-a11y'],
+  authors: ['kartikvyas', 'sanket-a11y'],
   actions: [
     createOrder,
     createPaymentLink,
