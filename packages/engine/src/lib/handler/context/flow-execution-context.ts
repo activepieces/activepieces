@@ -1,9 +1,9 @@
-import { assertEqual, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { EngineGenericError } from '../../helper/execution-errors'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
-import dayjs from 'dayjs'
 
 
 export type FlowVerdict = {
@@ -13,7 +13,7 @@ export type FlowVerdict = {
     status: FlowRunStatus.SUCCEEDED
     stopResponse: RespondResponse | undefined
 } | {
-    status: FlowRunStatus.FAILED,
+    status: FlowRunStatus.FAILED
     failedStep: FailedStep
 } | {
     status: FlowRunStatus.RUNNING
@@ -54,14 +54,14 @@ export class FlowExecutorContext {
     }
 
     public getDelayedInSeconds(): number | undefined {
-        if(this.verdict.status === FlowRunStatus.PAUSED && this.verdict.pauseMetadata.type === PauseType.DELAY) {
+        if (this.verdict.status === FlowRunStatus.PAUSED && this.verdict.pauseMetadata.type === PauseType.DELAY) {
             return dayjs(this.verdict.pauseMetadata.resumeDateTime).diff(Date.now(), 'seconds')
         }
-        return undefined;
+        return undefined
     }
 
     public finishExecution(): FlowExecutorContext {
-        if(this.verdict.status === FlowRunStatus.RUNNING) {
+        if (this.verdict.status === FlowRunStatus.RUNNING) {
             return new FlowExecutorContext({
                 ...this,
                 verdict: { status: FlowRunStatus.SUCCEEDED },
