@@ -1,4 +1,4 @@
-import { ActorListSortBy, ApifyClient, Build, Dictionary } from 'apify-client';
+import { ActorListSortBy, ActorRun, ApifyClient, Build, Dictionary } from 'apify-client';
 import { Property } from '@activepieces/pieces-framework';
 
 export type ApifyAuth = {
@@ -24,6 +24,11 @@ export type ActorBuild = Build & {
     };
   };
 };
+
+export enum RunType {
+  ACTOR = 'Actor',
+  TASK = 'task',
+}
 
 // Memory options for actor/task runs
 export const MEMORY_OPTIONS = [
@@ -101,15 +106,9 @@ export const listActors = async (apiKey: string, actorSource: string): Promise<D
 export const fetchActorInputSchema = async (apiKey: string, actorId: string): Promise<Build | undefined> => {
   const client = createApifyClient(apiKey);
   const defaultBuild = await client.actor(actorId).defaultBuild();
-  const build = defaultBuild.get();
+  const build = await defaultBuild.get();
 
   return build;
-};
-
-export const fetchTaskInputSchema = async (apiKey: string, taskId: string): Promise<Dictionary | Dictionary[] | undefined> => {
-  const client = createApifyClient(apiKey);
-  const inputSchema = await client.task(taskId).getInput();
-  return inputSchema;
 };
 
 export const getDefaultValuesFromBuild = (build: ActorBuild): Dictionary => {
@@ -251,28 +250,27 @@ export const createDropdownOptions = async (
 export const createBuildProperty = () => Property.ShortText({
   displayName: 'Build',
   description: 'Build to run. It can be either a build tag or build number. By default, the run uses the build specified in the default run configuration (typically `latest`).',
-  defaultValue: 'latest',
   required: false
 });
 
-export const createMemoryProperty = (description: string) => Property.StaticDropdown({
+export const createMemoryProperty = (runType: RunType) => Property.StaticDropdown({
   displayName: 'Memory',
-  description,
+  description: `Memory limit for the run, in megabytes. By default, the run uses a memory limit specified in the ${runType === RunType.ACTOR ? 'default run configuration for the Actor' : 'task settings'}.`,
   required: false,
   options: {
     options: MEMORY_OPTIONS
   }
 });
 
-export const createTimeoutProperty = (description: string) => Property.Number({
+export const createTimeoutProperty = (runType: RunType) => Property.Number({
   displayName: 'Timeout (seconds)',
   required: false,
-  description
+  description: `Optional timeout for the run, in seconds. By default, the run uses a timeout specified in the ${runType === RunType.ACTOR ? 'default run configuration for the Actor' : 'task settings'}.`
 });
 
-export const createWaitForFinishProperty = (description: string) => Property.Checkbox({
+export const createWaitForFinishProperty = (runType: RunType) => Property.Checkbox({
   displayName: 'Wait for finish',
-  description,
+  description: `Enable this to receive the actual output of the ${runType} run as the response.`,
   required: false,
   defaultValue: true,
 });
@@ -294,9 +292,9 @@ export const createRunOptions = (input: {
 
 // Handle run result based on the wait for finish property
 export const handleRunResult = async (
-  run: any,
+  run: ActorRun,
   waitForFinish: boolean,
-  client: any
+  client: ApifyClient
 ): Promise<{ run: any; items: any; }> => {
   if (waitForFinish && run.defaultDatasetId) {
     const items = await client.dataset(run.defaultDatasetId).get();
@@ -310,4 +308,81 @@ export const handleRunResult = async (
     run,
     items: null
   };
-}
+};
+
+export const createActorSourceProperty = () => Property.StaticDropdown({
+  required: true,
+  displayName: 'Actor Source',
+  defaultValue: 'recent',
+  options: {
+    options: [{
+      label: 'Recently Used Actors',
+      value: 'recent',
+    }, {
+      label: 'Apify Store',
+      value: 'store',
+    }]
+  }
+});
+
+export const createActorIdProperty = () => Property.Dropdown({
+  displayName: 'Actor',
+  description: 'Select an Actor from the list',
+  required: true,
+  refreshers: ['auth', 'actorSource'],
+  options: async (props) => {
+    const actorSource = props['actorSource'] as string;
+    return createDropdownOptions(props['auth'], (apiKey) => listActors(apiKey, actorSource));
+  }
+});
+
+export const createTaskIdProperty = () => Property.Dropdown({
+  displayName: 'Actor task',
+  description: 'Select a task from the list',
+  required: true,
+  refreshers: ['auth'],
+  options: async (props) => {
+    return createDropdownOptions(props['auth'], listTasks);
+  }
+});
+
+const createInputBodyProperty = (runType: RunType, defaultValue?: object) => Property.Json({
+  displayName: 'Input Override JSON',
+  description: `JSON input for the ${runType} run, which you can find on the ${runType} input page in Apify Console. If empty, the run uses the input specified in the default run configuration.`,
+  required: true,
+  defaultValue
+});
+
+export const createActorInputProperty = () => Property.DynamicProperties({
+  displayName: 'Input',
+  required: true,
+  refreshers: ['auth', 'actorid'],
+  props: async (propsValue) => {
+    const apiKey = propsValue['auth'] as ApifyAuth;
+    const actorId = propsValue['actorid'] as unknown as string;
+    const defaultBuild = await fetchActorInputSchema(apiKey.apikey, actorId);
+
+    const defaultInputs = defaultBuild ? getDefaultValuesFromBuild(defaultBuild as ActorBuild) : undefined;
+
+    return {
+      body: createInputBodyProperty(
+        RunType.ACTOR,
+        defaultInputs
+      )
+    };
+  }
+});
+
+export const createTaskInputProperty = () => Property.DynamicProperties({
+  displayName: 'Input',
+  required: true,
+  refreshers: ['auth', 'taskid'],
+  props: async () => {
+    return {
+      body: createInputBodyProperty(
+        RunType.TASK,
+        {},
+      )
+    };
+  }
+});
