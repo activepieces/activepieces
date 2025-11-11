@@ -26,7 +26,6 @@ import { auditLogService } from './ee/audit-logs/audit-event-service'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { otpModule } from './ee/authentication/otp/otp-module'
-import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
@@ -177,7 +176,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('preHandler', authenticationMiddleware)
     app.addHook('preHandler', authorizationMiddleware)
-    app.addHook('preHandler', rbacMiddleware)
     await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
     await app.register(flagModule)

@@ -32,7 +32,7 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
+import { rbacService } from '../../ee/authentication/project-role/rbac-service'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
@@ -106,7 +106,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
-        await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
+        await rbacService(request.log).assertUserHasPermissionToFlow({ principal: request.principal, operationType: request.body.type, projectId: request.project.id })
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,

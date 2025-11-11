@@ -1,4 +1,4 @@
-import { ProjectResourceType, ProjectTableResource, ProjectBodyResource, ProjectQueryResource, RouteKind, AuthorizationType, RouteSecurity } from "@activepieces/server-shared"
+import { ProjectResourceType, ProjectTableResource, ProjectBodyResource, ProjectQueryResource, RouteKind, AuthorizationType, AuthorizationRouteSecurity } from "@activepieces/server-shared"
 import { FastifyRequest } from "fastify"
 import { assertNotNullOrUndefined, isObject } from "@activepieces/shared"
 import { databaseConnection } from "../../database/database-connection"
@@ -7,10 +7,10 @@ import { authorizeOrThrow } from "./authorize"
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const securityAccessRequest = await convertToSecurityAccessRequest(request)
-    await authorizeOrThrow(request.principal, securityAccessRequest)
+    await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
 }
 
-async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<RouteSecurity<RawProjectResource>> {
+async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<AuthorizationRouteSecurity> {
     const security = request.routeOptions.config?.security
     if (security.kind === RouteKind.PUBLIC) {
         return {
@@ -24,16 +24,33 @@ async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<
                 authorization: {
                     type: AuthorizationType.PROJECT,
                     allowedPrincipals: security.authorization.allowedPrincipals,
-                    projectResource: {
-                        type: ProjectResourceType.RAW,
-                        projectId: await getProjectIdFromRequest(request),
-                    },
+                    permission: security.authorization.permission,
+                    projectId: await getProjectIdFromRequest(request),
                 },
             }
         case AuthorizationType.PLATFORM:
-        case AuthorizationType.NONE:
+            return {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.PLATFORM,
+                    allowedPrincipals: security.authorization.allowedPrincipals,
+                },
+            }
         case AuthorizationType.WORKER:
-            return security
+            return {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            }
+        case AuthorizationType.NONE:
+            return {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.NONE,
+                    reason: security.authorization.reason,
+                },
+            }
     }
 }
 

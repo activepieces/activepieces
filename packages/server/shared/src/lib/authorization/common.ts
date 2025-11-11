@@ -11,7 +11,11 @@ export enum ProjectResourceType {
     TABLE = 'TABLE',
     QUERY = 'QUERY',
     BODY = 'BODY',
-    RAW = 'RAW',
+}
+
+export enum RouteKind {
+    AUTHENTICATED = 'AUTHENTICATED',
+    PUBLIC = 'PUBLIC',
 }
 
 export type ProjectTableResource = {
@@ -29,7 +33,6 @@ export type ProjectBodyResource = {
     key: string
 }
 
-
 export type ProjectResource = ProjectTableResource | ProjectQueryResource | ProjectBodyResource
 
 export type WorkerAuthorization = {
@@ -41,10 +44,10 @@ export type PlatformAuthorization = {
     allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
 }
 
-export type ProjectAuthorization<T extends ProjectResource> = {
+export type ProjectAuthorization = {
     type: AuthorizationType.PROJECT
     allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
-    projectResource: T
+    projectResource: ProjectResource
     permission?: Permission
 }
 
@@ -53,26 +56,6 @@ export type NoneAuthorization = {
     reason: string
 }
 
-export type AuthorizationRule<T extends ProjectResource> =
-    | WorkerAuthorization
-    | PlatformAuthorization
-    | ProjectAuthorization<T>
-    | NoneAuthorization
-
-
-export enum RouteKind {
-    AUTHENTICATED = 'AUTHENTICATED',
-    PUBLIC = 'PUBLIC',
-}
-
-export type RouteAccessRequest<T extends ProjectResource> = {
-    kind: RouteKind.AUTHENTICATED
-    authorization: AuthorizationRule<T>
-}
-
 export type PublicRoute = {
     kind: RouteKind.PUBLIC
 }
-
-export type RouteSecurity = RouteAccessRequest<ProjectTableResource | ProjectQueryResource | ProjectBodyResource> | PublicRoute
-

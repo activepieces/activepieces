@@ -24,7 +24,7 @@ import dayjs from 'dayjs'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
-import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
+import { rbacService } from '../ee/authentication/project-role/rbac-service'
 import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
@@ -160,7 +160,7 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
         })
     }
     await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
-    await assertRoleHasPermission(request.principal, permission, request.log)
+    await rbacService(request.log).assertRoleHasPermission({ principal: request.principal, permission, projectId })
 }
 
 

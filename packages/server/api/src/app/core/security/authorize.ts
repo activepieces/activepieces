@@ -1,17 +1,21 @@
-import { RouteAccessRequest, AuthorizationType, PublicRoute, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-shared'
 
-import { ActivepiecesError, ErrorCode, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, isNil, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
+import { system } from '../../helper/system/system'
+import { rbacService } from '../../ee/authentication/project-role/rbac-service'
+import { FastifyBaseLogger } from 'fastify'
 
-export const authorizeOrThrow = async (principal: Principal, security: RouteAccessRequest<RawProjectResource> | PublicRoute): Promise<void> => {
+const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
+
+export const authorizeOrThrow = async (principal: Principal, security: AuthorizationRouteSecurity, log: FastifyBaseLogger): Promise<void> => {
     if (security.kind === RouteKind.PUBLIC) {
         return
     }
     switch (security.authorization.type) {
         case AuthorizationType.PROJECT:
             await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
-            const projectResource = security.authorization.projectResource;
-            await assertAccessToProject(principal, projectResource.projectId)
+            await assertAccessToProject(principal, security.authorization, log)
             break
         case AuthorizationType.PLATFORM:
             await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
@@ -42,8 +46,20 @@ async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal): Pr
 }
 
 
-async function assertAccessToProject(principal: Principal, projectId: string | undefined): Promise<void> {
-    
+async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, log: FastifyBaseLogger): Promise<void> {
+    const alwaysAccessProject = EDITION_IS_COMMUNITY || principal.type === PrincipalType.SERVICE || principal.type === PrincipalType.ENGINE
+    if (alwaysAccessProject) {
+        return
+    }
+    if (isNil(projectSecurity.projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Project ID is required',
+            },
+        })
+    }
+    await rbacService(log).assertRoleHasPermission({ principal, permission: projectSecurity.permission, projectId: projectSecurity.projectId })
 }
 
 
@@ -56,9 +72,4 @@ async function assertPrinicpalIsOneOf< T extends readonly PrincipalType[]>(allow
             },
         })
     }
-}
-
-type AuthorizeOrThrowParams = {
-    principal: Principal
-    security: PublicRoute | RouteAccessRequest
 }
