@@ -13,6 +13,7 @@ import { deactivateCashgram } from "./lib/actions/deactivate-cashgram"
 
 export const cashfreeTriggers = createPiece({
   displayName: "Cashfree Payments",
+  description:'Cashfree Payments integration for processing payments, refunds, and managing payment links and cashgrams.',
   auth: PieceAuth.CustomAuth({
     description: `Enter  your Cashfree authentication method. Each Cashfree product requires its own unique client ID and client secret. For example, if you are using both the Payments API and the Payouts API, you must generate separate credentials for each. This means one set of keys for the Payments API and a different set of keys for the Payouts API.`,
     props: {
