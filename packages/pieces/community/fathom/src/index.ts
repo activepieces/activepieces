@@ -18,16 +18,9 @@ export const fathom = createPiece({
   auth: fathomAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/fathom.png',
-  authors: [],
+  authors: ["fortunamide", "onyedikachi-david"],
   categories: [PieceCategory.PRODUCTIVITY],
-  description:
-    'AI meeting assistant that records, transcribes, and summarizes meetings',
-  actions: [
-    getRecordingSummary,
-    getRecordingTranscript,
-    listMeetings,
-    findTeam,
-    findTeamMember
-  ],
-  triggers: [newRecording]
+  description: 'Fathom is an AI meeting assistant that automatically records, transcribes, highlights, and generates AI summaries and action items from your meetings. Integrate with workflows to react to meeting events and retrieve meeting data.',
+  actions: [getRecordingSummary, getRecordingTranscript, listMeetings, findTeam, findTeamMember],
+  triggers: [newRecording],
 });

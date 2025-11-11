@@ -1,11 +1,12 @@
 import { fathomAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { Fathom } from 'fathom-typescript';
+import { ListMeetingsRequest } from 'fathom-typescript/dist/esm/sdk/models/operations';
 
 export const listMeetings = createAction({
   name: 'listMeetings',
   displayName: 'List Meetings',
-  description: 'List meetings with filtering and pagination',
+  description: 'List meetings with optional filtering and pagination',
   auth: fathomAuth,
   props: {
     calendar_invitees: Property.Array({
@@ -82,74 +83,67 @@ export const listMeetings = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const queryParams = new URLSearchParams();
+    const fathom = new Fathom({
+      security: { apiKeyAuth: auth },
+    });
+
+    const request: Partial<ListMeetingsRequest> = {};
 
     if (propsValue.calendar_invitees && Array.isArray(propsValue.calendar_invitees)) {
-      propsValue.calendar_invitees.forEach((email) => {
-        queryParams.append('calendar_invitees[]', email as string);
-      });
+      request.calendarInvitees = propsValue.calendar_invitees as string[];
     }
 
     if (propsValue.calendar_invitees_domains && Array.isArray(propsValue.calendar_invitees_domains)) {
-      propsValue.calendar_invitees_domains.forEach((domain) => {
-        queryParams.append('calendar_invitees_domains[]', domain as string);
-      });
+      request.calendarInviteesDomains = propsValue.calendar_invitees_domains as string[];
     }
 
     if (propsValue.calendar_invitees_domains_type && propsValue.calendar_invitees_domains_type !== 'all') {
-      queryParams.append('calendar_invitees_domains_type', propsValue.calendar_invitees_domains_type as string);
+      request.calendarInviteesDomainsType = propsValue.calendar_invitees_domains_type as 'only_internal' | 'one_or_more_external';
     }
 
     if (propsValue.recorded_by && Array.isArray(propsValue.recorded_by)) {
-      propsValue.recorded_by.forEach((email) => {
-        queryParams.append('recorded_by[]', email as string);
-      });
+      request.recordedBy = propsValue.recorded_by as string[];
     }
 
     if (propsValue.teams && Array.isArray(propsValue.teams)) {
-      propsValue.teams.forEach((team) => {
-        queryParams.append('teams[]', team as string);
-      });
+      request.teams = propsValue.teams as string[];
     }
 
     if (propsValue.created_after) {
-      queryParams.append('created_after', propsValue.created_after);
+      request.createdAfter = propsValue.created_after;
     }
 
     if (propsValue.created_before) {
-      queryParams.append('created_before', propsValue.created_before);
+      request.createdBefore = propsValue.created_before;
     }
 
     if (propsValue.include_transcript) {
-      queryParams.append('include_transcript', 'true');
+      request.includeTranscript = true;
     }
 
     if (propsValue.include_summary) {
-      queryParams.append('include_summary', 'true');
+      request.includeSummary = true;
     }
 
     if (propsValue.include_action_items) {
-      queryParams.append('include_action_items', 'true');
+      request.includeActionItems = true;
     }
 
     if (propsValue.include_crm_matches) {
-      queryParams.append('include_crm_matches', 'true');
+      request.includeCrmMatches = true;
     }
 
     if (propsValue.cursor) {
-      queryParams.append('cursor', propsValue.cursor);
+      request.cursor = propsValue.cursor;
     }
 
-    const url = `https://api.fathom.ai/external/v1/meetings${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await fathom.listMeetings(request);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: url,
-      headers: {
-        'X-Api-Key': auth,
-      },
-    });
+    const meetings = [];
+    for await (const meeting of response) {
+      meetings.push(meeting);
+    }
 
-    return response.body;
+    return meetings;
   },
 });
