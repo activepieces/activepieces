@@ -6,10 +6,10 @@ import { toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
-  CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
-  UpdateSubscriptionParams,
+  UpdateActiveFlowsAddonParams,
+  CreateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
@@ -31,13 +31,13 @@ export const billingMutations = {
       },
     });
   },
-  useUpdateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
+  useUpdateActiveFlowsLimit: (setIsOpen?: (isOpen: boolean) => void) => {
     const navigate = useNavigate();
     return useMutation({
-      mutationFn: (params: UpdateSubscriptionParams) =>
-        platformBillingApi.updateSubscription(params),
+      mutationFn: (params: UpdateActiveFlowsAddonParams) =>
+        platformBillingApi.updateActiveFlowsLimits(params),
       onSuccess: (url) => {
-        setIsOpen(false);
+        setIsOpen?.(false);
         navigate(url);
         toast({
           title: t('Success'),
@@ -49,7 +49,7 @@ export const billingMutations = {
       },
     });
   },
-  useCreateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
+  useCreateSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
     return useMutation({
       mutationFn: async (params: CreateSubscriptionParams) => {
         const checkoutSessionURl = await platformBillingApi.createSubscription(
@@ -58,15 +58,11 @@ export const billingMutations = {
         window.open(checkoutSessionURl, '_blank');
       },
       onSuccess: () => {
-        setIsOpen(false);
-        toast({
-          title: t('Success'),
-          description: t('Plan created successfully'),
-        });
+        setIsOpen?.(false);
       },
       onError: (error) => {
         toast({
-          title: t('Creating Subscription failed'),
+          title: t('Starting Subscription failed'),
           description: t(error.message),
           variant: 'default',
           duration: 5000,
