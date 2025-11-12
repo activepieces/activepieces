@@ -1,201 +1,120 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
-import { PiecePackageInformation } from '@activepieces/pieces-framework'
-import { enrichErrorContext, fileSystemUtils, systemConstants } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock, systemConstants } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     isEmpty,
     PackageType,
     PiecePackage,
     PieceType,
-    PrivatePiecePackage,
-    tryCatch,
-    WebsocketServerEvent,
+    unique,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { appSocket } from '../../../app-socket'
-import { PackageInfo, packageManager } from '../../package-manager'
-import { GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
+import { packageManager } from '../../package-manager'
+import writeFileAtomic from 'write-file-atomic'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
-type InstallParams = {
-    projectPath: string
-    pieces: PiecePackage[]
-}
+const pieceInstalled: Record<string, boolean> = {}
+
+const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
+const piecePath = (projectPath: string, piece: PiecePackage) => join(projectPath, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({
         projectPath,
         pieces,
     }: InstallParams): Promise<void> => {
-        try {
-            if (isEmpty(pieces)) {
-                return
+
+        const uniquePieces = unique(pieces)
+        const filterResults = await Promise.all(uniquePieces.map(piece => checkIfPieceIsCached(piecePath(projectPath, piece))))
+        const filteredPieces = uniquePieces.filter((_, idx) => !filterResults[idx])
+
+        if (isEmpty(filteredPieces)) {
+            return
+        }
+
+        await savePackageArchivesToDiskIfNotCached(filteredPieces)
+
+        await memoryLock.runExclusive({
+            key: `install-pieces`,
+            fn: async () => {
+                await createRootPackageJson({
+                    path: projectPath,
+                })
+                await Promise.all(filteredPieces.map(piece => createPiecePackageJson({
+                    path: piecePath(projectPath, piece),
+                    piecePackage: piece,
+                })))
+
+                log.info({
+                    projectPath,
+                }, 'Installing registry pieces using bun')
+                const performanceStartTime = performance.now()
+                await packageManager(log).installWorkspaces({
+                    path: projectPath,
+                    relativePiecePaths: filteredPieces.map(relativePiecePath),
+                })
+                await Promise.all(filteredPieces.map(piece => markPieceAsInstalled(piecePath(projectPath, piece))))
+                log.info({
+                    projectPath,
+                    timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
+                }, 'Installed registry pieces using bun')
             }
-
-            const uniquePieces = removeDuplicatedPieces(pieces)
-
-            await registryPieceManager(log).installDependencies({
-                projectPath,
-                pieces: uniquePieces,
-            })
-        }
-        catch (error) {
-            const contextKey = '[PieceManager#install]'
-            const contextValue = { projectPath }
-
-            const enrichedError = enrichErrorContext({
-                error,
-                key: contextKey,
-                value: contextValue,
-            })
-
-            throw enrichedError
-        }
-    },
-
-    installDependencies: async ({
-        projectPath,
-        pieces,
-    }: InstallParams): Promise<void> => {
-        await savePackageArchivesToDiskIfNotCached(pieces)
-        const installDir = join(projectPath, 'pieces')
-
-        await createRootPackageJson({
-            path: installDir,
-            workspaces: await getPiecesPublishers(pieces),
         })
-        for (const piece of pieces) {
-            await createPiecePackageJson({
-                path: join(installDir, `${piece.pieceName}-${piece.pieceVersion}`),
-                piecePackage: piece,
-            })
-        }
 
-        log.info({
-            installDir,
-        }, 'Installing registry pieces using bun')
-        
-        const performanceStartTime = performance.now()
-        
-        const result = await tryCatch(async () => packageManager(log).add({
-            path: installDir,
-            dependencies: pieces.map((piece) => pieceToDependency(piece)),
-        }))
-        if (result.error) {
-            throw result.error
-        }
-        log.info({
-            installDir,
-            timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
-        }, 'Installed registry pieces using bun')
-    },
-
-    async preWarmCache(): Promise<void> {
-        const pieces = await appSocket(log).emitWithAck<PiecePackageInformation[]>(WebsocketServerEvent.GET_REGISTRY_PIECES, {})
-
-        await registryPieceManager(log).install({
-            projectPath: GLOBAL_CACHE_COMMON_PATH,
-            pieces: pieces.map((piece) => ({
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
-                pieceName: piece.name,
-                pieceVersion: piece.version,
-            })),
-        })
     },
 })
-
-const pieceToDependency = (piece: PiecePackage): PackageInfo => {
-    return {
-        alias: piece.pieceName,
-        spec: piece.pieceVersion,
-        standalone: piece.pieceType === PieceType.CUSTOM,
-    }
-}
-
-const removeDuplicatedPieces = (pieces: PiecePackage[]): PiecePackage[] => {
-    return pieces.filter(
-        (piece, index, self) =>
-            index ===
-            self.findIndex(
-                (p) =>
-                    p.pieceName === piece.pieceName &&
-                    p.pieceVersion === piece.pieceVersion,
-            ),
-    )
-}
 
 const savePackageArchivesToDiskIfNotCached = async (
     pieces: PiecePackage[],
 ): Promise<void> => {
-    const packages = await getUncachedArchivePackages(pieces)
-    const saveToDiskJobs = packages.map((piece) =>
-        getArchiveAndSaveToDisk(piece),
-    )
+    const saveToDiskJobs = pieces.map(async (piece) => {
+        if (piece.packageType !== PackageType.ARCHIVE) {
+            return
+        }
+        await memoryLock.runExclusive({
+            key: `save-package-archive-${piece.archiveId}`,
+            fn: async () => {
+                const archivePath = getPackageArchivePathForPiece({
+                    archiveId: piece.archiveId,
+                    archivePath: PACKAGE_ARCHIVE_PATH,
+                })
+                if (await fileSystemUtils.fileExists(archivePath)) {
+                    return
+                }
+
+                await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
+                await writeFile(archivePath, piece.archive as Buffer)
+            }
+        })
+    })
     await Promise.all(saveToDiskJobs)
 }
 
-const getUncachedArchivePackages = async (
-    pieces: PiecePackage[],
-): Promise<PrivatePiecePackage[]> => {
-    const packages: PrivatePiecePackage[] = []
-
-    for (const piece of pieces) {
-        if (piece.packageType !== PackageType.ARCHIVE) {
-            continue
-        }
-
-        const archivePath = getPackageArchivePathForPiece({
-            archiveId: piece.archiveId,
-            archivePath: PACKAGE_ARCHIVE_PATH,
-        })
-
-        if (await fileSystemUtils.fileExists(archivePath)) {
-            continue
-        }
-
-        packages.push(piece)
+async function checkIfPieceIsCached(pieceFolder: string): Promise<boolean> {
+    if (pieceInstalled[pieceFolder]) {
+        return true
     }
-
-    return packages
+    pieceInstalled[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
+    return pieceInstalled[pieceFolder]
 }
 
-const getArchiveAndSaveToDisk = async (
-    piece: PrivatePiecePackage,
-): Promise<void> => {
-    const archiveId = piece.archiveId
-
-    const archivePath = getPackageArchivePathForPiece({
-        archiveId,
-        archivePath: PACKAGE_ARCHIVE_PATH,
-    })
-
-    await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
-
-    await writeFile(archivePath, piece.archive as Buffer)
+async function markPieceAsInstalled(pieceFolder: string): Promise<void> {
+    await writeFileAtomic(join(pieceFolder, 'ready'), 'true', 'utf8')
+    pieceInstalled[pieceFolder] = true
 }
 
-/**
- * Get the publishers of the pieces
- * @param pieces - e.g. `@activepieces/piece-youtube`, `@other-org/piece-other`
- * @returns `@activepieces`, `@other-org`
- */
-const getPiecesPublishers = async (pieces: PiecePackage[]): Promise<string[]> => {
-    return Array.from(new Set(pieces.map((piece) => piece.pieceName.split('/')[0])))
-}
-
-async function createRootPackageJson({ path, workspaces }: { path: string, workspaces: string[] }): Promise<void> {
+async function createRootPackageJson({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
-    const packageJson =  {
-        'name': 'common',
-        'version': '1.0.0',
-        'workspaces': workspaces.map((workspace) => `${workspace}/*`),
-        'dependencies': {},
-    }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
-    await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
+    await writeFileAtomic(packageJsonPath, JSON.stringify({
+        "name": "fast-workspace",
+        "version": "1.0.0",
+        "workspaces": [
+            "pieces/**"
+        ]
+    }, null, 2), 'utf8')
 }
 
 async function createPiecePackageJson({ path, piecePackage }: {
@@ -214,3 +133,8 @@ async function createPiecePackageJson({ path, piecePackage }: {
     await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
 }
 
+
+type InstallParams = {
+    projectPath: string
+    pieces: PiecePackage[]
+}

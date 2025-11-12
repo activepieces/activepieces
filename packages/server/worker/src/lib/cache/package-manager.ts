@@ -1,6 +1,5 @@
 
 import {
-    enrichErrorContext,
     execPromise,
     fileSystemUtils,
 } from '@activepieces/server-shared'
@@ -31,33 +30,10 @@ export type PackageInfo = {
     standalone?: boolean
 }
 
-const runCommand = async (
-    path: string,
-    command: Command,
-    log: FastifyBaseLogger,
-    ...args: string[]
-): Promise<PackageManagerOutput> => {
-    try {
-        log.debug({ path, command, args }, '[PackageManager#execute]')
-
-        await fileSystemUtils.threadSafeMkdir(path)
-        const commandLine = `bun ${command} ${args.join(' ')}`
-        return await execPromise(commandLine, { cwd: path })
-    }
-    catch (error) {
-        const contextKey = '[PackageManager#runCommand]'
-        const contextValue = { path, command, args }
-
-        const enrichedError = enrichErrorContext({
-            error,
-            key: contextKey,
-            value: contextValue,
-        })
-
-        throw enrichedError
-    }
-}
-
+const piecesConfigs = [
+    '--ignore-scripts',
+    '--linker isolated',
+]
 export const packageManager = (log: FastifyBaseLogger) => ({
     async add({
         path,
@@ -65,12 +41,9 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         installDir,
     }: AddParams): Promise<PackageManagerOutput> {
 
-        const config = [
-            '--ignore-scripts',
-            '--linker isolated',
-        ]
+        const baseConfig = [...piecesConfigs]
         if (!isNil(installDir)) {
-            config.push(`--dir=${installDir}`)
+            baseConfig.push(`--dir=${installDir}`)
         }
 
         const dependenciesArgs = []
@@ -79,9 +52,14 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             dependenciesArgs.push(...dependencies.map((dependency) => `${dependency.alias}@${dependency.spec}`))
         }
 
-        return runCommand(path, 'install', log, ...dependenciesArgs, ...config)
+        return runCommand(path, 'install', log, ...dependenciesArgs, ...baseConfig)
     },
 
+    async installWorkspaces({ path, relativePiecePaths }: InstallWorkspacesParams): Promise<PackageManagerOutput> {
+        const args = piecesConfigs;
+        const filters: string[] = relativePiecePaths.map((path) => `--filter '${path}'`)
+        return runCommand(path, 'install', log, ...args, ...filters)
+    },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<PackageManagerOutput> {
         const config = [
             `${entryFile}`,
@@ -94,6 +72,25 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+
+const runCommand = async (
+    path: string,
+    command: Command,
+    log: FastifyBaseLogger,
+    ...args: string[]
+): Promise<PackageManagerOutput> => {
+    log.debug({ path, command, args }, '[PackageManager#execute]')
+    await fileSystemUtils.threadSafeMkdir(path)
+    const commandLine = `bun ${command} ${args.join(' ')}`
+    return await execPromise(commandLine, { cwd: path })
+}
+
+
+type InstallWorkspacesParams = {
+    path: string
+    relativePiecePaths: string[]
+}
 
 type AddParams = {
     path: string
