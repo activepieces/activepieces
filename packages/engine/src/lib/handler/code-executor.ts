@@ -1,6 +1,6 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { CodeAction, FlowActionType, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { CodeAction, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -8,7 +8,6 @@ import { EngineGenericError } from '../helper/execution-errors'
 import { progressService } from '../services/progress.service'
 import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { ExecutionVerdict } from './context/flow-execution-context'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -67,7 +66,11 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict(ExecutionVerdict.FAILED, undefined)
+            .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+                name: action.name,
+                displayName: action.displayName,
+                message: utils.formatError(executionStateError),
+            } })
     }
 
     return executionStateResult

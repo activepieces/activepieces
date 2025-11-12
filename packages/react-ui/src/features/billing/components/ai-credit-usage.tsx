@@ -14,15 +14,16 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
   AiOverageState,
   PlatformBillingInformation,
-  PlanName,
 } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
 
 import { AiCreditsUsageTable } from './ai-credits-usage-table';
+import { EnableAIOverageDialog } from './enable-ai-credits-overage';
 
 interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
@@ -32,26 +33,27 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const queryClient = useQueryClient();
   const { plan, usage } = platformSubscription;
 
+  const [isOpen, setIsOpen] = useState(false);
+
   const planIncludedCredits = plan.includedAiCredits;
   const overageLimit = plan.aiCreditsOverageLimit;
   const totalCreditsUsed = usage.aiCredits;
 
+  const hasActiveSubscription =
+    plan.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE;
   const aiOverrageState =
-    plan.aiCreditsOverageState ??
-    plan.aiCreditsOverageState ??
-    AiOverageState.NOT_ALLOWED;
-
-  const isFreePlan = plan.plan === PlanName.FREE;
+    plan.aiCreditsOverageState ?? AiOverageState.NOT_ALLOWED;
 
   const overageConfig = useMemo(() => {
     const isAllowed = aiOverrageState !== AiOverageState.NOT_ALLOWED;
     const isEnabled = aiOverrageState === AiOverageState.ALLOWED_AND_ON;
+
     return {
       allowed: isAllowed,
       enabled: isEnabled,
-      canToggle: !isFreePlan && isAllowed,
+      canToggle: isAllowed,
     };
-  }, [aiOverrageState, isFreePlan]);
+  }, [aiOverrageState]);
 
   const [usageBasedEnabled, setUsageBasedEnabled] = useState(
     overageConfig.enabled,
@@ -105,14 +107,18 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
       ? AiOverageState.ALLOWED_BUT_OFF
       : AiOverageState.ALLOWED_AND_ON;
 
-    toggleAiCreditsOverageEnabled(
-      { state: newState },
-      {
-        onSuccess: () => {
-          setUsageBasedEnabled(!usageBasedEnabled);
+    if (!hasActiveSubscription) {
+      setIsOpen(true);
+    } else {
+      toggleAiCreditsOverageEnabled(
+        { state: newState },
+        {
+          onSuccess: () => {
+            setUsageBasedEnabled(!usageBasedEnabled);
+          },
         },
-      },
-    );
+      );
+    }
   }, [usageBasedEnabled, toggleAiCreditsOverageEnabled]);
 
   useEffect(() => {
@@ -298,6 +304,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
 
         <Separator />
         <AiCreditsUsageTable />
+        <EnableAIOverageDialog isOpen={isOpen} onOpenChange={setIsOpen} />
       </CardContent>
     </Card>
   );
