@@ -33,15 +33,18 @@ To use the createChat function with React, follow this example:
 Consider mounting this component higher on DOM so it does not conflict with other deeper nested components
 
 ```
-import { createChat } from '@avalant/automationx-widgets';
+import { ChatWidget } from '@avalant/automationx-widgets';
 import { useEffect } from 'react';
 
-useEffect(() => {
-  createChat({
-    title: 'Support Chat',
-    webhookUrl: 'http://127.0.0.1:4200/api/v1/webhooks/2AeEyRaC5FyEp1WvBuaVK/sync',
-  });
-}, []);
+export function App() {
+  return (
+    <ChatWidget
+        webhookUrl="http://127.0.0.1:4200/api/v1/webhooks/2AeEyRaC5FyEp1WvBuaVK/sync"
+        icon="https://www.gimp.org/theme/images/pp16.png"
+        title="Support"
+      />
+    );
+}
 ```
 
 ### Using with UMD Module (HTML)
@@ -79,6 +82,7 @@ Ones with "?" can be left empty as they will fallback to default values
   webhookUrl: string; // Published flow's live URL (Notice the /sync suffix)
   title?: string; // Shown on the chat header (expanded and collapsed)
   welcomeMessage?: string;
+  icon?: string | React.ReactNode; // Icon URL (png, svg) or a <svg>...</svg> element when used in ES modules (React)
   theme?: {
     headerColor?: string; // #333
     headerTextColor?: string; // #fff
@@ -96,11 +100,17 @@ Ones with "?" can be left empty as they will fallback to default values
 
 ### Look & Feel
 
-When collapsed
-![Collapsed Chat Window](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/default-collapsed.png)
+When collapsed (Default)
+![Collapsed Chat Widget](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/default-collapsed.png)
 
-When expanded
-![Expanded Chat Window](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/default-expanded.png)
+When expanded (Default)
+![Expanded Chat Widget](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/default-expanded.png)
+
+With theme, icon and title; Collapsed (Customized)
+![Collapsed Customized Widget](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/icon-title-collapsed.png)
+
+With theme, icon and title; Expanded (Customized)
+![Expanded Customized Widget](https://raw.githubusercontent.com/avalang-global/AutomationX/main/packages/widgets/images/icon-title-expanded.png)
 
 ## Building
 

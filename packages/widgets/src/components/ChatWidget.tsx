@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './ChatWindow.css';
+import './ChatWidget.css';
 
 export interface ThemeOptions {
   headerColor?: string;
@@ -14,18 +14,36 @@ export interface ThemeOptions {
   inputBorderColor?: string;
 }
 
-export interface ChatWindowProps {
+export const defaultTheme: ThemeOptions = {
+  headerColor: '#333',
+  headerTextColor: '#fff',
+  backgroundColor: '#fff',
+  userMessageColor: '#ccc',
+  userMessageTextColor: '#333',
+  botMessageColor: '#333',
+  botMessageTextColor: '#fff',
+  buttonColor: '#333',
+  buttonTextColor: '#fff',
+  inputBorderColor: '#ccc',
+};
+
+export interface ChatWidgetProps {
   webhookUrl: string;
   title?: string;
   welcomeMessage?: string;
   theme?: ThemeOptions;
+  icon?: string | React.ReactNode;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({
+const DEFAULT_WELCOME_MSG = '👋 Hi there! How can I help you today?';
+const DEFAULT_TITLE = 'Chat';
+
+export const ChatWidget: React.FC<ChatWidgetProps> = ({
   webhookUrl,
   title,
-  welcomeMessage,
-  theme = {},
+  welcomeMessage = DEFAULT_WELCOME_MSG,
+  theme: userTheme = {},
+  icon,
 }) => {
   const [messages, setMessages] = useState([
     { from: 'bot', text: welcomeMessage },
@@ -72,6 +90,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
+  // Fill in missing theme options with default ones
+  const theme = { ...defaultTheme, ...userTheme };
+
   const headerStyle = {
     backgroundColor: theme.headerColor,
     color: theme.headerTextColor,
@@ -110,7 +131,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         style={headerStyle}
         onClick={() => setIsMinimized(!isMinimized)}
       >
-        <span className="ax-chat-title">{title}</span>
+        {icon &&
+          (typeof icon === 'string' ? (
+            <img
+              src={icon}
+              alt="Chat icon"
+              className="ax-chat-icon"
+              style={{ width: 24, height: 24 }}
+            />
+          ) : (
+            <span className="ax-chat-icon">{icon}</span>
+          ))}
+        {title
+          ? title
+          : icon
+          ? null
+          : DEFAULT_TITLE && (
+              <span className="ax-chat-title">{title ?? DEFAULT_TITLE}</span>
+            )}
         {!isMinimized && <span className="ax-minimize-indicator">x</span>}
       </div>
 

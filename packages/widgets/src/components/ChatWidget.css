@@ -32,6 +32,10 @@
   background: #0069e0; /* Subtle hover cue for interactivity */
 }
 
+.ax-minimized .ax-chat-header {
+  gap: 8px;
+}
+
 .ax-chat-title {
   white-space: nowrap; /* Prevent text from wrapping */
   overflow: hidden; /* Hide text that overflows the container */
