@@ -102,13 +102,6 @@ export const ProjectDashboardLayoutHeader = () => {
       show: true,
       hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/issues'),
-      label: t('Issues'),
-      icon: CircleAlert,
-      hasPermission: checkAccess(Permission.READ_ISSUES),
-      show: true,
-    },
   ];
 
   const getCurrentPageName = () => {
