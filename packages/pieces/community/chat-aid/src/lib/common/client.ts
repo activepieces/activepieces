@@ -9,17 +9,23 @@ export async function makeRequest(
   body?: unknown
 ) {
   try {
+    const headers: Record<string, string> = {
+      Authorization: `${api_key}`,
+    };
+
+    if (body && !(body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await httpClient.sendRequest({
       method,
       url: `${BASE_URL}${path}`,
-      headers: {
-        Authorization: `${api_key}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       body,
     });
     return response.body;
-  } catch (error: any) {
-    throw new Error(`Unexpected error: ${error.message || String(error)}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Unexpected error: ${errorMessage}`);
   }
 }
