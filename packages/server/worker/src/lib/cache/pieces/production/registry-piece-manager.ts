@@ -64,6 +64,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
 
         await createRootPackageJson({
             path: installDir,
+            workspaces: await getPiecesPublishers(pieces),
         })
         for (const piece of pieces) {
             await createPiecePackageJson({
@@ -176,15 +177,21 @@ const getArchiveAndSaveToDisk = async (
     await writeFile(archivePath, piece.archive as Buffer)
 }
 
+/**
+ * Get the publishers of the pieces
+ * @param pieces - e.g. `@activepieces/piece-youtube`, `@other-org/piece-other`
+ * @returns `@activepieces`, `@other-org`
+ */
+const getPiecesPublishers = async (pieces: PiecePackage[]): Promise<string[]> => {
+    return Array.from(new Set(pieces.map((piece) => piece.pieceName.split('/')[0])))
+}
 
-async function createRootPackageJson({ path }: { path: string }): Promise<void> {
+async function createRootPackageJson({ path, workspaces }: { path: string, workspaces: string[] }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     const packageJson =  {
         'name': 'common',
         'version': '1.0.0',
-        'workspaces': [
-            '@activepieces/*',
-        ],
+        'workspaces': workspaces.map((workspace) => `${workspace}/*`),
         'dependencies': {},
     }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
