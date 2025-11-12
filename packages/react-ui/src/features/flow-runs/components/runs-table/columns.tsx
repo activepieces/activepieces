@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Archive, ChevronDown, Hourglass } from 'lucide-react'; 
+import { Archive, ChevronDown, Hourglass } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import { Button } from '@/components/ui/button';

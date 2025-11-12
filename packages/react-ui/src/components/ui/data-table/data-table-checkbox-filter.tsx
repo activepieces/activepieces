@@ -25,7 +25,11 @@ export function DataTableInputCheckbox({
       )}
       onClick={() => handleCheckedChange(!checked)}
     >
-      <Checkbox checked={checked} className="pointer-events-none" variant="secondary" />
+      <Checkbox
+        checked={checked}
+        className="pointer-events-none"
+        variant="secondary"
+      />
       <Label className="text-sm font-medium leading-none select-none cursor-pointer">
         {label}
       </Label>
