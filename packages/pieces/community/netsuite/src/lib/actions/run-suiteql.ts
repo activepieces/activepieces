@@ -4,6 +4,8 @@ import { netsuiteAuth } from '../..';
 import { createOAuthHeader } from '../oauth';
 import { format as formatSQL, ParamItems } from 'sql-formatter';
 
+const PAGE_SIZE = 1000;
+
 const mkdown = `
 - **DO NOT** insert dynamic input directly into the query string. Instead, use :1, :2, :3 and add them in args for parameterized queries
 - Arguments are treated as string and inserted as a [Text Literal](https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/Literals.html)
@@ -53,32 +55,51 @@ export const runSuiteQL = createAction({
       params: formattedArgs,
     });
 
+    const results = [];
+    let pageOffset = 0;
+    let hasMore = true;
+
     const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql`;
     const httpMethod = HttpMethod.POST;
 
-    const authHeader = createOAuthHeader(
-      accountId,
-      consumerKey,
-      consumerSecret,
-      tokenId,
-      tokenSecret,
-      requestUrl,
-      httpMethod
-    );
+    // paginate results: https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156414087576.html
+    while (hasMore) {
+      const queryParams = {
+        limit: String(PAGE_SIZE),
+        offset: String(pageOffset),
+      };
 
-    const response = await httpClient.sendRequest({
-      method: httpMethod,
-      url: requestUrl,
-      headers: {
-        Authorization: authHeader,
-        prefer: 'transient',
-        Cookie: 'NS_ROUTING_VERSION=LAGGING',
-      },
-      body: {
-        q: formattedSQL,
-      },
-    });
+      const authHeader = createOAuthHeader(
+        accountId,
+        consumerKey,
+        consumerSecret,
+        tokenId,
+        tokenSecret,
+        requestUrl,
+        httpMethod,
+        queryParams
+      );
 
-    return response.body;
+      const response = await httpClient.sendRequest({
+        method: httpMethod,
+        url: requestUrl,
+        headers: {
+          Authorization: authHeader,
+          prefer: 'transient',
+          Cookie: 'NS_ROUTING_VERSION=LAGGING',
+        },
+        body: {
+          q: formattedSQL,
+        },
+        queryParams: queryParams,
+      });
+
+      results.push(...(response.body?.items || []));
+
+      hasMore = response.body?.hasMore || false;
+      pageOffset += PAGE_SIZE;
+    }
+
+    return results;
   },
 });
