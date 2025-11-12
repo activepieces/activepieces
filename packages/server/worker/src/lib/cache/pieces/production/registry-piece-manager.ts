@@ -28,8 +28,11 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     }: InstallParams): Promise<void> => {
 
         const uniquePieces = unique(pieces)
+        if (isEmpty(uniquePieces)) {
+            return
+        }
         const redis = await workerRedisConnections.useExisting()
-        const filterResults = await Promise.all(uniquePieces.map(piece => redis.get(installedPieceRedisKey(piece))))
+        const filterResults = await redis.mget(uniquePieces.map(installedPieceRedisKey))
         const filteredPieces = uniquePieces.filter((_, idx) => !filterResults[idx])
 
         if (isEmpty(filteredPieces)) {
@@ -54,7 +57,8 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                     path: projectPath,
                     relativePiecePaths: filteredPieces.map(relativePiecePath),
                 })
-                await Promise.all(filteredPieces.map(piece => redis.set(installedPieceRedisKey(piece), 'true')))
+                await redis.mset(filteredPieces.map(piece => [installedPieceRedisKey(piece), 'true']).flat())
+
                 log.info({
                     projectPath,
                     pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
