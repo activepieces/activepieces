@@ -20,16 +20,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   FlowActionType,
-  ApEdition,
-  ApFlagId,
   FlowTriggerType,
   FlowVersionState,
   PieceTrigger,
@@ -99,7 +95,6 @@ const BuilderPage = () => {
       state.selectedStep,
     ]);
 
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   useShowBuilderIsSavingWarningBeforeLeaving();
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
@@ -287,7 +282,6 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      {edition === ApEdition.CLOUD && <UpgradeDialog />}
       <ChatDrawer />
     </div>
   );

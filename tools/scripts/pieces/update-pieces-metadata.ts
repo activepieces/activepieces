@@ -24,7 +24,7 @@ const insertPieceMetadata = async (
     body
   });
 
-  if (cloudResponse.status !== StatusCodes.OK) {
+  if (cloudResponse.status !== StatusCodes.OK && cloudResponse.status !== StatusCodes.CONFLICT) {
     throw new Error(await cloudResponse.text());
   }
 };
