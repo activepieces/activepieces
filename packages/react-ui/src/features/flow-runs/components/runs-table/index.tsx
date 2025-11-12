@@ -161,6 +161,7 @@ export const RunsTable = () => {
         title: t('Created'),
         accessorKey: 'created',
         icon: CheckIcon,
+        defaultPresetName: '7days',
       },
       {
         type: 'checkbox',
@@ -362,7 +363,7 @@ export const RunsTable = () => {
         },
       },
     ],
-    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
+    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data, archiveRuns, selectedAll, excludedRows],
   );
 
   const handleRowClick = useCallback(
