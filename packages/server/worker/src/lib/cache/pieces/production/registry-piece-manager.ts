@@ -95,7 +95,6 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     },
 
     async preWarmCache(): Promise<void> {
-        log.info('Pre-warming cache')
         const pieces = await appSocket(log).emitWithAck<PiecePackageInformation[]>(WebsocketServerEvent.GET_REGISTRY_PIECES, {})
 
         await registryPieceManager(log).install({

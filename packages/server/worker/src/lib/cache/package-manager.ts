@@ -67,12 +67,6 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         dependencies,
         installDir,
     }: AddParams): Promise<PackageManagerOutput> {
-        if (isEmpty(dependencies)) {
-            return {
-                stdout: '',
-                stderr: '',
-            }
-        }
 
         const config = [
             '--ignore-scripts',
@@ -82,7 +76,13 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             config.push(`--dir=${installDir}`)
         }
 
-        return runCommand(path, 'install', log, ...config)
+        const dependenciesArgs = []
+
+        if (!isNil(dependencies)) {
+            dependenciesArgs.push(...dependencies.map((dependency) => `${dependency.alias}@${dependency.spec}`))
+        }
+
+        return runCommand(path, 'install', log, ...dependenciesArgs, ...config)
     },
 
     async createRootPackageJson({ path }: { path: string }): Promise<void> {
@@ -120,7 +120,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
 
 type AddParams = {
     path: string
-    dependencies: PackageInfo[]
+    dependencies?: PackageInfo[]
     installDir?: string
 }
 
