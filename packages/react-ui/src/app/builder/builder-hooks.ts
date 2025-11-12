@@ -365,10 +365,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       exitStepSettings: () =>
         set((state) => ({
           rightSidebar: RightSideBarType.NONE,
-          leftSidebar:
-            state.leftSidebar === LeftSideBarType.AI_COPILOT
-              ? LeftSideBarType.NONE
-              : state.leftSidebar,
+          leftSidebar: state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
           askAiButtonProps: null,
@@ -570,12 +567,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       askAiButtonProps: null,
       setAskAiButtonProps: (props) => {
         return set((state) => {
-          let leftSidebar = state.leftSidebar;
-          if (props) {
-            leftSidebar = LeftSideBarType.AI_COPILOT;
-          } else if (state.leftSidebar === LeftSideBarType.AI_COPILOT) {
-            leftSidebar = LeftSideBarType.NONE;
-          }
+          const leftSidebar = state.leftSidebar;
 
           let rightSidebar = state.rightSidebar;
           if (props && props.type === FlowOperationType.UPDATE_ACTION) {

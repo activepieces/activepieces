@@ -52,7 +52,7 @@ export const GeneralSettings = ({
     {
       displayName: string;
       externalId?: string;
-      plan: { tasks: number | undefined; aiCredits?: number | undefined };
+      plan: { aiCredits?: number | undefined };
     }
   >({
     mutationFn: (request) => {
@@ -125,39 +125,6 @@ export const GeneralSettings = ({
 
             {false && platform.plan.manageProjectsEnabled && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  name="tasks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="tasks" className="text-sm font-medium">
-                        {t('Tasks')}
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="number"
-                          id="tasks"
-                          placeholder={t('Tasks')}
-                          className="h-9 pr-16"
-                        />
-                        {!field.disabled && (
-                          <Button
-                            variant="ghost"
-                            type="button"
-                            tabIndex={-1}
-                            size="sm"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-xs"
-                            onClick={() => form.setValue('tasks', '')}
-                          >
-                            {t('Clear')}
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   name="aiCredits"
                   render={({ field }) => (
@@ -234,7 +201,6 @@ export const GeneralSettings = ({
                     displayName: values.projectName,
                     externalId: values.externalId,
                     plan: {
-                      tasks: values.tasks ? parseInt(values.tasks) : undefined,
                       aiCredits: values.aiCredits
                         ? parseInt(values.aiCredits)
                         : undefined,

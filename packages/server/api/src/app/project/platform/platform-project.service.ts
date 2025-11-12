@@ -7,7 +7,7 @@ import {
     ActivepiecesError, assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
-    FlowStatus, Metadata, NotificationStatus, PlatformId,
+    FlowStatus, Metadata, PlatformId,
     Project,
     ProjectId, SeekPage,
     spreadIfDefined,
@@ -127,7 +127,6 @@ type UpdateParams = {
 type UpdateProjectRequestParams = {
     displayName?: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
     metadata?: Metadata
 }

@@ -51,22 +51,6 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     },
   },
   // {
-  //   accessorKey: 'tasks',
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title={t('Used Tasks')} />
-  //   ),
-  //   cell: ({ row }) => {
-  //     return (
-  //       <div className="text-left">
-  //         {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-  //         {!isNil(row.original.plan.tasks)
-  //           ? formatUtils.formatNumber(row.original.plan.tasks)
-  //           : t('Unlimited')}
-  //       </div>
-  //     );
-  //   },
-  // },
-  // {
   //   accessorKey: 'ai-tokens',
   //   header: ({ column }) => (
   //     <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
@@ -361,7 +345,6 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
-                    tasks: row.plan?.tasks?.toString() ?? '',
                     aiCredits: row.plan?.aiCredits?.toString() ?? '',
                   });
                   setEditDialogProjectId(row.id);

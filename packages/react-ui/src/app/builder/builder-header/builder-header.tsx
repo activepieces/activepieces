@@ -38,6 +38,7 @@ import {
   FlowVersionState,
   Permission,
   supportUrl,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
@@ -76,7 +77,9 @@ export const BuilderHeader = ({ creditUsage }: { creditUsage?: number }) => {
 
   const { embedState } = useEmbedding();
 
-  const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
+  const { data: folderData } = foldersHooks.useFolder(
+    flow.folderId ?? UncategorizedFolderId,
+  );
 
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
@@ -107,7 +110,7 @@ export const BuilderHeader = ({ creditUsage }: { creditUsage?: number }) => {
                                 '/flows',
                               ),
                             search: createSearchParams({
-                              folderId: folderData?.id ?? 'NULL',
+                              folderId: folderData?.id ?? UncategorizedFolderId,
                             }).toString(),
                           })
                         }

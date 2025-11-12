@@ -1,5 +1,5 @@
 
-import { PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_REGEX, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -46,6 +46,20 @@ export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadat
             })
 
             return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
+        },
+        async registry(params): Promise<PiecePackageInformation[]> {
+            const allPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
+                release: params.release,
+                projectId: undefined,
+                platformId: params.platformId,
+                log,
+            })
+            return allPieces.map((piece) => {
+                return {
+                    name: piece.name,
+                    version: piece.version,
+                }
+            })
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)

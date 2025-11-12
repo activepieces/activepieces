@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 // import {
 //   ApSubscriptionStatus,
 //   BillingCycle,
-//   PlanName,
 //   StripePlanName,
 // } from '@activepieces/ee-shared';
 import {
@@ -22,6 +21,7 @@ import {
   ApFlagId,
   isNil,
   PlatformUsageMetric,
+  PlanName,
 } from '@activepieces/shared';
 
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';
@@ -37,7 +37,7 @@ import { PlanSelectionStep } from './plan-selection-step';
 import { useManagePlanDialogStore } from './store';
 import { SubscriptionSummary } from './summary';
 import { calculatePrice, getActionConfig, getCurrentPlanInfo } from './utils';
-import { ApSubscriptionStatus, BillingCycle, PlanName, StripePlanName } from './enums';
+import { ApSubscriptionStatus, BillingCycle, StripePlanName } from './enums';
 
 export enum ActionType {
   CONFIGURE_ADDONS = 'configure-addons',
@@ -62,7 +62,6 @@ export interface CurrentPlanInfo {
   activeFlows: number;
   projects: number;
   subscriptionStatus: ApSubscriptionStatus;
-  isTrial: boolean;
 }
 
 export interface PricingCalculation {
@@ -282,7 +281,6 @@ export const UpgradeDialog: FC = () => {
     [PlatformUsageMetric.USER_SEATS]: t(
       'You have run out of user seats. Upgrade to get more.',
     ),
-    [PlatformUsageMetric.AGENTS]: t('Upgrade to unlock agents.'),
   };
 
   const message = dialog.metric ? messages[dialog.metric] : undefined;

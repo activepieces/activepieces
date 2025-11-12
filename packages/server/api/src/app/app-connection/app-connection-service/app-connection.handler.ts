@@ -3,10 +3,10 @@ import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionVal
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { APArrayContains } from '../../database/database-connection'
+import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
-import { distributedLock } from '../../helper/lock'
 import { projectService } from '../../project/project-service'
 import { AppConnectionSchema } from '../app-connection.entity'
 import { appConnectionsRepo } from './app-connection-service'
@@ -74,48 +74,46 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         externalId: string
         log: FastifyBaseLogger
     }) {
-        const refreshLock = await distributedLock.acquireLock({
+
+        return distributedLock(log).runExclusive({
             key: `${projectId}_${externalId}`,
-            timeout: 60000,
-            log,
-        })
+            timeoutInSeconds: 60,
+            fn: async () => {
+                let appConnection: AppConnection | null = null
 
-        let appConnection: AppConnection | null = null
-
-        try {
-            const encryptedAppConnection = await appConnectionsRepo().findOneBy({
-                ...APArrayContains('projectIds', [projectId]),
-                externalId,
-            })
-            if (isNil(encryptedAppConnection)) {
-                return encryptedAppConnection
-            }
-            appConnection = await this.decryptConnection(encryptedAppConnection)
-            if (!this.needRefresh(appConnection, log)) {
+                try {
+                    const encryptedAppConnection = await appConnectionsRepo().findOneBy({
+                        ...APArrayContains('projectIds', [projectId]),
+                        externalId,
+                    })
+                    if (isNil(encryptedAppConnection)) {
+                        return encryptedAppConnection
+                    }
+                    appConnection = await this.decryptConnection(encryptedAppConnection)
+                    if (!this.needRefresh(appConnection, log)) {
+                        return appConnection
+                    }
+                    const refreshedAppConnection = await this.refresh(appConnection, projectId, log)
+        
+                    await appConnectionsRepo().update(refreshedAppConnection.id, {
+                        status: AppConnectionStatus.ACTIVE,
+                        value: await encryptUtils.encryptObject(refreshedAppConnection.value),
+                    })
+                    return refreshedAppConnection
+                }
+                catch (e) {
+                    exceptionHandler.handle(e, log)
+                    if (!isNil(appConnection) && oauth2Util(log).isUserError(e)) {
+                        appConnection.status = AppConnectionStatus.ERROR
+                        await appConnectionsRepo().update(appConnection.id, {
+                            status: appConnection.status,
+                            updated: dayjs().toISOString(),
+                        })
+                    }
+                }
                 return appConnection
-            }
-            const refreshedAppConnection = await this.refresh(appConnection, projectId, log)
-
-            await appConnectionsRepo().update(refreshedAppConnection.id, {
-                status: AppConnectionStatus.ACTIVE,
-                value: await encryptUtils.encryptObject(refreshedAppConnection.value),
-            })
-            return refreshedAppConnection
-        }
-        catch (e) {
-            exceptionHandler.handle(e, log)
-            if (!isNil(appConnection) && oauth2Util(log).isUserError(e)) {
-                appConnection.status = AppConnectionStatus.ERROR
-                await appConnectionsRepo().update(appConnection.id, {
-                    status: appConnection.status,
-                    updated: dayjs().toISOString(),
-                })
-            }
-        }
-        finally {
-            await refreshLock.release()
-        }
-        return appConnection
+            },
+        })
     },
     async decryptConnection(
         encryptedConnection: AppConnectionSchema,
@@ -155,7 +153,6 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         id: flow.id,
         projectId,
         platformId,
-        lock: true,
         userId,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
@@ -167,7 +164,6 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         id: flow.id,
         projectId,
         platformId,
-        lock: true,
         userId,
         operation: {
             type: FlowOperationType.LOCK_AND_PUBLISH,
@@ -185,7 +181,6 @@ async function handleDraftVersion(flow: Flow, lastVersion: FlowVersion, userId: 
         id: flow.id,
         projectId,
         platformId,
-        lock: true,
         userId,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,

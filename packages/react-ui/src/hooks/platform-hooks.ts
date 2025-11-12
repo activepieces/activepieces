@@ -4,6 +4,7 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -22,9 +23,20 @@ import { platformApi } from '../lib/platforms-api';
 import { flagsHooks } from './flags-hooks';
 
 export const platformHooks = {
-  isCopilotEnabled: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    return Object.keys(platform?.copilotSettings?.providers ?? {}).length > 0;
+  useDeleteAccount: () => {
+    const navigate = useNavigate();
+    return useMutation({
+      mutationFn: async () => {
+        await platformApi.deleteAccount();
+      },
+      onSuccess: () => {
+        toast({
+          title: t('Success'),
+          description: t('Account deleted successfully'),
+        });
+        navigate('/sign-in');
+      },
+    });
   },
   useCurrentPlatform: () => {
     const currentPlatformId = authenticationSession.getPlatformId();
@@ -85,10 +97,7 @@ export const platformHooks = {
     });
   },
   useCheckResourceIsLocked: (
-    resource: Exclude<
-      PlatformUsageMetric,
-      PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS
-    >,
+    resource: Exclude<PlatformUsageMetric, PlatformUsageMetric.AI_CREDITS>,
   ): boolean => {
     const { platform } = platformHooks.useCurrentPlatform();
 

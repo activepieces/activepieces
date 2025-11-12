@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 
-import { agentsApi } from '@/features/agents/lib/agents-api';
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -22,7 +21,6 @@ import {
 import {
   PieceStepMetadata,
   PrimitiveStepMetadata,
-  StepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
 } from '../../../lib/types';
 
@@ -87,11 +85,11 @@ export const stepUtils = {
     const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
     const customLogoUrl = isPieceStep
       ? 'customLogoUrl' in step
-        ? step.customLogoUrl
+        ? (step.customLogoUrl as string)
         : undefined
       : undefined;
-    const agentId = flowStructureUtil.getExternalAgentId(step);
-    return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
+
+    return [pieceName, pieceVersion, customLogoUrl, locale, step.type];
   },
   async getMetadata(
     step: FlowAction | FlowTrigger,
@@ -120,22 +118,14 @@ export const stepUtils = {
           piece,
           type: step.type === FlowActionType.PIECE ? 'action' : 'trigger',
         });
-        const agentMetadata = await getAgentMetadata(step);
-        const agentDisplayName = agentMetadata.displayName;
         const actionOrTriggerDisplayName =
           step.type === FlowActionType.PIECE
             ? piece.actions[step.settings.actionName!].displayName
             : piece.triggers[step.settings.triggerName!].displayName;
         return {
           ...metadata,
-          ...spreadIfDefined('logoUrl', agentMetadata.logoUrl ?? customLogoUrl),
-          ...spreadIfDefined(
-            'description',
-            agentMetadata.description ?? piece.description,
-          ),
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
-          actionOrTriggerOrAgentDisplayName:
-            agentDisplayName ?? actionOrTriggerDisplayName,
+          actionOrTriggerOrAgentDisplayName: actionOrTriggerDisplayName,
         };
       }
     }
@@ -170,29 +160,6 @@ export const stepUtils = {
       : undefined;
   },
 };
-
-async function getAgentMetadata(
-  step: FlowAction | FlowTrigger,
-): Promise<
-  Partial<Pick<StepMetadata, 'displayName' | 'logoUrl' | 'description'>>
-> {
-  if (flowStructureUtil.isAgentPiece(step)) {
-    const externalAgentId = flowStructureUtil.getExternalAgentId(step);
-    if (!externalAgentId) {
-      return {};
-    }
-    const agent = await agentsApi.findByExteranlId(externalAgentId);
-    if (!agent) {
-      return {};
-    }
-    return {
-      logoUrl: agent.profilePictureUrl,
-      description: agent.description,
-      displayName: agent.displayName,
-    };
-  }
-  return {};
-}
 
 function mapErrorHandlingOptions(
   piece: PieceMetadataModel,

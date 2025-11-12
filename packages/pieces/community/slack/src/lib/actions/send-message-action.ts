@@ -38,14 +38,20 @@ export const slackSendMessageAction = createAction({
       required: false,
       defaultValue: false,
     }),
+    unfurlLinks: Property.Checkbox({
+      displayName: 'Unfurl Links',
+      description: 'Enable link unfurling for this message',
+      required: false,
+      defaultValue: true,
+    }),
     blocks,
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file, blocks, replyBroadcast } =
+    const { text, channel, username, profilePicture, threadTs, file, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
 
-    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+    const blockList = blocks && Array.isArray(blocks) ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
 
     return slackSendMessage({
       token,
@@ -57,6 +63,7 @@ export const slackSendMessageAction = createAction({
       file,
       blocks: blockList,
       replyBroadcast,
+      unfurlLinks,
     });
   },
 });

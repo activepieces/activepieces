@@ -9,16 +9,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  CodeAction,
-  FlowOperationType,
-  MarkdownVariant,
-} from '@activepieces/shared';
+import { CodeAction, MarkdownVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-import { AskAiButton } from '../ask-ai';
 
 import { CodeEditor } from './code-editor';
 
@@ -38,10 +32,9 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
-  const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
-    (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
-  );
-  const isCopilotEnabled = platformHooks.isCopilotEnabled();
+  const [refreshStepFormSettingsToggle] = useBuilderStateContext((state) => [
+    state.refreshStepFormSettingsToggle,
+  ]);
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -54,16 +47,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             </div>
             <div className="flex items-center justify-between !mb-2">
               <FormLabel>{t('Inputs')}</FormLabel>
-              {isCopilotEnabled && !readonly && (
-                <AskAiButton
-                  onClick={() => {}}
-                  varitant={'ghost'}
-                  operation={{
-                    type: FlowOperationType.UPDATE_ACTION,
-                    stepName: selectedStep,
-                  }}
-                ></AskAiButton>
-              )}
             </div>
 
             <DictionaryProperty

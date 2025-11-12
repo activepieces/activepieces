@@ -202,24 +202,6 @@ export const getDefaultValueForStep = ({
   );
 };
 
-const createPropertySettingsForStep = ({
-  propertySettings,
-  values,
-}: {
-  propertySettings: Record<string, PropertySettings>;
-  values: Record<string, unknown>;
-}) => {
-  return Object.fromEntries(
-    Object.entries(values).map(([key]) => [
-      key,
-      {
-        type: propertySettings[key]?.type ?? PropertyExecutionType.MANUAL,
-        schema: propertySettings[key]?.schema,
-      },
-    ]),
-  );
-};
-
 const buildConnectionSchema = (
   piece: PieceMetadataModelSummary | PieceMetadataModel,
 ) => {
@@ -389,10 +371,7 @@ export const formUtils = {
           existingInput: includeCurrentInput ? input : {},
           propertySettings: selectedStep.settings.propertySettings ?? {},
         });
-        const propertySettings = createPropertySettingsForStep({
-          propertySettings: selectedStep.settings.propertySettings ?? {},
-          values: defaultValues,
-        });
+        const propertySettings = selectedStep.settings.propertySettings;
         return {
           ...selectedStep,
           settings: {
@@ -426,10 +405,7 @@ export const formUtils = {
           existingInput: includeCurrentInput ? input : {},
           propertySettings: selectedStep.settings.propertySettings ?? {},
         });
-        const propertySettings = createPropertySettingsForStep({
-          propertySettings: selectedStep.settings.propertySettings ?? {},
-          values: defaultValues,
-        });
+        const propertySettings = selectedStep.settings.propertySettings;
         return {
           ...selectedStep,
           settings: {

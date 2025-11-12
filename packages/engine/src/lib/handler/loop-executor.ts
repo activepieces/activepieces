@@ -42,13 +42,14 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         for (let i = 0; i < resolvedInput.items.length; ++i) {
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
 
+            const testSingleStepMode = !isNil(constants.stepNameToTest)
             stepOutput = stepOutput.setItemAndIndex({ item: resolvedInput.items[i], index: i + 1 })
             const addEmptyIteration = !stepOutput.hasIteration(i)
             if (addEmptyIteration) {
                 stepOutput = stepOutput.addIteration()
             }
             newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
-            if (!isNil(firstLoopAction) && !constants.testSingleStepMode) {
+            if (!isNil(firstLoopAction) && !testSingleStepMode) {
                 newExecutionContext = await flowExecutor.execute({
                     action: firstLoopAction,
                     executionState: newExecutionContext,
@@ -62,7 +63,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
             }
 
-            if (constants.testSingleStepMode) {
+            if (testSingleStepMode) {
                 break
             }
         }

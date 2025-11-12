@@ -1,3 +1,5 @@
+import { PlanName } from '@activepieces/shared';
+
 export enum ApSubscriptionStatus {
   ACTIVE = 'active',
   CANCELED = 'canceled',
@@ -7,13 +9,6 @@ export enum ApSubscriptionStatus {
 export enum BillingCycle {
   MONTHLY = 'monthly',
   ANNUAL = 'annual',
-}
-
-export enum PlanName {
-  FREE = 'free',
-  PLUS = 'plus',
-  BUSINESS = 'business',
-  ENTERPRISE = 'enterprise',
 }
 
 export type StripePlanName = PlanName.PLUS | PlanName.BUSINESS;
