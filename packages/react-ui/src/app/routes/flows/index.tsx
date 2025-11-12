@@ -60,7 +60,6 @@ const FlowsPage = () => {
   return (
     <div className="flex flex-col gap-4 w-full grow">
       <DashboardPageHeader
-        tutorialTab="flows"
         title={t('Flows')}
         description={t('Create and manage your flows and run history')}
       ></DashboardPageHeader>
