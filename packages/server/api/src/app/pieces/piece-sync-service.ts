@@ -1,41 +1,16 @@
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
-import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
-import axios from 'axios'
-import axiosRetry from 'axios-retry'
-import dayjs from 'dayjs'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { apAxios, AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../core/db/repo-factory'
-import { parseAndVerify } from '../helper/json-validator'
+import pLimit from 'p-limit'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { PieceMetadataEntity } from './metadata/piece-metadata-entity'
-import { pieceMetadataService } from './metadata/piece-metadata-service'
-import pLimit from 'p-limit'
+import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
-const piecesRepo = repoFactory(PieceMetadataEntity)
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
-
-const axiosClient = axios.create({
-    baseURL: CLOUD_API_URL,
-    timeout: 20000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-})
-
-axiosRetry(axiosClient, {
-    retries: 5,
-    retryDelay: (_) => 10000,
-    retryCondition: (_) => true,
-    onRetry: (retryCount, _) => {
-        system.globalLogger().warn(`Sync failed, Retrying (${retryCount})...`)
-    },
-    shouldResetTimeout: true,
-})
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -50,7 +25,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             },
             schedule: {
                 type: 'repeated',
-                cron: '0 */1 * * *',
+                cron: `${Math.floor(Math.random() * 5)} */1 * * *`,
             },
         })
     },
@@ -60,19 +35,27 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             return
         }
         try {
-            log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
-            const pieces = await listPieces()
-            const limit = pLimit(200)
-            const promises: Promise<void>[] = []
+            log.info('Starting piece synchronization')
+            const startTime = performance.now()
+            const [cloudPieces, dbPieces] = await Promise.all([listCloudPieces(), pieceRepos().find()])
+            const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
+            const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
 
-            for (const summary of pieces) {
-                const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
-                if (!lastVersionSynced) {
-                    promises.push(limit(() => syncPiece(summary.name, log)))
-                }
-            }
-            await Promise.all(promises)
+            const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
+            const limit = pLimit(20)
+            const newPiecesMetadata = await Promise.all(newPiecesToFetch.map(piece => limit(async () => readPieceMetadata({ name: piece.name, version: piece.version, log }))))
+            await pieceMetadataService(log).bulkCreate(newPiecesMetadata.filter((piece): piece is PieceMetadataModel => piece !== null))
             
+            const officalPiecesThatIsNotOnCloud = dbPieces.filter(piece =>
+                piece.pieceType === PieceType.OFFICIAL &&
+                !cloudMap.has(`${piece.name}:${piece.version}`),
+            )
+            await pieceMetadataService(log).bulkDelete(officalPiecesThatIsNotOnCloud.map(piece => ({ name: piece.name, version: piece.version })))
+            log.info({
+                newPiecesSynchronized: newPiecesMetadata.length,
+                officialPiecesDeleted: officalPiecesThatIsNotOnCloud.length,
+                durationMs: Math.floor(performance.now() - startTime),
+            }, 'Piece synchronization completed')
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
@@ -80,53 +63,27 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
-    try {
-        const pieceVersionsMetadata: PieceMetadataModel[] = []
-        log.info({ name }, 'Syncing piece metadata into database')
-        const versions = await getVersions({ name })
-        for (const version of Object.keys(versions)) {
-            const currentVersionSynced = await existsInDatabase({ name, version })
-            if (!currentVersionSynced) {
-                const piece = await getOrThrow({ name, version })
-                pieceVersionsMetadata.push(piece)
-            }
-        }
-        await pieceMetadataService(log).bulkCreate(pieceVersionsMetadata)
-        log.info({ name }, 'Piece metadata synced into database')
+
+async function readPieceMetadata({ name, version, log }: { name: string, version: string, log: FastifyBaseLogger }): Promise<PieceMetadataModel | null> {
+    const { error, data: response } = await tryCatch(() => apAxios.get<PieceMetadataModel>(`${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`))
+    if (error) {
+        log.warn({ name, version, error }, 'Error reading piece metadata')
+        return null
     }
-    catch (error) {
-        log.error(error, 'Error syncing piece, please upgrade the activepieces to latest version')
-    }
-
-}
-async function existsInDatabase({ name, version }: { name: string, version: string }): Promise<boolean> {
-    return piecesRepo().existsBy({
-        name,
-        version,
-        pieceType: PieceType.OFFICIAL,
-        packageType: PackageType.REGISTRY,
-    })
-}
-
-async function getVersions({ name }: { name: string }): Promise<ListVersionsResponse> {
-    const queryParams = new URLSearchParams()
-    queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
-    queryParams.append('name', name)
-    const response = await axiosClient.get<ListVersionsResponse>(`/versions?${queryParams.toString()}`)
-    return parseAndVerify<ListVersionsResponse>(ListVersionsResponse, response.data)
-}
-
-async function getOrThrow({ name, version }: { name: string, version: string }): Promise<PieceMetadataModel> {
-    const response = await axiosClient.get<PieceMetadataModel>(`/${name}${version ? '?version=' + version : ''}`)
     return response.data
 }
 
-async function listPieces(): Promise<PieceMetadataModelSummary[]> {
+async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
     queryParams.append('release', await apVersionUtil.getCurrentRelease())
-    const response = await axiosClient.get<PieceMetadataModelSummary[]>(`?${queryParams.toString()}`)
+    const response = await apAxios.get<PieceRegistryResponse[]>(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
     return response.data
 }
+
+
+type PieceRegistryResponse = {
+    name: string
+    version: string
+}
+

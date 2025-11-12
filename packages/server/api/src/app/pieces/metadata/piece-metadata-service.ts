@@ -34,7 +34,7 @@ import { localPieceCache } from './local-piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
 
-const repo = repoFactory(PieceMetadataEntity)
+export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
@@ -127,10 +127,10 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 }, {} as ListVersionsResponse)
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
-            const existingMetadata = await repo().findOneByOrFail({
+            const existingMetadata = await pieceRepos().findOneByOrFail({
                 id,
             })
-            await repo().update(id, {
+            await pieceRepos().update(id, {
                 projectUsage: usage,
                 updated: existingMetadata.updated,
                 created: existingMetadata.created,
@@ -159,7 +159,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             pieceType,
             archiveId,
         }: CreateParams): Promise<PieceMetadataSchema> {
-            const existingMetadata = await repo().findOneBy({
+            const existingMetadata = await pieceRepos().findOneBy({
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
                 platformId: platformId ?? IsNull(),
@@ -176,7 +176,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            return repo().save({
+            return pieceRepos().save({
                 id: apId(),
                 packageType,
                 pieceType,
@@ -195,7 +195,16 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 }),
                 ...piece,
             })))
-            return repo().save(data)
+            return pieceRepos().save(data)
+        },
+
+        async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
+            await Promise.all(pieces.map(async (piece) => {
+                await pieceRepos().delete({
+                    name: piece.name,
+                    version: piece.version,
+                })
+            }))
         },
     }
 }
@@ -276,7 +285,7 @@ const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMeta
 }
 
 const findOldestCreatedDate = async ({ name, platformId }: { name: string, platformId?: string }): Promise<string> => {
-    const piece = await repo().findOne({
+    const piece = await pieceRepos().findOne({
         where: {
             name,
             platformId: platformId ?? IsNull(),
