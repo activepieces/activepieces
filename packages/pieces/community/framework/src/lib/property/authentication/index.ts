@@ -25,7 +25,7 @@ type Properties<T> = Omit<
   'valueSchema' | 'type' | 'defaultValidators' | 'defaultProcessors'
 >;
 
-
+export const DEFAULT_CONNECTION_DISPLAY_NAME = 'Connection';
 export const PieceAuth = {
   SecretText<R extends boolean>(
     request: Properties<SecretTextProperty<R>>
@@ -43,7 +43,7 @@ export const PieceAuth = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.OAUTH2,
-      displayName: request.displayName || 'Connection',
+      displayName: request.displayName || DEFAULT_CONNECTION_DISPLAY_NAME,
     } as unknown as OAuth2Property<T>
   },
   BasicAuth(
@@ -53,7 +53,7 @@ export const PieceAuth = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.BASIC_AUTH,
-      displayName: request.displayName || 'Connection',
+      displayName: request.displayName || DEFAULT_CONNECTION_DISPLAY_NAME,
       required: true,
     } as unknown as BasicAuthProperty;
   },
@@ -64,7 +64,7 @@ export const PieceAuth = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.CUSTOM_AUTH,
-      displayName: request.displayName || 'Connection',
+      displayName: request.displayName || DEFAULT_CONNECTION_DISPLAY_NAME,
     } as unknown as CustomAuthProperty<T>
   },
   None() {
