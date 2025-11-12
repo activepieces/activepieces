@@ -9,6 +9,7 @@ import {
     PiecePackage,
     PieceType,
     PrivatePiecePackage,
+    tryCatch,
     WebsocketServerEvent,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -76,22 +77,18 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         }, 'Installing registry pieces using bun')
         
         const performanceStartTime = performance.now()
-        await packageManager(log).add({
+        
+        const result = await tryCatch(async () => packageManager(log).add({
             path: installDir,
             dependencies: pieces.map((piece) => pieceToDependency(piece)),
-        })
-            .then(()=> {
-                log.info({
-                    installDir,
-                    timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
-                }, 'Installed registry pieces using bun')
-            })
-            .catch((error) => {
-                log.error({
-                    installDir,
-                    error,
-                }, 'Error installing registry pieces using bun')
-            })
+        }))
+        if (result.error) {
+            throw result.error
+        }
+        log.info({
+            installDir,
+            timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
+        }, 'Installed registry pieces using bun')
     },
 
     async preWarmCache(): Promise<void> {
