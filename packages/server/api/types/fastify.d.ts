@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType } from '@activepieces/shared'
 import { AuthorizationType, ProjectAuthorization, FastifyRouteSecurity, RouteKind, RouteAccessRequest, AuthorizationForType, RequestProject } from '@activepieces/server-shared'
-import fastify, { 
-    RouteShorthandOptions as BaseRouteShorthandOptions, 
-    FastifyBaseLogger, 
-    RouteOptions as FastifyRouteOptions, 
-    FastifySchema, 
+import fastify, {
+    RouteShorthandOptions as BaseRouteShorthandOptions,
+    FastifyBaseLogger,
+    RouteOptions as FastifyRouteOptions,
+    FastifySchema,
     FastifyTypeProvider,
     FastifyTypeProviderDefault,
     RawReplyDefaultExpression,
@@ -29,17 +29,17 @@ declare module 'fastify' {
         Logger = unknown,
         RequestType = unknown,
     > {
-        principal: ContextConfig extends { security: RouteAccessRequest }
-            ? ContextConfig['security']['authorization'] extends { allowedPrincipals: readonly (infer P extends PrincipalType)[] }
-                ? PrincipalForType<P>
-                : Principal
-            : Principal
+        principal: ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
+        ? PrincipalForType<PrincipalType.ENGINE> :
+        ContextConfig['security'] extends { authorization: { type: AuthorizationType.WORKER } }
+        ? PrincipalForType<PrincipalType.WORKER>
+        : ContextConfig['security'] extends { authorization: { allowedPrincipals: readonly (infer P extends PrincipalType)[] } }
+        ? PrincipalForType<P>
+        : Principal
 
-        project: ContextConfig extends { security: RouteAccessRequest }
-            ? ContextConfig['security']['authorization'] extends { type: AuthorizationType.PROJECT }
-                ? { id: string }
-                : undefined
-            : undefined
+        project: ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } }
+        ? { id: string }
+        : undefined
         rawBody?: string | Buffer
         isMultipart(): boolean
     }

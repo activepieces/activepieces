@@ -1,5 +1,5 @@
 import { AuthorizationType, ProjectResourceType, rejectedPromiseHandler, RouteKind } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalForType, PrincipalType, tryCatch, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -24,17 +24,10 @@ export const websocketService = {
         const principal = await websocketService.verifyPrincipal(socket)
 
         const type = principal.type
-        if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
+        const { error } = await tryCatch<void, ActivepiecesError>(() => authorizeForWebsocket(principal, socket.handshake.auth.projectId, log))
+        if (error) {
             return
         }
-        await authorizeOrThrow(principal, {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.PROJECT,
-                allowedPrincipals: [PrincipalType.USER],
-                projectId: socket.handshake.auth.projectId,
-            },
-        }, log)
         const castedType = type as keyof typeof listener
         switch (type) {
             case PrincipalType.USER: {
@@ -95,4 +88,32 @@ export const websocketService = {
             }
         }
     },
+}
+
+
+async function authorizeForWebsocket(principal: Principal, projectId: string, log: FastifyBaseLogger): Promise<void> {
+    switch (principal.type) {
+        case PrincipalType.USER: {
+            await authorizeOrThrow(principal, {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.PROJECT,
+                    allowedPrincipals: [PrincipalType.USER],
+                    projectId,
+                },
+            }, log)
+            break;
+        }
+        case PrincipalType.WORKER: {
+            break;
+        }
+        default: {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHENTICATION,
+                params: {
+                    message: 'principal is not allowed for websocket',
+                },
+            })
+        }
+    }
 }

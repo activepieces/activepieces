@@ -1,8 +1,8 @@
 import { ProjectResourceType, ProjectTableResource, ProjectBodyResource, ProjectQueryResource, RouteKind, AuthorizationType, AuthorizationRouteSecurity } from "@activepieces/server-shared"
 import { FastifyRequest } from "fastify"
 import { assertNotNullOrUndefined, isObject } from "@activepieces/shared"
-import { databaseConnection } from "../../database/database-connection"
 import { authorizeOrThrow } from "./authorize"
+import { databaseConnection } from "../../../database/database-connection"
 
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
@@ -41,6 +41,13 @@ async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
                     type: AuthorizationType.WORKER,
+                },
+            }
+        case AuthorizationType.ENGINE:
+            return {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.ENGINE,
                 },
             }
         case AuthorizationType.NONE:
@@ -98,16 +105,17 @@ async function extractProjectIdFromTable(
 }
 
 function extractProjectIdFromBody(request: FastifyRequest, projectBodyResource: ProjectBodyResource): string | undefined {
-    if (isObject(request.body) && projectBodyResource.key in request.body) {
-        return request.body[projectBodyResource.key] as string
+
+    if (isObject(request.body) && 'projectId' in request.body) {
+        return request.body.projectId as string
     }
 
     return undefined
 }
 
 function extractProjectIdFromQuery(request: FastifyRequest, projectQueryResource: ProjectQueryResource): string | undefined {
-    if (isObject(request.query) && projectQueryResource.key in request.query) {
-        return request.query[projectQueryResource.key] as string
+    if (isObject(request.query) && 'projectId' in request.query) {
+        return request.query.projectId as string
     }
 
     return undefined

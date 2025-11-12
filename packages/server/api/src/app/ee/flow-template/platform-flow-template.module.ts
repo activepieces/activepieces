@@ -1,10 +1,9 @@
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, platformAdminOnly, publicAccess, publicPlatformAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
-    ApEdition,
-    EndpointScope,
+    ApEdition, 
     ErrorCode,
     isNil,
     ListFlowTemplatesRequest,
@@ -97,8 +96,7 @@ async function resolveTemplatesPlatformId(principal: Principal): Promise<string 
 
 const GetParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        scope: EndpointScope.PLATFORM,
+        security: publicAccess(),
     },
     schema: {
         tags: ['flow-templates'],
@@ -110,8 +108,7 @@ const GetParams = {
 
 const ListFlowParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        scope: EndpointScope.PLATFORM,
+        security: publicAccess(),
     },
     schema: {
         tags: ['flow-templates'],
@@ -123,8 +120,7 @@ const ListFlowParams = {
 
 const DeleteParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         description: 'Delete a flow template',
@@ -135,9 +131,8 @@ const DeleteParams = {
 }
 
 const CreateParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        config: {
+            security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         description: 'Create a flow template',

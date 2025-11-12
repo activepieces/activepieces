@@ -10,9 +10,9 @@ import {
 } from '@fastify/type-provider-typebox'
 import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
-import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
+import { platformAdminOnly } from '@activepieces/server-shared'
 
 const GetOneRequest = Type.Object({
     id: Type.String(),
@@ -21,7 +21,6 @@ type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 
@@ -31,13 +30,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             body: AddDomainRequest,
         },
         config: {
-            security: {
-                kind: RouteKind.AUTHENTICATED,
-                authorization: {
-                    type: AuthorizationType.PLATFORM,
-                    allowedPrincipals: [PrincipalType.USER] as const,
-                },
-            },
+            security: platformAdminOnly([PrincipalType.USER] as const),
         },
     }, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -68,7 +61,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                 querystring: ListCustomDomainsRequest,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+                security: platformAdminOnly([PrincipalType.USER] as const),
             },
         },
         async (request) => {
@@ -89,7 +82,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                 params: GetOneRequest,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+                security: platformAdminOnly([PrincipalType.USER] as const),
             },
         },
         async (request) => {

@@ -2,6 +2,7 @@ import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
 import { ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { alertsService } from './alerts-service'
+import { AuthorizationType, ProjectResourceType, RouteKind } from '@activepieces/server-shared'
 
 export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAlertsRequest, async (req) => {
@@ -29,10 +30,17 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAlertsRequest = {
     config: {
-        permission: Permission.READ_ALERT,
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                projectResource: {
+                    type: ProjectResourceType.QUERY,
+                },
+                allowedPrincipals: [PrincipalType.USER],
+                permission: Permission.READ_ALERT,
+            },
+        } as const,
     },
     schema: {
         querystring: ListAlertsParams,
@@ -41,10 +49,17 @@ const ListAlertsRequest = {
 
 const CreateAlertRequest = {
     config: {
-        permission: Permission.WRITE_ALERT,
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                projectResource: {
+                    type: ProjectResourceType.BODY,
+                },
+                allowedPrincipals: [PrincipalType.USER],
+                permission: Permission.WRITE_ALERT,
+            },
+        } as const,
     },
     schema: {
         body: CreateAlertParams,
@@ -53,10 +68,18 @@ const CreateAlertRequest = {
 
 const DeleteAlertRequest = {
     config: {
-        permission: Permission.WRITE_ALERT,
-        allowedPrincipals: [
-            PrincipalType.USER,
-        ],
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals: [PrincipalType.USER],
+                permission: Permission.WRITE_ALERT,
+                projectResource: {
+                    type: ProjectResourceType.TABLE,
+                    tableName: 'alerts',
+                },
+            },
+        } as const,
     },
     schema: {
         params: Type.Object({

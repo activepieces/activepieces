@@ -9,6 +9,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appCredentialService } from './app-credentials.service'
+import { RouteKind } from '@activepieces/server-shared'
 
 export const appCredentialModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appCredentialController, {
@@ -23,7 +24,9 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: {
+                    kind: RouteKind.PUBLIC,
+                },
             },
             schema: {
                 querystring: ListAppCredentialsRequest,
@@ -44,45 +47,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
         },
     )
 
-    fastify.post(
-        '/',
-        {
-            schema: {
-                body: UpsertAppCredentialRequest,
-            },
-            config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
-            },
-        },
-        async (request) => {
-            return appCredentialService.upsert({
-                projectId: request.principal.projectId,
-                request: request.body,
-            })
-        },
-    )
-
-    fastify.delete(
-        '/:credentialId',
-        {
-            config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
-            },
-            schema: {
-                params: Type.Object({
-                    credentialId: Type.String(),
-                }),
-            },
-        },
-        async (request, reply) => {
-            await appCredentialService.delete({
-                id: request.params.credentialId,
-                projectId: request.principal.projectId,
-            })
-
-            return reply.status(StatusCodes.OK).send()
-        },
-    )
+  
 }
 
 function censorClientSecret(

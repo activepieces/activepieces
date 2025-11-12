@@ -1,5 +1,5 @@
 import { ProjectId } from "@activepieces/shared"
-import { NoneAuthorization, PlatformAuthorization, ProjectAuthorization, PublicRoute, RouteKind, WorkerAuthorization } from "./common"
+import { EngineAuthorization, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, PublicRoute, RouteKind, WorkerAuthorization } from "./common"
 
 export type ProjectAuthorizationConfig = Omit<ProjectAuthorization, 'projectResource'> & {
     projectId: ProjectId | undefined
@@ -9,6 +9,7 @@ type AuthorizationRuleConfig =
     | WorkerAuthorization
     | PlatformAuthorization
     | ProjectAuthorizationConfig
+    | EngineAuthorization
     | NoneAuthorization
 
 

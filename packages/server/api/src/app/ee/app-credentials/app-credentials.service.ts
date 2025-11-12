@@ -1,7 +1,6 @@
 import {
     AppCredential,
     AppCredentialId,
-    UpsertAppCredentialRequest,
 } from '@activepieces/ee-shared'
 import { apId, Cursor, ProjectId, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -39,30 +38,6 @@ export const appCredentialService = {
     },
     async getOneOrThrow(id: AppCredentialId): Promise<AppCredential> {
         return appCredentialRepo().findOneByOrFail({ id })
-    },
-    async upsert({
-        projectId,
-        request,
-    }: {
-        projectId: ProjectId
-        request: UpsertAppCredentialRequest
-    }): Promise<AppCredential | null> {
-        const newId = request.id ?? apId()
-        await appCredentialRepo().upsert(
-            {
-                id: newId,
-                projectId,
-                ...request,
-            },
-            ['id'],
-        )
-        return appCredentialRepo().findOneBy({ projectId, appName: request.appName })
-    },
-    async delete({ id, projectId }: DeleteParams): Promise<void> {
-        await appCredentialRepo().delete({
-            id,
-            projectId,
-        })
     },
 }
 

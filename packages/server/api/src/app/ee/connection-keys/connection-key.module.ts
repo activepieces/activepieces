@@ -12,6 +12,7 @@ import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
 import { connectionKeyService } from './connection-key.service'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(connectionKeyController, {
@@ -26,7 +27,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -52,7 +53,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -71,7 +72,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             schema: {
                 body: UpsertConnectionFromToken,

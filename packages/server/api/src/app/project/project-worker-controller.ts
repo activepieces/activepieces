@@ -1,6 +1,6 @@
-import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { projectService } from './project-service'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 export const projectWorkerController: FastifyPluginAsyncTypebox = async (
     app,
@@ -13,6 +13,11 @@ export const projectWorkerController: FastifyPluginAsyncTypebox = async (
 
 const GetWorkerProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
 }

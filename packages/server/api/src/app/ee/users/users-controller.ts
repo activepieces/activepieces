@@ -1,11 +1,12 @@
-import { assertNotNullOrUndefined, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
+import { assertNotNullOrUndefined, PrincipalType, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { userService } from '../../user/user-service'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 export const usersController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/me', GetCurrentUserRequest, async (req): Promise<UserWithMetaInformationAndProject> => {
+    app.get('/me', GetCurrentUserRequest, async (req): Promise<UserWithMetaInformation> => {
         const userId = req.principal.id
         assertNotNullOrUndefined(userId, 'userId')
 
@@ -23,10 +24,6 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
             firstName: identity.firstName,
             lastName: identity.lastName,
             email: identity.email,
-            trackEvents: identity.trackEvents,
-            newsLetter: identity.newsLetter,
-            verified: identity.verified,
-            projectId: req.principal.projectId,
         }
     })
 }
@@ -34,10 +31,17 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
 const GetCurrentUserRequest = {
     schema: {
         response: {
-            [StatusCodes.OK]: UserWithMetaInformationAndProject,
+            [StatusCodes.OK]: UserWithMetaInformation,
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.NONE,
+                reason: 'There is no need to authorize this route',
+                allowedPrincipals: [PrincipalType.USER],
+            },
+        }
     },
 }

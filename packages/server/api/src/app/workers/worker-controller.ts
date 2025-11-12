@@ -1,5 +1,5 @@
-import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { ExecutionType, PrincipalType } from '@activepieces/shared'
+import { AuthorizationType, MigrateJobsRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, RouteKind, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ExecutionType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -17,7 +17,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/send-engine-update', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            } as const,
         },
         schema: {
             body: SendEngineUpdateRequest,
@@ -42,7 +47,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     })
     app.post('/save-payloads', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            } as const,
         },
         schema: {
             body: SavePayloadRequest,
@@ -72,7 +82,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/migrate-job', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            } as const,
         },
         schema: {
             body: MigrateJobsRequest,
@@ -83,7 +98,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     
     app.post('/submit-payloads', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            } as const,
         },
         schema: {
             body: SubmitPayloadsRequest,

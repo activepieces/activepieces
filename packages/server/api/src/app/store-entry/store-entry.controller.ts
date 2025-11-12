@@ -9,6 +9,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
 import { storeEntryService } from './store-entry.service'
+import { engineAccess } from '@activepieces/server-shared'
 
 export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post( '/', CreateRequest, async (request, reply) => {
@@ -50,7 +51,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const CreateRequest =  {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
     schema: {
         body: PutStoreEntryRequest,
@@ -59,7 +60,7 @@ const CreateRequest =  {
 
 const GetRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
     schema: {
         querystring: GetStoreEntryRequest,
@@ -69,7 +70,7 @@ const GetRequest = {
 
 const DeleteStoreRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
     schema: {
         querystring: DeleteStoreEntryRequest,

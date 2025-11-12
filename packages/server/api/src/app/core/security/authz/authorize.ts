@@ -1,10 +1,9 @@
 import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-shared'
-
 import { ActivepiecesError, ApEdition, ErrorCode, isNil, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
-import { userService } from '../../user/user-service'
-import { system } from '../../helper/system/system'
-import { rbacService } from '../../ee/authentication/project-role/rbac-service'
 import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../helper/system/system'
+import { userService } from '../../../user/user-service'
+import { rbacService } from '../../../ee/authentication/project-role/rbac-service'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 
@@ -19,10 +18,15 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
             break
         case AuthorizationType.PLATFORM:
             await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
-            await assertPlatformIsOwnedByCurrentPrincipal(principal)
+            if (security.authorization.adminOnly) {
+                await assertPlatformIsOwnedByCurrentPrincipal(principal)
+            }
             break
         case AuthorizationType.WORKER:
             await assertPrinicpalIsOneOf([PrincipalType.WORKER], principal.type)
+            break
+        case AuthorizationType.ENGINE:
+            await assertPrinicpalIsOneOf([PrincipalType.ENGINE], principal.type)
             break
         case AuthorizationType.NONE:
             break

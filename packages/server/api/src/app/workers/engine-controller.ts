@@ -9,6 +9,7 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { stepRunProgressHandler } from '../flows/flow-run/step-run-progress.handler'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { engineResponseWatcher } from './engine-response-watcher'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -60,14 +61,14 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 runId,
                 stepNameToTest,
             })
-            
+
             if (!isNil(response)) {
                 const isTerminalOutput = isFlowRunStateTerminal({
                     status: runDetails.status,
                     ignoreInternalError: false,
                 })
 
-                const wsEvent = isTerminalOutput  ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRESS
+                const wsEvent = isTerminalOutput ? WebsocketClientEvent.TEST_STEP_FINISHED : WebsocketClientEvent.TEST_STEP_PROGRESS
                 app.io.to(request.principal.projectId).emit(wsEvent, response)
             }
         }
@@ -154,7 +155,12 @@ async function getFlowResponse(
 
 const GetAllFlowsByProjectParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
@@ -163,7 +169,12 @@ const GetAllFlowsByProjectParams = {
 
 const GetFileRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         params: Type.Object({
@@ -175,7 +186,12 @@ const GetFileRequestParams = {
 
 const UpdateRunProgress = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         body: UpdateRunProgressRequest,
@@ -184,7 +200,12 @@ const UpdateRunProgress = {
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         querystring: GetFlowVersionForWorkerRequest,
@@ -197,7 +218,12 @@ const GetLockedVersionRequest = {
 
 const UpdateFlowResponseParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         body: SendFlowResponseRequest,

@@ -146,17 +146,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async switchProject(params: SwitchProjectParams): Promise<AuthenticationResponse> {
-        const project = await projectService.getOneOrThrow(params.projectId)
-        const projectPlatform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        await assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
-        const user = await getUserForPlatform(params.identityId, projectPlatform)
-        return authenticationUtils.getProjectAndToken({
-            userId: user.id,
-            platformId: project.platformId,
-            projectId: params.projectId,
-        })
-    },
 })
 
 async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
@@ -301,10 +290,4 @@ type SignInWithPasswordParams = {
 type SwitchPlatformParams = {
     identityId: string
     platformId: string
-}
-
-type SwitchProjectParams = {
-    identityId: string
-    currentPlatformId: string
-    projectId: string
 }

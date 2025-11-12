@@ -1,15 +1,14 @@
 import { ListAuditEventsRequest } from '@activepieces/ee-shared'
 import {
-    EndpointScope,
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { auditLogService } from './audit-event-service'
+import { platformAdminOnly } from '@activepieces/server-shared'
 
 export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.auditLogEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(auditEventController, { prefix: '/v1/audit-events' })
 }
 
@@ -32,10 +31,9 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAuditEventsRequestEndpoint = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER] as const),
     },
     schema: {
         querystring: ListAuditEventsRequest,
-        scope: EndpointScope.PLATFORM,
     },
 }

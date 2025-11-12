@@ -4,7 +4,8 @@ import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { mcpService } from '../mcp-service'
-import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
+import { ProjectResourceType, projectAccess } from '@activepieces/server-shared'
+import { McpEntity } from './mcp-entity'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -78,14 +79,9 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 const CreateMcpRequest = {
     config: {
-        security: {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.PROJECT,
-                allowedPrincipals: [PrincipalType.USER],
-                permission: Permission.WRITE_MCP,
-            }
-        } as const,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -100,14 +96,9 @@ const CreateMcpRequest = {
 
 const GetMcpsRequest = {
     config: {
-        security: {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.PROJECT,
-                allowedPrincipals: [PrincipalType.USER],
-                permission: Permission.READ_MCP,
-            }
-        } as const,
+        security: projectAccess([PrincipalType.USER], Permission.READ_MCP, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -122,14 +113,10 @@ const GetMcpsRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        security: {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.PROJECT,
-                allowedPrincipals: [PrincipalType.USER],
-                permission: Permission.WRITE_MCP,
-            }
-        } as const,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -147,14 +134,10 @@ export const UpdateMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        security: {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.PROJECT,
-                allowedPrincipals: [PrincipalType.USER],
-                permission: Permission.WRITE_MCP,
-            }
-        } as const,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -171,14 +154,10 @@ const RotateTokenRequest = {
 
 const GetMcpRequest = {
     config: {
-        security: {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.PROJECT,
-                allowedPrincipals: [PrincipalType.USER],
-                permission: Permission.READ_MCP,
-            }
-        } as const,
+        security: projectAccess([PrincipalType.USER], Permission.READ_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -195,14 +174,10 @@ const GetMcpRequest = {
 
 const DeleteMcpRequest = {
     config: {
-        security: {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.PROJECT,
-                allowedPrincipals: [PrincipalType.USER],
-                permission: Permission.WRITE_MCP,
-            }
-        } as const,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],

@@ -1,6 +1,7 @@
 import { CreateTodoActivityRequestBody, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { todoActivitiesService as todoActivityService } from './todos-activity.service'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 
 const DEFAULT_LIMIT = 10
 const DEFAULT_CURSOR = null
@@ -34,7 +35,9 @@ const ListTodoCommentsRequest = {
         querystring: ListTodoActivitiesQueryParams,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
 }
 
@@ -44,6 +47,8 @@ const CreateTodoCommentRequest = {
         body: CreateTodoActivityRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }
