@@ -183,7 +183,7 @@ export function DateTimePickerWithRange({
   };
 
   const getPresetLabel = () => {
-    if (isNil(date?.from) || isNil(date?.to)) return t('Select preset');
+    if (isNil(date?.from) || isNil(date?.to)) return t('Not Selected');
     
     const daysDiff = getDaysDifference(date.from, date.to);
 
@@ -278,7 +278,8 @@ export function DateTimePickerWithRange({
             >
               <CalendarIcon className="h-4 w-4" />
               {t('Date Range')}
-              <div className="bg-muted rounded-md mr-1 text-sm px-4 py-1">
+              <Separator  orientation='vertical'  />
+              <div className="bg-muted rounded-lg text-sm px-4 py-1">
                 {getPresetLabel()}
               </div>
             </Button>

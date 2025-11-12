@@ -78,7 +78,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         if (!isNil(params.archived)) {
             query = query.andWhere({
-                archivedAt: params.archived ? IsNull() : Not(IsNull()),
+                archivedAt: params.archived ? Not(IsNull()) : IsNull(),
             })
         }
 

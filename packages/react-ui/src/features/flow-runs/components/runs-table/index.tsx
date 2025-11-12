@@ -8,6 +8,7 @@ import {
   History,
   X,
   Archive,
+  Eye,
 } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -79,6 +80,12 @@ export const RunsTable = () => {
 
       const createdAfter = searchParams.get('createdAfter');
       const createdBefore = searchParams.get('createdBefore');
+      const archivedParam = searchParams.get('archivedAt');
+
+
+      let archived: boolean
+      if (archivedParam === 'true') archived = true;
+      else archived = false;
 
       return flowRunsApi.list({
         status: status ?? undefined,
@@ -86,9 +93,10 @@ export const RunsTable = () => {
         flowId,
         cursor: cursor ?? undefined,
         limit,
+        archived,
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
-        failedStepName: failedStepName,
+        failedStepName,
         flowRunIds,
       });
     },
@@ -156,6 +164,11 @@ export const RunsTable = () => {
         title: t('Created'),
         accessorKey: 'created',
         icon: CheckIcon,
+      },
+      {
+        type: 'checkbox',
+        title: t('Show archived'),
+        accessorKey: 'archivedAt',
       },
     ],
     [flows],

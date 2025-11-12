@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
+import { Archive, ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import {
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowRun, FlowRunStatus, SeekPage } from '@activepieces/shared';
+import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type SelectedRow = {
@@ -175,8 +175,16 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Flow')} />
     ),
     cell: ({ row }) => {
+      const { archivedAt ,flowVersion } = row.original;
+      const displayName = flowVersion?.displayName ?? '—';
+
       return (
-        <div className="text-left">{row.original.flowVersion?.displayName}</div>
+        <div className="flex items-center gap-2 text-left">
+          {!isNil(archivedAt) && (
+            <Archive className="size-4 text-muted-foreground" />
+          )}
+          <span>{displayName}</span>
+        </div>
       );
     },
   },
