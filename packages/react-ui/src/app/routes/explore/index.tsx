@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { ArrowLeft, Search, SearchX } from 'lucide-react';
 import { useState } from 'react';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { TemplateCard } from '@/features/templates/components/template-card';
 import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
@@ -56,10 +63,21 @@ export const ExplorePage = () => {
         ) : (
           <>
             {filteredTemplates?.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 text-center min-h-[300px]">
-                <SearchX className="w-10 h-10" />
-                {t('No templates found, try adjusting your search')}
-              </div>
+              <Empty className="min-h-[300px]">
+                <EmptyHeader className="max-w-xl">
+                  <EmptyMedia variant="icon">
+                    <SearchX />
+                  </EmptyMedia>
+                  <EmptyTitle>{t('No templates found')}</EmptyTitle>
+                  <EmptyDescription>
+                    {search
+                      ? t(
+                          'No templates match your search criteria. Try adjusting your search terms.',
+                        )
+                      : t('No templates are available at the moment.')}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
               {filteredTemplates?.map((template) => (
