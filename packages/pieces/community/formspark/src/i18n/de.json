@@ -1,0 +1,7 @@
+{
+  "New Submission": "Neue Einreichung",
+  "Triggers when form receives a new submission.": "Auslöser wenn Formular eine neue Einreichung erhält.",
+  "Markdown": "Markdown",
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngeneriere Beispieldaten und löst den veröffentlichten Fluss aus.\n\n",
+  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n": "\nUm den Trigger für neue Formulareinreichungen einzurichten, folgen Sie diesen Schritten:\n\n1. Gehen Sie zum Abschnitt \"Dashboard\".\n2. Wählen Sie das Formular, in dem der Trigger auftreten soll.\n3. Klicken Sie auf den Bereich \"Einstellungen\".\nFinde das Feld \"Webhook URL\" und füge dort oberhalb der URL ein.  \n6. Klicke auf \"Speichern\".\n"
+}
