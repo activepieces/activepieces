@@ -333,7 +333,7 @@ describe('Platform API', () => {
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.STANDARD
+                    plan: PlanName.STANDARD,
                 },
             })
             const secondPlatform = await mockAndSaveBasicSetup( {

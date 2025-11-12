@@ -225,7 +225,6 @@ const McpServersPage = () => {
         <DashboardPageHeader
           title={t('MCP Servers')}
           description={t('Create and manage your MCP servers')}
-          tutorialTab="mcpServers"
         ></DashboardPageHeader>
 
         <DataTable
