@@ -33,8 +33,8 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
             nullable: true,
         },
-        logsFileId: { 
-            ...ApIdSchema, 
+        logsFileId: {
+            ...ApIdSchema,
             nullable: true,
         },
         parentRunId: {
@@ -104,6 +104,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_project_id_flow_id_environment_status_created_desc',
             columns: ['projectId', 'flowId', 'environment', 'status', 'created'],
+        },
+        {
+            name: 'idx_run_project_env_created_not_archived',
+            columns: ['projectId', 'environment', 'created', 'archivedAt']
         },
         {
             name: 'idx_run_flow_id',
