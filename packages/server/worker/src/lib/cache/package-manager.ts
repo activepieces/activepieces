@@ -1,11 +1,10 @@
-import fs from 'fs/promises'
-import fsPath from 'path'
+
 import {
     enrichErrorContext,
     execPromise,
     fileSystemUtils,
 } from '@activepieces/server-shared'
-import { isEmpty, isNil, PiecePackage } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 type PackageManagerOutput = {
@@ -13,9 +12,7 @@ type PackageManagerOutput = {
     stderr: string
 }
 
-type CoreCommand = 'install'
-type ExecCommand = 'tsc'
-type Command = CoreCommand | ExecCommand
+type Command = 'install' | 'build'
 
 export type PackageInfo = {
     /**
@@ -85,35 +82,15 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         return runCommand(path, 'install', log, ...dependenciesArgs, ...config)
     },
 
-    async createRootPackageJson({ path }: { path: string }): Promise<void> {
-        const packageJsonPath = fsPath.join(path, 'package.json')
-        const packageJson =  {
-            "name": "common",
-            "version": "1.0.0",
-            "workspaces": [
-                "@activepieces/*"
-            ],
-            "dependencies": {}
-        }
-        await fileSystemUtils.threadSafeMkdir(fsPath.dirname(packageJsonPath))
-        await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
-    },
-
-    async createPiecePackageJson({ path, piecePackage }: CreatePiecePackageParams): Promise<void> {
-        const packageJsonPath = fsPath.join(path, 'package.json')
-            const packageJson = {
-                "name": `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
-                "version": `${piecePackage.pieceVersion}`,
-                "dependencies": {
-                    [piecePackage.pieceName]: piecePackage.pieceVersion
-                }
-        }
-        await fileSystemUtils.threadSafeMkdir(fsPath.dirname(packageJsonPath))
-        await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
-    },
-
-    async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
-        return runCommand(path, command, log)
+    async build({ path, entryFile, outputFile }: BuildParams): Promise<PackageManagerOutput> {
+        const config = [
+            `${entryFile}`,
+            '--target node',
+            '--production',
+            '--format cjs',
+            `--outfile ${outputFile}`,
+        ]
+        return runCommand(path, "build", log, ...config)
     },
 
 })
@@ -124,12 +101,8 @@ type AddParams = {
     installDir?: string
 }
 
-type CreatePiecePackageParams = {
+type BuildParams = {
     path: string
-    piecePackage: PiecePackage
-}
-
-type ExecParams = {
-    path: string
-    command: ExecCommand
+    entryFile: string
+    outputFile: string
 }

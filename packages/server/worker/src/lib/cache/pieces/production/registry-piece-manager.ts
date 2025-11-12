@@ -61,11 +61,11 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         await savePackageArchivesToDiskIfNotCached(pieces)
         const installDir = join(projectPath, 'pieces')
 
-        await packageManager(log).createRootPackageJson({
+        await createRootPackageJson({
             path: installDir
         })
         for (const piece of pieces) {
-            await packageManager(log).createPiecePackageJson({
+            await createPiecePackageJson({
                 path: join(installDir, `${piece.pieceName}-${piece.pieceVersion}`),
                 piecePackage: piece,
             })
@@ -177,5 +177,37 @@ const getArchiveAndSaveToDisk = async (
     await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
 
     await writeFile(archivePath, piece.archive as Buffer)
+}
+
+createRootPackageJson
+
+async function createRootPackageJson({ path }: { path: string }): Promise<void> {
+    const packageJsonPath = join(path, 'package.json')
+    const packageJson =  {
+        "name": "common",
+        "version": "1.0.0",
+        "workspaces": [
+            "@activepieces/*"
+        ],
+        "dependencies": {}
+    }
+    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
+    await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
+}
+
+async function createPiecePackageJson({ path, piecePackage }: {
+    path: string
+    piecePackage: PiecePackage
+}): Promise<void> {
+    const packageJsonPath = join(path, 'package.json')
+    const packageJson = {
+        "name": `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
+        "version": `${piecePackage.pieceVersion}`,
+        "dependencies": {
+            [piecePackage.pieceName]: piecePackage.pieceVersion
+        }
+    }
+    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
+    await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
 }
 
