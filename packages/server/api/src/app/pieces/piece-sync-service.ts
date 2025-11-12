@@ -1,6 +1,6 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
-import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { chunk, isNil, ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import axios from 'axios'
 import axiosRetry from 'axios-retry'
 import dayjs from 'dayjs'
@@ -26,6 +26,11 @@ const axiosClient = axios.create({
         'Content-Type': 'application/json',
     },
 })
+
+type PieceRegistryResponse = {
+    name: string
+    version: string
+}
 
 axiosRetry(axiosClient, {
     retries: 5,
@@ -61,18 +66,20 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
         }
         try {
             log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
-            const pieces = await listPieces()
+            const cloudPieces = await listCloudPieces()
             const limit = pLimit(200)
-            const promises: Promise<void>[] = []
+            const promises: Promise<PieceMetadataModel | null>[] = []
 
-            for (const summary of pieces) {
-                const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
-                if (!lastVersionSynced) {
-                    promises.push(limit(() => syncPiece(summary.name, log)))
+            for (const piece of cloudPieces) {
+                const synced = await existsInDatabase({ name: piece.name, version: piece.version })
+                if (!synced) {
+                    promises.push(limit(() => readPieceMetadata(piece.name, piece.version, log)))
                 }
+
             }
-            await Promise.all(promises)
-            
+            const piecesMetadata = await Promise.all(promises)
+            await createNewPieces(piecesMetadata.filter((piece) => !isNil(piece)), log)
+            await syncDeletedPieces(cloudPieces, log)
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
@@ -80,26 +87,45 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
+async function readPieceMetadata(name: string, version: string, log: FastifyBaseLogger): Promise<PieceMetadataModel | null> {
     try {
-        const pieceVersionsMetadata: PieceMetadataModel[] = []
-        log.info({ name }, 'Syncing piece metadata into database')
-        const versions = await getVersions({ name })
-        for (const version of Object.keys(versions)) {
-            const currentVersionSynced = await existsInDatabase({ name, version })
-            if (!currentVersionSynced) {
-                const piece = await getOrThrow({ name, version })
-                pieceVersionsMetadata.push(piece)
-            }
-        }
-        await pieceMetadataService(log).bulkCreate(pieceVersionsMetadata)
-        log.info({ name }, 'Piece metadata synced into database')
+        log.info({ name, version }, 'Reading piece metadata')
+        return await getOrThrow({ name, version })
     }
     catch (error) {
-        log.error(error, 'Error syncing piece, please upgrade the activepieces to latest version')
+        log.error({ error, name, version }, 'Error reading piece')
+        return null
     }
-
 }
+
+async function createNewPieces(piecesMetadata: PieceMetadataModel[], log: FastifyBaseLogger): Promise<void> {
+    const chunks = chunk(piecesMetadata, 200)
+
+    await Promise.all(chunks.map(async (chunk, i) => {
+        chunk = chunk.filter((piece) => piece !== null)
+        log.info({ chunkNumber: i, chunkSize: chunk.length }, 'Syncing pieces metadata into database')
+        await pieceMetadataService(log).bulkCreate(chunk as PieceMetadataModel[])
+        log.info({ chunkNumber: i, chunkSize: chunk.length }, 'Pieces metadata synced into database')
+    }))
+}
+
+async function syncDeletedPieces(cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger): Promise<void> {
+    const dbPieces = await pieceMetadataService(log).registry({
+        edition: system.getEdition(),
+        release: await apVersionUtil.getCurrentRelease(),
+    })
+     const cloudPiecesSet = new Set(
+                cloudPieces.map(piece => `${piece.name}:${piece.version}`)
+            )
+    const dbPiecesToDelete = dbPieces.filter(
+        dbPiece => !cloudPiecesSet.has(`${dbPiece.name}:${dbPiece.version}`)
+    )
+    if (dbPiecesToDelete.length === 0) return 
+    log.info({ piecesToDelete: dbPiecesToDelete.length }, 'Deleting pieces from database')
+    await pieceMetadataService(log).bulkDelete(dbPiecesToDelete)
+    log.info({ piecesToDelete: dbPiecesToDelete.length }, 'Pieces deleted from database')
+}
+
 async function existsInDatabase({ name, version }: { name: string, version: string }): Promise<boolean> {
     return piecesRepo().existsBy({
         name,
@@ -109,24 +135,15 @@ async function existsInDatabase({ name, version }: { name: string, version: stri
     })
 }
 
-async function getVersions({ name }: { name: string }): Promise<ListVersionsResponse> {
-    const queryParams = new URLSearchParams()
-    queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
-    queryParams.append('name', name)
-    const response = await axiosClient.get<ListVersionsResponse>(`/versions?${queryParams.toString()}`)
-    return parseAndVerify<ListVersionsResponse>(ListVersionsResponse, response.data)
-}
-
 async function getOrThrow({ name, version }: { name: string, version: string }): Promise<PieceMetadataModel> {
     const response = await axiosClient.get<PieceMetadataModel>(`/${name}${version ? '?version=' + version : ''}`)
     return response.data
 }
 
-async function listPieces(): Promise<PieceMetadataModelSummary[]> {
+async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
     queryParams.append('release', await apVersionUtil.getCurrentRelease())
-    const response = await axiosClient.get<PieceMetadataModelSummary[]>(`?${queryParams.toString()}`)
+    const response = await axiosClient.get<PieceRegistryResponse[]>(`/registry?${queryParams.toString()}`)
     return response.data
 }

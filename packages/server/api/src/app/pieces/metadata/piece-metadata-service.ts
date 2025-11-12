@@ -25,7 +25,7 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
-import { EntityManager, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { system } from '../../helper/system/system'
@@ -196,6 +196,13 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 ...piece,
             })))
             return repo().save(data)
+        },
+
+        async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
+            await repo().delete({ 
+                name: In(pieces.map(piece => piece.name)),
+                version: In(pieces.map(piece => piece.version))
+            })
         },
     }
 }
