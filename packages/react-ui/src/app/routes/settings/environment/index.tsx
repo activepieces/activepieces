@@ -1,7 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

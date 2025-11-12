@@ -10,7 +10,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
+import { PlatformSwitcher } from '@/features/projects/components/platform-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
@@ -55,7 +55,7 @@ export const AppSidebarHeader = () => {
                 className="h-5 w-5 object-contain"
               />
             </Link>
-            {showSwitcher && <ProjectSwitcher />}
+            {showSwitcher && <PlatformSwitcher />}
           </div>
           {state === 'expanded' && <SidebarTrigger />}
         </SidebarMenuItem>

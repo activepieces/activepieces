@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ListTodo, Package, Compass } from 'lucide-react';
+import { Compass } from 'lucide-react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -13,11 +13,9 @@ import {
   useSidebar,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { isNil, Permission } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { HelpAndFeedback } from '../../help-and-feedback';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
@@ -27,12 +25,9 @@ import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
 import SidebarUsageLimits from '../sidebare-usage-limits';
 
-// Refactor sidebar to new design
 export function ProjectDashboardSidebar() {
-  const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectHooks.useCurrentProject();
   const { data: projects } = projectHooks.useProjects();
-  const { checkAccess } = useAuthorization();
   const { embedState } = useEmbedding();
   const { state, setOpen } = useSidebar();
 
@@ -53,28 +48,7 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const releasesLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/releases'),
-    icon: Package,
-    label: t('Releases'),
-    hasPermission:
-      project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
-    show: project.releasesEnabled,
-    isSubItem: false,
-  };
-
-  const todosLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/todos'),
-    label: t('Todos'),
-    show: platform.plan.todosEnabled || !embedState.isEmbedded,
-    icon: ListTodo,
-    hasPermission: checkAccess(Permission.READ_TODOS),
-    isSubItem: false,
-  };
-
-  const items = [exploreLink, todosLink, releasesLink].filter(permissionFilter);
+  const items = [exploreLink].filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (
@@ -87,9 +61,9 @@ export function ProjectDashboardSidebar() {
         <AppSidebarHeader />
 
         {state === 'collapsed' && <SidebarSeparator className="my-3" />}
-        {state === 'expanded' && <div className="my-2" />}
+        {state === 'expanded' && <div className="mt-1" />}
 
-        <SidebarContent className="gap-y-3">
+        <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -100,10 +74,12 @@ export function ProjectDashboardSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator className="mb-0" />
+          <SidebarSeparator />
 
           <SidebarGroup>
-            <SidebarGroupLabel>Projects</SidebarGroupLabel>
+            {state === 'expanded' && (
+              <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
+            )}
             <SidebarGroupContent>
               <SidebarMenu>
                 {projects?.map((p) => (

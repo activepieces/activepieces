@@ -4,7 +4,6 @@ import { CheckIcon, Package, Trash } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';

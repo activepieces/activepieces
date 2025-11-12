@@ -1,4 +1,4 @@
-import { ListTodo } from 'lucide-react';
+import { Compass } from 'lucide-react';
 import React, { createContext, useState, ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -6,9 +6,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { isNil, Permission } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
@@ -46,7 +45,6 @@ export function ProjectDashboardLayout({
 }) {
   const [isAlertClosed, setIsAlertClosed] = useState(false);
   const currentProjectId = authenticationSession.getProjectId();
-  const { checkAccess } = useAuthorization();
   const { t } = useTranslation();
   const location = useLocation();
 
@@ -56,11 +54,11 @@ export function ProjectDashboardLayout({
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
-      to: authenticationSession.appendProjectRoutePrefix('/todos'),
-      label: t('Todos'),
-      icon: ListTodo,
-      hasPermission: checkAccess(Permission.READ_TODOS),
+      to: authenticationSession.appendProjectRoutePrefix('/explore'),
+      label: t('Explore'),
       show: true,
+      icon: Compass,
+      hasPermission: true,
     },
   ];
 

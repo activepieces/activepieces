@@ -1,10 +1,11 @@
 import { t } from 'i18next';
 import {
   ChevronDown,
-  CircleAlert,
   GitBranch,
   History,
   Link2,
+  ListTodo,
+  Package,
   Puzzle,
   Table2,
   Workflow,
@@ -36,6 +37,8 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
+
+import { DashboardPageHeader } from '../dashboard-page-header';
 
 import { ProjectDashboardLayoutHeaderTab } from '.';
 
@@ -85,6 +88,21 @@ export const ProjectDashboardLayoutHeader = () => {
       show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
       hasPermission: checkAccess(Permission.READ_MCP),
       icon: McpSvg,
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/todos'),
+      label: t('Todos'),
+      show: platform.plan.todosEnabled || !embedState.isEmbedded,
+      icon: ListTodo,
+      hasPermission: checkAccess(Permission.READ_TODOS),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/releases'),
+      icon: Package,
+      label: t('Releases'),
+      hasPermission:
+        project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
+      show: project.releasesEnabled,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
@@ -144,7 +162,7 @@ export const ProjectDashboardLayoutHeader = () => {
 
   return (
     <div className="flex flex-col px-4 gap-3 mt-1">
-      <h1 className="text-xl font-semibold">{project?.displayName}</h1>
+      <DashboardPageHeader title={project?.displayName} />
       <Tabs>
         <TabsList variant="outline">
           {flowsLink.show && flowsLink.hasPermission && (
