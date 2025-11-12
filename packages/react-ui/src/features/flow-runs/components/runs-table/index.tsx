@@ -8,7 +8,6 @@ import {
   History,
   X,
   Archive,
-  Eye,
 } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -50,7 +49,6 @@ import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
 } from './retried-runs-snackbar';
-import { isDateInterval } from 'react-day-picker';
 
 type SelectedRow = {
   id: string;
@@ -82,8 +80,7 @@ export const RunsTable = () => {
       const createdBefore = searchParams.get('createdBefore');
       const archivedParam = searchParams.get('archivedAt');
 
-
-      let archived: boolean
+      let archived: boolean;
       if (archivedParam === 'true') archived = true;
       else archived = false;
 
@@ -212,9 +209,7 @@ export const RunsTable = () => {
   });
 
   const archiveRuns = useMutation({
-    mutationFn: (retryParams: {
-      runIds: string[];
-    }) => {
+    mutationFn: (retryParams: { runIds: string[] }) => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
       const createdAfter = searchParams.get('createdAfter') || undefined;
@@ -238,47 +233,57 @@ export const RunsTable = () => {
 
   const bulkActions: BulkAction<FlowRun>[] = useMemo(
     () => [
-        {
+      {
         render: (_, resetSelection) => {
           const allFailed = selectedRows.every((row) =>
             isFailedState(row.status),
           );
 
           const isDisabled =
-            selectedRows.length === 0 || !userHasPermissionToRetryRun || !allFailed;
+            selectedRows.length === 0 ||
+            !userHasPermissionToRetryRun ||
+            !allFailed;
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
-                <Button disabled={isDisabled} variant='outline' className="h-9 w-full" onClick={() => {
-                    archiveRuns.mutate({
-                      runIds: selectedRows.map((row) => row.id)
-                    });
-                    resetSelection();
-                    setSelectedRows([]);
-                }}>
-                  <Archive className='size-4 mr-1'/>
-                  {selectedRows.length > 0
-                    ? `${t('Archive')} ${!isDisabled ? (
-                        selectedAll
+              <Button
+                disabled={isDisabled}
+                variant="outline"
+                className="h-9 w-full"
+                onClick={() => {
+                  archiveRuns.mutate({
+                    runIds: selectedRows.map((row) => row.id),
+                  });
+                  resetSelection();
+                  setSelectedRows([]);
+                }}
+              >
+                <Archive className="size-4 mr-1" />
+                {selectedRows.length > 0
+                  ? `${t('Archive')} ${
+                      !isDisabled
+                        ? selectedAll
                           ? excludedRows.size > 0
                             ? `${t('all except')} ${excludedRows.size}`
                             : t('all')
                           : `(${selectedRows.length})`
-                      ) : ''}`
-              
-                    : t('Archive')}
-                </Button>
+                        : ''
+                    }`
+                  : t('Archive')}
+              </Button>
             </div>
           );
         },
       },
       {
         render: (_, resetSelection) => {
-          const allSuccess = selectedRows.every((row) =>
-            !isFailedState(row.status),
+          const allSuccess = selectedRows.every(
+            (row) => !isFailedState(row.status),
           );
           const isDisabled =
-            selectedRows.length === 0 || !userHasPermissionToRetryRun || !allSuccess;
+            selectedRows.length === 0 ||
+            !userHasPermissionToRetryRun ||
+            !allSuccess;
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -288,16 +293,17 @@ export const RunsTable = () => {
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild disabled={isDisabled}>
                     <Button disabled={isDisabled} className="h-9 w-full">
-                      <RotateCw className='size-4 mr-1' />
+                      <RotateCw className="size-4 mr-1" />
                       {selectedRows.length > 0
-                        ? `${t('Retry')} ${!isDisabled ? (
-                            selectedAll
-                              ? excludedRows.size > 0
-                                ? `${t('all except')} ${excludedRows.size}`
-                                : t('all')
-                              : `(${selectedRows.length})`
-                          ) : ''}`
-                  
+                        ? `${t('Retry')} ${
+                            !isDisabled
+                              ? selectedAll
+                                ? excludedRows.size > 0
+                                  ? `${t('all except')} ${excludedRows.size}`
+                                  : t('all')
+                                : `(${selectedRows.length})`
+                              : ''
+                          }`
                         : t('Retry')}
                       <ChevronDown className="h-3 w-4 ml-1" />
                     </Button>
@@ -360,7 +366,6 @@ export const RunsTable = () => {
           );
         },
       },
-      
     ],
     [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
   );

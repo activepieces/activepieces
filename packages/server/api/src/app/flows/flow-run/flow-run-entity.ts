@@ -80,7 +80,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         archivedAt: {
             type: String,
             nullable: true,
-            default: null
+            default: null,
         },
         stepNameToTest: {
             type: String,

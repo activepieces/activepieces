@@ -5,11 +5,11 @@ import { useSearchParams } from 'react-router-dom';
 
 import { DateTimePickerWithRange } from '../date-time-picker-range';
 
+import { DataTableInputCheckbox } from './data-table-checkbox-filter';
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
 
 import { CURSOR_QUERY_PARAM } from '.';
-import { DataTableInputCheckbox } from './data-table-checkbox-filter';
 
 type DropdownFilterProps = {
   type: 'select';
@@ -33,7 +33,12 @@ type CheckboxjhFilterProps = {
 export type DataTableFilterProps = {
   title?: string;
   icon?: React.ComponentType<{ className?: string }>;
-} & (DropdownFilterProps | InputFilterProps | DateFilterProps | CheckboxjhFilterProps);
+} & (
+  | DropdownFilterProps
+  | InputFilterProps
+  | DateFilterProps
+  | CheckboxjhFilterProps
+);
 
 export function DataTableFilter<TData, TValue>({
   title,
@@ -137,18 +142,23 @@ export function DataTableFilter<TData, TValue>({
       const isArchived = searchParams.get(key) === 'true';
 
       const handleCheckedChange = (checked: boolean) => {
-        setSearchParams(prev => {
-          const newParams = new URLSearchParams(prev);
-          newParams.delete(key);
-          newParams.delete(CURSOR_QUERY_PARAM);
-          if (checked) {
-            newParams.append(key, 'true');
-          }
-          return newParams;
-        }, { replace: true });
+        setSearchParams(
+          (prev) => {
+            const newParams = new URLSearchParams(prev);
+            newParams.delete(key);
+            newParams.delete(CURSOR_QUERY_PARAM);
+            if (checked) {
+              newParams.append(key, 'true');
+            }
+            return newParams;
+          },
+          { replace: true },
+        );
 
         column?.setFilterValue(
-          checked ? (row: any) => row.getValue('archivedAt') !== null : undefined
+          checked
+            ? (row: any) => row.getValue('archivedAt') !== null
+            : undefined,
         );
       };
 
@@ -160,6 +170,5 @@ export function DataTableFilter<TData, TValue>({
         />
       );
     }
-
   }
 }

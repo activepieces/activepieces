@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterface {
     name = 'AddArchivedAtColumnSqlite1762941660239'
@@ -6,28 +6,28 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_version_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_parent_run_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -56,7 +56,7 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 CONSTRAINT "fk_flow_run_logs_file_id" FOREIGN KEY ("logsFileId") REFERENCES "file" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow_run"(
                     "id",
@@ -99,20 +99,20 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "waitDuration",
                 "failedStep"
             FROM "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow_run"
                 RENAME TO "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_parent_run_id" ON "flow_run" ("parentRunId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -121,46 +121,46 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "status",
                 "created"
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_version_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_parent_run_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -189,7 +189,7 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 CONSTRAINT "fk_flow_run_logs_file_id" FOREIGN KEY ("logsFileId") REFERENCES "file" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow_run"(
                     "id",
@@ -234,20 +234,20 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "failedStep",
                 "archivedAt"
             FROM "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow_run"
                 RENAME TO "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_parent_run_id" ON "flow_run" ("parentRunId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -256,53 +256,53 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "status",
                 "created"
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_parent_run_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_version_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
                 RENAME TO "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -331,7 +331,7 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 CONSTRAINT "fk_flow_run_logs_file_id" FOREIGN KEY ("logsFileId") REFERENCES "file" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow_run"(
                     "id",
@@ -376,25 +376,25 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "failedStep",
                 "archivedAt"
             FROM "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -403,41 +403,41 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "status",
                 "created"
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_parent_run_id" ON "flow_run" ("parentRunId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_parent_run_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_version_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
                 RENAME TO "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -465,7 +465,7 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 CONSTRAINT "fk_flow_run_logs_file_id" FOREIGN KEY ("logsFileId") REFERENCES "file" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow_run"(
                     "id",
@@ -508,25 +508,25 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "waitDuration",
                 "failedStep"
             FROM "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -535,13 +535,13 @@ export class AddArchivedAtColumnSqlite1762941660239 implements MigrationInterfac
                 "status",
                 "created"
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_parent_run_id" ON "flow_run" ("parentRunId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_version_id" ON "flow_run" ("flowVersionId")
-        `);
+        `)
     }
 
 }

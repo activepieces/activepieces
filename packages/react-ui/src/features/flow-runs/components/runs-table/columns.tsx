@@ -14,10 +14,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
 import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type SelectedRow = {
   id: string;
@@ -175,7 +179,7 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Flow')} />
     ),
     cell: ({ row }) => {
-      const { archivedAt ,flowVersion } = row.original;
+      const { archivedAt, flowVersion } = row.original;
       const displayName = flowVersion?.displayName ?? '—';
 
       return (
@@ -228,13 +232,13 @@ export const runsTableColumns = ({
     cell: ({ row }) => {
       return (
         <Tooltip>
-            <TooltipTrigger>
-              <div className="text-left">
-                {row.original.finishTime &&
-                  formatUtils.formatDuration(row.original.duration)}
-              </div>
+          <TooltipTrigger>
+            <div className="text-left">
+              {row.original.finishTime &&
+                formatUtils.formatDuration(row.original.duration)}
+            </div>
           </TooltipTrigger>
-          <TooltipContent side='bottom'>
+          <TooltipContent side="bottom">
             {t(`Waiting time: ${row.original.waitDuration} second`)}
           </TooltipContent>
         </Tooltip>
@@ -248,7 +252,9 @@ export const runsTableColumns = ({
     ),
     cell: ({ row }) => {
       return (
-        <div className="text-left">{row.original.failedStep?.displayName ?? '-'}</div>
+        <div className="text-left">
+          {row.original.failedStep?.displayName ?? '-'}
+        </div>
       );
     },
   },

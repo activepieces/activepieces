@@ -19,10 +19,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { Separator } from './separator';
 import { TimePicker } from './time-picker';
-import { isNil } from '@activepieces/shared';
 
 type DateTimePickerWithRangeProps = {
   onChange: (date: DateRange | undefined) => void;
@@ -84,8 +84,16 @@ const getStartToEndDayTime = () => {
 
 const getDaysDifference = (date1: Date, date2: Date): number => {
   const oneDay = 1000 * 60 * 60 * 24;
-  const utcDate1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
-  const utcDate2 = Date.UTC(date2.getFullYear(), date2.getMonth(), date2.getDate());
+  const utcDate1 = Date.UTC(
+    date1.getFullYear(),
+    date1.getMonth(),
+    date1.getDate(),
+  );
+  const utcDate2 = Date.UTC(
+    date2.getFullYear(),
+    date2.getMonth(),
+    date2.getDate(),
+  );
   return Math.floor(Math.abs(utcDate2 - utcDate1) / oneDay);
 };
 
@@ -115,20 +123,18 @@ export function DateTimePickerWithRange({
     if (selectedDate) {
       const defaultTime = getStartToEndDayTime();
       const newDate = {
-        from:
-          selectedDate.from
-            ? applyTimeToDate({
-                timeDate: timeDate.from ?? defaultTime.from,
-                targetDate: selectedDate.from,
-              })
-            : undefined,
-        to:
-          selectedDate.to
-            ? applyTimeToDate({
-                timeDate: timeDate.to ?? defaultTime.to,
-                targetDate: selectedDate.to,
-              })
-            : undefined,
+        from: selectedDate.from
+          ? applyTimeToDate({
+              timeDate: timeDate.from ?? defaultTime.from,
+              targetDate: selectedDate.from,
+            })
+          : undefined,
+        to: selectedDate.to
+          ? applyTimeToDate({
+              timeDate: timeDate.to ?? defaultTime.to,
+              targetDate: selectedDate.to,
+            })
+          : undefined,
       };
       setDate(newDate);
       onChange(newDate);
@@ -162,10 +168,10 @@ export function DateTimePickerWithRange({
       default:
         newDate = { from: today, to: addDays(today, parseInt(value)) };
     }
-    
+
     if (newDate.from) newDate.from.setHours(0, 0, 0, 0);
     if (newDate.to) newDate.to.setHours(23, 59, 59, 999);
-    
+
     setDate(newDate);
     onChange(newDate);
   };
@@ -184,7 +190,7 @@ export function DateTimePickerWithRange({
 
   const getPresetLabel = () => {
     if (isNil(date?.from) || isNil(date?.to)) return t('Not Selected');
-    
+
     const daysDiff = getDaysDifference(date.from, date.to);
 
     switch (daysDiff) {
@@ -204,20 +210,20 @@ export function DateTimePickerWithRange({
   const handleClearTime = () => {
     const fromTime = getStartToEndDayTime().from;
     const toTime = getStartToEndDayTime().to;
-    
+
     const fromDate = date?.from
-        ? applyTimeToDate({
-              timeDate: fromTime,
-              targetDate: date.from,
-          })
-        : undefined;
+      ? applyTimeToDate({
+          timeDate: fromTime,
+          targetDate: date.from,
+        })
+      : undefined;
 
     const toDate = date?.to
-        ? applyTimeToDate({
-              timeDate: toTime,
-              targetDate: date.to,
-          })
-        : undefined;
+      ? applyTimeToDate({
+          timeDate: toTime,
+          targetDate: date.to,
+        })
+      : undefined;
 
     setTimeDate({
       from: fromTime,
@@ -232,7 +238,7 @@ export function DateTimePickerWithRange({
       from: fromDate,
       to: toDate,
     });
-  }
+  };
 
   const handleFromTimeChange = (fromTime: Date) => {
     const fromDate = date?.from ?? new Date();
@@ -249,7 +255,7 @@ export function DateTimePickerWithRange({
       to: date?.to,
     });
     setTimeDate({ ...timeDate, from: fromTime });
-  }
+  };
 
   const handleToTimeChange = (toTime: Date) => {
     const toDate = date?.to ?? date?.from ?? new Date();
@@ -266,19 +272,22 @@ export function DateTimePickerWithRange({
       to: toWithCorrectedTime,
     });
     setTimeDate({ ...timeDate, to: toTime });
-  }
+  };
 
   if (type === 'presets') {
     return (
-      <div className={cn('inline-flex items-center gap-0 border rounded-lg border-dashed overflow-hidden', className)}>
+      <div
+        className={cn(
+          'inline-flex items-center gap-0 border rounded-lg border-dashed overflow-hidden',
+          className,
+        )}
+      >
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-            >
+            <Button variant="ghost">
               <CalendarIcon className="h-4 w-4" />
               {t('Date Range')}
-              <Separator  orientation='vertical'  />
+              <Separator orientation="vertical" />
               <div className="bg-muted rounded-lg text-sm px-4 py-1">
                 {getPresetLabel()}
               </div>
@@ -287,28 +296,52 @@ export function DateTimePickerWithRange({
           <PopoverContent className="w-fit p-2" align="end">
             <div className="flex flex-col gap-1">
               <Button
-                variant={date?.from && getDaysDifference(date.from, new Date()) === 7 && date.to?.toDateString() === new Date().toDateString() ? 'accent' : 'ghost'}
+                variant={
+                  date?.from &&
+                  getDaysDifference(date.from, new Date()) === 7 &&
+                  date.to?.toDateString() === new Date().toDateString()
+                    ? 'accent'
+                    : 'ghost'
+                }
                 onClick={() => handlePresetButtonClick(7)}
                 className="w-full justify-start"
               >
                 {t('Last 7 Days')}
               </Button>
               <Button
-                variant={date?.from && getDaysDifference(date.from, new Date()) === 14 && date.to?.toDateString() === new Date().toDateString() ? 'accent' : 'ghost'}
+                variant={
+                  date?.from &&
+                  getDaysDifference(date.from, new Date()) === 14 &&
+                  date.to?.toDateString() === new Date().toDateString()
+                    ? 'accent'
+                    : 'ghost'
+                }
                 onClick={() => handlePresetButtonClick(14)}
                 className="w-full justify-start"
               >
                 {t('Last 14 Days')}
               </Button>
               <Button
-                variant={date?.from && getDaysDifference(date.from, new Date()) === 21 && date.to?.toDateString() === new Date().toDateString() ? 'accent' : 'ghost'}
+                variant={
+                  date?.from &&
+                  getDaysDifference(date.from, new Date()) === 21 &&
+                  date.to?.toDateString() === new Date().toDateString()
+                    ? 'accent'
+                    : 'ghost'
+                }
                 onClick={() => handlePresetButtonClick(21)}
                 className="w-full justify-start"
               >
                 {t('Last 21 Days')}
               </Button>
               <Button
-                variant={date?.from && getDaysDifference(date.from, new Date()) === 30 && date.to?.toDateString() === new Date().toDateString() ? 'accent' : 'ghost'}
+                variant={
+                  date?.from &&
+                  getDaysDifference(date.from, new Date()) === 30 &&
+                  date.to?.toDateString() === new Date().toDateString()
+                    ? 'accent'
+                    : 'ghost'
+                }
                 onClick={() => handlePresetButtonClick(30)}
                 className="w-full justify-start"
               >
@@ -317,7 +350,6 @@ export function DateTimePickerWithRange({
             </div>
           </PopoverContent>
         </Popover>
-        
       </div>
     );
   }
