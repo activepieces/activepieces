@@ -177,18 +177,6 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.issues,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Issues">
-            <FlowsPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
   {
     path: '/templates/:templateId',
     element: (

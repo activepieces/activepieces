@@ -104,7 +104,8 @@ export type BaseErrorParams<T, V> = {
 }
 
 export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
-    message?: string
+    standardOutput: string
+    standardError: string
 }>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
