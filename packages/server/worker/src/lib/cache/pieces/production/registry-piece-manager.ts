@@ -176,7 +176,6 @@ const getArchiveAndSaveToDisk = async (
     await writeFile(archivePath, piece.archive as Buffer)
 }
 
-createRootPackageJson
 
 async function createRootPackageJson({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
