@@ -59,7 +59,7 @@ const SidebarUsageLimits = React.memo(() => {
   if (isPending || isNil(project)) {
     return (
       <div className="flex flex-col gap-2 w-full px-2  broder rounded-md bg-background">
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4">
             {[1, 2].map((i) => (
               <div key={i} className="flex flex-col gap-3">
@@ -94,7 +94,7 @@ const SidebarUsageLimits = React.memo(() => {
 
   return (
     <div className="flex flex-col gap-2 w-full p-3 bg-background rounded-md border ">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold">{t('Executions')}</span>
