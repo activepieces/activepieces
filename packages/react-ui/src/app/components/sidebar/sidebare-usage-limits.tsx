@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -93,8 +94,14 @@ const SidebarUsageLimits = React.memo(() => {
 
   return (
     <div className="flex flex-col gap-2 w-full p-3 bg-background rounded-md border ">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold">{t('Executions')}</span>
+            <Badge variant="ghost" className="bg-muted font-bold">
+              {t('Unlimited')}
+            </Badge>
+          </div>
           <UsageProgress
             name={t('AI Credits')}
             value={project.usage.aiCredits}
