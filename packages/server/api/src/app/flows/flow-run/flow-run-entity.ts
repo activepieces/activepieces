@@ -107,7 +107,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
         {
             name: 'idx_run_project_env_created_not_archived',
-            columns: ['projectId', 'environment', 'created', 'archivedAt']
+            columns: ['projectId', 'environment', 'created', 'archivedAt'],
         },
         {
             name: 'idx_run_flow_id',

@@ -237,8 +237,7 @@ export const RunsTable = () => {
       {
         render: (_, resetSelection) => {
           const isDisabled =
-            selectedRows.length === 0 ||
-            !userHasPermissionToRetryRun
+            selectedRows.length === 0 || !userHasPermissionToRetryRun;
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -363,7 +362,16 @@ export const RunsTable = () => {
         },
       },
     ],
-    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data, archiveRuns, selectedAll, excludedRows],
+    [
+      retryRuns,
+      userHasPermissionToRetryRun,
+      t,
+      selectedRows,
+      data,
+      archiveRuns,
+      selectedAll,
+      excludedRows,
+    ],
   );
 
   const handleRowClick = useCallback(

@@ -494,7 +494,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveTasksAndTasksLimit1761570485475,
         DeleteLastChangelogDismissedAt1762018344394,
         AddFailedStepAndDurationToRunPostgres1762886424449,
-        AddArchivedAtIndiceCombination1762962678297
+        AddArchivedAtIndiceCombination1762962678297,
     ]
 
     const edition = system.getEdition()

@@ -339,7 +339,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveTasksAndTasksLimitSqlite1761574814842,
         DeleteLastChangelogDismissedAtSqlite1762018344394,
         AddFailedStepDurationSqlite1762949199414,
-        AddArchivedAtIndiceCombination1762962830627
+        AddArchivedAtIndiceCombination1762962830627,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

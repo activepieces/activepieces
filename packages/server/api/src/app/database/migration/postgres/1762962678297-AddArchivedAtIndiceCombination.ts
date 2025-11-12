@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddArchivedAtIndiceCombination1762962678297 implements MigrationInterface {
     name = 'AddArchivedAtIndiceCombination1762962678297'
@@ -11,13 +11,13 @@ export class AddArchivedAtIndiceCombination1762962678297 implements MigrationInt
                 "created",
                 "archivedAt"
             )
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "public"."idx_run_project_env_created_not_archived"
-        `);
+        `)
     }
 
 }

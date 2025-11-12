@@ -19,10 +19,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+
 import { Separator } from './separator';
 import { TimePicker } from './time-picker';
 
-export type PresetKey = '7days' | '14days' | '30days' | '90days' | '7' | '14' | '30' | '90';
+export type PresetKey =
+  | '7days'
+  | '14days'
+  | '30days'
+  | '90days'
+  | '7'
+  | '14'
+  | '30'
+  | '90';
 
 type DateTimePickerWithRangeProps = {
   onChange: (date: DateRange | undefined) => void;
@@ -147,24 +156,25 @@ export function DateTimePickerWithRange({
   const { initialDate, initialPreset } = React.useMemo(() => {
     return getInitialDateAndPreset(from, to, presetType, defaultSelectedRange);
   }, [from, to, presetType, defaultSelectedRange]);
-  
+
   const [date, setDate] = React.useState<DateRange | undefined>(initialDate);
   const [timeDate, setTimeDate] = React.useState<DateRange>({
     from: initialDate?.from,
     to: initialDate?.to,
   });
-  const [selectedPreset, setSelectedPreset] =
-    React.useState<string | null>(initialPreset);
-  
+  const [selectedPreset, setSelectedPreset] = React.useState<string | null>(
+    initialPreset,
+  );
+
   const isDefaultApplied = React.useRef(!!initialPreset && !from && !to);
 
   React.useEffect(() => {
     if (isDefaultApplied.current && date) {
-        onChange(date);
-        isDefaultApplied.current = false;
+      onChange(date);
+      isDefaultApplied.current = false;
     }
   }, [date, onChange]);
-  
+
   React.useEffect(() => {
     if (from && to) {
       const newDate: DateRange = { from: new Date(from), to: new Date(to) };
@@ -179,7 +189,6 @@ export function DateTimePickerWithRange({
     }
   }, [from, to, presetType, initialDate, initialPreset]);
 
-
   const handleSelect = (selectedDate: DateRange | undefined) => {
     setSelectedPreset(null);
     if (!selectedDate) {
@@ -190,7 +199,10 @@ export function DateTimePickerWithRange({
 
     const newDate = {
       from: selectedDate.from
-        ? applyTimeToDate(timeDate.from || getDayBoundaries().from, selectedDate.from)
+        ? applyTimeToDate(
+            timeDate.from || getDayBoundaries().from,
+            selectedDate.from,
+          )
         : undefined,
       to: selectedDate.to
         ? applyTimeToDate(timeDate.to || getDayBoundaries().to, selectedDate.to)
@@ -204,7 +216,7 @@ export function DateTimePickerWithRange({
     const newRange = PRESETS[value as PresetKey]();
     newRange.from!.setHours(0, 0, 0, 0);
     newRange.to!.setHours(23, 59, 59, 999);
-    
+
     setDate(newRange);
     setTimeDate({ from: newRange.from, to: newRange.to });
     setSelectedPreset(value);
