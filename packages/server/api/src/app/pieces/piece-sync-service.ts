@@ -48,7 +48,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             
             const officalPiecesThatIsNotOnCloud = dbPieces.filter(piece =>
                 piece.pieceType === PieceType.OFFICIAL &&
-                !cloudMap.has(`${piece.name}:${piece.version}`)
+                !cloudMap.has(`${piece.name}:${piece.version}`),
             )
             await pieceMetadataService(log).bulkDelete(officalPiecesThatIsNotOnCloud.map(piece => ({ name: piece.name, version: piece.version })))
             log.info({

@@ -73,7 +73,7 @@ import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
-import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
+import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
