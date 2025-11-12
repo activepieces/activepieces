@@ -40,7 +40,6 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import { IssuesPage } from '../routes/issues';
 import McpServersPage from '../routes/mcp-servers';
 import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
