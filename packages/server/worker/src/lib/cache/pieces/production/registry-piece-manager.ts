@@ -46,9 +46,6 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                     piecePackage: piece,
                 })))
 
-                log.info({
-                    projectPath,
-                }, 'Installing registry pieces using bun')
                 const performanceStartTime = performance.now()
                 await packageManager(log).installWorkspaces({
                     path: projectPath,
@@ -57,6 +54,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                 await Promise.all(filteredPieces.map(piece => markPieceAsInstalled(piecePath(projectPath, piece))))
                 log.info({
                     projectPath,
+                    pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
                     timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
                 }, 'Installed registry pieces using bun')
             }
