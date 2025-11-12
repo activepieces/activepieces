@@ -19,15 +19,12 @@ import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
-  ApEdition,
-  ApFlagId,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   isNil,
   OAuth2GrantType,
@@ -48,10 +45,9 @@ const PlatformPiecesPage = () => {
     includeTags: true,
     includeHidden: true,
   });
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { refetch: refetchPiecesClientIdsMap } =
-    oauthAppsQueries.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+    oauthAppsQueries.usePieceToClientIdMap();
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(

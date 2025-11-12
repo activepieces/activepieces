@@ -83,7 +83,6 @@ export const getAuthPropertyForValue = ({
   if(!Array.isArray(pieceAuth) || isNil(pieceAuth)) {
     return pieceAuth;
   }
-
     return pieceAuth.find(auth => {
     switch (auth.type) {
         case PropertyType.BASIC_AUTH:

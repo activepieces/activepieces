@@ -1,7 +1,11 @@
 import { nanoid } from 'nanoid';
 import { useSearchParams } from 'react-router-dom';
 
-import { isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
+import {
+  AppConnectionType,
+  isNil,
+  ThirdPartyAuthnProviderEnum,
+} from '@activepieces/shared';
 
 import {
   FROM_QUERY_PARAM,
@@ -11,7 +15,17 @@ import {
 } from './navigation-utils';
 
 let currentPopup: Window | null = null;
-
+export type OAuth2App =
+  | {
+      oauth2Type:
+        | AppConnectionType.CLOUD_OAUTH2
+        | AppConnectionType.PLATFORM_OAUTH2;
+      clientId: string;
+    }
+  | {
+      oauth2Type: AppConnectionType.OAUTH2;
+      clientId: null;
+    };
 export const oauth2Utils = {
   openOAuth2Popup,
   useThirdPartyLogin,

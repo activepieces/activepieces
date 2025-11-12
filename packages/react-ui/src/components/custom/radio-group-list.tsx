@@ -2,6 +2,12 @@ import { cn } from '@/lib/utils';
 
 import { CardListItem } from './card-list';
 
+export type RadioGroupListItem<T> = {
+  label: string;
+  value: T;
+  labelExtra?: React.ReactNode;
+  description?: string;
+};
 const RadioGroupList = <T,>({
   items,
   onChange,
@@ -9,12 +15,7 @@ const RadioGroupList = <T,>({
   onHover,
   className,
 }: {
-  items: {
-    label: string;
-    value: T;
-    labelExtra?: React.ReactNode;
-    description?: string;
-  }[];
+  items: RadioGroupListItem<T>[];
   onChange: (value: T) => void;
   value: T | null;
   onHover?: (value: T | null) => void;
