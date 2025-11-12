@@ -57,7 +57,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
 
     async installWorkspaces({ path, relativePiecePaths }: InstallWorkspacesParams): Promise<PackageManagerOutput> {
         const args = piecesConfigs;
-        const filters: string[] = relativePiecePaths.map((path) => `--filter '${path}'`)
+        const filters: string[] = relativePiecePaths.map((path) => `--filter ./${path}`)
         return runCommand(path, 'install', log, ...args, ...filters)
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<PackageManagerOutput> {

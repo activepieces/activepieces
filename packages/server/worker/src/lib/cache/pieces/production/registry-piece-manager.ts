@@ -6,7 +6,6 @@ import {
     isEmpty,
     PackageType,
     PiecePackage,
-    PieceType,
     unique,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
