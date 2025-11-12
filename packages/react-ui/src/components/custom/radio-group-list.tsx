@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 
 import { CardListItem } from './card-list';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 export type RadioGroupListItem<T> = {
   label: string;
@@ -42,19 +43,16 @@ const RadioGroupList = <T,>({
                 {item.labelExtra}
               </h4>
               <div className="flex-shrink-0 w-5 h-5">
-                <div
-                  className={cn(
-                    `w-5 h-5 rounded-full grid place-items-center border border-muted-foreground`,
-                    selected && 'border-primary',
-                  )}
-                >
-                  {selected && (
-                    <div className="w-3 h-3 rounded-full bg-primary"></div>
-                  )}
-                </div>
+                <RadioGroup value={JSON.stringify(value)}>
+                  <RadioGroupItem
+                    value={selected ? JSON.stringify(item.value) : ''}
+                    className='scale-125'
+                  >
+                  </RadioGroupItem>
+                </RadioGroup>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">{item.description}</p>
+            <div className="text-sm text-muted-foreground">{item.description}</div>
           </CardListItem>
         );
       })}
