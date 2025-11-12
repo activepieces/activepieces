@@ -2,8 +2,8 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash, User } from 'lucide-react';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';

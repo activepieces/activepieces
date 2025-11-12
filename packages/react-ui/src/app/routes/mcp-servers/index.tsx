@@ -4,8 +4,8 @@ import { Plus, Trash2, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -225,7 +225,6 @@ const McpServersPage = () => {
         <DashboardPageHeader
           title={t('MCP Servers')}
           description={t('Create and manage your MCP servers')}
-          tutorialTab="mcpServers"
         ></DashboardPageHeader>
 
         <DataTable

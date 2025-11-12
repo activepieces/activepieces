@@ -4,14 +4,32 @@ import semverMinVersion from 'semver/ranges/min-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import { PackageType, PiecePackage } from './piece'
 
+/**
+ * @param {string} pieceName - starts with `@activepieces/piece-`
+ * @param {string} pieceVersion - the version of the piece
+ * @returns {string} the package alias for the piece, e.g. `@activepieces/piece-activepieces-0.0.1`
+ */
 export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): string => {
     const { pieceName, pieceVersion } = params
     return `${pieceName}-${pieceVersion}`
 }
 
+/**
+ * @param {string} alias - e.g. piece-activepieces
+ * @returns {string} the piece name, e.g. activepieces
+ */
 export const getPieceNameFromAlias = (alias: string): string => {
     return alias.split('-').slice(1).join('-')
 }
+
+/**
+ * @param {string} alias - e.g. `@activepieces/piece-activepieces-0.0.1`
+ * @returns {string} the piece name, e.g. `@activepieces/piece-activepieces`
+ */
+export const trimVersionFromAlias = (alias: string): string => {
+    return alias.split('-').slice(0, -1).join('-')
+}
+
 
 export const getPackageSpecForPiece = (packageArchivePath: string, params: PiecePackage): string => {
     const { packageType, pieceName, pieceVersion } = params

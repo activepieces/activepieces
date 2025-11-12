@@ -116,6 +116,9 @@ export const workerMachine = {
     getPlatformIdForDedicatedWorker: (): string | undefined => {
         return environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
+    preWarmCacheEnabled: () => {
+        return environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE) === 'true'
+    },
 }
 
 function getPublicUrl(): string {

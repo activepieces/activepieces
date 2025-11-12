@@ -285,8 +285,12 @@ import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/pos
 import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
 import { RemoveEligibleForTrial1761588441492 } from './migration/postgres/1761588441492-remove-eligible-for-trial'
 import { AddRunUsageForPlatformAnalyticsReport1761668284685 } from './migration/postgres/1761668284685-AddRunUsageForPlatformAnalyticsReport'
+import { RemoveUserSeatsLimitColumn1761762177701 } from './migration/postgres/1761762177701-remove-user-seats-limit-column'
 import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgres/1762018344394-DeleteLastChangelogDismissedAt'
+import { RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 } from './migration/postgres/1762103191643-remove-mcp-and-tables-limits-and-billing-cycles'
 import { RemoveProjectIdFromPieceMetadata1762358403172 } from './migration/postgres/1762358403172-RemoveProjectIdFromPieceMetadata'
+import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postgres/1762709208569-remove-unused-payment-method-coloumn'
+import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -490,6 +494,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveTasksAndTasksLimit1761570485475,
         DeleteLastChangelogDismissedAt1762018344394,
         RemoveProjectIdFromPieceMetadata1762358403172,
+        AddFailedStepAndDurationToRunPostgres1762886424449,
     ]
 
     const edition = system.getEdition()
@@ -593,6 +598,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
                 RemoveEligibleForTrial1761588441492,
                 AddRunUsageForPlatformAnalyticsReport1761668284685,
+                RemoveUserSeatsLimitColumn1761762177701,
+                RemoveMcpAndTablesLimitsAndBillingCycles1762103191643,
+                RemoveUnusedPaymentMethodColoumn1762709208569,
             )
             break
         case ApEdition.COMMUNITY:

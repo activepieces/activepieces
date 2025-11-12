@@ -234,13 +234,13 @@ describe('Platform API', () => {
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.FREE,
+                    plan: PlanName.STANDARD,
                 },
             })
             const secondAccount = await mockAndSaveBasicSetup(
                 {
                     plan: {
-                        plan: PlanName.FREE,
+                        plan: PlanName.STANDARD,
                     },
                 },
             )
@@ -300,13 +300,13 @@ describe('Platform API', () => {
             // arrange
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.FREE,
+                    plan: PlanName.STANDARD,
                 },
             })
             const secondAccount = await mockAndSaveBasicSetup(
                 {
                     plan: {
-                        plan: PlanName.FREE,
+                        plan: PlanName.STANDARD,
                     },
                 },
             )
@@ -333,12 +333,12 @@ describe('Platform API', () => {
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.FREE,
+                    plan: PlanName.STANDARD,
                 },
             })
             const secondPlatform = await mockAndSaveBasicSetup( {
                 plan: {
-                    plan: PlanName.FREE,
+                    plan: PlanName.STANDARD,
                 },
             })
             const secondUser = createMockUser({

@@ -256,12 +256,6 @@ export const flagService = {
                 created,
                 updated,
             },
-            {
-                id: ApFlagId.SHOW_TUTORIALS,
-                value: true,
-                created,
-                updated,
-            },
         )
 
         if (system.isApp()) {
