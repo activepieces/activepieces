@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Wand } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';

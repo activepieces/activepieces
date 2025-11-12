@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
