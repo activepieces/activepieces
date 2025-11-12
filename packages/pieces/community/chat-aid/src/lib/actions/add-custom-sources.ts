@@ -1,7 +1,7 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { ChatAidAuth } from '../common/auth';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { BASE_URL } from '../common/client';
 import FormData from 'form-data';
 
 interface FileObject {
@@ -45,7 +45,8 @@ export const addCustomSources = createAction({
 
     files.forEach((fileObj) => {
       const file = fileObj.file;
-      formData.append('files', file.data, file.filename);
+      const fileBuffer = file.base64 ? Buffer.from(file.base64, 'base64') : file.data;
+      formData.append('files', fileBuffer, file.filename);
     });
 
     let path = '/external/sources/custom';
@@ -53,13 +54,18 @@ export const addCustomSources = createAction({
       path += `?teamId=${encodeURIComponent(teamId)}`;
     }
 
-    const response = await makeRequest(
-      context.auth as string,
-      HttpMethod.POST,
-      path,
-      formData
-    );
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `${BASE_URL}${path}`,
+      headers: {
+        Authorization: context.auth as string,
+        'Content-Type': 'multipart/form-data',
+      },
+      body: formData,
+    };
 
-    return response;
+    const response = await httpClient.sendRequest<never>(request);
+
+    return response.body;
   },
 });
