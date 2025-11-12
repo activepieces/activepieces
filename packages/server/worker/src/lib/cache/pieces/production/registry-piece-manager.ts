@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
+import { PiecePackageInformation } from '@activepieces/pieces-framework'
 import { enrichErrorContext, fileSystemUtils, systemConstants } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
@@ -11,10 +12,9 @@ import {
     WebsocketServerEvent,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appSocket } from '../../../app-socket'
 import { PackageInfo, packageManager } from '../../package-manager'
 import { GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
-import { appSocket } from '../../../app-socket'
-import { PiecePackageInformation } from '@activepieces/pieces-framework'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
@@ -62,7 +62,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         const installDir = join(projectPath, 'pieces')
 
         await createRootPackageJson({
-            path: installDir
+            path: installDir,
         })
         for (const piece of pieces) {
             await createPiecePackageJson({
@@ -80,18 +80,18 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             path: installDir,
             dependencies: pieces.map((piece) => pieceToDependency(piece)),
         })
-        .then(()=> {
-            log.info({
-                installDir,
-                timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
-            }, 'Installed registry pieces using bun')
-        })
-        .catch((error) => {
-            log.error({
-                installDir,
-                error,
-            }, 'Error installing registry pieces using bun')
-        })
+            .then(()=> {
+                log.info({
+                    installDir,
+                    timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
+                }, 'Installed registry pieces using bun')
+            })
+            .catch((error) => {
+                log.error({
+                    installDir,
+                    error,
+                }, 'Error installing registry pieces using bun')
+            })
     },
 
     async preWarmCache(): Promise<void> {
@@ -106,7 +106,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                 pieceVersion: piece.version,
             })),
         })
-    }
+    },
 })
 
 const pieceToDependency = (piece: PiecePackage): PackageInfo => {
@@ -184,12 +184,12 @@ createRootPackageJson
 async function createRootPackageJson({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     const packageJson =  {
-        "name": "common",
-        "version": "1.0.0",
-        "workspaces": [
-            "@activepieces/*"
+        'name': 'common',
+        'version': '1.0.0',
+        'workspaces': [
+            '@activepieces/*',
         ],
-        "dependencies": {}
+        'dependencies': {},
     }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
@@ -201,11 +201,11 @@ async function createPiecePackageJson({ path, piecePackage }: {
 }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     const packageJson = {
-        "name": `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
-        "version": `${piecePackage.pieceVersion}`,
-        "dependencies": {
-            [piecePackage.pieceName]: piecePackage.pieceVersion
-        }
+        'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
+        'version': `${piecePackage.pieceVersion}`,
+        'dependencies': {
+            [piecePackage.pieceName]: piecePackage.pieceVersion,
+        },
     }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')

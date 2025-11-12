@@ -67,7 +67,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
 
         const config = [
             '--ignore-scripts',
-            '--linker isolated'
+            '--linker isolated',
         ]
         if (!isNil(installDir)) {
             config.push(`--dir=${installDir}`)
@@ -90,7 +90,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             '--format cjs',
             `--outfile ${outputFile}`,
         ]
-        return runCommand(path, "build", log, ...config)
+        return runCommand(path, 'build', log, ...config)
     },
 
 })

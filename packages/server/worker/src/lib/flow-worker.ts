@@ -2,13 +2,13 @@ import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFacto
 import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
-import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,
