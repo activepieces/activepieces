@@ -1,7 +1,8 @@
 import { cn } from '@/lib/utils';
 
-import { CardListItem } from './card-list';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+
+import { CardListItem } from './card-list';
 
 export type RadioGroupListItem<T> = {
   label: string;
@@ -46,13 +47,14 @@ const RadioGroupList = <T,>({
                 <RadioGroup value={JSON.stringify(value)}>
                   <RadioGroupItem
                     value={selected ? JSON.stringify(item.value) : ''}
-                    className='scale-125'
-                  >
-                  </RadioGroupItem>
+                    className="scale-125"
+                  ></RadioGroupItem>
                 </RadioGroup>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground">{item.description}</div>
+            <div className="text-sm text-muted-foreground">
+              {item.description}
+            </div>
           </CardListItem>
         );
       })}

@@ -1,5 +1,6 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
+
 import {
   RadioGroupList,
   RadioGroupListItem,
@@ -21,6 +22,7 @@ import {
   OAuth2Property,
   PieceAuthProperty,
   PropertyType,
+  DEFAULT_CONNECTION_DISPLAY_NAME,
 } from '@activepieces/pieces-framework';
 import {
   isNil,
@@ -28,8 +30,6 @@ import {
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2GrantType,
 } from '@activepieces/shared';
-
-import { DEFAULT_CONNECTION_DISPLAY_NAME } from '../../../../pieces/community/framework/src/lib/property/authentication';
 
 export type SelectedAuth =
   | {
@@ -43,9 +43,6 @@ export type SelectedAuth =
       oauth2App: OAuth2App;
     };
 
-const appendDescription = (description: string | undefined, descriptionToAppend: string) => {
-  return `${description} ${descriptionToAppend}`;
-}
 export const MutlipleAuthList = ({
   pieceAuth,
   setSelectedAuth,
@@ -88,7 +85,9 @@ export const MutlipleAuthList = ({
             pieceToClientIdMap,
             pieceName,
           );
-          const predefinedAppOptionDescription = t('Use a predefined OAuth2 app for authentication, no extra configuration needed');
+          const predefinedAppOptionDescription = t(
+            'Use a predefined OAuth2 app for authentication, no extra configuration needed',
+          );
           const predefinedOAuth2AppOption: RadioGroupListItem<SelectedAuth> | null =
             predefinedOAuth2App
               ? {
@@ -101,7 +100,9 @@ export const MutlipleAuthList = ({
                   description: predefinedAppOptionDescription,
                 }
               : null;
-          const clientCredentialsOptionDescription = t('Create a connection without having to use a personal account.');
+          const clientCredentialsOptionDescription = t(
+            'Create a connection without having to use a personal account.',
+          );
           const clientCredentialsOption: RadioGroupListItem<SelectedAuth> = {
             label: `${auth.displayName} ${t('(Client Credentials Grant)')}`,
             value: {
@@ -114,7 +115,9 @@ export const MutlipleAuthList = ({
             },
             description: clientCredentialsOptionDescription,
           };
-          const userAppCredentialsOptionDescription = t('This option gives you full control over the authentication process by using your own OAuth2 app credentials');
+          const userAppCredentialsOptionDescription = t(
+            'This option gives you full control over the authentication process by using your own OAuth2 app credentials',
+          );
           const userAppCredentialsOption: RadioGroupListItem<SelectedAuth> = {
             label: `${auth.displayName} ${t('(Custom App Credentials)')}`,
             value: {
