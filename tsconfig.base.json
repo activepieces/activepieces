@@ -76,6 +76,9 @@
       "@activepieces/piece-housecall-pro": [
         "packages/pieces/community/housecall-pro/src/index.ts"
       ],
+      "@activepieces/piece-chat-aid": [
+        "packages/pieces/community/chat-aid/src/index.ts"
+      ],
       "@activepieces/piece-videoask": [
         "packages/pieces/community/videoask/src/index.ts"
       ],
