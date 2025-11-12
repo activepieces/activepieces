@@ -235,14 +235,9 @@ export const RunsTable = () => {
     () => [
       {
         render: (_, resetSelection) => {
-          const allFailed = selectedRows.every((row) =>
-            isFailedState(row.status),
-          );
-
           const isDisabled =
             selectedRows.length === 0 ||
-            !userHasPermissionToRetryRun ||
-            !allFailed;
+            !userHasPermissionToRetryRun
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
