@@ -38,12 +38,18 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             log.info('Starting piece synchronization')
             const startTime = performance.now()
             const [cloudPieces, dbPieces] = await Promise.all([listCloudPieces(), pieceRepos().find()])
-            const newPiecesToFetch = cloudPieces.filter(piece => !dbPieces.find(dbPiece => dbPiece.name === piece.name && dbPiece.version === piece.version))
+            const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
+            const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
+
+            const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
             const limit = pLimit(20)
             const newPiecesMetadata = await Promise.all(newPiecesToFetch.map(piece => limit(async () => readPieceMetadata({ name: piece.name, version: piece.version, log }))))
             await pieceMetadataService(log).bulkCreate(newPiecesMetadata.filter((piece): piece is PieceMetadataModel => piece !== null))
             
-            const officalPiecesThatIsNotOnCloud = dbPieces.filter(piece => piece.pieceType === PieceType.OFFICIAL && !cloudPieces.find(cloudPiece => cloudPiece.name === piece.name && cloudPiece.version === piece.version))
+            const officalPiecesThatIsNotOnCloud = dbPieces.filter(piece =>
+                piece.pieceType === PieceType.OFFICIAL &&
+                !cloudMap.has(`${piece.name}:${piece.version}`)
+            )
             await pieceMetadataService(log).bulkDelete(officalPiecesThatIsNotOnCloud.map(piece => ({ name: piece.name, version: piece.version })))
             log.info({
                 newPiecesSynchronized: newPiecesMetadata.length,
