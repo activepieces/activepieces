@@ -18,9 +18,23 @@ export class AddFailedStepAndDurationToRunPostgres1762886424449 implements Migra
             ALTER TABLE "flow_run"
             ADD "failedStep" jsonb
         `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run"
+            ADD "archivedAt" character varying
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run"
+            ALTER COLUMN "startTime" DROP NOT NULL
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "flow_run" ALTER COLUMN "startTime" SET NOT NULL
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run" DROP COLUMN "archivedAt"
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN "failedStep"
         `)

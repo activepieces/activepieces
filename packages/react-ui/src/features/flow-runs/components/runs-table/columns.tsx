@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Archive, ChevronDown } from 'lucide-react';
+import { Archive, ChevronDown, Hourglass } from 'lucide-react'; 
 import { Dispatch, SetStateAction } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ export const runsTableColumns = ({
   {
     id: 'select',
     header: ({ table }) => (
-      <div className="flex items-center">
+      <div className="flex items-center w-8">
         <Checkbox
           checked={selectedAll || table.getIsAllPageRowsSelected()}
           variant="secondary"
@@ -214,7 +214,7 @@ export const runsTableColumns = ({
   {
     accessorKey: 'created',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Run Time')} />
+      <DataTableColumnHeader column={column} title={t('Started At')} />
     ),
     cell: ({ row }) => {
       return (
@@ -233,13 +233,21 @@ export const runsTableColumns = ({
       return (
         <Tooltip>
           <TooltipTrigger>
-            <div className="text-left">
-              {row.original.finishTime &&
-                formatUtils.formatDuration(row.original.duration)}
+            <div className="text-left flex items-center gap-2">
+              {row.original.finishTime && (
+                <>
+                  <Hourglass className="h-4 w-4 text-muted-foreground" />
+                  {formatUtils.formatDuration(row.original.duration)}
+                </>
+              )}
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {t(`Waiting time: ${row.original.waitDuration} second`)}
+            {t(
+              `Wait duration: ${formatUtils.formatDuration(
+                row.original.waitDuration,
+              )}`,
+            )}
           </TooltipContent>
         </Tooltip>
       );

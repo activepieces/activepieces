@@ -95,7 +95,9 @@ export function DateTimePickerWithRange({
     from: from ? new Date(from) : undefined,
     to: to ? new Date(to) : undefined,
   });
-  const [selectedPreset, setSelectedPreset] = React.useState<string | null>(null);
+  const [selectedPreset, setSelectedPreset] = React.useState<string | null>(
+    null,
+  );
 
   const getPresetLabel = (value: string) => {
     const labels: Record<string, string> = {
@@ -113,7 +115,7 @@ export function DateTimePickerWithRange({
 
   const handleSelect = (selectedDate: DateRange | undefined) => {
     setSelectedPreset(null);
-    
+
     if (selectedDate) {
       const newDate = {
         from:
@@ -184,7 +186,7 @@ export function DateTimePickerWithRange({
             id="date"
             variant={'outline'}
             className={cn(
-              'min-w-[90px] border-dashed justify-start text-left font-normal'
+              'min-w-[90px] border-dashed justify-start text-left font-normal',
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -207,7 +209,10 @@ export function DateTimePickerWithRange({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-2" align="start">
           <div className="flex space-x-2 mb-2">
-            <Select onValueChange={handlePresetChange} value={selectedPreset || undefined}>
+            <Select
+              onValueChange={handlePresetChange}
+              value={selectedPreset || undefined}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select preset" />
               </SelectTrigger>
@@ -216,12 +221,8 @@ export function DateTimePickerWithRange({
                   <>
                     <SelectItem value="7days">{t('Last 7 Days')}</SelectItem>
                     <SelectItem value="14days">{t('Last 14 Days')}</SelectItem>
-                    <SelectItem value="30days">
-                      {t('Last 30 Days')}
-                    </SelectItem>
-                    <SelectItem value="90days">
-                      {t('Last 90 Days')}
-                    </SelectItem>
+                    <SelectItem value="30days">{t('Last 30 Days')}</SelectItem>
+                    <SelectItem value="90days">{t('Last 90 Days')}</SelectItem>
                   </>
                 ) : (
                   <>
@@ -303,7 +304,7 @@ export function DateTimePickerWithRange({
               ></TimePicker>
             </div>
           </div>
-          
+
           <div className="flex justify-center mt-3">
             <Button
               variant={'ghost'}

@@ -290,7 +290,6 @@ import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgre
 import { RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 } from './migration/postgres/1762103191643-remove-mcp-and-tables-limits-and-billing-cycles'
 import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postgres/1762709208569-remove-unused-payment-method-coloumn'
 import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
-import { AddArchivedAtColumnPostgres1762934933369 } from './migration/postgres/1762934933369-AddArchivedAtColumnPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -494,7 +493,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveTasksAndTasksLimit1761570485475,
         DeleteLastChangelogDismissedAt1762018344394,
         AddFailedStepAndDurationToRunPostgres1762886424449,
-        AddArchivedAtColumnPostgres1762934933369,
     ]
 
     const edition = system.getEdition()
