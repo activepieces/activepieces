@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
 import { EngineGenericError } from './execution-errors'
 
@@ -25,7 +25,7 @@ export const pieceLoader = {
             })
 
             if (isNil(piece)) {
-                throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}, pieceVersion: ${pieceVersion}`)
+                throw new EngineGenericError('PieceNotFoundError', `Piece not found for piece: ${pieceName}, pieceVersion: ${pieceVersion}`)
             }
             return piece
         })
@@ -155,10 +155,12 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
     let currentDir = __dirname
     const maxIterations = currentDir.split(path.sep).length
     for (let i = 0; i < maxIterations; i++) {
-        const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', packageName)
+        const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', trimVersionFromAlias(packageName))
+
         if (await utils.folderExists(piecePath)) {
             return piecePath
         }
+
         const parentDir = path.dirname(currentDir)
         if (parentDir === currentDir || currentDir === rootDir) {
             break

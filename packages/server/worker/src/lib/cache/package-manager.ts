@@ -4,9 +4,8 @@ import {
     enrichErrorContext,
     execPromise,
     fileSystemUtils,
-    memoryLock,
 } from '@activepieces/server-shared'
-import { isEmpty, isNil } from '@activepieces/shared'
+import { isEmpty, isNil, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
 type PackageManagerOutput = {
@@ -14,7 +13,7 @@ type PackageManagerOutput = {
     stderr: string
 }
 
-type CoreCommand = 'add' | 'init' | 'link'
+type CoreCommand = 'install'
 type ExecCommand = 'tsc'
 type Command = CoreCommand | ExecCommand
 
@@ -45,8 +44,7 @@ const runCommand = async (
         log.debug({ path, command, args }, '[PackageManager#execute]')
 
         await fileSystemUtils.threadSafeMkdir(path)
-
-        const commandLine = `pnpm ${command} ${args.join(' ')}`
+        const commandLine = `bun ${command} ${args.join(' ')}`
         return await execPromise(commandLine, { cwd: path })
     }
     catch (error) {
@@ -77,87 +75,48 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         }
 
         const config = [
-            '--prefer-offline',
             '--ignore-scripts',
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
+            '--linker isolated'
         ]
         if (!isNil(installDir)) {
             config.push(`--dir=${installDir}`)
         }
 
-        const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
-        return runCommand(path, 'add', log, ...dependencyArgs, ...config)
+        return runCommand(path, 'install', log, ...config)
     },
 
-    async init({ path }: InitParams): Promise<PackageManagerOutput> {
+    async createRootPackageJson({ path }: { path: string }): Promise<void> {
         const packageJsonPath = fsPath.join(path, 'package.json')
-        const fExists = await fileSystemUtils.fileExists(packageJsonPath)
-        if (fExists) {
-            return {
-                stdout: 'N/A',
-                stderr: 'N/A',
-            }
+        const packageJson =  {
+            "name": "common",
+            "version": "1.0.0",
+            "workspaces": [
+                "@activepieces/*"
+            ],
+            "dependencies": {}
         }
-        return memoryLock.runExclusive({
-            key: `pnpm-init-${path}`,
-            fn: async () => {
-                const fExists = await fileSystemUtils.fileExists(packageJsonPath)
-                if (fExists) {
-                    return {
-                        stdout: 'N/A',
-                        stderr: 'N/A',
-                    }
+        await fileSystemUtils.threadSafeMkdir(fsPath.dirname(packageJsonPath))
+        await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
+    },
+
+    async createPiecePackageJson({ path, piecePackage }: CreatePiecePackageParams): Promise<void> {
+        const packageJsonPath = fsPath.join(path, 'package.json')
+            const packageJson = {
+                "name": `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
+                "version": `${piecePackage.pieceVersion}`,
+                "dependencies": {
+                    [piecePackage.pieceName]: piecePackage.pieceVersion
                 }
-                // It must be awaited so it only releases the lock after the command is done
-                const result = await runCommand(path, 'init', log)
-                return result
-            },
-        })
+        }
+        await fileSystemUtils.threadSafeMkdir(fsPath.dirname(packageJsonPath))
+        await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
         return runCommand(path, command, log)
     },
 
-    async link({
-        path,
-        linkPath,
-        packageName,
-    }: LinkParams): Promise<PackageManagerOutput> {
-        const config = [
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
-        ]
-
-        const result = await runCommand(path, 'link', log, linkPath, ...config)
-
-        const nodeModules = fsPath.join(path, 'node_modules', packageName)
-        await replaceRelativeSystemLinkWithAbsolute(nodeModules, log)
-        return result
-    },
 })
-
-const replaceRelativeSystemLinkWithAbsolute = async (
-    filePath: string,
-    log: FastifyBaseLogger,
-) => {
-    try {
-    // Inside the isolate sandbox, the relative path is not valid
-
-        const stats = await fs.stat(filePath)
-
-        if (stats.isDirectory()) {
-            const realPath = await fs.realpath(filePath)
-            log.info({ realPath, filePath }, '[link]')
-            await fs.unlink(filePath)
-            await fs.symlink(realPath, filePath, 'junction')
-        }
-    }
-    catch (error) {
-        log.error([error], '[link]')
-    }
-}
 
 type AddParams = {
     path: string
@@ -165,17 +124,12 @@ type AddParams = {
     installDir?: string
 }
 
-type InitParams = {
+type CreatePiecePackageParams = {
     path: string
+    piecePackage: PiecePackage
 }
 
 type ExecParams = {
     path: string
     command: ExecCommand
-}
-
-type LinkParams = {
-    path: string
-    linkPath: string
-    packageName: string
 }

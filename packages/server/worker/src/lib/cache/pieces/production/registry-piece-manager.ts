@@ -1,20 +1,20 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { enrichErrorContext, fileSystemUtils, systemConstants } from '@activepieces/server-shared'
 import {
-    getPackageAliasForPiece,
     getPackageArchivePathForPiece,
-    getPackageSpecForPiece,
     isEmpty,
     PackageType,
     PiecePackage,
     PieceType,
     PrivatePiecePackage,
+    WebsocketServerEvent,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
 import { PackageInfo, packageManager } from '../../package-manager'
-import { CacheState } from '../../worker-cache'
+import { GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
+import { appSocket } from '../../../app-socket'
+import { PiecePackageInformation } from '@activepieces/pieces-framework'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
@@ -59,52 +59,61 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         pieces,
     }: InstallParams): Promise<void> => {
         await savePackageArchivesToDiskIfNotCached(pieces)
+        const installDir = join(projectPath, 'pieces')
 
-        const cache = cacheState(projectPath, log)
+        await packageManager(log).createRootPackageJson({
+            path: installDir
+        })
+        for (const piece of pieces) {
+            await packageManager(log).createPiecePackageJson({
+                path: join(installDir, `${piece.pieceName}-${piece.pieceVersion}`),
+                piecePackage: piece,
+            })
+        }
 
-        await Promise.all(
-            pieces.map(async (piece) => {
-                const pkg = pieceToDependency(piece)
-
-                await cache.getOrSetCache({
-                    key: pkg.alias,
-                    cacheMiss: (value: string) => {
-                        return value !== CacheState.READY
-                    },
-                    installFn: async () => {
-                        const exactVersionPath = join(projectPath, 'pieces', pkg.alias)
-                        await mkdir(exactVersionPath, { recursive: true })
-
-                        if (!pkg.standalone) {
-                            await writePnpmWorkspaceConfig(projectPath)
-                        }
-                        const performanceStartTime = performance.now()
-                        await packageManager(log).add({
-                            path: projectPath,
-                            dependencies: [pkg],
-                            installDir: exactVersionPath,
-                        })
-                        log.info({
-                            alias: pkg.alias,
-                            timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
-                        }, 'Installed piece using pnpm')
-                        return CacheState.READY
-                    },
-                    skipSave: NO_SAVE_GUARD,
-                })
-            }),
-        )
+        log.info({
+            installDir,
+        }, 'Installing registry pieces using bun')
+        
+        const performanceStartTime = performance.now()
+        await packageManager(log).add({
+            path: installDir,
+            dependencies: pieces.map((piece) => pieceToDependency(piece)),
+        })
+        .then(()=> {
+            log.info({
+                installDir,
+                timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
+            }, 'Installed registry pieces using bun')
+        })
+        .catch((error) => {
+            log.error({
+                installDir,
+                error,
+            }, 'Error installing registry pieces using bun')
+        })
     },
 
+    async preWarmCache(): Promise<void> {
+        log.info('Pre-warming cache')
+        const pieces = await appSocket(log).emitWithAck<PiecePackageInformation[]>(WebsocketServerEvent.GET_REGISTRY_PIECES, {})
+
+        await registryPieceManager(log).install({
+            projectPath: GLOBAL_CACHE_COMMON_PATH,
+            pieces: pieces.map((piece) => ({
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+                pieceName: piece.name,
+                pieceVersion: piece.version,
+            })),
+        })
+    }
 })
 
 const pieceToDependency = (piece: PiecePackage): PackageInfo => {
-    const packageAlias = getPackageAliasForPiece(piece)
-
-    const packageSpec = getPackageSpecForPiece(PACKAGE_ARCHIVE_PATH, piece)
     return {
-        alias: packageAlias,
-        spec: packageSpec,
+        alias: piece.pieceName,
+        spec: piece.pieceVersion,
         standalone: piece.pieceType === PieceType.CUSTOM,
     }
 }
@@ -119,14 +128,6 @@ const removeDuplicatedPieces = (pieces: PiecePackage[]): PiecePackage[] => {
                     p.pieceVersion === piece.pieceVersion,
             ),
     )
-}
-
-const writePnpmWorkspaceConfig = async (projectPath: string): Promise<void> => {
-    const workspaceConfig = `packages:
-- "pieces/*"
-`
-    const workspaceFilePath = join(projectPath, 'pnpm-workspace.yaml')
-    await writeFile(workspaceFilePath, workspaceConfig)
 }
 
 const savePackageArchivesToDiskIfNotCached = async (
