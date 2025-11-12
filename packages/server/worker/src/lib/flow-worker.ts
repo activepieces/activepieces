@@ -2,6 +2,7 @@ import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFacto
 import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
@@ -30,6 +31,10 @@ export const flowWorker = (log: FastifyBaseLogger): {
                 await workerMachine.init(response, log)
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
+
+                if (workerMachine.preWarmCacheEnabled()) {
+                    await registryPieceManager(log).preWarmCache()
+                }
             },
         })
     },

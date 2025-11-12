@@ -178,9 +178,10 @@ const compileCode = async ({
     })
     await fs.writeFile(`${path}/index.ts`, code, { encoding: 'utf8', flag: 'w' })
 
-    await packageManager(log).exec({
+    await packageManager(log).build({
         path,
-        command: 'tsc',
+        entryFile: `${path}/index.ts`,
+        outputFile: `${path}/index.js`,
     })
 }
 

@@ -1,10 +1,9 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronRight, BookOpen, History, VideoIcon } from 'lucide-react';
+import { ChevronRight, BookOpen, History } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import TutorialsDialog from '@/components/custom/tutorials-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,13 +59,6 @@ export const HelpAndFeedback = () => {
             </div>
           </Link>
         </DropdownMenuItem>
-
-        <TutorialsDialog location="tutorials-sidebar-item" showTooltip={false}>
-          <div className="flex items-center gap-2 text-sm px-2 py-1.5 cursor-pointer hover:bg-sidebar-accent rounded-sm transition-colors">
-            <VideoIcon className="size-4" />
-            <span>{t('Tutorials')}</span>
-          </div>
-        </TutorialsDialog>
 
         {showCommunity && (
           <>

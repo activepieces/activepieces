@@ -1,5 +1,3 @@
-'use client';
-
 import { format, subDays, addDays } from 'date-fns';
 import { t } from 'i18next';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
@@ -42,7 +40,6 @@ const applyTimeToDate = ({
   timeDate: Date;
   targetDate: Date;
 }): Date => {
-  // Extract time components from sourceDate
   const hours = timeDate.getHours();
   const minutes = timeDate.getMinutes();
   const seconds = timeDate.getSeconds();
@@ -54,7 +51,7 @@ const applyTimeToDate = ({
       seconds,
       milliseconds,
     ),
-  ); // Return the updated targetDate
+  );
 };
 const getStartToEndDayTime = () => {
   const now = new Date();
@@ -98,8 +95,27 @@ export function DateTimePickerWithRange({
     from: from ? new Date(from) : undefined,
     to: to ? new Date(to) : undefined,
   });
+  const [selectedPreset, setSelectedPreset] = React.useState<string | null>(
+    null,
+  );
+
+  const getPresetLabel = (value: string) => {
+    const labels: Record<string, string> = {
+      '7days': t('Last 7 Days'),
+      '14days': t('Last 14 Days'),
+      '30days': t('Last 30 Days'),
+      '90days': t('Last 90 Days'),
+      '7': t('Next 7 days'),
+      '14': t('Next 14 days'),
+      '30': t('Next 30 days'),
+      '90': t('Next 90 days'),
+    };
+    return labels[value] || '';
+  };
 
   const handleSelect = (selectedDate: DateRange | undefined) => {
+    setSelectedPreset(null);
+
     if (selectedDate) {
       const newDate = {
         from:
@@ -140,17 +156,17 @@ export function DateTimePickerWithRange({
     let newDate: DateRange;
 
     switch (value) {
-      case 'week':
+      case '7days':
         newDate = { from: subDays(today, 7), to: today };
         break;
-      case 'month':
+      case '14days':
+        newDate = { from: subDays(today, 14), to: today };
+        break;
+      case '30days':
         newDate = { from: subDays(today, 30), to: today };
         break;
-      case '3months':
+      case '90days':
         newDate = { from: subDays(today, 90), to: today };
-        break;
-      case '6months':
-        newDate = { from: subDays(today, 180), to: today };
         break;
       default:
         newDate = { from: today, to: addDays(today, parseInt(value)) };
@@ -158,6 +174,7 @@ export function DateTimePickerWithRange({
     newDate.from!.setHours(0, 0, 0, 0);
     newDate.to!.setHours(23, 59, 59, 999);
     setDate(newDate);
+    setSelectedPreset(value);
     onChange(newDate);
   };
 
@@ -170,12 +187,13 @@ export function DateTimePickerWithRange({
             variant={'outline'}
             className={cn(
               'min-w-[90px] border-dashed justify-start text-left font-normal',
-              !date && 'text-muted-foreground',
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {date?.from ? (
-              date.to ? (
+              selectedPreset ? (
+                <span>{getPresetLabel(selectedPreset)}</span>
+              ) : date.to ? (
                 <div className="flex gap-2 items-center">
                   <div>{format(date.from, 'LLL dd, y, hh:mm a')}</div>
                   <div>{t('to')}</div>
@@ -191,28 +209,27 @@ export function DateTimePickerWithRange({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-2" align="start">
           <div className="flex space-x-2 mb-2">
-            <Select onValueChange={handlePresetChange}>
+            <Select
+              onValueChange={handlePresetChange}
+              value={selectedPreset || undefined}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select preset" />
               </SelectTrigger>
               <SelectContent>
                 {presetType === 'past' ? (
                   <>
-                    <SelectItem value="week">{t('Last Week')}</SelectItem>
-                    <SelectItem value="month">{t('Last Month')}</SelectItem>
-                    <SelectItem value="3months">
-                      {t('Last 3 Months')}
-                    </SelectItem>
-                    <SelectItem value="6months">
-                      {t('Last 6 Months')}
-                    </SelectItem>
+                    <SelectItem value="7days">{t('Last 7 Days')}</SelectItem>
+                    <SelectItem value="14days">{t('Last 14 Days')}</SelectItem>
+                    <SelectItem value="30days">{t('Last 30 Days')}</SelectItem>
+                    <SelectItem value="90days">{t('Last 90 Days')}</SelectItem>
                   </>
                 ) : (
                   <>
                     <SelectItem value="7">{t('Next 7 days')}</SelectItem>
+                    <SelectItem value="14">{t('Next 14 days')}</SelectItem>
                     <SelectItem value="30">{t('Next 30 days')}</SelectItem>
                     <SelectItem value="90">{t('Next 90 days')}</SelectItem>
-                    <SelectItem value="180">{t('Next 180 days')}</SelectItem>
                   </>
                 )}
               </SelectContent>
@@ -231,52 +248,12 @@ export function DateTimePickerWithRange({
             fromDate={minDate}
           />
           <Separator className="mb-4"></Separator>
-          <div className="flex justify-between items-center ">
-            <div className="flex gap-1.5 px-2 items-center text-sm">
-              <Clock className="w-4 h-4 text-muted-foreground"></Clock>
-              {t('Select Time Range')}
-            </div>
-            <Button
-              variant={'ghost'}
-              size={'sm'}
-              className="text-primary hover:!text-primary"
-              onClick={() => {
-                const fromTime = getStartToEndDayTime().from;
-                const toTime = getStartToEndDayTime().to;
-                const fromDate = date?.from
-                  ? applyTimeToDate({
-                      timeDate: fromTime,
-                      targetDate: date.from,
-                    })
-                  : undefined;
-
-                const toDate = date?.to
-                  ? applyTimeToDate({
-                      timeDate: toTime,
-                      targetDate: date.to,
-                    })
-                  : undefined;
-
-                setTimeDate({
-                  from: fromTime,
-                  to: toTime,
-                });
-
-                setDate({
-                  from: fromDate,
-                  to: toDate,
-                });
-                onChange({
-                  from: fromDate,
-                  to: toDate,
-                });
-              }}
-            >
-              {t('Clear')}
-            </Button>
+          <div className="flex gap-1.5 px-2 items-center text-sm mb-3">
+            <Clock className="w-4 h-4 text-muted-foreground"></Clock>
+            {t('Select Time Range')}
           </div>
 
-          <div className="flex gap-3  items-center mt-3 px-2 mb-2">
+          <div className="flex gap-3  items-center px-2 mb-2">
             <div className="flex gap-2 grow justify-center items-center items-center">
               <TimePicker
                 date={timeDate.from}
@@ -296,6 +273,7 @@ export function DateTimePickerWithRange({
                     to: date?.to,
                   });
                   setTimeDate({ ...timeDate, from: fromTime });
+                  setSelectedPreset(null);
                 }}
               ></TimePicker>
             </div>
@@ -321,9 +299,29 @@ export function DateTimePickerWithRange({
                     to: toWithCorrectedTime,
                   });
                   setTimeDate({ ...timeDate, to: toTime });
+                  setSelectedPreset(null);
                 }}
               ></TimePicker>
             </div>
+          </div>
+
+          <div className="flex justify-center mt-3">
+            <Button
+              variant={'ghost'}
+              size={'sm'}
+              className="text-primary hover:!text-primary w-full"
+              onClick={() => {
+                setDate(undefined);
+                setTimeDate({
+                  from: undefined,
+                  to: undefined,
+                });
+                setSelectedPreset(null);
+                onChange(undefined);
+              }}
+            >
+              {t('Clear')}
+            </Button>
           </div>
         </PopoverContent>
       </Popover>

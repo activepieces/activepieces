@@ -1,7 +1,11 @@
+import { PiecePackageInformation } from '@activepieces/pieces-framework'
+import { apVersionUtil } from '@activepieces/server-shared'
 import { Principal, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../../core/websockets.service'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
+import { system } from '../../helper/system/system'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
@@ -18,6 +22,16 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             const response = await machineService(app.log).onHeartbeat({
                 ...request, 
                 socket,
+            })
+            callback?.(response)
+        }
+    })
+
+    websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.GET_REGISTRY_PIECES, () => {
+        return async (_request: unknown, _principal: Principal, callback?: (data: PiecePackageInformation[]) => void) => {
+            const response = await pieceMetadataService(app.log).registry({
+                release: await apVersionUtil.getCurrentRelease(),
+                edition: system.getEdition(),
             })
             callback?.(response)
         }
