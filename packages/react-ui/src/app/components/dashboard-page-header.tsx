@@ -52,7 +52,7 @@ export const DashboardPageHeader = ({
     return null;
   }
   return (
-    <div className="flex items-center justify-between border-b mb-4 py-2 min-w-full px-4 z-30 -mx-4">
+    <div className="flex items-center justify-between mb-4 py-2 min-w-full px-4 z-30 -mx-4">
       <div className="flex items-center justify-between w-full">
         <div>
           <div className="flex items-center gap-2">
