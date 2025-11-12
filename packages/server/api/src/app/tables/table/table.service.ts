@@ -6,7 +6,6 @@ import {
     ErrorCode,
     ExportTableResponse,
     isNil,
-    PlatformUsageMetric,
     SeekPage,
     spreadIfDefined,
     Table,
@@ -17,10 +16,8 @@ import {
 import { ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { projectService } from '../../project/project-service'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
@@ -35,13 +32,6 @@ export const tableService = {
         projectId,
         request,
     }: CreateParams): Promise<Table> {
-        const platformId = await projectService.getPlatformId(projectId)
-        await PlatformPlanHelper.checkQuotaOrThrow({
-            platformId,
-            projectId,
-            metric: PlatformUsageMetric.TABLES,
-        })
-
         const table = await tableRepo().save({
             id: apId(),
             externalId: request.externalId ?? apId(),

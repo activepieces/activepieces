@@ -209,15 +209,32 @@ activepieces:
 # PostgreSQL is deployed by default using the Bitnami subchart
 # ============================================================================
 postgresql:
-  enabled: true                       # Set to false to use external PostgreSQL
-  host: ""                            # Leave empty to use internal PostgreSQL
+  # Set to true to deploy PostgreSQL subchart (Bitnami)
+  # Set to false and provide host/url to use external PostgreSQL
+  enabled: true
+  # External PostgreSQL host (required if enabled=false and using external PostgreSQL)
+  host: ""
+  # PostgreSQL port
   port: 5432
+  # Enable SSL for PostgreSQL connection
   useSSL: false
-  url: ""                             # Alternative: full connection URL
+  # PostgreSQL connection URL (alternative to host/port/auth)
+  # If provided, host/port/auth will be ignored
+  url: ""
+  # SSL CA certificate for PostgreSQL (if useSSL is true)
+  sslCa: ""
   auth:
     database: "activepieces"
     username: "postgres"
-    password: ""                      # Auto-generated if not provided
+    # Password for PostgreSQL
+    # - If using subchart (enabled=true), password is automatically generated if not provided
+    # - If using external PostgreSQL, provide password here or use externalSecret
+    password: ""
+    # External secret reference for password (alternative to password field)
+    # Use this when password is stored in a Kubernetes secret (e.g., External Secrets Operator)
+    # externalSecret:
+    #   name: "postgresql-credentials"
+    #   key: "password"
   primary:
     persistence:
       enabled: true
@@ -227,15 +244,27 @@ postgresql:
 # Redis is deployed by default using the Bitnami subchart
 # ============================================================================
 redis:
-  enabled: true                       # Set to false to use memory queue (not for production)
-  host: ""                            # Leave empty to use internal Redis
+  # Set to true to deploy Redis subchart (Bitnami)
+  # Set to false and provide host/url to use external Redis
+  enabled: true
+  # External Redis host (required if enabled=false and using external Redis)
+  host: ""
+  # Redis port
   port: 6379
+  # Enable SSL for Redis connection
   useSSL: false
+  # SSL CA certificate file path for Redis (if useSSL is true)
+  sslCaFile: ""
+  # Redis database number
   db: 0
-  url: ""                             # Alternative: full connection URL
-  type: "standalone"                  # Options: standalone, sentinel
+  # Redis connection URL (alternative to host/port/auth)
+  # If provided, host/port/auth will be ignored
+  url: ""
+  # Redis type: "standalone" or "sentinel"
+  type: "standalone"
+  # Redis username (for Redis 6+ ACL)
+  user: ""
   sentinel:
-    enabled: false
     name: ""
     hosts: ""
     role: ""
@@ -243,8 +272,17 @@ redis:
     retentionDays: 7
     retentionMaxCount: 100
   auth:
+    # Set to true if Redis requires authentication
+    # - If using subchart (enabled=true), password is automatically generated if not provided
+    # - If using external Redis, provide password or use externalSecret
     enabled: true
-    password: ""                      # Auto-generated if not provided
+    # Password for Redis
+    password: ""
+    # External secret reference for password (alternative to password field)
+    # Use this when password is stored in a Kubernetes secret (e.g., External Secrets Operator)
+    # externalSecret:
+    #   name: "redis-credentials"
+    #   key: "password"
   master:
     persistence:
       enabled: true

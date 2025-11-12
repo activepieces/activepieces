@@ -11,6 +11,88 @@ This guide walks you through deploying Activepieces on Kubernetes using the offi
 - Helm 3.x installed
 - kubectl configured to access your cluster
 
+## Using External PostgreSQL and Redis
+
+The Helm chart supports using external PostgreSQL and Redis services instead of deploying the Bitnami subcharts.
+
+### Using External PostgreSQL
+
+To use an external PostgreSQL instance:
+
+```yaml
+postgresql:
+  enabled: false  # Disable Bitnami PostgreSQL subchart
+  host: "your-postgres-host.example.com"
+  port: 5432
+  useSSL: true  # Enable SSL if required
+  auth:
+    database: "activepieces"
+    username: "postgres"
+    password: "your-password"
+    # Or use external secret reference:
+    # externalSecret:
+    #   name: "postgresql-credentials"
+    #   key: "password"
+```
+
+Alternatively, you can use a connection URL:
+
+```yaml
+postgresql:
+  enabled: false
+  url: "postgresql://user:password@host:5432/database?sslmode=require"
+```
+
+### Using External Redis
+
+To use an external Redis instance:
+
+```yaml
+redis:
+  enabled: false  # Disable Bitnami Redis subchart
+  host: "your-redis-host.example.com"
+  port: 6379
+  useSSL: false  # Enable SSL if required
+  auth:
+    enabled: true
+    password: "your-password"
+    # Or use external secret reference:
+    # externalSecret:
+    #   name: "redis-credentials"
+    #   key: "password"
+```
+
+Alternatively, you can use a connection URL:
+
+```yaml
+redis:
+  enabled: false
+  url: "redis://:password@host:6379/0"
+```
+
+### External Secret References
+
+For better security, you can reference passwords from existing Kubernetes secrets (useful with External Secrets Operator or Sealed Secrets):
+
+```yaml
+postgresql:
+  enabled: false
+  host: "your-postgres-host.example.com"
+  auth:
+    externalSecret:
+      name: "postgresql-credentials"
+      key: "password"
+
+redis:
+  enabled: false
+  host: "your-redis-host.example.com"
+  auth:
+    enabled: true
+    externalSecret:
+      name: "redis-credentials"
+      key: "password"
+```
+
 ## Quick Start
 
 ### 1. Clone the Repository

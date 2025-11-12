@@ -151,7 +151,6 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
 
 
             const onResult = (result: EngineResponse<unknown>) => {
-
                 resolve({
                     engine: result,
                     stdOut,

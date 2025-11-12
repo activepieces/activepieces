@@ -338,6 +338,28 @@ It is strongly recommended that you add your credit card information to your Ope
         streaming: false,
         languageModels: [
             {
+                displayName: 'Claude 4.5 Sonnet',
+                instance: anthropic('claude-sonnet-4-5-20250929'),
+                functionCalling: true,
+                webSearchCost: 0.01,
+                pricing: {
+                    input: 3.00,
+                    output: 15.00,
+                    type: 'flat',
+                },
+            },
+            {
+                displayName: 'Claude 4.5 Haiku',
+                instance: anthropic('claude-haiku-4-5-20251001'),
+                functionCalling: true,
+                webSearchCost: 0.01,
+                pricing: {
+                    input: 1.00,
+                    output: 5.00,
+                    type: 'flat',
+                },
+            },
+            {
                 displayName: 'Claude 4 Sonnet',
                 instance: anthropic('claude-sonnet-4-20250514'),
                 functionCalling: true,
@@ -515,6 +537,20 @@ It is strongly recommended that you add your credit card information to your Ope
                         audio: 1.00,
                     },
                     output: 2.50,
+                    type: 'categorized',
+                },
+            },
+            {
+                displayName: 'Gemini 2.5 Flash-Lite',
+                instance: google('gemini-2.5-flash-lite'),
+                functionCalling: true,
+                webSearchCost: 0.035,
+                pricing: {
+                    input: {
+                        default: 0.10,
+                        audio: 0.30,
+                    },
+                    output: 0.40,   
                     type: 'categorized',
                 },
             },
