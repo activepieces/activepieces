@@ -12,20 +12,28 @@ export const DashboardPageHeader = ({
   children,
   description,
   beta = false,
+  middleChildren,
   tutorialTab,
 }: {
   title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
   beta?: boolean;
+  middleChildren?: React.ReactNode;
   tutorialTab?: TabType;
 }) => {
+  const className = middleChildren
+    ? 'grid grid-cols-3'
+    : 'flex justify-between';
+
   const { embedState } = useEmbedding();
   if (embedState.hidePageHeader) {
     return null;
   }
   return (
-    <div className="flex items-center justify-between border-b mb-4 py-2 min-w-full px-4 z-30 -mx-4">
+    <div
+      className={`${className} items-center border-b bg-background py-3 px-6 -mx-4 mb-4`}
+    >
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">{title}</h1>
@@ -46,7 +54,10 @@ export const DashboardPageHeader = ({
           <span className="text-xs text-muted-foreground">{description}</span>
         )}
       </div>
-      {children}
+      {middleChildren && (
+        <div className="flex justify-center">{middleChildren}</div>
+      )}
+      <div className="flex justify-end">{children}</div>
     </div>
   );
 };

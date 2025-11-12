@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
+import { useLocation } from 'react-router-dom';
 
 import {
   LeftSideBarType,
@@ -26,6 +27,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { promptFlowApi, PromptMessage } from '@/features/flows/lib/prompt-to-flow-api';
 import {
   FlowActionType,
   ApEdition,
@@ -38,7 +40,11 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { cn, useElementSize } from '../../lib/utils';
+import {
+  cn,
+  NEW_FLOW_WITH_AI_QUERY_PARAM,
+  useElementSize,
+} from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { CopilotSidebar } from './copilot';
@@ -48,6 +54,7 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { PromptToFlowSidebar } from './prompt-to-flow';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -89,8 +96,10 @@ const constructContainerKey = ({
   );
 };
 const BuilderPage = () => {
+  const location = useLocation();
   const { platform } = platformHooks.useCurrentPlatform();
-  const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep] =
+  const [creditUsage, setCreditUsage] = useState(0);
+  const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep, setLeftSidebar, flow] =
     useBuilderStateContext((state) => [
       state.setRun,
       state.flowVersion,
@@ -98,10 +107,32 @@ const BuilderPage = () => {
       state.rightSidebar,
       state.run,
       state.selectedStep,
+      state.setLeftSidebar,
+      state.flow,
     ]);
 
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   useShowBuilderIsSavingWarningBeforeLeaving();
+
+  const { data: ZERO_API_URL } = flagsHooks.useFlag<string>(ApFlagId.ZERO_SERVICE_URL);
+  const reloadCreditUsage = () => {
+    if (!ZERO_API_URL || !flow?.id) {
+      return;
+    }
+    promptFlowApi.getCreditUsage(
+      ZERO_API_URL,
+      flow.projectId,
+      flow.id
+    ).then((creditUsage) => {
+      setCreditUsage(creditUsage);
+    }).catch((error) => {
+      console.error('Failed to reload credit usage', error);
+    });
+  };
+
+  useEffect(() => {
+    reloadCreditUsage();
+  }, [ZERO_API_URL, flow?.id]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -138,6 +169,12 @@ const BuilderPage = () => {
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (location.search.includes(NEW_FLOW_WITH_AI_QUERY_PARAM)) {
+      setLeftSidebar(LeftSideBarType.PROMPT_TO_FLOW);
+    }
+  }, [location.search]);
 
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
@@ -181,7 +218,7 @@ const BuilderPage = () => {
   return (
     <div className="flex h-full w-full flex-col relative">
       <div className="z-50">
-        <BuilderHeader />
+        <BuilderHeader creditUsage={creditUsage} />
       </div>
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel
@@ -201,6 +238,9 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
             {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
+            {leftSidebar === LeftSideBarType.PROMPT_TO_FLOW && (
+              <PromptToFlowSidebar onShouldReloadCreditUsage={reloadCreditUsage} />
+            )}
           </div>
         </ResizablePanel>
 

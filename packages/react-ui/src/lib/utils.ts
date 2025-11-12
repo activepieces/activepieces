@@ -241,6 +241,7 @@ export const determineDefaultRoute = (
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
+export const NEW_FLOW_WITH_AI_QUERY_PARAM = 'newFlowWithAI';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
 export const NEW_MCP_QUERY_PARAM = 'newMcp';
 export const parentWindow: Window = window.opener ?? window.parent;
