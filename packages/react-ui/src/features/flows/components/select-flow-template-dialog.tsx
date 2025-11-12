@@ -1,12 +1,9 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowLeft, Info, Search, SearchX } from 'lucide-react';
+import { ArrowLeft, Search, SearchX } from 'lucide-react';
 import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { InputWithIcon } from '@/components/custom/input-with-icon';
-import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -23,111 +20,10 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import {
-  TooltipContent,
-  TooltipTrigger,
-  Tooltip,
-} from '@/components/ui/tooltip';
-import { foldersApi } from '@/features/folders/lib/folders-api';
-import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { templatesApi } from '@/features/templates/lib/templates-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  MarkdownVariant,
-  FlowOperationType,
-  FlowTemplate,
-  PopulatedFlow,
-  isNil,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
-
-import { flowsApi } from '../lib/flows-api';
-
-type TemplateCardProps = {
-  template: FlowTemplate;
-  onSelectTemplate: (template: FlowTemplate) => void;
-  folderId: string;
-};
-const TemplateCard = ({
-  template,
-  onSelectTemplate,
-  folderId,
-}: TemplateCardProps) => {
-  const selectTemplate = (template: FlowTemplate) => {
-    onSelectTemplate(template);
-  };
-
-  const navigate = useNavigate();
-
-  const { mutate: createFlow, isPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    FlowTemplate
-  >({
-    mutationFn: async (template: FlowTemplate) => {
-      const folder =
-        !isNil(folderId) && folderId !== UncategorizedFolderId
-          ? await foldersApi.get(folderId)
-          : undefined;
-      const newFlow = await flowsApi.create({
-        displayName: template.name,
-        projectId: authenticationSession.getProjectId()!,
-        folderName: folder?.displayName,
-      });
-      return await flowsApi.update(newFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: template.name,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
-        },
-      });
-    },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}`);
-    },
-  });
-  return (
-    <div
-      key={template.id}
-      className="rounded-lg border border-solid border-dividers overflow-hidden"
-    >
-      <div className="flex items-center gap-2 p-4 ">
-        <PieceIconList
-          trigger={template.template.trigger}
-          maxNumberOfIconsToShow={2}
-        />
-      </div>
-      <div className="text-sm font-medium px-4 min-h-16">{template.name}</div>
-      <div className="py-2 px-4 gap-1 flex items-center">
-        <Button
-          variant="default"
-          loading={isPending}
-          className="px-2 h-8"
-          onClick={() => createFlow(template)}
-        >
-          {t('Use Template')}
-        </Button>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="size-10 flex justify-center items-center">
-              <Button
-                variant="ghost"
-                className="rounded-full p-3 hover:bg-muted cursor-pointer flex justify-center items-center"
-                onClick={() => selectTemplate(template)}
-              >
-                <Info className="w-4 h-4" />
-              </Button>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <span className="text-sm">{t('Learn more')}</span>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    </div>
-  );
-};
+import { TemplateCard } from '@/features/templates/components/template-card';
+import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
+import { useTemplates } from '@/features/templates/hooks/templates-hook';
+import { FlowTemplate } from '@activepieces/shared';
 
 const SelectFlowTemplateDialog = ({
   children,
@@ -136,31 +32,11 @@ const SelectFlowTemplateDialog = ({
   children: React.ReactNode;
   folderId: string;
 }) => {
-  const [search, setSearch] = useState<string>('');
-
+  const { filteredTemplates, isLoading, search, setSearch } = useTemplates();
   const carousel = useRef<CarouselApi>();
-
   const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(
     null,
   );
-
-  const { data: templates, isLoading } = useQuery<FlowTemplate[], Error>({
-    queryKey: ['templates'],
-    queryFn: async () => {
-      const templates = await templatesApi.list();
-      return templates.data;
-    },
-    staleTime: 0,
-  });
-
-  const filteredTemplates = templates?.filter((template) => {
-    const templateName = template.name.toLowerCase();
-    const templateDescription = template.description.toLowerCase();
-    return (
-      templateName.includes(search.toLowerCase()) ||
-      templateDescription.includes(search.toLowerCase())
-    );
-  });
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
@@ -236,38 +112,7 @@ const SelectFlowTemplateDialog = ({
             </CarouselItem>
             <CarouselItem key="template-details">
               {selectedTemplate && (
-                <div className="px-2 ">
-                  <div className="mb-4 p-8 flex items-center justify-center gap-2 width-full bg-green-300 rounded-lg">
-                    <PieceIconList
-                      size="xxl"
-                      trigger={selectedTemplate.template.trigger}
-                      maxNumberOfIconsToShow={3}
-                    />
-                  </div>
-                  <ScrollArea className="px-2 min-h-[156px] h-[calc(70vh-144px)] max-h-[536px]">
-                    <div className="mb-4 text-lg font-medium font-black">
-                      {selectedTemplate?.name}
-                    </div>
-                    <ApMarkdown
-                      markdown={selectedTemplate?.description}
-                      variant={MarkdownVariant.BORDERLESS}
-                    />
-
-                    {selectedTemplate.blogUrl && (
-                      <div className="mt-4">
-                        {t('Read more about this template in')}{' '}
-                        <a
-                          href={selectedTemplate.blogUrl}
-                          target="_blank"
-                          className="text-primary underline underline-offset-4"
-                          rel="noreferrer"
-                        >
-                          {t('this blog!')}
-                        </a>
-                      </div>
-                    )}
-                  </ScrollArea>
-                </div>
+                <TemplateDetailsView template={selectedTemplate} />
               )}
             </CarouselItem>
           </CarouselContent>
