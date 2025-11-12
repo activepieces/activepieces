@@ -6,16 +6,18 @@ import {
     isEmpty,
     PackageType,
     PiecePackage,
+    PieceType,
     unique,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { packageManager } from '../../package-manager'
 import writeFileAtomic from 'write-file-atomic'
+import { workerRedisConnections } from '../../../utils/worker-redis'
+import { GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
-const pieceInstalled: Record<string, boolean> = {}
-
+const installedPieceRedisKey = (piece: PiecePackage) => `installed-piece:${piece.pieceName}:${piece.pieceVersion}`
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (projectPath: string, piece: PiecePackage) => join(projectPath, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
@@ -26,7 +28,8 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     }: InstallParams): Promise<void> => {
 
         const uniquePieces = unique(pieces)
-        const filterResults = await Promise.all(uniquePieces.map(piece => checkIfPieceIsCached(piecePath(projectPath, piece))))
+        const redis = await workerRedisConnections.useExisting()
+        const filterResults = await Promise.all(uniquePieces.map(piece => redis.get(installedPieceRedisKey(piece))))
         const filteredPieces = uniquePieces.filter((_, idx) => !filterResults[idx])
 
         if (isEmpty(filteredPieces)) {
@@ -54,7 +57,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                     path: projectPath,
                     relativePiecePaths: filteredPieces.map(relativePiecePath),
                 })
-                await Promise.all(filteredPieces.map(piece => markPieceAsInstalled(piecePath(projectPath, piece))))
+                await Promise.all(filteredPieces.map(piece => redis.set(installedPieceRedisKey(piece), 'true')))
                 log.info({
                     projectPath,
                     timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
@@ -62,6 +65,29 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             }
         })
 
+    },
+
+    
+    async preWarmCache(): Promise<void> {
+        const redis = await workerRedisConnections.useExisting()
+        const piecesKeys = await redis.keys('installed-piece:*')
+        if (piecesKeys.length > 0) {
+            return
+        }
+        const pieces: PiecePackage[] = piecesKeys.map((key) =>{
+            const [_, pieceName, pieceVersion] = key.split(':')
+            return {
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+                pieceName,
+                pieceVersion,
+            }
+        })
+
+        await registryPieceManager(log).install({
+            projectPath: GLOBAL_CACHE_COMMON_PATH,
+            pieces
+        })
     },
 })
 
@@ -89,19 +115,6 @@ const savePackageArchivesToDiskIfNotCached = async (
         })
     })
     await Promise.all(saveToDiskJobs)
-}
-
-async function checkIfPieceIsCached(pieceFolder: string): Promise<boolean> {
-    if (pieceInstalled[pieceFolder]) {
-        return true
-    }
-    pieceInstalled[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
-    return pieceInstalled[pieceFolder]
-}
-
-async function markPieceAsInstalled(pieceFolder: string): Promise<void> {
-    await writeFileAtomic(join(pieceFolder, 'ready'), 'true', 'utf8')
-    pieceInstalled[pieceFolder] = true
 }
 
 async function createRootPackageJson({ path }: { path: string }): Promise<void> {
