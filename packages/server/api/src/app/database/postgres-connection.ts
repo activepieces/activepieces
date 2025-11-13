@@ -492,7 +492,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaximumConcurrentJobsPerProject1761245180906,
         RemoveTasksAndTasksLimit1761570485475,
         DeleteLastChangelogDismissedAt1762018344394,
-        AddFailedStepAndDurationToRunPostgres1762886424449,
+        AddFailedStepAndDurationToRunPostgres1762886424449
     ]
 
     const edition = system.getEdition()

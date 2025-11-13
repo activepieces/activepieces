@@ -161,6 +161,7 @@ export const RunsTable = () => {
         title: t('Created'),
         accessorKey: 'created',
         icon: CheckIcon,
+        defaultPresetName: '7days',
       },
       {
         type: 'checkbox',
@@ -235,14 +236,8 @@ export const RunsTable = () => {
     () => [
       {
         render: (_, resetSelection) => {
-          const allFailed = selectedRows.every((row) =>
-            isFailedState(row.status),
-          );
-
           const isDisabled =
-            selectedRows.length === 0 ||
-            !userHasPermissionToRetryRun ||
-            !allFailed;
+            selectedRows.length === 0 || !userHasPermissionToRetryRun;
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -367,7 +362,16 @@ export const RunsTable = () => {
         },
       },
     ],
-    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
+    [
+      retryRuns,
+      userHasPermissionToRetryRun,
+      t,
+      selectedRows,
+      data,
+      archiveRuns,
+      selectedAll,
+      excludedRows,
+    ],
   );
 
   const handleRowClick = useCallback(
