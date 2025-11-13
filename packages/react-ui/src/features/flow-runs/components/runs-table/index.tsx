@@ -309,6 +309,55 @@ export const RunsTable = () => {
       },
       {
         render: (_, resetSelection) => {
+          const allCancellable = selectedRows.every(
+            (row) =>
+              row.status === FlowRunStatus.PAUSED ||
+              row.status === FlowRunStatus.QUEUED,
+          );
+          const isDisabled =
+            selectedRows.length === 0 ||
+            !userHasPermissionToRetryRun ||
+            !allCancellable;
+
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToRetryRun}
+              >
+                <MessageTooltip
+                  message={t('Only paused or queued runs can be cancelled')}
+                  isDisabled={allCancellable}
+                >
+                  <Button
+                    disabled={isDisabled}
+                    variant="outline"
+                    className="h-9 w-full"
+                    onClick={() => {
+                      cancelRuns.mutate({
+                        runIds: selectedRows.map((row) => row.id),
+                      });
+                      resetSelection();
+                    }}
+                  >
+                    <X className="h-3 w-4 mr-1" />
+                    {selectedRows.length > 0
+                      ? `${t('Cancel')} ${
+                          selectedAll
+                            ? excludedRows.size > 0
+                              ? `${t('all except')} ${excludedRows.size}`
+                              : t('all')
+                            : `(${selectedRows.length})`
+                        }`
+                      : t('Cancel')}
+                  </Button>
+                </MessageTooltip>
+              </PermissionNeededTooltip>
+            </div>
+          );
+        },
+      },
+      {
+        render: (_, resetSelection) => {
           const allSuccess = selectedRows.every(
             (row) => !isFailedState(row.status),
           );
@@ -393,55 +442,6 @@ export const RunsTable = () => {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </PermissionNeededTooltip>
-            </div>
-          );
-        },
-      },
-      {
-        render: (_, resetSelection) => {
-          const allCancellable = selectedRows.every(
-            (row) =>
-              row.status === FlowRunStatus.PAUSED ||
-              row.status === FlowRunStatus.QUEUED,
-          );
-          const isDisabled =
-            selectedRows.length === 0 ||
-            !userHasPermissionToRetryRun ||
-            !allCancellable;
-
-          return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToRetryRun}
-              >
-                <MessageTooltip
-                  message={t('Only paused or queued runs can be cancelled')}
-                  isDisabled={allCancellable}
-                >
-                  <Button
-                    disabled={isDisabled}
-                    variant="outline"
-                    className="h-9 w-full"
-                    onClick={() => {
-                      cancelRuns.mutate({
-                        runIds: selectedRows.map((row) => row.id),
-                      });
-                      resetSelection();
-                    }}
-                  >
-                    {selectedRows.length > 0
-                      ? `${t('Cancel')} ${
-                          selectedAll
-                            ? excludedRows.size > 0
-                              ? `${t('all except')} ${excludedRows.size}`
-                              : t('all')
-                            : `(${selectedRows.length})`
-                        }`
-                      : t('Cancel')}
-                    <X className="h-3 w-4 ml-2" />
-                  </Button>
-                </MessageTooltip>
               </PermissionNeededTooltip>
             </div>
           );
