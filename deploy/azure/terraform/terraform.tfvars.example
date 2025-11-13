@@ -1,0 +1,29 @@
+# Azure Wasper Deployment Configuration
+# Copy this file to terraform.tfvars and update with your values
+
+# Azure Configuration
+location            = "eastus"              # Azure region (eastus, westus2, westeurope, etc.)
+resource_group_name = "wasper-rg"           # Name of resource group
+environment         = "prod"                # Environment: prod, staging, or dev
+
+# VM Configuration
+vm_size        = "Standard_D2s_v3"          # VM size (D2s_v3 = 2vCPU/8GB ~$70/mo, D4s_v3 = 4vCPU/16GB ~$140/mo)
+admin_username = "wasperadmin"              # Admin username for SSH access
+
+# SSH Configuration
+ssh_public_key_path       = "~/.ssh/id_rsa.pub"  # Path to your SSH public key
+ssh_source_address_prefix = "*"                   # IP allowed to SSH (* = any, or specific IP like "1.2.3.4")
+
+# Domain Configuration
+domain_name = "wasper.yourdomain.com"       # FQDN for Wasper (REQUIRED - replace with your domain)
+
+# Disk Configuration
+os_disk_size_gb   = 128                     # OS disk size in GB
+data_disk_size_gb = 128                     # Data disk size in GB (for database)
+
+# Additional Tags (optional)
+tags = {
+  Project     = "Wasper"
+  Owner       = "your-name"
+  CostCenter  = "engineering"
+}

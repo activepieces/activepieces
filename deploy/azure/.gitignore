@@ -1,0 +1,40 @@
+# Terraform
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfstate
+terraform/*.tfstate.backup
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Backups
+backups/
+*.sql
+*.sql.gz
+*.tar.gz
+
+# SSH keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
