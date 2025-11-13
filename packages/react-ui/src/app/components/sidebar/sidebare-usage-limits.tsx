@@ -52,13 +52,6 @@ const SidebarUsageLimits = React.memo(() => {
   const { platform } = platformHooks.useCurrentPlatform();
   const currentUser = userHooks.useCurrentUser();
   const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
-
-
-  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@222")
-  console.log(isPlatformAdmin)
-  console.log(currentUser.data?.platformRole)
-  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@222")
-
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   if (edition === ApEdition.COMMUNITY) {
