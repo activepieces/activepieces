@@ -1,0 +1,55 @@
+{
+  "comment": "Cloudflare DNS Configuration for Wasper",
+  "instructions": [
+    "1. Log in to Cloudflare Dashboard: https://dash.cloudflare.com",
+    "2. Select your domain",
+    "3. Go to DNS > Records",
+    "4. Add the following A record",
+    "5. IMPORTANT: Disable proxy (click orange cloud to turn it grey)",
+    "6. Save the record",
+    "7. Wait 5-30 minutes for DNS propagation"
+  ],
+  "dns_record": {
+    "type": "A",
+    "name": "wasper",
+    "content": "YOUR_VM_PUBLIC_IP",
+    "ttl": 3600,
+    "proxied": false,
+    "comment": "Wasper Azure VM"
+  },
+  "example": {
+    "type": "A",
+    "name": "wasper",
+    "content": "20.123.45.67",
+    "ttl": 3600,
+    "proxied": false,
+    "comment": "Points to wasper.yourdomain.com"
+  },
+  "verification": {
+    "command": "dig +short wasper.yourdomain.com @8.8.8.8",
+    "expected_output": "YOUR_VM_PUBLIC_IP"
+  },
+  "notes": [
+    "Replace 'wasper' with your desired subdomain",
+    "Replace 'YOUR_VM_PUBLIC_IP' with the actual IP from Azure",
+    "Proxied must be FALSE (grey cloud) for SSL to work with Let's Encrypt",
+    "TTL 3600 (1 hour) is recommended for production",
+    "You can use @ for root domain instead of a subdomain"
+  ],
+  "cloudflare_api_example": {
+    "description": "Create DNS record via API (optional)",
+    "endpoint": "https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer YOUR_API_TOKEN",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "type": "A",
+      "name": "wasper",
+      "content": "YOUR_VM_PUBLIC_IP",
+      "ttl": 3600,
+      "proxied": false
+    }
+  }
+}
