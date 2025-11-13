@@ -1,6 +1,6 @@
 import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
 import { apDayjsDuration } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, PopulatedIssue, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -22,32 +22,45 @@ const alertEventKey = (flowVersionId: string) => `flow_fail_count:${flowVersionI
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 
 export const alertsService = (log: FastifyBaseLogger) => ({
-    async sendAlertOnRunFinish({ issue, flowRunId }: { issue: PopulatedIssue, flowRunId: string }): Promise<void> {
+    async sendAlertOnRunFinish({
+        issueToAlert,
+        flowRunId,
+    }: {
+        issueToAlert: IssueToAlert
+        flowRunId: string
+    }): Promise<void> {
         if (!paidEditions) {
             return
         }
+
         const redisConnection = await redisConnections.useExisting()
-        const failureKey = alertEventKey(issue.flowVersionId)
+        const failureKey = alertEventKey(issueToAlert.flowVersionId)
         const numberOfFailures = await redisConnection.incrby(failureKey, 1)
         await redisConnection.expire(failureKey, DAY_IN_SECONDS)
 
         if (numberOfFailures > 1) {
             return
         }
-        
-        const project = await projectService.getOneOrThrow(issue.projectId)
-        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
+
+        const project = await projectService.getOneOrThrow(issueToAlert.projectId)
+        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issueToAlert.flowId)
+
         const alertsInfo = {
             flowVersionId: flowVersion.id,
             flowRunId,
-            projectId: issue.projectId,
+            projectId: issueToAlert.projectId,
             platformId: project.platformId,
             projectName: project.displayName,
-            flowId: issue.flowId,
+            flowId: issueToAlert.flowId,
             flowName: flowVersion.displayName,
-            issueCount: issue.count,
-            createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+            createdAt: dayjs(issueToAlert.created)
+                .tz('America/Los_Angeles')
+                .format('DD MMM YYYY, HH:mm [PT]'),
         }
+
+        const globalAlertsKey = `alerts:flowFailures:${project.platformId}:${issueToAlert.projectId}`
+        await redisConnection.rpush(globalAlertsKey, JSON.stringify(alertsInfo))
+        await redisConnection.expire(globalAlertsKey, DAY_IN_SECONDS)
 
         await sendAlertOnFlowFailure(log, alertsInfo)
         await scheduleIssuesSummary(log, alertsInfo)
@@ -162,7 +175,13 @@ type IssueParams = {
     flowId: string
     flowRunId: string
     flowName: string
-    issueCount: number
     createdAt: string
 }
 
+
+type IssueToAlert = {
+    flowVersionId: string
+    projectId: string
+    flowId: string
+    created: string
+}

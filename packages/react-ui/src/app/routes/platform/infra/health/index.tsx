@@ -3,7 +3,7 @@ import { CheckCircle, WifiOff, Frown } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { useSocket } from '@/components/socket-provider';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
