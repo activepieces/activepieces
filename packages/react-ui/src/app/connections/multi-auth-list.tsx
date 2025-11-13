@@ -86,7 +86,7 @@ export const MutliAuthList = ({
             pieceName,
           );
           const predefinedAppOptionDescription = t(
-            'Use a predefined OAuth2 app for authentication, no extra configuration needed',
+            'Use a predefined OAuth2 app for authentication, no extra configuration needed.',
           );
           const predefinedOAuth2AppOption: RadioGroupListItem<SelectedAuth> | null =
             predefinedOAuth2App
@@ -116,7 +116,7 @@ export const MutliAuthList = ({
             description: clientCredentialsOptionDescription,
           };
           const userAppCredentialsOptionDescription = t(
-            'This option gives you full control over the authentication process by using your own OAuth2 app credentials',
+            'This option gives you full control over the authentication process by using your own OAuth2 app credentials.',
           );
           const userAppCredentialsOption: RadioGroupListItem<SelectedAuth> = {
             label: `${auth.displayName} ${t('(Advanced)')}`,
