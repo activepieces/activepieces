@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { DateTimePickerWithRange } from '../date-time-picker-range';
 
+import { DataTableInputCheckbox } from './data-table-checkbox-filter';
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
 
@@ -25,11 +26,19 @@ type InputFilterProps = {
 type DateFilterProps = {
   type: 'date';
 };
+type CheckboxjhFilterProps = {
+  type: 'checkbox';
+};
 
 export type DataTableFilterProps = {
   title?: string;
   icon?: React.ComponentType<{ className?: string }>;
-} & (DropdownFilterProps | InputFilterProps | DateFilterProps);
+} & (
+  | DropdownFilterProps
+  | InputFilterProps
+  | DateFilterProps
+  | CheckboxjhFilterProps
+);
 
 export function DataTableFilter<TData, TValue>({
   title,
@@ -125,6 +134,39 @@ export function DataTableFilter<TData, TValue>({
           onChange={handleFilterChange}
           from={from ?? undefined}
           to={to ?? undefined}
+        />
+      );
+    }
+    case 'checkbox': {
+      const key = column?.id || 'archivedAt';
+      const isArchived = searchParams.get(key) === 'true';
+
+      const handleCheckedChange = (checked: boolean) => {
+        setSearchParams(
+          (prev) => {
+            const newParams = new URLSearchParams(prev);
+            newParams.delete(key);
+            newParams.delete(CURSOR_QUERY_PARAM);
+            if (checked) {
+              newParams.append(key, 'true');
+            }
+            return newParams;
+          },
+          { replace: true },
+        );
+
+        column?.setFilterValue(
+          checked
+            ? (row: any) => row.getValue('archivedAt') !== null
+            : undefined,
+        );
+      };
+
+      return (
+        <DataTableInputCheckbox
+          label={title ?? 'Archived'}
+          checked={isArchived}
+          handleCheckedChange={handleCheckedChange}
         />
       );
     }

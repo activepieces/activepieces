@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import {
+  Compass,
   GitBranch,
   Link2,
   ListTodo,
@@ -59,6 +60,15 @@ export function ProjectDashboardSidebar() {
       return isNil(link.hasPermission) || link.hasPermission;
     }
     return true;
+  };
+
+  const exploreLink: SidebarItemType = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/explore'),
+    icon: Compass,
+    label: t('Explore'),
+    show: true,
+    isSubItem: false,
   };
 
   const releasesLink: SidebarItemType = {
@@ -156,6 +166,14 @@ export function ProjectDashboardSidebar() {
         <AppSidebarHeader />
 
         <SidebarContent className="gap-y-0">
+          <SidebarGroup className="mt-2">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <ApSidebarItem key={exploreLink.label} {...exploreLink} />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
           <SidebarGroup>
             <SidebarGroupLabel>{t('Automations')}</SidebarGroupLabel>
             <SidebarGroupContent>
