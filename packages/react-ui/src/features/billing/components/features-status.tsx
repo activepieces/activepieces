@@ -8,10 +8,6 @@ import {
 } from '@activepieces/shared';
 
 const LICENSE_PROPS_MAP = {
-  agentsEnabled: {
-    label: 'Agents',
-    description: 'AI assistants that can help automate tasks and workflows',
-  },
   environmentsEnabled: {
     label: 'Team Collaboration via Git',
     description:

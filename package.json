@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.71.2",
+  "version": "0.71.3",
   "rcVersion": "0.72.0-rc.1",
   "scripts": {
     "prepare": "husky install",
@@ -124,7 +124,7 @@
     "@uiw/codemirror-theme-github": "4.23.0",
     "@uiw/react-codemirror": "4.23.0",
     "@xyflow/react": "12.3.5",
-    "ai": "5.0.52",
+    "ai": "5.0.12",
     "async-mutex": "0.4.0",
     "axios": "1.8.3",
     "axios-retry": "4.4.1",

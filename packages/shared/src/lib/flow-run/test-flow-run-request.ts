@@ -16,7 +16,8 @@ export const RetryFlowRequestBody = Type.Object({
 
 export type RetryFlowRequestBody = Static<typeof RetryFlowRequestBody>
 
-export const BulkRetryFlowRequestBody = Type.Object({
+
+export const BulkActionOnRunsRequestBody = Type.Object({
     projectId: ApId,
     flowRunIds: Type.Optional(Type.Array(ApId)),
     excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
@@ -28,7 +29,7 @@ export const BulkRetryFlowRequestBody = Type.Object({
     failedStepName: Type.Optional(Type.String()),
 })
 
-export type BulkRetryFlowRequestBody = Static<typeof BulkRetryFlowRequestBody>
+export type BulkActionOnRunsRequestBody = Static<typeof BulkActionOnRunsRequestBody>
 
 export const BulkCancelFlowRequestBody = Type.Object({
     projectId: ApId,
@@ -44,3 +45,16 @@ export const BulkCancelFlowRequestBody = Type.Object({
 })
 
 export type BulkCancelFlowRequestBody = Static<typeof BulkCancelFlowRequestBody>
+
+export const BulkArchiveActionOnRunsRequestBody = Type.Object({
+    projectId: ApId,
+    flowRunIds: Type.Optional(Type.Array(ApId)),
+    excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
+    status: Type.Optional(Type.Array(Type.Enum(FlowRunStatus))),
+    flowId: Type.Optional(Type.Array(ApId)),
+    createdAfter: Type.Optional(Type.String()),
+    createdBefore: Type.Optional(Type.String()),
+    failedStepName: Type.Optional(Type.String()),
+})
+
+export type BulkArchiveActionOnRunsRequestBody = Static<typeof BulkArchiveActionOnRunsRequestBody>

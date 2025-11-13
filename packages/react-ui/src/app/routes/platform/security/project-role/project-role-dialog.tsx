@@ -50,12 +50,6 @@ const initialPermissions = [
     write: [Permission.READ_RUN, Permission.WRITE_RUN],
   },
   {
-    name: 'Issues',
-    description: 'Read and write issues',
-    read: [Permission.READ_ISSUES],
-    write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
-  },
-  {
     name: 'Alerts',
     description: 'Read and write alerts',
     read: [Permission.READ_ALERT],

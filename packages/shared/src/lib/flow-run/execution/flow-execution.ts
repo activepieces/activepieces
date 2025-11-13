@@ -59,7 +59,6 @@ export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
 export type PauseMetadata = Static<typeof PauseMetadata>
 
-
 export const FlowError = Type.Object({
     stepName: Type.String(),
     message: Type.String(),
@@ -96,7 +95,6 @@ export const FlowRunResponse = Type.Union([
     }),
 ])
 export type FlowRunResponse = Static<typeof FlowRunResponse>
-
 
 export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status: FlowRunStatus, ignoreInternalError: boolean }): boolean => {
     switch (status) {
