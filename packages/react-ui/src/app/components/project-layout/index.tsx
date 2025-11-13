@@ -1,5 +1,5 @@
 import { Compass } from 'lucide-react';
-import React, { createContext, useState, ComponentType, SVGProps } from 'react';
+import React, { ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -63,22 +63,22 @@ export function ProjectDashboardLayout({
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
-        <SidebarProvider>
-          <ProjectDashboardSidebar />
-          <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
-            <div className="flex flex-col">
-              {!hideHeader && (
-                <>
-                  <ProjectDashboardLayoutHeader />
-                  <Separator className="mb-6" />
-                </>
-              )}
-              <div className="px-4"> {children} </div>
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
+      <SidebarProvider>
+        <ProjectDashboardSidebar />
+        <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
+          <div className="flex flex-col">
+            {!hideHeader && (
+              <>
+                <ProjectDashboardLayoutHeader />
+                <Separator className="mb-6" />
+              </>
+            )}
+            <div className="px-4"> {children} </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
 
-        <PurchaseExtraFlowsDialog />
+      <PurchaseExtraFlowsDialog />
     </ProjectChangedRedirector>
   );
 }

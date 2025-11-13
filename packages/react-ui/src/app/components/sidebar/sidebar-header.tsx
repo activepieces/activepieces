@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
+
 import { useEmbedding } from '@/components/embed-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -16,7 +17,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PlatformSwitcher } from '@/features/projects/components/platform-switcher';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
@@ -26,15 +26,16 @@ export const AppSidebarHeader = () => {
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const branding = flagsHooks.useWebsiteBranding();
-  const showSwitcher =
-    edition === ApEdition.CLOUD && !embedState.isEmbedded;
-  const { checkAccess } = useAuthorization();
+  const showSwitcher = edition === ApEdition.CLOUD && !embedState.isEmbedded;
   const { state } = useSidebar();
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
 
   if (!showSwitcher) {
     return (
-      <SidebarHeader className="relative w-full" onClick={(e) => e.stopPropagation()}>
+      <SidebarHeader
+        className="relative w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
         <SidebarMenu className="w-full">
           <SidebarMenuItem className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1 w-full">
@@ -42,7 +43,7 @@ export const AppSidebarHeader = () => {
               <div
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  "w-full flex items-center justify-center h-9 select-none cursor-default"
+                  'w-full flex items-center justify-center h-9 select-none cursor-default',
                 )}
                 style={{ pointerEvents: 'none' }}
               >
@@ -54,8 +55,8 @@ export const AppSidebarHeader = () => {
                   }
                   alt={t('home')}
                   className={cn(
-                    "object-contain",
-                    state === 'collapsed' ? "h-5 w-5" : "w-full h-9"
+                    'object-contain',
+                    state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
                   )}
                   draggable={false}
                 />
