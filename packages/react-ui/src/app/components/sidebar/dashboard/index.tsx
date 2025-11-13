@@ -1,8 +1,25 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { Compass, Search } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +47,11 @@ export function ProjectDashboardSidebar() {
   const { embedState } = useEmbedding();
   const { state, setOpen } = useSidebar();
   const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { setCurrentProject } = projectHooks.useCurrentProject();
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -49,6 +71,26 @@ export function ProjectDashboardSidebar() {
   };
 
   const items = [exploreLink].filter(permissionFilter);
+
+  const filteredProjects = useMemo(() => {
+    if (!projects) return [];
+    if (!searchQuery.trim()) return projects;
+
+    const query = searchQuery.toLowerCase().trim();
+    return projects.filter((project) =>
+      project.displayName.toLowerCase().includes(query),
+    );
+  }, [projects, searchQuery]);
+
+  const handleProjectSelect = async (projectId: string) => {
+    const project = projects?.find((p) => p.id === projectId);
+    if (project) {
+      await setCurrentProject(queryClient, project);
+      navigate('/');
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
 
   return (
     !embedState.hideSideNav && (
@@ -80,7 +122,56 @@ export function ProjectDashboardSidebar() {
 
           <SidebarGroup>
             {state === 'expanded' && (
-              <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
+              <div className="flex items-center justify-between">
+                <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
+                {projects && projects.length > 3 && (
+                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-accent"
+                      >
+                        <Search className="text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[280px] p-0"
+                      align="start"
+                      side="right"
+                      sideOffset={8}
+                    >
+                      <Command>
+                        <CommandInput
+                          placeholder={t('Search projects...')}
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                          <CommandEmpty>{t('No projects found.')}</CommandEmpty>
+                          <CommandGroup>
+                            {filteredProjects.map((project) => (
+                              <CommandItem
+                                key={project.id}
+                                value={project.id}
+                                onSelect={handleProjectSelect}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground text-xs">
+                                  {project.displayName.charAt(0)}
+                                </Avatar>
+                                <span className="flex-1 truncate">
+                                  {project.displayName}
+                                </span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
             )}
             <SidebarGroupContent>
               <SidebarMenu className={cn(state === 'collapsed' ? 'gap-2' : '')}>
@@ -91,6 +182,7 @@ export function ProjectDashboardSidebar() {
                     isCurrentProject={location.pathname.includes(
                       `/projects/${p.id}`,
                     )}
+                    handleProjectSelect={handleProjectSelect}
                   />
                 ))}
               </SidebarMenu>

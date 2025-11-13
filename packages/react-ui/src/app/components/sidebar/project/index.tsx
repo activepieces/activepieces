@@ -1,6 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-
 import { Avatar } from '@/components/ui/avatar';
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -14,29 +11,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectHooks } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
   isCurrentProject: boolean;
+  handleProjectSelect: (projectId: string) => void;
 };
 
 const ProjectSideBarItem = ({
   project,
   isCurrentProject,
+  handleProjectSelect,
 }: ProjectSideBarItemProps) => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { setCurrentProject } = projectHooks.useCurrentProject();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
-
-  const handleClick = async () => {
-    await setCurrentProject(queryClient, project);
-    navigate('/');
-  };
 
   return (
     <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
@@ -45,7 +35,7 @@ const ProjectSideBarItem = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={handleClick}
+                onClick={() => handleProjectSelect(project.id)}
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
                   isCurrentProject && 'bg-neutral-200 hover:!bg-neutral-200',
@@ -70,7 +60,10 @@ const ProjectSideBarItem = ({
             isCurrentProject && 'bg-neutral-200 hover:!bg-neutral-200',
           )}
         >
-          <div onClick={handleClick} className="flex items-center gap-2">
+          <div
+            onClick={() => handleProjectSelect(project.id)}
+            className="flex items-center gap-2"
+          >
             <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
               {project.displayName.charAt(0)}
             </Avatar>
