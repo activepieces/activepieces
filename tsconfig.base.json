@@ -84,6 +84,9 @@
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-tableau": [
+        "packages/pieces/community/tableau/src/index.ts"
       ]
     },
     "resolveJsonModule": true
