@@ -1,4 +1,4 @@
-import { FlowVersion } from '@activepieces/shared'
+import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
@@ -33,4 +33,21 @@ export const flowMigrations = {
         }
         return flowVersion
     },
+}
+
+export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger'], schemaVersion: FlowVersion['schemaVersion']): Promise<FlowVersionTemplate> => {
+    return flowMigrations.apply({
+        agentIds: [],
+        connectionIds: [],
+        created: new Date().toISOString(),
+        displayName: '',
+        flowId: '',
+        id: '',
+        updated: new Date().toISOString(),
+        updatedBy: '',
+        valid: false,
+        trigger,
+        state: FlowVersionState.DRAFT,
+        schemaVersion,
+    })
 }
