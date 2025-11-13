@@ -1,0 +1,7 @@
+{
+  "New Submission": "Nova Submissão",
+  "Triggers when form receives a new submission.": "Gatilhos quando o formulário receber uma nova submissão.",
+  "Markdown": "Markdown",
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**URL ao vivo:**\n```text\n{{webhookUrl}}\n```\ngera dados de amostra e aciona fluxo publicado.\n\n",
+  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n": "\nPara configurar o gatilho para novas submissões de formulários, siga estas etapas:\n\n1. Vá para a seção \"Painel\".\n2. Selecione o formulário onde você deseja que o gatilho ocorra.\n3. Clique na seção \"Configurações\".\n4. Encontre o campo \"URL do Webhook\" e cole acima da URL.  \n6. Clique em \"Salvar\".\n"
+}
