@@ -47,7 +47,7 @@ export const updateContactAction = createAction({
         Object.entries(objectProperties).forEach(([key, value]) => {
             if ((Array.isArray(value) && value.length === 0)) {
                 return;  
-            };
+            }
             // Format values if they are arrays
             contactProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
