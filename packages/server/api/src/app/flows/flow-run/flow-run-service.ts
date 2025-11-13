@@ -23,7 +23,6 @@ import {
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
-    tryCatch,
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -166,7 +165,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async cancel({ projectId, platformId, flowRunIds, excludeFlowRunIds, status, flowId, createdAfter, createdBefore }: CancelParams): Promise<FlowRun[] | null> {
+    async cancel({ projectId, platformId, flowRunIds, excludeFlowRunIds, status, flowId, createdAfter, createdBefore }: CancelParams): Promise<void> {
         const filteredStatus = status ?? CANCELLABLE_STATUSES
         const flowRuns = await filterFlowRunsAndApplyFilters({
             projectId,
@@ -177,22 +176,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             createdBefore,
             excludeFlowRunIds,
         })
-
-        if (flowRuns.length === 0) {
-            return null
-        }
-
-        const parentIds = flowRuns.map(flowRun => flowRun.id)
-        const childFlows = await getAllChildRuns(parentIds)
+        const cancelParentFlowRuns = await Promise.allSettled(flowRuns.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        const childFlows = await getAllChildRuns(flowRuns.map(flowRun => flowRun.id))
         log.info({
             flowRunsCount: flowRuns.length,
             childFlowCount: childFlows.length,
         }, '[cancelChildFlows] Found cancellable descendant flows (paused/queued)')
 
-        const runsToCancel = flowRuns.concat(childFlows)
-        const cancelPromises = runsToCancel.map(flowRun => cancelSingleRun(log, flowRun, platformId))
-        await Promise.all(cancelPromises)
-        return runsToCancel
+        const canceChildlPromises = await Promise.allSettled(childFlows.map(flowRun => cancelSingleRun(log, flowRun, platformId)))
+        if (cancelParentFlowRuns.some(r => r.status === 'rejected')) {
+            throw cancelParentFlowRuns.find(r => r.status === 'rejected')!.reason
+        }
+        if (canceChildlPromises.some(r => r.status === 'rejected')) {
+            throw canceChildlPromises.find(r => r.status === 'rejected')!.reason
+        }
     },
     async existsBy(runId: FlowRunId): Promise<boolean> {
         return flowRunRepo().existsBy({ id: runId })
@@ -431,20 +428,18 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
 
 async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string) {
-    return tryCatch(async () => {
-        await jobQueue(log).removeOneTimeJob({
-            jobId: flowRun.id,
-            platformId,
-        })
-        await runsMetadataQueue(log).add({
-            id: flowRun.id,
-            projectId: flowRun.projectId,
-            status: FlowRunStatus.CANCELED,
-        })
-        log.info({
-            flowRunId: flowRun.id,
-        }, '[cancelFlowRuns] Canceled flow run')
+    await jobQueue(log).removeOneTimeJob({
+        jobId: flowRun.id,
+        platformId,
     })
+    await runsMetadataQueue(log).add({
+        id: flowRun.id,
+        projectId: flowRun.projectId,
+        status: FlowRunStatus.CANCELED,
+    })
+    log.info({
+        flowRunId: flowRun.id,
+    }, '[cancelFlowRuns] Canceled flow run')
 }
 
 async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
@@ -468,7 +463,7 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
         )
         SELECT * FROM descendants
     `
-    
+
     const results = await flowRunRepo().query(query, [parentRunIds, CANCELLABLE_STATUSES])
     return results as FlowRun[]
 }
