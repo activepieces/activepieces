@@ -43,8 +43,8 @@ import { HelpAndFeedback } from '../../help-and-feedback';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import { AppSidebarHeader } from '../sidebar-header';
+import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
-import SidebarUsageLimits from '../sidebare-usage-limits';
 
 export function ProjectDashboardSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
