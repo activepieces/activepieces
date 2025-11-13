@@ -161,7 +161,6 @@ import { AddMaximumConcurrentJobsPerProjectSqlite1761499100171 } from './migrati
 import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/1761574814842-RemoveTasksAndTasksLimitSqlite'
 import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
 import { AddFailedStepDurationSqlite1762949199414 } from './migration/sqlite/1762949199414-AddFailedStepDurationSqlite'
-import { AddArchivedAtIndiceCombination1762962830627 } from './migration/sqlite/1762962830627-AddArchivedAtIndiceCombination'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -338,8 +337,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaximumConcurrentJobsPerProjectSqlite1761499100171,
         RemoveTasksAndTasksLimitSqlite1761574814842,
         DeleteLastChangelogDismissedAtSqlite1762018344394,
-        AddFailedStepDurationSqlite1762949199414,
-        AddArchivedAtIndiceCombination1762962830627,
+        AddFailedStepDurationSqlite1762949199414
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
