@@ -5,7 +5,7 @@ import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
-
+import 'sqlite3'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -337,7 +337,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaximumConcurrentJobsPerProjectSqlite1761499100171,
         RemoveTasksAndTasksLimitSqlite1761574814842,
         DeleteLastChangelogDismissedAtSqlite1762018344394,
-        AddFailedStepDurationSqlite1762949199414
+        AddFailedStepDurationSqlite1762949199414,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
