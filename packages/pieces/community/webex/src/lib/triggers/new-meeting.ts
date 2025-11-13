@@ -6,7 +6,7 @@ export const newMeeting = createTrigger({
   auth: webexAuth,
   name: 'newMeeting',
   displayName: 'New meeting',
-  description: 'Triggers when a new meeting is created',
+  description: 'Triggers when a new meeting is created. ',
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

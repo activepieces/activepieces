@@ -12,6 +12,7 @@ import { newRoom } from './lib/triggers/new-room';
 import { newMeeting } from './lib/triggers/new-meeting';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { BASE_URL } from './lib/common/client';
 
 export const webex = createPiece({
   displayName: 'Cisco Webex Meetings',
@@ -29,7 +30,7 @@ export const webex = createPiece({
     findRoom,
     createCustomApiCallAction({
       auth: webexAuth,
-      baseUrl: () => 'https://webexapis.com/v1',
+      baseUrl: () => BASE_URL,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),

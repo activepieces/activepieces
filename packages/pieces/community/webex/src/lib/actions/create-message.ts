@@ -6,7 +6,7 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { webexAuth } from '../common/auth';
-import { roomIdDropdown } from '../common/props';
+import { fetchRooms, roomIdDropdown } from '../common/props';
 
 export const createMessage = createAction({
   auth: webexAuth,
@@ -31,11 +31,12 @@ export const createMessage = createAction({
       displayName: 'Destination',
       required: true,
       refreshers: ['messageType'],
-      async props({ messageType }): Promise<DynamicPropsValue> {
+      async props({ messageType, auth }): Promise<DynamicPropsValue> {
         const type = messageType as unknown as string;
         if (type === 'room') {
+          const rooms = await fetchRooms((auth as any).access_token);
           return {
-            roomId: roomIdDropdown,
+            roomId: roomIdDropdown(rooms),
           };
         } else {
           return {

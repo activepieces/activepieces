@@ -5,7 +5,5 @@ export const webexAuth = PieceAuth.OAuth2({
   authUrl: 'https://webexapis.com/v1/authorize',
   tokenUrl: 'https://webexapis.com/v1/access_token',
   required: true,
-  scope: [
-    'spark:all'
-  ],
+  scope: ['spark:all', 'meeting:schedules_read'],
 });
