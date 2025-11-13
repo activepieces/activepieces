@@ -14,6 +14,7 @@ import { packageManager } from '../../package-manager'
 import writeFileAtomic from 'write-file-atomic'
 import { workerRedisConnections } from '../../../utils/worker-redis'
 import { GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
+import { smartPieceCache } from './smart-piece-cache'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
@@ -25,20 +26,17 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({
         projectPath,
         pieces,
+        skipRedisWrite = false
     }: InstallParams): Promise<void> => {
 
         const uniquePieces = unique(pieces)
         if (isEmpty(uniquePieces)) {
             return
         }
-        const redis = await workerRedisConnections.useExisting()
-        const filterResults = await redis.mget(uniquePieces.map(installedPieceRedisKey))
-        const filteredPieces = uniquePieces.filter((_, idx) => !filterResults[idx])
-
+        const filteredPieces = await smartPieceCache(log).filterCachedPieces(projectPath, uniquePieces)
         if (isEmpty(filteredPieces)) {
             return
         }
-
         await savePackageArchivesToDiskIfNotCached(filteredPieces)
 
         await memoryLock.runExclusive({
@@ -57,7 +55,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                     path: projectPath,
                     relativePiecePaths: filteredPieces.map(relativePiecePath),
                 })
-                await redis.mset(filteredPieces.map(piece => [installedPieceRedisKey(piece), 'true']).flat())
+                await smartPieceCache(log).markPiecesAsCached(projectPath, filteredPieces, skipRedisWrite)
 
                 log.info({
                     projectPath,
@@ -67,29 +65,6 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             }
         })
 
-    },
-
-    
-    async preWarmCache(): Promise<void> {
-        const redis = await workerRedisConnections.useExisting()
-        const piecesKeys = await redis.keys('installed-piece:*')
-        if (piecesKeys.length > 0) {
-            return
-        }
-        const pieces: PiecePackage[] = piecesKeys.map((key) =>{
-            const [_, pieceName, pieceVersion] = key.split(':')
-            return {
-                packageType: PackageType.REGISTRY,
-                pieceType: PieceType.OFFICIAL,
-                pieceName,
-                pieceVersion,
-            }
-        })
-
-        await registryPieceManager(log).install({
-            projectPath: GLOBAL_CACHE_COMMON_PATH,
-            pieces
-        })
     },
 })
 
@@ -151,4 +126,5 @@ async function createPiecePackageJson({ path, piecePackage }: {
 type InstallParams = {
     projectPath: string
     pieces: PiecePackage[]
+    skipRedisWrite?: boolean
 }
