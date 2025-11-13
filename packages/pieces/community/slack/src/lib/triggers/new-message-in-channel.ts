@@ -10,8 +10,8 @@ import { getFirstFiveOrAll } from '../common/utils';
 export const newMessageInChannelTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-message-in-channel',
-	displayName: 'New Message Posted to Channel',
-	description: 'Triggers when a new message is posted to a specific #channel you choose.',
+	displayName: 'New Message Posted to Channel (DEPRECATED)',
+	description: 'Triggers when a new message is posted to a specific #channel you choose. This trigger is deprecated: use the "New message posted" trigger instead',
 	props: {
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
@@ -42,7 +42,7 @@ export const newMessageInChannelTrigger = createTrigger({
 		if (!['channel','group'].includes(payloadBody.event.channel_type)) {
 			return [];
 		}
-		
+
 		if (payloadBody.event.channel === context.propsValue.channel) {
 			// check for bot messages
 			if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
