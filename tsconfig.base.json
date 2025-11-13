@@ -88,6 +88,9 @@
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
       ],
+      "@activepieces/piece-webex": [
+        "packages/pieces/community/webex/src/index.ts"
+      ],
       "@activepieces/piece-fragment":[
         "packages/pieces/community/fragment/src/index.ts"
       ]
