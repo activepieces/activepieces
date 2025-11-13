@@ -6,19 +6,15 @@ import {
     isEmpty,
     PackageType,
     PiecePackage,
-    PieceType,
     unique,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { packageManager } from '../../package-manager'
 import writeFileAtomic from 'write-file-atomic'
-import { workerRedisConnections } from '../../../utils/worker-redis'
-import { GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
 import { smartPieceCache } from './smart-piece-cache'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
-const installedPieceRedisKey = (piece: PiecePackage) => `installed-piece:${piece.pieceName}:${piece.pieceVersion}`
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (projectPath: string, piece: PiecePackage) => join(projectPath, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
