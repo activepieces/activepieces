@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
+import { webexAuth } from '../common/auth';
 
 export const createTeam = createAction({
+  auth: webexAuth,
   name: 'createTeam',
   displayName: 'Create Team',
   description:
@@ -32,7 +34,7 @@ export const createTeam = createAction({
     }
 
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.access_token,
       HttpMethod.POST,
       '/teams',
       body

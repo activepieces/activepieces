@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
+import { webexAuth } from '../common/auth';
 
 export const createRoom = createAction({
+  auth: webexAuth,
   name: 'createRoom',
   displayName: 'Create Room',
   description:
@@ -97,7 +99,7 @@ export const createRoom = createAction({
     }
 
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.access_token,
       HttpMethod.POST,
       '/rooms',
       body

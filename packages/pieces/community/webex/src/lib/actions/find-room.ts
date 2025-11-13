@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findRoom = createAction({
   auth: webexAuth,
   name: 'findRoom',
-  displayName: 'find room',
+  displayName: 'Find room',
   description: 'Retrieve details for a specific room by room id',
   props: {
     roomId: Property.ShortText({
@@ -19,9 +19,10 @@ export const findRoom = createAction({
     const roomId = context.propsValue.roomId as string;
 
     const response = await makeRequest(
-      (context.auth as any).access_token,
+      context.auth.access_token,
       HttpMethod.GET,
-      `/messages/${encodeURIComponent(roomId)}`,
+      `/rooms/${encodeURIComponent(roomId)}`,
+      undefined
     );
 
     return response;

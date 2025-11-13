@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
+import { webexAuth } from '../common/auth';
 
 export const findMessage = createAction({
+  auth: webexAuth,
   name: 'findMessage',
   displayName: 'Find Message',
   description: 'Retrieve details for a specific message by message ID',
@@ -16,13 +18,8 @@ export const findMessage = createAction({
   async run(context) {
     const messageId = context.propsValue.messageId as string;
 
-    // Validate required fields
-    if (!messageId || messageId.trim() === '') {
-      throw new Error('Message ID is required');
-    }
-
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.access_token,
       HttpMethod.GET,
       `/messages/${encodeURIComponent(messageId)}`,
       undefined

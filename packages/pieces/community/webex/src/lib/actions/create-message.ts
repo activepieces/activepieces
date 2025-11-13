@@ -27,7 +27,6 @@ export const createMessage = createAction({
         ],
       },
     }),
-    room: roomIdDropdown,
     destination: Property.DynamicProperties({
       displayName: 'Destination',
       required: true,
