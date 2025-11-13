@@ -1,4 +1,15 @@
 import {
+  Check,
+  CircleCheck,
+  CircleX,
+  PauseCircleIcon,
+  PauseIcon,
+  Play,
+  Timer,
+  X,
+} from 'lucide-react';
+
+import {
   FlowActionType,
   FlowRun,
   FlowRunStatus,
@@ -12,16 +23,6 @@ import {
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
-import {
-  Check,
-  CircleCheck,
-  CircleX,
-  PauseCircleIcon,
-  PauseIcon,
-  Play,
-  Timer,
-  X,
-} from 'lucide-react';
 
 export const flowRunUtils = {
   findLastStepWithStatus,

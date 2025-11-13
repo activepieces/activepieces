@@ -111,7 +111,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
 
         if (!isNil(params.failedStepName)) {
-            query = query.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', {
+            query = query.andWhere('flow_run."failedStep"->>"name" = :failedStepName', {
                 failedStepName: params.failedStepName,
             })
         }
