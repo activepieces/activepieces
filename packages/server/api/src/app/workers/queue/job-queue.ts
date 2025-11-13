@@ -74,6 +74,24 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
     },
 
+    async removeOneTimeJob({ jobId, platformId }: { jobId: ApId, platformId: string | null }): Promise<void> {
+        const queueName = await getQueueName(platformId, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const job = await queue.getJob(jobId)
+        if (!isNil(job)) {
+            await job.remove()
+            log.info({
+                jobId,
+                queueName,
+            }, '[jobQueue#removeOneTimeJob] removed job from queue')
+            return
+        }
+        log.info({
+            jobId,
+            queueName,
+        }, '[jobQueue#removeOneTimeJob] job not found in queue')
+    },
+
     getAllQueues(): Queue[] {
         const queues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
         return queues
@@ -135,7 +153,7 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
                 queueName,
             }, '[jobQueue#ensureQueueExists] Queue created')
 
-            return queue    
+            return queue
         },
     })
 }
