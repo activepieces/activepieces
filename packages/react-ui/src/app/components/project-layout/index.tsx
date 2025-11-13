@@ -33,17 +33,11 @@ const ProjectChangedRedirector = ({
   return children;
 };
 
-export const CloseTaskLimitAlertContext = createContext({
-  isAlertClosed: false,
-  setIsAlertClosed: (_isAlertClosed: boolean) => {},
-});
-
 export function ProjectDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [isAlertClosed, setIsAlertClosed] = useState(false);
   const currentProjectId = authenticationSession.getProjectId();
   const { t } = useTranslation();
   const location = useLocation();
@@ -69,12 +63,6 @@ export function ProjectDashboardLayout({
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <CloseTaskLimitAlertContext.Provider
-        value={{
-          isAlertClosed,
-          setIsAlertClosed,
-        }}
-      >
         <SidebarProvider>
           <ProjectDashboardSidebar />
           <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
@@ -91,7 +79,6 @@ export function ProjectDashboardLayout({
         </SidebarProvider>
 
         <PurchaseExtraFlowsDialog />
-      </CloseTaskLimitAlertContext.Provider>
     </ProjectChangedRedirector>
   );
 }

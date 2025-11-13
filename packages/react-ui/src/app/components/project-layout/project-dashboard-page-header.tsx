@@ -29,9 +29,10 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@activepieces/shared';
 
 import { ProjectSettingsDialog } from '../project-settings';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 export const ProjectDashboardPageHeader = ({
   title,
@@ -57,6 +58,10 @@ export const ProjectDashboardPageHeader = ({
   const { checkAccess } = useAuthorization();
   const userHasPermissionToReadProjectMembers = checkAccess(
     Permission.READ_PROJECT_MEMBER,
+  );
+
+  const { data: showProjectMembers } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PROJECT_MEMBERS,
   );
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
@@ -111,7 +116,7 @@ export const ProjectDashboardPageHeader = ({
         </div>
         {isProjectPage && (
           <div className="flex items-center gap-3">
-            {userHasPermissionToReadProjectMembers && (
+            {(userHasPermissionToReadProjectMembers && showProjectMembers) && (
               <div className="flex items-center gap-2 px-3 py-1.5 ">
                 <UsersRound className="w-4 h-4" />
                 <span className="text-sm font-medium">
@@ -147,15 +152,15 @@ export const ProjectDashboardPageHeader = ({
                     Invite
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem
-                  onClick={() => {
+                {userHasPermissionToReadProjectMembers && showProjectMembers && (
+                  <DropdownMenuItem onClick={() => {
                     setSettingsInitialTab('team');
                     setSettingsOpen(true);
-                  }}
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Members
-                </DropdownMenuItem>
+                  }}>
+                    <Users className="w-4 h-4 mr-2" />
+                    Members
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => {
                     setSettingsInitialTab('general');
