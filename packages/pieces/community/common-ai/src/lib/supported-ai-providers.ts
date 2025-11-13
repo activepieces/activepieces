@@ -319,7 +319,16 @@ It is strongly recommended that you add your credit card information to your Ope
                 } as DALLE2PricingPerImage,
             },
         ],
-        videoModels: [],
+        videoModels: [
+            {
+                displayName: 'Sora 2',
+                instance: { modelId: 'sora-2' },
+                pricing: {
+                    costPerSecond: 0.1,
+                },  
+                minimumDurationInSeconds: 4,
+            }
+        ],
     },
     {
         provider: 'anthropic',

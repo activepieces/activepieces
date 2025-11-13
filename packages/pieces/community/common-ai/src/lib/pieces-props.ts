@@ -228,6 +228,15 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                     }
                     
                 }
+                if(provider === 'openai')
+                {
+                    options ={
+                        seconds:Property.Number({
+                            displayName:'Duration (seconds)',
+                            required:false
+                        })
+                    }
+                }
             }
 
             return options;
