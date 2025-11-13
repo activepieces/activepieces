@@ -1,5 +1,14 @@
-import { ActorListSortBy, ActorRun, ApifyClient, Build, Dictionary } from 'apify-client';
+import { 
+  ActorListSortBy, 
+  ActorRun, 
+  ApifyClient, 
+  Build, 
+  Dictionary, 
+  WebhookCondition, 
+  WebhookEventType 
+} from 'apify-client';
 import { Property } from '@activepieces/pieces-framework';
+import { createHash } from 'crypto';
 
 export type ApifyAuth = {
   apikey: string;
@@ -41,6 +50,32 @@ export const MEMORY_OPTIONS = [
   { value: 8192, label: '8192 MB' },
   { value: 16384, label: '16384 MB' },
   { value: 32768, label: '32768 MB' }
+];
+
+export const TERMINAL_STATUSES: WebhookEventType[] = [
+  'ACTOR.RUN.SUCCEEDED',
+  'ACTOR.RUN.FAILED',
+  'ACTOR.RUN.TIMED_OUT',
+  'ACTOR.RUN.ABORTED',
+];
+
+export const STATUS_OPTIONS = [
+  {
+    label: 'Aborted',
+    value: 'ACTOR.RUN.ABORTED',
+  },
+  {
+    label: 'Failed',
+    value: 'ACTOR.RUN.FAILED',
+  },
+  {
+    label: 'Succeeded',
+    value: 'ACTOR.RUN.SUCCEEDED',
+  },
+  {
+    label: 'Timed Out',
+    value: 'ACTOR.RUN.TIMED_OUT',
+  },
 ];
 
 // Helper to create an Apify client instance with tracking header
@@ -385,4 +420,77 @@ export const createTaskInputProperty = () => Property.DynamicProperties({
       )
     };
   }
+});
+
+export const createWebhook = async (
+  client: ApifyClient,
+  eventTypes: WebhookEventType[],
+  condition: WebhookCondition,
+  webhookUrl: string,
+  idempotencyKey: string,
+): Promise<string> => {
+  try {
+    const webhook = await client.webhooks().create({
+      eventTypes,
+      condition,
+      requestUrl: webhookUrl,
+      idempotencyKey,
+    });
+    return webhook.id;
+  } catch (error: any) {
+    throw new Error(`Failed to create a webhook. Reason: ${error.message}`);
+  }
+};
+
+export const deleteWebhook = async (
+  client: ApifyClient,
+  webhookId: string,
+): Promise<void> => {
+  try {
+    await client.webhook(webhookId).delete();
+  } catch (error: any) {
+    throw new Error(`Failed to delete the webhook. Reason: ${error.message}`);
+  }
+};
+
+export const generateIdempotencyKey = (
+  id: string,
+  eventTypes: WebhookEventType[],
+): string => {
+  const sortedEventTypes = [...eventTypes].sort();
+  const hash = createHash('sha256');
+  hash.update(`${id}:${sortedEventTypes.join(',')}`);
+  return hash.digest('hex');
+};
+
+export const createStatusesProperty = () => Property.StaticMultiSelectDropdown({
+  displayName: 'Statuses',
+  description: 'Run statuses to watch',
+  required: true,
+  defaultValue: TERMINAL_STATUSES,
+  options: {
+    options: STATUS_OPTIONS,
+  },
+});
+
+export const createWebhookSampleData = (runType: RunType) => ({
+  userId: 'wRsJZtadYvn4mBZmm',
+  createdAt: '2019-12-12T07:34:14.202Z',
+  eventType: 'ACTOR.RUN.SUCCEEDED',
+  eventData: {
+    actorId: 'vvE7iMKuMc5qTHHsR',
+    actorTaskId: runType === RunType.ACTOR ? undefined : "FThsabHGXorVhWbPV",
+    actorRunId: 'JgwXN9BdwxGcu9MMF',
+  },
+  resource: {
+    id: "RHQcmK6J61lSuqwert",
+    actId: "nFJndFXA5zjCTuudP",
+    startedAt: "2025-10-30T11:30:34.985Z",
+    finishedAt: "2025-10-30T11:30:41.352Z",
+    status: "SUCCEEDED",
+    isStatusMessageTerminal: true,
+    defaultKeyValueStoreId: "eJNzqsbPiopwJcgGQ",
+    defaultDatasetId: "wmKPijuyDnPZAPRMk",
+    defaultRequestQueueId: "FL35cSF7jrxr3BY39",
+  },
 });

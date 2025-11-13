@@ -8,6 +8,8 @@ import { createApifyClient } from './lib/common';
 import { getKeyValueStoreRecord } from './lib/actions/get-key-value-store-record';
 import { scrapeSingleUrl } from './lib/actions/scrape-single-url';
 import { runTask } from './lib/actions/run-task';
+import { watchTaskRunsTrigger } from './lib/triggers/watch-task-runs';
+import { watchActorRunsTrigger } from './lib/triggers/watch-actor-runs';
 
 export const apifyAuth = PieceAuth.CustomAuth({
   description: 'Enter API key authentication details',
@@ -50,5 +52,5 @@ export const apify = createPiece({
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['buttonsbond'],
   actions: [getDatasetItems, getActors, getLastRun, runActor, runTask, getKeyValueStoreRecord, scrapeSingleUrl],
-  triggers: [],
+  triggers: [watchActorRunsTrigger, watchTaskRunsTrigger],
 });
