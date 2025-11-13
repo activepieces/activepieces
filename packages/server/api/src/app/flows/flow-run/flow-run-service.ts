@@ -13,7 +13,6 @@ import {
     FlowRunId,
     FlowRunStatus,
     FlowVersionId,
-    isFlowRunStateTerminal,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
@@ -24,7 +23,7 @@ import {
     RunEnvironment,
     SampleDataFileType,
     SeekPage,
-    spreadIfDefined,
+    tryCatch,
     UploadLogsBehavior,
     WorkerJobType,
 } from '@activepieces/shared'
@@ -183,18 +182,17 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             return null
         }
 
-        await cancelFlowRuns({
-            flowRuns,
-            platformId,
-        }, log)
+        const parentIds = flowRuns.map(flowRun => flowRun.id)
+        const childFlows = await getAllChildRuns(parentIds)
+        log.info({
+            flowRunsCount: flowRuns.length,
+            childFlowCount: childFlows.length,
+        }, '[cancelChildFlows] Found cancellable descendant flows (paused/queued)')
 
-        await cancelChildFlows({
-            parentRunIds: flowRuns.map(r => r.id),
-            projectId,
-            platformId,
-        }, log)
-
-        return flowRuns
+        const runsToCancel = flowRuns.concat(childFlows)
+        const cancelPromises = runsToCancel.map(flowRun => cancelSingleRun(log, flowRun, platformId))
+        await Promise.all(cancelPromises)
+        return runsToCancel
     },
     async existsBy(runId: FlowRunId): Promise<boolean> {
         return flowRunRepo().existsBy({ id: runId })
@@ -431,40 +429,25 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function cancelFlowRuns(params: {
-    flowRuns: FlowRun[]
-    platformId: PlatformId
-}, log: FastifyBaseLogger): Promise<void> {
-    await Promise.all(
-        params.flowRuns.map(async (flowRun) => {
-            try {
-                await jobQueue(log).removeOneTimeJob({
-                    jobId: flowRun.id,
-                    platformId: params.platformId,
-                })
 
-                await runsMetadataQueue(log).add({
-                    id: flowRun.id,
-                    projectId: flowRun.projectId,
-                    status: FlowRunStatus.CANCELED,
-                })
-
-                log.info({
-                    flowRunId: flowRun.id,
-                }, '[cancelFlowRuns] Canceled flow run')
-            }
-            catch (error) {
-                log.error({
-                    flowRunId: flowRun.id,
-                    error,
-                }, '[cancelFlowRuns] Failed to cancel flow run')
-                throw error
-            }
-        }),
-    )
+async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string) {
+    return tryCatch(async () => {
+        await jobQueue(log).removeOneTimeJob({
+            jobId: flowRun.id,
+            platformId,
+        })
+        await runsMetadataQueue(log).add({
+            id: flowRun.id,
+            projectId: flowRun.projectId,
+            status: FlowRunStatus.CANCELED,
+        })
+        log.info({
+            flowRunId: flowRun.id,
+        }, '[cancelFlowRuns] Canceled flow run')
+    })
 }
 
-async function getCancellableDescendantFlows(parentRunIds: string[]): Promise<FlowRun[]> {
+async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
     if (parentRunIds.length === 0) {
         return []
     }
@@ -490,19 +473,6 @@ async function getCancellableDescendantFlows(parentRunIds: string[]): Promise<Fl
     return results as FlowRun[]
 }
 
-async function cancelChildFlows(params: CancelChildFlowsParams, log: FastifyBaseLogger): Promise<void> {
-    const childFlows = await getCancellableDescendantFlows(params.parentRunIds)
-
-    log.info({
-        parentRunIds: params.parentRunIds,
-        childFlowCount: childFlows.length,
-    }, '[cancelChildFlows] Found cancellable descendant flows (paused/queued)')
-
-    await cancelFlowRuns({
-        flowRuns: childFlows,
-        platformId: params.platformId,
-    }, log)
-}
 
 async function filterFlowRunsAndApplyFilters(
     params: FilterFlowRunsAndApplyFiltersParams,
@@ -732,12 +702,6 @@ type CancelParams = {
     flowId?: FlowId[]
     createdAfter?: string
     createdBefore?: string
-}
-
-type CancelChildFlowsParams = {
-    parentRunIds: FlowRunId[]
-    projectId: ProjectId
-    platformId: PlatformId
 }
 
 type BulkRetryParams = {
