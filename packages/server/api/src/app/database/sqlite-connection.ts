@@ -337,7 +337,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaximumConcurrentJobsPerProjectSqlite1761499100171,
         RemoveTasksAndTasksLimitSqlite1761574814842,
         DeleteLastChangelogDismissedAtSqlite1762018344394,
-        AddFailedStepDurationSqlite1762949199414,
+        AddFailedStepDurationSqlite1762949199414
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
