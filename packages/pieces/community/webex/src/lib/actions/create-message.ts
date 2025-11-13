@@ -6,6 +6,7 @@ import {
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { webexAuth } from '../common/auth';
+import { roomIdDropdown } from '../common/props';
 
 export const createMessage = createAction({
   auth: webexAuth,
@@ -26,6 +27,7 @@ export const createMessage = createAction({
         ],
       },
     }),
+    room: roomIdDropdown,
     destination: Property.DynamicProperties({
       displayName: 'Destination',
       required: true,
@@ -34,11 +36,7 @@ export const createMessage = createAction({
         const type = messageType as unknown as string;
         if (type === 'room') {
           return {
-            roomId: Property.ShortText({
-              displayName: 'Room ID',
-              description: 'The room ID where to post the message',
-              required: true,
-            }),
+            roomId: roomIdDropdown,
           };
         } else {
           return {

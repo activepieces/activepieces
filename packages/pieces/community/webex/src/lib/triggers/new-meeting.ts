@@ -1,13 +1,12 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { webexAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-
-export const newRoom = createTrigger({
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { makeRequest } from '../common/client';
+import { webexAuth } from '../common/auth';
+export const newMeeting = createTrigger({
   auth: webexAuth,
-  name: 'newRoom',
-  displayName: 'new room',
-  description: 'Triggers when a new room is created',
+  name: 'newMeeting',
+  displayName: 'new meeting',
+  description: 'Triggers when a new meeting is created',
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
@@ -18,7 +17,7 @@ export const newRoom = createTrigger({
       `/webhooks`,
       {
         event: 'created',
-        resource: 'rooms',
+        resource: 'meetings',
         targetUrl: context.webhookUrl,
       }
     );

@@ -6,11 +6,14 @@ export const webexAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://webexapis.com/v1/access_token',
   required: true,
   scope: [
-    'spark:rooms_read',
-    'spark:rooms_write',
-    'spark:messages_read',
+    'spark-compliance:messages_write',
+    'spark-compliance:messages_read',
     'spark:messages_write',
-    'spark:teams_read',
-    'spark:teams_write',
+    'spark:messages_read',
+    'spark-compliance:rooms_write',
+    'spark-compliance:rooms_read',
+    'spark-compliance:teams_read',
+    'spark:rooms_write',
+    'spark:rooms_read'
   ],
 });

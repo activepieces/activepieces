@@ -18,6 +18,7 @@ export async function makeRequest(
       },
       body,
     });
+    console.log(JSON.stringify(response.body))
     return response.body;
   } catch (error: any) {
     throw new Error(`Unexpected error: ${error.message || String(error)}`);
