@@ -1,7 +1,7 @@
 import { Writable } from 'stream'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/common-ai'
 import { exceptionHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, EnginePrincipal, ErrorCode, isNil, PlatformUsageMetric, PrincipalType } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -18,6 +18,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         prefix: '/v1/ai-providers/proxy/:provider',
         upstream: '',
         disableRequestLogging: false,
+        config: {
+            allowedPrincipals: [PrincipalType.ENGINE],
+        },
         replyOptions: {
             rewriteRequestHeaders: (_request, headers) => {
                 headers['accept-encoding'] = 'identity'
@@ -29,7 +32,9 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onResponse: async (request, reply, response) => {
                 request.body = (request as ModifiedFastifyRequest).originalBody
-                const projectId = request.principal.projectId
+
+                const principal = request.principal as EnginePrincipal
+                const projectId = principal.projectId
                 const { provider } = request.params as { provider: string }
                 if (aiProviderService.isNonUsageRequest(provider, request)) {
                     return reply.send(response.stream)
@@ -102,7 +107,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                             //     }
                             //     await platformUsageService(app.log).increaseAiCreditUsage({
                             //         projectId,
-                            //         platformId: request.principal.platform.id,
+                            //         platformId: principal!.platform.id,
                             //         provider,
                             //         model: usage.model,
                             //         cost: usage.cost,
@@ -128,20 +133,12 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         preHandler: async (request) => {
-            if (![PrincipalType.ENGINE, PrincipalType.USER].includes(request.principal.type)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
-                    params: {
-                        message: 'invalid route for principal type',
-                    },
-                })
-            }
-
+            const principal = request.principal as EnginePrincipal
             const provider = (request.params as { provider: string }).provider
             aiProviderService.validateRequest(provider, request)
 
-            // const projectId = request.principal.projectId
-            // const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
+            const projectId = principal.projectId
+            const videoModelRequestCost = aiProviderService.getVideoModelCost({ provider, request })
             // const exceededLimit = await projectLimitsService(request.log).checkAICreditsExceededLimit({ projectId, requestCostBeforeFiring: videoModelRequestCost })
             const exceededLimit = 0
             if (exceededLimit) {
@@ -154,7 +151,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
             }
 
 
-            const userPlatformId = request.principal.platform.id
+            const userPlatformId = principal.platform.id
             const providerConfig = getProviderConfigOrThrow(provider)
 
             const platformId = await aiProviderService.getAIProviderPlatformId(userPlatformId)

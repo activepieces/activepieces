@@ -63,7 +63,7 @@ async function addDefaultMCPServers(queryRunner: QueryRunner, projectIds: string
         await queryRunner.query(sql, parameters)
     }
     catch (e) {
-        log.error(`Failed to create default MCP servers for projects: ${projectIds.join(', ')}`, e)
+        log.error(e, `Failed to create default MCP servers for projects: ${projectIds.join(', ')}`)
     }
 }
 

@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EndpointScope, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -70,7 +70,8 @@ const GetCurrentUserRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
     },
 }
 
@@ -87,6 +88,7 @@ const UpdateCurrentUserRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
     },
 }

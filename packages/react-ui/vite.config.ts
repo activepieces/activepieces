@@ -6,6 +6,8 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
 
+// import customHtmlPlugin from './vite-plugins/html-plugin';
+
 export default defineConfig({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/packages/react-ui',
@@ -47,16 +49,20 @@ export default defineConfig({
   plugins: [
     react(),
     nxViteTsPaths(),
+    // customHtmlPlugin({
+    //     title: AP_TITLE,
+    //     icon: AP_FAVICON,
+    // }),
     checker({
-      typescript: true,
-      // todo(Rupal): Fix this once FE is cleaned up, make it same as activepieces
-      // typescript: {
-      //   buildMode: true,
-      //   tsconfigPath: './tsconfig.json',
-      //   root: __dirname,
-      // },
+        typescript: true,
+        // todo(Rupal): Fix this once FE is cleaned up, make it same as activepieces
+        // typescript: {
+        //     buildMode: true,
+        //     tsconfigPath: './tsconfig.json',
+        //     root: __dirname,
+        // },
     }),
-  ],
+    ],
 
   build: {
     outDir: '../../dist/packages/react-ui',

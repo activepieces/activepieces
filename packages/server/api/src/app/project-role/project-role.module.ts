@@ -1,11 +1,14 @@
-import { ApId, ListProjectMembersForProjectRoleRequestQuery, ProjectMember, ProjectRole, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ApId, EndpointScope, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectMember, ProjectRole, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { projectRoleService } from './project-role.service'
 import { projectMemberService } from '../project-member/project-member.service'
 
 const ListProjectRolesRequest = {
-    config: {},
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         tags: ['project-role'],
         response: {
@@ -15,6 +18,10 @@ const ListProjectRolesRequest = {
 }
 
 const GetProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         tags: ['project-role'],
         params: Type.Object({
@@ -24,6 +31,10 @@ const GetProjectRoleRequest = {
 }
 
 const ProjectMembersForProjectRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         tags: ['project-member'],
         params: Type.Object({
@@ -37,6 +48,10 @@ const ProjectMembersForProjectRoleRequest = {
 }
 
 const UpdateProjectRoleRequest = {
+    config: {
+      allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+      scope: EndpointScope.PLATFORM,
+    },
     schema: {
         body: UpdateProjectRoleRequestBody,
         params: Type.Object({
@@ -49,6 +64,10 @@ const UpdateProjectRoleRequest = {
 }
 
 const DeleteProjectRoleRequest = {
+    config: {
+      allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+      scope: EndpointScope.PLATFORM,
+    },
     schema: {
         params: Type.Object({
             name: Type.String(),

@@ -41,7 +41,6 @@ import { distributedLock, redisConnections } from './database/redis-connections'
 // import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 // import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 // import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
-// import { adminPieceModule } from './ee/pieces/admin-piece-module'
 // import { platformPieceModule } from './ee/pieces/platform-piece-module'
 // import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 // import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
@@ -167,8 +166,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     await app.register(rateLimitModule)
-
-
     app.addHook('onResponse', async (request, reply) => {
         // eslint-disable-next-line
         reply.header('x-request-id', request.id)
@@ -226,7 +223,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     setPlatformOAuthService(userOAuth2Service(app.log))
 
     // await app.register(adminPlatformModule)
-    await app.register(todoActivityModule)
     await app.register(projectRoleModule)
     await app.register(projectMemberModule)
 
@@ -290,7 +286,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             // await app.register(platformPlanModule)
             // await app.register(projectMemberModule)
             // await app.register(appSumoModule)
-            // await app.register(adminPieceModule)
             // await app.register(customDomainModule)
             // await app.register(signingKeyModule)
             // await app.register(authnSsoSamlModule)

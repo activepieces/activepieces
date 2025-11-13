@@ -2075,6 +2075,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "SinghaAnirban005",
+      "name": "Anirban Singha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143536290?v=4",
+      "profile": "https://github.com/SinghaAnirban005",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Dania02525",
+      "name": "Dania Es",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11240307?v=4",
+      "profile": "http://dania.es",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

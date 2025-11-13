@@ -1,4 +1,4 @@
-import { AnalyticsResponse, GetAnalyticsParams, OverviewResponse } from '@activepieces/shared'
+import { AnalyticsResponse, EndpointScope, GetAnalyticsParams, OverviewResponse, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { analyticsService } from './analytics-service'
@@ -11,7 +11,10 @@ const ErrorResponse = {
 }
 
 const AnalyticsRequest = {
-    config: {},
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         tags: ['analytics'],
         description: 'Get analytics data for flow-runs',
@@ -25,7 +28,10 @@ const AnalyticsRequest = {
 }
 
 const OverviewRequest = {
-    config: {},
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         tags: ['analytics'],
         description: 'Get workflow overview statistics',
@@ -76,7 +82,7 @@ export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
             return await reply.send(analyticsData)
         }
         catch (error) {
-            app.log.error('Error fetching analytics data:', error)
+            app.log.error(error, 'Error fetching analytics data')
             return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
                 message: 'An error occurred while fetching analytics data\n' + error,
             })
@@ -91,7 +97,7 @@ export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
             return await reply.send(response)
         }
         catch (error) {
-            app.log.error('Error fetching workflow overview:', error)
+            app.log.error(error, 'Error fetching workflow overview')
             return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
                 message: 'An error occurred while fetching analytics data\n' + error,
             })

@@ -30,12 +30,15 @@ describe('Signing Key API', () => {
     describe('Add Signing Key API', () => {
         it('Creates new Signing Key', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await setupEnabledPlatform()
+            const { mockOwner, mockPlatform, mockProject } = await setupEnabledPlatform()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                platform: { id: mockPlatform.id },
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -64,7 +67,7 @@ describe('Signing Key API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform } = await setupEnabledPlatform()
+            const { mockPlatform, mockProject } = await setupEnabledPlatform()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -83,6 +86,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -106,7 +110,7 @@ describe('Signing Key API', () => {
     describe('Get Signing Key endpoint', () => {
         it('Finds a Signing Key by id', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await setupEnabledPlatform()
+            const { mockOwner, mockPlatform, mockProject } = await setupEnabledPlatform()
             
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -119,6 +123,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -145,7 +150,7 @@ describe('Signing Key API', () => {
     describe('Delete Signing Key endpoint', () => {
         it('Fail if non owner', async () => {
             // arrange
-            const { mockPlatform: mockPlatformOne } = await setupEnabledPlatform()
+            const { mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await setupEnabledPlatform()
 
             const { mockUser: nonOwnerUser } = await mockBasicUser({
                 user: {
@@ -165,7 +170,10 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                platform: { id: mockPlatformOne.id },
+                projectId: mockProjectOne.id,
+                platform: {
+                    id: mockPlatformOne.id,
+                },
             })
 
             // act
@@ -184,7 +192,7 @@ describe('Signing Key API', () => {
 
     describe('List Signing Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
-            const { mockPlatform: mockPlatformTwo } = await setupEnabledPlatform()
+            const { mockPlatform: mockPlatformTwo, mockProject: mockProjectTwo } = await setupEnabledPlatform()
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await setupEnabledPlatform()
 
             const mockSigningKeyOne = createMockSigningKey({
@@ -202,7 +210,10 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                projectId: mockProjectTwo.id,
+                platform: {
+                    id: mockPlatformOne.id,
+                },
             })
             // act
             const response = await app?.inject({

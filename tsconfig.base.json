@@ -33,6 +33,9 @@
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"
       ],
+      "@activepieces/piece-meistertask": [
+        "packages/pieces/community/meistertask/src/index.ts"
+      ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
@@ -83,7 +86,11 @@
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
-      ]
+      ],
+      "@activepieces/piece-housecall-pro": [
+        "packages/pieces/community/housecall-pro/src/index.ts"
+      ],
+      
     },
     "resolveJsonModule": true
   },

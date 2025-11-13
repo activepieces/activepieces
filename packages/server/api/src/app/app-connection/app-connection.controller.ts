@@ -139,7 +139,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_APP_CONNECTION,
     },
     schema: {
@@ -155,7 +155,7 @@ const UpsertAppConnectionRequest = {
 
 const UpdateConnectionValueRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_APP_CONNECTION,
     },
     schema: {
@@ -171,7 +171,7 @@ const UpdateConnectionValueRequest = {
 
 const ReplaceAppConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_APP_CONNECTION,
     },
     schema: {
@@ -187,7 +187,7 @@ const ReplaceAppConnectionsRequest = {
 
 const ListAppConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_APP_CONNECTION,
     },
     schema: {
@@ -202,7 +202,7 @@ const ListAppConnectionsRequest = {
 }
 const ListAppConnectionOwnersRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.READ_APP_CONNECTION,
     },
     schema: {
@@ -218,7 +218,7 @@ const ListAppConnectionOwnersRequest = {
 
 const DeleteAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_APP_CONNECTION,
     },
     schema: {

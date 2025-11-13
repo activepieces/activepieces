@@ -1,18 +1,19 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { app } from '../server'
 
-export type WebsocketListener<T> = (socket: Socket) => (data: T, principal: Principal, callback?: (data: unknown) => void) => Promise<void>
+export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER> 
+= (socket: Socket) => (data: T, principal: PrincipalForType<PR>, callback?: (data: unknown) => void) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ListenerMap = Partial<Record<WebsocketServerEvent, WebsocketListener<any>>>
+type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
 
-const listener: Record<PrincipalType.USER | PrincipalType.WORKER, ListenerMap> = {
-    [PrincipalType.USER]: {},
-    [PrincipalType.WORKER]: {},
+const listener = {
+    [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER  >,
+    [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
 }
 
 
@@ -70,7 +71,18 @@ export const websocketService = {
     async verifyPrincipal(socket: Socket): Promise<Principal> {
         return accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
     },
-    addListener<T>(principalType: keyof typeof listener, event: WebsocketServerEvent, handler: WebsocketListener<T>): void {
-        listener[principalType][event] = handler
+    addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
+        switch (principalType) {
+            case PrincipalType.USER: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                listener[PrincipalType.USER][event] = handler as unknown as WebsocketListener<any, PrincipalType.USER>
+                break
+            }
+            case PrincipalType.WORKER: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                listener[PrincipalType.WORKER][event] = handler as unknown as WebsocketListener<any, PrincipalType.WORKER>
+                break
+            }
+        }
     },
 }
