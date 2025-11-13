@@ -167,7 +167,7 @@ const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
         className={cn('w-full h-[6px]', {
           'bg-muted-foreground': isUnlimited,
         })}
-        indicatorClassName="bg-neutral-500"
+        indicatorClassName="bg-sidebar-progress"
       />
     </div>
   );

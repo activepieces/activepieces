@@ -34,10 +34,6 @@ module.exports = {
       },
       colors: {
         'light-blue': 'hsl(var(--light-blue))',
-        neutral: {
-          200: 'hsl(var(--neutral-200))',
-          500: 'hsl(var(--neutral-500))',
-        },
         warning: {
           DEFAULT: 'hsl(var(--warning))',
           100: 'hsl(var(--warning-100))',
@@ -55,6 +51,8 @@ module.exports = {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
+          active: 'hsl(var(--sidebar-active))',
+          progress: 'hsl(var(--sidebar-progress))',
         },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

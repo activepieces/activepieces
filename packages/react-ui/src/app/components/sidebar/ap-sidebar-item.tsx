@@ -52,7 +52,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                 rel={item.newWindow ? 'noopener noreferrer' : undefined}
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  isLinkActive && 'bg-neutral-200 hover:!bg-neutral-200',
+                  isLinkActive && 'bg-sidebar-active hover:!bg-sidebar-active',
                   'relative',
                 )}
               >
@@ -75,7 +75,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           asChild
           className={cn(
             'px-2 py-5',
-            isLinkActive && 'bg-neutral-200 hover:!bg-neutral-200',
+            isLinkActive && 'bg-sidebar-active hover:!bg-sidebar-active',
           )}
         >
           <Link
