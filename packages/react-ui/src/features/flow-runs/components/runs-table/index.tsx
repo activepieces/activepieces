@@ -1,3 +1,11 @@
+import {
+  FlowRetryStrategy,
+  FlowRun,
+  FlowRunStatus,
+  isFailedState,
+  isFlowRunStateTerminal,
+  Permission,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -10,6 +18,12 @@ import {
 } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { runsTableColumns } from './columns';
+import {
+  RetriedRunsSnackbar,
+  RUN_IDS_QUERY_PARAM,
+} from './retried-runs-snackbar';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -34,20 +48,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import {
-  FlowRetryStrategy,
-  FlowRun,
-  FlowRunStatus,
-  isFailedState,
-  isFlowRunStateTerminal,
-  Permission,
-} from '@activepieces/shared';
-
-import { runsTableColumns } from './columns';
-import {
-  RetriedRunsSnackbar,
-  RUN_IDS_QUERY_PARAM,
-} from './retried-runs-snackbar';
 
 type SelectedRow = {
   id: string;
@@ -196,6 +196,38 @@ export const RunsTable = () => {
     },
   });
 
+  const cancelRuns = useMutation({
+    mutationFn: (cancelParams: { runIds: string[] }) => {
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
+      const createdAfter = searchParams.get('createdAfter') || undefined;
+      const createdBefore = searchParams.get('createdBefore') || undefined;
+      return flowRunsApi.bulkCancel({
+        projectId: authenticationSession.getProjectId()!,
+        flowRunIds: selectedAll ? undefined : cancelParams.runIds,
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status:
+          status.length > 0
+            ? (status.filter(
+                (s) => s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
+              ) as (
+                | typeof FlowRunStatus.PAUSED
+                | typeof FlowRunStatus.QUEUED
+              )[])
+            : undefined,
+        flowId,
+        createdAfter,
+        createdBefore,
+      });
+    },
+    onSuccess: () => {
+      refetch();
+      setSelectedRows([]);
+      setSelectedAll(false);
+      setExcludedRows(new Set());
+    },
+  });
+
   const bulkActions: BulkAction<FlowRun>[] = useMemo(
     () => [
       {
@@ -284,8 +316,64 @@ export const RunsTable = () => {
           );
         },
       },
+      {
+        render: (_, resetSelection) => {
+          const allCancellable = selectedRows.every(
+            (row) =>
+              row.status === FlowRunStatus.PAUSED ||
+              row.status === FlowRunStatus.QUEUED,
+          );
+          const isDisabled =
+            selectedRows.length === 0 ||
+            !userHasPermissionToRetryRun ||
+            !allCancellable;
+
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToRetryRun}
+              >
+                <MessageTooltip
+                  message={t('Only paused or queued runs can be cancelled')}
+                  isDisabled={allCancellable}
+                >
+                  <Button
+                    disabled={isDisabled}
+                    variant="outline"
+                    className="h-9 w-full"
+                    onClick={() => {
+                      cancelRuns.mutate({
+                        runIds: selectedRows.map((row) => row.id),
+                      });
+                      resetSelection();
+                    }}
+                  >
+                    {selectedRows.length > 0
+                      ? `${t('Cancel')} ${
+                          selectedAll
+                            ? excludedRows.size > 0
+                              ? `${t('all except')} ${excludedRows.size}`
+                              : t('all')
+                            : `(${selectedRows.length})`
+                        }`
+                      : t('Cancel')}
+                    <X className="h-3 w-4 ml-2" />
+                  </Button>
+                </MessageTooltip>
+              </PermissionNeededTooltip>
+            </div>
+          );
+        },
+      },
     ],
-    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
+    [
+      retryRuns,
+      cancelRuns,
+      userHasPermissionToRetryRun,
+      selectedRows,
+      selectedAll,
+      excludedRows,
+    ],
   );
 
   const handleRowClick = useCallback(

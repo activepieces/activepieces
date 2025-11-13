@@ -51,6 +51,8 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 import { flowRunLogsService } from './logs/flow-run-logs-service'
 
+const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+
 
 const tracer = trace.getTracer('flow-run-service')
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -158,56 +160,58 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async cancel({ flowRunId, projectId, platformId }: CancelParams): Promise<void> {
+    async cancel({ projectId, platformId, flowRunIds, excludeFlowRunIds, status, flowId, createdAfter, createdBefore }: CancelParams): Promise<FlowRun[] | null> {
         log.info({
-            runId: flowRunId,
-        }, '[FlowRunService#cancel] canceling paused flow run')
-
-        const flowRun = await flowRunService(log).getOneOrThrow({
-            id: flowRunId,
             projectId,
+            flowRunIds,
+            status,
+            flowId,
+        }, '[FlowRunService#cancel]')
+
+        const filteredStatus = status ?? CANCELLABLE_STATUSES
+        const flowRuns = await filterFlowRunsAndApplyFilters({
+            projectId,
+            flowRunIds,
+            status: filteredStatus,
+            flowId,
+            createdAfter,
+            createdBefore,
+            excludeFlowRunIds,
         })
 
-        if (flowRun.status !== FlowRunStatus.PAUSED) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: `Flow run is not paused. Current status: ${flowRun.status}`,
-                },
-            })
+        if (flowRuns.length === 0) {
+            log.info('[FlowRunService#cancel] No flow runs found matching criteria')
+            return null
         }
 
-        await jobQueue(log).removeOneTimeJob({
-            jobId: flowRun.id,
-            platformId,
-        })
-
-        await cancelChildFlows({
-            parentRunId: flowRun.id,
-            projectId: flowRun.projectId,
+        await cancelFlowRuns({
+            flowRuns,
             platformId,
         }, log)
 
-        await flowRunService(log).updateRun({
-            flowRunId: flowRun.id,
-            projectId: flowRun.projectId,
-            status: FlowRunStatus.CANCELED,
-            duration: Date.now() - new Date(flowRun.startTime).getTime(),
-        })
+        await cancelChildFlows({
+            parentRunIds: flowRuns.map(r => r.id),
+            projectId,
+            platformId,
+        }, log)
 
-        const updatedFlowRun = {
-            ...flowRun,
-            status: FlowRunStatus.CANCELED,
-        }
-
-        await flowRunSideEffects(log).onFinish(updatedFlowRun)
+        return flowRuns
     },
     async existsBy(runId: FlowRunId): Promise<boolean> {
         return flowRunRepo().existsBy({ id: runId })
     },
     async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName }: BulkRetryParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds, failedStepName)
-        return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
+        const filteredFlowRuns = await filterFlowRunsAndApplyFilters({
+            projectId,
+            flowRunIds,
+            status,
+            flowId,
+            createdAfter,
+            createdBefore,
+            excludeFlowRunIds,
+            failedStepName,
+        })
+        return Promise.all(filteredFlowRuns.map(flowRun => this.retry({ flowRunId: flowRun.id, strategy, projectId })))
     },
     async resume({
         flowRunId,
@@ -455,65 +459,93 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function cancelChildFlows(params: CancelChildFlowsParams, log: FastifyBaseLogger): Promise<void> {
-    const childFlows = await flowRunRepo().findBy({
-        parentRunId: params.parentRunId,
-        status: In([FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]),
-    })
-
-    log.info({
-        parentRunId: params.parentRunId,
-        childFlowCount: childFlows.length,
-    }, '[cancelChildFlows] Found running or paused child flows to cancel')
-
+async function cancelFlowRuns(params: {
+    flowRuns: FlowRun[]
+    platformId: PlatformId
+}, log: FastifyBaseLogger): Promise<void> {
     await Promise.all(
-        childFlows.map(async (childFlow) => {
+        params.flowRuns.map(async (flowRun) => {
             try {
                 await jobQueue(log).removeOneTimeJob({
-                    jobId: childFlow.id,
+                    jobId: flowRun.id,
                     platformId: params.platformId,
                 })
 
-                await cancelChildFlows({
-                    parentRunId: childFlow.id,
-                    projectId: childFlow.projectId,
-                    platformId: params.platformId,
-                }, log)
-
                 await flowRunService(log).updateRun({
-                    flowRunId: childFlow.id,
-                    projectId: childFlow.projectId,
+                    flowRunId: flowRun.id,
+                    projectId: flowRun.projectId,
                     status: FlowRunStatus.CANCELED,
-                    duration: Date.now() - new Date(childFlow.startTime).getTime(),
+                    duration: Date.now() - new Date(flowRun.startTime).getTime(),
                 })
 
                 log.info({
-                    parentRunId: params.parentRunId,
-                    childFlowId: childFlow.id,
-                }, '[cancelChildFlows] Canceled child flow')
+                    flowRunId: flowRun.id,
+                }, '[cancelFlowRuns] Canceled flow run')
             }
             catch (error) {
                 log.error({
-                    parentRunId: params.parentRunId,
-                    childFlowId: childFlow.id,
+                    flowRunId: flowRun.id,
                     error,
-                }, '[cancelChildFlows] Failed to cancel child flow')
+                }, '[cancelFlowRuns] Failed to cancel flow run')
                 throw error
             }
         }),
     )
 }
 
+async function getCancellableDescendantFlows(parentRunIds: string[]): Promise<FlowRun[]> {
+    if (parentRunIds.length === 0) {
+        return []
+    }
+
+    const query = `
+        WITH RECURSIVE descendants AS (
+            SELECT *
+            FROM flow_run
+            WHERE "parentRunId" = ANY($1)
+              AND status = ANY($2)
+
+            UNION ALL
+
+            SELECT f.*
+            FROM flow_run f
+            INNER JOIN descendants d ON f."parentRunId" = d.id
+            WHERE f.status = ANY($2)
+        )
+        SELECT * FROM descendants
+    `
+    
+    const results = await flowRunRepo().query(query, [parentRunIds, CANCELLABLE_STATUSES])
+    return results as FlowRun[]
+}
+
+async function cancelChildFlows(params: CancelChildFlowsParams, log: FastifyBaseLogger): Promise<void> {
+    const childFlows = await getCancellableDescendantFlows(params.parentRunIds)
+
+    log.info({
+        parentRunIds: params.parentRunIds,
+        childFlowCount: childFlows.length,
+    }, '[cancelChildFlows] Found cancellable descendant flows (paused/queued)')
+
+    await cancelFlowRuns({
+        flowRuns: childFlows,
+        platformId: params.platformId,
+    }, log)
+}
+
 async function filterFlowRunsAndApplyFilters(
-    projectId: ProjectId,
-    flowRunIds?: FlowRunId[],
-    status?: FlowRunStatus[],
-    flowId?: FlowId[],
-    createdAfter?: string,
-    createdBefore?: string,
-    excludeFlowRunIds?: FlowRunId[],
-    failedStepName?: string,
-): Promise<FlowRunId[]> {
+    params: FilterFlowRunsAndApplyFiltersParams,
+): Promise<FlowRun[]> {
+    const {
+        projectId,
+        flowRunIds,
+        status,
+        flowId,
+        createdAfter,
+        createdBefore,
+        excludeFlowRunIds,
+        failedStepName,
+    } = params
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId,
         environment: RunEnvironment.PRODUCTION,
@@ -557,7 +589,7 @@ async function filterFlowRunsAndApplyFilters(
     }
 
     const flowRuns = await query.getMany()
-    return flowRuns.map(flowRun => flowRun.id)
+    return flowRuns
 }
 
 
@@ -735,13 +767,18 @@ type RetryParams = {
 }
 
 type CancelParams = {
-    flowRunId: FlowRunId
     projectId: ProjectId
     platformId: PlatformId
+    flowRunIds?: FlowRunId[]
+    excludeFlowRunIds?: FlowRunId[]
+    status?: FlowRunStatus[]
+    flowId?: FlowId[]
+    createdAfter?: string
+    createdBefore?: string
 }
 
 type CancelChildFlowsParams = {
-    parentRunId: FlowRunId
+    parentRunIds: FlowRunId[]
     projectId: ProjectId
     platformId: PlatformId
 }
@@ -764,4 +801,15 @@ type ResumeWebhookParams = {
     payload?: unknown
     executionType: ExecutionType
     checkRequestId: boolean
+}
+
+type FilterFlowRunsAndApplyFiltersParams = {
+    projectId: ProjectId
+    flowRunIds?: FlowRunId[]
+    status?: FlowRunStatus[]
+    flowId?: FlowId[]
+    createdAfter?: string
+    createdBefore?: string
+    excludeFlowRunIds?: FlowRunId[]
+    failedStepName?: string
 }

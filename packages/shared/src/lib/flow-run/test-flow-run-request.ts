@@ -29,3 +29,18 @@ export const BulkRetryFlowRequestBody = Type.Object({
 })
 
 export type BulkRetryFlowRequestBody = Static<typeof BulkRetryFlowRequestBody>
+
+export const BulkCancelFlowRequestBody = Type.Object({
+    projectId: ApId,
+    flowRunIds: Type.Optional(Type.Array(ApId)),
+    excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
+    status: Type.Optional(Type.Array(Type.Union([
+        Type.Literal(FlowRunStatus.PAUSED),
+        Type.Literal(FlowRunStatus.QUEUED),
+    ]))),
+    flowId: Type.Optional(Type.Array(ApId)),
+    createdAfter: Type.Optional(Type.String()),
+    createdBefore: Type.Optional(Type.String()),
+})
+
+export type BulkCancelFlowRequestBody = Static<typeof BulkCancelFlowRequestBody>

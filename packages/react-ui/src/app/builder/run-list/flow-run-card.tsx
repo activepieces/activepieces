@@ -1,3 +1,12 @@
+import {
+  FlowRetryStrategy,
+  FlowRun,
+  FlowRunStatus,
+  isFailedState,
+  isFlowRunStateTerminal,
+  Permission,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -29,15 +38,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn, formatUtils } from '@/lib/utils';
-import {
-  FlowRetryStrategy,
-  FlowRun,
-  FlowRunStatus,
-  isFailedState,
-  isFlowRunStateTerminal,
-  Permission,
-  PopulatedFlow,
-} from '@activepieces/shared';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -134,12 +134,26 @@ const FlowRunCard = React.memo(
       >
         <div>
           <span>
-            <Icon
-              className={cn('w-5 h-5', {
-                'text-success': variant === 'success',
-                'text-destructive': variant === 'error',
-              })}
-            />
+            {run.status === FlowRunStatus.CANCELED ? (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Icon
+                    className={cn('w-5 h-5', {
+                      'text-success': variant === 'success',
+                      'text-destructive': variant === 'error',
+                    })}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>{t('Canceled')}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Icon
+                className={cn('w-5 h-5', {
+                  'text-success': variant === 'success',
+                  'text-destructive': variant === 'error',
+                })}
+              />
+            )}
           </span>
         </div>
         <div className="grid gap-2">
@@ -164,11 +178,6 @@ const FlowRunCard = React.memo(
           {run.status === FlowRunStatus.QUEUED && (
             <p className="flex gap-1 text-xs text-muted-foreground">
               {t('Queued')}...
-            </p>
-          )}
-          {run.status === FlowRunStatus.CANCELED && (
-            <p className="flex gap-1 text-xs text-muted-foreground">
-              {t('Canceled')}
             </p>
           )}
         </div>

@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
+    BulkCancelFlowRequestBody,
     BulkRetryFlowRequestBody,
     ErrorCode,
     ExecutionType,
@@ -86,6 +87,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
         await reply.status(response.status).headers(response.headers).send(response.body)
     })
+
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         const flowRun = await flowRunService(req.log).retry({
             flowRunId: req.params.id,
@@ -104,13 +106,17 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         return flowRun
     })
 
-    app.post('/:id/cancel', CancelFlowRequest, async (req, reply) => {
-        await flowRunService(req.log).cancel({
-            flowRunId: req.params.id,
+    app.post('/cancel', BulkCancelFlowRequest, async (req) => {
+        return flowRunService(req.log).cancel({
             projectId: req.principal.projectId,
             platformId: req.principal.platform.id,
+            flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
         })
-        return reply.status(StatusCodes.OK).send()
     })
 
     app.post('/retry', BulkRetryFlowRequest, async (req) => {
@@ -191,18 +197,16 @@ const RetryFlowRequest = {
     },
 }
 
-const CancelFlowRequest = {
+const BulkCancelFlowRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         permission: Permission.WRITE_RUN,
     },
     schema: {
         tags: ['flow-runs'],
-        description: 'Cancel a paused flow run',
+        description: 'Cancel multiple paused/queued flow runs',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
-        }),
+        body: BulkCancelFlowRequestBody,
     },
 }
 

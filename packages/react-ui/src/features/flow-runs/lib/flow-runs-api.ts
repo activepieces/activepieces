@@ -1,6 +1,3 @@
-import { Socket } from 'socket.io-client';
-
-import { api } from '@/lib/api';
 import {
   FlowRun,
   ListFlowRunsRequestQuery,
@@ -11,8 +8,12 @@ import {
   CreateStepRunRequestBody,
   StepRunResponse,
   BulkRetryFlowRequestBody,
+  BulkCancelFlowRequestBody,
   SeekPage,
 } from '@activepieces/shared';
+import { Socket } from 'socket.io-client';
+
+import { api } from '@/lib/api';
 
 type TestStepParams = {
   socket: Socket;
@@ -37,6 +38,9 @@ export const flowRunsApi = {
   },
   bulkRetry(request: BulkRetryFlowRequestBody): Promise<FlowRun[]> {
     return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
+  },
+  bulkCancel(request: BulkCancelFlowRequestBody): Promise<FlowRun[]> {
+    return api.post<FlowRun[]>('/v1/flow-runs/cancel', request);
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
