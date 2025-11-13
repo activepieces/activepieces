@@ -60,12 +60,22 @@ export const ProjectDashboardPageHeader = ({
     Permission.READ_PROJECT_MEMBER,
   );
 
-  const { data: showProjectMembers } = flagsHooks.useFlag<boolean>(
+  const { data: showProjectMembersFlag } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
+
+  const isEmbedded = embedState.isEmbedded;
+
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
+
+  const showProjectMembersIcons =
+    !isEmbedded &&
+    showProjectMembersFlag &&
+    userHasPermissionToReadProjectMembers;
+  const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
+  const showSettingsButton = !isEmbedded;
   const isProjectPage = location.pathname.includes('/projects/');
 
   if (embedState.hidePageHeader) {
@@ -116,7 +126,7 @@ export const ProjectDashboardPageHeader = ({
         </div>
         {isProjectPage && (
           <div className="flex items-center gap-3">
-            {userHasPermissionToReadProjectMembers && showProjectMembers && (
+            {showProjectMembersIcons && (
               <div className="flex items-center gap-2 px-3 py-1.5 ">
                 <UsersRound className="w-4 h-4" />
                 <span className="text-sm font-medium">
@@ -124,7 +134,7 @@ export const ProjectDashboardPageHeader = ({
                 </span>
               </div>
             )}
-            {userHasPermissionToInviteUser && (
+            {showInviteUserButton && (
               <Button
                 variant="outline"
                 size="sm"
@@ -135,25 +145,29 @@ export const ProjectDashboardPageHeader = ({
                 <span className="text-sm font-medium">Invite</span>
               </Button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="shadow-sm px-2">
-                  <DotsHorizontalIcon className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-semibold">
-                  {project?.displayName}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {userHasPermissionToInviteUser && (
-                  <DropdownMenuItem onClick={() => setInviteOpen(true)}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Invite
-                  </DropdownMenuItem>
-                )}
-                {userHasPermissionToReadProjectMembers &&
-                  showProjectMembers && (
+            {showSettingsButton && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shadow-sm px-2"
+                  >
+                    <DotsHorizontalIcon className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-semibold">
+                    {project?.displayName}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {showInviteUserButton && (
+                    <DropdownMenuItem onClick={() => setInviteOpen(true)}>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Invite
+                    </DropdownMenuItem>
+                  )}
+                  {showProjectMembersIcons && (
                     <DropdownMenuItem
                       onClick={() => {
                         setSettingsInitialTab('team');
@@ -164,17 +178,18 @@ export const ProjectDashboardPageHeader = ({
                       Members
                     </DropdownMenuItem>
                   )}
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSettingsInitialTab('general');
-                    setSettingsOpen(true);
-                  }}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSettingsInitialTab('general');
+                      setSettingsOpen(true);
+                    }}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         )}
       </div>
