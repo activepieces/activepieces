@@ -55,7 +55,6 @@ export type ApErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
-    | ResourceLockedParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -105,7 +104,8 @@ export type BaseErrorParams<T, V> = {
 }
 
 export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
-    message?: string
+    standardOutput: string
+    standardError: string
 }>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
@@ -385,12 +385,6 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
-export type ResourceLockedParams = BaseErrorParams<
-ErrorCode.RESOURCE_LOCKED,
-{
-    message: string
-}>
-
 export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
 ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
 {
@@ -540,7 +534,6 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-    RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',

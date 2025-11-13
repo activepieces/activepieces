@@ -39,7 +39,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                         case WorkerJobType.EXECUTE_TOOL:
                         case WorkerJobType.EXECUTE_VALIDATION:
                         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-                            await userInteractionJobExecutor(log).execute(jobData, engineToken, workerToken, timeoutInSeconds)
+                            await userInteractionJobExecutor(log).execute(jobData, engineToken, timeoutInSeconds)
                             span.setAttribute('worker.completed', true)
                             return {
                                 status: ConsumeJobResponseStatus.OK,

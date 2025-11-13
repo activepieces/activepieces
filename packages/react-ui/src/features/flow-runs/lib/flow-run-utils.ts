@@ -112,6 +112,11 @@ export const flowRunUtils = {
           variant: 'default',
           Icon: PauseIcon,
         };
+      case FlowRunStatus.CANCELED:
+        return {
+          variant: 'default',
+          Icon: X,
+        };
       case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
         return {
           variant: 'error',

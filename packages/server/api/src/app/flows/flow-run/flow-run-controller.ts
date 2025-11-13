@@ -2,7 +2,9 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
-    BulkRetryFlowRequestBody,
+    BulkActionOnRunsRequestBody,
+    BulkArchiveActionOnRunsRequestBody,
+    BulkCancelFlowRequestBody,
     ErrorCode,
     ExecutionType,
     FlowRun,
@@ -39,6 +41,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
             flowRunIds: request.query.flowRunIds,
+            archived: request.query.archived,
         })
     })
 
@@ -88,6 +91,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
         await reply.status(response.status).headers(response.headers).send(response.body)
     })
+
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         const flowRun = await flowRunService(req.log).retry({
             flowRunId: req.params.id,
@@ -106,6 +110,19 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         return flowRun
     })
 
+    app.post('/cancel', BulkCancelFlowRequest, async (req) => {
+        return flowRunService(req.log).cancel({
+            projectId: req.principal.projectId,
+            platformId: req.principal.platform.id,
+            flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
+        })
+    })
+
     app.post('/retry', BulkRetryFlowRequest, async (req) => {
         return flowRunService(req.log).bulkRetry({
             projectId: req.principal.projectId,
@@ -120,10 +137,23 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.post('/archive', ArchiveFlowRunRequest, async (req) => {
+        return flowRunService(req.log).bulkArchive({
+            projectId: req.principal.projectId,
+            flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
+            failedStepName: req.body.failedStepName,
+        })
+    })
+
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])
-const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata', 'steps'])
+const FlowRunFiltered = Type.Omit(FlowRun, ['pauseMetadata'])
+const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['pauseMetadata', 'steps'])
 
 const ListRequest = {
     config: {
@@ -188,6 +218,29 @@ const RetryFlowRequest = {
     },
 }
 
+const BulkCancelFlowRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.WRITE_RUN,
+    },
+    schema: {
+        tags: ['flow-runs'],
+        description: 'Cancel multiple paused/queued flow runs',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: BulkCancelFlowRequestBody,
+    },
+}
+
+const ArchiveFlowRunRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        permission: Permission.WRITE_RUN,
+    },
+    schema: {
+        body: BulkArchiveActionOnRunsRequestBody,
+    },
+}
+
 const BulkRetryFlowRequest = {
     config: {
         security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
@@ -195,6 +248,6 @@ const BulkRetryFlowRequest = {
         }),
     },
     schema: {
-        body: BulkRetryFlowRequestBody,
+        body: BulkActionOnRunsRequestBody,
     },
 }

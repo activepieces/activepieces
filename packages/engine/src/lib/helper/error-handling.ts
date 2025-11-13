@@ -1,6 +1,6 @@
-import { CodeAction, isNil, PieceAction } from '@activepieces/shared'
+import { CodeAction, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from '../handler/context/flow-execution-context'
+import {  FlowExecutorContext } from '../handler/context/flow-execution-context'
 
 export async function runWithExponentialBackoff<T extends CodeAction | PieceAction>(
     executionState: FlowExecutorContext,
@@ -33,12 +33,12 @@ export async function continueIfFailureHandler(
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
 
     if (
-        executionState.verdict === ExecutionVerdict.FAILED &&
+        executionState.verdict.status === FlowRunStatus.FAILED &&
         continueOnFailure &&
         isNil(constants.stepNameToTest)
     ) {
         return executionState
-            .setVerdict(ExecutionVerdict.RUNNING, undefined)
+            .setVerdict({ status: FlowRunStatus.RUNNING })
     }
 
     return executionState
@@ -46,7 +46,7 @@ export async function continueIfFailureHandler(
 
 
 const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorContext): boolean => {
-    return flowExecutorContext.verdict === ExecutionVerdict.FAILED
+    return flowExecutorContext.verdict.status === FlowRunStatus.FAILED
 }
 
 type Request<T extends CodeAction | PieceAction> = {

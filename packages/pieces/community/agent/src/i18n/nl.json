@@ -8,7 +8,7 @@
   "Structured Output": "Gestructureerde uitgang",
   "Max steps": "Max stappen",
   "Describe what you want the assistant to do.": "Beschrijf wat u wilt dat de assistent doet.",
-  "Choose your AI model and provider": "Kies uw AI-model en -provider",
+  "Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.": "Kies jouw AI model en provider. Verschillende modellen bieden verschillende capaciteiten, snelheden en kosten. OpenAI-modellen zijn het beste voor algemene taken, antropische uitwassen om te analyseren en Google Gemini biedt concurrerende prijzen.",
   "The numbder of interations the agent can do": "De numbder van interacties die de agent kan doen",
   "(openai) GPT-5": "(openai) GPT-5",
   "(openai) GPT-5 Chat": "(openai) GPT-5 Chat",
@@ -24,6 +24,8 @@
   "(openai) O3 Mini": "(openai) O3 Mini",
   "(openai) GPT-4 Turbo": "(openai) GPT-4 Turbo",
   "(openai) GPT-3.5 Turbo": "(openai) GPT-3.5 Turbo",
+  "(anthropic) Claude 4.5 Sonnet": "(antropic) Claude 4.5 Sonnet",
+  "(anthropic) Claude 4.5 Haiku": "(antropic) Claude 4.5 Haiku",
   "(anthropic) Claude 4 Sonnet": "(Aanthropic) Claude 4 Sonnet",
   "(anthropic) Claude 3.5 Haiku": "(antropic) Claude 3.5 Haiku",
   "(anthropic) Claude 4.1 Opus": "(antropic) Claude 4.1 Opus",
@@ -34,6 +36,7 @@
   "(anthropic) Claude 3 Haiku": "(antropic) Claude 3 Haiku",
   "(google) Gemini 2.5 Pro": "(google) Gemini 2.5 Pro",
   "(google) Gemini 2.5 Flash": "(google) Gemini 2.5 Flash",
+  "(google) Gemini 2.5 Flash-Lite": "(google) Gemini 2.5 Flash-Lite",
   "(google) Gemini 2.5 Flash-Lite Preview": "(google) Gemini 2.5 Flash-Lite Voorbeeld",
   "(google) Gemini 2.0 Flash-Lite": "(google) Gemini 2.0 Flash-Lite"
 }
