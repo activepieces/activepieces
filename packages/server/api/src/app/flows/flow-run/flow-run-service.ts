@@ -111,7 +111,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
 
         if (!isNil(params.failedStepName)) {
-            query = query.andWhere('flow_run."failedStep"->>"name" = :failedStepName', {
+            query = query.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', {
                 failedStepName: params.failedStepName,
             })
         }
@@ -258,39 +258,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         await flowRunSideEffects(log).onResume(flowRun)
         return flowRun
-    },
-
-    async updateRun({
-        flowRunId,
-        status,
-        projectId,
-        tags,
-        duration,
-        failedStepName,
-        pauseMetadata,
-        logsFileId,
-    }: UpdateRunParams): Promise<void> {
-        log.info({
-            runId: flowRunId,
-            status,
-            duration,
-            failedStepName,
-        }, '[FlowRunService#updateRun]')
-
-        await runsMetadataQueue(log).add({
-            id: flowRunId,
-            status,
-            logsFileId,
-            projectId,
-            tags,
-            ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
-            ...spreadIfDefined('pauseMetadata', pauseMetadata),
-            ...spreadIfDefined('failedStep', failedStepName ? { name: failedStepName } : undefined),
-            finishTime: isFlowRunStateTerminal({
-                status,
-                ignoreInternalError: true,
-            }) ? new Date().toISOString() : undefined,
-        })
     },
 
     async start({
@@ -476,8 +443,8 @@ async function cancelFlowRuns(params: {
                     platformId: params.platformId,
                 })
 
-                await flowRunService(log).updateRun({
-                    flowRunId: flowRun.id,
+                await runsMetadataQueue(log).add({
+                    id: flowRun.id,
                     projectId: flowRun.projectId,
                     status: FlowRunStatus.CANCELED,
                 })
@@ -678,18 +645,6 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
             await runsMetadataQueue(log).add(flowRun)
             return flowRun
     }
-}
-
-
-type UpdateRunParams = {
-    flowRunId: FlowRunId
-    projectId: string
-    status: FlowRunStatus
-    duration?: number | undefined
-    pauseMetadata?: PauseMetadata
-    tags?: string[]
-    failedStepName?: string | undefined
-    logsFileId?: string | undefined
 }
 
 
