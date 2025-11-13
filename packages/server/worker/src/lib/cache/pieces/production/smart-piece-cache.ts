@@ -28,7 +28,7 @@ export const smartPieceCache = (log: FastifyBaseLogger) => ({
             : await redis.mget(pieces.map(usedPiecesRedisCache))
 
         await Promise.all(pieces.map(async (piece, idx) => {
-            await markPieceAsInstalledInMemAndDisk(piecePath(projectPath, piece), expireDuration)
+            await markPieceAsInstalledInMemAndDisk(piecePath(projectPath, piece))
             if (!piecesRedisKeys[idx]) {
               await redis.set(usedPiecesRedisCache(piece), 'true', 'EX', expireDuration)
             }
@@ -57,7 +57,8 @@ async function checkIfPieceIsCached(pieceFolder: string): Promise<boolean> {
   return usedPiecesMemoryCache[pieceFolder]
 }
 
-async function markPieceAsInstalledInMemAndDisk(pieceFolder: string, expireDuration: number): Promise<void> {
+async function markPieceAsInstalledInMemAndDisk(pieceFolder: string): Promise<void> {
+  const expireDuration = apDayjsDuration(10, "days").asMilliseconds()
   const readyFilePath = join(pieceFolder, 'ready')
   await writeFileAtomic(readyFilePath, 'true', 'utf8')
   usedPiecesMemoryCache[pieceFolder] = true
@@ -65,7 +66,7 @@ async function markPieceAsInstalledInMemAndDisk(pieceFolder: string, expireDurat
   setTimeout(async () => {
     delete usedPiecesMemoryCache[pieceFolder]
     await fileSystemUtils.deleteFile(readyFilePath)
-  }, expireDuration * 1000)
+  }, expireDuration)
 }
 
 async function getCachedPiecesInRedis(): Promise<PiecePackage[]> {
