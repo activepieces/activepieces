@@ -1,7 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { buttonVariants } from '@/components/ui/button';
 import {
   SidebarMenuButton,
@@ -14,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectHooks } from '@/hooks/project-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
@@ -27,14 +26,17 @@ const ProjectSideBarItem = ({
   project,
   isCurrentProject,
 }: ProjectSideBarItemProps) => {
-  const { setCurrentProject } = projectHooks.useCurrentProject();
-  const queryClient = useQueryClient();
-  const location = useLocation();
+  const navigate = useNavigate();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
   const handleClick = () => {
-    setCurrentProject(queryClient, project, location.pathname);
+    if (isCurrentProject) {
+      return;
+    }
+    navigate(
+      authenticationSession.appendProjectRoutePrefix(`/projects/${project.id}`),
+    );
   };
 
   return (
@@ -51,10 +53,8 @@ const ProjectSideBarItem = ({
                   'relative cursor-pointer',
                 )}
               >
-                <Avatar className="size-5 bg-primary text-primary-foreground rounded-lg">
-                  <AvatarFallback>
-                    {project.displayName.charAt(0)}
-                  </AvatarFallback>
+                <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
+                  {project.displayName.charAt(0)}
                 </Avatar>
               </button>
             </TooltipTrigger>
@@ -72,8 +72,8 @@ const ProjectSideBarItem = ({
           )}
         >
           <div onClick={handleClick} className="flex items-center gap-2">
-            <Avatar className="size-5 bg-primary text-primary-foreground rounded-lg">
-              <AvatarFallback>{project.displayName.charAt(0)}</AvatarFallback>
+            <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
+              {project.displayName.charAt(0)}
             </Avatar>
             <span className="truncate text-ellipsis max-w-[250px]">
               {project.displayName}

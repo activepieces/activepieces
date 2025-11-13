@@ -47,6 +47,7 @@ export function ProjectDashboardLayout({
   const currentProjectId = authenticationSession.getProjectId();
   const { t } = useTranslation();
   const location = useLocation();
+  const isPlatformPage = location.pathname.includes('/platform/');
 
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
@@ -54,7 +55,7 @@ export function ProjectDashboardLayout({
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
-      to: authenticationSession.appendProjectRoutePrefix('/explore'),
+      to: '/explore',
       label: t('Explore'),
       show: true,
       icon: Compass,
@@ -62,9 +63,9 @@ export function ProjectDashboardLayout({
     },
   ];
 
-  const hideHeader = itemsWithoutHeader.some((item) =>
-    location.pathname.includes(item.to),
-  );
+  const hideHeader =
+    itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
+    isPlatformPage;
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
@@ -76,12 +77,12 @@ export function ProjectDashboardLayout({
       >
         <SidebarProvider>
           <ProjectDashboardSidebar />
-          <SidebarInset className={`relative overflow-auto pb-4 gap-4 pt-4`}>
+          <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
             <div className="flex flex-col">
               {!hideHeader && (
                 <>
                   <ProjectDashboardLayoutHeader />
-                  <Separator className="mb-4" />
+                  <Separator className="mb-6" />
                 </>
               )}
               <div className="px-4"> {children} </div>

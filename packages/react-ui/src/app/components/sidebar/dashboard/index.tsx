@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { Compass } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -14,10 +15,9 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
 import { projectHooks } from '@/hooks/project-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
-import { HelpAndFeedback } from '../../help-and-feedback';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
@@ -26,10 +26,10 @@ import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar() {
-  const { project } = projectHooks.useCurrentProject();
   const { data: projects } = projectHooks.useProjects();
   const { embedState } = useEmbedding();
   const { state, setOpen } = useSidebar();
+  const location = useLocation();
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -40,7 +40,7 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/explore'),
+    to: '/explore',
     label: t('Explore'),
     show: true,
     icon: Compass,
@@ -55,15 +55,17 @@ export function ProjectDashboardSidebar() {
       <Sidebar
         variant="inset"
         collapsible="icon"
-        className="group/sidebar-hover"
         onClick={() => setOpen(true)}
+        className={cn(state === 'collapsed' ? 'cursor-nesw-resize' : '')}
       >
         <AppSidebarHeader />
 
         {state === 'collapsed' && <SidebarSeparator className="my-3" />}
         {state === 'expanded' && <div className="mt-1" />}
 
-        <SidebarContent>
+        <SidebarContent
+          className={cn(state === 'collapsed' ? 'gap-4' : 'gap-3')}
+        >
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -81,12 +83,14 @@ export function ProjectDashboardSidebar() {
               <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className={cn(state === 'collapsed' ? 'gap-2' : '')}>
                 {projects?.map((p) => (
                   <ProjectSideBarItem
                     key={p.id}
                     project={p}
-                    isCurrentProject={p.id === project.id}
+                    isCurrentProject={location.pathname.includes(
+                      `/projects/${p.id}`,
+                    )}
                   />
                 ))}
               </SidebarMenu>
@@ -94,7 +98,6 @@ export function ProjectDashboardSidebar() {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter onClick={(e) => e.stopPropagation()}>
-          <HelpAndFeedback />
           {state === 'expanded' && <SidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>

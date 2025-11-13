@@ -14,14 +14,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -38,7 +30,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
-import { DashboardPageHeader } from '../dashboard-page-header';
+import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 
 import { ProjectDashboardLayoutHeaderTab } from '.';
 
@@ -122,47 +114,18 @@ export const ProjectDashboardLayoutHeader = () => {
     },
   ];
 
+  const allItems = [flowsLink, tablesLink, runsLink, ...moreItems];
+
   const getCurrentPageName = () => {
-    const currentItem = moreItems.find((item) =>
+    const currentItem = allItems.find((item) =>
       location.pathname.includes(item.to),
     );
     return currentItem ? currentItem.label : '';
   };
 
-  const showBreadcrumb = moreItems.some((item) =>
-    location.pathname.includes(item.to),
-  );
-
-  if (showBreadcrumb) {
-    return (
-      <div className="flex flex-col mt-2 px-4 pb-3">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                onClick={() =>
-                  navigate(
-                    authenticationSession.appendProjectRoutePrefix('/flows'),
-                  )
-                }
-                className="cursor-pointer"
-              >
-                {project?.displayName}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{getCurrentPageName()}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col px-4 gap-3 mt-1">
-      <DashboardPageHeader title={project?.displayName} />
+    <div className="flex flex-col px-4 gap-3">
+      <ProjectDashboardPageHeader title={getCurrentPageName()} />
       <Tabs>
         <TabsList variant="outline">
           {flowsLink.show && flowsLink.hasPermission && (
@@ -217,31 +180,49 @@ export const ProjectDashboardLayoutHeader = () => {
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2 h-auto text-muted-foreground hover:text-foreground mb-2"
-              >
-                {t('More')}
-                <ChevronDown className="h-4 w-4" />
-              </Button>
+              {(() => {
+                const activeItem = moreItems.find((item) =>
+                  location.pathname.includes(item.to),
+                );
+
+                if (activeItem) {
+                  return (
+                    <TabsTrigger
+                      value="more"
+                      variant="outline"
+                      className="pb-3"
+                      data-state="active"
+                    >
+                      <activeItem.icon className="h-4 w-4 mr-2" />
+                      {activeItem.label}
+                      <ChevronDown className="h-4 w-4 ml-1" />
+                    </TabsTrigger>
+                  );
+                }
+
+                return (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-2 h-auto text-muted-foreground hover:text-foreground mb-2"
+                  >
+                    {t('More')}
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                );
+              })()}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
               {moreItems
                 .filter((item) => item.show && item.hasPermission !== false)
                 .map((item) => {
-                  const isActive = location.pathname.includes(item.to);
                   return (
                     <DropdownMenuItem
                       key={item.to}
                       onClick={() => navigate(item.to)}
                     >
                       <div className="flex items-center gap-2">
-                        <item.icon
-                          className={cn('size-4', {
-                            'text-primary': isActive,
-                          })}
-                        />
+                        <item.icon className={cn('size-4')} />
                         <span>{item.label}</span>
                       </div>
                     </DropdownMenuItem>

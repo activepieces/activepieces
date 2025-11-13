@@ -46,12 +46,12 @@ export const ExplorePage = () => {
   };
 
   return (
-    <>
+    <div className="pt-5">
       <DashboardPageHeader
         title={t('Explore Templates')}
         description={t('Browse and use pre-built flow templates')}
       />
-      <div className="px-4">
+      <div>
         <div className="mb-4">
           <InputWithIcon
             icon={<Search className="w-4 h-4" />}
@@ -126,6 +126,6 @@ export const ExplorePage = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };

@@ -100,8 +100,8 @@ const routes = [
     path: '/authenticate',
     element: <AuthenticatePage />,
   },
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.explore,
+  {
+    path: '/explore',
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Explore">
@@ -109,7 +109,7 @@ const routes = [
         </PageTitle>
       </ProjectDashboardLayout>
     ),
-  }),
+  },
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
     element: (
