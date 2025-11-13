@@ -31,8 +31,10 @@ const RadioGroupList = <T,>({
           <CardListItem
             key={index}
             className={cn(
-              `p-4 rounded-lg border  block hover:border-primary/50 hover:bg-muted/50`,
-              item.value === value && 'border-primary bg-primary/5',
+              `p-4 rounded-lg border block hover:border-primary/50 hover:bg-muted/50`,
+              {
+                'border-primary bg-primary/5': selected,
+              },
             )}
             onClick={() => onChange(item.value)}
             onMouseEnter={() => onHover && onHover(item.value)}
