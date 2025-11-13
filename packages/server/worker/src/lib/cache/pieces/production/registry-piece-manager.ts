@@ -115,7 +115,7 @@ async function createPiecePackageJson({ path, piecePackage }: {
         'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
         'version': `${piecePackage.pieceVersion}`,
         'dependencies': {
-            [piecePackage.pieceName]: piecePackage.pieceVersion,
+            [piecePackage.pieceName]: piecePackage.packageType === PackageType.REGISTRY ? piecePackage.pieceVersion : getPackageArchivePathForPiece({ archiveId: piecePackage.archiveId, archivePath: PACKAGE_ARCHIVE_PATH }),
         },
     }
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
