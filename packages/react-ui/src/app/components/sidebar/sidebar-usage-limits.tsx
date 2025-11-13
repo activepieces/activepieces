@@ -144,9 +144,7 @@ const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
   return (
     <div className="flex items-center flex-col justify-between gap-3  w-full">
       <div className="w-full flex text-xs justify-between">
-        <span className="flex items-center gap-1 font-bold">
-          {name}
-        </span>
+        <span className="flex items-center gap-1 font-bold">{name}</span>
         <div className="text-xs">
           {!isNil(value) && (
             <span>
