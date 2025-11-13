@@ -779,8 +779,8 @@ const SidebarSkeleton = ({ numOfItems }: { numOfItems: number }) => {
         <SidebarMenuItem key={index}>
           <SidebarMenuButton disabled className="px-2">
             <div className="flex items-center w-full">
-              <div className="w-4 h-4 mr-2 bg-gray-300 dark:bg-gray-600 rounded animate-pulse" />
-              <div className="bg-gray-300 w-full rounded dark:bg-gray-600 animate-pulse h-4" />
+              <div className="w-4 h-4 mr-2 bg-muted rounded animate-pulse" />
+              <div className="bg-muted w-full rounded animate-pulse h-4" />
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>

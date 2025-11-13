@@ -34,6 +34,10 @@ module.exports = {
       },
       colors: {
         'light-blue': 'hsl(var(--light-blue))',
+        neutral: {
+          200: 'hsl(var(--neutral-200))',
+          500: 'hsl(var(--neutral-500))',
+        },
         warning: {
           DEFAULT: 'hsl(var(--warning))',
           100: 'hsl(var(--warning-100))',
