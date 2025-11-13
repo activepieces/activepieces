@@ -182,6 +182,10 @@ async function markParentRunAsFailed({
         id: parentRunId,
     })
 
+    if (flowRun.status === FlowRunStatus.CANCELED) {
+        return
+    }
+
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')
 
