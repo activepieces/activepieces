@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -13,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { authenticationSession } from '@/lib/authentication-session';
+import { projectHooks } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
 
@@ -27,16 +28,14 @@ const ProjectSideBarItem = ({
   isCurrentProject,
 }: ProjectSideBarItemProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { setCurrentProject } = projectHooks.useCurrentProject();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
-  const handleClick = () => {
-    if (isCurrentProject) {
-      return;
-    }
-    navigate(
-      authenticationSession.appendProjectRoutePrefix(`/projects/${project.id}`),
-    );
+  const handleClick = async () => {
+    await setCurrentProject(queryClient, project);
+    navigate('/');
   };
 
   return (
