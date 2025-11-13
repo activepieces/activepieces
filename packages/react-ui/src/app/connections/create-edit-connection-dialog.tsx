@@ -56,7 +56,7 @@ import { formUtils } from '../../features/pieces/lib/form-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
-import { MutlipleAuthList, SelectedAuth } from './multiple-auth-list';
+import { MutliAuthList, SelectedAuth } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
@@ -333,7 +333,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
           hasMultipleAuth &&
           piece.auth &&
           selectedAuth && (
-            <MutlipleAuthList
+            <MutliAuthList
               pieceName={piece.name}
               pieceToClientIdMap={props.pieceToClientIdMap}
               selectedAuth={selectedAuth}

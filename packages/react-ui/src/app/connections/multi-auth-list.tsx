@@ -43,7 +43,7 @@ export type SelectedAuth =
       oauth2App: OAuth2App;
     };
 
-export const MutlipleAuthList = ({
+export const MutliAuthList = ({
   pieceAuth,
   setSelectedAuth,
   confirmSelectedAuth,
@@ -91,7 +91,7 @@ export const MutlipleAuthList = ({
           const predefinedOAuth2AppOption: RadioGroupListItem<SelectedAuth> | null =
             predefinedOAuth2App
               ? {
-                  label: `${auth.displayName}`,
+                  label: `${auth.displayName} ${t('(Easiest)')}`,
                   value: {
                     authProperty: auth,
                     grantType: OAuth2GrantType.AUTHORIZATION_CODE,
@@ -119,7 +119,7 @@ export const MutlipleAuthList = ({
             'This option gives you full control over the authentication process by using your own OAuth2 app credentials',
           );
           const userAppCredentialsOption: RadioGroupListItem<SelectedAuth> = {
-            label: `${auth.displayName} ${t('(Custom App Credentials)')}`,
+            label: `${auth.displayName} ${t('(Advanced)')}`,
             value: {
               authProperty: auth,
               grantType: OAuth2GrantType.AUTHORIZATION_CODE,
