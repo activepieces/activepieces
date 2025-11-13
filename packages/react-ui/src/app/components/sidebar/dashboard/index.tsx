@@ -98,7 +98,10 @@ export function ProjectDashboardSidebar() {
         variant="inset"
         collapsible="icon"
         onClick={() => setOpen(true)}
-        className={cn(state === 'collapsed' ? 'cursor-nesw-resize' : '')}
+        className={cn(
+          'cursor-nesw-resize',
+          'group',
+        )}
       >
         <AppSidebarHeader />
 
@@ -106,7 +109,10 @@ export function ProjectDashboardSidebar() {
         {state === 'expanded' && <div className="mt-1" />}
 
         <SidebarContent
-          className={cn(state === 'collapsed' ? 'gap-4' : 'gap-3')}
+          className={cn(
+            state === 'collapsed' ? 'gap-4' : 'gap-3',
+            'scrollbar-hover',
+          )}
         >
           <SidebarGroup>
             <SidebarGroupContent>

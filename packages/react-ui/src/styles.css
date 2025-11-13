@@ -166,3 +166,50 @@
 body {
   pointer-events: auto !important;
 }
+
+@layer utilities {
+  .scrollbar-hover {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-hover::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-hover::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    transition: opacity 0.2s;
+  }
+
+  .scrollbar-hover:hover::-webkit-scrollbar-thumb,
+  .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .scrollbar-hover:hover::-webkit-scrollbar-thumb,
+  .dark .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .scrollbar-hover:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark .scrollbar-hover:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .group:hover .scrollbar-hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark .group:hover .scrollbar-hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
