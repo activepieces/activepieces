@@ -7,7 +7,7 @@ export const getTask = createAction({
   auth: fragmentAuth,
   name: 'get_task',
   displayName: 'Get Task',
-  description: 'Retrieve details of a specific task from Fragment',
+  description: 'Retrieves details of a specific task.',
   props: {
     task_uid: Property.ShortText({
       displayName: 'Task UID',

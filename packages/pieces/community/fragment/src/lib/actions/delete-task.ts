@@ -7,7 +7,7 @@ export const deleteTask = createAction({
   auth: fragmentAuth,
   name: 'delete_task',
   displayName: 'Delete Task',
-  description: 'Delete a task from Fragment',
+  description: 'Deletes an existing task.',
   props: {
     task_uid: Property.ShortText({
       displayName: 'Task UID',

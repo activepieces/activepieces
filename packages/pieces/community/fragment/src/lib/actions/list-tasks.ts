@@ -1,13 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { fragmentAuth } from '../common/auth';
 import { fragmentClient } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 
 export const listTasks = createAction({
   auth: fragmentAuth,
   name: 'list_tasks',
   displayName: 'List Tasks',
-  description: 'Retrieve a list of tasks from Fragment',
+  description: 'Retrieves a list of tasks from.',
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',
@@ -15,9 +15,9 @@ export const listTasks = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Open', value: 'open' },
-          { label: 'Completed', value: 'completed' },
-          { label: 'Cancelled', value: 'cancelled' },
+          { label: 'TODO', value: 'TODO' },
+          { label: 'STARTED', value: 'STARTED' },
+          { label: 'DONE', value: 'DONE' },
         ],
       },
     }),
@@ -32,27 +32,18 @@ export const listTasks = createAction({
       required: false,
       defaultValue: 50,
     }),
-    offset: Property.Number({
-      displayName: 'Offset',
-      description: 'Number of tasks to skip for pagination (default: 0)',
-      required: false,
-      defaultValue: 0,
-    }),
   },
   async run(context) {
-    const queryParams: Record<string, string> = {};
+    const queryParams: QueryParams = {};
 
     if (context.propsValue.status) {
-      queryParams.status = context.propsValue.status;
+      queryParams['status'] = context.propsValue.status;
     }
     if (context.propsValue.assignee) {
-      queryParams.assignee = context.propsValue.assignee;
+      queryParams['assignee_uid'] = context.propsValue.assignee;
     }
     if (context.propsValue.limit !== undefined) {
-      queryParams.limit = context.propsValue.limit.toString();
-    }
-    if (context.propsValue.offset !== undefined) {
-      queryParams.offset = context.propsValue.offset.toString();
+      queryParams['limit'] = context.propsValue.limit.toString();
     }
 
     const response = await fragmentClient.makeRequest(
