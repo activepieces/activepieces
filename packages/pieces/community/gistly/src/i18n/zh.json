@@ -1,9 +1,9 @@
 {
-  "YouTube Transcripts": "YouTube 脚本",
-  "\nTo obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).\n": "\n获取您免费的 Gistly API 密钥， 在 [Gistly](https://gist.ly/youtube-transcript-api上注册，然后复制 [dashboard](https://api-portal.gist.ly/中可用的密钥。\n",
+  "YouTube Transcripts": "YouTube Transcripts",
+  "\nTo obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).\n": "\nTo obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).\n",
   "Get Transcript": "Get Transcript",
-  "Fetches transcript of a YouTube video.": "获取 YouTube 视频的字幕。",
+  "Fetches transcript of a YouTube video.": "Fetches transcript of a YouTube video.",
   "YouTube URL": "YouTube URL",
-  "Merge Text": "合并文本",
-  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "如果为 true，字幕将合并为一个单一文本，而不是时间戳区块。"
+  "Merge Text": "Merge Text",
+  "If true, the transcript will be merged into a single text instead of timestamped chunks.": "If true, the transcript will be merged into a single text instead of timestamped chunks."
 }
