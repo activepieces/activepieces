@@ -1,4 +1,4 @@
-import { googleSheetsOAuth2 } from '../../index';
+import { googleSheetsAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	areSheetIdsValid,
@@ -12,7 +12,7 @@ import { getWorkSheetName } from '../triggers/helpers';
 import { commonProps } from '../common/props';
 
 export const createColumnAction = createAction({
-	auth: googleSheetsOAuth2,
+	auth: googleSheetsAuth,
 	name: 'create-column',
 	displayName: 'Create Spreadsheet Column',
 	description: 'Adds a new column to a spreadsheet.',

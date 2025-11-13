@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { googleSheetsOAuth2 } from '../..';
+import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid } from '../common/common';
 
@@ -12,7 +12,7 @@ export const exportSheetAction = createAction({
   name: 'export_sheet',
   displayName: 'Export Sheet',
   description: 'Export a Google Sheets tab to CSV or TSV format.',
-  auth: googleSheetsOAuth2,
+  auth: googleSheetsAuth,
   props: {
     ...commonProps,
     format: Property.StaticDropdown({

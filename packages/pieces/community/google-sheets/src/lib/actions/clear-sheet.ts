@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
-import { googleSheetsOAuth2 } from '../..';
+import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
 
 export const clearSheetAction = createAction({
-  auth: googleSheetsOAuth2,
+  auth: googleSheetsAuth,
   name: 'clear_sheet',
   description: 'Clears all rows on an existing sheet',
   displayName: 'Clear Sheet',

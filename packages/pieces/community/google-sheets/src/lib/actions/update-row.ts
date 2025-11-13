@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, Dimension, objectToArray, ValueInputOption } from '../common/common';
-import { googleSheetsOAuth2 } from '../..';
+import { googleSheetsAuth } from '../..';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
@@ -8,7 +8,7 @@ import {  isString } from '@activepieces/shared';
 import { commonProps, rowValuesProp } from '../common/props';
 
 export const updateRowAction = createAction({
-  auth: googleSheetsOAuth2,
+  auth: googleSheetsAuth,
   name: 'update_row',
   description: 'Overwrite values in an existing row',
   displayName: 'Update Row',

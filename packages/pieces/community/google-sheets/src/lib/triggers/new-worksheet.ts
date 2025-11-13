@@ -1,13 +1,13 @@
-import { googleSheetsOAuth2, googleSheetsServiceAccountAuth } from '../../index';
+import { googleSheetsAuth } from '../../index';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 
 import { google } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
 import { isNil } from '@activepieces/shared';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
-import { createGoogleAuthForClient } from '../common/common';
 
 export const newWorksheetTrigger = createTrigger({
-	auth: [googleSheetsOAuth2, googleSheetsServiceAccountAuth],
+	auth: googleSheetsAuth,
 	name: 'new-worksheet',
 	displayName: 'New Worksheet',
 	description: 'Triggers when a worksheet is created in a spreadsheet.',
@@ -18,7 +18,8 @@ export const newWorksheetTrigger = createTrigger({
 	},
 	async onEnable(context) {
 		const ids: number[] = [];
-		const authClient = await createGoogleAuthForClient(context.auth);
+		const authClient = new OAuth2Client();
+		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId,
@@ -38,7 +39,8 @@ export const newWorksheetTrigger = createTrigger({
 	},
 	async test(context) {
 		const worksheets = [];
-		const authClient = await createGoogleAuthForClient(context.auth);
+		const authClient = new OAuth2Client();
+		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId,
@@ -55,7 +57,8 @@ export const newWorksheetTrigger = createTrigger({
 		const existingIds = (await context.store.get<string>('worksheets')) ?? '[]';
 		const parsedExistingIds = JSON.parse(existingIds) as number[];
 
-		const authClient = await createGoogleAuthForClient(context.auth);
+		const authClient = new OAuth2Client();
+		authClient.setCredentials(context.auth);
 
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 

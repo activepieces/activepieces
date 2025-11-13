@@ -1,5 +1,5 @@
 import { createTrigger,PiecePropValueSchema,TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleSheetsOAuth2 } from '../../index';
+import { googleSheetsAuth } from '../../index';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
@@ -9,10 +9,10 @@ import { includeTeamDrivesProp } from '../common/props';
 type Props = {
     includeTeamDrives?: boolean;
 };
-const polling: Polling<PiecePropValueSchema<typeof googleSheetsOAuth2>, Props> = {
+const polling: Polling<PiecePropValueSchema<typeof googleSheetsAuth>, Props> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth, propsValue, lastFetchEpochMS }) {
-        const authValue = auth as PiecePropValueSchema<typeof googleSheetsOAuth2>;
+        const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
         const q = ["mimeType='application/vnd.google-apps.spreadsheet'",'trashed = false'];
         if (lastFetchEpochMS) {
             q.push(`createdTime > '${dayjs(lastFetchEpochMS).toISOString()}'`);
@@ -45,7 +45,7 @@ const polling: Polling<PiecePropValueSchema<typeof googleSheetsOAuth2>, Props> =
     },
 };
 export const newSpreadsheetTrigger = createTrigger({
-    auth: googleSheetsOAuth2,
+    auth: googleSheetsAuth,
     name: 'new-spreadsheet',
     displayName: 'New Spreadsheet',
     description: 'Triggers when a new spreadsheet is created.',

@@ -1,11 +1,11 @@
-import { googleSheetsOAuth2 } from '../../index';
+import { googleSheetsAuth } from '../../index';
 import { createAction } from '@activepieces/pieces-framework';
 import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 
 export const copyWorksheetAction = createAction({
-	auth: googleSheetsOAuth2,
+	auth: googleSheetsAuth,
 	name: 'copy-worksheet',
 	displayName: 'Copy Worksheet',
 	description: 'Creates a new worksheet by copying an existing one.',

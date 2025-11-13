@@ -1,10 +1,10 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
-import { googleSheetsOAuth2 } from '../..';
+import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
 
 export const findRowByNumAction = createAction({
-  auth: googleSheetsOAuth2,
+  auth: googleSheetsAuth,
   name: 'find_row_by_num',
   description: 'Get a row in a Google Sheet by row number',
   displayName: 'Get Row',

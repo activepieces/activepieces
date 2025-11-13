@@ -19,12 +19,12 @@ import {
 	WebhookInformation,
 } from './helpers';
 
-import { googleSheetsOAuth2 } from '../..';
+import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({
-	auth: googleSheetsOAuth2,
+	auth: googleSheetsAuth,
 	name: 'googlesheets_new_row_added',
 	displayName: 'New Row Added',
 	description: 'Triggers when a new row is added to bottom of a spreadsheet.',
@@ -116,7 +116,7 @@ export const newRowAddedTrigger = createTrigger({
 		const range = `${sheetName}!${oldRowCount + 1}:${currentRowCount}`;
 
 		const newRowValues = await getWorkSheetValues(
-			context.auth as PiecePropValueSchema<typeof googleSheetsOAuth2>,
+			context.auth as PiecePropValueSchema<typeof googleSheetsAuth>,
 			spreadsheetId,
 			range,
 		);
