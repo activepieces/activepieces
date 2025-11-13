@@ -31,7 +31,7 @@ export const flowWorker = (log: FastifyBaseLogger): {
                 await workerMachine.init(response, log)
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
-                smartPieceCache(log).preWarmCache()
+                smartPieceCache(log).preWarmCache(token)
             },
         })
     },

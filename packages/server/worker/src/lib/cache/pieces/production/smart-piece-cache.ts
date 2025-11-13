@@ -1,15 +1,15 @@
-import { isEmpty, PackageType, PiecePackage, PieceType } from "@activepieces/shared"
+import { assertNotEqual, isEmpty, PackageType, PiecePackage, PieceType } from "@activepieces/shared"
 import { FastifyBaseLogger } from "fastify"
 import { workerRedisConnections } from "../../../utils/worker-redis"
 import { apDayjsDuration, fileSystemUtils } from "@activepieces/server-shared"
-import { GLOBAL_CACHE_COMMON_PATH } from "../../worker-cache"
-import { registryPieceManager } from "./registry-piece-manager"
 import { join } from "node:path"
 import writeFileAtomic from 'write-file-atomic'
+import { getArchive } from "../../../utils/flow-engine-util"
+import { executionFiles } from "../../execution-files"
 
 const USED_PIECES_REDIS_KEY = 'used-piece'
 const usedPiecesMemoryCache : Record<string, boolean> = {}
-const usedPiecesRedisCache = (piece: PiecePackage) => `${USED_PIECES_REDIS_KEY}:${piece.pieceName}:${piece.pieceVersion}:${piece.packageType}`
+const usedPiecesRedisCache = (piece: PiecePackage) => `${USED_PIECES_REDIS_KEY}:${piece.pieceName}:${piece.pieceVersion}:${piece.pieceType}:${piece.packageType}:${piece.packageType === PackageType.ARCHIVE ? `${piece.archiveId}` : 'NULL'}`
 const piecePath = (projectPath: string, piece: PiecePackage) => join(projectPath, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const smartPieceCache = (log: FastifyBaseLogger) => ({
@@ -35,16 +35,13 @@ export const smartPieceCache = (log: FastifyBaseLogger) => ({
         }))
     },
 
-    async preWarmCache(): Promise<void> { 
-        const pieces = await getCachedPiecesInRedis()
+    async preWarmCache(token: string): Promise<void> { 
+        const pieces = await getCachedPiecesInRedis(token)
         if (isEmpty(pieces)) {
             return
         }
-        await registryPieceManager(log).install({
-            projectPath: GLOBAL_CACHE_COMMON_PATH,
-            pieces,
-            skipRedisWrite: true,
-        })
+        const customPiecesPath = await executionFiles(log).getCustomPiecesPath({ platformId: "placeholder" })
+        await executionFiles(log).installRegistryPieces(pieces, customPiecesPath)
     }
 
 })
@@ -69,26 +66,28 @@ async function markPieceAsInstalledInMemAndDisk(pieceFolder: string): Promise<vo
   }, expireDuration)
 }
 
-async function getCachedPiecesInRedis(): Promise<PiecePackage[]> {
+async function getCachedPiecesInRedis(token: string): Promise<PiecePackage[]> {
   const redis = await workerRedisConnections.useExisting()
   const piecesKeys = await redis.keys(`${USED_PIECES_REDIS_KEY}:*`)
-  return piecesKeys.map((key) => {
-      const [_, pieceName, pieceVersion, packageType] = key.split(':')
+  return Promise.all(piecesKeys.map(async (key) => {
+      const [_, pieceName, pieceVersion, pieceType, packageType, archiveId] = key.split(':')
       if (packageType === PackageType.REGISTRY) {
           return {
               pieceName,
               pieceVersion,
-              pieceType: PieceType.OFFICIAL,
+              pieceType: pieceType as PieceType,
               packageType: PackageType.REGISTRY,
           }
       }
+      assertNotEqual(archiveId, 'NULL', 'archiveId', 'NULL')
+      const archive = await getArchive(token, archiveId)
       return {
           pieceName,
           pieceVersion,
-          pieceType: PieceType.CUSTOM,
+          pieceType: pieceType as PieceType,
           packageType: PackageType.ARCHIVE,
-          archiveId: '',
-          archive: null,
+          archiveId: archiveId!,
+          archive,
       }
-  })
+  }))
 }

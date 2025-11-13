@@ -63,7 +63,7 @@ const GetAllFlowsByProjectParams = {
 
 const GetFileRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.WORKER] as const,
     },
     schema: {
         params: Type.Object({

@@ -22,6 +22,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         codeSteps,
         customPiecesPath,
     }: ProvisionParams): Promise<void> {
+
         const startTime = performance.now()
 
         await fileSystemUtils.threadSafeMkdir(GLOBAL_CACHE_PATH_LATEST_VERSION)
@@ -51,6 +52,15 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
             cacheHit,
         }, 'Installed engine in sandbox')
 
+        await this.installRegistryPieces(pieces, customPiecesPath)
+
+        log.info({
+            timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
+        }, 'Sandbox installation complete')
+
+    },
+
+    async installRegistryPieces(pieces: PiecePackage[], customPiecesPath: string): Promise<void> {
         const devPieces = workerMachine.getSettings().DEV_PIECES || []
         const nonDevPieces = pieces.filter((p) => !devPieces.includes(getPieceNameFromAlias(p.pieceName)))
 
@@ -81,11 +91,6 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
                 timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
             }, 'Installed custom pieces in sandbox')
         }
-
-        log.info({
-            timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
-        }, 'Sandbox installation complete')
-
     },
 })
 
