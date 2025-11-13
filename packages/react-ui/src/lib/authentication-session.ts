@@ -10,6 +10,7 @@ import {
 import { ApStorage } from './ap-browser-storage';
 import { authenticationApi } from './authentication-api';
 const tokenKey = 'token';
+const projectIdKey = 'projectId';
 
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
@@ -17,6 +18,7 @@ export const authenticationSession = {
       ApStorage.setInstanceToSessionStorage();
     }
     ApStorage.getInstance().setItem(tokenKey, response.token);
+    ApStorage.getInstance().setItem(projectIdKey, response.projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isJwtExpired(token: string): boolean {
@@ -38,12 +40,7 @@ export const authenticationSession = {
   },
 
   getProjectId(): string | null {
-    const token = this.getToken();
-    if (isNil(token)) {
-      return null;
-    }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.projectId;
+    return ApStorage.getInstance().getItem(projectIdKey) ?? null;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
@@ -76,14 +73,17 @@ export const authenticationSession = {
       platformId,
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(projectIdKey, result.projectId);
     window.location.href = '/';
   },
   async switchToProject(projectId: string) {
-    if (authenticationSession.getProjectId() === projectId) {
+    const currentProjectId = ApStorage.getInstance().getItem(projectIdKey);
+    if (currentProjectId === projectId) {
       return;
     }
     const result = await authenticationApi.switchProject({ projectId });
     ApStorage.getInstance().setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(projectIdKey, projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
@@ -95,6 +95,7 @@ export const authenticationSession = {
   },
   clearSession() {
     ApStorage.getInstance().removeItem(tokenKey);
+    ApStorage.getInstance().removeItem(projectIdKey);
   },
   logOut() {
     this.clearSession();

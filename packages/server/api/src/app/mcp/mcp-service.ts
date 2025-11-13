@@ -6,6 +6,7 @@ import {
     Cursor,
     ErrorCode,
     isNil,
+    Mcp,
     McpTool,
     mcpToolNaming,
     McpToolRequest,
@@ -28,6 +29,14 @@ export const mcpRepo = repoFactory(McpEntity)
 const mcpToolRepo = repoFactory(McpToolEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
+    async getOneById({ id }: GetOneByIdParams): Promise<Mcp | null> {
+        const mcp = await mcpRepo().findOne({ where: { id } })
+        if (isNil(mcp)) {
+            return null
+        }
+        return mcp
+    },
+
     async create({ projectId, name, externalId }: CreateParams): Promise<McpWithTools> {
         const mcp = await mcpRepo().save({
             id: apId(),
@@ -213,6 +222,10 @@ async function findToolId(mcpId: ApId, tool: McpToolRequest): Promise<{ id: ApId
             return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: tool.flowId } }).then(tool => tool ? { id: tool.id, externalId: tool.externalId } : undefined)
         }
     }
+}
+
+type GetOneByIdParams = {
+    id: ApId
 }
 
 type CreateParams = {

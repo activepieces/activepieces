@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { apVersionUtil } from '@activepieces/server-shared'
+import { apVersionUtil, platformAdminOnly } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -129,8 +129,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
             edition: req.query.edition,
-            platformId: req.principal.type === PrincipalType.UNKNOWN 
-            || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
+            platformId: req.principal.type === PrincipalType.UNKNOWN
+                || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id,
         })
         return pieces
     })
@@ -229,7 +229,7 @@ const OptionsPieceRequest = {
 
 const ListVersionsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPE
     },
     schema: {
         querystring: ListVersionRequestQuery,
@@ -238,6 +238,6 @@ const ListVersionsRequest = {
 
 const SyncPiecesRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: platformAdminOnly([PrincipalType.USER])
     },
 }

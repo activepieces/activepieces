@@ -3,7 +3,6 @@ import {
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
     PlatformWithoutSensitiveData,
     PrincipalType,
@@ -26,11 +25,11 @@ import { system } from '../helper/system/system'
 import { projectRepo } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
 import { platformRepo, platformService } from './platform.service'
+import { platformAdminOnly, publicPlatformAccess } from '@activepieces/server-shared'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, res)
         await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
         const { smtp } = req.body
         if (smtp) {
@@ -45,7 +44,8 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
-        if (req.principal.platform.id !== req.params.id) {
+        const platformId = req.params.id
+        if (platformId !== req.principal.platform.id) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
@@ -108,8 +108,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
 const UpdatePlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: UpdatePlatformRequestBody,
@@ -125,8 +124,7 @@ const UpdatePlatformRequest = {
 
 const GetPlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         tags: ['platforms'],
@@ -143,8 +141,7 @@ const GetPlatformRequest = {
 
 const DeletePlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({

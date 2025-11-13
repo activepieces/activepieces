@@ -1,6 +1,6 @@
 import { Writable } from 'stream'
 import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata, SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from '@activepieces/common-ai'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { engineAccess, exceptionHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, EnginePrincipal, ErrorCode, isNil, PlatformUsageMetric, PrincipalType } from '@activepieces/shared'
 import proxy from '@fastify/http-proxy'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -19,7 +19,7 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
         upstream: '',
         disableRequestLogging: false,
         config: {
-            allowedPrincipals: [PrincipalType.ENGINE],
+            security: engineAccess()
         },
         replyOptions: {
             rewriteRequestHeaders: (_request, headers) => {

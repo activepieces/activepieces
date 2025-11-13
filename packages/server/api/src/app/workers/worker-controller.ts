@@ -1,4 +1,4 @@
-import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { AuthorizationType, MigrateJobsRequest, rejectedPromiseHandler, RouteKind, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
 import { ExecutionType, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
@@ -15,7 +15,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/save-payloads', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            } as const,
         },
         schema: {
             body: SavePayloadRequest,
@@ -45,7 +50,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/migrate-job', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            } as const,
         },
         schema: {
             body: MigrateJobsRequest,
@@ -56,7 +66,12 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     
     app.post('/submit-payloads', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.WORKER,
+                },
+            } as const,
         },
         schema: {
             body: SubmitPayloadsRequest,

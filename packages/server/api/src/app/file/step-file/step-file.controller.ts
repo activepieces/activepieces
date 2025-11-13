@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, engineAccess, publicAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -88,7 +88,7 @@ async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Om
 
 const SignedFileRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         querystring: Type.Object({
@@ -99,7 +99,7 @@ const SignedFileRequest = {
 
 const UpsertStepFileRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
     schema: {
         body: StepFileUpsertRequest,

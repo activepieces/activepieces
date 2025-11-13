@@ -23,6 +23,8 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from './flow-run-service'
+import { projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
+import { FlowRunEntity } from './flow-run-entity'
 
 const DEFAULT_PAGING_LIMIT = 10
 
@@ -155,8 +157,9 @@ const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['pauseMetadata', 'steps']
 
 const ListRequest = {
     config: {
-        permission: Permission.READ_RUN,
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_RUN, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -171,8 +174,10 @@ const ListRequest = {
 
 const GetRequest = {
     config: {
-        permission: Permission.READ_RUN,
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.SERVICE, PrincipalType.USER], Permission.READ_RUN,{
+            type: ProjectResourceType.TABLE,
+            tableName: FlowRunEntity,
+        }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -189,7 +194,7 @@ const GetRequest = {
 
 const ResumeFlowRunRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         params: Type.Object({
@@ -201,8 +206,9 @@ const ResumeFlowRunRequest = {
 
 const RetryFlowRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_RUN,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         params: Type.Object({
@@ -237,8 +243,9 @@ const ArchiveFlowRunRequest = {
 
 const BulkRetryFlowRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_RUN,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: BulkActionOnRunsRequestBody,

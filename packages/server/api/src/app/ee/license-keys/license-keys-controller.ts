@@ -2,6 +2,7 @@ import { ActivepiecesError, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyReq
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { licenseKeysService } from './license-keys-service'
+import { platformAdminOnly, publicAccess } from '@activepieces/server-shared'
 
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -12,9 +13,9 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/verify', VerifyLicenseKeyRequest, async (req) => {
-        const { platformId, licenseKey } = req.body
+        const { licenseKey } = req.body
         const key = await licenseKeysService(app.log).verifyKeyOrReturnNull({
-            platformId,
+            platformId: req.principal.platform.id,
             license: licenseKey,
         })
         if (isNil(key)) {
@@ -25,17 +26,14 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        await licenseKeysService(app.log).applyLimits(platformId, key)
+        await licenseKeysService(app.log).applyLimits(req.principal.platform.id, key)
         return key
     })
 
 }
 const VerifyLicenseKeyRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.UNKNOWN,
-            PrincipalType.USER,
-        ],
+        security: platformAdminOnly([PrincipalType.USER])
     },
     schema: {
         body: VerifyLicenseKeyRequestBody,
@@ -44,10 +42,7 @@ const VerifyLicenseKeyRequest = {
 
 const GetLicenseKeyRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.UNKNOWN,
-            PrincipalType.USER,
-        ],
+        security: publicAccess(),
     },
     schema: {
         params: Type.Object({

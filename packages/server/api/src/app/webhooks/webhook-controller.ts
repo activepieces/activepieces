@@ -17,6 +17,7 @@ import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
 import { webhookService } from './webhook.service'
+import { publicAccess, RouteKind } from '@activepieces/server-shared'
 
 const tracer = trace.getTracer('webhook-controller')
 
@@ -159,8 +160,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 const WEBHOOK_PARAMS = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        skipAuth: true,
+        security: publicAccess(),
         rawBody: true,
     },
     schema: {

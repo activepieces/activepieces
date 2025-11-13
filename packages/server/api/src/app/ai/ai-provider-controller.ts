@@ -3,6 +3,7 @@ import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'
+import { platformAdminOnly, publicPlatformAccess, RouteKind } from '@activepieces/server-shared'
 
 export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAIProviders, async (request) => {
@@ -22,7 +23,7 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAIProviders = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.ENGINE] as const)
     },
     schema: {
         response: {
@@ -33,7 +34,7 @@ const ListAIProviders = {
 
 const CreateAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER])
     },
     schema: {
         body: CreateAIProviderRequest,
@@ -42,7 +43,7 @@ const CreateAIProvider = {
 
 const DeleteAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER])
     },
     schema: {
         params: Type.Object({

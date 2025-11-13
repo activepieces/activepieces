@@ -3,6 +3,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { mcpService } from '../mcp-service'
 import { mcpServerHandler } from './mcp-server-handler'
 import { mcpSessionManager } from './mcp-session-manager'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:token/sse', SSERequest, async (req, reply) => {
@@ -48,7 +49,7 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
 
 const MessagesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         querystring: Type.Object({
@@ -59,7 +60,7 @@ const MessagesRequest = {
 
 const SSERequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         params: Type.Object({

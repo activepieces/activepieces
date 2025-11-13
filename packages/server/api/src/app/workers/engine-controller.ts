@@ -6,6 +6,8 @@ import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authoriza
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { engineResponseWatcher } from './engine-response-watcher'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -54,7 +56,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetAllFlowsByProjectParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
@@ -63,7 +70,12 @@ const GetAllFlowsByProjectParams = {
 
 const GetFileRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         params: Type.Object({
@@ -74,7 +86,12 @@ const GetFileRequestParams = {
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.ENGINE,
+            },
+        } as const,
     },
     schema: {
         querystring: GetFlowVersionForWorkerRequest,

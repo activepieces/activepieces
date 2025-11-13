@@ -1,9 +1,11 @@
-import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, TodoEnvironment, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, Permission, PrincipalType, ResolveTodoRequestQuery, SeekPage, TodoEnvironment, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { userService } from '../user/user-service'
 import { todoService } from './todo.service'
+import { engineAccess, projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
+import { TodoEntity } from './todo.entity'
 
 const DEFAULT_LIMIT = 10
 const DEFAULT_CURSOR = null
@@ -101,7 +103,10 @@ const DeleteTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TODOS, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity,
+        }),
     },
 }
 
@@ -114,7 +119,7 @@ const ListTodoAssigneesRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
 
 }
@@ -125,7 +130,9 @@ const ListTodosRequest = {
         querystring: ListTodosQueryParams,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: projectAccess([PrincipalType.USER], Permission.READ_TODOS, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
 }
 
@@ -134,7 +141,7 @@ const CreateTodoRequest = {
         body: CreateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
 }
 
@@ -146,7 +153,7 @@ const RequestResolveTodoRequest = {
         querystring: ResolveTodoRequestQuery,
     },
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
 }
 
@@ -157,7 +164,10 @@ const GetTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE] as const,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE], Permission.READ_TODOS, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity!,
+        }),
     },
 }
 
@@ -169,6 +179,9 @@ const UpdateTodoRequest = {
         body: UpdateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TODOS, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity,
+        }),
     },
 }

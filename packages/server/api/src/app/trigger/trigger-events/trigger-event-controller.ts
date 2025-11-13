@@ -1,12 +1,14 @@
 
 import {
     ListTriggerEventsRequest,
+    Permission,
     PrincipalType,
     SaveTriggerEventRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerEventService } from './trigger-event.service'
+import { ProjectResourceType, projectAccess } from '@activepieces/server-shared'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -15,7 +17,7 @@ export const triggerEventController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.post('/', SaveTriggerEventRequestParams, async (request) => {
         return triggerEventService(request.log).saveEvent({
-            projectId: request.principal.projectId,
+            projectId: request.project.id,
             flowId: request.body.flowId,
             payload: request.body.mockData,
         })
@@ -24,7 +26,7 @@ export const triggerEventController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.get('/', ListTriggerEventsRequestParams, async (request) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.query.flowId,
-            projectId: request.principal.projectId,
+            projectId: request.project.id,
         })
 
         return triggerEventService(request.log).list({
@@ -43,7 +45,9 @@ const ListTriggerEventsRequestParams = {
         querystring: ListTriggerEventsRequest,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,   
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
 }
 
@@ -52,6 +56,8 @@ const SaveTriggerEventRequestParams = {
         body: SaveTriggerEventRequest,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }

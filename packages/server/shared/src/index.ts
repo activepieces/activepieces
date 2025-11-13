@@ -14,6 +14,7 @@ export * from './lib/exec'
 export * from './lib/system-props'
 export * from './lib/env-migrations'
 export * from './lib/ap-axios'
+export * from './lib/authorization'
 
 export * from './lib/redis/distributed-lock-factory'
 export * from './lib/redis/distributed-store-factory'

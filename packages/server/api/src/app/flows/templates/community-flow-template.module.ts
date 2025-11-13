@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, publicAccess } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     FlowTemplate,
@@ -21,7 +21,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             schema: {
                 querystring: ListFlowTemplatesRequest,

@@ -4,6 +4,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformUtils } from '../../../platform/platform.utils'
 import { otpService } from './otp-service'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const otpController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateOtpRequest, async (req, res) => {
@@ -19,7 +20,7 @@ export const otpController: FastifyPluginAsyncTypebox = async (app) => {
 
 const CreateOtpRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         body: CreateOtpRequestBody,

@@ -12,7 +12,3 @@ export const SERVICE_KEY_SECURITY_OPENAPI = {
     apiKey: [],
 }
 
-export enum EndpointScope {
-    PLATFORM = 'PLATFORM',
-    PROJECT = 'PROJECT',
-}

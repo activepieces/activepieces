@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 
 export const VerifyLicenseKeyRequestBody = Type.Object({
     licenseKey: Type.String(),
-    platformId: Type.String(),
 })
 
 export type VerifyLicenseKeyRequestBody = Static<typeof VerifyLicenseKeyRequestBody>
