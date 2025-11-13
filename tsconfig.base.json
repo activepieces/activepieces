@@ -76,6 +76,9 @@
       "@activepieces/piece-housecall-pro": [
         "packages/pieces/community/housecall-pro/src/index.ts"
       ],
+      "@activepieces/piece-chat-aid": [
+        "packages/pieces/community/chat-aid/src/index.ts"
+      ],
       "@activepieces/piece-videoask": [
         "packages/pieces/community/videoask/src/index.ts"
       ],
@@ -84,6 +87,12 @@
       ],
       "@activepieces/piece-formspark": [
         "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-tableau": [
+        "packages/pieces/community/tableau/src/index.ts"
+      ],
+      "@activepieces/piece-fragment":[
+        "packages/pieces/community/fragment/src/index.ts"
       ]
     },
     "resolveJsonModule": true
