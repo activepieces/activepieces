@@ -25,41 +25,41 @@ const RadioGroupList = <T,>({
 }) => {
   return (
     <div className={cn('space-y-4', className)}>
-      {items.map((item, index) => {
-        const selected = item.value === value;
-        return (
-          <CardListItem
-            key={index}
-            className={cn(
-              `p-4 rounded-lg border block hover:border-primary/50 hover:bg-muted/50`,
-              {
-                'border-primary bg-primary/5': selected,
-              },
-            )}
-            onClick={() => onChange(item.value)}
-            onMouseEnter={() => onHover && onHover(item.value)}
-            onMouseLeave={() => onHover && onHover(null)}
-          >
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-md font-medium flex items-center gap-2">
-                {item.label}
-                {item.labelExtra}
-              </h4>
-              <div className="flex-shrink-0 w-5 h-5">
-                <RadioGroup value={JSON.stringify(value)}>
+      <RadioGroup value={JSON.stringify(value)}>
+        {items.map((item, index) => {
+          const selected = item.value === value;
+          return (
+            <CardListItem
+              key={index}
+              className={cn(
+                `p-4 rounded-lg border block hover:border-primary/50 hover:bg-muted/50`,
+                {
+                  'border-primary bg-primary/5': selected,
+                },
+              )}
+              onClick={() => onChange(item.value)}
+              onMouseEnter={() => onHover && onHover(item.value)}
+              onMouseLeave={() => onHover && onHover(null)}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text-md font-medium flex items-center gap-2">
+                  {item.label}
+                  {item.labelExtra}
+                </h4>
+                <div className="flex-shrink-0 w-5 h-5">
                   <RadioGroupItem
-                    value={selected ? JSON.stringify(item.value) : ''}
+                    value={JSON.stringify(item.value)}
                     className="scale-125"
                   ></RadioGroupItem>
-                </RadioGroup>
+                </div>
               </div>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {item.description}
-            </div>
-          </CardListItem>
-        );
-      })}
+              <div className="text-sm text-muted-foreground">
+                {item.description}
+              </div>
+            </CardListItem>
+          );
+        })}
+      </RadioGroup>
     </div>
   );
 };

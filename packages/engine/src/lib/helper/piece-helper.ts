@@ -171,12 +171,11 @@ const validateAuth = async ({
     authValue: AppConnectionValue
     pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
 }): Promise<ExecuteValidateAuthResponse> => {
-    if (isNil(authValue) || isNil(pieceAuth)) {
+    if (isNil(pieceAuth)) {
         return {
             valid: true,
         }
     }
-    
     const usedPieceAuth = getAuthPropertyForValue({
         authValueType: authValue.type,
         pieceAuth,

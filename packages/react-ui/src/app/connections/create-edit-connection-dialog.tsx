@@ -363,7 +363,12 @@ const CreateOrEditConnectionDialog = React.memo(
   }: ConnectionDialogProps) => {
     const { data: pieceToClientIdMap, isPending: loadingPieceToClientIdMap } =
       oauthAppsQueries.usePieceToClientIdMap();
-
+    const hasOAuth2PieceAuth =
+      !isNil(piece.auth) &&
+      ((!Array.isArray(piece.auth) &&
+        piece.auth.type === PropertyType.OAUTH2) ||
+        (Array.isArray(piece.auth) &&
+          piece.auth.some((auth) => auth.type === PropertyType.OAUTH2)));
     return (
       <Dialog
         open={open}
@@ -374,12 +379,30 @@ const CreateOrEditConnectionDialog = React.memo(
           onInteractOutside={(e) => e.preventDefault()}
           className="max-h-[70vh] px-0  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
         >
-          {loadingPieceToClientIdMap || isNil(pieceToClientIdMap) ? (
-            <SkeletonList numberOfItems={2} className="h-7"></SkeletonList>
+          {loadingPieceToClientIdMap && hasOAuth2PieceAuth ? (
+            <>
+              <DialogHeader className="mb-0">
+                <DialogTitle className="px-5">
+                  <div className="flex items-center gap-2">
+                    {reconnectConnection
+                      ? t('Reconnect {displayName} Connection', {
+                          displayName: reconnectConnection.displayName,
+                        })
+                      : t('Connect to {displayName}', {
+                          displayName: piece.displayName,
+                        })}
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+              <SkeletonList
+                numberOfItems={4}
+                className="h-7 mt-2"
+              ></SkeletonList>
+            </>
           ) : (
             <CreateOrEditConnectionDialogContent
               piece={piece}
-              pieceToClientIdMap={pieceToClientIdMap}
+              pieceToClientIdMap={pieceToClientIdMap ?? {}}
               setOpen={setOpen}
               reconnectConnection={reconnectConnection}
               isGlobalConnection={isGlobalConnection}
