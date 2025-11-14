@@ -38,7 +38,8 @@ const ProjectSideBarItem = ({
                 onClick={() => handleProjectSelect(project.id)}
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
+                  isCurrentProject &&
+                    'bg-sidebar-active hover:!bg-sidebar-active',
                   'relative cursor-pointer',
                 )}
               >
