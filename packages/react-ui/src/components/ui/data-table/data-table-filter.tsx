@@ -3,7 +3,7 @@ import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 import { useSearchParams } from 'react-router-dom';
 
-import { DateTimePickerWithRange } from '../date-time-picker-range';
+import { DateTimePickerWithRange, PresetKey } from '../date-time-picker-range';
 
 import { DataTableInputCheckbox } from './data-table-checkbox-filter';
 import { DataTableInputPopover } from './data-table-input-popover';
@@ -25,6 +25,7 @@ type InputFilterProps = {
 };
 type DateFilterProps = {
   type: 'date';
+  defaultPresetName?: PresetKey;
 };
 type CheckboxjhFilterProps = {
   type: 'checkbox';
@@ -130,6 +131,7 @@ export function DataTableFilter<TData, TValue>({
 
       return (
         <DateTimePickerWithRange
+          defaultSelectedRange={props.defaultPresetName}
           presetType="past"
           onChange={handleFilterChange}
           from={from ?? undefined}

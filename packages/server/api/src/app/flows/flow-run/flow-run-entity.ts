@@ -33,8 +33,8 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
             nullable: true,
         },
-        logsFileId: { 
-            ...ApIdSchema, 
+        logsFileId: {
+            ...ApIdSchema,
             nullable: true,
         },
         parentRunId: {
