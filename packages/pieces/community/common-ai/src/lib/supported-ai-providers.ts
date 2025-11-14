@@ -506,7 +506,7 @@ It is strongly recommended that you add your credit card information to your Ope
             headerName: 'x-goog-api-key',
             bearer: false,
         },
-        streaming: false,
+        streaming: true,
         languageModels: [
             {
                 displayName: 'Gemini 2.5 Pro',

@@ -65,14 +65,19 @@ export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
                         }
                         else {
                             try {
-                                await reply.send(JSON.parse(buffer.toString()))
+                                const responseText = buffer.toString()
+                                const parsedResponse = JSON.parse(responseText)
+                                await reply.send(parsedResponse)
                             }
                             catch (error) {
                                 app.log.error({
                                     projectId,
                                     request,
                                     response: buffer.toString(),
-                                }, 'Error response from AI provider')
+                                    error,
+                                }, 'Error parsing AI provider response')
+                                // Send the raw response if JSON parsing fails, let the AI SDK handle it
+                                await reply.status(200).send(buffer.toString())
                                 return
                             }
                         }
