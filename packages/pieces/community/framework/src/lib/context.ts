@@ -18,13 +18,14 @@ import {
 import { PieceAuthProperty } from './property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
+
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
   Props extends InputPropertyMap
 > = {
   flows: FlowsContext;
-  step: StepContext;
   auth: PiecePropValueSchema<PieceAuth>;
+  step: StepContext;
   propsValue: StaticPropsValue<Props>;
   store: Store;
   project: {

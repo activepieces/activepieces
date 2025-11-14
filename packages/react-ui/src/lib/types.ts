@@ -27,7 +27,7 @@ export type PieceStepMetadata = BaseStepMetadata & {
   categories: string[];
   packageType: PackageType;
   pieceType: PieceType;
-  auth: PieceAuthProperty | undefined;
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
 };
 

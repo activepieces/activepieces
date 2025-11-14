@@ -3,12 +3,10 @@ import { t } from 'i18next';
 
 import {
   CONNECTION_REGEX,
-  CustomAuthProperty,
   OAuth2Props,
   PieceAuthProperty,
   PieceMetadata,
   PieceMetadataModel,
-  PieceMetadataModelSummary,
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
@@ -44,7 +42,7 @@ import {
 
 const addAuthToPieceProps = (
   props: PiecePropertyMap,
-  auth: PieceAuthProperty | undefined,
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
   requireAuth: boolean,
 ): PiecePropertyMap => {
   if (!requireAuth || isNil(auth)) {
@@ -55,6 +53,12 @@ const addAuthToPieceProps = (
       return acc;
     }, {} as PiecePropertyMap);
     return newProps;
+  }
+  if (Array.isArray(auth)) {
+    return {
+      ...props,
+      ...spreadIfDefined('auth', auth[0]),
+    };
   }
   return {
     ...props,
@@ -204,10 +208,7 @@ export const getDefaultValueForProperties = ({
   );
 };
 
-const buildConnectionSchema = (
-  piece: PieceMetadataModelSummary | PieceMetadataModel,
-) => {
-  const auth = piece.auth;
+const buildConnectionSchema = (auth: PieceAuthProperty) => {
   if (isNil(auth)) {
     return Type.Object({
       request: Type.Composite([
@@ -249,9 +250,7 @@ const buildConnectionSchema = (
           connectionSchema,
           Type.Object({
             value: Type.Object({
-              props: formUtils.buildSchema(
-                (piece.auth as CustomAuthProperty<any>).props,
-              ),
+              props: formUtils.buildSchema(auth.props),
             }),
           }),
         ]),

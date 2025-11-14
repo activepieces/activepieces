@@ -1,5 +1,5 @@
-import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
+import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
@@ -14,7 +14,7 @@ export const propsProcessor = {
     applyProcessorsAndValidators: async (
         resolvedInput: StaticPropsValue<PiecePropertyMap>,
         props: InputPropertyMap,
-        auth: PieceAuthProperty | undefined,
+        auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
         requireAuth: boolean,
         propertySettings: Record<string, PropertySettings>,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
@@ -24,22 +24,28 @@ export const propsProcessor = {
         }
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
+        const authValue: AppConnectionValue | undefined = resolvedInput[AUTHENTICATION_PROPERTY_NAME]
 
-        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props) && requireAuth
-        if (isAuthenticationProperty) {
-            const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
-                resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-                auth.props,
-                undefined,
-                requireAuth,
-                {},
-            )
-            processedInput.auth = authProcessedInput
-            if (Object.keys(authErrors).length > 0) {
-                errors.auth = authErrors
+        if (authValue) {
+            const authPropertyToValidate = getAuthPropertyForValue({
+                authValueType: authValue.type,
+                pieceAuth: auth,
+            })
+            const authRequiresValidation = authPropertyToValidate && (authPropertyToValidate.type === PropertyType.CUSTOM_AUTH || authPropertyToValidate.type === PropertyType.OAUTH2) && !isNil(authPropertyToValidate.props) && requireAuth
+            if (authRequiresValidation) {
+                const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
+                    resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+                    authPropertyToValidate.props,
+                    undefined,
+                    requireAuth,
+                    {},
+                )
+                processedInput.auth = authProcessedInput
+                if (Object.keys(authErrors).length > 0) {
+                    errors.auth = authErrors
+                }
             }
         }
-
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
             if (isNil(property)) {

@@ -42,7 +42,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         if (isNil(action.settings.actionName)) {
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
-
+        
         const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
@@ -56,7 +56,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         })
 
         stepOutput.input = censoredInput
-
+    
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))

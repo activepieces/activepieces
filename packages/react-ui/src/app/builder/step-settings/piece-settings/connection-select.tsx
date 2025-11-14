@@ -75,6 +75,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
 
   const isGlobalConnection =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
+  const selectedAuth = Array.isArray(params.piece.auth)
+    ? params.piece.auth[0]
+    : params.piece.auth;
   const dynamicInputModeToggled =
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
@@ -103,9 +106,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               />
             </div>
           )}
-          {!isLoadingConnections && (
+          {!isLoadingConnections && selectedAuth && (
             <AutoFormFieldWrapper
-              property={params.piece.auth!}
+              property={{ ...selectedAuth, displayName: t('Connection') }}
               propertyName="auth"
               field={field as unknown as ControllerRenderProps}
               disabled={params.disabled}

@@ -19,15 +19,12 @@ import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
-  ApEdition,
-  ApFlagId,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   isNil,
   OAuth2GrantType,
@@ -48,10 +45,9 @@ const PlatformPiecesPage = () => {
     includeTags: true,
     includeHidden: true,
   });
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { refetch: refetchPiecesClientIdsMap } =
-    oauthAppsQueries.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+    oauthAppsQueries.usePieceToClientIdMap();
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -147,14 +143,18 @@ const PlatformPiecesPage = () => {
         {
           id: 'actions',
           cell: ({ row }) => {
+            const oauth2Auth = Array.isArray(row.original.auth)
+              ? row.original.auth.find(
+                  (auth) => auth.type === PropertyType.OAUTH2,
+                )
+              : row.original.auth;
             const isOAuth2Enabled =
-              row.original.auth &&
-              row.original.auth.type === PropertyType.OAUTH2 &&
-              (row.original.auth.grantType ===
+              oauth2Auth &&
+              oauth2Auth.type === PropertyType.OAUTH2 &&
+              (oauth2Auth.grantType ===
                 BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
-                row.original.auth.grantType ===
-                  OAuth2GrantType.AUTHORIZATION_CODE ||
-                isNil(row.original.auth.grantType));
+                oauth2Auth.grantType === OAuth2GrantType.AUTHORIZATION_CODE ||
+                isNil(oauth2Auth.grantType));
             return (
               <div className="flex justify-end">
                 {isOAuth2Enabled && (

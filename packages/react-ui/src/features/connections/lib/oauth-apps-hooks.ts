@@ -2,21 +2,51 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { OAuth2App } from '@/lib/oauth2-utils';
 import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
-import { ApEdition, AppConnectionType } from '@activepieces/shared';
+import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 
 import { oauthAppsApi } from './api/oauth-apps';
 
 export type PieceToClientIdMap = {
-  //key is set like this, to avoid issues reconnecting to a cloud oauth2 app after setting a platform oauth2 app
   [
     pieceName: `${string}-${
       | AppConnectionType.CLOUD_OAUTH2
       | AppConnectionType.PLATFORM_OAUTH2}`
   ]: {
-    type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
+    oauth2Type:
+      | AppConnectionType.CLOUD_OAUTH2
+      | AppConnectionType.PLATFORM_OAUTH2;
     clientId: string;
   };
+};
+
+const makeAppKey = (
+  pieceName: string,
+  type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2,
+) => {
+  return `${pieceName}-${type}` as const;
+};
+
+export const getPredefinedOAuth2App = (
+  pieceToClientIdMap: PieceToClientIdMap,
+  pieceName: string,
+): OAuth2App | null => {
+  const platformApp =
+    pieceToClientIdMap[
+      makeAppKey(pieceName, AppConnectionType.PLATFORM_OAUTH2)
+    ];
+  const cloudApp =
+    pieceToClientIdMap[makeAppKey(pieceName, AppConnectionType.CLOUD_OAUTH2)];
+  if (platformApp) {
+    return platformApp;
+  }
+  if (cloudApp) {
+    return cloudApp;
+  }
+  return null;
 };
 
 export const oauthAppsMutations = {
@@ -78,7 +108,10 @@ export const oauthAppsQueries = {
       oauth2App: query.data,
     };
   },
-  usePieceToClientIdMap(cloudAuthEnabled: boolean, edition: ApEdition) {
+  usePieceToClientIdMap() {
+    const { platform } = platformHooks.useCurrentPlatform();
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
     return useQuery<PieceToClientIdMap, Error>({
       queryKey: ['oauth-apps'],
       queryFn: async () => {
@@ -91,19 +124,21 @@ export const oauthAppsQueries = {
                 limit: 1000000,
                 cursor: undefined,
               });
-        const cloudApps = !cloudAuthEnabled
+        const cloudApps = !platform.cloudAuthEnabled
           ? {}
-          : await oauthAppsApi.listCloudOAuthApps(edition);
+          : await oauthAppsApi.listCloudOAuthApps(edition!);
         const appsMap: PieceToClientIdMap = {};
         Object.keys(cloudApps).forEach((key) => {
-          appsMap[`${key}-${AppConnectionType.CLOUD_OAUTH2}`] = {
-            type: AppConnectionType.CLOUD_OAUTH2,
+          appsMap[makeAppKey(key, AppConnectionType.CLOUD_OAUTH2)] = {
+            oauth2Type: AppConnectionType.CLOUD_OAUTH2,
             clientId: cloudApps[key].clientId,
           };
         });
         apps.data.forEach((app) => {
-          appsMap[`${app.pieceName}-${AppConnectionType.PLATFORM_OAUTH2}`] = {
-            type: AppConnectionType.PLATFORM_OAUTH2,
+          appsMap[
+            makeAppKey(app.pieceName, AppConnectionType.PLATFORM_OAUTH2)
+          ] = {
+            oauth2Type: AppConnectionType.PLATFORM_OAUTH2,
             clientId: app.clientId,
           };
         });

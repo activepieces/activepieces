@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { customDomainApi } from '@/features/platform-admin/lib/custom-domain-api';
 import { api } from '@/lib/api';
 import { CustomDomain } from '@activepieces/ee-shared';
@@ -72,9 +72,12 @@ const AddCustomDomainDialog = React.memo(
               });
               break;
             }
+            default: {
+              toast(INTERNAL_ERROR_TOAST);
+              break;
+            }
           }
         }
-        setOpen(true);
       },
     });
 

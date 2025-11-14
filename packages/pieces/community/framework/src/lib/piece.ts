@@ -8,10 +8,9 @@ import {
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
-import path from 'path';
-import fs from 'fs/promises';
+import { InputPropertyMap } from './property';
 
-export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
+export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = PieceAuthProperty | PieceAuthProperty[]>
   implements Omit<PieceBase, 'version' | 'name'>
 {
   private readonly _actions: Record<string, Action> = {};
@@ -22,8 +21,8 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     public readonly logoUrl: string,
     public readonly authors: string[],
     public readonly events: PieceEventProcessors | undefined,
-    actions: Action<PieceAuth>[],
-    triggers: Trigger<PieceAuth>[],
+    actions: Action[],
+    triggers: Trigger[],
     public readonly categories: PieceCategory[],
     public readonly auth?: PieceAuth,
     public readonly minimumSupportedRelease?: string,
@@ -67,10 +66,10 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   }
 }
 
-export const createPiece = <PieceAuth extends PieceAuthProperty>(
+export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthProperty[]>(
   params: CreatePieceParams<PieceAuth>
 ) => {
-  return new Piece(
+  return new Piece<PieceAuth>(
     params.displayName,
     params.logoUrl,
     params.authors ?? [],
@@ -78,7 +77,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
     params.actions,
     params.triggers,
     params.categories ?? [],
-    params.auth ?? undefined,
+    params.auth,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
@@ -86,7 +85,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
 };
 
 type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[]
 > = {
   displayName: string;
   logoUrl: string;
@@ -96,8 +95,8 @@ type CreatePieceParams<
   events?: PieceEventProcessors;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
-  actions: Action<PieceAuth>[];
-  triggers: Trigger<PieceAuth>[];
+  actions: Action[];
+  triggers: Trigger[];
   categories?: PieceCategory[];
 };
 
