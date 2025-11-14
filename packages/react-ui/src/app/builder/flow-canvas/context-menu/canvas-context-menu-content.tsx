@@ -1,3 +1,10 @@
+import {
+  FlowAction,
+  FlowActionType,
+  FlowOperationType,
+  flowStructureUtil,
+  StepLocationRelativeToParent,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowLeftRight,
@@ -8,23 +15,8 @@ import {
   Route,
   RouteOff,
   Trash,
+  Pencil,
 } from 'lucide-react';
-
-import {
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-} from '@/components/ui/context-menu';
-import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
-import {
-  FlowAction,
-  FlowActionType,
-  FlowOperationType,
-  flowStructureUtil,
-  StepLocationRelativeToParent,
-} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -40,6 +32,16 @@ import {
   CanvasShortcuts,
   ContextMenuType,
 } from './canvas-context-menu';
+import { RenameStepDialog } from './rename-step-dialog';
+
+import {
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+} from '@/components/ui/context-menu';
+import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
 
 const ShortcutWrapper = ({
   children,
@@ -80,15 +82,15 @@ export const CanvasContextMenuContent = ({
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
       !!(flowStructureUtil.getStep(node, flowVersion.trigger) as FlowAction)
-        ?.skip,
+        ?.skip
   );
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
-    (node) => node === flowVersion.trigger.name,
+    (node) => node === flowVersion.trigger.name
   );
 
   const firstSelectedStep = flowStructureUtil.getStep(
     selectedNodes[0],
-    flowVersion.trigger,
+    flowVersion.trigger
   );
   const showPasteAfterLastStep =
     !readonly && contextMenuType === ContextMenuType.CANVAS;
@@ -107,6 +109,10 @@ export const CanvasContextMenuContent = ({
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showReplace =
+    selectedNodes.length === 1 &&
+    !readonly &&
+    contextMenuType === ContextMenuType.STEP;
+  const showRename =
     selectedNodes.length === 1 &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
@@ -148,6 +154,17 @@ export const CanvasContextMenuContent = ({
         >
           <ArrowLeftRight className="w-4 h-4"></ArrowLeftRight> {t('Replace')}
         </ContextMenuItem>
+      )}
+      {showRename && (
+        <RenameStepDialog stepName={selectedNodes[0]}>
+          <ContextMenuItem
+            disabled={disabled}
+            className="flex items-center gap-2"
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Pencil className="w-4 h-4"></Pencil> {t('Rename')}
+          </ContextMenuItem>
+        </RenameStepDialog>
       )}
       {showCopy && (
         <ContextMenuItem
@@ -225,7 +242,7 @@ export const CanvasContextMenuContent = ({
                   stepLocationRelativeToParent:
                     StepLocationRelativeToParent.INSIDE_LOOP,
                 },
-                applyOperation,
+                applyOperation
               );
             }}
             className="flex items-center gap-2"
@@ -245,7 +262,7 @@ export const CanvasContextMenuContent = ({
                   stepLocationRelativeToParent:
                     StepLocationRelativeToParent.AFTER,
                 },
-                applyOperation,
+                applyOperation
               );
             }}
             className="flex items-center gap-2"
@@ -276,13 +293,13 @@ export const CanvasContextMenuContent = ({
                               StepLocationRelativeToParent.INSIDE_BRANCH,
                             branchIndex,
                           },
-                          applyOperation,
+                          applyOperation
                         );
                       }}
                     >
                       {branch.branchName}
                     </ContextMenuItem>
-                  ),
+                  )
                 )}
               <ContextMenuItem
                 onClick={() => {
@@ -304,7 +321,7 @@ export const CanvasContextMenuContent = ({
                       branchIndex:
                         firstSelectedStep.settings.branches.length - 1,
                     },
-                    applyOperation,
+                    applyOperation
                   );
                 }}
               >
