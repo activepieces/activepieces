@@ -108,7 +108,7 @@ async function getPieceVersionAndArchiveId(engineToken: string, archiveId: strin
     }
 }
 
-async function getArchive(engineToken: string, archiveId: string): Promise<Buffer> {
+export async function getArchive(engineToken: string, archiveId: string): Promise<Buffer> {
     const archivePath = getPackageArchivePathForPiece({
         archiveId,
         archivePath: PACKAGE_ARCHIVE_PATH,
