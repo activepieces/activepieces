@@ -159,7 +159,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     flowVersionId: latestFlowVersion.id,
                     projectId: oldFlowRun.projectId,
                     failParentOnFailure: oldFlowRun.failParentOnFailure,
-                    parentRunId: oldFlowRun.id,
+                    parentRunId: oldFlowRun.parentRunId,
                 })
             }
         }
