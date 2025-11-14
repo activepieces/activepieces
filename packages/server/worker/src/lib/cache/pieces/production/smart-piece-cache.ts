@@ -29,7 +29,7 @@ export const smartPieceCache = (log: FastifyBaseLogger) => ({
 
         await Promise.all(pieces.map(async (piece, idx) => {
             await markPieceAsInstalledInMemAndDisk(piecePath(projectPath, piece))
-            if (!piecesRedisKeys[idx]) {
+            if (!skipRedisWrite && !piecesRedisKeys[idx]) {
               await redis.set(usedPiecesRedisCache(piece), 'true', 'EX', expireDuration)
             }
         }))
