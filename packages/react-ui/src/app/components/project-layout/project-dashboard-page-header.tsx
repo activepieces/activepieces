@@ -73,7 +73,10 @@ export const ProjectDashboardPageHeader = ({
   const showProjectMembersIcons =
     !isEmbedded &&
     showProjectMembersFlag &&
-    userHasPermissionToReadProjectMembers;
+    userHasPermissionToReadProjectMembers &&
+    projectMembers?.length &&
+    projectMembers?.length > 0;
+    
   const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
   const showSettingsButton = !isEmbedded;
   const isProjectPage = location.pathname.includes('/projects/');
