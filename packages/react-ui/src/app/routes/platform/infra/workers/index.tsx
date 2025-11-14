@@ -3,8 +3,8 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { InfoIcon, Network, Server, ServerOff } from 'lucide-react';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { CircularIcon } from '@/components/custom/circular-icon';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';

@@ -6,7 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
-import { PlatformPlanHelper } from '../platform/platform-plan/platform-plan-helper'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
@@ -127,12 +126,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 ...turnedOffFeatures,
             },
         })
-        await PlatformPlanHelper.handleResourceLocking({
-            platformId, 
-            newLimits: {
-                userSeatsLimit: 0,
-            },
-        })
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
@@ -156,12 +149,9 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 todosEnabled: key.todosEnabled,
                 tablesEnabled: key.tablesEnabled,
                 activeFlowsLimit: undefined,
-                mcpLimit: undefined,
                 projectsLimit: undefined,
-                userSeatsLimit: undefined,
                 stripeSubscriptionId: undefined,
                 stripeSubscriptionStatus: undefined,
-                tablesLimit: undefined,
                 agentsEnabled: key.agentsEnabled,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,

@@ -1,4 +1,4 @@
-import { EngineHttpResponse, FlowRunResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, spreadIfDefined, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appSocket } from '../../app-socket'
@@ -15,34 +15,32 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
         )
     },
     updateRunProgress: async (request: UpdateRunProgressRequest): Promise<void> => {
-        const { runId, projectId, workerHandlerId, runDetails, httpRequestId, stepNameToTest, logsFileId, failedStepName, stepResponse } = request
+        const { runId, projectId, workerHandlerId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse, pauseMetadata } = request
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
-        if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
+        if (!nonSupportedStatuses.includes(status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
             await engineResponsePublisher(log).publish(
                 httpRequestId,
                 workerHandlerId,
-                await getFlowResponse(runDetails),
+                await getFlowResponse(status),
             )
         }
 
         await runsMetadataQueue.add({
             id: runId,
-            status: runDetails.status,
-            failedStepName,
+            status,
+            failedStep,
+            startTime,
+            finishTime,
             logsFileId,
             projectId,
-            tags: runDetails.tags ?? [],
-            ...spreadIfDefined('duration', runDetails.duration ? Math.floor(Number(runDetails.duration)) : undefined),
-            finishTime: isFlowRunStateTerminal({
-                status: runDetails.status,
-                ignoreInternalError: true,
-            }) ? new Date().toISOString() : undefined,
+            tags,
+            pauseMetadata,
         })
 
         if (!isNil(stepNameToTest) && !isNil(stepResponse)) {
             const isTerminalOutput = isFlowRunStateTerminal({
-                status: runDetails.status,
+                status,
                 ignoreInternalError: false,
             })
 
@@ -53,10 +51,8 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
 })
 
 
-async function getFlowResponse(
-    result: FlowRunResponse,
-): Promise<EngineHttpResponse> {
-    switch (result.status) {
+async function getFlowResponse(status: FlowRunStatus): Promise<EngineHttpResponse> {
+    switch (status) {
         case FlowRunStatus.INTERNAL_ERROR:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -90,6 +86,6 @@ async function getFlowResponse(
             }
         // Case that should be handled before
         default:
-            throw new Error(`Unexpected flow run status: ${result.status}`)
+            throw new Error(`Unexpected flow run status: ${status}`)
     }
 }
