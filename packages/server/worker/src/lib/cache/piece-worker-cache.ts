@@ -10,8 +10,8 @@ import { GLOBAL_CACHE_PIECES_PATH } from './worker-cache'
 
 
 export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
-    async getPiece({ engineToken, pieceName, pieceVersion, projectId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel> {
-        const cacheKey = `${pieceName}-${pieceVersion}-${projectId}`
+    async getPiece({ engineToken, pieceName, pieceVersion, platformId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel> {
+        const cacheKey = `${pieceName}-${pieceVersion}-${platformId}`
         const cache = cacheState(path.join(GLOBAL_CACHE_PIECES_PATH, cacheKey), log)
 
         const { state } = await cache.getOrSetCache({
@@ -36,7 +36,7 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
                     message: '[pieceWorkerCache] Cached piece',
                     pieceName,
                     pieceVersion,
-                    projectId,
+                    platformId,
                     timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
                 })
                 return JSON.stringify(pieceMetadata)
@@ -55,5 +55,5 @@ type GetPieceRequestQueryWorker = PieceCacheKey & {
 type PieceCacheKey = {
     pieceName: string
     pieceVersion: string
-    projectId: ProjectId
+    platformId: string
 }

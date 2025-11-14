@@ -156,7 +156,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
             engineToken,
             pieceName,
             pieceVersion,
-            projectId,
+            platformId,
         })
         return pieceEngineUtil.enrichPieceWithArchive(engineToken, pieceMetadata)
     })
