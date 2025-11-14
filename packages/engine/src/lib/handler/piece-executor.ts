@@ -43,7 +43,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
         
-        const { pieceAction,piece } = await pieceLoader.getPieceAndActionOrThrow({
+        const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,

@@ -26,26 +26,26 @@ export const propsProcessor = {
         const errors: PropsValidationError = {}
         const authValue: AppConnectionValue | undefined = resolvedInput[AUTHENTICATION_PROPERTY_NAME]
 
-        if(authValue) {
-        const authPropertyToValidate = getAuthPropertyForValue({
-            authValueType: authValue.type,
-            pieceAuth: auth,
-        })
-        const authRequiresValidation = authPropertyToValidate && (authPropertyToValidate.type === PropertyType.CUSTOM_AUTH || authPropertyToValidate.type === PropertyType.OAUTH2) && !isNil(authPropertyToValidate.props) && requireAuth
-        if (authRequiresValidation) {
-            const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
-                resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-                authPropertyToValidate.props,
-                undefined,
-                requireAuth,
-                {},
-            )
-            processedInput.auth = authProcessedInput
-            if (Object.keys(authErrors).length > 0) {
-                errors.auth = authErrors
+        if (authValue) {
+            const authPropertyToValidate = getAuthPropertyForValue({
+                authValueType: authValue.type,
+                pieceAuth: auth,
+            })
+            const authRequiresValidation = authPropertyToValidate && (authPropertyToValidate.type === PropertyType.CUSTOM_AUTH || authPropertyToValidate.type === PropertyType.OAUTH2) && !isNil(authPropertyToValidate.props) && requireAuth
+            if (authRequiresValidation) {
+                const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
+                    resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+                    authPropertyToValidate.props,
+                    undefined,
+                    requireAuth,
+                    {},
+                )
+                processedInput.auth = authProcessedInput
+                if (Object.keys(authErrors).length > 0) {
+                    errors.auth = authErrors
+                }
             }
         }
-      }
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
             if (isNil(property)) {
