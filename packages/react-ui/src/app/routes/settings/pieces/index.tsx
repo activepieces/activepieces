@@ -4,7 +4,6 @@ import { CheckIcon, Package, Trash } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -126,10 +125,6 @@ const ProjectPiecesPage = () => {
 
   return (
     <div className="w-fullj flex-col">
-      <DashboardPageHeader
-        title={t('Pieces')}
-        description={'Manage project pieces'}
-      />
       {!platform.plan.managePiecesEnabled && (
         <LockedAlert
           title={t('Control Pieces')}

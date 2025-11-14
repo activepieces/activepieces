@@ -335,5 +335,4 @@ export const routesThatRequireProjectId = {
   singleMcp: '/mcps/:mcpId',
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
-  explore: '/explore',
 };
