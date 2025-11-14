@@ -62,7 +62,6 @@ async function markPieceAsInstalledInMemAndDisk(pieceFolder: string): Promise<vo
 
   setTimeout(async () => {
     delete usedPiecesMemoryCache[pieceFolder]
-    await fileSystemUtils.deleteFile(readyFilePath)
   }, expireDuration)
 }
 
