@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -152,24 +151,6 @@ const ProjectReleasesPage = () => {
 
   return (
     <div className="flex-col w-full gap-4">
-      <DashboardPageHeader
-        title={t('Project Releases')}
-        description={
-          <>
-            {t(
-              'Track and manage your project version history and deployments. ',
-            )}
-            <a
-              href="https://www.activepieces.com/docs/operations/git-sync"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {t('Environments & Releases')}
-            </a>
-          </>
-        }
-      ></DashboardPageHeader>
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}

@@ -19,7 +19,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
       {showPlatformAdminDashboard ? (
         <SidebarProvider>
           <PlatformSidebar />
-          <SidebarInset className="px-4 overflow-auto pb-4">
+          <SidebarInset className="px-4 overflow-auto pb-4 pt-4">
             {children}
           </SidebarInset>
         </SidebarProvider>

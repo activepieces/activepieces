@@ -1,59 +1,57 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Compass,
-  GitBranch,
-  Link2,
-  ListTodo,
-  MoreHorizontal,
-  Package,
-  Puzzle,
-  Table2,
-  Workflow,
-} from 'lucide-react';
-import { useState } from 'react';
+import { Compass, Search } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
+import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarGroupContent,
-  SidebarMenuItem,
-  SidebarMenuButton,
+  SidebarSeparator,
+  useSidebar,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { isNil, Permission } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
-import { HelpAndFeedback } from '../../help-and-feedback';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
+import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar() {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { project } = projectHooks.useCurrentProject();
-  const { checkAccess } = useAuthorization();
+  const { data: projects } = projectHooks.useProjects();
   const { embedState } = useEmbedding();
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-  const navigate = useNavigate();
+  const { state, setOpen } = useSidebar();
   const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { setCurrentProject } = projectHooks.useCurrentProject();
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -64,118 +62,56 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/explore'),
-    icon: Compass,
+    to: '/explore',
     label: t('Explore'),
     show: true,
+    icon: Compass,
+    hasPermission: true,
     isSubItem: false,
   };
 
-  const releasesLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/releases'),
-    icon: Package,
-    label: t('Releases'),
-    hasPermission:
-      project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
-    show: project.releasesEnabled,
-    isSubItem: false,
+  const items = [exploreLink].filter(permissionFilter);
+
+  const filteredProjects = useMemo(() => {
+    if (!projects) return [];
+    if (!searchQuery.trim()) return projects;
+
+    const query = searchQuery.toLowerCase().trim();
+    return projects.filter((project) =>
+      project.displayName.toLowerCase().includes(query),
+    );
+  }, [projects, searchQuery]);
+
+  const handleProjectSelect = async (projectId: string) => {
+    const project = projects?.find((p) => p.id === projectId);
+    if (project) {
+      await setCurrentProject(queryClient, project);
+      navigate('/');
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
   };
-
-  const flowsLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/flows'),
-    icon: Workflow,
-    label: t('Flows'),
-    hasPermission: checkAccess(Permission.READ_FLOW),
-    isSubItem: false,
-    show: true,
-    isActive: (pathname) =>
-      pathname.includes('/flows') ||
-      pathname.includes('/runs') ||
-      pathname.includes('/issues'),
-  };
-
-  const tablesLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/tables'),
-    label: t('Tables'),
-    show: platform.plan.tablesEnabled || !embedState.isEmbedded,
-    icon: Table2,
-    hasPermission: checkAccess(Permission.READ_TABLE),
-    isSubItem: false,
-  };
-
-  const todosLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/todos'),
-    label: t('Todos'),
-    show: platform.plan.todosEnabled || !embedState.isEmbedded,
-    icon: ListTodo,
-    hasPermission: checkAccess(Permission.READ_TODOS),
-    isSubItem: false,
-  };
-
-  const items = [flowsLink, tablesLink, todosLink, releasesLink].filter(
-    permissionFilter,
-  );
-
-  const otherItems: SidebarItemType[] = [
-    {
-      type: 'link',
-      to: authenticationSession.appendProjectRoutePrefix('/connections'),
-      label: t('Connections'),
-      icon: Link2,
-      hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
-      show: true,
-      isSubItem: false,
-    },
-    {
-      type: 'link',
-      to: authenticationSession.appendProjectRoutePrefix('/mcps'),
-      label: t('MCP'),
-      show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
-      hasPermission: checkAccess(Permission.READ_MCP),
-      icon: McpSvg,
-      isSubItem: false,
-    },
-  ];
-
-  const moreItems = [
-    {
-      type: 'link',
-      to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
-      label: t('Pieces'),
-      icon: Puzzle,
-      show: true,
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix(
-        '/settings/environments',
-      ),
-      label: t('Environments'),
-      icon: GitBranch,
-      type: 'link',
-      show: checkAccess(Permission.READ_PROJECT_RELEASE),
-    },
-  ];
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar variant="inset">
+      <Sidebar
+        variant="inset"
+        collapsible="icon"
+        onClick={() => setOpen(true)}
+        className={cn('cursor-nesw-resize', 'group')}
+      >
         <AppSidebarHeader />
 
-        <SidebarContent className="gap-y-0">
-          <SidebarGroup className="mt-2">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <ApSidebarItem key={exploreLink.label} {...exploreLink} />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+        {state === 'collapsed' && <SidebarSeparator className="my-3" />}
+        {state === 'expanded' && <div className="mt-1" />}
 
+        <SidebarContent
+          className={cn(
+            state === 'collapsed' ? 'gap-4' : 'gap-3',
+            'scrollbar-hover',
+          )}
+        >
           <SidebarGroup>
-            <SidebarGroupLabel>{t('Automations')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
@@ -185,68 +121,79 @@ export function ProjectDashboardSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{t('Other')}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {otherItems.map((item) => (
-                  <ApSidebarItem key={item.label} {...item} />
-                ))}
-                {!embedState.isEmbedded && (
-                  <SidebarMenuItem>
-                    <DropdownMenu
-                      open={isMoreMenuOpen}
-                      onOpenChange={setIsMoreMenuOpen}
-                    >
-                      <DropdownMenuTrigger asChild>
-                        <div>
-                          <SidebarMenuButton className="px-2 py-5">
-                            <MoreHorizontal className="size-5" />
-                            <span className="grow">{t('More')}</span>
-                          </SidebarMenuButton>
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="center"
-                        side="bottom"
-                        className="w-64"
-                      >
-                        {moreItems
-                          .filter((item) => item.show)
-                          .map((item) => {
-                            const isActive = location.pathname.includes(
-                              item.to,
-                            );
+          <SidebarSeparator />
 
-                            return (
-                              <DropdownMenuItem
-                                key={item.to}
-                                onClick={() => {
-                                  navigate(item.to);
-                                }}
+          <SidebarGroup>
+            {state === 'expanded' && (
+              <div className="flex items-center justify-between">
+                <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
+                {projects && projects.length > 3 && (
+                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-accent"
+                      >
+                        <Search className="text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[280px] p-0"
+                      align="start"
+                      side="right"
+                      sideOffset={8}
+                    >
+                      <Command>
+                        <CommandInput
+                          placeholder={t('Search projects...')}
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                          <CommandEmpty>{t('No projects found.')}</CommandEmpty>
+                          <CommandGroup>
+                            {filteredProjects.map((project) => (
+                              <CommandItem
+                                key={project.id}
+                                value={project.id}
+                                onSelect={handleProjectSelect}
+                                className="flex items-center gap-2 cursor-pointer"
                               >
-                                <div className="flex items-center gap-2">
-                                  <item.icon
-                                    className={cn('size-4', {
-                                      'text-primary': isActive,
-                                    })}
-                                  />
-                                  <span>{item.label}</span>
-                                </div>
-                              </DropdownMenuItem>
-                            );
-                          })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuItem>
+                                <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground text-xs">
+                                  {project.displayName.charAt(0)}
+                                </Avatar>
+                                <span className="flex-1 truncate">
+                                  {project.displayName}
+                                </span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 )}
+              </div>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className={cn(state === 'collapsed' ? 'gap-2' : '')}>
+                {projects?.map((p) => (
+                  <ProjectSideBarItem
+                    key={p.id}
+                    project={p}
+                    isCurrentProject={location.pathname.includes(
+                      `/projects/${p.id}`,
+                    )}
+                    handleProjectSelect={handleProjectSelect}
+                  />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter>
-          <HelpAndFeedback />
-          <SidebarUsageLimits />
+        <SidebarFooter onClick={(e) => e.stopPropagation()}>
+          {state === 'expanded' && <SidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
