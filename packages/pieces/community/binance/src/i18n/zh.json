@@ -1,9 +1,9 @@
 {
-  "Fetch the price of a crypto pair from Binance": "从 Binance 获取加密价格对",
-  "Fetch Pair Price": "获取配对",
-  "Fetch the current price of a pair (e.g. BTC/USDT)": "获取配对的当前价格 (例如，BTC/USDT)",
-  "First Coin Symbol": "第一个Coin 符号",
-  "Second Coin Symbol": "第二个Coin 符号",
-  "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')": "要获取价格的货币 (例如在 'BTC/USDT' 中的 'BTC' )",
-  "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')": "要获取价格的货币 (例如, 'BTC/USDT')"
+  "Fetch the price of a crypto pair from Binance": "Fetch the price of a crypto pair from Binance",
+  "Fetch Pair Price": "Fetch Pair Price",
+  "Fetch the current price of a pair (e.g. BTC/USDT)": "Fetch the current price of a pair (e.g. BTC/USDT)",
+  "First Coin Symbol": "First Coin Symbol",
+  "Second Coin Symbol": "Second Coin Symbol",
+  "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')": "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')",
+  "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')": "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')"
 }
