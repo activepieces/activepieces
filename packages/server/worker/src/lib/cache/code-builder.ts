@@ -127,44 +127,42 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
     },
 })
 
-function getPackageJson(packageJson: string): string {
-    const isPackagesAllowed =
-    workerMachine.getSettings().EXECUTION_MODE !==
-    ExecutionMode.SANDBOX_CODE_ONLY
-    if (isPackagesAllowed) {
-        const packageJsonObject = JSON.parse(packageJson)
-        return JSON.stringify({
-            ...packageJsonObject,
-            dependencies: {
-                '@types/node': '18.17.1',
-                ...(packageJsonObject?.dependencies ?? {}),
-            },
-        })
-    }
 
-    return '{"dependencies":{}}'
+function isPackagesAllowed(): boolean {
+    switch (workerMachine.getSettings().EXECUTION_MODE) {
+        case ExecutionMode.SANDBOX_CODE_ONLY:
+            return false
+        case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
+            return true
+        case ExecutionMode.SANDBOX_PROCESS:
+            return true
+        default:
+            return false
+    }
 }
 
-const installDependencies = async ({
-    path,
-    packageJson,
-    log,
-}: InstallDependenciesParams): Promise<void> => {
-    const packageJsonObject = JSON.parse(packageJson)
-    const dependencies = Object.keys(packageJsonObject?.dependencies ?? {})
-    await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
-    if (dependencies.length === 0) {
-        return
+
+function getPackageJson(packageJson: string): string {
+    const packagedAllowed = isPackagesAllowed()
+    if (!packagedAllowed) {
+        return '{"dependencies":{}}'
     }
-    await packageManager(log).add({
-        path,
-        dependencies: Object.entries(packageJsonObject.dependencies).map(
-            ([dependency, spec]) => ({
-                alias: dependency,
-                spec: spec as string,
-            }),
-        ),
+    const packageJsonObject = JSON.parse(packageJson)
+    return JSON.stringify({
+        ...packageJsonObject,
+        dependencies: {
+            '@types/node': '18.17.1',
+            ...(packageJsonObject?.dependencies ?? {}),
+        },
     })
+}
+
+const installDependencies = async ({ path, packageJson, log }: InstallDependenciesParams): Promise<void> => {
+    await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
+    const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
+    if (deps.length > 0) {
+        await packageManager(log).install({ path, filtersPath: [] })
+    }
 }
 
 const compileCode = async ({
@@ -190,7 +188,7 @@ const handleCompilationError = async ({
     error,
 }: HandleCompilationErrorParams): Promise<void> => {
     const errorHasStdout =
-    typeof error === 'object' && error && 'stdout' in error
+        typeof error === 'object' && error && 'stdout' in error
     const stdoutError = errorHasStdout ? error.stdout : undefined
     const genericError = `${error ?? 'error compiling'}`
     const errorMessage = `Compilation Error ${stdoutError ?? genericError}`

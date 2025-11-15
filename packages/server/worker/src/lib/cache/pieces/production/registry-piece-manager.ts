@@ -40,27 +40,35 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         for (const [packagePath, pieces] of Object.entries(groupedPieces)) {
+            log.debug(
+                { packagePath, pieceCount: pieces.length },
+                `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${pieces.length}`,
+            )
             await installPieces(log, packagePath, pieces)
         }
     },
     warmup: async (): Promise<void> => {
         if (!workerMachine.preWarmCacheEnabled()) {
-            log.info('Pre warm cache is disabled')
+            log.info('[registryPieceManager] Pre-warm cache is disabled')
             return
         }
-        log.info('Warming up pieces cache')
+        log.info('[registryPieceManager] Warming up pieces cache')
         const startTime = performance.now()
         const redis = await workerRedisConnections.useExisting()
         const usedPiecesKey = await redis.keys(`${REDIS_USED_PIECES_CACHE_KEY}:*`)
         const usedPiecesValues = usedPiecesKey.length > 0 ? await redis.mget(...usedPiecesKey) : []
         const usedPieces = usedPiecesKey.filter((_key, index) => usedPiecesValues[index] !== null).map((_key, index) => JSON.parse(usedPiecesValues[index] as string))
+        log.debug(
+            { usedPiecesCount: usedPieces.length },
+            '[registryPieceManager] Installing used pieces on warmup',
+        )
         await registryPieceManager(log).install({
             pieces: usedPieces,
         })
         log.info({
             piecesCount: usedPieces.length,
             timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
-        }, 'Warmed up pieces cache')
+        }, '[registryPieceManager] Warmed up pieces cache')
     },
     getCustomPiecesPath: (platformId: string): string => {
         if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
@@ -74,13 +82,19 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
 async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
     const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces)
     if (isEmpty(filteredPieces)) {
+        log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install (already installed)')
         return
     }
+    log.info({
+        rootWorkspace,
+        filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+    }, `[registryPieceManager] Installing pieces in workspace: ${rootWorkspace}. Piece count: ${filteredPieces.length}`)
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
             const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces)
             if (isEmpty(filteredPieces)) {
+                log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install in lock (already installed)')
                 return
             }
             await createRootPackageJson({
@@ -95,18 +109,18 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             })))
 
             const performanceStartTime = performance.now()
-            await packageManager(log).installWorkspaces({
+            await packageManager(log).install({
                 path: rootWorkspace,
-                relativePiecePaths: filteredPieces.map(relativePiecePath),
+                filtersPath: filteredPieces.map(relativePiecePath),
             })
 
             await markPiecesAsUsed(rootWorkspace, filteredPieces)
 
             log.info({
                 rootWorkspace,
-                pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                piecesCount: filteredPieces.length,
                 timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
-            }, 'Installed registry pieces using bun')
+            }, '[registryPieceManager] Installed registry pieces using bun')
         },
     })
 }
@@ -193,7 +207,7 @@ async function filterPiecesThatAlreadyInstalled(rootWorkspace: string, pieces: P
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
     const writeToDiskJobs = pieces.map(async (piece) => {
         await writeFileAtomic(
-            join(piecePath(rootWorkspace, piece), 'ready'), 
+            join(piecePath(rootWorkspace, piece), 'ready'),
             'true',
         )
     })

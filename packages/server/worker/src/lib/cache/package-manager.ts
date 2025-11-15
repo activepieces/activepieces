@@ -1,66 +1,25 @@
 
 import {
-    execPromise,
+    CommandOutput,
     fileSystemUtils,
+    runCommandWithLiveOutput,
 } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 
-type PackageManagerOutput = {
-    stdout: string
-    stderr: string
-}
-
-type Command = 'install' | 'build'
-
-export type PackageInfo = {
-    /**
-   * name or alias
-   */
-    alias: string
-
-    /**
-   * where to get the package from, could be an npm tag, a local path, or a tarball.
-   */
-    spec: string
-
-    /**
-   * if the package is standalone, it means it get installed in it's own folder
-   */
-    standalone?: boolean
-}
-
-const piecesConfigs = [
-    '--ignore-scripts',
-    '--linker isolated',
-]
 export const packageManager = (log: FastifyBaseLogger) => ({
-    async add({
-        path,
-        dependencies,
-        installDir,
-    }: AddParams): Promise<PackageManagerOutput> {
-
-        const baseConfig = [...piecesConfigs]
-        if (!isNil(installDir)) {
-            baseConfig.push(`--dir=${installDir}`)
-        }
-
-        const dependenciesArgs = []
-
-        if (!isNil(dependencies)) {
-            dependenciesArgs.push(...dependencies.map((dependency) => `${dependency.alias}@${dependency.spec}`))
-        }
-
-        return runCommand(path, 'install', log, ...dependenciesArgs, ...baseConfig)
+    async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
+        const args = [
+            '--ignore-scripts',
+            '--linker isolated',
+        ]
+        const filters: string[] = filtersPath
+            .map(sanitizeFilterPath)
+            .map((path) => `--filter ./${path}`)
+        await fileSystemUtils.threadSafeMkdir(path)
+        log.debug({ path, args, filters }, '[PackageManager#install]')
+        return runCommandWithLiveOutput(`bun install ${args.join(' ')} ${filters.join(' ')}`, { cwd: path })
     },
-
-    async installWorkspaces({ path, relativePiecePaths }: InstallWorkspacesParams): Promise<PackageManagerOutput> {
-        const args = piecesConfigs
-        const filters: string[] = relativePiecePaths.map((path) => `--filter ./${path}`)
-        return runCommand(path, 'install', log, ...args, ...filters)
-    },
-    async build({ path, entryFile, outputFile }: BuildParams): Promise<PackageManagerOutput> {
+    async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const config = [
             `${entryFile}`,
             '--target node',
@@ -68,34 +27,25 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             '--format cjs',
             `--outfile ${outputFile}`,
         ]
-        return runCommand(path, 'build', log, ...config)
+        log.debug({ path, entryFile, outputFile, config }, '[PackageManager#build]')
+        return runCommandWithLiveOutput(`bun build ${config.join(' ')}`, { cwd: path })
     },
 
 })
 
-
-const runCommand = async (
-    path: string,
-    command: Command,
-    log: FastifyBaseLogger,
-    ...args: string[]
-): Promise<PackageManagerOutput> => {
-    log.debug({ path, command, args }, '[PackageManager#execute]')
-    await fileSystemUtils.threadSafeMkdir(path)
-    const commandLine = `bun ${command} ${args.join(' ')}`
-    return execPromise(commandLine, { cwd: path })
+const sanitizeFilterPath = (filterPath: string): string => {
+    const allowed = /^[a-zA-Z0-9\-_/@]+$/
+    if (!allowed.test(filterPath)) {
+        throw new Error(`Invalid filter path ${filterPath}`)
+    }
+    return filterPath
 }
 
 
-type InstallWorkspacesParams = {
-    path: string
-    relativePiecePaths: string[]
-}
 
-type AddParams = {
+type InstallParams = {
     path: string
-    dependencies?: PackageInfo[]
-    installDir?: string
+    filtersPath: string[]
 }
 
 type BuildParams = {
