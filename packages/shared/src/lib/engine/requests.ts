@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
-import { FlowRunStatus } from '../flow-run/execution/flow-execution'
+import { FlowRunStatus, PauseMetadata } from '../flow-run/execution/flow-execution'
 import { FailedStep } from '../flow-run/flow-run'
 import { StepRunResponse } from '../flows/sample-data'
 import { ProgressUpdateType } from './engine-operation'
@@ -21,6 +21,7 @@ export const UpdateRunProgressRequest = Type.Object({
     startTime: Type.Optional(Type.String()),
     finishTime: Type.Optional(Type.String()),
     stepResponse: Type.Optional(StepRunResponse),
+    pauseMetadata: Type.Optional(PauseMetadata),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>

@@ -115,6 +115,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             failedStep: flowExecutorContext.verdict.status === FlowRunStatus.FAILED ? flowExecutorContext.verdict.failedStep : undefined,
             stepNameToTest: engineConstants.stepNameToTest,
             stepResponse,
+            pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
             finishTime: isFlowRunStateTerminal({
                 status: flowExecutorContext.verdict.status,
                 ignoreInternalError: false,

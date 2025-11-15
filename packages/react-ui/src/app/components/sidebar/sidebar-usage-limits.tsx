@@ -3,14 +3,16 @@ import { t } from 'i18next';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
 
@@ -48,7 +50,8 @@ const getTimeUntilNextReset = (nextResetDate: number) => {
 const SidebarUsageLimits = React.memo(() => {
   const { project, isPending } = projectHooks.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
-
+  const currentUser = userHooks.useCurrentUser();
+  const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   if (edition === ApEdition.COMMUNITY) {
@@ -95,17 +98,21 @@ const SidebarUsageLimits = React.memo(() => {
     <div className="flex flex-col gap-2 w-full p-3 bg-background rounded-md border ">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold">{t('Executions')}</span>
+            <Badge variant="ghost" className="bg-muted font-bold">
+              {t('Unlimited')}
+            </Badge>
+          </div>
           <UsageProgress
             name={t('AI Credits')}
             value={project.usage.aiCredits}
             max={project.plan.aiCredits}
-            variant={'success'}
           />
           <UsageProgress
             name={t('Active Flows')}
             value={platform.usage?.activeFlows ?? 0}
             max={platform?.plan.activeFlowsLimit}
-            variant={'success'}
           />
         </div>
         <div className="text-xs text-muted-foreground flex justify-between w-full">
@@ -113,13 +120,15 @@ const SidebarUsageLimits = React.memo(() => {
             {t('Usage resets in')}{' '}
             {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
           </span>
-          <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-            <Link to={'/platform/setup/billing'} className="w-fit">
-              <span className="text-xs text-primary underline">
-                {t('Manage')}
-              </span>
-            </Link>
-          </FlagGuard>
+          {isPlatformAdmin && (
+            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+              <Link to={'/platform/setup/billing'} className="w-fit">
+                <span className="text-xs text-primary underline">
+                  {t('Manage')}
+                </span>
+              </Link>
+            </FlagGuard>
+          )}
         </div>
       </div>
     </div>
@@ -130,19 +139,16 @@ type UsageProgressProps = {
   value: number | null;
   max: number | undefined | null;
   name: string;
-  variant: 'success' | 'primary';
 };
 
-const UsageProgress = ({ value, max, name, variant }: UsageProgressProps) => {
+const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
   const isUnlimited = isNil(max);
   const usagePercentage = isUnlimited || isNil(value) ? 0 : (value / max) * 100;
 
   return (
     <div className="flex items-center flex-col justify-between gap-3  w-full">
       <div className="w-full flex text-xs justify-between">
-        <span className="text-muted-foreground flex items-center gap-1">
-          {name}
-        </span>
+        <span className="flex items-center gap-1 font-bold">{name}</span>
         <div className="text-xs">
           {!isNil(value) && (
             <span>
@@ -159,8 +165,9 @@ const UsageProgress = ({ value, max, name, variant }: UsageProgressProps) => {
       <Progress
         value={usagePercentage}
         className={cn('w-full h-[6px]', {
-          'bg-primary/40': isUnlimited,
+          'bg-muted-foreground': isUnlimited,
         })}
+        indicatorClassName="bg-sidebar-progress"
       />
     </div>
   );

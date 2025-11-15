@@ -10,12 +10,12 @@ categories:
   - title: "✨ Exciting New Features"
     labels:
       - "🌟 feature"
-  - title: "🧩 Pieces"
+  - title: "🧩 area/core-pieces"
     labels:
-      - "🔌 pieces"
-  - title: "🛠️ Piece Framework"
+      - "🔌 Core Pieces"
+  - title: "🧩 area/third-party-pieces"
     labels:
-      - "🛠️ piece-framework"
+      - "🔌 Third Party Pieces"
   - title: "🐞 Bug Fixes"
     labels:
       - "🐛 bug"
