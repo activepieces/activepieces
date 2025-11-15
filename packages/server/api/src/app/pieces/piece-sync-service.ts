@@ -1,6 +1,5 @@
-import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { apAxios, AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
-import { PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { system } from '../helper/system/system'
@@ -37,23 +36,33 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
         try {
             log.info('Starting piece synchronization')
             const startTime = performance.now()
-            const [cloudPieces, dbPieces] = await Promise.all([listCloudPieces(), pieceRepos().find()])
+            const [dbPieces, cloudPieces] = await Promise.all([pieceRepos().find(), listCloudPieces()])
             const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
             const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
-
             const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
             const limit = pLimit(20)
-            const newPiecesMetadata = await Promise.all(newPiecesToFetch.map(piece => limit(async () => readPieceMetadata({ name: piece.name, version: piece.version, log }))))
-            await pieceMetadataService(log).bulkCreate(newPiecesMetadata.filter((piece): piece is PieceMetadataModel => piece !== null))
-            
+            const newPiecesMetadata = await Promise.all(newPiecesToFetch.map(piece => limit(async () => {
+                const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
+                const response = await fetch(url)
+                if (!response.ok) {
+                    log.warn({ name: piece.name, version: piece.version, status: response.status }, 'Error reading piece metadata')
+                    return
+                }
+                const pieceMetadata = await response.json()
+                await pieceMetadataService(log).create({
+                    pieceMetadata: pieceMetadata,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                })
+            })))
             const officalPiecesThatIsNotOnCloud = dbPieces.filter(piece =>
                 piece.pieceType === PieceType.OFFICIAL &&
                 !cloudMap.has(`${piece.name}:${piece.version}`),
             )
             await pieceMetadataService(log).bulkDelete(officalPiecesThatIsNotOnCloud.map(piece => ({ name: piece.name, version: piece.version })))
             log.info({
-                newPiecesSynchronized: newPiecesMetadata.length,
-                officialPiecesDeleted: officalPiecesThatIsNotOnCloud.length,
+                piecesAdded: newPiecesMetadata.length,
+                piecesDeleted: officalPiecesThatIsNotOnCloud.length,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
         }
@@ -64,21 +73,15 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function readPieceMetadata({ name, version, log }: { name: string, version: string, log: FastifyBaseLogger }): Promise<PieceMetadataModel | null> {
-    const { error, data: response } = await tryCatch(() => apAxios.get<PieceMetadataModel>(`${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`))
-    if (error) {
-        log.warn({ name, version, error }, 'Error reading piece metadata')
-        return null
-    }
-    return response.data
-}
-
 async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
     queryParams.append('release', await apVersionUtil.getCurrentRelease())
-    const response = await apAxios.get<PieceRegistryResponse[]>(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
-    return response.data
+    const response = await fetch(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
+    if (!response.ok) {
+        throw new Error(`Failed to fetch cloud pieces: ${response.status}`)
+    }
+    return await response.json()
 }
 
 

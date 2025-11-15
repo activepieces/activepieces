@@ -1,7 +1,6 @@
 import { EngineResponseStatus, FlowId, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, TriggerSource, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { projectService } from '../project/project-service'
 import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'

@@ -13,7 +13,6 @@ import {
     ErrorCode,
     FlowId,
     FlowTriggerType,
-    FlowVersion,
     FlowVersionId,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,

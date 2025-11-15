@@ -174,17 +174,20 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
 
 async function filterPiecesThatAlreadyInstalled(rootWorkspace: string, pieces: PiecePackage[]): Promise<PiecePackage[]> {
     const checkResults = await Promise.all(
-        pieces.map(piece => checkIfPieceIsCached(piecePath(rootWorkspace, piece))),
+        pieces.map(async piece => {
+            const pieceFolder = piecePath(rootWorkspace, piece)
+            if (usedPiecesMemoryCache[pieceFolder]) {
+                return true
+            }
+            usedPiecesMemoryCache[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
+            if(usedPiecesMemoryCache[pieceFolder]) {
+                const redis = await workerRedisConnections.useExisting()
+                await redis.set(redisUsedPiecesCacheKey(piece), JSON.stringify(piece))
+            }
+            return usedPiecesMemoryCache[pieceFolder]
+        }),
     )
     return pieces.filter((_, idx) => !checkResults[idx])
-}
-
-async function checkIfPieceIsCached(pieceFolder: string): Promise<boolean> {
-    if (usedPiecesMemoryCache[pieceFolder]) {
-        return true
-    }
-    usedPiecesMemoryCache[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
-    return usedPiecesMemoryCache[pieceFolder]
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
@@ -194,10 +197,7 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
             'true'
         )
     })
-
     await Promise.all(writeToDiskJobs)
-    const redis = await workerRedisConnections.useExisting()
-    await redis.mset(pieces.map(piece => [redisUsedPiecesCacheKey(piece), JSON.stringify(piece)]))
 }
 
 
