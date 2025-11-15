@@ -228,9 +228,9 @@ export const getPiecePackageWithoutArchive = async (
                 packageType: PackageType.ARCHIVE,
                 pieceName: pkg.pieceName,
                 pieceVersion: pieceMetadata.version,
+                platformId: platformId!,
                 pieceType: pieceMetadata.pieceType,
                 archiveId: pieceMetadata.archiveId,
-                archive: undefined,
             }
         }
         case PackageType.REGISTRY: {

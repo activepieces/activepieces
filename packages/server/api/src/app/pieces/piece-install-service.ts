@@ -107,7 +107,7 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
                 ...params,
                 pieceType: PieceType.CUSTOM,
                 archiveId,
-                archive: undefined,
+                platformId: platformId!,
                 packageType: params.packageType,
             }
         }

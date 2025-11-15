@@ -1,29 +1,40 @@
+import { pubsubFactory } from '@activepieces/server-shared'
 import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appSocket } from '../../app-socket'
 import { runsMetadataQueue } from '../../flow-worker'
-import { engineResponsePublisher } from '../../utils/engine-response-publisher'
+import { workerRedisConnections } from '../../utils/worker-redis'
+
+const pubsub = pubsubFactory(workerRedisConnections.create)
 
 export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
     sendFlowResponse: async (request: SendFlowResponseRequest): Promise<void> => {
         const { workerHandlerId, httpRequestId, runResponse } = request
-        await engineResponsePublisher(log).publish(
-            httpRequestId,
-            workerHandlerId,
-            runResponse,
-        )
+        await publishEngineResponse(log, {
+            requestId: httpRequestId,
+            workerServerId: workerHandlerId,
+            response: runResponse,
+        })
+    },
+    sendUserInteractionResponse: async <T>(request: PublishEngineResponseRequest<T>): Promise<void> => {
+        const { requestId, workerServerId, response } = request
+        await publishEngineResponse(log, {
+            requestId,
+            workerServerId,
+            response,
+        })
     },
     updateRunProgress: async (request: UpdateRunProgressRequest): Promise<void> => {
         const { runId, projectId, workerHandlerId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse } = request
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
-            await engineResponsePublisher(log).publish(
-                httpRequestId,
-                workerHandlerId,
-                await getFlowResponse(status),
-            )
+            await publishEngineResponse(log, {
+                requestId: httpRequestId,
+                workerServerId: workerHandlerId,
+                response: await getFlowResponse(status),
+            })
         }
 
         await runsMetadataQueue.add({
@@ -48,6 +59,14 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+
+async function publishEngineResponse<T>(log: FastifyBaseLogger, request: PublishEngineResponseRequest<T>): Promise<void> {
+    const { requestId, workerServerId, response } = request
+    log.info({ requestId }, '[engineResponsePublisher#publishEngineResponse]')
+    const message: EngineResponseWithId<T> = { requestId, response }
+    await pubsub.publish(`engine-run:sync:${workerServerId}`, JSON.stringify(message))
+}
 
 
 async function getFlowResponse(status: FlowRunStatus): Promise<EngineHttpResponse> {
@@ -88,3 +107,12 @@ async function getFlowResponse(status: FlowRunStatus): Promise<EngineHttpRespons
             throw new Error(`Unexpected flow run status: ${status}`)
     }
 }
+
+
+type PublishEngineResponseRequest<T> = {
+    requestId: string
+    workerServerId: string
+    response: T
+}
+
+type EngineResponseWithId<T> = { requestId: string, response: T }

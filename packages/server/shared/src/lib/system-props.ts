@@ -3,7 +3,6 @@ import axios from 'axios'
 import { environmentMigrations } from './env-migrations'
 
 export const systemConstants = {
-    PACKAGE_ARCHIVE_PATH: 'cache/archives',
     ENGINE_EXECUTABLE_PATH: 'dist/packages/engine/main.js',
 }
 

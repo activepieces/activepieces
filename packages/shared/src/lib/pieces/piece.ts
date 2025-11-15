@@ -16,7 +16,7 @@ export const PrivatePiecePackage = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     archiveId: Type.String(),
-    archive: Type.Unknown(),
+    platformId: Type.String(),
 })
 
 export type PrivatePiecePackage = Static<typeof PrivatePiecePackage>

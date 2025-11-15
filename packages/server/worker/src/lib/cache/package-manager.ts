@@ -56,7 +56,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     },
 
     async installWorkspaces({ path, relativePiecePaths }: InstallWorkspacesParams): Promise<PackageManagerOutput> {
-        const args = piecesConfigs;
+        const args = piecesConfigs
         const filters: string[] = relativePiecePaths.map((path) => `--filter ./${path}`)
         return runCommand(path, 'install', log, ...args, ...filters)
     },
@@ -83,7 +83,7 @@ const runCommand = async (
     log.debug({ path, command, args }, '[PackageManager#execute]')
     await fileSystemUtils.threadSafeMkdir(path)
     const commandLine = `bun ${command} ${args.join(' ')}`
-    return await execPromise(commandLine, { cwd: path })
+    return execPromise(commandLine, { cwd: path })
 }
 
 

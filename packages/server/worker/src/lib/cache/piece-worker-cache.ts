@@ -1,7 +1,6 @@
 import path from 'path'
-import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { AppSystemProp, environmentVariables } from '@activepieces/server-shared'
-import { ApEnvironment, ProjectId } from '@activepieces/shared'
+import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
@@ -10,7 +9,14 @@ import { GLOBAL_CACHE_PIECES_PATH } from './worker-cache'
 
 
 export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
-    async getPiece({ engineToken, pieceName, pieceVersion, platformId }: GetPieceRequestQueryWorker): Promise<PieceMetadataModel> {
+    async getPiece({ engineToken, pieceName, pieceVersion, platformId }: GetPieceRequestQueryWorker): Promise<PiecePackage> {
+        const isExactVersion = EXACT_VERSION_REGEX.test(pieceVersion)
+
+        const skipCacheAsItCanChange = !isExactVersion
+        if (skipCacheAsItCanChange) {
+            return getPiecePackage({ engineToken, pieceName, pieceVersion, platformId })
+        }
+
         const cacheKey = `${pieceName}-${pieceVersion}-${platformId}`
         const cache = cacheState(path.join(GLOBAL_CACHE_PIECES_PATH, cacheKey), log)
 
@@ -25,13 +31,12 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
                 if (devPieces.includes(pieceName)) {
                     return true
                 }
-                return false        
+                return false
             },
             installFn: async () => {
                 const startTime = performance.now()
-                const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
-                    version: pieceVersion,
-                })
+
+                const piecePackage = await getPiecePackage({ engineToken, pieceName, pieceVersion, platformId })
                 log.info({
                     message: '[pieceWorkerCache] Cached piece',
                     pieceName,
@@ -39,14 +44,42 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
                     platformId,
                     timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
                 })
-                return JSON.stringify(pieceMetadata)
+
+                return JSON.stringify(piecePackage)
             },
             skipSave: NO_SAVE_GUARD,
         })
-        const pieceMetadata = JSON.parse(state as string) as PieceMetadataModel
-        return pieceMetadata
+
+        return JSON.parse(state as string) as PiecePackage
     },
 })
+
+
+async function getPiecePackage(query: GetPieceRequestQueryWorker): Promise<PiecePackage> {
+    const pieceMetadata = await engineApiService(query.engineToken).getPiece(query.pieceName, {
+        version: query.pieceVersion,
+    })
+
+    switch (pieceMetadata.packageType) {
+        case PackageType.ARCHIVE:
+            return {
+                packageType: PackageType.ARCHIVE,
+                pieceName: pieceMetadata.name,
+                pieceVersion: pieceMetadata.version,
+                pieceType: pieceMetadata.pieceType,
+                archiveId: pieceMetadata.archiveId!,
+                platformId: query.platformId,
+            }
+        case PackageType.REGISTRY:
+            return {
+                packageType: PackageType.REGISTRY,
+                pieceName: pieceMetadata.name,
+                pieceVersion: pieceMetadata.version,
+                pieceType: pieceMetadata.pieceType,
+            }
+    }
+}
+
 
 type GetPieceRequestQueryWorker = PieceCacheKey & {
     engineToken: string

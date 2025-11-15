@@ -14,16 +14,14 @@ export const handshakeHandler = (log: FastifyBaseLogger) => ({
             return null
         }
 
-        const flowVersion = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: params.flowId,
-            versionId: params.flowVersionId,
-        })
+       
         const platformId = await projectService.getPlatformId(params.projectId)
 
         const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.HANDSHAKE>>>({
             jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.HANDSHAKE,
-            flowVersion,
+            flowId: params.flowId,
+            flowVersionId: params.flowVersionId,
             projectId: params.projectId,
             test: false,
             platformId,
