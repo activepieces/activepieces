@@ -104,7 +104,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                     log,
                 }))
                 if (error) {
-                    log.info({ codePath, error }, '[ßCodeBuilder#processCodeStep] Compilation error')
+                    log.info({ codePath, error }, '[CodeBuilder#processCodeStep] Compilation error')
                     await handleCompilationError({ codePath, error })
                 }
                 else {
