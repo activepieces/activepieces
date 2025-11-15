@@ -19,8 +19,10 @@ import {
 import { PlatformSwitcher } from '@/features/projects/components/platform-switcher';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn } from '@/lib/utils';
+import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { Link } from 'react-router-dom';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 
 export const AppSidebarHeader = () => {
   const { embedState } = useEmbedding();
@@ -29,6 +31,9 @@ export const AppSidebarHeader = () => {
   const showSwitcher = edition === ApEdition.CLOUD && !embedState.isEmbedded;
   const { state } = useSidebar();
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
+  const { checkAccess } = useAuthorization();
+  const defaultRoute = determineDefaultRoute(checkAccess);
+  
 
   if (!showSwitcher) {
     return (
@@ -72,7 +77,7 @@ export const AppSidebarHeader = () => {
     <SidebarHeader className="relative" onClick={(e) => e.stopPropagation()}>
       <SidebarMenu>
         <SidebarMenuItem className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 w-full">
             {state === 'collapsed' ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -93,20 +98,34 @@ export const AppSidebarHeader = () => {
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <PlatformSwitcher>
-                <SidebarMenuButton className="px-2 h-9 gap-3">
-                  <img
-                    src={branding.logos.logoIconUrl}
-                    alt={t('home')}
-                    className="h-5 w-5 object-contain"
-                  />
-                  <Separator orientation="vertical" className="h-4" />
-                  <h1 className="flex-1 min-w-0 w-48 truncate font-semibold">
-                    {currentPlatform?.name}
-                  </h1>
-                  <ChevronsUpDown className="ml-auto shrink-0" />
-                </SidebarMenuButton>
-              </PlatformSwitcher>
+              <div className="flex items-center gap-2 w-full px-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                        to={defaultRoute}
+                        className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
+                      >
+                      <img
+                        src={branding.logos.logoIconUrl}
+                        alt={t('Home')}
+                        className="h-5 w-5 object-contain"
+                      />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('Home')}
+                  </TooltipContent>
+                </Tooltip>
+                <Separator orientation="vertical" className="h-4" />
+                <PlatformSwitcher>
+                  <SidebarMenuButton className="px-2 h-9 gap-3 flex-1 min-w-0">
+                    <h1 className="flex-1 min-w-0 truncate font-semibold">
+                      {currentPlatform?.name}
+                    </h1>
+                    <ChevronsUpDown className="ml-auto shrink-0" />
+                  </SidebarMenuButton>
+                </PlatformSwitcher>
+              </div>
             )}
           </div>
         </SidebarMenuItem>
