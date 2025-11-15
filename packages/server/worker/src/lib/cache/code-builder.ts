@@ -97,6 +97,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                     timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
                 })
 
+                const startTimeCompilation = performance.now()
                 const { error } = await tryCatch(() => compileCode({
                     path: codePath,
                     code,
@@ -105,6 +106,8 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 if (error) {
                     log.info({ codePath, error }, '[ßCodeBuilder#processCodeStep] Compilation error')
                     await handleCompilationError({ codePath, error })
+                } else {
+                    log.info({ codePath, timeTaken: `${Math.floor(performance.now() - startTimeCompilation)}ms` }, '[CodeBuilder#processCodeStep] Compilation success')
                 }
                 return currentHash
             },
