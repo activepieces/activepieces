@@ -1,10 +1,12 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { AIProvider } from '@activepieces/common-ai'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
-import { AIProviderStrategy, Usage } from './types'
+import { AIProviderStrategy, StreamingParser, Usage } from './types'
 import { calculateTokensCost, calculateWebSearchCost, getProviderConfig } from './utils'
 export const googleProvider: AIProviderStrategy = {
     extractModelId: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null => {
-        // https://generativelanguage.googleapis.com/v1beta/{model=models/*}:streamGenerateContent
+        // https://generativelanguage.googleapis.com/v1beta/{model=models/*}:generateContent
         const url = request.url
         const modelMatch = url.match(/\/models\/([^/:]+)/)
         return modelMatch ? modelMatch[1] : null
@@ -111,8 +113,72 @@ export const googleProvider: AIProviderStrategy = {
     },
 
     isStreaming: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
-        const url = request.url
-        return url.includes(':streamGenerateContent')
+        // Check if the URL contains :streamGenerateContent endpoint or alt=sse parameter
+        return request.url.includes(':streamGenerateContent') || request.url.includes('alt=sse')
+    },
+
+    streamingParser: (): StreamingParser => {
+        let finalResponse: Record<string, unknown> = {}
+        let accumulatedUsage: {
+            promptTokenCount: number
+            candidatesTokenCount: number
+            thoughtsTokenCount?: number
+            promptTokensDetails: Array<{ modality: string, tokenCount: number }>
+        } | null = null
+        
+        const parser = createParser({
+            onEvent(event) {
+                if (event.data.trim() === '' || !event.data) {
+                    return
+                }
+
+                try {
+                    const data = JSON.parse(event.data)
+                    // Accumulate usage from each chunk
+                    if (data.usageMetadata) {
+                        if (!accumulatedUsage) {
+                            accumulatedUsage = {
+                                promptTokenCount: 0,
+                                candidatesTokenCount: 0,
+                                thoughtsTokenCount: 0,
+                                promptTokensDetails: []
+                            }
+                        }
+                        accumulatedUsage.promptTokenCount += data.usageMetadata.promptTokenCount || 0
+                        accumulatedUsage.candidatesTokenCount += data.usageMetadata.candidatesTokenCount || 0
+                        accumulatedUsage.thoughtsTokenCount = (accumulatedUsage.thoughtsTokenCount || 0) + (data.usageMetadata.thoughtsTokenCount || 0)
+                        if (data.usageMetadata.promptTokensDetails) {
+                            accumulatedUsage.promptTokensDetails.push(...(data.usageMetadata.promptTokensDetails || []))
+                        }
+                    }
+                    
+                    // Keep the final chunk as the complete response
+                    if (data.candidates || data.usageMetadata) {
+                        finalResponse = data
+                    }
+                } catch (e) {
+                    // Ignore parse errors for individual chunks
+                }
+            },
+        })
+        
+        return {
+            onChunk: (chunk: string): void => {
+                parser.feed(chunk)
+            },
+            onEnd: () => {
+                // Merge accumulated usage into final response
+                if (accumulatedUsage && finalResponse) {
+                    finalResponse.usageMetadata = {
+                        promptTokenCount: accumulatedUsage.promptTokenCount,
+                        candidatesTokenCount: accumulatedUsage.candidatesTokenCount,
+                        thoughtsTokenCount: accumulatedUsage.thoughtsTokenCount,
+                        promptTokensDetails: accumulatedUsage.promptTokensDetails
+                    }
+                }
+                return finalResponse
+            },
+        }
     },
 
     isNonUsageRequest: (request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean => {
