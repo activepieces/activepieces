@@ -98,7 +98,10 @@ export function ProjectDashboardSidebar() {
         variant="inset"
         collapsible="icon"
         onClick={() => setOpen(true)}
-        className={cn('cursor-nesw-resize', 'group')}
+        className={cn(
+          state === 'collapsed' ? 'cursor-nesw-resize' : '',
+          'group',
+        )}
       >
         <AppSidebarHeader />
 
