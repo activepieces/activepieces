@@ -5,7 +5,7 @@ export class RemoveProjectIdFromPieceMetadata1762358403172 implements MigrationI
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_piece_metadata_name_project_id_version"
+            DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
         await queryRunner.query(`
             ALTER TABLE "piece_metadata" DROP CONSTRAINT "fk_piece_metadata_project_id"
@@ -39,7 +39,7 @@ export class RemoveProjectIdFromPieceMetadata1762358403172 implements MigrationI
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_piece_metadata_name_platform_id_version"
+            DROP INDEX "idx_piece_metadata_name_platform_id_version"
         `)
         await queryRunner.query(`
             ALTER TABLE "piece_metadata" DROP COLUMN "projectId"
