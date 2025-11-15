@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         procps && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-RUN npm i -g bun@1.3.1 npm@9.9.3 pnpm@9.15.0 pm2@6.0.10 typescript@4.9.4
+RUN npm i -g bun@1.3.1 npm@9.9.3 pm2@6.0.10 typescript@4.9.4
 
 # Set the locale
 ENV LANG en_US.UTF-8
@@ -33,9 +33,8 @@ RUN apt-get update \
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
 RUN cd /usr/src && bun i isolated-vm@5.0.1
 
-RUN pnpm store add @tsconfig/node18@1.0.0
-RUN pnpm store add @types/node@18.17.1
-RUN pnpm store add typescript@4.9.4
+RUN bun fetch @types/node@18.17.1
+RUN bun fetch typescript@4.9.4
 
 ### STAGE 1: Build ###
 FROM base AS build
