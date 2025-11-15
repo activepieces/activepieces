@@ -13,15 +13,15 @@ import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
 import { workerApiService } from '../../../api/server-api.service'
 import { workerMachine } from '../../../utils/machine'
+import { workerRedisConnections } from '../../../utils/worker-redis'
 import { packageManager } from '../../package-manager'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../../worker-cache'
-import { workerRedisConnections } from '../../../utils/worker-redis'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
-const REDIS_USED_PIECES_CACHE_KEY = 'pieces'
+const REDIS_USED_PIECES_CACHE_KEY = 'cache:pieces:v1'
 
 const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
     switch (piece.packageType) {
@@ -51,8 +51,8 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         log.info('Warming up pieces cache')
         const startTime = performance.now()
         const redis = await workerRedisConnections.useExisting()
-        const usedPiecesKey = await redis.keys(`${REDIS_USED_PIECES_CACHE_KEY}:*`);
-        const usedPiecesValues = usedPiecesKey.length > 0 ? await redis.mget(...usedPiecesKey) : [];
+        const usedPiecesKey = await redis.keys(`${REDIS_USED_PIECES_CACHE_KEY}:*`)
+        const usedPiecesValues = usedPiecesKey.length > 0 ? await redis.mget(...usedPiecesKey) : []
         const usedPieces = usedPiecesKey.filter((_key, index) => usedPiecesValues[index] !== null).map((_key, index) => JSON.parse(usedPiecesValues[index] as string))
         await registryPieceManager(log).install({
             pieces: usedPieces,
@@ -180,7 +180,7 @@ async function filterPiecesThatAlreadyInstalled(rootWorkspace: string, pieces: P
                 return true
             }
             usedPiecesMemoryCache[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
-            if(usedPiecesMemoryCache[pieceFolder]) {
+            if (usedPiecesMemoryCache[pieceFolder]) {
                 const redis = await workerRedisConnections.useExisting()
                 await redis.set(redisUsedPiecesCacheKey(piece), JSON.stringify(piece))
             }
@@ -194,7 +194,7 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
     const writeToDiskJobs = pieces.map(async (piece) => {
         await writeFileAtomic(
             join(piecePath(rootWorkspace, piece), 'ready'), 
-            'true'
+            'true',
         )
     })
     await Promise.all(writeToDiskJobs)

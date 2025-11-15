@@ -50,7 +50,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 }
                 const pieceMetadata = await response.json()
                 await pieceMetadataService(log).create({
-                    pieceMetadata: pieceMetadata,
+                    pieceMetadata,
                     packageType: pieceMetadata.packageType,
                     pieceType: pieceMetadata.pieceType,
                 })
@@ -81,7 +81,7 @@ async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)
     }
-    return await response.json()
+    return response.json()
 }
 
 

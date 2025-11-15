@@ -1,11 +1,11 @@
 import { AppConnectionValue, assertNotNullOrUndefined, UserInteractionJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
 import { EngineHelperResponse, EngineHelperResult } from '../../compute/engine-runner-types'
 import { engineSocketHandlers } from '../../compute/process/engine-socket-handlers'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
-import { flowWorkerCache } from '../../cache/flow-worker-cache'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
     async execute(jobData: UserInteractionJobData, engineToken: string, timeoutInSeconds: number): Promise<void> {
