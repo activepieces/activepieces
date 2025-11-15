@@ -1,7 +1,7 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
-import { ExecutionMode } from '@activepieces/shared'
+import { ExecutionMode, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
@@ -96,29 +96,15 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                     path: codePath,
                     timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
                 })
-                try {
-                    const timeTaken = performance.now()
-                    await compileCode({
-                        path: codePath,
-                        code,
-                        log,
-                    })
-                    log.info({
-                        message: '[CodeBuilder#processCodeStep] Compiled code',
-                        path: codePath,
-                        timeTaken: `${Math.floor(performance.now() - timeTaken)}ms`,
-                    })
-                }
-                catch (error: unknown) {
-                    log.error(
-                        error,
-                        `[CodeBuilder#processCodeStep], codePath: ${codePath}`,
-                    )
 
-                    await handleCompilationError({
-                        codePath,
-                        error,
-                    })
+                const { error } = await tryCatch(() => compileCode({
+                    path: codePath,
+                    code,
+                    log,
+                }))
+                if (error) {
+                    log.info({ codePath, error }, '[ßCodeBuilder#processCodeStep] Compilation error')
+                    await handleCompilationError({ codePath, error })
                 }
                 return currentHash
             },

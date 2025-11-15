@@ -12,8 +12,8 @@ export const pieceWorkerCache = (log: FastifyBaseLogger) => ({
     async getPiece({ engineToken, pieceName, pieceVersion, platformId }: GetPieceRequestQueryWorker): Promise<PiecePackage> {
         const isExactVersion = EXACT_VERSION_REGEX.test(pieceVersion)
 
-        const skipCacheAsItCanChange = !isExactVersion
-        if (skipCacheAsItCanChange) {
+        const skipRelativeVersions = !isExactVersion
+        if (skipRelativeVersions) {
             return getPiecePackage({ engineToken, pieceName, pieceVersion, platformId })
         }
 
