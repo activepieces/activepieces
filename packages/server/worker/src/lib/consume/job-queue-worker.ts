@@ -47,14 +47,17 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 assertNotNullOrUndefined(jobId, 'jobId')
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
                 if (shouldRateLimit) {
+                    const baseDelay = Math.min(600, 20 * Math.pow(2, job.attemptsStarted))
+                    const randomFactor = 0.6 + Math.random() * 0.4
+                    const delayInSeconds = Math.round(baseDelay * randomFactor)
                     await job.moveToDelayed(
-                        dayjs().add(Math.min(240, 20 * (job.attemptsStarted + 1)), 'seconds').valueOf(),
+                        dayjs().add(delayInSeconds, 'seconds').valueOf(),
                         token,
                     )
                     log.info({
                         message: '[jobQueueWorker] Job is throttled and will be retried',
                         jobId,
-                        delayInSeconds: Math.min(240, 20 * (job.attemptsStarted + 1)),
+                        delayInSeconds,
                     })
                     await job.changePriority({
                         priority: JOB_PRIORITY[RATE_LIMIT_PRIORITY],
@@ -90,16 +93,16 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 )
             }
         },
-        {
-            connection: await workerRedisConnections.create(),
-            telemetry: isOtpEnabled
-                ? new BullMQOtel(QueueName.WORKER_JOBS)
-                : undefined,
-            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
-            autorun: true,
-            stalledInterval: 30000,
-            maxStalledCount: 5,
-        },
+            {
+                connection: await workerRedisConnections.create(),
+                telemetry: isOtpEnabled
+                    ? new BullMQOtel(QueueName.WORKER_JOBS)
+                    : undefined,
+                concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+                autorun: true,
+                stalledInterval: 30000,
+                maxStalledCount: 5,
+            },
         )
         await worker.waitUntilReady()
         log.info({
