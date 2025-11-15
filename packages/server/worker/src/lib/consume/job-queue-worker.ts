@@ -63,7 +63,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                         'Thie job is rate limited and will be retried',
                     )
                 }
-                const response = await jobConsmer(log).consumeJob(job, workerToken)
+                const response = await jobConsmer(log).consumeJob(job)
                 log.info({
                     message: '[jobQueueWorker] Consumed job',
                     response,
@@ -132,7 +132,7 @@ async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
     }
     const schemaVersion = 'schemaVersion' in job.data ? job.data.schemaVersion : 0
     if (schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION) {
-        const newJobData = await workerApiService(workerToken).migrateJob({
+        const newJobData = await workerApiService().migrateJob({
             jobData: job.data,
         })
         await job.updateData(newJobData)

@@ -10,11 +10,15 @@ import { engineProcessManager } from '../compute/process/engine-process-manager'
 const execAsync = promisify(exec)
 
 let settings: WorkerSettingsResponse | undefined
-
+let workerToken: string | undefined
 const workerId = apId()
 
 export const workerMachine = {
     getWorkerId: () => workerId,
+    getWorkerToken: () => {
+        assertNotNullOrUndefined(workerToken, 'Worker token is not set')
+        return workerToken
+    },
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
         const cpus = os.cpus()
@@ -59,12 +63,14 @@ export const workerMachine = {
     isDedicatedWorker: () => {
         return !isNil(workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
-    init: async (_settings: WorkerSettingsResponse, log: FastifyBaseLogger) => {
+    init: async (_settings: WorkerSettingsResponse, _workerToken: string, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
             ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
             ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)),
         }
+
+        workerToken = _workerToken
 
         const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)

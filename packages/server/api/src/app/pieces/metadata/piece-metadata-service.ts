@@ -187,17 +187,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             })
         },
 
-        async bulkCreate(pieces: BulkCreateParams): Promise<PieceMetadataSchema[]> {
-            const data = await Promise.all(pieces.map(async (piece) => ({
-                id: apId(),
-                created: await findOldestCreatedDate({
-                    name: piece.name,
-                }),
-                ...piece,
-            })))
-            return pieceRepos().save(data)
-        },
-
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
             await Promise.all(pieces.map(async (piece) => {
                 await pieceRepos().delete({
@@ -228,9 +217,9 @@ export const getPiecePackageWithoutArchive = async (
                 packageType: PackageType.ARCHIVE,
                 pieceName: pkg.pieceName,
                 pieceVersion: pieceMetadata.version,
+                platformId: platformId!,
                 pieceType: pieceMetadata.pieceType,
                 archiveId: pieceMetadata.archiveId,
-                archive: undefined,
             }
         }
         case PackageType.REGISTRY: {
@@ -459,5 +448,3 @@ type RegistryParams = {
     platformId?: string
     edition: ApEdition
 }
-
-type BulkCreateParams = PieceMetadataModel[]
