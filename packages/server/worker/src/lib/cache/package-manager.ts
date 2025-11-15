@@ -34,7 +34,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
 })
 
 const sanitizeFilterPath = (filterPath: string): string => {
-    const allowed = /^[a-zA-Z0-9\-_/@]+$/
+    const allowed = /^(?![.])[a-zA-Z0-9\-_.@/]+$/
     if (!allowed.test(filterPath)) {
         throw new Error(`Invalid filter path ${filterPath}`)
     }

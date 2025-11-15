@@ -85,6 +85,7 @@ async function getDirsToBindArgs(log: FastifyBaseLogger, flowVersionId: string |
 
     const customPiecesPath = registryPieceManager(log).getCustomPiecesPath(platformId)
     if (customPiecesPath) {
+        dirsToBind.push(`--dir=/node_modules=${path.resolve(customPiecesPath, 'node_modules')}:maybe`)
         dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
     }
 
