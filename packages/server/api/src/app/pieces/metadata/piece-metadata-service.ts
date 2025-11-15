@@ -7,6 +7,7 @@ import {
     assertNotNullOrUndefined,
     ErrorCode,
     EXACT_VERSION_REGEX,
+    isEmpty,
     isNil,
     ListVersionsResponse,
     LocalesEnum,
@@ -255,10 +256,9 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
 
 const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> => {
     const devPiecesConfig = system.get(AppSystemProp.DEV_PIECES)
-    if (isNil(devPiecesConfig)) {
+    if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
         return []
     }
-
     const packages = devPiecesConfig.split(',')
     const pieces = await filePiecesUtils(packages, log).findAllPieces()
 
