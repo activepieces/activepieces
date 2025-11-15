@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -17,12 +18,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PlatformSwitcher } from '@/features/projects/components/platform-switcher';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-import { Link } from 'react-router-dom';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 
 export const AppSidebarHeader = () => {
   const { embedState } = useEmbedding();
@@ -33,7 +33,6 @@ export const AppSidebarHeader = () => {
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
-  
 
   if (!showSwitcher) {
     return (
@@ -102,9 +101,11 @@ export const AppSidebarHeader = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
-                        to={defaultRoute}
-                        className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
-                      >
+                      to={defaultRoute}
+                      className={cn(
+                        buttonVariants({ variant: 'ghost', size: 'icon' }),
+                      )}
+                    >
                       <img
                         src={branding.logos.logoIconUrl}
                         alt={t('Home')}
@@ -112,9 +113,7 @@ export const AppSidebarHeader = () => {
                       />
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t('Home')}
-                  </TooltipContent>
+                  <TooltipContent side="bottom">{t('Home')}</TooltipContent>
                 </Tooltip>
                 <Separator orientation="vertical" className="h-4" />
                 <PlatformSwitcher>
