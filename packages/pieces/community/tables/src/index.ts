@@ -3,6 +3,7 @@ import { createRecords } from "./lib/actions/create-records";
 import { PieceCategory } from "@activepieces/shared";
 import { deleteRecord } from "./lib/actions/delete-record";
 import { updateRecord } from "./lib/actions/update-record";
+import { upsertRecord } from "./lib/actions/upsert-record";
 import { getRecord } from "./lib/actions/get-record";
 import { findRecords } from "./lib/actions/find-records";
 import { newRecordTrigger } from "./lib/triggers/new-record";
@@ -16,6 +17,6 @@ export const tables = createPiece({
   minimumSupportedRelease: '0.54.1',
   authors: ['amrdb'],
   auth: PieceAuth.None(),
-  actions: [createRecords, deleteRecord, updateRecord, getRecord, findRecords],
+  actions: [createRecords, deleteRecord, updateRecord, upsertRecord, getRecord, findRecords],
   triggers: [newRecordTrigger, updatedRecordTrigger, deletedRecordTrigger],
 });
