@@ -33,9 +33,6 @@ RUN apt-get update \
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
 RUN cd /usr/src && bun i isolated-vm@5.0.1
 
-RUN bun fetch @types/node@18.17.1
-RUN bun fetch typescript@4.9.4
-
 ### STAGE 1: Build ###
 FROM base AS build
 

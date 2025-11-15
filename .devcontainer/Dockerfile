@@ -31,13 +31,8 @@ ENV LC_ALL en_US.UTF-8
 
 COPY default.cf /usr/local/etc/isolate
 
-RUN npm i -g npm@9.9.3
-RUN npm i -g cross-env@7.0.3
+RUN npm i -g bun@1.3.1 npm@9.9.3 cross-env@7.0.3
 
-# Install bun instead of pnpm (see: https://bun.sh/docs/installation)
-RUN curl -fsSL https://bun.sh/install | bash
-ENV PATH="/root/.bun/bin:${PATH}"
 
-# Update to use Node.js 20 packages using bun fetch
-RUN bun fetch @types/node@20.14.8
-RUN bun fetch typescript@4.9.4
+# install isolated-vm in a parent directory to avoid linking the package in every sandbox
+RUN cd /usr/src && bun i isolated-vm@5.0.1
