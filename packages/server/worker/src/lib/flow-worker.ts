@@ -2,13 +2,13 @@ import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFacto
 import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
-import { smartPieceCache } from './cache/pieces/production/smart-piece-cache'
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,
@@ -28,10 +28,10 @@ export const flowWorker = (log: FastifyBaseLogger): {
             onConnect: async () => {
                 const request = await workerMachine.getSystemInfo()
                 const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
-                await workerMachine.init(response, log)
+                await workerMachine.init(response, token, log)
+                await registryPieceManager(log).warmup()
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
-                smartPieceCache(log).preWarmCache(token)
             },
         })
     },

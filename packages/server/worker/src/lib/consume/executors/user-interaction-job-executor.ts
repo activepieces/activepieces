@@ -1,8 +1,9 @@
-import { AppConnectionValue, UserInteractionJobData, WorkerJobType } from '@activepieces/shared'
+import { AppConnectionValue, assertNotNullOrUndefined, UserInteractionJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
 import { EngineHelperResponse, EngineHelperResult } from '../../compute/engine-runner-types'
-import { engineResponsePublisher } from '../../utils/engine-response-publisher'
+import { engineSocketHandlers } from '../../compute/process/engine-socket-handlers'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
@@ -11,7 +12,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
         let response: EngineHelperResponse<EngineHelperResult>
         switch (jobData.jobType) {
             case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-                response = await engineRunner(log).extractPieceMetadata(engineToken, {
+                response = await engineRunner(log).extractPieceMetadata({
                     ...jobData.piece,
                     platformId: jobData.platformId,
                     timeoutInSeconds,
@@ -25,13 +26,18 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds,
                 })
                 break
-            case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+            case WorkerJobType.EXECUTE_TRIGGER_HOOK: {
+                const flowVersion = await flowWorkerCache(log).getVersion({
+                    engineToken,
+                    flowVersionId: jobData.flowVersionId,
+                })
+                assertNotNullOrUndefined(flowVersion, 'flowVersion')
                 response = await engineRunner(log).executeTrigger(engineToken, {
                     platformId: jobData.platformId,
                     hookType: jobData.hookType,
-                    flowVersion: jobData.flowVersion,
+                    flowVersion,
                     webhookUrl: await webhookUtils(log).getWebhookUrl({
-                        flowId: jobData.flowVersion.flowId,
+                        flowId: flowVersion.flowId,
                         simulate: jobData.test,
                         publicApiUrl: workerMachine.getPublicApiUrl(),
                     }),
@@ -41,8 +47,9 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds,
                 })
                 break
+            }
             case WorkerJobType.EXECUTE_TOOL:
-                response =  await engineRunner(log).excuteTool(engineToken, {
+                response = await engineRunner(log).excuteTool(engineToken, {
                     platformId: jobData.platformId,
                     actionName: jobData.actionName,
                     pieceName: jobData.pieceName,
@@ -67,10 +74,10 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 })
                 break
         }
-        await engineResponsePublisher(log).publish(
-            jobData.requestId,
-            jobData.webserverId,
+        await engineSocketHandlers(log).sendUserInteractionResponse({
+            requestId: jobData.requestId,
+            workerServerId: jobData.webserverId,
             response,
-        )
+        })
     },
 })

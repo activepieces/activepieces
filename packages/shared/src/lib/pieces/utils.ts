@@ -2,7 +2,6 @@ import semverMajor from 'semver/functions/major'
 import semverMinor from 'semver/functions/minor'
 import semverMinVersion from 'semver/ranges/min-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
-import { PackageType, PiecePackage } from './piece'
 
 /**
  * @param {string} pieceName - starts with `@activepieces/piece-`
@@ -31,28 +30,6 @@ export const trimVersionFromAlias = (alias: string): string => {
 }
 
 
-export const getPackageSpecForPiece = (packageArchivePath: string, params: PiecePackage): string => {
-    const { packageType, pieceName, pieceVersion } = params
-
-    switch (packageType) {
-        case PackageType.REGISTRY: {
-            return `npm:${pieceName}@${pieceVersion}`
-        }
-
-        case PackageType.ARCHIVE: {
-            const archivePath = getPackageArchivePathForPiece({
-                archiveId: params.archiveId,
-                archivePath: packageArchivePath,
-            })
-
-            return `file:${archivePath}`
-        }
-    }
-}
-
-export const getPackageArchivePathForPiece = (params: GetPackageArchivePathForPieceParams): string => {
-    return `${params.archivePath}/${params.archiveId}.tgz`
-}
 
 export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams): T => {
     const { module, pieceName, pieceVersion } = params
@@ -84,12 +61,6 @@ export const getPieceMajorAndMinorVersion = (pieceVersion: string): string => {
 type GetPackageAliasForPieceParams = {
     pieceName: string
     pieceVersion: string
-}
-
-
-type GetPackageArchivePathForPieceParams = {
-    archiveId: string
-    archivePath: string
 }
 
 type ExtractPieceFromModuleParams = {
