@@ -360,9 +360,9 @@ Property.DynamicProperties({
   description: 'Dynamic Form',
   displayName: 'Dynamic Form',
   required: true,
-  refreshers: ['authentication'],
+  refreshers: ['auth'],
   props: async (propsValue) => {
-    const authentication = propsValue['authentication'];
+    const authentication = propsValue['auth'];
     const apiEndpoint = 'https://someapi.com';
     const response = await httpClient.sendRequest<{ values: [string[]][] }>({
         method: HttpMethod.GET,
