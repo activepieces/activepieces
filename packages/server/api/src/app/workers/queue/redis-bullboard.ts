@@ -42,15 +42,12 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     assertNotNullOrUndefined(jobQueues.length > 0, 'No job queues available')
     assertNotNullOrUndefined(runsMetadataQueue(app.log).get(), 'runsMetadataQueueInstance')
 
-    const throttledJobQueues = throttledJobQueue(app.log).getAllQueues()
-
     const jobQueueAdapters = jobQueues.map(queue => new BullMQAdapter(queue))
-    const throttledJobQueueAdapters = throttledJobQueues.map(queue => new BullMQAdapter(queue))
 
     const allQueues = [
         ...jobQueueAdapters,
-        ...throttledJobQueueAdapters,
         new BullMQAdapter(systemJobsQueue),
+        new BullMQAdapter(throttledJobQueue(app.log).get()),
         new BullMQAdapter(runsMetadataQueue(app.log).get()),
     ]
 

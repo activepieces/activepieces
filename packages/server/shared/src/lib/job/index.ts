@@ -23,10 +23,6 @@ export const getPlatformQueueName = (platformId: string): string => {
     return `platform-${platformId}-jobs`
 }
 
-export const getThrottledJobsQueueName = (platformId: string): string => {
-    return `platform-${platformId}-throttled-jobs`
-}
-
 export const ApQueueJob = Type.Object({
     id: Type.String(),
     data: JobData,
