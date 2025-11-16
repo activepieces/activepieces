@@ -136,6 +136,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 updated: existingMetadata.updated,
                 created: existingMetadata.created,
             })
+
+            await localPieceCache(log).piecesUpdated()
         },
         async resolveExactVersion({ name, version, projectId, platformId }: GetExactPieceVersionParams): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
@@ -177,7 +179,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            return pieceRepos().save({
+            const result = await pieceRepos().save({
                 id: apId(),
                 packageType,
                 pieceType,
@@ -186,6 +188,10 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 created: createdDate,
                 ...pieceMetadata,
             })
+
+            await localPieceCache(log).piecesUpdated()
+
+            return result
         },
 
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
@@ -195,6 +201,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     version: piece.version,
                 })
             }))
+
+            await localPieceCache(log).piecesUpdated()
         },
     }
 }
