@@ -70,7 +70,7 @@ export function ProjectDashboardLayout({
             {!hideHeader && (
               <>
                 <ProjectDashboardLayoutHeader />
-                <Separator className="mb-6" />
+                <Separator className="mb-5" />
               </>
             )}
             <div className="px-4"> {children} </div>

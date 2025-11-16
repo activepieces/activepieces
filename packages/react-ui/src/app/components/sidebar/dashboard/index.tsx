@@ -101,16 +101,17 @@ export function ProjectDashboardSidebar() {
         className={cn(
           state === 'collapsed' ? 'cursor-nesw-resize' : '',
           'group',
+          'p-1',
         )}
       >
         <AppSidebarHeader />
 
-        {state === 'collapsed' && <SidebarSeparator className="my-3" />}
-        {state === 'expanded' && <div className="mt-1" />}
+        {state === 'collapsed' && <div className="mt-1" />}
+        {state === 'expanded' && <div className="mt-2" />}
 
         <SidebarContent
           className={cn(
-            state === 'collapsed' ? 'gap-4' : 'gap-3',
+            state === 'collapsed' ? 'gap-2' : 'gap-0',
             'scrollbar-hover',
           )}
         >
@@ -124,7 +125,9 @@ export function ProjectDashboardSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator />
+          <SidebarSeparator
+            className={cn(state === 'collapsed' ? 'mb-3' : 'mb-5')}
+          />
 
           <SidebarGroup>
             {state === 'expanded' && (
@@ -180,7 +183,13 @@ export function ProjectDashboardSidebar() {
               </div>
             )}
             <SidebarGroupContent>
-              <SidebarMenu className={cn(state === 'collapsed' ? 'gap-2' : '')}>
+              <SidebarMenu
+                className={cn(
+                  state === 'collapsed'
+                    ? 'gap-2 flex flex-col items-center'
+                    : '',
+                )}
+              >
                 {projects?.map((p) => (
                   <ProjectSideBarItem
                     key={p.id}
@@ -194,9 +203,12 @@ export function ProjectDashboardSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <div className="flex-grow" />
+          <div className="px-2">
+            {state === 'expanded' && <SidebarUsageLimits />}
+          </div>
         </SidebarContent>
         <SidebarFooter onClick={(e) => e.stopPropagation()}>
-          {state === 'expanded' && <SidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
