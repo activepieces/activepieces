@@ -9,7 +9,7 @@ import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { system } from '../../helper/system/system'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
 import { jobQueue } from './job-queue'
-import {throttledJobQueue} from "./throttled-job-queue";
+import { throttledJobQueue } from './throttled-job-queue';
 
 const QUEUE_BASE_PATH = '/ui'
 

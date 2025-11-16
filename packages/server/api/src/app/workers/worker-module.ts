@@ -8,7 +8,7 @@ import { jobQueue } from './queue/job-queue'
 import { queueMigration } from './queue/migration'
 import { setupBullMQBoard } from './queue/redis-bullboard'
 import { flowWorkerController } from './worker-controller'
-import {throttledJobQueue} from "./queue/throttled-job-queue";
+import { throttledJobQueue } from './queue/throttled-job-queue';
 
 export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, {
