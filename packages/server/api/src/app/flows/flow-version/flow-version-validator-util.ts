@@ -159,13 +159,10 @@ async function validateAction(
         return { valid: false }
     }
 
-    const props = action.props
-    if (isNil(settings.input?.auth) && !isNil(piece.auth) && action.requireAuth !== false) {
-        return { valid: false }
-    }
-    if (!isNil(piece.auth) && action.requireAuth ) {
-        const auth = Array.isArray(piece.auth) ? piece.auth[0] : piece.auth
-        props.auth = auth
+    const props = {...action.props}
+  
+    if (!isNil(piece.auth) && action.requireAuth) {
+        props['auth'] = Array.isArray(piece.auth) ? piece.auth[0] : piece.auth
     }
 
     return validateProps(props, settings.input)
@@ -199,13 +196,9 @@ async function validateTrigger(
     if (isNil(trigger)) {
         return { valid: false }
     }
-    const props = trigger.props
-    if (isNil(settings.input?.auth) && !isNil(piece.auth) && trigger.requireAuth !== false) {
-        return { valid: false }
-    }   
+    const props = {...trigger.props} 
     if (!isNil(piece.auth) && trigger.requireAuth ) {
-        const auth = Array.isArray(piece.auth) ? piece.auth[0] : piece.auth
-        props.auth = auth
+        props['auth'] = Array.isArray(piece.auth) ? piece.auth[0] : piece.auth
     }
     return validateProps(props, settings.input)
 }
