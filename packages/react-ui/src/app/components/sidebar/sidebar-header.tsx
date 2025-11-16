@@ -12,11 +12,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { PlatformSwitcher } from '@/features/projects/components/platform-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -75,46 +70,39 @@ export const AppSidebarHeader = () => {
   return (
     <SidebarHeader className="relative" onClick={(e) => e.stopPropagation()}>
       <SidebarMenu>
-        <SidebarMenuItem className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1 w-full">
+        <SidebarMenuItem
+          className={cn(
+            'flex items-center gap-1',
+            state === 'collapsed' ? 'justify-center' : 'justify-between',
+          )}
+        >
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              state === 'collapsed' ? 'w-auto' : 'w-full',
+            )}
+          >
             {state === 'collapsed' ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <PlatformSwitcher>
-                      <Button variant="ghost" size="icon">
-                        <img
-                          src={branding.logos.logoIconUrl}
-                          alt={t('home')}
-                          className="h-5 w-5 object-contain"
-                        />
-                      </Button>
-                    </PlatformSwitcher>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  {t('Switch Platform')}
-                </TooltipContent>
-              </Tooltip>
+              <Link to={defaultRoute}>
+                <Button variant={'ghost'} size={'icon'}>
+                  <img
+                    src={branding.logos.logoIconUrl}
+                    alt={t('Home')}
+                    className="h-5 w-5 object-contain"
+                  />
+                </Button>
+              </Link>
             ) : (
-              <div className="flex items-center gap-2 w-full px-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={defaultRoute}
-                      className={cn(
-                        buttonVariants({ variant: 'ghost', size: 'icon' }),
-                      )}
-                    >
-                      <img
-                        src={branding.logos.logoIconUrl}
-                        alt={t('Home')}
-                        className="h-5 w-5 object-contain"
-                      />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">{t('Home')}</TooltipContent>
-                </Tooltip>
+              <div className="flex items-center gap-2 w-full">
+                <Link to={defaultRoute}>
+                  <Button variant={'ghost'} size={'icon'}>
+                    <img
+                      src={branding.logos.logoIconUrl}
+                      alt={t('Home')}
+                      className="h-5 w-5 object-contain"
+                    />
+                  </Button>
+                </Link>
                 <Separator orientation="vertical" className="h-4" />
                 <PlatformSwitcher>
                   <SidebarMenuButton className="px-2 h-9 gap-3 flex-1 min-w-0">
