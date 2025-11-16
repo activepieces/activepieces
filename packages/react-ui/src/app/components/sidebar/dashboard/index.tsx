@@ -202,7 +202,6 @@ export function ProjectDashboardSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
           <div className="px-2">
-            {' '}
             {state === 'expanded' && <SidebarUsageLimits />}
           </div>
         </SidebarContent>

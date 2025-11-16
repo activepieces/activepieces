@@ -12,11 +12,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { PlatformSwitcher } from '@/features/projects/components/platform-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -34,7 +29,7 @@ export const AppSidebarHeader = () => {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
 
-  if (false) {
+  if (!showSwitcher) {
     return (
       <SidebarHeader
         className="relative w-full"
@@ -43,37 +38,28 @@ export const AppSidebarHeader = () => {
         <SidebarMenu className="w-full">
           <SidebarMenuItem className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1 w-full">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={defaultRoute}
-                    className={cn(
-                      'w-full flex items-center justify-center h-9',
-                    )}
-                  >
-                    <Button variant={'ghost'} size={'icon'} className="w-full">
-                      <img
-                        src={
-                          state === 'collapsed'
-                            ? branding.logos.logoIconUrl
-                            : branding.logos.fullLogoUrl
-                        }
-                        alt={t('home')}
-                        className={cn(
-                          'object-contain',
-                          state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
-                        )}
-                        draggable={false}
-                      />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent
-                  side={state === 'collapsed' ? 'right' : 'bottom'}
-                >
-                  {t('Home')}
-                </TooltipContent>
-              </Tooltip>
+              {/* The following outer div prevents pointer events, so it's not clickable */}
+              <div
+                className={cn(
+                  buttonVariants({ variant: 'ghost', size: 'icon' }),
+                  'w-full flex items-center justify-center h-9 select-none cursor-default',
+                )}
+                style={{ pointerEvents: 'none' }}
+              >
+                <img
+                  src={
+                    state === 'collapsed'
+                      ? branding.logos.logoIconUrl
+                      : branding.logos.fullLogoUrl
+                  }
+                  alt={t('home')}
+                  className={cn(
+                    'object-contain',
+                    state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
+                  )}
+                  draggable={false}
+                />
+              </div>
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -81,40 +67,42 @@ export const AppSidebarHeader = () => {
     );
   }
 
-  const logoLink = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link to={defaultRoute}>
-          <Button variant={'ghost'} size={'icon'}>
-            <img
-              src={branding.logos.logoIconUrl}
-              alt={t('Home')}
-              className="h-5 w-5 object-contain"
-            />
-          </Button>
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side={state === 'collapsed' ? 'right' : 'bottom'}>
-        {t('Home')}
-      </TooltipContent>
-    </Tooltip>
-  );
-
   return (
-    <SidebarHeader
-      className="relative px-0"
-      onClick={(e) => e.stopPropagation()}
-    >
+    <SidebarHeader className="relative" onClick={(e) => e.stopPropagation()}>
       <SidebarMenu>
-        <SidebarMenuItem className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1 w-full">
+        <SidebarMenuItem
+          className={cn(
+            'flex items-center gap-1',
+            state === 'collapsed' ? 'justify-center' : 'justify-between',
+          )}
+        >
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              state === 'collapsed' ? 'w-auto' : 'w-full',
+            )}
+          >
             {state === 'collapsed' ? (
-              <div className="w-full flex items-center justify-center">
-                {logoLink}
-              </div>
+              <Link to={defaultRoute}>
+                <Button variant={'ghost'} size={'icon'}>
+                  <img
+                    src={branding.logos.logoIconUrl}
+                    alt={t('Home')}
+                    className="h-5 w-5 object-contain"
+                  />
+                </Button>
+              </Link>
             ) : (
-              <div className="flex items-center gap-2 w-full px-2">
-                {logoLink}
+              <div className="flex items-center gap-2 w-full">
+                <Link to={defaultRoute}>
+                  <Button variant={'ghost'} size={'icon'}>
+                    <img
+                      src={branding.logos.logoIconUrl}
+                      alt={t('Home')}
+                      className="h-5 w-5 object-contain"
+                    />
+                  </Button>
+                </Link>
                 <Separator orientation="vertical" className="h-4" />
                 <PlatformSwitcher>
                   <SidebarMenuButton className="px-2 h-9 gap-3 flex-1 min-w-0">
