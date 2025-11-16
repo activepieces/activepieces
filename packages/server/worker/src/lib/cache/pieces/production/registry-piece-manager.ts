@@ -74,11 +74,8 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         }, '[registryPieceManager] Warmed up pieces cache')
     },
     getCustomPiecesPath: (platformId: string): string => {
-        console.error("************")
-        console.error(workerMachine.getSettings().EXECUTION_MODE)
-        console.error("************")
-        if (true || workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
-            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', "BDJHT9kFRCngyzv8yGGC5")
+        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
+            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
         }
         return GLOBAL_CACHE_PATH_LATEST_VERSION
     },
