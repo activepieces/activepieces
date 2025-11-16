@@ -1,4 +1,4 @@
-import { exec as execCallback, spawn } from 'node:child_process'
+import { exec, exec as execCallback, spawn } from 'node:child_process'
 import type { SpawnOptions } from 'node:child_process'
 import { promisify } from 'node:util'
 
@@ -7,6 +7,33 @@ export const execPromise = promisify(execCallback)
 export type CommandOutput = {
     stdout: string
     stderr: string
+}
+
+export function execWithTimeout({ command, cwd, timeoutMs }: ExecWithTimeoutParams): Promise<CommandOutput> {
+    return new Promise<CommandOutput>((resolve, reject) => {
+        const child = exec(command, {
+            cwd,
+        }, (error, stdout, stderr) => {
+            if (timeoutHandle) clearTimeout(timeoutHandle)
+
+            if (error) {
+                reject(error)
+                return
+            }
+            resolve({ stdout, stderr })
+        })
+
+        const timeoutHandle = setTimeout(() => {
+            child.kill('SIGKILL')
+            reject(new Error(`Timed out after ${timeoutMs}ms executing command: ${command}`))
+        }, timeoutMs)
+    })
+}
+
+type ExecWithTimeoutParams = {
+    command: string
+    cwd: string
+    timeoutMs: number
 }
 
 export async function runCommandWithLiveOutput(
