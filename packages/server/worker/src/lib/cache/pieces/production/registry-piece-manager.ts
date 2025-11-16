@@ -127,7 +127,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
                 await Promise.all(customPieces.map(piece => 
                     packageManager(log).install({
                         path: rootWorkspace,
-                        filtersPath: applyInstallCmdFilters ? customPieces.map(relativePiecePath) : [],
+                        filtersPath: applyInstallCmdFilters ? [relativePiecePath(piece)] : [],
                     })
                 ))
             }
