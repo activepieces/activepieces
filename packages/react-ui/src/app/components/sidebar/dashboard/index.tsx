@@ -201,6 +201,7 @@ export function ProjectDashboardSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <div className="flex-grow" />
           <div className="px-2">
             {state === 'expanded' && <SidebarUsageLimits />}
           </div>
