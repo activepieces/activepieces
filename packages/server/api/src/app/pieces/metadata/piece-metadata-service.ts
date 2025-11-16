@@ -34,9 +34,9 @@ import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './local-piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
-import {systemJobHandlers} from "../../helper/system-jobs/job-handlers";
-import {SystemJobName} from "../../helper/system-jobs/common";
-import {systemJobsSchedule} from "../../helper/system-jobs/system-job";
+import { systemJobHandlers } from "../../helper/system-jobs/job-handlers";
+import { SystemJobName } from "../../helper/system-jobs/common";
+import { systemJobsSchedule } from "../../helper/system-jobs/system-job";
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
@@ -196,7 +196,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            const result = await pieceRepos().save({
+            return await pieceRepos().save({
                 id: apId(),
                 packageType,
                 pieceType,
@@ -205,8 +205,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 created: createdDate,
                 ...pieceMetadata,
             })
-
-            return result
         },
 
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
