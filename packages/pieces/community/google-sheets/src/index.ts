@@ -42,8 +42,8 @@ export const googleSheetsAuth =[PieceAuth.OAuth2({
   required: true,
   props: {
     serviceAccount: Property.ShortText({
-      displayName: 'Service Account JSON',
-      description: 'The service account to use for the Google Sheets API',
+      displayName: 'Service Account JSON Key',
+      description: 'The service account JSON key to use for the Google Sheets API, you can get one by going to https://console.cloud.google.com/ -> IAM & Admin -> Service Accounts -> Create Service Account -> Keys -> Add key',
       required: true,
     })}
   })];
