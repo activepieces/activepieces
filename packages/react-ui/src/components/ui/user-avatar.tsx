@@ -24,7 +24,7 @@ export function UserAvatar({
       colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
       variant="bauhaus"
       square
-      className="rounded-lg"
+      className="rounded-full"
     />
   );
 

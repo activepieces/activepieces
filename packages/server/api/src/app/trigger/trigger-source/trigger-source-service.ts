@@ -31,7 +31,8 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             }
             const triggerSource = await triggerSourceRepo().save(triggerSourceWithouSchedule)
             const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
-                flowVersion,
+                flowId: flowVersion.flowId,
+                flowVersionId: flowVersion.id,
                 projectId,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceTrigger,
@@ -112,7 +113,8 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             const pieceTrigger = await triggerUtils(log).getPieceTrigger({ flowVersion, projectId })
             if (!isNil(pieceTrigger)) {
                 await flowTriggerSideEffect(log).disable({
-                    flowVersion,
+                    flowId: triggerSource.flowId,
+                    flowVersionId: triggerSource.flowVersionId,
                     projectId,
                     pieceName: triggerSource.pieceName,
                     pieceTrigger,

@@ -12,7 +12,7 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 
 export const oauth2Util = (log: FastifyBaseLogger) => ({
     formatOAuth2Response: (response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue => {

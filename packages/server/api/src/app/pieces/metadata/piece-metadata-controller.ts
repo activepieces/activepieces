@@ -22,14 +22,11 @@ import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
-import { flowService } from '../flows/flow/flow.service'
-import { sampleDataService } from '../flows/step-run/sample-data.service'
-import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import {
-    getPiecePackageWithoutArchive,
-    pieceMetadataService,
-} from './piece-metadata-service'
-import { pieceSyncService } from './piece-sync-service'
+import { flowService } from '../../flows/flow/flow.service'
+import { sampleDataService } from '../../flows/step-run/sample-data.service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { pieceSyncService } from '../piece-sync-service'
+import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })

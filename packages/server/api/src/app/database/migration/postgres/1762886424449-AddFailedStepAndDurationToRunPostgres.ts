@@ -5,7 +5,7 @@ export class AddFailedStepAndDurationToRunPostgres1762886424449 implements Migra
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_flow_run_flow_failed_step"
+            DROP INDEX "idx_flow_run_flow_failed_step"
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN "failedStepName"
