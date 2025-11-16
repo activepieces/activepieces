@@ -4,7 +4,6 @@ import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperati
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import treeKill from 'tree-kill'
-import { executionFiles } from '../../cache/execution-files'
 import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
 import { engineSocketHandlers } from './engine-socket-handlers'
@@ -84,9 +83,7 @@ export const engineProcessManager = {
                 processes[workerIndex] = await engineProcessFactory(log).create({
                     workerId,
                     workerIndex,
-                    customPiecesPath: executionFiles(log).getCustomPiecesPath({
-                        platformId: operation.platformId,
-                    }),
+                    platformId: operation.platformId,
                     flowVersionId: getFlowVersionId(operation, operationType),
                     options,
                     reusable: isWorkerReusable(),

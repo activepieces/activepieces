@@ -5,7 +5,7 @@ import {
     SuggestionType,
 } from '@activepieces/shared'
 import Fuse from 'fuse.js'
-import { PieceMetadataSchema } from '../../piece-metadata-entity'
+import { PieceMetadataSchema } from '../piece-metadata-entity'
 
 export const pieceSearching = {
     search: (params: SearchParams): PieceMetadataSchema[] => {
@@ -26,20 +26,19 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
         return pieces
     }
     const putActionsAndTriggersInAnArray = pieces.map((piece) => {
-        const actions = Object.values(piece.actions)
-        const triggers = Object.values(piece.triggers)
+        const actions = suggestionType === SuggestionType.ACTION ||
+                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
+            ? Object.values(piece.actions)
+            : []
+
+        const triggers = suggestionType === SuggestionType.TRIGGER ||
+                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
+            ? Object.values(piece.triggers)
+            : []
         return {
             ...piece,
-            actions:
-                suggestionType === SuggestionType.ACTION ||
-                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
-                    ? actions
-                    : [],
-            triggers:
-                suggestionType === SuggestionType.TRIGGER ||
-                    suggestionType === SuggestionType.ACTION_AND_TRIGGER
-                    ? triggers
-                    : [],
+            actions,
+            triggers,
         }
     })
 
@@ -114,11 +113,11 @@ function searchForSuggestion<T extends ActionBase | TriggerBase>(
         keys: ['pieceDisplayName', 'displayName', 'description'],
         threshold: 0.2,
     })
-    const suggestions = nestedFuse.search(searchQuery).map(({ item }) => item)
+    const suggestions = nestedFuse.search(searchQuery)
     return suggestions.reduce<Record<string, T>>(
-        (filteredSuggestions, suggestion) => {
-            filteredSuggestions[suggestion.name] = {
-                ...suggestion,
+        (filteredSuggestions, { item }) => {
+            filteredSuggestions[item.name] = {
+                ...item,
                 pieceDisplayName: undefined,
             }
             return filteredSuggestions

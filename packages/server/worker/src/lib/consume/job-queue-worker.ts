@@ -47,14 +47,17 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 assertNotNullOrUndefined(jobId, 'jobId')
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
                 if (shouldRateLimit) {
+                    const baseDelay = Math.min(600, 20 * Math.pow(2, job.attemptsStarted))
+                    const randomFactor = 0.6 + Math.random() * 0.4
+                    const delayInSeconds = Math.round(baseDelay * randomFactor)
                     await job.moveToDelayed(
-                        dayjs().add(Math.min(240, 20 * (job.attemptsStarted + 1)), 'seconds').valueOf(),
+                        dayjs().add(delayInSeconds, 'seconds').valueOf(),
                         token,
                     )
                     log.info({
                         message: '[jobQueueWorker] Job is throttled and will be retried',
                         jobId,
-                        delayInSeconds: Math.min(240, 20 * (job.attemptsStarted + 1)),
+                        delayInSeconds,
                     })
                     await job.changePriority({
                         priority: JOB_PRIORITY[RATE_LIMIT_PRIORITY],
@@ -63,7 +66,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                         'Thie job is rate limited and will be retried',
                     )
                 }
-                const response = await jobConsmer(log).consumeJob(job, workerToken)
+                const response = await jobConsmer(log).consumeJob(job)
                 log.info({
                     message: '[jobQueueWorker] Consumed job',
                     response,
@@ -132,7 +135,7 @@ async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
     }
     const schemaVersion = 'schemaVersion' in job.data ? job.data.schemaVersion : 0
     if (schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION) {
-        const newJobData = await workerApiService(workerToken).migrateJob({
+        const newJobData = await workerApiService().migrateJob({
             jobData: job.data,
         })
         await job.updateData(newJobData)

@@ -43,7 +43,7 @@ export class EngineConstants {
     public static readonly BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes'
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
-    public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
+    public static readonly DEV_PIECES = process.env.AP_DEV_PIECES?.split(',') ?? []
     public static readonly TEST_MODE = process.env.AP_TEST_MODE === 'true'
 
     public readonly flowId: string
@@ -76,8 +76,8 @@ export class EngineConstants {
         return EngineConstants.BASE_CODE_DIRECTORY
     }
 
-    public get piecesSource(): string {
-        return EngineConstants.PIECE_SOURCES
+    public get devPieces(): string[] {
+        return EngineConstants.DEV_PIECES
     }
 
     public constructor(params: EngineConstantsParams) {
