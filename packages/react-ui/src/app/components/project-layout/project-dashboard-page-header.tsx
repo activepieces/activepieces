@@ -1,18 +1,11 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons';
 import { UserPlus, UsersRound, Users, Settings } from 'lucide-react';
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -29,7 +22,6 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { ApFlagId, Permission } from '@activepieces/shared';
 
 import { ProjectSettingsDialog } from '../project-settings';
@@ -45,7 +37,6 @@ export const ProjectDashboardPageHeader = ({
   description?: React.ReactNode;
   beta?: boolean;
 }) => {
-  const navigate = useNavigate();
   const { project } = projectHooks.useCurrentProject();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -73,44 +64,38 @@ export const ProjectDashboardPageHeader = ({
   const showProjectMembersIcons =
     !isEmbedded &&
     showProjectMembersFlag &&
-    userHasPermissionToReadProjectMembers;
+    userHasPermissionToReadProjectMembers &&
+    projectMembers?.length &&
+    projectMembers?.length > 0;
+
   const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
   const showSettingsButton = !isEmbedded;
   const isProjectPage = location.pathname.includes('/projects/');
+
+  const truncatedTitle = title.length > 30 ? `${title.slice(0, 30)}...` : title;
+  const shouldShowTooltip = title.length > 30;
 
   if (embedState.hidePageHeader) {
     return null;
   }
   return (
-    <div className="flex items-center justify-between min-w-full pt-4 pb-3">
+    <div className="flex items-center justify-between min-w-full py-3">
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           <SidebarTrigger />
-          <Separator orientation="vertical" className="h-4 mr-2" />
+          <Separator orientation="vertical" className="h-5 mr-2" />
           <div>
             <div className="flex items-center gap-2">
-              <Breadcrumb className="text-xl">
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink
-                      onClick={() =>
-                        navigate(
-                          authenticationSession.appendProjectRoutePrefix(
-                            '/flows',
-                          ),
-                        )
-                      }
-                      className="cursor-pointer"
-                    >
-                      {project?.displayName}
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>{title}</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
+              {shouldShowTooltip ? (
+                <TextWithTooltip
+                  tooltipMessage={title}
+                  renderTrigger={() => (
+                    <h1 className="text-xl font-semibold">{truncatedTitle}</h1>
+                  )}
+                />
+              ) : (
+                <h1 className="text-xl font-semibold">{title}</h1>
+              )}
               {beta && (
                 <div className="flex items-center">
                   <BetaBadge />

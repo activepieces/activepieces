@@ -31,13 +31,8 @@ ENV LC_ALL en_US.UTF-8
 
 COPY default.cf /usr/local/etc/isolate
 
-RUN npm i -g npm@9.9.3
-RUN npm i -g pnpm@9.15.0
-RUN npm i -g cross-env@7.0.3
+RUN npm i -g bun@1.3.1 npm@9.9.3 cross-env@7.0.3
 
-RUN pnpm config set store-dir /root/.local/share/pnpm/store
 
-# Update to use Node.js 20 packages
-RUN pnpm store add @tsconfig/node20@20.1.4
-RUN pnpm store add @types/node@20.14.8
-RUN pnpm store add typescript@4.9.4
+# install isolated-vm in a parent directory to avoid linking the package in every sandbox
+RUN cd /usr/src && bun i isolated-vm@5.0.1

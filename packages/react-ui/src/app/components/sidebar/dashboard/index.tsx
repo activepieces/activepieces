@@ -98,7 +98,11 @@ export function ProjectDashboardSidebar() {
         variant="inset"
         collapsible="icon"
         onClick={() => setOpen(true)}
-        className={cn('cursor-nesw-resize', 'group')}
+        className={cn(
+          state === 'collapsed' ? 'cursor-nesw-resize' : '',
+          'group',
+          'p-1',
+        )}
       >
         <AppSidebarHeader />
 
@@ -177,7 +181,13 @@ export function ProjectDashboardSidebar() {
               </div>
             )}
             <SidebarGroupContent>
-              <SidebarMenu className={cn(state === 'collapsed' ? 'gap-2' : '')}>
+              <SidebarMenu
+                className={cn(
+                  state === 'collapsed'
+                    ? 'gap-2 flex flex-col items-center'
+                    : '',
+                )}
+              >
                 {projects?.map((p) => (
                   <ProjectSideBarItem
                     key={p.id}
@@ -191,9 +201,12 @@ export function ProjectDashboardSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <div className="flex-grow" />
+          <div className="px-2">
+            {state === 'expanded' && <SidebarUsageLimits />}
+          </div>
         </SidebarContent>
         <SidebarFooter onClick={(e) => e.stopPropagation()}>
-          {state === 'expanded' && <SidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

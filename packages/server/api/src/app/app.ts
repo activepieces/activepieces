@@ -66,8 +66,8 @@ import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { mcpModule } from './mcp/mcp-module'
-import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
+import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
 import { platformModule } from './platform/platform.module'
@@ -358,15 +358,11 @@ export async function appPostBoot(app: FastifyInstance): Promise<void> {
 The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
-    const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {
-        app.log.warn(
-            `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
-        )
         app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
         )
