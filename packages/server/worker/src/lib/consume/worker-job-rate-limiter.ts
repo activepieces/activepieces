@@ -1,5 +1,16 @@
 import { apDayjsDuration, getPlatformPlanNameKey, getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
-import { ApEdition, ExecuteFlowJobData, isNil, JobData, PlanName, PlatformId, ProjectId, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import {
+    ApEdition,
+    assertNotNullOrUndefined,
+    ExecuteFlowJobData,
+    isNil,
+    JobData,
+    PlanName,
+    PlatformId,
+    ProjectId,
+    RunEnvironment,
+    WorkerJobType
+} from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../utils/machine'
 import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
@@ -17,8 +28,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         const redis = await workerRedisConnections.useExisting()
         const key = projectWaitingSetKey(data.projectId!)
 
-        const member = JSON.stringify({ id, data })
-        await redis.zadd(key, Date.now(), member)
+        await redis.zadd(key, Date.now(), id)
 
         await throttledJobQueue(_log).add({ id, data })
     },
@@ -62,14 +72,13 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
 
         // zpopmin returns the [member, score] tuple
         const popped = await redis.zpopmin(projectKey)
-        const member = popped[0] as string | undefined
-        if (!member) {
+        const nextJobId = popped[0] as string | undefined
+        if (!nextJobId) {
             return
         }
 
-        const parsed = JSON.parse(member) as { id?: string; data: JobData }
-        const nextJobId = parsed.id
-        const nextJobData = parsed.data
+        const nextJobData = await throttledJobQueue(_log).getJobById(nextJobId)
+        assertNotNullOrUndefined(nextJobData, 'nextJobData')
 
         await jobQueue(_log).add({
             data: nextJobData as ExecuteFlowJobData,

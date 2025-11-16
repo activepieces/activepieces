@@ -25,7 +25,16 @@ export const throttledJobQueue = (log: FastifyBaseLogger) => ({
         await queue.add(params.id, data, { jobId: params.id })
     },
 
-    get(): Queue {
+    async getJobById(jobId: string): Promise<JobData | null> {
+        const queue = await ensureQueueExists(log)
+        const job = await queue.getJob(jobId)
+        if (isNil(job)) {
+            return null
+        }
+        return job.data
+    },
+
+    get(): Queue<JobData> {
         if (!isNil(queue)) {
             throw new Error('Throttled job queue not initialized')
         }
@@ -39,7 +48,7 @@ export const throttledJobQueue = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function ensureQueueExists(log: FastifyBaseLogger): Promise<Queue> {
+async function ensureQueueExists(log: FastifyBaseLogger): Promise<Queue<JobData>> {
     if (!queue) {
         const queueName = QueueName.THROTTLED_JOBS
 
