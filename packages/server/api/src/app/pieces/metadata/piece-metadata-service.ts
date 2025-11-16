@@ -39,13 +39,14 @@ import { pieceListUtils } from './utils'
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
+    const piecesCache = localPieceCache(log)
+
     return {
         async setup(): Promise<void> {
-            await localPieceCache(log).refreshPiecesCache()
-
             cron.schedule('*/15 * * * *', async () => {
                 log.info('Refreshing pieces cache via cron job')
-                await localPieceCache(log).refreshPiecesCache()
+
+                await piecesCache.updateCache(await piecesCache.fetchPieces())
             })
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
