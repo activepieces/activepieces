@@ -38,28 +38,28 @@ export const AppSidebarHeader = () => {
         <SidebarMenu className="w-full">
           <SidebarMenuItem className="flex items-center justify-between gap-1 w-full">
             <div className="flex items-center gap-1 w-full">
-              {/* The following outer div prevents pointer events, so it's not clickable */}
-              <div
-                className={cn(
-                  buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  'w-full flex items-center justify-center h-9 select-none cursor-default',
-                )}
-                style={{ pointerEvents: 'none' }}
-              >
-                <img
-                  src={
-                    state === 'collapsed'
-                      ? branding.logos.logoIconUrl
-                      : branding.logos.fullLogoUrl
-                  }
-                  alt={t('home')}
+              <Link to={defaultRoute} className="w-full">
+                <div
                   className={cn(
-                    'object-contain',
-                    state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
+                    buttonVariants({ variant: 'ghost', size: 'icon' }),
+                    'w-full flex items-center justify-center h-9',
                   )}
-                  draggable={false}
-                />
-              </div>
+                >
+                  <img
+                    src={
+                      state === 'collapsed'
+                        ? branding.logos.logoIconUrl
+                        : branding.logos.fullLogoUrl
+                    }
+                    alt={t('home')}
+                    className={cn(
+                      'object-contain',
+                      state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
+                    )}
+                    draggable={false}
+                  />
+                </div>
+              </Link>
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
