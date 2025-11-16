@@ -5,13 +5,24 @@ import { workerMachine } from '../utils/machine'
 import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
 import { jobQueue } from '../../../../api/src/app/workers/queue/job-queue';
 import { JobType } from '../../../../api/src/app/workers/queue/queue-manager';
-import { projectWaitingSetKey } from './job-queue-worker';
+import { throttledJobQueue } from '../../../../api/src/app/workers/queue/throttled-job-queue';
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
-const projectSetKey = (projectId: string): string => `active_jobs_set:${projectId}`
+const projectActiveSetKey = (projectId: string): string => `active_jobs_set:${projectId}`
+const projectWaitingSetKey = (projectId: string): string => `waiting_jobs_set:${projectId}`
 
 export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
+    async throttleJob(id: string, data: JobData): Promise<void> {
+        const redis = await workerRedisConnections.useExisting()
+        const key = projectWaitingSetKey(data.projectId!)
+
+        const member = JSON.stringify({ id, data })
+        await redis.zadd(key, Date.now(), member)
+
+        await throttledJobQueue(_log).add({ id, data })
+    },
+
     async onCompleteOrFailedJob(data: JobData, jobId: string | undefined): Promise<void> {
         const projectRateLimiterEnabled = workerMachine.getSettings().PROJECT_RATE_LIMITER_ENABLED
         if (!RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || !projectRateLimiterEnabled || isNil(jobId)) {
@@ -22,7 +33,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return
         }
 
-        const setKey = projectSetKey(castedJob.projectId)
+        const setKey = projectActiveSetKey(castedJob.projectId)
         const redisConnection = await workerRedisConnections.useExisting()
         await redisConnection.eval(`
             local setKey = KEYS[1]
@@ -88,7 +99,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             projectId: data.projectId,
             platformId: data.platformId,
         })
-        const setKey = projectSetKey(data.projectId)
+        const setKey = projectActiveSetKey(data.projectId)
         const currentTime = Date.now()
         const jobWithTimestamp = `${jobId}:${currentTime}`
         const redisConnection = await workerRedisConnections.useExisting()

@@ -2,7 +2,7 @@ import {
     AppSystemProp,
     QueueName
 } from '@activepieces/server-shared'
-import { JobData } from '@activepieces/shared'
+import { isNil, JobData } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -26,10 +26,10 @@ export const throttledJobQueue = (log: FastifyBaseLogger) => ({
     },
 
     get(): Queue {
-        if (!queue) {
+        if (!isNil(queue)) {
             throw new Error('Throttled job queue not initialized')
         }
-        return queue
+        return queue!
     },
 
     async close(): Promise<void> {

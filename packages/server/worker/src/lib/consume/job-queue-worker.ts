@@ -24,7 +24,6 @@ import { throttledJobQueue } from '../../../../api/src/app/workers/queue/throttl
 
 let worker: Worker<JobData>
 
-export const projectWaitingSetKey = (projectId: string): string => `waiting_jobs_set:${projectId}`
 
 export const jobQueueWorker = (log: FastifyBaseLogger) => ({
     async start(workerToken: string): Promise<void> {
@@ -48,16 +47,8 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                 assertNotNullOrUndefined(jobId, 'jobId')
                 const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(jobId, job.data)
                 if (shouldRateLimit) {
-                    const redis = await workerRedisConnections.useExisting()
-                    const key = projectWaitingSetKey(job.data.projectId!)
+                    await workerJobRateLimiter(log).throttleJob(jobId, job.data)
 
-                    const member = JSON.stringify({ id: job.id!, data: job.data })
-                    await redis.zadd(key, Date.now(), member)
-
-                    await throttledJobQueue(log).add({
-                        id: job.id!,
-                        data: job.data,
-                    })
                     log.info({
                         message: '[jobQueueWorker] Job is throttled and moved to throttled queue',
                         jobId,
