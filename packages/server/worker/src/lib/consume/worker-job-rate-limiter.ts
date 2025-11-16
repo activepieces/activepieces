@@ -43,7 +43,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return
         }
 
-        const setKey = projectActiveSetKey(castedJob.projectId)
+        const activeSetKey = projectActiveSetKey(castedJob.projectId)
         const redisConnection = await workerRedisConnections.useExisting()
         await redisConnection.eval(`
             local setKey = KEYS[1]
@@ -63,16 +63,15 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return 1
                 `,
             1,
-            setKey,
+            activeSetKey,
             jobId,
         )
 
-        const projectKey = projectWaitingSetKey(castedJob.projectId)
+        const waitingSetKey = projectWaitingSetKey(castedJob.projectId)
         const redis = await workerRedisConnections.useExisting()
 
-        // zpopmin returns the [member, score] tuple
-        const popped = await redis.zpopmin(projectKey)
-        const nextJobId = popped[0] as string | undefined
+        const members = await redis.zrange(waitingSetKey, 0, 0)
+        const nextJobId = members[0] as string | undefined
         if (!nextJobId) {
             return
         }
@@ -85,6 +84,8 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             type: JobType.ONE_TIME,
             id: nextJobId!,
         })
+
+        await redis.zrem(waitingSetKey, nextJobId)
     },
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
