@@ -2,9 +2,12 @@
 import {
     CommandOutput,
     execPromise,
+    execWithTimeout,
     fileSystemUtils,
 } from '@activepieces/server-shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { tryCatch } from 'packages/shared/src/lib/common/try-catch'
 
 export const packageManager = (log: FastifyBaseLogger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
@@ -17,7 +20,16 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             .map((path) => `--filter ./${path}`)
         await fileSystemUtils.threadSafeMkdir(path)
         log.debug({ path, args, filters }, '[PackageManager#install]')
-        return execPromise(`bun install ${args.join(' ')} ${filters.join(' ')}`, { cwd: path })
+        const { error, data } = await tryCatch(async () => await execWithTimeout({
+            command: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            cwd: path,
+            timeoutMs: dayjs.duration(10, 'minutes').asMilliseconds(),
+        }))
+        if (error) {
+            log.error({ error }, '[PackageManager#install] Failed to install dependencies')
+            throw error
+        }
+        return data
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const config = [
