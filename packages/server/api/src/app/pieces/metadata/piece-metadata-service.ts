@@ -211,27 +211,30 @@ export const getPiecePackageWithoutArchive = async (
         projectId,
         platformId,
     })
-    switch (pieceMetadata.packageType) {
-        case PackageType.ARCHIVE: {
-            assertNotNullOrUndefined(pieceMetadata.archiveId, 'archiveId')
-            return {
-                packageType: PackageType.ARCHIVE,
-                pieceName: pkg.pieceName,
-                pieceVersion: pieceMetadata.version,
-                platformId: platformId!,
-                pieceType: pieceMetadata.pieceType,
-                archiveId: pieceMetadata.archiveId,
-            }
-        }
-        case PackageType.REGISTRY: {
-            return {
-                packageType: PackageType.REGISTRY,
-                pieceName: pkg.pieceName,
-                pieceVersion: pieceMetadata.version,
-                pieceType: pieceMetadata.pieceType,
-            }
-        }
+
+    const baseProps = {
+        packageType: pieceMetadata.packageType,
+        pieceName: pieceMetadata.name,
+        pieceVersion: pieceMetadata.version,
+        pieceType: pieceMetadata.pieceType,
     }
+
+    if (pieceMetadata.packageType === PackageType.ARCHIVE) {
+        return {
+            ...baseProps,
+            archiveId: pieceMetadata.archiveId!,
+            platformId: platformId!,
+        } as PiecePackage
+    }
+
+    if (pieceMetadata.pieceType === PieceType.CUSTOM) {
+        return {
+            ...baseProps,
+            platformId: platformId!,
+        } as PiecePackage
+    }
+
+    return baseProps as PiecePackage
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(

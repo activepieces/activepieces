@@ -49,7 +49,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             )
             await installPieces(log, packagePath, pieces, applyInstallCmdFilters)
         }
-    },
+    },  
     warmup: async (): Promise<void> => {
         if (!workerMachine.preWarmCacheEnabled()) {
             log.info('[registryPieceManager] Pre-warm cache is disabled')
@@ -113,24 +113,11 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             })))
 
             const performanceStartTime = performance.now()
-            const [customPieces, officialPieces] = partition(filteredPieces, piece => piece.pieceType === PieceType.CUSTOM)
-
-            if (officialPieces.length > 0) {
-                await packageManager(log).install({
-                    path: rootWorkspace,
-                    filtersPath: applyInstallCmdFilters ? officialPieces.map(relativePiecePath) : [],
-                })
-            }
-
-            if (customPieces.length > 0) {
-                // install each one of the custom pieces in a separate process to catch errors
-                await Promise.all(customPieces.map(piece => 
-                    packageManager(log).install({
-                        path: rootWorkspace,
-                        filtersPath: applyInstallCmdFilters ? [relativePiecePath(piece)] : [],
-                    })
-                ))
-            }
+           
+            await packageManager(log).install({
+                path: rootWorkspace,
+                filtersPath: applyInstallCmdFilters ? filteredPieces.map(relativePiecePath) : [],
+            })
 
             await markPiecesAsUsed(rootWorkspace, filteredPieces)
 
@@ -144,15 +131,11 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
 }
 
 function groupPiecesByPackagePath(log: FastifyBaseLogger, pieces: PiecePackage[]): Record<string, PiecePackage[]> {
-    return groupBy(pieces, (piece) => {
-        switch (piece.packageType) {
-            case PackageType.REGISTRY:
-                return GLOBAL_CACHE_COMMON_PATH
-            case PackageType.ARCHIVE:
-                return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
-            default:
-                throw new Error('Invalid package type')
+    return groupBy(pieces, (piece: PiecePackage) => {
+        if (piece.packageType === PackageType.ARCHIVE || piece.pieceType === PieceType.CUSTOM) {
+            return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
         }
+        return GLOBAL_CACHE_COMMON_PATH
     })
 }
 
@@ -231,9 +214,6 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
     })
     await Promise.all(writeToDiskJobs)
 }
-
-
-
 
 function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: PrivatePiecePackage): string {
     return join(piecePath(rootWorkspace, piecePackage), `${piecePackage.archiveId}.tgz`)
