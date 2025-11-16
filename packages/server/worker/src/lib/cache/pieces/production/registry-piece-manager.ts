@@ -88,15 +88,20 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
     log.info({
         rootWorkspace,
         filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-    }, `[registryPieceManager] Installing pieces in workspace: ${rootWorkspace}. Piece count: ${filteredPieces.length}`)
+    }, `[registryPieceManager] Installing pieces in workspace`)
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
             const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces)
             if (isEmpty(filteredPieces)) {
-                log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install in lock (already installed)')
+                log.info({ rootWorkspace }, '[registryPieceManager] No new pieces to install in lock (already installed)')
                 return
             }
+            log.info({
+                rootWorkspace,
+                filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`)
+            }, '[registryPieceManager] acquired lock and starting to install pieces')
+
             await createRootPackageJson({
                 path: rootWorkspace,
             })
