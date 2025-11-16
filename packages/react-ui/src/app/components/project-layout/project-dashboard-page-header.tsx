@@ -88,7 +88,7 @@ export const ProjectDashboardPageHeader = ({
             <div className="flex items-center gap-2">
               {shouldShowTooltip ? (
                 <TextWithTooltip
-                  fullText={title}
+                  tooltipMessage={title}
                   renderTrigger={() => (
                     <h1 className="text-xl font-semibold">{truncatedTitle}</h1>
                   )}

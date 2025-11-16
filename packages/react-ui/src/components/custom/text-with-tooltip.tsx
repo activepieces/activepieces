@@ -6,22 +6,23 @@ import {
 } from '@/components/ui/tooltip';
 
 interface TextWithTooltipProps {
-  fullText: string;
-  renderTrigger: (text: string) => React.ReactNode;
+  tooltipMessage: string;
+  renderTrigger: () => React.ReactNode;
 }
 
 export const TextWithTooltip = ({
-  fullText,
+  tooltipMessage,
   renderTrigger,
 }: TextWithTooltipProps) => {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>{renderTrigger(fullText)}</TooltipTrigger>
+        <TooltipTrigger asChild>{renderTrigger()}</TooltipTrigger>
         <TooltipContent className="max-w-md break-words whitespace-normal">
-          <p>{fullText}</p>
+          <p>{tooltipMessage}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 };
+
