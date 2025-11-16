@@ -116,7 +116,6 @@ const EmbeddedConnectionDialogContent = ({
 
   const { data: pieceToClientIdMap, isPending: loadingPieceToClientIdMap } =
     oauthAppsQueries.usePieceToClientIdMap();
-
   return (
     <Dialog
       open={isDialogOpen}
