@@ -8,7 +8,6 @@ import {
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
-import { InputPropertyMap } from './property';
 
 export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = PieceAuthProperty | PieceAuthProperty[]>
   implements Omit<PieceBase, 'version' | 'name'>
@@ -69,6 +68,14 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = P
 export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthProperty[]>(
   params: CreatePieceParams<PieceAuth>
 ) => {
+  if(params.auth && Array.isArray(params.auth)) { 
+    const isUnique = params.auth.every((auth, index, self) =>
+      index === self.findIndex((t) => t.type === auth.type)
+    );
+    if(!isUnique) {
+     throw new Error('Auth properties must be unique by type');
+    }
+  }
   return new Piece<PieceAuth>(
     params.displayName,
     params.logoUrl,
