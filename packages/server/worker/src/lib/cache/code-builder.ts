@@ -88,7 +88,7 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 const startTime = performance.now()
                 await installDependencies({
                     path: codePath,
-                    packageJson: getPackageJson(packageJson),
+                    packageJson: await getPackageJson(packageJson),
                     log,
                 })
                 log.info({
@@ -132,17 +132,18 @@ function isPackagesAllowed(): boolean {
 }
 
 
-function getPackageJson(packageJson: string): string {
+async function getPackageJson(packageJson: string): Promise<string> {
     const packagedAllowed = isPackagesAllowed()
     if (!packagedAllowed) {
         return '{"dependencies":{}}'
     }
-    const packageJsonObject = JSON.parse(packageJson)
+    const { data: parsedPackageJson, error: parseError } = await tryCatch(() => JSON.parse(packageJson))
+    const packageJsonObject = parseError ? {} : (parsedPackageJson as Record<string, unknown>)
     return JSON.stringify({
         ...packageJsonObject,
         dependencies: {
             '@types/node': '18.17.1',
-            ...(packageJsonObject?.dependencies ?? {}),
+            ...(packageJsonObject?.['dependencies'] ?? {}),
         },
     })
 }
