@@ -1,8 +1,8 @@
 
 import {
     CommandOutput,
+    execPromise,
     fileSystemUtils,
-    runCommandWithLiveOutput,
 } from '@activepieces/server-shared'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -17,7 +17,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             .map((path) => `--filter ./${path}`)
         await fileSystemUtils.threadSafeMkdir(path)
         log.debug({ path, args, filters }, '[PackageManager#install]')
-        return runCommandWithLiveOutput(`bun install ${args.join(' ')} ${filters.join(' ')}`, { cwd: path })
+        return execPromise(`bun install ${args.join(' ')} ${filters.join(' ')}`, { cwd: path })
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const config = [
@@ -28,7 +28,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             `--outfile ${outputFile}`,
         ]
         log.debug({ path, entryFile, outputFile, config }, '[PackageManager#build]')
-        return runCommandWithLiveOutput(`bun build ${config.join(' ')}`, { cwd: path })
+        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
     },
 
 })
