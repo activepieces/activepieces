@@ -1,10 +1,10 @@
 import { googleSheetsAuth } from '../../index';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { isNil } from '@activepieces/shared';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
+import { createGoogleClient } from '../common/common';
 
 export const newWorksheetTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -18,8 +18,7 @@ export const newWorksheetTrigger = createTrigger({
 	},
 	async onEnable(context) {
 		const ids: number[] = [];
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId,
@@ -39,8 +38,7 @@ export const newWorksheetTrigger = createTrigger({
 	},
 	async test(context) {
 		const worksheets = [];
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
 			spreadsheetId: context.propsValue.spreadsheetId,
@@ -57,8 +55,7 @@ export const newWorksheetTrigger = createTrigger({
 		const existingIds = (await context.store.get<string>('worksheets')) ?? '[]';
 		const parsedExistingIds = JSON.parse(existingIds) as number[];
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 

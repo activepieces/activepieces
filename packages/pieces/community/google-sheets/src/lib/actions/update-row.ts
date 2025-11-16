@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { areSheetIdsValid, Dimension, objectToArray, ValueInputOption } from '../common/common';
+import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
@@ -41,8 +41,7 @@ export const updateRowAction = createAction({
     const sheetId = Number(inputSheetId);
 		const spreadsheetId = inputSpreadsheetId as string;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const sheets = google.sheets({ version: 'v4', auth: authClient });
 

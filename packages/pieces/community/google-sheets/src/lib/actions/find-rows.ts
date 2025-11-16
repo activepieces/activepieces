@@ -79,7 +79,7 @@ export const findRowsAction = createAction({
 
     const rows = await googleSheetsCommon.getGoogleSheetRows({
       spreadsheetId: spreadsheetId as string,
-      accessToken: auth.access_token,
+      auth: auth,
       sheetId: sheetId as number,
       rowIndex_s: startingRow,
       rowIndex_e: undefined,
@@ -134,7 +134,7 @@ export const findRowsAction = createAction({
       spreadsheetId as string,
       sheetId as number,
       headerRow,
-      auth.access_token
+      auth,
     );
     
     return finalRows;

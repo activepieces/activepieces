@@ -6,7 +6,7 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel, areSheetIdsValid } from '../common/common';
+import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel, areSheetIdsValid, GoogleSheetsAuthValue, createGoogleClient } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
@@ -57,7 +57,6 @@ export const insertMultipleRowsAction = createAction({
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;
 				const valuesInputType = input_type as unknown as string;
-				const authentication = auth as OAuth2PropertyValue;
 
 				if (
 					!auth ||
@@ -104,7 +103,7 @@ export const insertMultipleRowsAction = createAction({
 				case 'column_names': {
 					const headers = await googleSheetsCommon.getGoogleSheetRows({
 						spreadsheetId: spreadsheet_id,
-						accessToken: getAccessTokenOrThrow(authentication),
+						auth: auth as GoogleSheetsAuthValue,
 						sheetId: sheet_id,
 						rowIndex_s: 1,
 						rowIndex_e: 1,
@@ -179,7 +178,7 @@ export const insertMultipleRowsAction = createAction({
 				if (checkForExisting) {
 					const headers = await googleSheetsCommon.getGoogleSheetRows({
 						spreadsheetId: spreadsheet_id,
-						accessToken: getAccessTokenOrThrow(authentication),
+						auth: auth as GoogleSheetsAuthValue,
 						sheetId: sheet_id,
 						rowIndex_s: 1,
 						rowIndex_e: 1,
@@ -253,7 +252,7 @@ export const insertMultipleRowsAction = createAction({
 
 		const rowHeaders = await googleSheetsCommon.getGoogleSheetRows({
 			spreadsheetId: spreadsheetId,
-			accessToken: context.auth.access_token,
+			auth: context.auth,
 			sheetId: sheetId,
 			rowIndex_s: 1,
 			rowIndex_e: 1,
@@ -262,8 +261,7 @@ export const insertMultipleRowsAction = createAction({
 
 		const sheetHeaders = rowHeaders[0]?.values ?? {};
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		const formattedValues = await formatInputRows(sheets,spreadsheetId, sheetName,valuesInputType, rowValuesInput, sheetHeaders);
@@ -280,7 +278,7 @@ export const insertMultipleRowsAction = createAction({
 		if (checkForDuplicateValues) {
 			const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
 				spreadsheetId: spreadsheetId,
-				accessToken: context.auth.access_token,
+				auth: context.auth,
 				sheetId: sheetId,
 				rowIndex_s: 1,
 				rowIndex_e: undefined,

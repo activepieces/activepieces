@@ -13,6 +13,7 @@ import {
 } from '@activepieces/pieces-common';
 import { drive_v3, sheets_v4 } from 'googleapis';
 import { includeTeamDrivesProp } from '../common/props';
+import { getAccessToken, GoogleSheetsAuthValue } from '../common/common';
 
 export const createSpreadsheetAction = createAction({
 	auth: googleSheetsAuth,
@@ -102,7 +103,7 @@ export const createSpreadsheetAction = createAction({
 });
 
 async function createSpreadsheet(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	title: string,
 ) {
 	const response = await httpClient.sendRequest<sheets_v4.Schema$Spreadsheet>({
@@ -115,7 +116,7 @@ async function createSpreadsheet(
 		},
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
+			token: await getAccessToken(auth),
 		},
 	});
 
@@ -123,7 +124,7 @@ async function createSpreadsheet(
 }
 
 async function moveFile(
-	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	auth: GoogleSheetsAuthValue,
 	fileId: string,
 	folderId: string,
 ) {
@@ -135,7 +136,7 @@ async function moveFile(
 		},
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
+			token: await getAccessToken(auth),
 		},
 	});
 

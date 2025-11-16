@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
-import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
+import { areSheetIdsValid, columnToLabel, GoogleSheetsAuthValue, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
 	deleteFileNotification,
@@ -54,7 +54,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 					};
 				}
 
-				const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+				const authValue = auth as GoogleSheetsAuthValue;
 				const spreadsheet_id = spreadsheetId as string;
 				const sheet_id = sheetId as number;
 

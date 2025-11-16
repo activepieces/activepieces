@@ -29,7 +29,7 @@ export const deleteRowAction = createAction({
       spreadsheetId as string,
       sheetId as number,
       adjustedRowIndex,
-      context.auth.access_token
+      context.auth,
     );
 
     return {

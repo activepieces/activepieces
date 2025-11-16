@@ -1,6 +1,5 @@
 import {
 	DEDUPE_KEY_PROPERTY,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 	WebhookRenewStrategy,
@@ -21,7 +20,7 @@ import {
 
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
-import { areSheetIdsValid } from '../common/common';
+import { areSheetIdsValid, GoogleSheetsAuthValue } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -116,7 +115,7 @@ export const newRowAddedTrigger = createTrigger({
 		const range = `${sheetName}!${oldRowCount + 1}:${currentRowCount}`;
 
 		const newRowValues = await getWorkSheetValues(
-			context.auth as PiecePropValueSchema<typeof googleSheetsAuth>,
+			context.auth as GoogleSheetsAuthValue,
 			spreadsheetId,
 			range,
 		);

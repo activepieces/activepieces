@@ -1,4 +1,4 @@
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, OAuth2Props, PiecePropValueSchema, ShortTextProperty, StaticPropsValue } from '@activepieces/pieces-framework';
 import {
 	httpClient,
 	HttpMethod,
@@ -8,9 +8,11 @@ import {
 import { isNil, isString } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { googleSheetsAuth } from '../../';
 import { mapRowsToColumnLabels } from '../triggers/helpers';
 
+export type GoogleSheetsAuthValue = OAuth2PropertyValue<OAuth2Props> | StaticPropsValue<{
+    serviceAccount: ShortTextProperty<true>;
+}>;
 export const googleSheetsCommon = {
 	baseUrl: 'https://sheets.googleapis.com/v4/spreadsheets',
 	getGoogleSheetRows,
@@ -21,12 +23,11 @@ export const googleSheetsCommon = {
 };
 
 export async function findSheetName(
-	access_token: string,
+	auth: GoogleSheetsAuthValue,
 	spreadsheetId: string,
 	sheetId: string | number,
 ) {
-	const sheets = await listSheetsName(access_token, spreadsheetId);
-	// don't use === because sheetId can be a string when dynamic values are used
+	const sheets = await listSheetsName(auth, spreadsheetId);
 	const sheetName = sheets.find((f) => f.properties.sheetId == sheetId)?.properties.title;
 	if (!sheetName) {
 		throw Error(`Sheet with ID ${sheetId} not found in spreadsheet ${spreadsheetId}`);
@@ -34,7 +35,7 @@ export async function findSheetName(
 	return sheetName;
 }
 
-async function listSheetsName(access_token: string, spreadsheet_id: string) {
+async function listSheetsName(auth: GoogleSheetsAuthValue, spreadsheet_id: string) {
 	return (
 		await httpClient.sendRequest<{
 			sheets: { properties: { title: string; sheetId: number } }[];
@@ -43,7 +44,7 @@ async function listSheetsName(access_token: string, spreadsheet_id: string) {
 			url: `https://sheets.googleapis.com/v4/spreadsheets/` + spreadsheet_id,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: access_token,
+				token: await getAccessToken(auth),
 			},
 		})
 	).body.sheets;
@@ -51,7 +52,7 @@ async function listSheetsName(access_token: string, spreadsheet_id: string) {
 
 type GetGoogleSheetRowsProps = {
 	spreadsheetId: string;
-	accessToken: string;
+	auth: GoogleSheetsAuthValue;
 	sheetId: number;
 	rowIndex_s: number | undefined;
 	rowIndex_e: number | undefined;
@@ -60,15 +61,13 @@ type GetGoogleSheetRowsProps = {
 
 async function getGoogleSheetRows({
 	spreadsheetId,
-	accessToken,
+	auth,
 	sheetId,
 	rowIndex_s,
 	rowIndex_e,
 	headerRow = 1,
 }: GetGoogleSheetRowsProps): Promise<{ row: number; values: { [x: string]: string } }[]> {
-	// Define the API endpoint and headers
-	// Send the API request
-	const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
+	const sheetName = await findSheetName(auth, spreadsheetId, sheetId);
 	if (!sheetName) {
 		return [];
 	}
@@ -85,7 +84,7 @@ async function getGoogleSheetRows({
 		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}${range}`)}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
+			token: await getAccessToken(auth),
 		},
 	});
 	if (rowsResponse.body.values === undefined) return [];
@@ -95,7 +94,7 @@ async function getGoogleSheetRows({
 		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${encodeURIComponent(`${sheetName}!A${headerRow}:ZZZ${headerRow}`)}`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
+			token: await getAccessToken(auth),
 		},
 	});
 
@@ -119,18 +118,18 @@ async function getGoogleSheetRows({
 
 type GetHeaderRowProps = {
 	spreadsheetId: string;
-	accessToken: string;
+	auth: GoogleSheetsAuthValue;
 	sheetId: number;
 };
 
 export async function getHeaderRow({
 	spreadsheetId,
-	accessToken,
+	auth,
 	sheetId,
 }: GetHeaderRowProps): Promise<string[] | undefined> {
 	const rows = await getGoogleSheetRows({
 		spreadsheetId,
-		accessToken,
+		auth,
 		sheetId,
 		rowIndex_s: 1,
 		rowIndex_e: 1,
@@ -188,7 +187,7 @@ export async function mapRowsToHeaderNames(
 	spreadsheetId: string,
 	sheetId: number,
 	headerRow: number,
-	accessToken: string
+	auth: GoogleSheetsAuthValue,
 ): Promise<any[]> {
 	if (!useHeaderNames) {
 		return rows;
@@ -196,7 +195,7 @@ export async function mapRowsToHeaderNames(
 
 	const headerRows = await getGoogleSheetRows({
 		spreadsheetId,
-		accessToken,
+		auth,
 		sheetId,
 		rowIndex_s: headerRow,
 		rowIndex_e: headerRow,
@@ -232,14 +231,14 @@ async function deleteRow(
 	spreadsheetId: string,
 	sheetId: number,
 	rowIndex: number,
-	accessToken: string,
+	auth: GoogleSheetsAuthValue,
 ) {
 	const request: HttpRequest = {
 		method: HttpMethod.POST,
 		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/:batchUpdate`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
+			token: await getAccessToken(auth),
 		},
 		body: {
 			requests: [
@@ -262,7 +261,7 @@ async function deleteRow(
 async function clearSheet(
 	spreadsheetId: string,
 	sheetId: number,
-	accessToken: string,
+	auth: GoogleSheetsAuthValue,
 	rowIndex: number,
 	numOfRows: number,
 ) {
@@ -271,7 +270,7 @@ async function clearSheet(
 		url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/:batchUpdate`,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
+			token: await getAccessToken(auth),
 		},
 		body: {
 			requests: [
@@ -301,12 +300,36 @@ export enum Dimension {
 	COLUMNS = 'COLUMNS',
 }
 
-export async function createGoogleSheetClient(auth: PiecePropValueSchema<typeof googleSheetsAuth>) {
+export async function createGoogleClient(auth: GoogleSheetsAuthValue): Promise<OAuth2Client> {
+	if('serviceAccount' in auth)
+	{
+		const serviceAccount = JSON.parse(auth.serviceAccount);
+		return new google.auth.JWT(
+			serviceAccount.client_email,
+			undefined,
+			serviceAccount.private_key,
+			['https://www.googleapis.com/auth/spreadsheets'],
+		);
+	}
 	const authClient = new OAuth2Client();
-	authClient.setCredentials(auth);
+    authClient.setCredentials(auth);
+	return authClient
+}
 
-	const googleSheetClient = google.sheets({ version: 'v4', auth: authClient });
-	return googleSheetClient;
+export const getAccessToken = async (auth: GoogleSheetsAuthValue): Promise<string> => {
+	if('serviceAccount' in auth)
+	{
+		const googleClient = await createGoogleClient(auth);
+	    const response = await googleClient.getAccessToken();
+		if(response.token)
+		{
+			return response.token;
+		}
+		else {
+			throw new Error('Could not retrieve access token from service account json');
+		}
+	}
+	return auth.access_token;
 }
 
 export function areSheetIdsValid(spreadsheetId: string | null | undefined, sheetId: string | number | null | undefined): boolean {

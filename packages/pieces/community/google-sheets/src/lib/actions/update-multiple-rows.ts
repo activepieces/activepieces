@@ -5,7 +5,7 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { areSheetIdsValid, Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
+import { areSheetIdsValid, createGoogleClient, Dimension, GoogleSheetsAuthValue, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { isNil, isString, MarkdownVariant } from '@activepieces/shared';
 import { getWorkSheetName } from '../triggers/helpers';
@@ -42,7 +42,7 @@ export const updateMultipleRowsAction = createAction({
 
 				const headers = await googleSheetsCommon.getGoogleSheetRows({
 					spreadsheetId: spreadsheet_Id,
-					accessToken: getAccessTokenOrThrow(authentication),
+					auth: auth as GoogleSheetsAuthValue,
 					sheetId: sheet_Id,
 					rowIndex_s: 1,
 					rowIndex_e: 1,
@@ -117,8 +117,7 @@ export const updateMultipleRowsAction = createAction({
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		const values: sheets_v4.Schema$ValueRange[] = [];
