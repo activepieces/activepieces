@@ -10,6 +10,7 @@ import {
   Table2,
   Workflow,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
@@ -41,6 +42,8 @@ export const ProjectDashboardLayoutHeader = () => {
   const { embedState } = useEmbedding();
   const location = useLocation();
   const navigate = useNavigate();
+  const [pinnedItem, setPinnedItem] =
+    useState<ProjectDashboardLayoutHeaderTab | null>(null);
 
   const flowsLink: ProjectDashboardLayoutHeaderTab = {
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
@@ -114,18 +117,9 @@ export const ProjectDashboardLayoutHeader = () => {
     },
   ];
 
-  const allItems = [flowsLink, tablesLink, runsLink, ...moreItems];
-
-  const getCurrentPageName = () => {
-    const currentItem = allItems.find((item) =>
-      location.pathname.includes(item.to),
-    );
-    return currentItem ? currentItem.label : '';
-  };
-
   return (
     <div className="flex flex-col px-4 gap-3">
-      <ProjectDashboardPageHeader title={getCurrentPageName()} />
+      <ProjectDashboardPageHeader title={project?.displayName} />
       <Tabs>
         <TabsList variant="outline">
           {flowsLink.show && flowsLink.hasPermission && (
@@ -178,10 +172,29 @@ export const ProjectDashboardLayoutHeader = () => {
               {t('Runs')}
             </TabsTrigger>
           )}
+          {pinnedItem && pinnedItem.show && pinnedItem.hasPermission && (
+            <TabsTrigger
+              value="pinned"
+              variant="outline"
+              className="pb-3"
+              onClick={() => navigate(pinnedItem.to)}
+              data-state={
+                location.pathname.includes(pinnedItem.to)
+                  ? 'active'
+                  : 'inactive'
+              }
+            >
+              <pinnedItem.icon className="h-4 w-4 mr-2" />
+              {pinnedItem.label}
+            </TabsTrigger>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               {(() => {
-                const activeItem = moreItems.find((item) =>
+                const filteredMoreItems = moreItems.filter(
+                  (item) => item.to !== pinnedItem?.to,
+                );
+                const activeItem = filteredMoreItems.find((item) =>
                   location.pathname.includes(item.to),
                 );
 
@@ -214,12 +227,20 @@ export const ProjectDashboardLayoutHeader = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
               {moreItems
-                .filter((item) => item.show && item.hasPermission !== false)
+                .filter(
+                  (item) =>
+                    item.show &&
+                    item.hasPermission !== false &&
+                    item.to !== pinnedItem?.to,
+                )
                 .map((item) => {
                   return (
                     <DropdownMenuItem
                       key={item.to}
-                      onClick={() => navigate(item.to)}
+                      onClick={() => {
+                        setPinnedItem(item);
+                        navigate(item.to);
+                      }}
                     >
                       <div className="flex items-center gap-2">
                         <item.icon className={cn('size-4')} />

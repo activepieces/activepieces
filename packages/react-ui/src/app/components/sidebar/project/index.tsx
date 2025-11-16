@@ -44,7 +44,7 @@ const ProjectSideBarItem = ({
                 )}
               >
                 <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
-                  {project.displayName.charAt(0)}
+                  {project.displayName.charAt(0).toUpperCase()}
                 </Avatar>
               </button>
             </TooltipTrigger>
@@ -66,7 +66,7 @@ const ProjectSideBarItem = ({
             className="flex items-center gap-2"
           >
             <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
-              {project.displayName.charAt(0)}
+              {project.displayName.charAt(0).toUpperCase()}
             </Avatar>
             <span className="truncate text-ellipsis max-w-[250px]">
               {project.displayName}

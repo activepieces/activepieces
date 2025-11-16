@@ -101,6 +101,7 @@ export function ProjectDashboardSidebar() {
         className={cn(
           state === 'collapsed' ? 'cursor-nesw-resize' : '',
           'group',
+          'p-1',
         )}
       >
         <AppSidebarHeader />
@@ -194,9 +195,12 @@ export function ProjectDashboardSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <div className="px-2">
+            {' '}
+            {state === 'expanded' && <SidebarUsageLimits />}
+          </div>
         </SidebarContent>
         <SidebarFooter onClick={(e) => e.stopPropagation()}>
-          {state === 'expanded' && <SidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
