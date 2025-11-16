@@ -54,9 +54,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
                         jobId,
                     })
 
-                    throw new DelayedError(
-                        'Thie job is rate limited and will be retried',
-                    )
+                    return
                 }
                 const response = await jobConsmer(log).consumeJob(job)
                 log.info({
