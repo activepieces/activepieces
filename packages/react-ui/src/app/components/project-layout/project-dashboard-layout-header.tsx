@@ -127,7 +127,7 @@ export const ProjectDashboardLayoutHeader = () => {
     });
 
   return (
-    <div className="flex flex-col px-4 gap-3">
+    <div className="flex flex-col px-4 gap-1">
       <ProjectDashboardPageHeader title={project?.displayName} />
       <Tabs>
         <TabsList variant="outline">
