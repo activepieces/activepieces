@@ -13,6 +13,7 @@ import {
   SeekPage,
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
+  BulkCancelFlowRequestBody,
 } from '@activepieces/shared';
 
 type TestStepParams = {
@@ -38,6 +39,9 @@ export const flowRunsApi = {
   },
   bulkRetry(request: BulkActionOnRunsRequestBody): Promise<FlowRun[]> {
     return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
+  },
+  bulkCancel(request: BulkCancelFlowRequestBody): Promise<FlowRun[]> {
+    return api.post<FlowRun[]>('/v1/flow-runs/cancel', request);
   },
   bulkArchive(request: BulkArchiveActionOnRunsRequestBody): Promise<void> {
     return api.post<void>('/v1/flow-runs/archive', request);

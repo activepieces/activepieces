@@ -161,6 +161,7 @@ export const RunsTable = () => {
         title: t('Created'),
         accessorKey: 'created',
         icon: CheckIcon,
+        defaultPresetName: '7days',
       },
       {
         type: 'checkbox',
@@ -208,6 +209,38 @@ export const RunsTable = () => {
     },
   });
 
+  const cancelRuns = useMutation({
+    mutationFn: (cancelParams: { runIds: string[] }) => {
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
+      const createdAfter = searchParams.get('createdAfter') || undefined;
+      const createdBefore = searchParams.get('createdBefore') || undefined;
+      return flowRunsApi.bulkCancel({
+        projectId: authenticationSession.getProjectId()!,
+        flowRunIds: selectedAll ? undefined : cancelParams.runIds,
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status:
+          status.length > 0
+            ? (status.filter(
+                (s) => s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
+              ) as (
+                | typeof FlowRunStatus.PAUSED
+                | typeof FlowRunStatus.QUEUED
+              )[])
+            : undefined,
+        flowId,
+        createdAfter,
+        createdBefore,
+      });
+    },
+    onSuccess: () => {
+      refetch();
+      setSelectedRows([]);
+      setSelectedAll(false);
+      setExcludedRows(new Set());
+    },
+  });
+
   const archiveRuns = useMutation({
     mutationFn: (retryParams: { runIds: string[] }) => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
@@ -235,14 +268,8 @@ export const RunsTable = () => {
     () => [
       {
         render: (_, resetSelection) => {
-          const allFailed = selectedRows.every((row) =>
-            isFailedState(row.status),
-          );
-
           const isDisabled =
-            selectedRows.length === 0 ||
-            !userHasPermissionToRetryRun ||
-            !allFailed;
+            selectedRows.length === 0 || !userHasPermissionToRetryRun;
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -271,6 +298,55 @@ export const RunsTable = () => {
                     }`
                   : t('Archive')}
               </Button>
+            </div>
+          );
+        },
+      },
+      {
+        render: (_, resetSelection) => {
+          const allCancellable = selectedRows.every(
+            (row) =>
+              row.status === FlowRunStatus.PAUSED ||
+              row.status === FlowRunStatus.QUEUED,
+          );
+          const isDisabled =
+            selectedRows.length === 0 ||
+            !userHasPermissionToRetryRun ||
+            !allCancellable;
+
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToRetryRun}
+              >
+                <MessageTooltip
+                  message={t('Only paused or queued runs can be cancelled')}
+                  isDisabled={allCancellable}
+                >
+                  <Button
+                    disabled={isDisabled}
+                    variant="outline"
+                    className="h-9 w-full"
+                    onClick={() => {
+                      cancelRuns.mutate({
+                        runIds: selectedRows.map((row) => row.id),
+                      });
+                      resetSelection();
+                    }}
+                  >
+                    <X className="h-3 w-4 mr-1" />
+                    {selectedRows.length > 0
+                      ? `${t('Cancel')} ${
+                          selectedAll
+                            ? excludedRows.size > 0
+                              ? `${t('all except')} ${excludedRows.size}`
+                              : t('all')
+                            : `(${selectedRows.length})`
+                        }`
+                      : t('Cancel')}
+                  </Button>
+                </MessageTooltip>
+              </PermissionNeededTooltip>
             </div>
           );
         },
@@ -367,7 +443,14 @@ export const RunsTable = () => {
         },
       },
     ],
-    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
+    [
+      retryRuns,
+      archiveRuns,
+      userHasPermissionToRetryRun,
+      selectedRows,
+      selectedAll,
+      excludedRows,
+    ],
   );
 
   const handleRowClick = useCallback(

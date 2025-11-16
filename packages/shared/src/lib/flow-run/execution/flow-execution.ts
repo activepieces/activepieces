@@ -12,6 +12,7 @@ export enum FlowRunStatus {
     SUCCEEDED = 'SUCCEEDED',
     MEMORY_LIMIT_EXCEEDED = 'MEMORY_LIMIT_EXCEEDED',
     TIMEOUT = 'TIMEOUT',
+    CANCELED = 'CANCELED',
 }
 
 export enum PauseType {
@@ -58,7 +59,6 @@ export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
 export type PauseMetadata = Static<typeof PauseMetadata>
 
-
 export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status: FlowRunStatus, ignoreInternalError: boolean }): boolean => {
     switch (status) {
         case FlowRunStatus.SUCCEEDED:
@@ -66,6 +66,7 @@ export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status
         case FlowRunStatus.FAILED:
         case FlowRunStatus.QUOTA_EXCEEDED:
         case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
+        case FlowRunStatus.CANCELED:
             return true
         case FlowRunStatus.INTERNAL_ERROR:
             return !ignoreInternalError
