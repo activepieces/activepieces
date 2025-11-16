@@ -305,12 +305,16 @@ const SelectConnectionSettings = ({
 const CreateOrEditConnectionDialogContent = React.memo(
   (props: CreateOrEditConnectionDialogContentProps) => {
     const piece = props.piece;
+    const hasPredefinedOAuth2App = !isNil(
+      getPredefinedOAuth2App(props.pieceToClientIdMap, piece.name),
+    );
+    const hasBothGrantTypes =
+      !isNil(piece.auth) &&
+      !Array.isArray(piece.auth) &&
+      piece.auth.type === PropertyType.OAUTH2 &&
+      piece.auth.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
     const hasMultipleAuth =
-      Array.isArray(piece.auth) ||
-      (piece.auth?.type === PropertyType.OAUTH2 &&
-        piece.auth.grantType ===
-          BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE) ||
-      !isNil(getPredefinedOAuth2App(props.pieceToClientIdMap, piece.name));
+      Array.isArray(piece.auth) || hasBothGrantTypes || hasPredefinedOAuth2App;
     const [selectedAuth, setSelectedAuth] = useState<SelectedAuth | null>(
       getInitialGrantTypeAndOAuth2App(
         getInitiallySelectedAuth(piece.auth, props.reconnectConnection),
