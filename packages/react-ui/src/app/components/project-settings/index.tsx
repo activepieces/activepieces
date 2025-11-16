@@ -22,6 +22,7 @@ interface ProjectSettingsDialogProps {
   open: boolean;
   onClose: () => void;
   projectId?: string;
+  initialTab?: TabId;
   initialValues?: {
     projectName?: string;
     aiCredits?: string;
@@ -39,9 +40,10 @@ export function ProjectSettingsDialog({
   open,
   onClose,
   projectId,
+  initialTab = 'general',
   initialValues,
 }: ProjectSettingsDialogProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('general');
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
@@ -60,6 +62,7 @@ export function ProjectSettingsDialog({
   useEffect(() => {
     if (open) {
       form.reset(initialValues);
+      setActiveTab(initialTab);
     }
   }, [open]);
 

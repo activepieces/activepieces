@@ -1,103 +1,52 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-shared'
+import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { io, Socket } from 'socket.io-client'
+import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
-import { workerDistributedLock, workerRedisConnections } from './utils/worker-redis'
+import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
 
-let workerToken: string
-let heartbeatInterval: NodeJS.Timeout
-let socket: Socket
+export const runsMetadataQueue = runsMetadataQueueFactory({ 
+    createRedisConnection: workerRedisConnections.create,
+    distributedStore: workerDistributedStore,
+})
 
-export const flowWorker = (log: FastifyBaseLogger) => ({
+export const flowWorker = (log: FastifyBaseLogger): {
+    init: (params: { workerToken: string }) => Promise<void>
+    close: () => Promise<void>
+} => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
         await engineRunnerSocket(log).init()
 
-        workerToken = token
-
-        const { url, path } = workerMachine.getSocketUrlAndPath()
-        socket = io(url, {
-            transports: ['websocket'],
-            path,
-            autoConnect: false,
-            reconnection: true,
+        await appSocket(log).init({
+            workerToken: token,
+            onConnect: async () => {
+                const request = await workerMachine.getSystemInfo()
+                const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
+                await workerMachine.init(response, token, log)
+                await registryPieceManager(log).warmup()
+                await jobQueueWorker(log).start(token)
+                await initRunsMetadataQueue(log)
+            },
         })
-
-        socket.auth = {
-            token: workerToken,
-            workerId: workerMachine.getWorkerId(),
-            platformIdForDedicatedWorker: workerMachine.getPlatformIdForDedicatedWorker(),
-        }
-
-        socket.on('connect', async () => {
-            log.info({
-                message: 'Connected to server',
-                workerId: workerMachine.getWorkerId(),
-                socketId: socket.id,
-            })
-            const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-            const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
-            await workerMachine.init(response, log)
-            await jobQueueWorker(log).start(workerToken)
-        })
-
-        socket.io.on('reconnect_attempt', (attempt: number) => {
-            log.info({
-                message: 'Socket reconnect attempt',
-                attempt,
-            })
-        })
-        socket.on('connect_error', (error) => {
-            log.error({
-                message: 'Socket connection error',
-                error: error.message,
-            })
-        })
-
-        socket.on('error', (error) => {
-            log.error({
-                message: 'Socket error',
-                error: error.message,
-            })
-        })
-
-        socket.connect()
-
-        heartbeatInterval = setInterval(async () => {
-            if (!socket.connected) {
-                log.error({
-                    message: 'Not connected to server, retrying...',
-                })
-                return
-            }
-            try {
-                const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-                socket.emit(WebsocketServerEvent.WORKER_HEALTHCHECK, request)
-            }
-            catch (error) {
-                log.error({
-                    message: 'Failed to send heartbeat, retrying...',
-                    error,
-                })
-            }
-        }, 15000)
     },
 
     async close(): Promise<void> {
         await engineRunnerSocket(log).disconnect()
+        appSocket(log).disconnect()
 
-        if (socket) {
-            socket.disconnect()
+        if (runsMetadataQueue.isInitialized()) {
+            await runsMetadataQueue.get().close()
         }
 
         await workerRedisConnections.destroy()
         await workerDistributedLock(log).destroy()
-        clearTimeout(heartbeatInterval)
+        
         if (workerMachine.hasSettings()) {
             await engineRunner(log).shutdownAllWorkers()
         }
@@ -105,3 +54,15 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function initRunsMetadataQueue(log: FastifyBaseLogger): Promise<void> {
+    const settings = workerMachine.getSettings()
+    const config: RunsMetadataQueueConfig = {
+        isOtelEnabled: settings.OTEL_ENABLED ?? false,
+        redisFailedJobRetentionDays: settings.REDIS_FAILED_JOB_RETENTION_DAYS,
+        redisFailedJobRetentionMaxCount: settings.REDIS_FAILED_JOB_RETENTION_MAX_COUNT,
+    }
+    await runsMetadataQueue.init(config)
+    log.info({
+        message: 'Initialized runs metadata queue for worker',
+    }, '[flowWorker#init]')
+}

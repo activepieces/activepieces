@@ -8,6 +8,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { chatGemini } from './lib/actions/chat-gemini.action';
 import { generateContentFromImageAction } from './lib/actions/generate-content-from-image.action';
 import { generateContentAction } from './lib/actions/generate-content.action';
+import { textToSpeechAction } from './lib/actions/text-to-speech.action';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -57,6 +58,7 @@ export const googleGemini = createPiece({
     generateContentAction,
     generateContentFromImageAction,
     chatGemini,
+    textToSpeechAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://generativelanguage.googleapis.com/v1beta';

@@ -8,6 +8,9 @@ import {
   SidebarProvider,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../../allow-logged-in-user-only-guard';
 import { AppSidebarHeader } from '../sidebar-header';
@@ -21,6 +24,7 @@ export function BuilderNavigationSidebar({
 }: {
   children: React.ReactNode;
 }) {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
 
   return (
@@ -39,7 +43,10 @@ export function BuilderNavigationSidebar({
             </SidebarFooter>
           </Sidebar>
         )}
-        <SidebarInset>{children}</SidebarInset>
+        <SidebarInset>
+          {children}
+          {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+        </SidebarInset>
       </SidebarProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );

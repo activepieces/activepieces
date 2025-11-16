@@ -12,7 +12,6 @@ import {
     flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
     FlowTrigger,
-    FlowVersionState,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     isNil,
@@ -33,10 +32,10 @@ import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
-import { flowMigrations } from '../flow-version/migrations'
+import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -73,35 +72,14 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 id: ApId,
             }),
         },
-        preValidation: (request, _, done) => {
+        preValidation: async (request) => {
             if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
-                flowMigrations.apply({
-                    agentIds: [],
-                    connectionIds: [],
-                    created: new Date().toISOString(),
-                    displayName: '',
-                    flowId: '',
-                    id: '',
-                    updated: new Date().toISOString(),
-                    updatedBy: '',
-                    valid: false,
-                    trigger: request.body.request.trigger,
-                    state: FlowVersionState.DRAFT,
-                    schemaVersion: request.body.request.schemaVersion,
-                }).then((migratedFlowVersion) => {
-                    request.body.request = {
-                        ...request.body.request,
-                        trigger: migratedFlowVersion.trigger,
-                        schemaVersion: migratedFlowVersion.schemaVersion,
-                    }
-                    done()
-                }).catch((error) => {
-                    request.log.error(error)
-               
-                })
-            }
-            else {
-                done()
+                const migratedFlowTemplate = await migrateFlowVersionTemplate(request.body.request.trigger, request.body.request.schemaVersion)
+                request.body.request = {
+                    ...request.body.request,
+                    trigger: migratedFlowTemplate.trigger,
+                    schemaVersion: migratedFlowTemplate.schemaVersion,
+                }
             }
         },
     }, async (request) => {
@@ -116,11 +94,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
         const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
         if (turnOnFlow || publishDisabledFlow) {
-            await PlatformPlanHelper.checkQuotaOrThrow({
-                platformId: request.principal.platform.id,
-                projectId: request.principal.projectId,
-                metric: PlatformUsageMetric.ACTIVE_FLOWS,
-            })
+            await platformPlanService(request.log).checkActiveFlowsExceededLimit(
+                request.principal.platform.id,
+                PlatformUsageMetric.ACTIVE_FLOWS,
+            )
         }
         await assertThatFlowIsNotBeingUsed(flow, userId)
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {

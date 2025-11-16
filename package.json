@@ -1,17 +1,18 @@
 {
   "name": "activepieces",
-  "version": "0.71.1",
-  "rcVersion": "0.70.4-rc.0",
+  "version": "0.71.4",
+  "rcVersion": "0.72.0-rc.1",
   "scripts": {
     "prepare": "husky install",
+    "prebuild": "node tools/scripts/install-bun.js",
     "serve:frontend": "nx serve react-ui",
     "serve:backend": "nx serve server-api",
     "serve:engine": "nx serve engine",
     "push": "npx nx run-many --target=lint --fix && git push",
-    "dev": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
+    "dev": "node tools/scripts/install-bun.js && concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:backend": "concurrently -n \"API,ENG\" -c \"bgGreen.bold,bgRed.bold\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:frontend": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
-    "start": "npm i && npm run dev",
+    "start": "node tools/scripts/install-bun.js && bun install && npm run dev",
     "test:e2e": "nx run tests-e2e:test-e2e",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
@@ -409,10 +410,5 @@
   },
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node"
-  },
-  "overrides": {
-    "vite": {
-      "rollup": "npm:@rollup/wasm-node"
-    }
   }
 }

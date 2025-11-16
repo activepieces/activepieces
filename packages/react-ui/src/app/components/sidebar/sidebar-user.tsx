@@ -1,13 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ChevronsUpDown,
-  LogOut,
-  Settings,
-  Shield,
-  UserCogIcon,
-  UserPlus,
-} from 'lucide-react';
+import { ChevronsUpDown, LogOut, Shield, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -28,36 +21,32 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import {
-  useAuthorization,
-  useShowPlatformAdminDashboard,
-} from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission, PlatformRole } from '@activepieces/shared';
+import { PlatformRole } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
-import { ProjectSettingsDialog } from '../project-settings';
 
 export function SidebarUser() {
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [projectSettingsOpen, setProjectSettingsOpen] = useState(false);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
+  const { state } = useSidebar();
   const location = useLocation();
-  const { project } = projectHooks.useCurrentProject();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToInviteUser = checkAccess(
-    Permission.WRITE_INVITATION,
-  );
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
+  const isCollapsed = state === 'collapsed';
 
   if (!user || embedState.isEmbedded) {
     return null;
@@ -73,28 +62,48 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex items-center gap-2 w-full text-left text-sm">
-                <UserAvatar
-                  name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
-                  size={32}
-                  disableTooltip={true}
-                />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {user.firstName}
-                  </span>
-                  <span className="truncate text-xs">{user.email}</span>
+          {isCollapsed ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger className="flex items-center justify-center size-9 rounded-md hover:bg-accent cursor-pointer">
+                    <UserAvatar
+                      name={user.firstName + ' ' + user.lastName}
+                      email={user.email}
+                      size={28}
+                      disableTooltip={true}
+                    />
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center">
+                  {user.firstName}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <div className="flex items-center gap-2 w-full text-left text-sm">
+                  <UserAvatar
+                    name={user.firstName + ' ' + user.lastName}
+                    email={user.email}
+                    size={32}
+                    disableTooltip={true}
+                  />
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {user.firstName}
+                    </span>
+                    <span className="truncate text-xs">{user.email}</span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
                 </div>
-                <ChevronsUpDown className="ml-auto size-4" />
-              </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+          )}
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side="right"
@@ -119,30 +128,13 @@ export function SidebarUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {!isInPlatformAdmin && (
-              <>
-                <SidebarPlatformAdminButton />
-                <DropdownMenuSeparator />
-              </>
-            )}
+            {!isInPlatformAdmin && <SidebarPlatformAdminButton />}
 
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
-              {!isInPlatformAdmin && (
-                <DropdownMenuItem onClick={() => setProjectSettingsOpen(true)}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t('Project Settings')}
-                </DropdownMenuItem>
-              )}
-              {userHasPermissionToInviteUser && (
-                <DropdownMenuItem onClick={() => setInviteOpen(true)}>
-                  <UserPlus className="size-4 mr-2" />
-                  <span>{t('Invite User')}</span>
-                </DropdownMenuItem>
-              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
@@ -153,16 +145,6 @@ export function SidebarUser() {
         </DropdownMenu>
       </SidebarMenuItem>
 
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
-      <ProjectSettingsDialog
-        open={projectSettingsOpen}
-        onClose={() => setProjectSettingsOpen(false)}
-        projectId={project?.id}
-        initialValues={{
-          projectName: project?.displayName,
-          aiCredits: project?.plan?.aiCredits?.toString() ?? '',
-        }}
-      />
       <AccountSettingsDialog
         open={accountSettingsOpen}
         onClose={() => setAccountSettingsOpen(false)}

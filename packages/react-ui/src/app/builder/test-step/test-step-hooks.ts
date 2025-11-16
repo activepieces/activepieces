@@ -6,7 +6,6 @@ import { useFormContext } from 'react-hook-form';
 import { useSocket } from '@/components/socket-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
@@ -39,20 +38,15 @@ const stringifyNullOrUndefined = (data: undefined | null) => {
 };
 
 export const testStepHooks = {
-  useUpdateSampleData: (
-    stepName: string,
-    onSuccess?: (step: FlowTrigger | FlowAction) => void,
-  ) => {
+  useUpdateSampleData: (stepName: string) => {
     const queryClient = useQueryClient();
-    const { setSampleData, flowVersionId, applyOperation, flowId, step } =
+    const { flowVersionId, applyOperation, step, setSampleData } =
       useBuilderStateContext((state) => {
         return {
-          sampleDataInput: state.sampleDataInput[stepName],
-          setSampleData: state.setSampleData,
           flowVersionId: state.flowVersion.id,
           step: flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
-          flowId: state.flow.id,
           applyOperation: state.applyOperation,
+          setSampleData: state.setSampleData,
         };
       });
 
@@ -60,57 +54,60 @@ export const testStepHooks = {
       mutationFn: async ({
         response,
       }: {
-        response: { output?: unknown; success: boolean };
+        response:
+          | {
+              testType: 'trigger' | 'mockData' | 'todo';
+              output?: unknown;
+              success: boolean;
+            }
+          | ({ testType: 'action'; success: boolean } & StepRunResponse);
       }) => {
         if (isNil(step)) {
           console.error(`Step ${stepName} not found`);
           toast(INTERNAL_ERROR_TOAST);
           return;
         }
-
         if (response.success) {
           //if the output is undefined it will fail to save sample data unless we stringify it
           const output = isNil(response.output)
             ? stringifyNullOrUndefined(response.output)
             : response.output;
-          setSampleData(step.name, output);
-          const updatedFlowVersion = await flowsApi.update(flowId, {
+          setSampleData({ stepName: step.name, type: 'output', value: output });
+          applyOperation({
             type: FlowOperationType.SAVE_SAMPLE_DATA,
             request: {
-              stepName,
+              stepName: step.name,
               payload: output,
               type: SampleDataFileType.OUTPUT,
               dataType:
-                typeof response.output === 'string'
+                typeof output === 'string'
                   ? SampleDataDataType.STRING
                   : SampleDataDataType.JSON,
             },
           });
-          const modifiedStep = flowStructureUtil.getStep(
-            stepName,
-            updatedFlowVersion.version.trigger,
-          );
-          if (!isNil(modifiedStep)) {
-            if (flowStructureUtil.isTrigger(modifiedStep?.type)) {
-              applyOperation({
-                type: FlowOperationType.UPDATE_TRIGGER,
-                request: modifiedStep as FlowTrigger,
-              });
-            } else {
-              applyOperation({
-                type: FlowOperationType.UPDATE_ACTION,
-                request: modifiedStep as FlowAction,
-              });
-            }
+          if (response.testType === 'action') {
+            const input = isNil(response.input)
+              ? stringifyNullOrUndefined(response.input)
+              : response.input;
+            setSampleData({ stepName: step.name, type: 'input', value: input });
+            applyOperation({
+              type: FlowOperationType.SAVE_SAMPLE_DATA,
+              request: {
+                stepName: step.name,
+                payload: input,
+                type: SampleDataFileType.INPUT,
+                dataType:
+                  typeof input === 'string'
+                    ? SampleDataDataType.STRING
+                    : SampleDataDataType.JSON,
+              },
+            });
           }
-          return modifiedStep;
         }
       },
-      onSuccess: (step) => {
+      onSuccess: () => {
+        //we do this so next time the user enters the builder, the sample data is refetched
         sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
-        if (step) {
-          onSuccess?.(step);
-        }
       },
     });
   },
@@ -153,7 +150,11 @@ export const testStepHooks = {
           if (!deepEqual(ids, newIds)) {
             if (newData.data.length > 0) {
               await updateSampleData({
-                response: { success: true, output: newData.data[0].payload },
+                response: {
+                  testType: 'trigger',
+                  success: true,
+                  output: newData.data[0].payload,
+                },
               });
             }
             return newData.data;
@@ -192,7 +193,11 @@ export const testStepHooks = {
           mockData,
         });
         await updateSampleData({
-          response: { success: true, output: data.payload },
+          response: {
+            testType: 'mockData',
+            success: true,
+            output: data.payload,
+          },
         });
         return data;
       },
@@ -223,7 +228,11 @@ export const testStepHooks = {
         });
         if (data.length > 0) {
           await updateSampleData({
-            response: { success: true, output: data[0].payload },
+            response: {
+              testType: 'trigger',
+              success: true,
+              output: data[0].payload,
+            },
           });
         }
         return data;
@@ -266,14 +275,12 @@ export const testStepHooks = {
     setErrorMessage,
     setConsoleLogs,
     onSuccess,
-    onProgress,
     mutationKey,
   }: {
     currentStep: FlowAction;
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     setConsoleLogs: ((logs: string | null) => void) | undefined;
     onSuccess: (() => void) | undefined;
-    onProgress?: (progress: StepRunResponse) => void;
     mutationKey?: string[];
   }) => {
     const socket = useSocket();
@@ -285,25 +292,30 @@ export const testStepHooks = {
     return useMutation<StepRunResponse, Error, TestActionMutationParams>({
       mutationKey,
       mutationFn: async (params: TestActionMutationParams) => {
-        if (!isNil(params?.preExistingSampleData)) {
+        if (
+          params?.type === 'webhookAction' &&
+          !isNil(params?.preExistingSampleData)
+        ) {
           return params.preExistingSampleData;
         }
-        const response = await flowRunsApi.testStep(
+        const todoParams =
+          params?.type === 'todoAction'
+            ? {
+                isForTodo: true as const,
+                onProgress: params.onProgress,
+              }
+            : {
+                isForTodo: false as const,
+                onProgress: undefined,
+              };
+        const response = await flowRunsApi.testStep({
           socket,
-          {
+          request: {
             flowVersionId,
             stepName: currentStep.name,
           },
-          (progress) => {
-            if (params?.abortSignal?.aborted) {
-              throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
-            }
-            onProgress?.(progress);
-          },
-        );
-        if (params?.abortSignal?.aborted) {
-          throw new Error(CANCEL_TEST_STEP_ERROR_MESSAGE);
-        }
+          ...todoParams,
+        });
         return response;
       },
       onSuccess: (testStepResponse: StepRunResponse) => {
@@ -313,7 +325,7 @@ export const testStepHooks = {
         setConsoleLogs?.(errorMessage ?? null);
         if (success) {
           updateSampleData({
-            response: testStepResponse,
+            response: { testType: 'action', ...testStepResponse },
           });
           onSuccess?.();
         } else {
@@ -349,8 +361,12 @@ const useRequiredStateToTestSteps = () => {
 
 type TestActionMutationParams =
   | {
-      preExistingSampleData?: StepRunResponse;
-      abortSignal?: AbortSignal;
+      preExistingSampleData: StepRunResponse;
+      type: 'webhookAction';
+    }
+  | {
+      type: 'todoAction';
+      onProgress: (progress: StepRunResponse) => void;
     }
   | undefined;
 

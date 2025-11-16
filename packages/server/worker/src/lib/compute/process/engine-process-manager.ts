@@ -4,9 +4,9 @@ import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperati
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import treeKill from 'tree-kill'
-import { executionFiles } from '../../cache/execution-files'
 import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
+import { engineSocketHandlers } from './engine-socket-handlers'
 import { EngineProcessOptions } from './factory/engine-factory-types'
 import { engineProcessFactory } from './factory/index'
 
@@ -83,9 +83,7 @@ export const engineProcessManager = {
                 processes[workerIndex] = await engineProcessFactory(log).create({
                     workerId,
                     workerIndex,
-                    customPiecesPath: executionFiles(log).getCustomPiecesPath({
-                        platformId: operation.platformId,
-                    }),
+                    platformId: operation.platformId,
                     flowVersionId: getFlowVersionId(operation, operationType),
                     options,
                     reusable: isWorkerReusable(),
@@ -150,7 +148,6 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
 
 
             const onResult = (result: EngineResponse<unknown>) => {
-
                 resolve({
                     engine: result,
                     stdOut,
@@ -164,7 +161,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
                 stdError += stderr.message
             }
 
-            engineSocketServer.subscribe(workerId, onResult, onStdout, onStderr)
+            engineSocketServer.subscribe({
+                workerId,
+                onResult,
+                onStdout,
+                onStderr,
+                ...engineSocketHandlers(log),
+            })
 
             worker.on('error', (error) => {
                 log.info({

@@ -177,7 +177,7 @@ export const getDefaultPropertyValue = ({
   }
 };
 
-export const getDefaultValueForStep = ({
+export const getDefaultValueForProperties = ({
   props,
   existingInput,
   propertySettings,
@@ -189,13 +189,15 @@ export const getDefaultValueForStep = ({
   return Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
-        existingInput[propertyName] ??
-        getDefaultPropertyValue({
-          property,
-          dynamicInputModeToggled:
-            propertySettings?.[propertyName]?.type ===
-            PropertyExecutionType.DYNAMIC,
-        });
+        //we specifically check for undefined because null is a valid value
+        existingInput[propertyName] === undefined
+          ? getDefaultPropertyValue({
+              property,
+              dynamicInputModeToggled:
+                propertySettings?.[propertyName]?.type ===
+                PropertyExecutionType.DYNAMIC,
+            })
+          : existingInput[propertyName];
       return defaultValues;
     },
     {},
@@ -299,12 +301,12 @@ export const formUtils = {
         ([_, value]) => value !== undefined,
       ),
     );
+    copiedStep.nextAction = null;
     return copiedStep;
   },
   buildPieceDefaultValue: (
     selectedStep: FlowAction | FlowTrigger,
     piece: PieceMetadata | null | undefined,
-    includeCurrentInput: boolean,
   ): FlowAction | FlowTrigger => {
     const { type } = selectedStep;
     const defaultErrorOptions = {
@@ -366,9 +368,9 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep({
+        const defaultValues = getDefaultValueForProperties({
           props: props ?? {},
-          existingInput: includeCurrentInput ? input : {},
+          existingInput: input,
           propertySettings: selectedStep.settings.propertySettings ?? {},
         });
         const propertySettings = selectedStep.settings.propertySettings;
@@ -400,9 +402,9 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep({
+        const defaultValues = getDefaultValueForProperties({
           props: props ?? {},
-          existingInput: includeCurrentInput ? input : {},
+          existingInput: input,
           propertySettings: selectedStep.settings.propertySettings ?? {},
         });
         const propertySettings = selectedStep.settings.propertySettings;
@@ -627,6 +629,6 @@ export const formUtils = {
     }
     return Type.Object(propsSchema);
   },
-  getDefaultValueForStep,
+  getDefaultValueForProperties,
   buildConnectionSchema,
 };

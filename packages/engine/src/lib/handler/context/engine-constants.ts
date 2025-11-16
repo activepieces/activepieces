@@ -1,4 +1,5 @@
 import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { EngineGenericError } from '../../helper/execution-errors'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -42,7 +43,7 @@ export class EngineConstants {
     public static readonly BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes'
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
-    public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
+    public static readonly DEV_PIECES = process.env.AP_DEV_PIECES?.split(',') ?? []
     public static readonly TEST_MODE = process.env.AP_TEST_MODE === 'true'
 
     public readonly flowId: string
@@ -75,16 +76,16 @@ export class EngineConstants {
         return EngineConstants.BASE_CODE_DIRECTORY
     }
 
-    public get piecesSource(): string {
-        return EngineConstants.PIECE_SOURCES
+    public get devPieces(): string[] {
+        return EngineConstants.DEV_PIECES
     }
 
     public constructor(params: EngineConstantsParams) {
         if (!params.publicApiUrl.endsWith('/api/')) {
-            throw new Error('Public URL must end with a slash, got: ' + params.publicApiUrl)
+            throw new EngineGenericError('PublicUrlNotEndsWithSlashError', `Public URL must end with a slash, got: ${params.publicApiUrl}`)
         }
         if (!params.internalApiUrl.endsWith('/')) {
-            throw new Error('Internal API URL must end with a slash, got: ' + params.internalApiUrl)
+            throw new EngineGenericError('InternalApiUrlNotEndsWithSlashError', `Internal API URL must end with a slash, got: ${params.internalApiUrl}`)
         }
 
         this.flowId = params.flowId

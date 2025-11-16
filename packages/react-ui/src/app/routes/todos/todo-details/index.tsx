@@ -146,7 +146,10 @@ export const TodoDetails = ({
                   isLoading={isLoadingComments}
                   refetchComments={refetchComments}
                 />
-                <TodoCreateComment todo={todo} />
+                <TodoCreateComment
+                  todo={todo}
+                  refetchComments={refetchComments}
+                />
               </>
             )}
           </div>

@@ -1,11 +1,12 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, PauseType, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService, flowRunLogs } from '../../api/server-api.service'
+import { flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
-import { workerMachine } from '../../utils/machine'
+import { engineSocketHandlers } from '../../compute/process/engine-socket-handlers'
+import { runsMetadataQueue } from '../../flow-worker'
 
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
@@ -74,53 +75,46 @@ async function prepareInput(
 
 async function handleMemoryIssueError(
     jobData: ExecuteFlowJobData,
-    engineToken: string,
+    log: FastifyBaseLogger,
 ): Promise<void> {
-    await engineApiService(engineToken).updateRunStatus({
-        runDetails: {
-            duration: 0,
-            status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
-            tags: [],
-        },
+    await engineSocketHandlers(log).updateRunProgress({
+        finishTime: dayjs().toISOString(),
+        status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
+        projectId: jobData.projectId,
     })
 }
 
 async function handleTimeoutError(
     jobData: ExecuteFlowJobData,
-    engineToken: string,
+    log: FastifyBaseLogger,
 ): Promise<void> {
-    const timeoutFlowInSeconds =
-        workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
-    await engineApiService(engineToken).updateRunStatus({
-        runDetails: {
-            duration: timeoutFlowInSeconds,
-            status: FlowRunStatus.TIMEOUT,
-        },
+    await engineSocketHandlers(log).updateRunProgress({
+        finishTime: dayjs().toISOString(),
+        status: FlowRunStatus.TIMEOUT,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
+        projectId: jobData.projectId,
     })
 }
 
 async function handleInternalError(
     jobData: ExecuteFlowJobData,
-    engineToken: string,
+    log: FastifyBaseLogger,
 ): Promise<void> {
-    await engineApiService(engineToken).updateRunStatus({
-        runDetails: {
-            duration: 0,
-            status: FlowRunStatus.INTERNAL_ERROR,
-            tags: [],
-        },
+    await engineSocketHandlers(log).updateRunProgress({
+        finishTime: dayjs().toISOString(),
+        status: FlowRunStatus.INTERNAL_ERROR,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
+        projectId: jobData.projectId,
     })
 }
 
@@ -142,6 +136,13 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     status: ConsumeJobResponseStatus.OK,
                 }
             }
+            await runsMetadataQueue.add({
+                id: jobData.runId,
+                projectId: jobData.projectId,
+                startTime: dayjs().toISOString(),
+                status: FlowRunStatus.RUNNING,
+            })
+
             const runLog = pinoLogging.createRunContextLog({
                 log,
                 runId: jobData.runId,
@@ -156,14 +157,11 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 attemptsStarted,
                 timeoutInSeconds,
             )
-            const { result, status } = await engineRunner(runLog).executeFlow(
+            const { result, status, delayInSeconds } = await engineRunner(runLog).executeFlow(
                 engineToken,
                 input,
             )
-            if (
-                result.status === FlowRunStatus.INTERNAL_ERROR ||
-                status === EngineResponseStatus.INTERNAL_ERROR
-            ) {
+            if (status === EngineResponseStatus.INTERNAL_ERROR) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENGINE_OPERATION_FAILURE,
                     params: {
@@ -171,22 +169,13 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            if (result.status === FlowRunStatus.PAUSED &&
-                result.pauseMetadata?.type === PauseType.DELAY
-                && isNil(jobData.stepNameToTest)
-            ) {
-                const diffInSeconds = dayjs(result.pauseMetadata.resumeDateTime).diff(
-                    dayjs(),
-                    'seconds',
-                )
+            if (!isNil(delayInSeconds) && delayInSeconds > 0) {
                 return {
                     status: ConsumeJobResponseStatus.OK,
-                    delayInSeconds: diffInSeconds,
+                    delayInSeconds,
                 }
             }
-            return {
-                status: ConsumeJobResponseStatus.OK,
-            }
+            return { status: ConsumeJobResponseStatus.OK }
         }
         catch (e) {
             const isTimeoutError =
@@ -197,19 +186,19 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 e.error.code === ErrorCode.MEMORY_ISSUE
 
             if (isTimeoutError) {
-                await handleTimeoutError(jobData, engineToken)
+                await handleTimeoutError(jobData, log)
                 return {
                     status: ConsumeJobResponseStatus.OK,
                 }
             }
             else if (isMemoryIssueError) {
-                await handleMemoryIssueError(jobData, engineToken)
+                await handleMemoryIssueError(jobData, log)
                 return {
                     status: ConsumeJobResponseStatus.OK,
                 }
             }
             else {
-                await handleInternalError(jobData, engineToken)
+                await handleInternalError(jobData, log)
                 exceptionHandler.handle(e, log)
                 throw e
             }

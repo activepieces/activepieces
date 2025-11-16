@@ -6,7 +6,7 @@ import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../helper/system/system'
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
 import { adminPlatformService } from './admin-platform.service'
 

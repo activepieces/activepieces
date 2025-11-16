@@ -179,11 +179,18 @@ describe('Piece Metadata API', () => {
         })
     })
     describe('List Piece Metadata endpoint', () => {
-        it('Should list platform and project pieces', async () => {
+        it('Should list platform pieces', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 platform: {
                     filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
                     filteredPieceNames: [],
+                },
+            })
+
+            const { mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
                 },
             })
             const mockProject = await createProjectAndPlan({
@@ -192,16 +199,12 @@ describe('Piece Metadata API', () => {
             })
 
 
-            const mockProject2 = await createProjectAndPlan({
-                platformId: mockPlatform.id,
-                ownerId: mockOwner.id,
-            })
 
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
                 name: 'a',
                 pieceType: PieceType.CUSTOM,
-                projectId: mockProject.id,
+                platformId: mockPlatform.id,
                 displayName: 'a',
             })
             const mockPieceMetadataB = createMockPieceMetadata({
@@ -212,8 +215,7 @@ describe('Piece Metadata API', () => {
             const mockPieceMetadataC = createMockPieceMetadata({
                 name: 'c',
                 pieceType: PieceType.CUSTOM,
-                projectId: mockProject2.id,
-                platformId: mockPlatform.id,
+                platformId: mockPlatform2.id,
                 displayName: 'c',
             })
             const mockPieceMetadataD = createMockPieceMetadata({
@@ -257,74 +259,6 @@ describe('Piece Metadata API', () => {
             expect(responseBody?.[2].id).toBe(mockPieceMetadataD.id)
         })
 
-        it('Should list project pieces', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-                    filteredPieceNames: [],
-                },
-            })
-
-            const mockProject1 = await createProjectAndPlan({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-            })
-
-            const mockProject2 = await createProjectAndPlan({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-            })
-
-            // arrange
-            const mockPieceMetadataA = createMockPieceMetadata({
-                name: 'a',
-                pieceType: PieceType.CUSTOM,
-                projectId: mockProject1.id,
-                platformId: mockPlatform.id,
-                displayName: 'a',
-            })
-            const mockPieceMetadataB = createMockPieceMetadata({
-                name: 'b',
-                pieceType: PieceType.OFFICIAL,
-                displayName: 'b',
-            })
-            const mockPieceMetadataC = createMockPieceMetadata({
-                name: 'c',
-                pieceType: PieceType.CUSTOM,
-                projectId: mockProject2.id,
-                platformId: mockPlatform.id,
-                displayName: 'c',
-            })
-            await databaseConnection()
-                .getRepository('piece_metadata')
-                .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
-
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                projectId: mockProject1.id,
-                id: mockOwner.id,
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody).toHaveLength(2)
-            expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
-            expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
-        })
         it('Should list correct version by piece name', async () => {
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
