@@ -15,11 +15,16 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
+    THROTTLED_JOBS = 'throttledJobs',
     RUNS_METADATA = 'runsMetadata',
 }
 
 export const getPlatformQueueName = (platformId: string): string => {
     return `platform-${platformId}-jobs`
+}
+
+export const getThrottledJobsQueueName = (platformId: string): string => {
+    return `platform-${platformId}-throttled-jobs`
 }
 
 export const ApQueueJob = Type.Object({

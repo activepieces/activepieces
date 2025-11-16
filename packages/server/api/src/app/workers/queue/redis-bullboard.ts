@@ -9,6 +9,7 @@ import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { system } from '../../helper/system/system'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
 import { jobQueue } from './job-queue'
+import {throttledJobQueue} from "./throttled-job-queue";
 
 const QUEUE_BASE_PATH = '/ui'
 
@@ -41,10 +42,14 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     assertNotNullOrUndefined(jobQueues.length > 0, 'No job queues available')
     assertNotNullOrUndefined(runsMetadataQueue(app.log).get(), 'runsMetadataQueueInstance')
 
+    const throttledJobQueues = throttledJobQueue(app.log).getAllQueues()
+
     const jobQueueAdapters = jobQueues.map(queue => new BullMQAdapter(queue))
+    const throttledJobQueueAdapters = throttledJobQueues.map(queue => new BullMQAdapter(queue))
 
     const allQueues = [
         ...jobQueueAdapters,
+        ...throttledJobQueueAdapters,
         new BullMQAdapter(systemJobsQueue),
         new BullMQAdapter(runsMetadataQueue(app.log).get()),
     ]

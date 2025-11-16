@@ -3,6 +3,9 @@ import { ApEdition, ExecuteFlowJobData, isNil, JobData, PlanName, PlatformId, Pr
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../utils/machine'
 import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
+import { jobQueue } from '../../../../api/src/app/workers/queue/job-queue';
+import { JobType } from '../../../../api/src/app/workers/queue/queue-manager';
+import { projectWaitingSetKey } from './job-queue-worker';
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
@@ -22,26 +25,46 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         const setKey = projectSetKey(castedJob.projectId)
         const redisConnection = await workerRedisConnections.useExisting()
         await redisConnection.eval(`
-        local setKey = KEYS[1]
-        local jobId = ARGV[1]
-        
-        -- Get all members of the set
-        local members = redis.call('SMEMBERS', setKey)
-        
-        -- Find and remove the job entry that starts with jobId:
-        for i = 1, #members do
-            local member = members[i]
-            if string.match(member, '^' .. jobId .. ':') then
-                redis.call('SREM', setKey, member)
+            local setKey = KEYS[1]
+            local jobId = ARGV[1]
+            
+            -- Get all members of the set
+            local members = redis.call('SMEMBERS', setKey)
+            
+            -- Find and remove the job entry that starts with jobId:
+            for i = 1, #members do
+                local member = members[i]
+                if string.match(member, '^' .. jobId .. ':') then
+                    redis.call('SREM', setKey, member)
+                end
             end
-        end
-        
-        return 1
-            `,
-        1,
-        setKey,
-        jobId,
+            
+            return 1
+                `,
+            1,
+            setKey,
+            jobId,
         )
+
+        const projectKey = projectWaitingSetKey(castedJob.projectId)
+        const redis = await workerRedisConnections.useExisting()
+
+        // zpopmin returns the [member, score] tuple
+        const popped = await redis.zpopmin(projectKey)
+        const member = popped[0] as string | undefined
+        if (!member) {
+            return
+        }
+
+        const parsed = JSON.parse(member) as { id?: string; data: JobData }
+        const nextJobId = parsed.id
+        const nextJobData = parsed.data
+
+        await jobQueue(_log).add({
+            data: nextJobData as ExecuteFlowJobData,
+            type: JobType.ONE_TIME,
+            id: nextJobId!,
+        })
     },
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
