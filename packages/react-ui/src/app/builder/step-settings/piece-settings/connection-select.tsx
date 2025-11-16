@@ -5,6 +5,7 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import { FormField, FormLabel } from '@/components/ui/form';
@@ -17,7 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -25,6 +31,7 @@ import {
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
+  Permission,
   PieceAction,
   PieceTrigger,
   PropertyExecutionType,
@@ -52,7 +59,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
   const form = useFormContext<PieceAction | PieceTrigger>();
-
+  const hasPermissionToCreateConnection = useAuthorization().checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
   const {
     data: connections,
     isLoading: isLoadingConnections,
@@ -81,6 +90,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   const dynamicInputModeToggled =
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
+  const isPLatformAdmin = useIsPlatformAdmin();
   return (
     <FormField
       control={form.control}
@@ -139,30 +149,30 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 disabled={params.disabled}
               >
                 <div className="relative">
-                  {field.value && !field.disabled && (
-                    <>
-                      {connections?.data?.find(
-                        (connection) =>
-                          connection.externalId ===
-                            removeBrackets(field.value) &&
-                          connection.scope !== AppConnectionScope.PLATFORM,
-                      ) && (
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          className="z-50 absolute right-8 top-2 "
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setReconnectConnection(selectedConnection ?? null);
-                            setSelectConnectionOpen(false);
-                            setConnectionDialogOpen(true);
-                          }}
+                  {field.value &&
+                    !field.disabled &&
+                    selectedConnection &&
+                    (!isGlobalConnection || isPLatformAdmin) && (
+                      <div className="z-50 absolute right-8 top-2 ">
+                        <PermissionNeededTooltip
+                          hasPermission={hasPermissionToCreateConnection}
                         >
-                          {t('Reconnect')}
-                        </Button>
-                      )}
-                    </>
-                  )}
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReconnectConnection(selectedConnection);
+                              setSelectConnectionOpen(false);
+                              setConnectionDialogOpen(true);
+                            }}
+                            disabled={!hasPermissionToCreateConnection}
+                          >
+                            {t('Reconnect')}
+                          </Button>
+                        </PermissionNeededTooltip>
+                      </div>
+                    )}
 
                   <SelectTrigger className="flex gap-2 items-center">
                     <SelectValue
@@ -215,18 +225,31 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 </div>
 
                 <SelectContent>
-                  <SelectAction
-                    onClick={() => {
-                      setSelectConnectionOpen(false);
-                      setReconnectConnection(null);
-                      setConnectionDialogOpen(true);
-                    }}
+                  <PermissionNeededTooltip
+                    hasPermission={hasPermissionToCreateConnection}
                   >
-                    <span className="flex items-center gap-1 text-primary w-full">
-                      <Plus size={16} />
-                      {t('Create Connection')}
-                    </span>
-                  </SelectAction>
+                    <SelectAction
+                      onClick={() => {
+                        setSelectConnectionOpen(false);
+                        setReconnectConnection(null);
+                        setConnectionDialogOpen(true);
+                      }}
+                      disabled={!hasPermissionToCreateConnection}
+                    >
+                      <span
+                        className={cn(
+                          'flex items-center gap-1 text-primary w-full',
+                          {
+                            'text-muted-foreground cursor-not-allowed':
+                              !hasPermissionToCreateConnection,
+                          },
+                        )}
+                      >
+                        <Plus size={16} />
+                        {t('Create Connection')}
+                      </span>
+                    </SelectAction>
+                  </PermissionNeededTooltip>
 
                   {connections &&
                     connections.data &&
