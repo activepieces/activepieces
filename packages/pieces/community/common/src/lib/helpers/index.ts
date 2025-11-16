@@ -74,7 +74,7 @@ export function createCustomApiCallAction({
   extraProps,
   authLocation = 'headers',
 }: {
-  auth?: PieceAuthProperty;
+  auth?: PieceAuthProperty | PieceAuthProperty[];
   baseUrl: (auth?: unknown) => string;
   authMapping?: (
     auth: unknown,
