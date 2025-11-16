@@ -6,7 +6,9 @@ import {
     groupBy,
     isEmpty,
     PackageType,
+    partition,
     PiecePackage,
+    PieceType,
     PrivatePiecePackage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -111,10 +113,24 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             })))
 
             const performanceStartTime = performance.now()
-            await packageManager(log).install({
-                path: rootWorkspace,
-                filtersPath: applyInstallCmdFilters ? filteredPieces.map(relativePiecePath) : [],
-            })
+            const [customPieces, officialPieces] = partition(filteredPieces, piece => piece.pieceType === PieceType.CUSTOM)
+
+            if (officialPieces.length > 0) {
+                await packageManager(log).install({
+                    path: rootWorkspace,
+                    filtersPath: applyInstallCmdFilters ? officialPieces.map(relativePiecePath) : [],
+                })
+            }
+
+            if (customPieces.length > 0) {
+                // install each one of the custom pieces in a separate process to catch errors
+                await Promise.all(customPieces.map(piece => 
+                    packageManager(log).install({
+                        path: rootWorkspace,
+                        filtersPath: applyInstallCmdFilters ? customPieces.map(relativePiecePath) : [],
+                    })
+                ))
+            }
 
             await markPiecesAsUsed(rootWorkspace, filteredPieces)
 
