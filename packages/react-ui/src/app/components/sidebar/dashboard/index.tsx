@@ -113,6 +113,7 @@ export function ProjectDashboardSidebar() {
           className={cn(
             state === 'collapsed' ? 'gap-4' : 'gap-3',
             'scrollbar-hover',
+            'flex flex-col',
           )}
         >
           <SidebarGroup>
@@ -201,6 +202,7 @@ export function ProjectDashboardSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <div className="flex-grow" />
           <div className="px-2">
             {state === 'expanded' && <SidebarUsageLimits />}
           </div>
