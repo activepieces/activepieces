@@ -112,8 +112,7 @@ export function ProjectDashboardSidebar() {
         <SidebarContent
           className={cn(
             state === 'collapsed' ? 'gap-4' : 'gap-3',
-            'scrollbar-hover',
-            'flex flex-col',
+            'scrollbar-hover'
           )}
         >
           <SidebarGroup>
