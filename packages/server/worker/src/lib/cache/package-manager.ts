@@ -20,7 +20,7 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             .map((path) => `--filter ./${path}`)
         await fileSystemUtils.threadSafeMkdir(path)
         log.debug({ path, args, filters }, '[PackageManager#install]')
-        const { error, data } = await tryCatch(async () => await execWithTimeout({
+        const { error, data } = await tryCatch(async () => execWithTimeout({
             command: `bun install ${args.join(' ')} ${filters.join(' ')}`,
             cwd: path,
             timeoutMs: dayjs.duration(10, 'minutes').asMilliseconds(),

@@ -14,20 +14,20 @@ export function execWithTimeout({ command, cwd, timeoutMs }: ExecWithTimeoutPara
         const child = exec(command, {
             cwd,
         }, (error, stdout, stderr) => {
-            if (timeoutHandle) clearTimeout(timeoutHandle);
+            if (timeoutHandle) clearTimeout(timeoutHandle)
 
             if (error) {
-                reject(error);
-                return;
+                reject(error)
+                return
             }
-            resolve({ stdout, stderr });
-        });
+            resolve({ stdout, stderr })
+        })
 
         const timeoutHandle = setTimeout(() => {
-            child.kill("SIGKILL");
-            reject(new Error(`Timed out after ${timeoutMs}ms executing command: ${command}`));
-        }, timeoutMs);
-    });
+            child.kill('SIGKILL')
+            reject(new Error(`Timed out after ${timeoutMs}ms executing command: ${command}`))
+        }, timeoutMs)
+    })
 }
 
 type ExecWithTimeoutParams = {

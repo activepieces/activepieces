@@ -88,7 +88,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
     log.info({
         rootWorkspace,
         filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-    }, `[registryPieceManager] Installing pieces in workspace`)
+    }, '[registryPieceManager] Installing pieces in workspace')
     await memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
@@ -99,7 +99,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             }
             log.info({
                 rootWorkspace,
-                filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`)
+                filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[registryPieceManager] acquired lock and starting to install pieces')
 
             await createRootPackageJson({
