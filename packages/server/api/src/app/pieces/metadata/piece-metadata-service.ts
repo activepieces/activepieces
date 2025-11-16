@@ -211,30 +211,37 @@ export const getPiecePackageWithoutArchive = async (
         projectId,
         platformId,
     })
-
-    const baseProps = {
-        packageType: pieceMetadata.packageType,
-        pieceName: pieceMetadata.name,
-        pieceVersion: pieceMetadata.version,
-        pieceType: pieceMetadata.pieceType,
+    switch (pieceMetadata.packageType) {
+        case PackageType.ARCHIVE:
+            assertNotNullOrUndefined(pieceMetadata.platformId, 'platformId is required')
+            return {
+                pieceName: pieceMetadata.name,
+                pieceVersion: pieceMetadata.version,
+                pieceType: pieceMetadata.pieceType,
+                packageType: pieceMetadata.packageType,
+                archiveId: pieceMetadata.archiveId!,
+                platformId: pieceMetadata.platformId,
+            }
+        case PackageType.REGISTRY: {
+            const piecePlatformId = pieceMetadata.platformId
+            if (pieceMetadata.pieceType === PieceType.CUSTOM) {
+                assertNotNullOrUndefined(piecePlatformId, 'platformId is required')
+                return {  
+                    pieceName: pieceMetadata.name,
+                    pieceVersion: pieceMetadata.version,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    platformId: piecePlatformId,
+                }
+            }
+            return {  
+                pieceName: pieceMetadata.name,
+                pieceVersion: pieceMetadata.version,
+                packageType: pieceMetadata.packageType,
+                pieceType: pieceMetadata.pieceType,
+            }
+        }
     }
-
-    if (pieceMetadata.packageType === PackageType.ARCHIVE) {
-        return {
-            ...baseProps,
-            archiveId: pieceMetadata.archiveId!,
-            platformId: platformId!,
-        } as PiecePackage
-    }
-
-    if (pieceMetadata.pieceType === PieceType.CUSTOM) {
-        return {
-            ...baseProps,
-            platformId: platformId!,
-        } as PiecePackage
-    }
-
-    return baseProps as PiecePackage
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(

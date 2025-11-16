@@ -5,10 +5,12 @@ import {
     ExecutionMode,
     groupBy,
     isEmpty,
+    isNil,
     PackageType,
     PiecePackage,
     PieceType,
     PrivatePiecePackage,
+    tryCatch,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
@@ -38,7 +40,7 @@ const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
 export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({
         pieces,
-        applyInstallCmdFilters = true,
+        includeFilters,
     }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         for (const [packagePath, pieces] of Object.entries(groupedPieces)) {
@@ -46,9 +48,9 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                 { packagePath, pieceCount: pieces.length },
                 `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${pieces.length}`,
             )
-            await installPieces(log, packagePath, pieces, applyInstallCmdFilters)
+            await installPieces(log, packagePath, pieces, includeFilters)
         }
-    },  
+    },
     warmup: async (): Promise<void> => {
         if (!workerMachine.preWarmCacheEnabled()) {
             log.info('[registryPieceManager] Pre-warm cache is disabled')
@@ -66,7 +68,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         )
         await registryPieceManager(log).install({
             pieces: usedPieces,
-            applyInstallCmdFilters: false,
+            includeFilters: false,
         })
         log.info({
             piecesCount: usedPieces.length,
@@ -82,7 +84,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
 
 })
 
-async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], applyInstallCmdFilters: boolean): Promise<void> {
+async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean): Promise<void> {
     const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces)
     if (isEmpty(filteredPieces)) {
         log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install (already installed)')
@@ -112,21 +114,21 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             })))
 
             const performanceStartTime = performance.now()
-           
-            await packageManager(log).install({
+
+            const { error: installError } = await tryCatch(async () => await packageManager(log).install({
                 path: rootWorkspace,
-                filtersPath: applyInstallCmdFilters ? filteredPieces.map(relativePiecePath) : [],
-            }).catch(async error => {
+                filtersPath: includeFilters ? filteredPieces.map(relativePiecePath) : [],
+            }))
+
+            if (!isNil(installError)) {
                 log.error({
-                    error,
+                    rootWorkspace,
+                    pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                    error: installError,
                 }, '[registryPieceManager] Piece installation failed, rolling back')
-
-                await Promise.all(filteredPieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
-                    recursive: true,
-                })))
-
-                throw error
-            })
+                await rollbackInstallation(rootWorkspace, filteredPieces)
+                throw installError
+            }
 
             await markPiecesAsUsed(rootWorkspace, filteredPieces)
 
@@ -139,12 +141,26 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
     })
 }
 
+async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
+    await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
+        recursive: true,
+    })))
+}
+
 function groupPiecesByPackagePath(log: FastifyBaseLogger, pieces: PiecePackage[]): Record<string, PiecePackage[]> {
-    return groupBy(pieces, (piece: any) => {
-        if (true || piece.packageType === PackageType.ARCHIVE || piece.pieceType === PieceType.CUSTOM) {
-            return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
+    return groupBy(pieces, (piece) => {
+        switch (piece.packageType) {
+            case PackageType.ARCHIVE:
+                return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
+            case PackageType.REGISTRY: {
+                if (piece.pieceType === PieceType.CUSTOM) {
+                    return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
+                }
+                return GLOBAL_CACHE_COMMON_PATH
+            }
+            default:
+                throw new Error('Invalid package type')
         }
-        return GLOBAL_CACHE_COMMON_PATH
     })
 }
 
@@ -185,7 +201,7 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
     piecePackage: PiecePackage
 }): Promise<void> {
     const packageJsonPath = join(piecePath(rootWorkspace, piecePackage), 'package.json')
-   
+
     const packageJson = {
         'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
         'version': `${piecePackage.pieceVersion}`,
@@ -231,5 +247,5 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
 
 type InstallParams = {
     pieces: PiecePackage[]
-    applyInstallCmdFilters?: boolean
+    includeFilters: boolean
 }
