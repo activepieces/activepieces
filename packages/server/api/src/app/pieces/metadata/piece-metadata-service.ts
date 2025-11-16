@@ -23,6 +23,7 @@ import {
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
+import cron from 'node-cron'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
@@ -34,28 +35,17 @@ import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './local-piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
-import { systemJobHandlers } from "../../helper/system-jobs/job-handlers";
-import { SystemJobName } from "../../helper/system-jobs/common";
-import { systemJobsSchedule } from "../../helper/system-jobs/system-job";
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
-            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_CACHE_REFRESH, async function refreshPiecesCache(): Promise<void> {
-                await localPieceCache(log).refreshPiecesCache()
-            })
             await localPieceCache(log).refreshPiecesCache()
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.PIECES_CACHE_REFRESH,
-                    data: {},
-                },
-                schedule: {
-                    type: 'repeated',
-                    cron: '15 * * * *',
-                },
+
+            cron.schedule('*/15 * * * *', async () => {
+                log.info('Refreshing pieces cache via cron job')
+                await localPieceCache(log).refreshPiecesCache()
             })
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
