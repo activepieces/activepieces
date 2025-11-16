@@ -5,9 +5,9 @@ import {
     execWithTimeout,
     fileSystemUtils,
 } from '@activepieces/server-shared'
+import { tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { tryCatch } from 'packages/shared/src/lib/common/try-catch'
 
 export const packageManager = (log: FastifyBaseLogger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
