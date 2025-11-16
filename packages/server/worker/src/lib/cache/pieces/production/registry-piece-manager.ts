@@ -65,6 +65,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         )
         await registryPieceManager(log).install({
             pieces: usedPieces,
+            applyInstallCmdFilters: false,
         })
         log.info({
             piecesCount: usedPieces.length,
