@@ -37,6 +37,7 @@ const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
 export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({
         pieces,
+        applyInstallCmdFilters = true,
     }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         for (const [packagePath, pieces] of Object.entries(groupedPieces)) {
@@ -44,7 +45,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                 { packagePath, pieceCount: pieces.length },
                 `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${pieces.length}`,
             )
-            await installPieces(log, packagePath, pieces)
+            await installPieces(log, packagePath, pieces, applyInstallCmdFilters)
         }
     },
     warmup: async (): Promise<void> => {
@@ -79,7 +80,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
 
 })
 
-async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
+async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], applyInstallCmdFilters: boolean): Promise<void> {
     const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces)
     if (isEmpty(filteredPieces)) {
         log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install (already installed)')
@@ -111,7 +112,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             const performanceStartTime = performance.now()
             await packageManager(log).install({
                 path: rootWorkspace,
-                filtersPath: filteredPieces.map(relativePiecePath),
+                filtersPath: applyInstallCmdFilters ? filteredPieces.map(relativePiecePath) : [],
             })
 
             await markPiecesAsUsed(rootWorkspace, filteredPieces)
@@ -223,4 +224,5 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
 
 type InstallParams = {
     pieces: PiecePackage[]
+    applyInstallCmdFilters?: boolean
 }
