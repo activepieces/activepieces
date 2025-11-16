@@ -30,7 +30,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PlatformRole } from '@activepieces/shared';
@@ -154,7 +154,7 @@ export function SidebarUser() {
 }
 
 function SidebarPlatformAdminButton() {
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const messages = notificationHooks.useNotifications();

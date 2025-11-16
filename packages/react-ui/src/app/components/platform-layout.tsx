@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
@@ -12,7 +12,7 @@ import { PlatformSidebar } from './sidebar/platform';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const showPlatformAdminDashboard = useIsPlatformAdmin();
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
