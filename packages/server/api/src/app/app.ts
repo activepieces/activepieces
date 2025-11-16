@@ -85,6 +85,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import {pieceMetadataService} from "./pieces/metadata/piece-metadata-service";
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -194,6 +195,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tagsModule)
     await app.register(mcpModule)
     await pieceSyncService(app.log).setup()
+    await pieceMetadataService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(alertsModule)
     await app.register(invitationModule)

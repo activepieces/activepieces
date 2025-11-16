@@ -34,11 +34,30 @@ import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './local-piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
+import {systemJobHandlers} from "../../helper/system-jobs/job-handlers";
+import {SystemJobName} from "../../helper/system-jobs/common";
+import {systemJobsSchedule} from "../../helper/system-jobs/system-job";
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
+        async setup(): Promise<void> {
+            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_CACHE_REFRESH, async function refreshPiecesCache(): Promise<void> {
+                await localPieceCache(log).refreshPiecesCache()
+            })
+            await localPieceCache(log).refreshPiecesCache()
+            await systemJobsSchedule(log).upsertJob({
+                job: {
+                    name: SystemJobName.PIECES_CACHE_REFRESH,
+                    data: {},
+                },
+                schedule: {
+                    type: 'repeated',
+                    cron: '15 * * * *',
+                },
+            })
+        },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 ...params,
@@ -136,8 +155,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 updated: existingMetadata.updated,
                 created: existingMetadata.created,
             })
-
-            await localPieceCache(log).piecesUpdated()
         },
         async resolveExactVersion({ name, version, projectId, platformId }: GetExactPieceVersionParams): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
@@ -189,8 +206,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 ...pieceMetadata,
             })
 
-            await localPieceCache(log).piecesUpdated()
-
             return result
         },
 
@@ -201,8 +216,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     version: piece.version,
                 })
             }))
-
-            await localPieceCache(log).piecesUpdated()
         },
     }
 }
