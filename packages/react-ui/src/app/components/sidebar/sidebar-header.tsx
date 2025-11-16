@@ -3,7 +3,7 @@ import { ChevronsUpDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   SidebarHeader,
@@ -34,7 +34,7 @@ export const AppSidebarHeader = () => {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
 
-  if (!showSwitcher) {
+  if (false) {
     return (
       <SidebarHeader
         className="relative w-full"
@@ -48,23 +48,24 @@ export const AppSidebarHeader = () => {
                   <Link
                     to={defaultRoute}
                     className={cn(
-                      buttonVariants({ variant: 'ghost', size: 'icon' }),
                       'w-full flex items-center justify-center h-9',
                     )}
                   >
-                    <img
-                      src={
-                        state === 'collapsed'
-                          ? branding.logos.logoIconUrl
-                          : branding.logos.fullLogoUrl
-                      }
-                      alt={t('home')}
-                      className={cn(
-                        'object-contain',
-                        state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
-                      )}
-                      draggable={false}
-                    />
+                    <Button variant={'ghost'} size={'icon'} className="w-full">
+                      <img
+                        src={
+                          state === 'collapsed'
+                            ? branding.logos.logoIconUrl
+                            : branding.logos.fullLogoUrl
+                        }
+                        alt={t('home')}
+                        className={cn(
+                          'object-contain',
+                          state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
+                        )}
+                        draggable={false}
+                      />
+                    </Button>
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent
@@ -83,15 +84,14 @@ export const AppSidebarHeader = () => {
   const logoLink = (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Link
-          to={defaultRoute}
-          className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
-        >
-          <img
-            src={branding.logos.logoIconUrl}
-            alt={t('Home')}
-            className="h-5 w-5 object-contain"
-          />
+        <Link to={defaultRoute}>
+          <Button variant={'ghost'} size={'icon'}>
+            <img
+              src={branding.logos.logoIconUrl}
+              alt={t('Home')}
+              className="h-5 w-5 object-contain"
+            />
+          </Button>
         </Link>
       </TooltipTrigger>
       <TooltipContent side={state === 'collapsed' ? 'right' : 'bottom'}>

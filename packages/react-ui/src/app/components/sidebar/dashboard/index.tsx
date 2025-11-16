@@ -181,7 +181,13 @@ export function ProjectDashboardSidebar() {
               </div>
             )}
             <SidebarGroupContent>
-              <SidebarMenu className={cn(state === 'collapsed' ? 'gap-2' : '')}>
+              <SidebarMenu
+                className={cn(
+                  state === 'collapsed'
+                    ? 'gap-2 flex flex-col items-center'
+                    : '',
+                )}
+              >
                 {projects?.map((p) => (
                   <ProjectSideBarItem
                     key={p.id}

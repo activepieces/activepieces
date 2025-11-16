@@ -42,8 +42,6 @@ export const ProjectDashboardLayoutHeader = () => {
   const { embedState } = useEmbedding();
   const location = useLocation();
   const navigate = useNavigate();
-  const [pinnedItem, setPinnedItem] =
-    useState<ProjectDashboardLayoutHeaderTab | null>(null);
 
   const flowsLink: ProjectDashboardLayoutHeaderTab = {
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
@@ -116,6 +114,17 @@ export const ProjectDashboardLayoutHeader = () => {
       hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ];
+
+  const [pinnedItem, setPinnedItem] =
+    useState<ProjectDashboardLayoutHeaderTab | null>(() => {
+      const matchedItem = moreItems.find(
+        (item) =>
+          item.show &&
+          item.hasPermission !== false &&
+          location.pathname.includes(item.to),
+      );
+      return matchedItem || null;
+    });
 
   return (
     <div className="flex flex-col px-4 gap-3">

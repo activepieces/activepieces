@@ -1,5 +1,5 @@
 import { Avatar } from '@/components/ui/avatar';
-import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -34,19 +34,20 @@ const ProjectSideBarItem = ({
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <Button
+                variant={'ghost'}
+                size={'icon'}
                 onClick={() => handleProjectSelect(project.id)}
                 className={cn(
-                  buttonVariants({ variant: 'ghost', size: 'icon' }),
                   isCurrentProject &&
                     'bg-sidebar-active hover:!bg-sidebar-active',
-                  'relative cursor-pointer',
+                  'relative flex items-center justify-center',
                 )}
               >
                 <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
                   {project.displayName.charAt(0).toUpperCase()}
                 </Avatar>
-              </button>
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="right" align="center">
               {project.displayName}

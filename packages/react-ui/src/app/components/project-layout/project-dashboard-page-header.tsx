@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,12 +17,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -92,20 +87,14 @@ export const ProjectDashboardPageHeader = ({
           <div>
             <div className="flex items-center gap-2">
               {shouldShowTooltip ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <h1 className="text-xl font-semibold">
-                        {truncatedTitle}
-                      </h1>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-md break-words whitespace-normal">
-                      <p>{title}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <TextWithTooltip
+                  fullText={title}
+                  renderTrigger={() => (
+                    <h1 className="text-xl font-semibold">{truncatedTitle}</h1>
+                  )}
+                />
               ) : (
-                <h1 className="text-xl font-semibold">{truncatedTitle}</h1>
+                <h1 className="text-xl font-semibold">{title}</h1>
               )}
               {beta && (
                 <div className="flex items-center">
