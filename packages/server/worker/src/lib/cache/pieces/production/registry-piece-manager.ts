@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises'
+import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import {
@@ -6,7 +6,6 @@ import {
     groupBy,
     isEmpty,
     PackageType,
-    partition,
     PiecePackage,
     PieceType,
     PrivatePiecePackage,
@@ -75,8 +74,11 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         }, '[registryPieceManager] Warmed up pieces cache')
     },
     getCustomPiecesPath: (platformId: string): string => {
-        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
-            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
+        console.error("************")
+        console.error(workerMachine.getSettings().EXECUTION_MODE)
+        console.error("************")
+        if (true || workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
+            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', "BDJHT9kFRCngyzv8yGGC5")
         }
         return GLOBAL_CACHE_PATH_LATEST_VERSION
     },
@@ -117,6 +119,16 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             await packageManager(log).install({
                 path: rootWorkspace,
                 filtersPath: applyInstallCmdFilters ? filteredPieces.map(relativePiecePath) : [],
+            }).catch(async error => {
+                log.error({
+                    error,
+                }, '[registryPieceManager] Piece installation failed, rolling back')
+
+                await Promise.all(filteredPieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
+                    recursive: true,
+                })))
+
+                throw error
             })
 
             await markPiecesAsUsed(rootWorkspace, filteredPieces)
@@ -131,8 +143,8 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
 }
 
 function groupPiecesByPackagePath(log: FastifyBaseLogger, pieces: PiecePackage[]): Record<string, PiecePackage[]> {
-    return groupBy(pieces, (piece: PiecePackage) => {
-        if (piece.packageType === PackageType.ARCHIVE || piece.pieceType === PieceType.CUSTOM) {
+    return groupBy(pieces, (piece: any) => {
+        if (true || piece.packageType === PackageType.ARCHIVE || piece.pieceType === PieceType.CUSTOM) {
             return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
         }
         return GLOBAL_CACHE_COMMON_PATH
@@ -176,6 +188,7 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
     piecePackage: PiecePackage
 }): Promise<void> {
     const packageJsonPath = join(piecePath(rootWorkspace, piecePackage), 'package.json')
+   
     const packageJson = {
         'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
         'version': `${piecePackage.pieceVersion}`,
