@@ -96,6 +96,7 @@ const assertInstallProjectEnabled = (scope: PieceScope): void => {
 }
 
 async function savePiecePackage(platformId: string | undefined, projectId: string | undefined, params: AddPieceRequestBody, log: FastifyBaseLogger): Promise<PiecePackage> {
+
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
             const archiveId = await saveArchive({
@@ -116,6 +117,7 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
+                platformId: platformId!,
             }
         }
     }

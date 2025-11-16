@@ -1,6 +1,6 @@
 import path from 'path'
 import { AppSystemProp, environmentVariables } from '@activepieces/server-shared'
-import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage } from '@activepieces/shared'
+import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { workerMachine } from '../utils/machine'
@@ -60,24 +60,29 @@ async function getPiecePackage(query: GetPieceRequestQueryWorker): Promise<Piece
         version: query.pieceVersion,
     })
 
-    switch (pieceMetadata.packageType) {
-        case PackageType.ARCHIVE:
-            return {
-                packageType: PackageType.ARCHIVE,
-                pieceName: pieceMetadata.name,
-                pieceVersion: pieceMetadata.version,
-                pieceType: pieceMetadata.pieceType,
-                archiveId: pieceMetadata.archiveId!,
-                platformId: query.platformId,
-            }
-        case PackageType.REGISTRY:
-            return {
-                packageType: PackageType.REGISTRY,
-                pieceName: pieceMetadata.name,
-                pieceVersion: pieceMetadata.version,
-                pieceType: pieceMetadata.pieceType,
-            }
+    const baseProps = {
+        packageType: pieceMetadata.packageType,
+        pieceName: pieceMetadata.name,
+        pieceVersion: pieceMetadata.version,
+        pieceType: pieceMetadata.pieceType,
     }
+
+    if (pieceMetadata.packageType === PackageType.ARCHIVE) {
+        return {
+            ...baseProps,
+            archiveId: pieceMetadata.archiveId!,
+            platformId: query.platformId,
+        } as PiecePackage
+    }
+
+    if (pieceMetadata.pieceType === PieceType.CUSTOM) {
+        return {
+            ...baseProps,
+            platformId: query.platformId,
+        } as PiecePackage
+    }
+
+    return baseProps as PiecePackage
 }
 
 
