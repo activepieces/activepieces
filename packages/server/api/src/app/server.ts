@@ -68,6 +68,23 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     })
     exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
 
+    app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body: string, done) => {
+        try {
+            if (body == null || body.trim() === '') {
+                done(null, {})
+                return
+            }
+            
+            const parsed = JSON.parse(body)
+            done(null, parsed)
+            
+        } catch (err) {
+            const error = err instanceof Error 
+                ? err 
+                : new Error(`JSON parsing failed: ${String(err)}`)
+            done(error)
+        }
+    })
 
     await app.register(fastifyRawBody, {
         field: 'rawBody',
@@ -84,7 +101,8 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         exposedHeaders: ['*'],
         methods: ['*'],
     })
-    // SurveyMonkey
+    
+    // SurveyMonkey (different content type, no conflict)
     app.addContentTypeParser(
         'application/vnd.surveymonkey.response.v1+json',
         { parseAs: 'string' },

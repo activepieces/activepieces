@@ -35,3 +35,13 @@ To make your webhook accessible from the internet, you need to configure the bac
 Once you have completed these configurations, you are good to go!
 
 </Warning>
+
+## JSON Body Handling
+
+Activepieces webhooks handle various content types including `application/json`. For JSON payloads:
+
+- **Valid JSON**: Normal parsing and processing
+- **Empty Body**: Third-party providers that send `Content-Type: application/json` with an empty body are supported and will be processed as an empty object `{}`
+- **Malformed JSON**: Will result in a parsing error and webhook failure
+
+This ensures compatibility with providers that send empty JSON payloads without body content.
