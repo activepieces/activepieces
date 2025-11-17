@@ -230,6 +230,17 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Duration')} />
     ),
     cell: ({ row }) => {
+      const duration =
+        row.original.startTime && row.original.finishTime
+          ? new Date(row.original.finishTime).getTime() -
+            new Date(row.original.startTime).getTime()
+          : undefined;
+      const waitDuration =
+        row.original.startTime && row.original.created
+          ? new Date(row.original.startTime).getTime() -
+            new Date(row.original.created).getTime()
+          : undefined;
+
       return (
         <Tooltip>
           <TooltipTrigger>
@@ -237,15 +248,15 @@ export const runsTableColumns = ({
               {row.original.finishTime && (
                 <>
                   <Hourglass className="h-4 w-4 text-muted-foreground" />
-                  {formatUtils.formatDuration(row.original.duration)}
+                  {formatUtils.formatDuration(duration)}
                 </>
               )}
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">
             {t(
-              `Wait duration: ${formatUtils.formatDuration(
-                row.original.waitDuration,
+              `Time waited before first execution attempt: ${formatUtils.formatDuration(
+                waitDuration,
               )}`,
             )}
           </TooltipContent>
