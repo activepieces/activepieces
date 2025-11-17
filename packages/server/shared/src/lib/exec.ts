@@ -16,6 +16,7 @@ export async function spawnWithKill({
         const [command, ...args] = cmd.split(' ')
         const cp = spawn(command, args, {
             detached: true,
+            shell: true,
             ...options,
         })
 
