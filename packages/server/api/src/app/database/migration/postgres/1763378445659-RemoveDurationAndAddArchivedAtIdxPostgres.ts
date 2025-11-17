@@ -7,16 +7,16 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_environment_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_created_desc"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_environment_status_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_status_created_desc"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_flow_id_environment_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_created_desc"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_flow_id_environment_status_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_status_created_desc"
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN "duration"
@@ -67,16 +67,16 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_flow_id_environment_status_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_status_archived_at_created_desc"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_flow_id_environment_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_archived_at_created_desc"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_environment_status_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_status_archived_at_created_desc"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "public"."idx_run_project_id_environment_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_archived_at_created_desc"
         `)
         await queryRunner.query(`
             ALTER TABLE "piece_metadata"
