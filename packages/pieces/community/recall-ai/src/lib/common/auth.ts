@@ -41,7 +41,7 @@ export const recallAiAuth = PieceAuth.CustomAuth({
         auth.server as string,
         auth.api_key as string,
         HttpMethod.GET,
-        '/list-chat'
+        '/bot'
       );
       return { valid: true };
     } catch (e) {

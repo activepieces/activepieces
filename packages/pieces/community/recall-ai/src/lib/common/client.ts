@@ -8,6 +8,7 @@ export async function makeRequest(
   body?: unknown
 ) {
   try {
+    
     const response = await httpClient.sendRequest({
       method,
       url: `${BASE_URL}/api/v1${path}`,
