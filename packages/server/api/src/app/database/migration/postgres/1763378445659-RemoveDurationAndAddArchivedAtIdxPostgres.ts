@@ -28,7 +28,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             ALTER TABLE "piece_metadata" DROP COLUMN "projectId"
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_run_project_id_environment_archived_at_created_desc" ON "flow_run" (
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_archived_at_created_desc" ON "flow_run" (
                 "projectId",
                 "environment",
                 "archivedAt",
@@ -36,7 +36,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_run_project_id_environment_status_archived_at_created_desc" ON "flow_run" (
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_status_archived_at_created_desc" ON "flow_run" (
                 "projectId",
                 "environment",
                 "status",
@@ -45,7 +45,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_run_project_id_flow_id_environment_archived_at_created_desc" ON "flow_run" (
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_flow_id_environment_archived_at_created_desc" ON "flow_run" (
                 "projectId",
                 "flowId",
                 "environment",
@@ -54,7 +54,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_run_project_id_flow_id_environment_status_archived_at_created_desc" ON "flow_run" (
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_flow_id_environment_status_archived_at_created_desc" ON "flow_run" (
                 "projectId",
                 "flowId",
                 "environment",
