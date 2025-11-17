@@ -96,6 +96,9 @@
       ],
       "@activepieces/piece-fountain": [
         "packages/pieces/community/fountain/src/index.ts"
+      ],
+      "@activepieces/piece-omni-co": [
+        "packages/pieces/community/omni-co/src/index.ts"
       ]
     },
     "resolveJsonModule": true
