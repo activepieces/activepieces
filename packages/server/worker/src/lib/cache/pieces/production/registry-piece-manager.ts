@@ -104,7 +104,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
             }
             log.info({
                 rootWorkspace,
-                filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[registryPieceManager] acquired lock and starting to install pieces')
 
             await createRootPackageJson({
