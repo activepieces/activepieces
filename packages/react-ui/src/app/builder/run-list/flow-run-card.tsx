@@ -1,3 +1,12 @@
+import {
+  FlowRetryStrategy,
+  FlowRun,
+  FlowRunStatus,
+  isFailedState,
+  isFlowRunStateTerminal,
+  Permission,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -29,15 +38,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn, formatUtils } from '@/lib/utils';
-import {
-  FlowRetryStrategy,
-  FlowRun,
-  FlowRunStatus,
-  isFailedState,
-  isFlowRunStateTerminal,
-  Permission,
-  PopulatedFlow,
-} from '@activepieces/shared';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -167,7 +167,14 @@ const FlowRunCard = React.memo(
           }) && (
             <p className="flex gap-1 text-xs text-muted-foreground">
               <StopwatchIcon className="h-3.5 w-3.5" />
-              {t('Took')} {formatUtils.formatDuration(run.duration, false)}
+              {t('Took')}{' '}
+              {formatUtils.formatDuration(
+                run.startTime && run.finishTime
+                  ? new Date(run.finishTime).getTime() -
+                      new Date(run.startTime).getTime()
+                  : undefined,
+                false,
+              )}
             </p>
           )}
           {run.status === FlowRunStatus.RUNNING && (

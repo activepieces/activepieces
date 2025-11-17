@@ -1,3 +1,4 @@
+import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Archive, ChevronDown, Hourglass } from 'lucide-react';
@@ -21,7 +22,6 @@ import {
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 
 type SelectedRow = {
   id: string;
@@ -230,6 +230,17 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Duration')} />
     ),
     cell: ({ row }) => {
+      const duration =
+        row.original.startTime && row.original.finishTime
+          ? new Date(row.original.finishTime).getTime() -
+            new Date(row.original.startTime).getTime()
+          : undefined;
+      const waitDuration =
+        row.original.startTime && row.original.created
+          ? new Date(row.original.startTime).getTime() -
+            new Date(row.original.created).getTime()
+          : undefined;
+
       return (
         <Tooltip>
           <TooltipTrigger>
@@ -237,15 +248,15 @@ export const runsTableColumns = ({
               {row.original.finishTime && (
                 <>
                   <Hourglass className="h-4 w-4 text-muted-foreground" />
-                  {formatUtils.formatDuration(row.original.duration)}
+                  {formatUtils.formatDuration(duration)}
                 </>
               )}
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">
             {t(
-              `Wait duration: ${formatUtils.formatDuration(
-                row.original.waitDuration,
+              `Time waited before first execution attempt: ${formatUtils.formatDuration(
+                waitDuration,
               )}`,
             )}
           </TooltipContent>
