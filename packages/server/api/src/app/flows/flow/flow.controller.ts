@@ -192,33 +192,18 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
             lastTestDate: undefined,
         }
         const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    sampleData: {
-                        ...step.settings.sampleData,
-                        ...clearSampleData,
-                    },
-                },
+            step.settings.sampleData = {
+                ...step.settings.sampleData,
+                ...clearSampleData,
             }
+            return step
         }) as FlowTrigger
-        return {
-            ...operation,
-            request: {
-                ...operation.request,
-                trigger: {
-                    ...trigger,
-                    settings: {
-                        ...trigger.settings,
-                        sampleData: {
-                            ...trigger.settings.sampleData,
-                            ...clearSampleData,
-                        },
-                    },
-                },
-            },
+
+        trigger.settings.sampleData = {
+            ...trigger.settings.sampleData,
+            ...clearSampleData,
         }
+        operation.request.trigger = trigger
     }
     return operation
 }
