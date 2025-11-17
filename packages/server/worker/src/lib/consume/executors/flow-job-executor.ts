@@ -137,13 +137,11 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             },
         }, async (span) => {
             try {
-
                 const flowVersion = await flowWorkerCache(log).getVersion({
                     engineToken,
                     flowVersionId: jobData.flowVersionId,
                 })
                 if (isNil(flowVersion)) {
-                    span.end()
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
@@ -175,7 +173,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 )
                 if (status === EngineResponseStatus.INTERNAL_ERROR) {
                     span.recordException(new Error(`Engine internal error: ${JSON.stringify(result)}`))
-                    span.end()
                     throw new ActivepiecesError({
                         code: ErrorCode.ENGINE_OPERATION_FAILURE,
                         params: {
@@ -185,13 +182,11 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 }
                 if (!isNil(delayInSeconds) && delayInSeconds > 0) {
                     span.setAttribute('flow.delayInSeconds', delayInSeconds)
-                    span.end()
                     return {
                         status: ConsumeJobResponseStatus.OK,
                         delayInSeconds,
                     }
                 }
-                span.end()
                 return { status: ConsumeJobResponseStatus.OK }
             }
             catch (e) {
@@ -205,7 +200,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 if (isTimeoutError) {
                     span.setAttribute('error.type', 'timeout')
                     await handleTimeoutError(jobData, log)
-                    span.end()
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
@@ -213,7 +207,6 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 else if (isMemoryIssueError) {
                     span.setAttribute('error.type', 'memory')
                     await handleMemoryIssueError(jobData, log)
-                    span.end()
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
@@ -222,9 +215,11 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     span.recordException(e as Error)
                     await handleInternalError(jobData, log)
                     exceptionHandler.handle(e, log)
-                    span.end()
                     throw e
                 }
+            }
+            finally {
+                span.end()
             }
         })
     },
