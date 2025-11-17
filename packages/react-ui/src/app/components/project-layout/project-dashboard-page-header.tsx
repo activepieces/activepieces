@@ -90,11 +90,11 @@ export const ProjectDashboardPageHeader = ({
                 <TextWithTooltip
                   tooltipMessage={title}
                   renderTrigger={() => (
-                    <h1 className="text-xl font-semibold">{truncatedTitle}</h1>
+                    <h1 className="text-lg font-semibold">{truncatedTitle}</h1>
                   )}
                 />
               ) : (
-                <h1 className="text-xl font-semibold">{title}</h1>
+                <h1 className="text-lg font-semibold">{title}</h1>
               )}
               {beta && (
                 <div className="flex items-center">
