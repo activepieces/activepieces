@@ -9,6 +9,7 @@ import { moveDocument } from './lib/actions/move-document';
 import { runQuery } from './lib/actions/run-query';
 import { editSchedule } from './lib/actions/edit-schedule';
 import { generateQuery } from './lib/actions/generate-query';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const omniCo = createPiece({
   displayName: 'Omni',
@@ -26,6 +27,13 @@ export const omniCo = createPiece({
     generateQuery,
     moveDocument,
     runQuery,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://blobsrus.omniapp.co/api/v1',
+      auth: omniAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [],
 });
