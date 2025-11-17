@@ -36,15 +36,6 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_flow_id_environment_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "flowId",
-                "environment",
-                "archivedAt",
-                "created"
-            )
-        `)
-        await queryRunner.query(`
             CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_flow_id_environment_status_archived_at_created_desc" ON "flow_run" (
                 "projectId",
                 "flowId",
