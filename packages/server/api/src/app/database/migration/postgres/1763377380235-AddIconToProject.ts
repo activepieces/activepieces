@@ -21,9 +21,7 @@ export class AddIconToProject1763377380235 implements MigrationInterface {
     name = 'AddIconToProject1763377380235'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "piece_metadata" DROP COLUMN "projectId"
-        `)
+      
         await queryRunner.query(`
             ALTER TABLE "project"
             ADD "icon" jsonb
@@ -52,10 +50,6 @@ export class AddIconToProject1763377380235 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "icon"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "piece_metadata"
-            ADD "projectId" character varying(21)
         `)
     }
 
