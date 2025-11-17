@@ -1,79 +1,93 @@
-import { exec, exec as execCallback, spawn } from 'node:child_process'
+import { exec as execCallback, spawn } from 'node:child_process'
 import type { SpawnOptions } from 'node:child_process'
 import { promisify } from 'node:util'
+import treeKill from 'tree-kill'
 
 export const execPromise = promisify(execCallback)
+
+export async function spawnWithKill({
+    cmd,
+    options = {},
+    printOutput,
+    timeoutMs,
+}: SpawnWithKillParams): Promise<CommandOutput> {
+
+    return new Promise((resolve, reject) => {
+        const [command, ...args] = cmd.split(" ");
+        const cp = spawn(command, args, {
+            detached: true,
+            ...options,
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        if (cp.stdout) {
+            cp.stdout.on("data", data => {
+                if (printOutput) process.stdout.write(data);
+                stdout += data;
+            });
+        }
+
+        if (cp.stderr) {
+            cp.stderr.on("data", data => {
+                if (printOutput) process.stderr.write(data);
+                stderr += data;
+            });
+        }
+
+        let finished = false;
+        let timeoutHandler: NodeJS.Timeout | undefined;
+
+        const finish = (err?: Error | null) => {
+            if (finished) return;
+            finished = true;
+
+            if (timeoutHandler) clearTimeout(timeoutHandler);
+
+            if (!cp.pid) {
+                return err ? reject(err) : resolve({ stdout, stderr });
+            }
+
+            treeKill(cp.pid, "SIGKILL", () => {
+                if (err) reject(err);
+                else resolve({ stdout, stderr });
+            });
+        };
+
+        if (timeoutMs && timeoutMs > 0) {
+            timeoutHandler = setTimeout(() => {
+                finish(
+                    new Error(
+                        `Timeout after ${timeoutMs}ms\nstdout: ${stdout}\nstderr: ${stderr}`
+                    )
+                );
+            }, timeoutMs);
+        }
+
+        cp.on("error", err => finish(err));
+        cp.on("close", (code, signal) => {
+            if (code !== 0) {
+                return finish(
+                    new Error(
+                        `Exit ${code}${signal ? ` (signal ${signal})` : ""}\nstdout: ${stdout}\nstderr: ${stderr}`
+                    )
+                );
+            }
+            finish();
+        });
+    });
+}
+
+
+type SpawnWithKillParams = {
+    cmd: string
+    options?: SpawnOptions
+    printOutput?: boolean
+    timeoutMs?: number
+}
 
 export type CommandOutput = {
     stdout: string
     stderr: string
-}
-
-export function execWithTimeout({ command, cwd, timeoutMs }: ExecWithTimeoutParams): Promise<CommandOutput> {
-    return new Promise<CommandOutput>((resolve, reject) => {
-        const child = exec(command, {
-            cwd,
-        }, (error, stdout, stderr) => {
-            if (timeoutHandle) clearTimeout(timeoutHandle)
-
-            if (error) {
-                reject(error)
-                return
-            }
-            resolve({ stdout, stderr })
-        })
-
-        const timeoutHandle = setTimeout(() => {
-            child.kill('SIGKILL')
-            reject(new Error(`Timed out after ${timeoutMs}ms executing command: ${command}`))
-        }, timeoutMs)
-    })
-}
-
-type ExecWithTimeoutParams = {
-    command: string
-    cwd: string
-    timeoutMs: number
-}
-
-export async function runCommandWithLiveOutput(
-    cmd: string,
-    options: SpawnOptions = {},
-): Promise<CommandOutput> {
-    const [command, ...args] = cmd.split(' ')
-
-    return new Promise<CommandOutput>((resolve, reject) => {
-        const child = spawn(command, args, {
-            shell: true,
-            ...options,
-            stdio: ['inherit', 'pipe', 'pipe'],
-        })
-
-        let stdout = ''
-        let stderr = ''
-
-        child.stdout?.on('data', data => {
-            const chunk = data.toString()
-            stdout += chunk
-            process.stdout.write(chunk)
-        })
-
-        child.stderr?.on('data', data => {
-            const chunk = data.toString()
-            stderr += chunk
-            process.stderr.write(chunk)
-        })
-
-        child.on('error', reject)
-        child.on('close', code => {
-            if (code === 0) {
-                resolve({ stdout, stderr })
-            }
-            else {
-                const error = new Error(`Process exited with code ${code}`)
-                Object.assign(error, { stdout, stderr, exitCode: code })
-                reject(error)
-            }
-        })
-    })
 }
