@@ -79,7 +79,7 @@ export const engineProcessManager = {
                 }
 
                 const workerId = processIds[workerIndex]
-
+                const startTime = performance.now()
                 processes[workerIndex] = await engineProcessFactory(log).create({
                     workerId,
                     workerIndex,
@@ -97,6 +97,7 @@ export const engineProcessManager = {
                 }
                 log.info({
                     workerIndex,
+                    timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
                 }, 'Worker connected')
             }
 
