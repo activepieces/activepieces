@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import { resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock, runCommandWithLiveOutput } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar, { FSWatcher } from 'chokidar'
@@ -46,7 +46,7 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
         }
 
         const startTime = Date.now()
-        await runCommandWithLiveOutput(`npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`)
+        await spawnWithKill({ cmd: `npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`, printOutput: true })
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
 
