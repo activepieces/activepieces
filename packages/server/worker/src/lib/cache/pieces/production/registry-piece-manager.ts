@@ -154,7 +154,7 @@ function groupPiecesByPackagePath(log: FastifyBaseLogger, pieces: PiecePackage[]
             case PackageType.ARCHIVE:
                 return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
             case PackageType.REGISTRY: {
-                if (piece.pieceType === PieceType.CUSTOM) {
+                if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
                     return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
                 }
                 return GLOBAL_CACHE_COMMON_PATH

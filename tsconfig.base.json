@@ -94,6 +94,15 @@
       "@activepieces/piece-fragment": [
         "packages/pieces/community/fragment/src/index.ts"
       ],
+      "@activepieces/piece-fountain": [
+        "packages/pieces/community/fountain/src/index.ts"
+      ],
+      "@activepieces/piece-omni-co": [
+        "packages/pieces/community/omni-co/src/index.ts"
+      ],
+      "@activepieces/piece-instabase": [
+        "packages/pieces/community/instabase/src/index.ts"
+      ],
       "@activepieces/piece-recall-ai": [
         "packages/pieces/community/recall-ai/src/index.ts"
       ]
