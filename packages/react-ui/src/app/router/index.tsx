@@ -28,7 +28,7 @@ import { Permission } from '@activepieces/shared';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { PlatformLayout } from '../components/platform-layout';
-import { ProjectDashboardLayout } from '../components/project-dashboard-layout';
+import { ProjectDashboardLayout } from '../components/project-layout';
 import ProjectSettingsLayout from '../components/project-settings-layout';
 import { BuilderNavigationSidebar } from '../components/sidebar/builder';
 import NotFoundPage from '../routes/404-page';
@@ -57,6 +57,7 @@ import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
+import { RunsPage } from '../routes/runs';
 import { FlowRunPage } from '../routes/runs/id';
 import { EnvironmentPage } from '../routes/settings/environment';
 import { SignInPage } from '../routes/sign-in';
@@ -99,8 +100,8 @@ const routes = [
     path: '/authenticate',
     element: <AuthenticatePage />,
   },
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.explore,
+  {
+    path: '/explore',
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Explore">
@@ -108,7 +109,7 @@ const routes = [
         </PageTitle>
       </ProjectDashboardLayout>
     ),
-  }),
+  },
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
     element: (
@@ -171,7 +172,7 @@ const routes = [
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Runs">
-            <FlowsPage />
+            <RunsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>

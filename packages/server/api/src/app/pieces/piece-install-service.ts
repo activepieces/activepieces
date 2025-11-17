@@ -22,12 +22,12 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
-import { fileService } from '../../file/file.service'
-import { system } from '../../helper/system/system'
-import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
-import { pieceMetadataService } from '../piece-metadata-service'
+import { fileService } from '../file/file.service'
+import { system } from '../helper/system/system'
+import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+import { pieceMetadataService } from './metadata/piece-metadata-service'
 
-export const pieceService = (log: FastifyBaseLogger) => ({
+export const pieceInstallService = (log: FastifyBaseLogger) => ({
     async installPiece(
         platformId: string,
         projectId: string | undefined,
@@ -52,8 +52,6 @@ export const pieceService = (log: FastifyBaseLogger) => ({
                     version: pieceInformation.version,
                     i18n: pieceInformation.i18n,
                 },
-                // TODO (@abuaboud) delete after migrating everyone to their own platform
-                projectId: undefined,
                 packageType: params.packageType,
                 platformId,
                 pieceType: PieceType.CUSTOM,
@@ -98,6 +96,7 @@ const assertInstallProjectEnabled = (scope: PieceScope): void => {
 }
 
 async function savePiecePackage(platformId: string | undefined, projectId: string | undefined, params: AddPieceRequestBody, log: FastifyBaseLogger): Promise<PiecePackage> {
+
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
             const archiveId = await saveArchive({
@@ -109,7 +108,7 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
                 ...params,
                 pieceType: PieceType.CUSTOM,
                 archiveId,
-                archive: undefined,
+                platformId: platformId!,
                 packageType: params.packageType,
             }
         }
@@ -118,6 +117,7 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
+                platformId: platformId!,
             }
         }
     }
@@ -160,3 +160,4 @@ type GetPieceArchivePackageParams = {
     projectId?: ProjectId
     platformId?: PlatformId
 }
+

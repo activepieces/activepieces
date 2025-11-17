@@ -13,7 +13,6 @@ import {
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
@@ -497,10 +496,6 @@ function AppConnectionsPage() {
   );
   return (
     <div className="flex-col w-full">
-      <DashboardPageHeader
-        title={t('Connections')}
-        description={t('Manage project connections to external systems.')}
-      />
       <DataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
