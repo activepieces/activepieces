@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ProjectWithLimits } from '@activepieces/shared';
+import { PROJECT_COLOR_PALETTE, ProjectWithLimits } from '@activepieces/shared';
 
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
@@ -26,17 +26,28 @@ const ProjectSideBarItem = ({
   handleProjectSelect,
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+
+  const projectAvatar = (
+    <Avatar
+      className="size-6 flex items-center justify-center rounded-sm"
+      style={{
+        backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
+        color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
+      }}
+    >
+      {project.displayName.charAt(0).toUpperCase()}
+    </Avatar>
+  );
 
   return (
     <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
-      {isCollapsed ? (
+      {state === 'collapsed' ? (
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={'ghost'}
-                size={'icon'}
+                variant="ghost"
+                size="icon"
                 onClick={() => handleProjectSelect(project.id)}
                 className={cn(
                   isCurrentProject &&
@@ -44,9 +55,7 @@ const ProjectSideBarItem = ({
                   'relative flex items-center justify-center',
                 )}
               >
-                <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
-                  {project.displayName.charAt(0).toUpperCase()}
-                </Avatar>
+                {projectAvatar}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right" align="center">
@@ -66,9 +75,7 @@ const ProjectSideBarItem = ({
             onClick={() => handleProjectSelect(project.id)}
             className="flex items-center gap-2"
           >
-            <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
-              {project.displayName.charAt(0).toUpperCase()}
-            </Avatar>
+            {projectAvatar}
             <span className="truncate text-ellipsis max-w-[250px]">
               {project.displayName}
             </span>

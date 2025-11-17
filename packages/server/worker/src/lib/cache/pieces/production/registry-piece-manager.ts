@@ -116,7 +116,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
 
             const performanceStartTime = performance.now()
 
-            const { error: installError } = await tryCatch(async () => await packageManager(log).install({
+            const { error: installError } = await tryCatch(async () => packageManager(log).install({
                 path: rootWorkspace,
                 filtersPath: includeFilters ? filteredPieces.map(relativePiecePath) : [],
             }))
@@ -154,7 +154,7 @@ function groupPiecesByPackagePath(log: FastifyBaseLogger, pieces: PiecePackage[]
             case PackageType.ARCHIVE:
                 return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
             case PackageType.REGISTRY: {
-                if (piece.pieceType === PieceType.CUSTOM) {
+                if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
                     return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
                 }
                 return GLOBAL_CACHE_COMMON_PATH

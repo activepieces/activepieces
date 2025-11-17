@@ -292,6 +292,7 @@ import { RemoveProjectIdFromPieceMetadata1762358403172 } from './migration/postg
 import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postgres/1762709208569-remove-unused-payment-method-coloumn'
 import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
 import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
+import { AddIconToProject1763377380235 } from './migration/postgres/1763377380235-AddIconToProject'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -497,6 +498,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveProjectIdFromPieceMetadata1762358403172,
         AddFailedStepAndDurationToRunPostgres1762886424449,
         RemoveDurationAndAddArchivedAtIdxPostgres1763378445659,
+        AddIconToProject1763377380235,
     ]
 
     const edition = system.getEdition()
