@@ -102,6 +102,9 @@
       ],
       "@activepieces/piece-instabase": [
         "packages/pieces/community/instabase/src/index.ts"
+      ],
+      "@activepieces/piece-contextual-ai": [
+        "packages/pieces/community/contextual-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
