@@ -22,7 +22,7 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { ProjectSettingsDialog } from '../project-settings';
 
@@ -65,7 +65,7 @@ export const ProjectDashboardPageHeader = ({
     !isEmbedded &&
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    projectMembers?.length &&
+    !isNil(projectMembers) &&
     projectMembers?.length > 0;
 
   const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
