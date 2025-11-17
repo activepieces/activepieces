@@ -96,6 +96,9 @@
       ],
       "@activepieces/piece-omni-co": [
         "packages/pieces/community/omni-co/src/index.ts"
+      ],
+      "@activepieces/piece-instabase": [
+        "packages/pieces/community/instabase/src/index.ts"
       ]
     },
     "resolveJsonModule": true
