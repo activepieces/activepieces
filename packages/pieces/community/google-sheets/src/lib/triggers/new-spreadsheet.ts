@@ -1,5 +1,5 @@
 import { createTrigger,TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsAuth } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';

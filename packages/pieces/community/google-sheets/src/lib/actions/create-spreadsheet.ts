@@ -1,10 +1,9 @@
 import {
 	createAction,
 	OAuth2PropertyValue,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import {
 	AuthenticationType,
 	httpClient,
@@ -41,7 +40,7 @@ export const createSpreadsheetAction = createAction({
 						placeholder: 'Please authenticate first',
 					};
 				}
-				const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+	            const authValue = auth as GoogleSheetsAuthValue;
 				let folders: { id: string; name: string }[] = [];
 				let pageToken = null;
 				do {
@@ -55,7 +54,7 @@ export const createSpreadsheetAction = createAction({
 						},
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,
-							token: authProp!['access_token'],
+							token: await getAccessToken(authValue),
 						},
 					};
 					if (pageToken) {
@@ -89,7 +88,9 @@ export const createSpreadsheetAction = createAction({
 	},
 	async run(context) {
 		const { title, folder } = context.propsValue;
+		console.log('start create spreadsheet-------', context.auth);
 		const response = await createSpreadsheet(context.auth, title);
+		console.log('done create spreadsheet-------')
 		const newSpreadsheetId = response.spreadsheetId;
 
 		if (folder && newSpreadsheetId) {
@@ -106,6 +107,7 @@ async function createSpreadsheet(
 	auth: GoogleSheetsAuthValue,
 	title: string,
 ) {
+	const accessToken = await getAccessToken(auth);
 	const response = await httpClient.sendRequest<sheets_v4.Schema$Spreadsheet>({
 		method: HttpMethod.POST,
 		url: 'https://sheets.googleapis.com/v4/spreadsheets',
@@ -116,7 +118,7 @@ async function createSpreadsheet(
 		},
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: await getAccessToken(auth),
+			token: accessToken,
 		},
 	});
 

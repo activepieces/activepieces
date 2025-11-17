@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsAuth } from '../common/common';
 import { createAction } from '@activepieces/pieces-framework';
 import { includeTeamDrivesProp, sheetIdProp, spreadsheetIdProp } from '../common/props';
 import { google } from 'googleapis';

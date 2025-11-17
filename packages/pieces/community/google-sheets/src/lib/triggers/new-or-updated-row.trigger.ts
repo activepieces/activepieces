@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/shared';
-import { googleSheetsAuth } from '../../';
+import { googleSheetsAuth } from '../common/common';
 import { areSheetIdsValid, columnToLabel, GoogleSheetsAuthValue, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
@@ -19,7 +19,6 @@ import {
 	DEDUPE_KEY_PROPERTY,
 	WebhookRenewStrategy,
 	Property,
-	PiecePropValueSchema,
 	DropdownOption,
 } from '@activepieces/pieces-framework';
 

@@ -1,9 +1,6 @@
-import { googleSheetsAuth } from '../../index';
-import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { google, drive_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { columnToLabel, createGoogleClient, getAccessToken, getHeaderRow, GoogleSheetsAuthValue, googleSheetsCommon } from './common';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { columnToLabel, createGoogleClient, getHeaderRow, GoogleSheetsAuthValue, googleSheetsCommon } from './common';
 import { isNil } from '@activepieces/shared';
 
 export const includeTeamDrivesProp = () =>

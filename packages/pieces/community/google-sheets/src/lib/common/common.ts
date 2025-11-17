@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, OAuth2Props, PiecePropValueSchema, ShortTextProperty, StaticPropsValue } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, OAuth2Props, PieceAuth, PiecePropValueSchema, Property, ShortTextProperty, StaticPropsValue } from '@activepieces/pieces-framework';
 import {
 	httpClient,
 	HttpMethod,
@@ -304,11 +304,11 @@ export async function createGoogleClient(auth: GoogleSheetsAuthValue): Promise<O
 	if('serviceAccount' in auth)
 	{
 		const serviceAccount = JSON.parse(auth.serviceAccount);
-		return new google.auth.JWT(
-			serviceAccount.client_email,
-			undefined,
-			serviceAccount.private_key,
-			['https://www.googleapis.com/auth/spreadsheets'],
+		return new google.auth.JWT({
+			email: serviceAccount.client_email,
+			key: serviceAccount.private_key,
+			scopes: googleSheetsScopes,
+		}
 		);
 	}
 	const authClient = new OAuth2Client();
@@ -336,3 +336,28 @@ export function areSheetIdsValid(spreadsheetId: string | null | undefined, sheet
     return !isNil(spreadsheetId) && spreadsheetId !== "" &&
            !isNil(sheetId) && sheetId !== "";
 }
+
+export const googleSheetsScopes = [
+	'https://www.googleapis.com/auth/spreadsheets',
+	'https://www.googleapis.com/auth/drive.readonly',
+	'https://www.googleapis.com/auth/drive',
+  ]
+
+export const googleSheetsAuth =[PieceAuth.OAuth2({
+	description: '',
+	authUrl: 'https://accounts.google.com/o/oauth2/auth',
+	tokenUrl: 'https://oauth2.googleapis.com/token',
+	required: true,
+	scope:googleSheetsScopes ,
+  }), PieceAuth.CustomAuth({
+	displayName: 'Service Account (Enterprise)',
+	description: 'Allows you to authenticate on behalf of the organization via a service account, you can get one by going to https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key',
+	required: true,
+	props: {
+	  serviceAccount: Property.ShortText({
+		displayName: 'Service Account JSON Key',
+		required: true,
+	  })}
+	})];
+
+	

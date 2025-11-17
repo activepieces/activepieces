@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsAuth } from '../common/common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';

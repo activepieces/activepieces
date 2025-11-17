@@ -5,7 +5,7 @@ import {
   StoreScope,
   createAction,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import {
   areSheetIdsValid,
   GoogleSheetsAuthValue,

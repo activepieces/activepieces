@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid, getAccessToken } from '../common/common';
 

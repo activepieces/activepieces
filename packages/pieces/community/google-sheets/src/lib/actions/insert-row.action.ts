@@ -9,7 +9,7 @@ import {
   stringifyArray,
   ValueInputOption,
 } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { isNil } from '@activepieces/shared';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { commonProps, rowValuesProp } from '../common/props';

@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, Dimension, objectToArray, ValueInputOption } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import {  isString } from '@activepieces/shared';
 import { commonProps, rowValuesProp } from '../common/props';
 

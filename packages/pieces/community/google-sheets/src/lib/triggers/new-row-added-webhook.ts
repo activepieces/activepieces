@@ -18,7 +18,7 @@ import {
 	WebhookInformation,
 } from './helpers';
 
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 import { areSheetIdsValid, GoogleSheetsAuthValue } from '../common/common';
 

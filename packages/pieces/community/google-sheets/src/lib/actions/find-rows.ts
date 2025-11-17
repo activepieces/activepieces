@@ -8,7 +8,7 @@ import {
   labelToColumn,
   mapRowsToHeaderNames
 } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { columnNameProp, commonProps } from '../common/props';
