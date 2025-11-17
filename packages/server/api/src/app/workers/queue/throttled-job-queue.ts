@@ -3,7 +3,7 @@ import {
     QueueName
 } from '@activepieces/server-shared'
 import { isNil, JobData } from '@activepieces/shared'
-import { Queue } from 'bullmq'
+import {Job, Queue} from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -25,13 +25,13 @@ export const throttledJobQueue = (log: FastifyBaseLogger) => ({
         await queue.add(params.id, data, { jobId: params.id })
     },
 
-    async getJobById(jobId: string): Promise<JobData | null> {
+    async getJobById(jobId: string): Promise<Job<JobData> | null> {
         const queue = await ensureQueueExists(log)
         const job = await queue.getJob(jobId)
         if (isNil(job)) {
             return null
         }
-        return job.data
+        return job
     },
 
     get(): Queue<JobData> {

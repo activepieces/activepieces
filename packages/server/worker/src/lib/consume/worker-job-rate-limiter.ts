@@ -55,11 +55,11 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return
         }
 
-        const nextJobData = await throttledJobQueue(_log).getJobById(nextJobId)
-        assertNotNullOrUndefined(nextJobData, 'nextJobData')
+        const nextJob = await throttledJobQueue(_log).getJobById(nextJobId)
+        assertNotNullOrUndefined(nextJob, 'nextJob')
 
         await jobQueue(_log).add({
-            data: nextJobData as ExecuteFlowJobData,
+            data: nextJob.data as ExecuteFlowJobData,
             type: JobType.ONE_TIME,
             id: nextJobId!,
         })
