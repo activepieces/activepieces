@@ -31,14 +31,20 @@ export class AddIconToProject1763377380235 implements MigrationInterface {
             SELECT "id" FROM "project"
         `)
 
-        for (const project of projects) {
-            const randomIndex = Math.floor(Math.random() * 1000) % colors.length
-            const randomColor = colors[randomIndex]
+        if (projects.length > 0) {
+            const valuesClause = projects.map((project: { id: string }) => {
+                const randomIndex = Math.floor(Math.random() * 1000) % colors.length
+                const randomColor = colors[randomIndex]
+                const iconJson = JSON.stringify({ color: randomColor })
+                return `('${project.id}', '${iconJson}')`
+            }).join(', ')
+
             await queryRunner.query(`
                 UPDATE "project"
-                SET "icon" = $1
-                WHERE "id" = $2
-            `, [JSON.stringify({ color: randomColor }), project.id])
+                SET "icon" = v.icon::jsonb
+                FROM (VALUES ${valuesClause}) AS v(id, icon)
+                WHERE "project"."id" = v.id
+            `)
         }
 
         await queryRunner.query(`
