@@ -91,8 +91,11 @@
       "@activepieces/piece-tableau": [
         "packages/pieces/community/tableau/src/index.ts"
       ],
-      "@activepieces/piece-fragment":[
+      "@activepieces/piece-fragment": [
         "packages/pieces/community/fragment/src/index.ts"
+      ],
+      "@activepieces/piece-fountain": [
+        "packages/pieces/community/fountain/src/index.ts"
       ]
     },
     "resolveJsonModule": true
