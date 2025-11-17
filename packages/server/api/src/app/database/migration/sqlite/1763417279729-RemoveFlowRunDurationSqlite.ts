@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class RemoveDurationAndAddArchivedAtIdxSqlite1763379562214 implements MigrationInterface {
-    name = 'RemoveDurationAndAddArchivedAtIdxSqlite1763379562214'
+export class RemoveFlowRunDurationSqlite1763417279729 implements MigrationInterface {
+    name = 'RemoveFlowRunDurationSqlite1763417279729'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`

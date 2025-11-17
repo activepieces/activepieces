@@ -291,8 +291,8 @@ import { RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 } from './migrati
 import { RemoveProjectIdFromPieceMetadata1762358403172 } from './migration/postgres/1762358403172-RemoveProjectIdFromPieceMetadata'
 import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postgres/1762709208569-remove-unused-payment-method-coloumn'
 import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
-import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
 import { AddIconToProject1763377380235 } from './migration/postgres/1763377380235-AddIconToProject'
+import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

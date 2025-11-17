@@ -18,34 +18,43 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
         await queryRunner.query(`
             DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_status_created_desc"
         `)
-        await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "environment",
-                "archivedAt",
-                "created"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_status_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "environment",
-                "status",
-                "archivedAt",
-                "created"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_flow_id_environment_status_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "flowId",
-                "environment",
-                "status",
-                "archivedAt",
-                "created"
-            )
-        `)
 
+        await queryRunner.query(`
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_flow_id_status_created_archived_at" ON "flow_run" (
+                "projectId",
+                "environment",
+                "flowId",
+                "status",
+                "created",
+                "archivedAt"
+            )
+        `)
+        await queryRunner.query(`
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_status_created_archived_at" ON "flow_run" (
+                "projectId",
+                "environment",
+                "status",
+                "created",
+                "archivedAt"
+            )
+        `)
+        await queryRunner.query(`
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_created_archived_at" ON "flow_run" (
+                "projectId",
+                "environment",
+                "created",
+                "archivedAt"
+            )
+        `)
+        await queryRunner.query(`
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_flow_id_created_archived_at" ON "flow_run" (
+                "projectId",
+                "environment",
+                "flowId",
+                "created",
+                "archivedAt"
+            )
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN "duration"
         `)
@@ -56,16 +65,16 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_status_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_flow_id_created_archived_at"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_created_archived_at"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_run_project_id_environment_status_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_status_created_archived_at"
         `)
         await queryRunner.query(`
-            DROP INDEX IF EXISTS "idx_run_project_id_environment_archived_at_created_desc"
+            DROP INDEX IF EXISTS "idx_run_project_id_environment_flow_id_status_created_archived_at"
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
