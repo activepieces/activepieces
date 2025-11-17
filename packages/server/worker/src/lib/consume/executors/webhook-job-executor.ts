@@ -24,7 +24,6 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         jobId: string,
         data: WebhookJobData,
         engineToken: string,
-        workerToken: string,
         timeoutInSeconds: number,
     ): Promise<ConsumeJobResponse> {
         return tracer.startActiveSpan('webhook.executor.consume', {
@@ -61,7 +60,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 span.setAttribute('webhook.projectId', data.projectId)
 
                 if (saveSampleData) {
-                    await handleSampleData(jobId, flowVersion, engineToken, workerToken, data.projectId, data.platformId, webhookLogger, payload, timeoutInSeconds)
+                    await handleSampleData(jobId, flowVersion, engineToken, data.projectId, data.platformId, webhookLogger, payload, timeoutInSeconds)
                 }
 
                 const onlySaveSampleData = !execute
@@ -92,7 +91,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                     }
                 }
 
-                await workerApiService(workerToken).startRuns({
+                await workerApiService().startRuns({
                     flowVersionId: flowVersion.id,
                     projectId: data.projectId,
                     environment: data.runEnvironment,
@@ -120,7 +119,6 @@ async function handleSampleData(
     jobId: string,
     latestFlowVersion: FlowVersion,
     engineToken: string,
-    workerToken: string,
     projectId: string,
     platformId: PlatformId,
     log: FastifyBaseLogger,
@@ -139,7 +137,6 @@ async function handleSampleData(
     webhookUtils(log).savePayloadsAsSampleData({
         flowVersion: latestFlowVersion,
         projectId,
-        workerToken,
         payloads,
     })
 

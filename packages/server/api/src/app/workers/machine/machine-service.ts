@@ -48,7 +48,6 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
                 SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
                 SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
-                PIECES_SOURCE: system.getOrThrow(AppSystemProp.PIECES_SOURCE),
                 DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
                 SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
                 LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
@@ -77,6 +76,7 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 REDIS_FAILED_JOB_RETENTION_DAYS: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
                 REDIS_FAILED_JOB_RETENTION_MAX_COUNT: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
                 EDITION: system.getOrThrow(AppSystemProp.EDITION),
+                PRE_WARM_CACHE: system.getBooleanOrThrow(WorkerSystemProp.PRE_WARM_CACHE),
             }
         },
         async onHeartbeat({

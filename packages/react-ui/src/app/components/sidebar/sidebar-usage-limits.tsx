@@ -10,8 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
 
@@ -49,7 +50,8 @@ const getTimeUntilNextReset = (nextResetDate: number) => {
 const SidebarUsageLimits = React.memo(() => {
   const { project, isPending } = projectHooks.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
-
+  const currentUser = userHooks.useCurrentUser();
+  const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   if (edition === ApEdition.COMMUNITY) {
@@ -118,13 +120,15 @@ const SidebarUsageLimits = React.memo(() => {
             {t('Usage resets in')}{' '}
             {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
           </span>
-          <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-            <Link to={'/platform/setup/billing'} className="w-fit">
-              <span className="text-xs text-primary underline">
-                {t('Manage')}
-              </span>
-            </Link>
-          </FlagGuard>
+          {isPlatformAdmin && (
+            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+              <Link to={'/platform/setup/billing'} className="w-fit">
+                <span className="text-xs text-primary underline">
+                  {t('Manage')}
+                </span>
+              </Link>
+            </FlagGuard>
+          )}
         </div>
       </div>
     </div>
@@ -163,7 +167,7 @@ const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
         className={cn('w-full h-[6px]', {
           'bg-muted-foreground': isUnlimited,
         })}
-        indicatorClassName="bg-neutral-500"
+        indicatorClassName="bg-sidebar-progress"
       />
     </div>
   );

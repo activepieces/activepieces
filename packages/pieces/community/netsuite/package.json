@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-netsuite",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "dependencies": {
     "sql-formatter": "15.6.10"
   }

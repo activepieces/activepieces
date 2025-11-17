@@ -346,6 +346,7 @@ ErrorCode.VALIDATION,
 export type TriggerUpdateStatusErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_UPDATE_STATUS,
 {
+    flowId?: FlowId
     flowVersionId?: FlowVersionId
     message?: string
     standardOutput?: string
