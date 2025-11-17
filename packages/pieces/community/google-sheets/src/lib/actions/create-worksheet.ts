@@ -26,9 +26,9 @@ export const createWorksheetAction = createAction({
   async run(context){
     const {spreadsheetId,title} = context.propsValue;
     const headers = context.propsValue.headers as string[] ?? [];
-	const googleSheetClient = await createGoogleClient(context.auth);
-    const sheets = google.sheets({ version: 'v4', auth: googleSheetClient });
-    const sheet = await sheets.spreadsheets.batchUpdate({
+	const client = await createGoogleClient(context.auth);
+    const sheetsApi = google.sheets({ version: 'v4', auth: client });
+    const sheet = await sheetsApi.spreadsheets.batchUpdate({
         spreadsheetId:spreadsheetId,
         requestBody:{
             requests:[
@@ -43,7 +43,7 @@ export const createWorksheetAction = createAction({
             ]
         }
     });
-    const addHeadersResponse = await sheets.spreadsheets.values.append({
+    const addHeadersResponse = await sheetsApi.spreadsheets.values.append({
         spreadsheetId,
         range:`${context.propsValue.title}!A1`,
         valueInputOption:'RAW',

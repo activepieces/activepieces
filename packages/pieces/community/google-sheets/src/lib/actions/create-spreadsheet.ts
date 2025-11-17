@@ -1,16 +1,15 @@
 import {
 	createAction,
-	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../common/common';
+import { createGoogleClient, googleSheetsAuth } from '../common/common';
 import {
 	AuthenticationType,
 	httpClient,
 	HttpMethod,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { drive_v3, sheets_v4 } from 'googleapis';
+import { google } from 'googleapis';
 import { includeTeamDrivesProp } from '../common/props';
 import { getAccessToken, GoogleSheetsAuthValue } from '../common/common';
 
@@ -29,9 +28,9 @@ export const createSpreadsheetAction = createAction({
 		folder: Property.Dropdown({
 			displayName: 'Parent Folder',
 			description:
-				'The folder to create the worksheet in.By default, the new worksheet is created in the root folder of drive.',
+				'The folder to create the spreadsheet in. IMPORTANT: When using a service account, you must specify a shared folder to avoid storage quota issues.',
 			required: false,
-			refreshers: [],
+			refreshers: ['includeTeamDrives'],
 			options: async ({ auth, includeTeamDrives }) => {
 				if (!auth) {
 					return {
@@ -88,59 +87,27 @@ export const createSpreadsheetAction = createAction({
 	},
 	async run(context) {
 		const { title, folder } = context.propsValue;
-		console.log('start create spreadsheet-------', context.auth);
-		const response = await createSpreadsheet(context.auth, title);
-		console.log('done create spreadsheet-------')
-		const newSpreadsheetId = response.spreadsheetId;
-
-		if (folder && newSpreadsheetId) {
-			await moveFile(context.auth, newSpreadsheetId, folder);
-		}
-
+		const response = await createSpreadsheet(context.auth, title, folder);
 		return {
-			id: newSpreadsheetId,
+			id: response.id,
 		};
 	},
 });
-
+	
 async function createSpreadsheet(
 	auth: GoogleSheetsAuthValue,
 	title: string,
+	folderId?: string,
 ) {
-	const accessToken = await getAccessToken(auth);
-	const response = await httpClient.sendRequest<sheets_v4.Schema$Spreadsheet>({
-		method: HttpMethod.POST,
-		url: 'https://sheets.googleapis.com/v4/spreadsheets',
-		body: {
-			properties: {
-				title,
-			},
+	const client = await createGoogleClient(auth);
+	const filesApi = google.drive({ version: 'v3', auth: client });
+	const response = await filesApi.files.create({
+		requestBody: {
+			name: title,
+			mimeType: 'application/vnd.google-apps.spreadsheet',
+			parents: folderId ? [folderId] : undefined,
 		},
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
-		},
+		supportsAllDrives: true,
 	});
-
-	return response.body;
-}
-
-async function moveFile(
-	auth: GoogleSheetsAuthValue,
-	fileId: string,
-	folderId: string,
-) {
-	const response = await httpClient.sendRequest<drive_v3.Schema$File>({
-		method: HttpMethod.PUT,
-		url: `https://www.googleapis.com/drive/v2/files/${fileId}`,
-		queryParams: {
-			addParents: folderId,
-		},
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: await getAccessToken(auth),
-		},
-	});
-
-	return response.body;
+	return response.data;
 }

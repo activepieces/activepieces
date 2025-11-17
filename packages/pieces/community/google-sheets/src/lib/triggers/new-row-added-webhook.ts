@@ -115,7 +115,7 @@ export const newRowAddedTrigger = createTrigger({
 		const range = `${sheetName}!${oldRowCount + 1}:${currentRowCount}`;
 
 		const newRowValues = await getWorkSheetValues(
-			context.auth as GoogleSheetsAuthValue,
+			context.auth,
 			spreadsheetId,
 			range,
 		);
