@@ -115,8 +115,9 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const options: DropdownOption<string>[] = [];
+        const labelMap = new Map<string, string>(); // id -> name
 
+        // Fetch team specific labels
         let hasNextPage = false;
         let cursor;
 
@@ -135,12 +136,38 @@ export const props = {
           });
 
           for (const label of labels.nodes) {
-            options.push({ label: label.name, value: label.id });
+            labelMap.set(label.id, label.name);
           }
 
           hasNextPage = labels.pageInfo.hasNextPage;
           cursor = labels.pageInfo.endCursor;
         } while (hasNextPage);
+
+        // Fetch all workspace labels 
+        hasNextPage = false;
+        cursor = undefined;
+
+        do {
+          const labels = await client.listIssueLabels({
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            first: 100,
+            after: cursor,
+          });
+
+          for (const label of labels.nodes) {
+            // Prevent duplicates
+            if (!labelMap.has(label.id)) {
+              labelMap.set(label.id, label.name);
+            }
+          }
+
+          hasNextPage = labels.pageInfo.hasNextPage;
+          cursor = labels.pageInfo.endCursor;
+        } while (hasNextPage);
+
+        const options: DropdownOption<string>[] = Array.from(
+          labelMap.entries()
+        ).map(([id, name]) => ({ label: name, value: id }));
 
         return {
           disabled: false,
