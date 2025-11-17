@@ -19,15 +19,6 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
             DROP INDEX IF EXISTS "idx_run_project_id_flow_id_environment_status_created_desc"
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN "duration"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN "waitDuration"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "piece_metadata" DROP COLUMN "projectId"
-        `)
-        await queryRunner.query(`
             CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_archived_at_created_desc" ON "flow_run" (
                 "projectId",
                 "environment",
@@ -63,6 +54,13 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
                 "created"
             )
         `)
+
+        await queryRunner.query(`
+            ALTER TABLE "flow_run" DROP COLUMN "duration"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run" DROP COLUMN "waitDuration"
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -77,10 +75,6 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
         `)
         await queryRunner.query(`
             DROP INDEX IF EXISTS "idx_run_project_id_environment_archived_at_created_desc"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "piece_metadata"
-            ADD "projectId" character varying(21)
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
