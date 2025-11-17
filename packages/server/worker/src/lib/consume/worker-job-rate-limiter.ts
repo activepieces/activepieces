@@ -20,7 +20,7 @@ import { throttledJobQueue } from '../../../../api/src/app/workers/queue/throttl
 
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
-const projectActiveSetKey = (projectId: string): string => `active_jobs_set:${projectId}`
+const projectActiveSetKey = (projectId: string): string => `active_jobs_set_2:${projectId}`
 const projectWaitingSetKey = (projectId: string): string => `waiting_jobs_set:${projectId}`
 
 export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
@@ -43,36 +43,15 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             return
         }
 
-        const activeSetKey = projectActiveSetKey(castedJob.projectId)
-        const redisConnection = await workerRedisConnections.useExisting()
-        await redisConnection.eval(`
-            local setKey = KEYS[1]
-            local jobId = ARGV[1]
-            
-            -- Get all members of the set
-            local members = redis.call('SMEMBERS', setKey)
-            
-            -- Find and remove the job entry that starts with jobId:
-            for i = 1, #members do
-                local member = members[i]
-                if string.match(member, '^' .. jobId .. ':') then
-                    redis.call('SREM', setKey, member)
-                end
-            end
-            
-            return 1
-                `,
-            1,
-            activeSetKey,
-            jobId,
-        )
-
-        const waitingSetKey = projectWaitingSetKey(castedJob.projectId)
         const redis = await workerRedisConnections.useExisting()
 
-        const members = await redis.zrange(waitingSetKey, 0, 0)
-        const nextJobId = members[0] as string | undefined
-        if (!nextJobId) {
+        const activeSetKey = projectActiveSetKey(castedJob.projectId)
+        const waitingSetKey = projectWaitingSetKey(castedJob.projectId)
+
+        await redis.srem(activeSetKey, jobId)
+
+        const [nextJobId] = await redis.zrange(waitingSetKey, 0, 0)
+        if (isNil(nextJobId)) {
             return
         }
 
@@ -104,67 +83,36 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             }
         }
 
-
         const maxConcurrentJobsPerProject = await getMaxConcurrentJobsPerProject({
             projectId: data.projectId,
             platformId: data.platformId,
         })
         const setKey = projectActiveSetKey(data.projectId)
-        const currentTime = Date.now()
-        const jobWithTimestamp = `${jobId}:${currentTime}`
-        const redisConnection = await workerRedisConnections.useExisting()
+        const redis = await workerRedisConnections.useExisting()
 
-        const result = await redisConnection.eval(
+        const result = await redis.eval(
             `
-    local setKey = KEYS[1]
-    local currentTime = tonumber(ARGV[1])
-    local timeoutMs = tonumber(ARGV[2])
-    local maxJobs = tonumber(ARGV[3])
-    local newJobEntry = ARGV[4]
-    
-    -- Get all members of the set
-    local members = redis.call('SMEMBERS', setKey)
-    
-    -- Clean up old jobs and check if job already exists
-    local jobIdToCheck = string.match(newJobEntry, '^([^:]+):')
-    for i = 1, #members do
-        local member = members[i]
-        local timestamp = string.match(member, ':(%d+)$')
-        local existingJobId = string.match(member, '^([^:]+):')
-        
-        -- Clean up old jobs
-        if timestamp and (currentTime - tonumber(timestamp)) > timeoutMs then
-            redis.call('SREM', setKey, member)
-        -- Check if the job already exists in the set
-        elseif existingJobId == jobIdToCheck then
-            return 0  -- fixed
-        end
-    end
-    
-    -- Check current size after cleanup
-    local currentSize = redis.call('SCARD', setKey)
-    
-    if currentSize >= maxJobs then
-        return 1  -- Should rate limit
-    end
-    
-    -- Add new job with timestamp
-    redis.call('SADD', setKey, newJobEntry)
-    redis.call('EXPIRE', setKey, math.ceil(timeoutMs / 1000))
-    
-    return 0  -- Should not rate limit
+local setKey = KEYS[1]
+local jobId = ARGV[1]
+local maxConcurrent = tonumber(ARGV[2])
+
+local size = redis.call('SCARD', setKey)
+if size >= maxConcurrent then
+    return 1 -- Should rate limit
+end
+
+redis.call('SADD', setKey, jobId)
+return 0 -- Should not rate limit
 `,
             1,
             setKey,
-            currentTime.toString(),
-            flowTimeoutInMilliseconds.toString(),
-            maxConcurrentJobsPerProject.toString(),
-            jobWithTimestamp,
-        ) as number
+            jobId,
+            maxConcurrentJobsPerProject
+        );
 
         return {
-            shouldRateLimit: result === 1,
-        }
+            shouldRateLimit: result === 1
+        };
     },
 
 })
