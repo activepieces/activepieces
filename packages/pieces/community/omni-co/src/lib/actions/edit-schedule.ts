@@ -2,20 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { omniAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { scheduleIdDropdown } from '../common/props';
 
-export const createASchedule = createAction({
+export const editSchedule = createAction({
   auth: omniAuth,
-  name: 'createASchedule',
-  displayName: 'Create a schedule',
+  name: 'editSchedule',
+  displayName: 'Edit schedule',
   description:
-    'Creates a scheduled task for a dashboard with support for email, SFTP, and webhook destinations',
+    'Updates a scheduled task. Only properties included will be updated',
   props: {
-    identifier: Property.ShortText({
-      displayName: 'Dashboard Identifier',
-      description:
-        ' The string after /dashboards is the dashboards ID; for example: https://blobsrus.omniapp.co/dashboards/12db1a0a',
-      required: true,
-    }),
+    scheduleId: scheduleIdDropdown,
     name: Property.ShortText({
       displayName: 'Schedule Name',
       description: 'The name of the schedule/task',
@@ -104,7 +100,7 @@ export const createASchedule = createAction({
   },
   async run(context) {
     const {
-      identifier,
+      scheduleId,
       name,
       schedule,
       timezone,
@@ -117,14 +113,27 @@ export const createASchedule = createAction({
       paperOrientation,
     } = context.propsValue;
 
-    const body: Record<string, unknown> = {
-      identifier,
-      name,
-      schedule,
-      timezone,
-      format,
-      destinationType,
-    };
+    const body: Record<string, unknown> = {};
+
+    if (name) {
+      body['name'] = name;
+    }
+
+    if (schedule) {
+      body['schedule'] = schedule;
+    }
+
+    if (timezone) {
+      body['timezone'] = timezone;
+    }
+
+    if (format) {
+      body['format'] = format;
+    }
+
+    if (destinationType) {
+      body['destinationType'] = destinationType;
+    }
 
     if (url) {
       body['url'] = url;
@@ -148,8 +157,8 @@ export const createASchedule = createAction({
 
     const response = await makeRequest(
       context.auth as string,
-      HttpMethod.POST,
-      '/schedules',
+      HttpMethod.PUT,
+      `/schedules/${scheduleId}`,
       body
     );
 

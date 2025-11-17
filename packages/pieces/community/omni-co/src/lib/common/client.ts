@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export const BASE_URL = `https://blobsrus.omniapp.co/api`;
+export const BASE_URL = `https://blobsrus.omniapp.co/api/v1`;
 
 export async function makeRequest(
   api_key: string,
