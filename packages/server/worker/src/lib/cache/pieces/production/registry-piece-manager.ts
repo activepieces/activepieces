@@ -62,10 +62,6 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         const usedPiecesKey = await redis.keys(`${REDIS_USED_PIECES_CACHE_KEY}:*`)
         const usedPiecesValues = usedPiecesKey.length > 0 ? await redis.mget(...usedPiecesKey) : []
         const usedPieces = usedPiecesKey.filter((_key, index) => usedPiecesValues[index] !== null).map((_key, index) => JSON.parse(usedPiecesValues[index] as string))
-        log.debug(
-            { usedPiecesCount: usedPieces.length },
-            '[registryPieceManager] Installing used pieces on warmup',
-        )
         await registryPieceManager(log).install({
             pieces: usedPieces,
             includeFilters: false,
