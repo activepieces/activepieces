@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { instabaseAuth } from '../../index';
 import { makeInstabaseApiCall, InstabaseAuth } from '../common';
@@ -9,7 +9,7 @@ type Conversation = {
   description?: string;
 };
 
-const polling: Polling<any, {}> = {
+const polling: Polling<PiecePropValueSchema<typeof instabaseAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const response = await makeInstabaseApiCall<{ conversations: Conversation[] }>(
