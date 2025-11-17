@@ -61,6 +61,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: Number,
             nullable: true,
         },
+        icon: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
+        },
         releasesEnabled: {
             type: Boolean,
             nullable: false,
