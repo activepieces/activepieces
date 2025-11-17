@@ -288,8 +288,10 @@ import { AddRunUsageForPlatformAnalyticsReport1761668284685 } from './migration/
 import { RemoveUserSeatsLimitColumn1761762177701 } from './migration/postgres/1761762177701-remove-user-seats-limit-column'
 import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgres/1762018344394-DeleteLastChangelogDismissedAt'
 import { RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 } from './migration/postgres/1762103191643-remove-mcp-and-tables-limits-and-billing-cycles'
+import { RemoveProjectIdFromPieceMetadata1762358403172 } from './migration/postgres/1762358403172-RemoveProjectIdFromPieceMetadata'
 import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postgres/1762709208569-remove-unused-payment-method-coloumn'
 import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
+import { AddIconToProject1763377380235 } from './migration/postgres/1763377380235-AddIconToProject'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -492,7 +494,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaximumConcurrentJobsPerProject1761245180906,
         RemoveTasksAndTasksLimit1761570485475,
         DeleteLastChangelogDismissedAt1762018344394,
+        RemoveProjectIdFromPieceMetadata1762358403172,
         AddFailedStepAndDurationToRunPostgres1762886424449,
+        AddIconToProject1763377380235,
     ]
 
     const edition = system.getEdition()

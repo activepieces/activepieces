@@ -4,6 +4,21 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { Metadata } from '../common/metadata'
 
+export enum ColorName {
+    RED = 'RED',
+    BLUE = 'BLUE',
+    YELLOW = 'YELLOW',
+    PURPLE = 'PURPLE',
+    GREEN = 'GREEN',
+    PINK = 'PINK',
+    VIOLET = 'VIOLET',
+    ORANGE = 'ORANGE',
+    DARK_GREEN = 'DARK_GREEN',
+    CYAN = 'CYAN',
+    LAVENDER = 'LAVENDER',
+    DEEP_ORANGE = 'DEEP_ORANGE',
+}
+
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
@@ -46,6 +61,11 @@ export const ProjectPlan = Type.Object({
 
 export type ProjectPlan = Static<typeof ProjectPlan>
 
+export const ProjectIcon = Type.Object({
+    color: Type.Enum(ColorName),
+})
+export type ProjectIcon = Static<typeof ProjectIcon>
+
 export const Project = Type.Object({
     ...BaseModelSchema,
     deleted: Nullable(Type.String()),
@@ -53,6 +73,7 @@ export const Project = Type.Object({
     displayName: Type.String(),
     platformId: ApId,
     maxConcurrentJobs: Nullable(Type.Number()),
+    icon: ProjectIcon,
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
     metadata: Nullable(Metadata),
@@ -102,3 +123,74 @@ export const ProjectWithLimitsWithPlatform = Type.Object({
 })
 
 export type ProjectWithLimitsWithPlatform = Static<typeof ProjectWithLimitsWithPlatform>
+
+
+const ProjectColor = Type.Object({
+    textColor: Type.String(),
+    color: Type.String(),
+    backgroundColor: Type.String(),
+})
+type ProjectColor = Static<typeof ProjectColor>
+
+export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
+    [ColorName.RED]: {
+        textColor: '#ffffff',
+        color: '#ef4444',
+        backgroundColor: '#fac6c6',
+    },
+    [ColorName.BLUE]: {
+        textColor: '#ffffff',
+        color: '#3b82f6',
+        backgroundColor: '#c4d9fc',
+    },
+    [ColorName.YELLOW]: {
+        textColor: '#ffffff',
+        color: '#eab308',
+        backgroundColor: '#f8e8b4',
+    },
+    [ColorName.PURPLE]: {
+        textColor: '#ffffff',
+        color: '#a855f7',
+        backgroundColor: '#e4ccfc',
+    },
+    [ColorName.GREEN]: {
+        textColor: '#ffffff',
+        color: '#22c55e',
+        backgroundColor: '#bcedce',
+    },
+    [ColorName.PINK]: {
+        textColor: '#ffffff',
+        color: '#f472b6',
+        backgroundColor: '#fbd4e9',
+    },
+    [ColorName.VIOLET]: {
+        textColor: '#ffffff',
+        color: '#9333ea',
+        backgroundColor: '#dec1f8',
+    },
+    [ColorName.ORANGE]: {
+        textColor: '#ffffff',
+        color: '#f97316',
+        backgroundColor: '#fdd5b9',
+    },
+    [ColorName.DARK_GREEN]: {
+        textColor: '#ffffff',
+        color: '#15803d',
+        backgroundColor: '#b8d8c4',
+    },
+    [ColorName.CYAN]: {
+        textColor: '#ffffff',
+        color: '#06b6d4',
+        backgroundColor: '#b4e9f2',
+    },
+    [ColorName.LAVENDER]: {
+        textColor: '#ffffff',
+        color: '#8b5cf6',
+        backgroundColor: '#dccefc',
+    },
+    [ColorName.DEEP_ORANGE]: {
+        textColor: '#ffffff',
+        color: '#ea580c',
+        backgroundColor: '#f8ccb6',
+    },
+}
