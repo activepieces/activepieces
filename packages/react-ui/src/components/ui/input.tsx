@@ -42,7 +42,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className={cn(inputClass, 'cursor-pointer items-center ', className)}
         >
           <input
-            className={cn('grow cursor-pointer outline-none',{
+            className={cn('grow cursor-pointer outline-none', {
               'text-muted-foreground': !fileName,
             })}
             value={fileName || t('Select a file')}
