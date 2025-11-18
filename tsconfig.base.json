@@ -115,11 +115,20 @@
       "@activepieces/piece-contextual-ai": [
         "packages/pieces/community/contextual-ai/src/index.ts"
       ],
+      "@activepieces/piece-hume-ai": [
+        "packages/pieces/community/hume-ai/src/index.ts"
+      ],
       "@activepieces/piece-chatsistant": [
         "packages/pieces/community/chatsistant/src/index.ts"
       ],
       "@activepieces/piece-rapidtext-ai": [
         "packages/pieces/community/rapidtext-ai/src/index.ts"
+      ],
+      "@activepieces/piece-opnform": [
+        "packages/pieces/community/opnform/src/index.ts"
+      ],
+      "@activepieces/piece-opportify": [
+        "packages/pieces/community/opportify/src/index.ts"
       ]
     },
     "resolveJsonModule": true

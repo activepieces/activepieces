@@ -1,6 +1,6 @@
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
-import { Bell, Settings, Users } from 'lucide-react';
+import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -13,10 +13,12 @@ import { cn } from '@/lib/utils';
 import { ApFlagId, Permission } from '@activepieces/shared';
 
 import { AlertsSettings } from './alerts';
+import { EnvironmentSettings } from './environment';
 import { GeneralSettings } from './general';
+import { PiecesSettings } from './pieces';
 import { TeamSettings } from './team';
 
-type TabId = 'general' | 'team' | 'alerts';
+type TabId = 'general' | 'team' | 'alerts' | 'pieces' | 'environment';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -86,6 +88,18 @@ export function ProjectSettingsDialog({
       icon: <Bell className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
+    {
+      id: 'pieces' as TabId,
+      label: t('Pieces'),
+      icon: <Puzzle className="w-4 h-4" />,
+      disabled: false,
+    },
+    {
+      id: 'environment' as TabId,
+      label: t('Environment'),
+      icon: <GitBranch className="w-4 h-4" />,
+      disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
+    },
   ].filter((tab) => !tab.disabled);
 
   const renderTabContent = () => {
@@ -102,6 +116,10 @@ export function ProjectSettingsDialog({
         return <TeamSettings />;
       case 'alerts':
         return <AlertsSettings />;
+      case 'pieces':
+        return <PiecesSettings />;
+      case 'environment':
+        return <EnvironmentSettings />;
       default:
         return null;
     }

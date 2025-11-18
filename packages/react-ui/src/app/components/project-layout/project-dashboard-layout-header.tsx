@@ -1,12 +1,10 @@
 import { t } from 'i18next';
 import {
   ChevronDown,
-  GitBranch,
   History,
   Link2,
   ListTodo,
   Package,
-  Puzzle,
   Table2,
   Workflow,
 } from 'lucide-react';
@@ -98,22 +96,6 @@ export const ProjectDashboardLayoutHeader = () => {
         checkAccess(Permission.READ_PROJECT_RELEASE) &&
         !isEmbedded,
       show: project.releasesEnabled,
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
-      label: t('Pieces'),
-      icon: Puzzle,
-      show: !isEmbedded,
-      hasPermission: true,
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix(
-        '/settings/environments',
-      ),
-      label: t('Environments'),
-      icon: GitBranch,
-      show: !isEmbedded,
-      hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ];
 
