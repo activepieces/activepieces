@@ -9,6 +9,7 @@ import { engineRunnerSocket } from './compute/engine-runner-socket'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
+import { workerJobRateLimiter } from './consume/worker-job-rate-limiter';
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,
@@ -32,6 +33,7 @@ export const flowWorker = (log: FastifyBaseLogger): {
                 await registryPieceManager(log).warmup()
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
+                workerJobRateLimiter(log).setup()
             },
         })
     },
