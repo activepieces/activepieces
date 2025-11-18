@@ -1,0 +1,18 @@
+{
+  "Opnform": "Opnform",
+  "Create beautiful online forms and surveys with unlimited fields and submissions": "Crear hermosos formularios y encuestas en línea con campos ilimitados y envíos",
+  "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "Por favor, utiliza tu clave API de Opnform. [Haz clic aquí para crear la clave API](https://opnform.com/home?user-settings=access-tokens)",
+  "Base URL (Default: https://api.opnform.com)": "URL base (por defecto: https://api.opnform.com)",
+  "API Key": "Clave API",
+  "Invalid API Key": "Clave de API inválida",
+  "New Submission": "Nuevo envío",
+  "Triggers when Opnform receives a new submission": "Dispara cuando Opnform recibe un nuevo envío",
+  "Workspace": "Espacio de trabajo",
+  "Workspace Name": "Nombre del área de trabajo",
+  "Connect Opnform account": "Conectar cuenta Opnform",
+  "Select workspace": "Seleccionar área de trabajo",
+  "Form": "Forma",
+  "Form Name": "Nombre del formulario",
+  "Select form": "Seleccionar formulario"
+}
+
