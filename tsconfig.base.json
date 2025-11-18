@@ -102,6 +102,9 @@
       ],
       "@activepieces/piece-instabase": [
         "packages/pieces/community/instabase/src/index.ts"
+      ],
+      "@activepieces/piece-manus": [
+        "packages/pieces/community/manus/src/index.ts"
       ]
     },
     "resolveJsonModule": true
