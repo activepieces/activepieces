@@ -35,7 +35,7 @@ export const CustomNpmPiecePackage = Type.Object({
     pieceType: Type.Literal(PieceType.CUSTOM),
     pieceName: Type.String(),
     pieceVersion: Type.String(),
-    platformId: Type.String()
+    platformId: Type.String(),
 })
 
 export type CustomNpmPiecePackage = Static<typeof CustomNpmPiecePackage>
