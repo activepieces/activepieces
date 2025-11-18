@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 import { Bell, Trash } from 'lucide-react';
 
-import { AddAlertEmailDialog } from '@/app/routes/settings/alerts/add-alert-email-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +22,8 @@ import {
 } from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
+
+import { AddAlertEmailDialog } from './add-alert-email-dialog';
 
 export const AlertsSettings = () => {
   const { checkAccess } = useAuthorization();

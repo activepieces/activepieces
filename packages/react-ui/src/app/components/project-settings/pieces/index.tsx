@@ -104,7 +104,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   },
 ];
 
-const ProjectPiecesPage = () => {
+const PiecesSettings = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
@@ -167,5 +167,5 @@ const ProjectPiecesPage = () => {
   );
 };
 
-ProjectPiecesPage.displayName = 'ProjectPiecesPage';
-export { ProjectPiecesPage };
+PiecesSettings.displayName = 'PiecesSettings';
+export { PiecesSettings };
