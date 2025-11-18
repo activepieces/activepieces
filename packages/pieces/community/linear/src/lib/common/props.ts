@@ -115,7 +115,8 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const labelMap = new Map<string, string>(); // id -> name
+        const teamLabels: DropdownOption<string>[] = [];
+        const workspaceLabels: DropdownOption<string>[] = [];
 
         // Fetch team specific labels
         let hasNextPage = false;
@@ -136,38 +137,45 @@ export const props = {
           });
 
           for (const label of labels.nodes) {
-            labelMap.set(label.id, label.name);
+            teamLabels.push({ label: label.name, value: label.id });
           }
 
           hasNextPage = labels.pageInfo.hasNextPage;
           cursor = labels.pageInfo.endCursor;
         } while (hasNextPage);
 
-        // Fetch all workspace labels 
+        // Fetch all workspace labels that are common to all teams
         hasNextPage = false;
         cursor = undefined;
 
         do {
           const labels = await client.listIssueLabels({
+            filter: {
+              team: {
+                null: true,
+              },
+            },
             orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
             first: 100,
             after: cursor,
           });
 
           for (const label of labels.nodes) {
-            // Prevent duplicates
-            if (!labelMap.has(label.id)) {
-              labelMap.set(label.id, label.name);
-            }
+            // Prefix workspace labels with [Workspace]
+            workspaceLabels.push({ label: `[Workspace] ${label.name}`, value: label.id });
           }
 
           hasNextPage = labels.pageInfo.hasNextPage;
           cursor = labels.pageInfo.endCursor;
         } while (hasNextPage);
 
-        const options: DropdownOption<string>[] = Array.from(
-          labelMap.entries()
-        ).map(([id, name]) => ({ label: name, value: id }));
+        // team labels are displayed first in alphabetical order
+        teamLabels.sort((a, b) => a.label.localeCompare(b.label));
+        
+        // followed by workspace labels in alphabetical order
+        workspaceLabels.sort((a, b) => a.label.localeCompare(b.label));
+
+        const options = [...teamLabels, ...workspaceLabels];
 
         return {
           disabled: false,
