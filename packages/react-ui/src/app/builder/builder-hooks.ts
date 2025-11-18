@@ -105,8 +105,6 @@ export type BuilderState = {
   selectedStep: string | null;
   activeDraggingStep: string | null;
   saving: boolean;
-  /** change this value to trigger the step form to set its values from the step */
-  refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
   chatDrawerOpenSource: ChatDrawerSource | null;
   chatSessionMessages: Messages;
@@ -116,7 +114,6 @@ export type BuilderState = {
   addChatMessage: (message: Messages[0]) => void;
   clearChatSession: () => void;
   setChatSessionId: (sessionId: string | null) => void;
-  refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
@@ -251,7 +248,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         initiallySelectedStep && !isEmptyTriggerInitiallySelected
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
-      refreshStepFormSettingsToggle: false,
       chatDrawerOpenSource: null,
       chatSessionMessages: [],
       chatSessionId: apId(),
@@ -587,10 +583,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
         set({ insertMention });
       },
-      refreshSettings: () =>
-        set((state) => ({
-          refreshStepFormSettingsToggle: !state.refreshStepFormSettingsToggle,
-        })),
       selectedBranchIndex: null,
       operationListeners: [],
       addOperationListener: (

@@ -36,6 +36,9 @@
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"
       ],
+      "@activepieces/piece-meistertask": [
+        "packages/pieces/community/meistertask/src/index.ts"
+      ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
@@ -45,11 +48,72 @@
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
+      "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
+      "activepieces/piece-microsoft-dynamics-365-business-central": [
+        "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
+      ],
+      "activepieces/piece-microsoft-dynamics-crm": [
+        "packages/pieces/community/microsoft-dynamics-crm/src/index.ts"
+      ],
+      "activepieces/piece-microsoft-sharepoint": [
+        "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+      ],
+      "activepieces/piece-snowflake": [
+        "packages/pieces/community/snowflake/src/index.ts"
+      ],
+      "activepieces/piece-zuora": [
+        "packages/pieces/community/zuora/src/index.ts"
+      ],
+      "activepieces/piece-cashfree-payments": [
+        "packages/pieces/community/cashfree-payments/src/index.ts"
+      ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
+      ],
+      "@activepieces/piece-housecall-pro": [
+        "packages/pieces/community/housecall-pro/src/index.ts"
+      ],
+      "@activepieces/piece-chat-aid": [
+        "packages/pieces/community/chat-aid/src/index.ts"
+      ],
+      "@activepieces/piece-videoask": [
+        "packages/pieces/community/videoask/src/index.ts"
+      ],
+      "@activepieces/piece-presenton": [
+        "packages/pieces/community/presenton/src/index.ts"
+      ],
+      "@activepieces/piece-formspark": [
+        "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-tableau": [
+        "packages/pieces/community/tableau/src/index.ts"
+      ],
+      "@activepieces/piece-fragment": [
+        "packages/pieces/community/fragment/src/index.ts"
+      ],
+      "@activepieces/piece-fountain": [
+        "packages/pieces/community/fountain/src/index.ts"
+      ],
+      "@activepieces/piece-omni-co": [
+        "packages/pieces/community/omni-co/src/index.ts"
+      ],
+      "@activepieces/piece-instabase": [
+        "packages/pieces/community/instabase/src/index.ts"
+      ],
+      "@activepieces/piece-gladia": [
+        "packages/pieces/community/gladia/src/index.ts"
+      ],
+      "@activepieces/piece-manus": [
+        "packages/pieces/community/manus/src/index.ts"
+      ],
+      "@activepieces/piece-recall-ai": [
+        "packages/pieces/community/recall-ai/src/index.ts"
+      ],
+      "@activepieces/piece-contextual-ai": [
+        "packages/pieces/community/contextual-ai/src/index.ts"
       ],
       "@activepieces/piece-opnform": [
         "packages/pieces/community/opnform/src/index.ts"

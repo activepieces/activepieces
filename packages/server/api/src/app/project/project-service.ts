@@ -4,12 +4,13 @@ import {
     ApId,
     apId,
     assertNotNullOrUndefined,
+    ColorName,
     ErrorCode,
     isNil,
     Metadata,
     PlatformRole,
-    PlatformUsageMetric,
     Project,
+    ProjectIcon,
     ProjectId,
     spreadIfDefined,
     UserId,
@@ -17,7 +18,6 @@ import {
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedStore } from '../database/redis-connections'
-import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
@@ -28,15 +28,14 @@ export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
-
-        await PlatformPlanHelper.checkQuotaOrThrow({
-            platformId: params.platformId,
-            metric: PlatformUsageMetric.PROJECTS,
-        })
-
+        const colors = Object.values(ColorName)
+        const icon: ProjectIcon = {
+            color: colors[Math.floor(Math.random() * colors.length)],
+        }
         const newProject: NewProject = {
             id: apId(),
             ...params,
+            icon,
             maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }

@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const propsValidation = {
-    async validateZod<T extends Record<string, unknown>>(props: T, schema: Partial<Record<keyof T, z.ZodType>>): Promise<void> {
+    async validateZod<T extends Record<string, unknown>>(props: T, schema: Partial<Record<keyof T, z.ZodTypeAny>>): Promise<void> {
         const schemaObj = z.object(
             Object.entries(schema).reduce((acc, [key, value]) => ({
                 ...acc,

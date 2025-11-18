@@ -1,124 +1,252 @@
-import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
-import { fileSystemUtils } from '@activepieces/server-shared'
+import { rm, writeFile } from 'node:fs/promises'
+import path, { dirname, join } from 'node:path'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import {
-    getPackageArchivePathForPiece,
+    ExecutionMode,
+    groupBy,
+    isEmpty,
+    isNil,
     PackageType,
     PiecePackage,
+    PieceType,
     PrivatePiecePackage,
+    tryCatch,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { cacheState, NO_SAVE_GUARD } from '../../cache-state'
+import writeFileAtomic from 'write-file-atomic'
+import { workerApiService } from '../../../api/server-api.service'
+import { workerMachine } from '../../../utils/machine'
+import { workerRedisConnections } from '../../../utils/worker-redis'
 import { packageManager } from '../../package-manager'
-import { CacheState } from '../../worker-cache'
-import { PACKAGE_ARCHIVE_PATH, PieceManager } from '../piece-manager'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../../worker-cache'
 
-export class RegistryPieceManager extends PieceManager {
-    protected override async installDependencies({
-        projectPath,
+const usedPiecesMemoryCache: Record<string, boolean> = {}
+const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
+const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
+
+const REDIS_USED_PIECES_CACHE_KEY = 'cache:pieces:v1'
+
+const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
+    switch (piece.packageType) {
+        case PackageType.REGISTRY:
+            return `${REDIS_USED_PIECES_CACHE_KEY}:registry:${piece.pieceName}:${piece.pieceVersion}`
+        case PackageType.ARCHIVE:
+            return `${REDIS_USED_PIECES_CACHE_KEY}:archive:${piece.archiveId}`
+        default:
+            throw new Error('Invalid package type')
+    }
+}
+
+export const registryPieceManager = (log: FastifyBaseLogger) => ({
+    install: async ({
         pieces,
-        log,
-    }: InstallParams): Promise<void> {
-        await this.savePackageArchivesToDiskIfNotCached(pieces)
+        includeFilters,
+    }: InstallParams): Promise<void> => {
+        const groupedPieces = groupPiecesByPackagePath(log, pieces)
+        for (const [packagePath, pieces] of Object.entries(groupedPieces)) {
+            log.debug(
+                { packagePath, pieceCount: pieces.length },
+                `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${pieces.length}`,
+            )
+            await installPieces(log, packagePath, pieces, includeFilters)
+        }
+    },
+    warmup: async (): Promise<void> => {
+        if (!workerMachine.preWarmCacheEnabled()) {
+            log.info('[registryPieceManager] Pre-warm cache is disabled')
+            return
+        }
+        log.info('[registryPieceManager] Warming up pieces cache')
+        const startTime = performance.now()
+        const redis = await workerRedisConnections.useExisting()
+        const usedPiecesKey = await redis.keys(`${REDIS_USED_PIECES_CACHE_KEY}:*`)
+        const usedPiecesValues = usedPiecesKey.length > 0 ? await redis.mget(...usedPiecesKey) : []
+        const usedPieces = usedPiecesKey.filter((_key, index) => usedPiecesValues[index] !== null).map((_key, index) => JSON.parse(usedPiecesValues[index] as string))
+        await registryPieceManager(log).install({
+            pieces: usedPieces,
+            includeFilters: false,
+        })
+        log.info({
+            piecesCount: usedPieces.length,
+            timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
+        }, '[registryPieceManager] Warmed up pieces cache')
+    },
+    getCustomPiecesPath: (platformId: string): string => {
+        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
+            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
+        }
+        return GLOBAL_CACHE_PATH_LATEST_VERSION
+    },
 
-        const cache = cacheState(projectPath, log)
+})
 
-        await Promise.all(
-            pieces.map(async (piece) => {
-                const pkg = this.pieceToDependency(piece)
-
-                await cache.getOrSetCache({
-                    key: pkg.alias,
-                    cacheMiss: (value: string) => {
-                        return value !== CacheState.READY
-                    },
-                    installFn: async () => {
-                        const exactVersionPath = join(projectPath, 'pieces', pkg.alias)
-                        await mkdir(exactVersionPath, { recursive: true })
-
-                        if (!pkg.standalone) {
-                            await this.writePnpmWorkspaceConfig(projectPath)
-                        }
-                        const performanceStartTime = performance.now()
-                        await packageManager(log).add({
-                            path: projectPath,
-                            dependencies: [pkg],
-                            installDir: exactVersionPath,
-                        })
-                        log.info({
-                            alias: pkg.alias,
-                            timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
-                        }, 'Installed piece using pnpm')
-                        return CacheState.READY
-                    },
-                    skipSave: NO_SAVE_GUARD,
-                })
-            }),
-        )
+async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean): Promise<void> {
+    const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces)
+    if (isEmpty(filteredPieces)) {
+        log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install (already installed)')
+        return
     }
-
-    private async writePnpmWorkspaceConfig(projectPath: string): Promise<void> {
-        const workspaceConfig = `packages:
-  - "pieces/*"
-`
-        const workspaceFilePath = join(projectPath, 'pnpm-workspace.yaml')
-        await writeFile(workspaceFilePath, workspaceConfig)
-    }
-
-    private async savePackageArchivesToDiskIfNotCached(
-        pieces: PiecePackage[],
-    ): Promise<void> {
-        const packages = await this.getUncachedArchivePackages(pieces)
-        const saveToDiskJobs = packages.map((piece) =>
-            this.getArchiveAndSaveToDisk(piece),
-        )
-        await Promise.all(saveToDiskJobs)
-    }
-
-    private async getUncachedArchivePackages(
-        pieces: PiecePackage[],
-    ): Promise<PrivatePiecePackage[]> {
-        const packages: PrivatePiecePackage[] = []
-
-        for (const piece of pieces) {
-            if (piece.packageType !== PackageType.ARCHIVE) {
-                continue
+    log.info({
+        rootWorkspace,
+        filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+    }, '[registryPieceManager] Installing pieces in workspace')
+    await memoryLock.runExclusive({
+        key: `install-pieces-${rootWorkspace}`,
+        fn: async () => {
+            const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces)
+            if (isEmpty(filteredPieces)) {
+                log.info({ rootWorkspace }, '[registryPieceManager] No new pieces to install in lock (already installed)')
+                return
             }
+            log.info({
+                rootWorkspace,
+                pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+            }, '[registryPieceManager] acquired lock and starting to install pieces')
 
-            const archivePath = getPackageArchivePathForPiece({
-                archiveId: piece.archiveId,
-                archivePath: PACKAGE_ARCHIVE_PATH,
+            await createRootPackageJson({
+                path: rootWorkspace,
             })
 
-            if (await fileSystemUtils.fileExists(archivePath)) {
-                continue
+            await savePackageArchivesToDiskIfNotCached(rootWorkspace, filteredPieces)
+
+            await Promise.all(filteredPieces.map(piece => createPiecePackageJson({
+                rootWorkspace,
+                piecePackage: piece,
+            })))
+
+            const performanceStartTime = performance.now()
+
+            const { error: installError } = await tryCatch(async () => packageManager(log).install({
+                path: rootWorkspace,
+                filtersPath: includeFilters ? filteredPieces.map(relativePiecePath) : [],
+            }))
+
+            if (!isNil(installError)) {
+                log.error({
+                    rootWorkspace,
+                    pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                    error: installError,
+                }, '[registryPieceManager] Piece installation failed, rolling back')
+                await rollbackInstallation(rootWorkspace, filteredPieces)
+                throw installError
             }
 
-            packages.push(piece)
+            await markPiecesAsUsed(rootWorkspace, filteredPieces)
+
+            log.info({
+                rootWorkspace,
+                piecesCount: filteredPieces.length,
+                timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
+            }, '[registryPieceManager] Installed registry pieces using bun')
+        },
+    })
+}
+
+async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
+    await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
+        recursive: true,
+    })))
+}
+
+function groupPiecesByPackagePath(log: FastifyBaseLogger, pieces: PiecePackage[]): Record<string, PiecePackage[]> {
+    return groupBy(pieces, (piece) => {
+        switch (piece.packageType) {
+            case PackageType.ARCHIVE:
+                return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
+            case PackageType.REGISTRY: {
+                if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
+                    return registryPieceManager(log).getCustomPiecesPath(piece.platformId)
+                }
+                return GLOBAL_CACHE_COMMON_PATH
+            }
+            default:
+                throw new Error('Invalid package type')
         }
+    })
+}
 
-        return packages
-    }
 
-    private async getArchiveAndSaveToDisk(
-        piece: PrivatePiecePackage,
-    ): Promise<void> {
-        const archiveId = piece.archiveId
-
-        const archivePath = getPackageArchivePathForPiece({
-            archiveId,
-            archivePath: PACKAGE_ARCHIVE_PATH,
-        })
-
+const savePackageArchivesToDiskIfNotCached = async (
+    rootWorkspace: string,
+    pieces: PiecePackage[],
+): Promise<void> => {
+    const saveToDiskJobs = pieces.map(async (piece) => {
+        if (piece.packageType !== PackageType.ARCHIVE) {
+            return
+        }
+        const archivePath = getPackageArchivePathForPiece(rootWorkspace, piece)
+        if (await fileSystemUtils.fileExists(archivePath)) {
+            return
+        }
         await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
+        const archive = await workerApiService().getPieceArchive(piece.archiveId)
+        await writeFile(archivePath, archive as Buffer)
+    })
+    await Promise.all(saveToDiskJobs)
+}
 
-        await writeFile(archivePath, piece.archive as Buffer)
+async function createRootPackageJson({ path }: { path: string }): Promise<void> {
+    const packageJsonPath = join(path, 'package.json')
+    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
+    await writeFileAtomic(packageJsonPath, JSON.stringify({
+        'name': 'fast-workspace',
+        'version': '1.0.0',
+        'workspaces': [
+            'pieces/**',
+        ],
+    }, null, 2), 'utf8')
+}
+
+async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
+    rootWorkspace: string
+    piecePackage: PiecePackage
+}): Promise<void> {
+    const packageJsonPath = join(piecePath(rootWorkspace, piecePackage), 'package.json')
+
+    const packageJson = {
+        'name': `${piecePackage.pieceName}-${piecePackage.pieceVersion}`,
+        'version': `${piecePackage.pieceVersion}`,
+        'dependencies': {
+            [piecePackage.pieceName]: piecePackage.packageType === PackageType.REGISTRY ? piecePackage.pieceVersion : getPackageArchivePathForPiece(rootWorkspace, piecePackage),
+        },
     }
+    await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
+    await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
+}
 
+async function filterPiecesThatAlreadyInstalled(rootWorkspace: string, pieces: PiecePackage[]): Promise<PiecePackage[]> {
+    const checkResults = await Promise.all(
+        pieces.map(async piece => {
+            const pieceFolder = piecePath(rootWorkspace, piece)
+            if (usedPiecesMemoryCache[pieceFolder]) {
+                return true
+            }
+            usedPiecesMemoryCache[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
+            if (usedPiecesMemoryCache[pieceFolder]) {
+                const redis = await workerRedisConnections.useExisting()
+                await redis.set(redisUsedPiecesCacheKey(piece), JSON.stringify(piece))
+            }
+            return usedPiecesMemoryCache[pieceFolder]
+        }),
+    )
+    return pieces.filter((_, idx) => !checkResults[idx])
+}
+
+async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
+    const writeToDiskJobs = pieces.map(async (piece) => {
+        await writeFileAtomic(
+            join(piecePath(rootWorkspace, piece), 'ready'),
+            'true',
+        )
+    })
+    await Promise.all(writeToDiskJobs)
+}
+
+function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: PrivatePiecePackage): string {
+    return join(piecePath(rootWorkspace, piecePackage), `${piecePackage.archiveId}.tgz`)
 }
 
 type InstallParams = {
-    projectPath: string
     pieces: PiecePackage[]
-    log: FastifyBaseLogger
+    includeFilters: boolean
 }

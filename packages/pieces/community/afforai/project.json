@@ -46,7 +46,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/afforai",
-        "command": "bun install --no-save"
+        "command": "bun install --no-save --silent"
       },
       "dependsOn": [
         "^build"

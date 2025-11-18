@@ -18,8 +18,8 @@ export type EngineProcessOptions =  {
 type CreateEngineParams = {
     workerId: string
     workerIndex: number
-    customPiecesPath: string
     flowVersionId: string | undefined
+    platformId: string
     options: EngineProcessOptions
     reusable: boolean
 }

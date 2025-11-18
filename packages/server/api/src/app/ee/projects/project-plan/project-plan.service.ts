@@ -1,15 +1,12 @@
-import { ProjectPlanLimits, RESOURCE_TO_MESSAGE_MAPPING } from '@activepieces/ee-shared'
+import { ProjectPlanLimits } from '@activepieces/ee-shared'
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     AiOverageState,
     ApEdition,
     apId,
-    ErrorCode,
     isNil,
     PiecesFilterType,
     PlatformPlan,
-    PlatformUsageMetric,
     ProjectPlan,
     spreadIfDefined,
     spreadIfNotUndefined,
@@ -75,7 +72,7 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             return false
         }
 
-        const projectPlan = await this.ensureProjectUnlockedAndGetPlatformPlan(projectId)
+        const projectPlan = await projectLimitsService(system.globalLogger()).getOrCreateDefaultPlan(projectId)
 
         try {
             const platformId = await projectService.getPlatformId(projectId)
@@ -95,22 +92,6 @@ export const projectLimitsService = (log: FastifyBaseLogger) => ({
             return false
         }
     },
-
-    async ensureProjectUnlockedAndGetPlatformPlan(projectId: string): Promise<ProjectPlan> {
-        const projectPlan = await projectLimitsService(system.globalLogger()).getOrCreateDefaultPlan(projectId)
-
-        if (projectPlan.locked) {
-            throw new ActivepiecesError({
-                code: ErrorCode.RESOURCE_LOCKED,
-                params: {
-                    message: RESOURCE_TO_MESSAGE_MAPPING[PlatformUsageMetric.PROJECTS],
-                },
-            })
-        }
-
-        return projectPlan
-    },
-
 })
 
 async function projectReachedLimit(params: LimitReachedFromProjectPlanParams): Promise<boolean> {

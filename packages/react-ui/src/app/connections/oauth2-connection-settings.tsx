@@ -215,7 +215,7 @@ const OAuth2ConnectionSettingsForm = ({
     );
     const defaultValuesForProps = Object.fromEntries(
       Object.entries(
-        formUtils.getDefaultValueForStep({
+        formUtils.getDefaultValueForProperties({
           props: authProperty.props ?? {},
           existingInput: {},
         }),

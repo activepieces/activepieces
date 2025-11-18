@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ChevronDown } from 'lucide-react';
+import { Archive, ChevronDown, Hourglass } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowRun, FlowRunStatus, SeekPage } from '@activepieces/shared';
+import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 
 type SelectedRow = {
   id: string;
@@ -44,7 +49,7 @@ export const runsTableColumns = ({
   {
     id: 'select',
     header: ({ table }) => (
-      <div className="flex items-center">
+      <div className="flex items-center w-8">
         <Checkbox
           checked={selectedAll || table.getIsAllPageRowsSelected()}
           variant="secondary"
@@ -174,8 +179,16 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Flow')} />
     ),
     cell: ({ row }) => {
+      const { archivedAt, flowVersion } = row.original;
+      const displayName = flowVersion?.displayName ?? '—';
+
       return (
-        <div className="text-left">{row.original.flowVersion?.displayName}</div>
+        <div className="flex items-center gap-2 text-left">
+          {!isNil(archivedAt) && (
+            <Archive className="size-4 text-muted-foreground" />
+          )}
+          <span>{displayName}</span>
+        </div>
       );
     },
   },
@@ -201,12 +214,12 @@ export const runsTableColumns = ({
   {
     accessorKey: 'created',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Start Time')} />
+      <DataTableColumnHeader column={column} title={t('Started At')} />
     ),
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.startTime))}
+          {formatUtils.formatDate(new Date(row.original.created ?? new Date()))}
         </div>
       );
     },
@@ -217,10 +230,49 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Duration')} />
     ),
     cell: ({ row }) => {
+      const duration =
+        row.original.startTime && row.original.finishTime
+          ? new Date(row.original.finishTime).getTime() -
+            new Date(row.original.startTime).getTime()
+          : undefined;
+      const waitDuration =
+        row.original.startTime && row.original.created
+          ? new Date(row.original.startTime).getTime() -
+            new Date(row.original.created).getTime()
+          : undefined;
+
+      return (
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="text-left flex items-center gap-2">
+              {row.original.finishTime && (
+                <>
+                  <Hourglass className="h-4 w-4 text-muted-foreground" />
+                  {formatUtils.formatDuration(duration)}
+                </>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {t(
+              `Time waited before first execution attempt: ${formatUtils.formatDuration(
+                waitDuration,
+              )}`,
+            )}
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
+  },
+  {
+    accessorKey: 'failedStep',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Failed Step')} />
+    ),
+    cell: ({ row }) => {
       return (
         <div className="text-left">
-          {row.original.finishTime &&
-            formatUtils.formatDuration(row.original.duration)}
+          {row.original.failedStep?.displayName ?? '-'}
         </div>
       );
     },

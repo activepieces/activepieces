@@ -83,7 +83,6 @@ export const WorkerSettingsResponse = Type.Object({
     MAX_FILE_SIZE_MB: Type.Number(),
     SANDBOX_MEMORY_LIMIT: Type.String(),
     SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
-    PIECES_SOURCE: Type.String(),
     DEV_PIECES: Type.Array(Type.String()),
     SENTRY_DSN: Type.Optional(Type.String()),
     LOKI_PASSWORD: Type.Optional(Type.String()),
@@ -106,11 +105,14 @@ export const WorkerSettingsResponse = Type.Object({
     REDIS_SENTINEL_ROLE: Type.Optional(Type.String()),
     REDIS_SENTINEL_HOSTS: Type.Optional(Type.String()),
     REDIS_SENTINEL_NAME: Type.Optional(Type.String()),
+    REDIS_FAILED_JOB_RETENTION_DAYS: Type.Number(),
+    REDIS_FAILED_JOB_RETENTION_MAX_COUNT: Type.Number(),
     PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
     MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
     JWT_SECRET: Type.String(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: Type.Optional(Type.String()),
     EDITION: Type.String(),
+    PRE_WARM_CACHE: Type.Boolean(),
 })
 
 export type WorkerSettingsResponse = Static<typeof WorkerSettingsResponse>
