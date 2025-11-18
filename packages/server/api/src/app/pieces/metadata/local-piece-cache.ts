@@ -12,13 +12,16 @@ const repo = repoFactory(PieceMetadataEntity)
 
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
-        if (!cache.length) {
-            cache = await fetchPieces(log)
-        }
         return cache
     },
     async setup(): Promise<void> {
         cache = await fetchPieces(log)
+        
+        cron.schedule('*/15 * * * *', async () => {
+            log.info('[localPieceCache] Refreshing pieces cache via cron job')
+
+            cache = await fetchPieces(log)
+        })
     },
 })
 
