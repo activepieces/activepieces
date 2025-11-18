@@ -111,6 +111,9 @@
       ],
       "@activepieces/piece-contextual-ai": [
         "packages/pieces/community/contextual-ai/src/index.ts"
+      ],
+      "@activepieces/piece-hume-ai": [
+        "packages/pieces/community/hume-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
