@@ -126,10 +126,12 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 status: WorkerMachineStatus.ONLINE,
             }))
         },
-        async onPieceInstalled(request: OnPieceInstalledParams): Promise<void> {
+        async onPiecesInstalled(request: OnPiecesInstalledParams): Promise<void> {
             const workers = await machineService(_log).list()
             const otherWorkers = workers.filter(worker => worker.id !== request.workerId)
-            websocketService.to(...otherWorkers.map(worker => worker.id)).emit(WebsocketServerEvent.PIECE_INSTALLED, request.piece)
+            websocketService.to(...otherWorkers.map(worker => worker.id)).emit(WebsocketServerEvent.PIECES_INSTALLED, {
+                pieces: request.pieces
+            })
         },
     }
 }
@@ -168,7 +170,7 @@ type OnHeartbeatParams = {
     workerProps: Record<string, string>
 }
 
-type OnPieceInstalledParams = {
+type OnPiecesInstalledParams = {
     workerId: string
-    piece: PiecePackage
+    pieces: PiecePackage[]
 }
