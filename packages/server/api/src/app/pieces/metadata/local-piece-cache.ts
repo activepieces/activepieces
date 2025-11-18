@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/shared'
+import { isNil, Result, tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -15,18 +15,26 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         return cache
     },
     async setup(): Promise<void> {
-        cache = await fetchPieces(log)
-        
+        const piecesResult = await fetchPieces()
+        if (piecesResult.error) {
+            log.error({ error: piecesResult.error }, '[localPieceCache] Error fetching local pieces')
+            throw piecesResult.error
+        }
+        cache = piecesResult.data
+
         cron.schedule('*/15 * * * *', async () => {
             log.info('[localPieceCache] Refreshing pieces cache via cron job')
 
-            cache = await fetchPieces(log)
+            const piecesResult = await fetchPieces()
+            if (!isNil(piecesResult.data)) {
+                cache = piecesResult.data
+            }
         })
     },
 })
 
-
-async function fetchPieces(log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> {
+// Removed the log arg since it's not used, and fixed types
+async function fetchPieces(): Promise<Result<PieceMetadataSchema[], Error>> {
     const newestState: State | undefined = await repo()
         .createQueryBuilder()
         .select('MAX(updated)', 'recentUpdate')
@@ -40,11 +48,11 @@ async function fetchPieces(log: FastifyBaseLogger): Promise<PieceMetadataSchema[
 
         const needUpdate = dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
         if (!needUpdate) {
-            return cache
+            return { data: cache, error: null }
         }
     }
 
-    const { data, error } = await tryCatch(async () => {
+    return tryCatch(async () => {
         const piecesFromDatabase = await repo().find()
 
         return piecesFromDatabase.sort((a, b) => {
@@ -54,13 +62,8 @@ async function fetchPieces(log: FastifyBaseLogger): Promise<PieceMetadataSchema[
             return semVer.rcompare(a.version, b.version)
         })
     })
-    if (error) {
-        log.error({ error }, '[localPieceCache] Error fetching local pieces')
-        return []
-    }
-
-    return data
 }
+
 type State = {
     recentUpdate: string | undefined
     count: string
