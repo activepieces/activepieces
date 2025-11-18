@@ -28,7 +28,6 @@ import { Permission } from '@activepieces/shared';
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { PlatformLayout } from '../components/platform-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
-import ProjectSettingsLayout from '../components/project-settings-layout';
 import { BuilderNavigationSidebar } from '../components/sidebar/builder';
 import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
@@ -58,7 +57,6 @@ import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
 import { RunsPage } from '../routes/runs';
 import { FlowRunPage } from '../routes/runs/id';
-import { EnvironmentPage } from '../routes/settings/environment';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
@@ -72,7 +70,6 @@ import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import {
   ProjectRouterWrapper,
-  projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
 
@@ -309,21 +306,6 @@ const routes = [
       </PageTitle>
     ),
   },
-
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.environments,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
-          <PageTitle title="Environments">
-            <ProjectSettingsLayout>
-              <EnvironmentPage />
-            </ProjectSettingsLayout>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
 
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.mcps,
