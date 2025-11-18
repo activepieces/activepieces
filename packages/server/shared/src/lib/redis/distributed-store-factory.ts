@@ -104,6 +104,9 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         const serializedFields: Record<string, string> = {}
 
         for (const [field, fieldValue] of Object.entries(value)) {
+            if (isNil(fieldValue)) {
+                continue
+            }
             serializedFields[field] = JSON.stringify(fieldValue)
         }
 
