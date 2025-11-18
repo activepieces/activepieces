@@ -24,6 +24,7 @@
     "redlock": "5.0.0-beta.2",
     "redis-memory-server": "0.13.0",
     "bullmq": "5.61.0",
-    "bullmq-otel": "1.0.1"
+    "bullmq-otel": "1.0.1",
+    "tree-kill": "1.2.2"
   }
 }

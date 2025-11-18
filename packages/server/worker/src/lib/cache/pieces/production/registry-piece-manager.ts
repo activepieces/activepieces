@@ -116,7 +116,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
 
             const performanceStartTime = performance.now()
 
-            const { error: installError } = await tryCatch(async () => await packageManager(log).install({
+            const { error: installError } = await tryCatch(async () => packageManager(log).install({
                 path: rootWorkspace,
                 filtersPath: includeFilters ? filteredPieces.map(relativePiecePath) : [],
             }))
