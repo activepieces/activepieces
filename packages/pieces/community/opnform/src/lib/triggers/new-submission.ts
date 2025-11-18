@@ -33,23 +33,18 @@ export const opnformNewSubmission = createTrigger({
       throw new Error('Form is required');
     }
       
-    // Skip creation of integration for test webhook
-    if (webhookUrl && webhookUrl.endsWith('/test')) {
-        return;
-    }
+    const flowUrl = `${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}`;
       
-    const flowUrl = `${ new URL(context.server.publicUrl).origin }/projects/${ context.project.id }/flows/${ context.flows.current.id }`;
-      
-    const integrationId = await opnformCommon.createIntegration(
+    const integrationId = await opnformCommon.createOrUpdateIntegration(
       context.auth,
       formId,
       webhookUrl,
       flowUrl
     );
-    if(integrationId){
-        await context.store?.put<WebhookInformation>('_new_submission_trigger', {
-            integrationId: integrationId as number,
-        });
+    if (integrationId) {
+      await context.store?.put<WebhookInformation>('_new_submission_trigger', {
+        integrationId: integrationId as number,
+      });
     } else {
       throw new Error('Failed to create integration');
     }

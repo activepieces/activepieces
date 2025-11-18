@@ -50,6 +50,9 @@
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
+      ],
+      "@activepieces/piece-opnform": [
+        "packages/pieces/community/opnform/src/index.ts"
       ]
     },
     "resolveJsonModule": true

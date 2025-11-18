@@ -163,10 +163,10 @@ export const opnformCommon = {
         token: (auth as any).apiKey,
       },
     });
-    const integration = allIntegrations.body.some((integration: any) =>
-      integration.integration_id === 'activepieces' && integration.data.provider_url === flowUrl
+    const integration = allIntegrations.body.find((integration: any) =>
+      integration.integration_id === 'activepieces' && integration.data?.provider_url === flowUrl
     );
-    return integration ? integration.id : null;
+    return integration || null;
   },
   createIntegration: async (
     auth: any,
@@ -174,12 +174,6 @@ export const opnformCommon = {
     webhookUrl: string,
     flowUrl: string,
   ) => {
-    // Check if the integration already exists
-    const existingIntegrationId = await opnformCommon.checkExistsIntegration(auth, formId, flowUrl);
-    if(existingIntegrationId){
-      return existingIntegrationId;
-    }
-
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${opnformCommon.getBaseUrl(auth)}/open/forms/${formId}/integrations`,
@@ -203,6 +197,27 @@ export const opnformCommon = {
 
     const response = await httpClient.sendRequest(request);
     return (response as any)?.form_integration?.id as number || null;
+  },
+  createOrUpdateIntegration: async (
+    auth: any,
+    formId: string,
+    webhookUrl: string,
+    flowUrl: string,
+  ) => {
+    // Check if the integration already exists
+    const existingIntegration = await opnformCommon.checkExistsIntegration(auth, formId, flowUrl);
+    
+    if (existingIntegration) {
+      // If webhook URL matches, return existing ID
+      if (existingIntegration.data?.webhook_url === webhookUrl) {
+        return existingIntegration.id;
+      }
+      // If webhook URL differs (test -> production), delete and recreate
+      await opnformCommon.deleteIntegration(auth, formId, existingIntegration.id);
+    }
+
+    // Create new integration (or recreate after deletion)
+    return await opnformCommon.createIntegration(auth, formId, webhookUrl, flowUrl);
   },
   deleteIntegration: async (
     auth: any,
