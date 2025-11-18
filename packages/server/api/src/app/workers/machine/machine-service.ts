@@ -4,7 +4,7 @@ import {
     isNil,
     MachineInformation,
     PiecePackage,
-    WebsocketServerEvent,
+    WebsocketWorkerEvent,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
     WorkerSettingsResponse,
@@ -126,10 +126,8 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 status: WorkerMachineStatus.ONLINE,
             }))
         },
-        async onPiecesInstalled(request: OnPiecesInstalledParams): Promise<void> {
-            const workers = await machineService(_log).list()
-            const otherWorkers = workers.filter(worker => worker.id !== request.workerId)
-            websocketService.to(...otherWorkers.map(worker => worker.id)).emit(WebsocketServerEvent.PIECES_INSTALLED, {
+        async onPiecesInstalled(socket: Socket, request: OnPiecesInstalledParams): Promise<void> {
+            websocketService.broadcast(socket, WebsocketWorkerEvent.PIECES_INSTALLED, {
                 pieces: request.pieces
             })
         },

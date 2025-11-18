@@ -82,6 +82,19 @@ export const appSocket = (log: FastifyBaseLogger) => ({
             })(), log)
         }, 15000)
     },
+
+    emit: async <T = unknown>(event: string, data: unknown): Promise<void> => {
+        if (!socket.connected) {
+            log.error({
+                message: 'Failed to emit event',
+                event,
+                data,
+                error: 'socket not connected',
+            })
+            return
+        }
+        socket.emit(event, data)
+    },
     
     emitWithAck: async <T = unknown>(event: string, data: unknown): Promise<T> => {
         const result = await tryCatch(() => {
@@ -104,6 +117,8 @@ export const appSocket = (log: FastifyBaseLogger) => ({
 
         return result.data
     },
+
+    
 
     addListener: <T>(event: WebsocketWorkerEvent, listener: (data: T) => void): void => {
         socket.on(event, listener)

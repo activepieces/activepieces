@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent, WebsocketWorkerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -18,7 +18,7 @@ const listener = {
 
 
 export const websocketService = {
-    to: (...workerIds: string[]) => app!.io.to(workerIds),
+    to: (workerId: string) => app!.io.to(workerId),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)
         const type = principal.type
@@ -42,7 +42,7 @@ export const websocketService = {
                     message: 'Worker connected',
                     workerId,
                 })
-                await socket.join(workerId)
+                await socket.join(['workers', workerId])
                 break
             }
             default: {
@@ -85,4 +85,5 @@ export const websocketService = {
             }
         }
     },
+    broadcast: <T>(socket: Socket, event: WebsocketWorkerEvent, data: T) => socket.to('workers').emit(event, data),
 }

@@ -34,7 +34,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.PIECES_INSTALLED, (socket) => {
         return async ({ pieces }: { pieces: PiecePackage[] }) => {
-            await machineService(app.log).onPiecesInstalled({
+            await machineService(app.log).onPiecesInstalled(socket, {
                 workerId: socket.handshake.auth.workerId,
                 pieces,
             })

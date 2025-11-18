@@ -55,7 +55,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             await installPieces(log, packagePath, pieces, includeFilters)
         }
         if (broadcast) {
-            await appSocket(log).emitWithAck(WebsocketServerEvent.PIECES_INSTALLED, {
+            await appSocket(log).emit(WebsocketServerEvent.PIECES_INSTALLED, {
                 pieces,
             })
         }
