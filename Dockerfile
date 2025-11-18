@@ -31,7 +31,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && bun i isolated-vm@5.0.1
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src && bun i isolated-vm@5.0.1
 
 ### STAGE 1: Build ###
 FROM base AS build
@@ -40,7 +41,8 @@ FROM base AS build
 WORKDIR /usr/src/app
 
 COPY .npmrc package.json bun.lock ./
-RUN bun install
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 COPY . .
 
@@ -51,7 +53,8 @@ RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
 RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
 
 # Install backend production dependencies
-RUN cd dist/packages/server/api && bun install --production --force
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd dist/packages/server/api && bun install --production --frozen-lockfile
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -78,7 +81,8 @@ COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/
 COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
 COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
 
-RUN cd /usr/src/app/dist/packages/server/api/ && bun install --production --force
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src/app/dist/packages/server/api/ && bun install --production --frozen-lockfile
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
