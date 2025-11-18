@@ -105,6 +105,9 @@
       ],
       "@activepieces/piece-manus": [
         "packages/pieces/community/manus/src/index.ts"
+      ],
+      "@activepieces/piece-recall-ai": [
+        "packages/pieces/community/recall-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
