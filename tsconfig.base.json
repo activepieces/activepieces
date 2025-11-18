@@ -114,6 +114,9 @@
       ],
       "@activepieces/piece-contextual-ai": [
         "packages/pieces/community/contextual-ai/src/index.ts"
+      ],
+      "@activepieces/piece-rapidtext-ai": [
+        "packages/pieces/community/rapidtext-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
