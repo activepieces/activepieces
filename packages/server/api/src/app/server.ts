@@ -8,7 +8,7 @@ import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import qs from 'qs'
 import { setupApp } from './app'
-import { healthModule, healthStatus } from './health/health.module'
+import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { system } from './helper/system/system'
 import { setupWorker } from './worker'
@@ -91,10 +91,6 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
     await app.register(healthModule)
-    if (system.isApp()) {
-        healthStatus.isReady = true
-    }
-
     return app
 }
 
