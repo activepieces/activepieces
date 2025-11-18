@@ -6,7 +6,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-
+        /*
         await queryRunner.query(`
             CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_flow_id_status_created_archived_at" ON "flow_run" (
                 "projectId",
@@ -16,7 +16,7 @@ export class RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 implements M
                 "created" DESC,
                 "archivedAt"
             )
-        `)
+        `)*/
         await queryRunner.query(`
             CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_run_project_id_environment_status_created_archived_at" ON "flow_run" (
                 "projectId",
