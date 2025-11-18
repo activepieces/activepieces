@@ -1,12 +1,11 @@
 import { BotIcon, CircleX, RotateCcw } from 'lucide-react';
-import React from 'react';
 
 import {
   ChatBubble,
   ChatBubbleAction,
   ChatBubbleAvatar,
   ChatBubbleMessage,
-} from '@/components/ui/chat/chat-bubble';
+} from '@/features/chat/chat-bubble';
 import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
 
 const formatError = (

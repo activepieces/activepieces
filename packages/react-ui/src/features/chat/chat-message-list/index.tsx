@@ -6,8 +6,8 @@ import {
   ChatBubble,
   ChatBubbleAvatar,
   ChatBubbleMessage,
-} from '@/components/ui/chat/chat-bubble';
-import { ChatMessage } from '@/components/ui/chat/chat-input';
+} from '@/features/chat/chat-bubble';
+import { ChatMessage } from '@/features/chat/chat-input';
 import { cn } from '@/lib/utils';
 import {
   ApErrorParams,

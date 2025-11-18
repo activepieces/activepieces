@@ -205,7 +205,7 @@ export const UpsertTemplateDialog = ({
                     required
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-sm"
+                    className="rounded-sm w-full"
                   />
                   <FormMessage />
                 </FormItem>
