@@ -19,12 +19,6 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
     },
     async setup(): Promise<void> {
         cache = await fetchPieces(log)
-        
-        cron.schedule('*/15 * * * *', async () => {
-            log.info('[localPieceCache] Refreshing pieces cache via cron job')
-
-            cache = await fetchPieces(log)
-        })
     },
 })
 
