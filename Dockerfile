@@ -40,11 +40,7 @@ FROM base AS build
 WORKDIR /usr/src/app
 
 COPY .npmrc package.json bun.lock ./
-
-# Speed up bun install with cache mounts
-RUN --mount=type=cache,id=bun-cache,target=/root/.bun \
-    --mount=type=cache,id=node_modules,target=/usr/src/app/node_modules \
-    bun install --frozen-lockfile
+RUN bun install
 
 COPY . .
 
@@ -54,9 +50,8 @@ ENV NX_NO_CLOUD=true
 RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
 RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
 
-# Install backend production dependencies, speed up with cache mount
-RUN cd dist/packages/server/api && \
-    bun install --production --force --frozen-lockfile --cache-dir /root/.bun
+# Install backend production dependencies
+RUN cd dist/packages/server/api && bun install --production --force
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -83,10 +78,7 @@ COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/
 COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
 COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
 
-# Also speed up bun install here using cache if possible
-RUN --mount=type=cache,id=bun-cache,target=/root/.bun \
-    cd /usr/src/app/dist/packages/server/api/ && \
-    bun install --production --force --frozen-lockfile --cache-dir /root/.bun
+RUN cd /usr/src/app/dist/packages/server/api/ && bun install --production --force
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
