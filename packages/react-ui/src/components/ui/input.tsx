@@ -41,13 +41,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           onClick={handleDivClick}
           className={cn(inputClass, 'cursor-pointer items-center ', className)}
         >
-          <div
-            className={cn('flex truncate ', {
+          <input
+            className={cn('grow cursor-pointer outline-none', {
               'text-muted-foreground': !fileName,
             })}
-          >
-            {fileName || t('Select a file')}
-          </div>
+            value={fileName || t('Select a file')}
+            readOnly
+          />
           <div className="basis-1">
             <SelectUtilButton
               tooltipText={t('Select a file')}

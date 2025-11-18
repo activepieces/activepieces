@@ -91,8 +91,38 @@
       "@activepieces/piece-tableau": [
         "packages/pieces/community/tableau/src/index.ts"
       ],
-      "@activepieces/piece-fragment":[
+      "@activepieces/piece-fragment": [
         "packages/pieces/community/fragment/src/index.ts"
+      ],
+      "@activepieces/piece-fountain": [
+        "packages/pieces/community/fountain/src/index.ts"
+      ],
+      "@activepieces/piece-omni-co": [
+        "packages/pieces/community/omni-co/src/index.ts"
+      ],
+      "@activepieces/piece-instabase": [
+        "packages/pieces/community/instabase/src/index.ts"
+      ],
+      "@activepieces/piece-gladia": [
+        "packages/pieces/community/gladia/src/index.ts"
+      ],
+      "@activepieces/piece-manus": [
+        "packages/pieces/community/manus/src/index.ts"
+      ],
+      "@activepieces/piece-recall-ai": [
+        "packages/pieces/community/recall-ai/src/index.ts"
+      ],
+      "@activepieces/piece-contextual-ai": [
+        "packages/pieces/community/contextual-ai/src/index.ts"
+      ],
+      "@activepieces/piece-chatsistant": [
+        "packages/pieces/community/chatsistant/src/index.ts"
+      ],
+      "@activepieces/piece-rapidtext-ai": [
+        "packages/pieces/community/rapidtext-ai/src/index.ts"
+      ],
+      "@activepieces/piece-opnform": [
+        "packages/pieces/community/opnform/src/index.ts"
       ]
     },
     "resolveJsonModule": true

@@ -23,7 +23,6 @@ import {
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
-import cron from 'node-cron'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
@@ -39,15 +38,10 @@ import { pieceListUtils } from './utils'
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
-    const piecesCache = localPieceCache(log)
 
     return {
         async setup(): Promise<void> {
-            cron.schedule('*/15 * * * *', async () => {
-                log.info('Refreshing pieces cache via cron job')
-
-                await piecesCache.updateCache(await piecesCache.fetchPieces())
-            })
+            await localPieceCache(log).setup()
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
@@ -187,7 +181,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            return await pieceRepos().save({
+            return pieceRepos().save({
                 id: apId(),
                 packageType,
                 pieceType,
@@ -222,22 +216,32 @@ export const getPiecePackageWithoutArchive = async (
         platformId,
     })
     switch (pieceMetadata.packageType) {
-        case PackageType.ARCHIVE: {
-            assertNotNullOrUndefined(pieceMetadata.archiveId, 'archiveId')
+        case PackageType.ARCHIVE:
+            assertNotNullOrUndefined(pieceMetadata.platformId, 'platformId is required')
             return {
-                packageType: PackageType.ARCHIVE,
-                pieceName: pkg.pieceName,
+                pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
-                platformId: platformId!,
                 pieceType: pieceMetadata.pieceType,
-                archiveId: pieceMetadata.archiveId,
+                packageType: pieceMetadata.packageType,
+                archiveId: pieceMetadata.archiveId!,
+                platformId: pieceMetadata.platformId,
             }
-        }
         case PackageType.REGISTRY: {
-            return {
-                packageType: PackageType.REGISTRY,
-                pieceName: pkg.pieceName,
+            const piecePlatformId = pieceMetadata.platformId
+            if (pieceMetadata.pieceType === PieceType.CUSTOM) {
+                assertNotNullOrUndefined(piecePlatformId, 'platformId is required')
+                return {  
+                    pieceName: pieceMetadata.name,
+                    pieceVersion: pieceMetadata.version,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    platformId: piecePlatformId,
+                }
+            }
+            return {  
+                pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
+                packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
             }
         }
