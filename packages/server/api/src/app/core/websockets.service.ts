@@ -18,7 +18,7 @@ const listener = {
 
 
 export const websocketService = {
-    to: (workerId: string) => app!.io.to(workerId),
+    to: (...workerIds: string[]) => app!.io.to(workerIds),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)
         const type = principal.type

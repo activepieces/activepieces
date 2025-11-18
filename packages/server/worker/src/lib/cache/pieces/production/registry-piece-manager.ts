@@ -11,6 +11,8 @@ import {
     PieceType,
     PrivatePiecePackage,
     tryCatch,
+    WebsocketServerEvent,
+    WebsocketWorkerEvent,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
@@ -19,6 +21,7 @@ import { workerMachine } from '../../../utils/machine'
 import { workerRedisConnections } from '../../../utils/worker-redis'
 import { packageManager } from '../../package-manager'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../../worker-cache'
+import { appSocket } from '../../../app-socket'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -41,6 +44,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({
         pieces,
         includeFilters,
+        broadcast
     }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         for (const [packagePath, pieces] of Object.entries(groupedPieces)) {
@@ -49,6 +53,11 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
                 `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${pieces.length}`,
             )
             await installPieces(log, packagePath, pieces, includeFilters)
+        }
+        if (broadcast) {
+            await appSocket(log).emitWithAck(WebsocketServerEvent.PIECES_INSTALLED, {
+                pieces,
+            })
         }
     },
     warmup: async (): Promise<void> => {
@@ -65,6 +74,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         await registryPieceManager(log).install({
             pieces: usedPieces,
             includeFilters: false,
+            broadcast: true
         })
         log.info({
             piecesCount: usedPieces.length,
@@ -249,4 +259,5 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
+    broadcast: boolean
 }

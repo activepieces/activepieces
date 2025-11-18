@@ -3,6 +3,8 @@ import {
     ExecutionMode,
     isNil,
     MachineInformation,
+    PiecePackage,
+    WebsocketServerEvent,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
     WorkerSettingsResponse,
@@ -18,6 +20,7 @@ import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedic
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { WorkerMachineEntity } from './machine-entity'
+import { websocketService } from '../../core/websockets.service'
 
 const workerRepo = repoFactory(WorkerMachineEntity)
 
@@ -123,6 +126,11 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 status: WorkerMachineStatus.ONLINE,
             }))
         },
+        async onPieceInstalled(request: OnPieceInstalledParams): Promise<void> {
+            const workers = await machineService(_log).list()
+            const otherWorkers = workers.filter(worker => worker.id !== request.workerId)
+            websocketService.to(...otherWorkers.map(worker => worker.id)).emit(WebsocketServerEvent.PIECE_INSTALLED, request.piece)
+        },
     }
 }
 
@@ -158,4 +166,9 @@ type OnHeartbeatParams = {
     totalSandboxes: number
     freeSandboxes: number
     workerProps: Record<string, string>
+}
+
+type OnPieceInstalledParams = {
+    workerId: string
+    piece: PiecePackage
 }
