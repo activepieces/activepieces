@@ -105,6 +105,9 @@
       ],
       "@activepieces/piece-gladia": [
         "packages/pieces/community/gladia/src/index.ts"
+      ],
+      "@activepieces/piece-manus": [
+        "packages/pieces/community/manus/src/index.ts"
       ]
     },
     "resolveJsonModule": true
