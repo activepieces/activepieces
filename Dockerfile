@@ -40,7 +40,8 @@ FROM base AS build
 WORKDIR /usr/src/app
 
 COPY .npmrc package.json bun.lock ./
-RUN bun install
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install
 
 COPY . .
 
@@ -51,7 +52,8 @@ RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
 RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
 
 # Install backend production dependencies
-RUN cd dist/packages/server/api && bun install --production --force
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd dist/packages/server/api && bun install --production --force
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -59,28 +61,27 @@ FROM base AS run
 # Set up backend
 WORKDIR /usr/src/app
 
-COPY packages/server/api/src/assets/default.cf /usr/local/etc/isolate
-
 # Install Nginx and gettext for envsubst
-RUN apt-get update && apt-get install -y nginx gettext
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y nginx gettext
 
 # Copy Nginx configuration template
 COPY nginx.react.conf /etc/nginx/nginx.conf
 
+# Create necessary directories
+RUN mkdir -p /usr/src/app/dist/packages/server/ \
+    /usr/src/app/dist/packages/engine/ \
+    /usr/src/app/dist/packages/shared/
+
+# Copy built files from build stage (includes node_modules from build stage)
 COPY --from=build /usr/src/app/LICENSE .
-
-RUN mkdir -p /usr/src/app/dist/packages/server/
-RUN mkdir -p /usr/src/app/dist/packages/engine/
-RUN mkdir -p /usr/src/app/dist/packages/shared/
-
-# Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/engine/
 COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
 COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
+COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
 
-RUN cd /usr/src/app/dist/packages/server/api/ && bun install --production --force
-
-# Copy Output files to appropriate directory from build stage
+# Copy packages directory (needed for runtime)
 COPY --from=build /usr/src/app/packages packages
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
