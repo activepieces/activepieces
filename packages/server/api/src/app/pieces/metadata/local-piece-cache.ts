@@ -53,7 +53,8 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         })
         if (error) {
             log.error({ error }, 'Error fetching local pieces');
-            return [];
+
+            throw error
         }
 
         return data
