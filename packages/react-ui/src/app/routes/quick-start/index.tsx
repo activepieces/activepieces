@@ -110,25 +110,28 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
 
 const QuickStartPage = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(
-    null,
+    null
   );
+  const [templates, setTemplates] = useState<FlowTemplate[]>([]);
 
-  const { data: templates, isLoading } = useQuery<FlowTemplate[], Error>({
+  // Fetch cloud templates first
+  const { isLoading: isCloudLoading } = useQuery<FlowTemplate[], Error>({
+    queryKey: ['cloud-templates'],
+    queryFn: async () => {
+      const result = await templatesApi.listCloud();
+      setTemplates((prev) => [...result.data, ...prev].slice(0, 15));
+      return result.data;
+    },
+    staleTime: 0,
+  });
+
+  // Fetch community templates and append them when ready
+  const { isLoading: isCommunityLoading } = useQuery<FlowTemplate[], Error>({
     queryKey: ['community-templates'],
     queryFn: async () => {
-      // const communityTemplates = await templatesApi.listCommunity();
-      // return communityTemplates.data.slice(0, 15);
-      const results = await Promise.allSettled([
-        templatesApi.listCommunity(),
-        templatesApi.listCloud(),
-      ]);
-
-      const communityTemplates =
-        results[0].status === 'fulfilled' ? results[0].value.data : [];
-      const cloudTemplates =
-        results[1].status === 'fulfilled' ? results[1].value.data : [];
-
-      return [...cloudTemplates, ...communityTemplates].slice(0, 12);
+      const result = await templatesApi.listCommunity();
+      setTemplates((prev) => [...prev, ...result.data].slice(0, 15));
+      return result.data;
     },
     staleTime: 0,
   });
@@ -167,7 +170,7 @@ const QuickStartPage = () => {
           </SelectFlowTemplateDialog>
         </div>
 
-        {isLoading ? (
+        {(isCloudLoading || isCommunityLoading) && templates.length === 0 ? (
           <div className="flex justify-center items-center min-h-[200px]">
             <LoadingSpinner />
           </div>
