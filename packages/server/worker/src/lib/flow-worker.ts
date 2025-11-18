@@ -16,10 +16,10 @@ export const runsMetadataQueue = runsMetadataQueueFactory({
 })
 
 export const flowWorker = (log: FastifyBaseLogger): {
-    init: (params: { workerToken: string }) => Promise<void>
+    init: (params: { workerToken: string, postConnect: () => Promise<void> }) => Promise<void>
     close: () => Promise<void>
 } => ({
-    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+    async init({ workerToken: token, postConnect }): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
         await engineRunnerSocket(log).init()
 
@@ -32,6 +32,7 @@ export const flowWorker = (log: FastifyBaseLogger): {
                 await registryPieceManager(log).warmup()
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
+                await postConnect()
             },
         })
     },

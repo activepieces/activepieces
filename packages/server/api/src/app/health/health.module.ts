@@ -1,8 +1,12 @@
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ErrorCode } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
 export const healthModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(healthController, { prefix: '/v1/health' })
+}
+
+export const healthStatus = {
+    isReady: false
 }
 
 const healthController: FastifyPluginAsyncTypebox = async (app) => {
@@ -14,6 +18,14 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         async () => {
+            if (!healthStatus.isReady) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.MACHINE_NOT_AVAILABLE,
+                    params: {
+                        resourceType: 'health'
+                    }
+                })
+            }
             return { status: 'OK' }
         },
     )
