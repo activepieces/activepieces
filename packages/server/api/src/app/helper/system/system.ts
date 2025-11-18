@@ -63,7 +63,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
-    [WorkerSystemProp.PRE_WARM_CACHE]: 'true',
 }
 
 let globalLogger: FastifyBaseLogger
