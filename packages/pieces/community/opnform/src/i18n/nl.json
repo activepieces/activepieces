@@ -1,0 +1,18 @@
+{
+  "Opnform": "Opnform",
+  "Create beautiful online forms and surveys with unlimited fields and submissions": "Maak prachtige online formulieren en enquêtes met onbeperkte velden en inzendingen",
+  "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "Gebruik uw Opnform API-sleutel. [Klik hier voor het maken van API-sleutel](https://opnform.com/home?user-settings=access-tokens)",
+  "Base URL (Default: https://api.opnform.com)": "Basis-URL (standaard: https://api.opnform.com)",
+  "API Key": "API Sleutel",
+  "Invalid API Key": "Ongeldige API-sleutel",
+  "New Submission": "Nieuwe inzending",
+  "Triggers when Opnform receives a new submission": "Triggert wanneer Opnform een nieuwe uitwerking ontvangt",
+  "Workspace": "werkruimte",
+  "Workspace Name": "Naam werkruimte",
+  "Connect Opnform account": "Verbinden met Opnform account",
+  "Select workspace": "Selecteer workspace",
+  "Form": "Vorm",
+  "Form Name": "Formulier naam",
+  "Select form": "Selecteer formulier"
+}
+
