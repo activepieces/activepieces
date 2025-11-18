@@ -133,63 +133,61 @@ export function ProjectDashboardSidebar() {
             {state === 'expanded' && (
               <div className="flex items-center justify-between">
                 <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-                {projects && projects.length > 3 && (
-                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-accent"
-                      >
-                        <Search className="text-muted-foreground" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[280px] p-0"
-                      align="start"
-                      side="right"
-                      sideOffset={8}
+                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-accent"
                     >
-                      <Command>
-                        <CommandInput
-                          placeholder={t('Search projects...')}
-                          value={searchQuery}
-                          onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                          <CommandEmpty>{t('No projects found.')}</CommandEmpty>
-                          <CommandGroup>
-                            {filteredProjects.map((project) => (
-                              <CommandItem
-                                key={project.id}
-                                value={project.id}
-                                onSelect={handleProjectSelect}
-                                className="flex items-center gap-2 cursor-pointer"
+                      <Search className="text-muted-foreground" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[280px] p-0"
+                    align="start"
+                    side="right"
+                    sideOffset={8}
+                  >
+                    <Command>
+                      <CommandInput
+                        placeholder={t('Search projects...')}
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                      />
+                      <CommandList>
+                        <CommandEmpty>{t('No projects found.')}</CommandEmpty>
+                        <CommandGroup>
+                          {filteredProjects.map((project) => (
+                            <CommandItem
+                              key={project.id}
+                              value={project.id}
+                              onSelect={handleProjectSelect}
+                              className="flex items-center gap-2 cursor-pointer"
+                            >
+                              <Avatar
+                                className="size-6 flex items-center justify-center rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    PROJECT_COLOR_PALETTE[project.icon.color]
+                                      .color,
+                                  color:
+                                    PROJECT_COLOR_PALETTE[project.icon.color]
+                                      .textColor,
+                                }}
                               >
-                                <Avatar
-                                  className="size-6 flex items-center justify-center rounded-sm"
-                                  style={{
-                                    backgroundColor:
-                                      PROJECT_COLOR_PALETTE[project.icon.color]
-                                        .color,
-                                    color:
-                                      PROJECT_COLOR_PALETTE[project.icon.color]
-                                        .textColor,
-                                  }}
-                                >
-                                  {project.displayName.charAt(0)}
-                                </Avatar>
-                                <span className="flex-1 truncate">
-                                  {project.displayName}
-                                </span>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                )}
+                                {project.displayName.charAt(0)}
+                              </Avatar>
+                              <span className="flex-1 truncate">
+                                {project.displayName}
+                              </span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             )}
             <SidebarGroupContent>
