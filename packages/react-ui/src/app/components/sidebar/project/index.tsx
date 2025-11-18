@@ -1,5 +1,5 @@
 import { Avatar } from '@/components/ui/avatar';
-import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ProjectWithLimits } from '@activepieces/shared';
+import { PROJECT_COLOR_PALETTE, ProjectWithLimits } from '@activepieces/shared';
 
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
@@ -26,27 +26,37 @@ const ProjectSideBarItem = ({
   handleProjectSelect,
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+
+  const projectAvatar = (
+    <Avatar
+      className="size-6 flex items-center justify-center rounded-sm"
+      style={{
+        backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
+        color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
+      }}
+    >
+      {project.displayName.charAt(0).toUpperCase()}
+    </Avatar>
+  );
 
   return (
     <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
-      {isCollapsed ? (
+      {state === 'collapsed' ? (
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleProjectSelect(project.id)}
                 className={cn(
-                  buttonVariants({ variant: 'ghost', size: 'icon' }),
                   isCurrentProject &&
                     'bg-sidebar-active hover:!bg-sidebar-active',
-                  'relative cursor-pointer',
+                  'relative flex items-center justify-center',
                 )}
               >
-                <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
-                  {project.displayName.charAt(0)}
-                </Avatar>
-              </button>
+                {projectAvatar}
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="right" align="center">
               {project.displayName}
@@ -65,9 +75,7 @@ const ProjectSideBarItem = ({
             onClick={() => handleProjectSelect(project.id)}
             className="flex items-center gap-2"
           >
-            <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground">
-              {project.displayName.charAt(0)}
-            </Avatar>
+            {projectAvatar}
             <span className="truncate text-ellipsis max-w-[250px]">
               {project.displayName}
             </span>

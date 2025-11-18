@@ -2,7 +2,6 @@ import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, 
 import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
@@ -53,7 +52,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
-                            const { duration, waitDuration, startTime } = await calculateComputedFields(runMetadata, existingFlowRun)
                             let savedFlowRun: FlowRun
                             if (!isNil(existingFlowRun)) {
                                 await flowRunRepo().update(job.data.runId, {
@@ -61,20 +59,16 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('flowId', runMetadata.flowId),
                                     ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
                                     ...spreadIfDefined('environment', runMetadata.environment),
-                                    ...spreadIfDefined('duration', duration),
-                                    ...spreadIfDefined('waitDuration', waitDuration),
-                                    ...spreadIfDefined('startTime', startTime),
+                                    ...(isNil(existingFlowRun.startTime) ? spreadIfDefined('startTime', runMetadata.startTime) : {}),
                                     ...spreadIfDefined('finishTime', runMetadata.finishTime),
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
-                                    ...spreadIfDefined('duration', runMetadata.duration),
                                     ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
                                     ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
-                                    ...spreadIfDefined('created', runMetadata.created),
                                     ...spreadIfDefined('updated', runMetadata.updated),
                                 })
                                 savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
@@ -88,12 +82,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
                                     return
                                 }
-                                savedFlowRun = await flowRunRepo().save({
-                                    ...runMetadata,
-                                    ...spreadIfDefined('duration', duration),
-                                    ...spreadIfDefined('waitDuration', waitDuration),
-                                    ...spreadIfDefined('startTime', startTime),
-                                })
+                                savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
@@ -160,17 +149,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     },
 
 })
-
-
-
-async function calculateComputedFields(runMetadata: RunsMetadataUpsertData, savedFlowRun: FlowRun | null): Promise<{ duration: number | undefined, waitDuration: number | undefined, startTime: string | undefined }> {
-    const startTime = savedFlowRun?.startTime ?? runMetadata.startTime
-    const finishTime = runMetadata.finishTime ?? savedFlowRun?.finishTime
-    const created = runMetadata.created ?? savedFlowRun?.created
-    const waitDuration = startTime && created ? dayjs(startTime).diff(dayjs(created), 'milliseconds') : undefined
-    const duration = startTime && finishTime ? dayjs(finishTime).diff(dayjs(startTime), 'milliseconds') : undefined
-    return { duration, waitDuration, startTime }
-}
 
 async function markParentRunAsFailed({
     parentRunId,

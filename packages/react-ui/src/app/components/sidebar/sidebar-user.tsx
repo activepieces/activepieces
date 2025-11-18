@@ -30,7 +30,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PlatformRole } from '@activepieces/shared';
@@ -76,7 +76,7 @@ export function SidebarUser() {
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
                 <TooltipContent side="right" align="center">
-                  {user.firstName}
+                  {user.firstName + ' ' + user.lastName}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -95,9 +95,8 @@ export function SidebarUser() {
                   />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
-                      {user.firstName}
+                      {user.firstName + ' ' + user.lastName}
                     </span>
-                    <span className="truncate text-xs">{user.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </div>
@@ -121,7 +120,7 @@ export function SidebarUser() {
 
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    {user.firstName}
+                    {user.firstName + ' ' + user.lastName}
                   </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
@@ -154,7 +153,7 @@ export function SidebarUser() {
 }
 
 function SidebarPlatformAdminButton() {
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const messages = notificationHooks.useNotifications();
