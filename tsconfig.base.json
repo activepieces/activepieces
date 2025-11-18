@@ -115,6 +115,12 @@
       "@activepieces/piece-contextual-ai": [
         "packages/pieces/community/contextual-ai/src/index.ts"
       ],
+      "@activepieces/piece-chatsistant": [
+        "packages/pieces/community/chatsistant/src/index.ts"
+      ],
+      "@activepieces/piece-rapidtext-ai": [
+        "packages/pieces/community/rapidtext-ai/src/index.ts"
+      ],
       "@activepieces/piece-opnform": [
         "packages/pieces/community/opnform/src/index.ts"
       ]
