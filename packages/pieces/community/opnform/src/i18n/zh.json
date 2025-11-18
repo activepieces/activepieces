@@ -1,0 +1,18 @@
+{
+  "Opnform": "Opnform",
+  "Create beautiful online forms and surveys with unlimited fields and submissions": "创建美丽的在线表格和调查，无限范围的字段和提交",
+  "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "请使用您的Opnform API 密钥。[点击这里创建 API 密钥](https://opnform.com/home?user-settings=access-tokens)",
+  "Base URL (Default: https://api.opnform.com)": "基础 URL (默认: https://api.opnform.com)",
+  "API Key": "API 密钥",
+  "Invalid API Key": "无效的 API 密钥",
+  "New Submission": "新建提交",
+  "Triggers when Opnform receives a new submission": "当Opnform 收到新的提交时触发",
+  "Workspace": "工作区",
+  "Workspace Name": "工作区名称",
+  "Connect Opnform account": "连接Opnform 账户",
+  "Select workspace": "选择工作区",
+  "Form": "形式",
+  "Form Name": "表单名称",
+  "Select form": "选择表单"
+}
+
