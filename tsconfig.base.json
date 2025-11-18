@@ -120,6 +120,12 @@
       ],
       "@activepieces/piece-rapidtext-ai": [
         "packages/pieces/community/rapidtext-ai/src/index.ts"
+      ],
+      "@activepieces/piece-opnform": [
+        "packages/pieces/community/opnform/src/index.ts"
+      ],
+      "@activepieces/piece-opportify": [
+        "packages/pieces/community/opportify/src/index.ts"
       ]
     },
     "resolveJsonModule": true
