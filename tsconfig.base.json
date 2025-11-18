@@ -108,6 +108,9 @@
       ],
       "@activepieces/piece-recall-ai": [
         "packages/pieces/community/recall-ai/src/index.ts"
+      ],
+      "@activepieces/piece-contextual-ai": [
+        "packages/pieces/community/contextual-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
