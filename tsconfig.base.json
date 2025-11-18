@@ -102,6 +102,9 @@
       ],
       "@activepieces/piece-instabase": [
         "packages/pieces/community/instabase/src/index.ts"
+      ],
+      "@activepieces/piece-gladia": [
+        "packages/pieces/community/gladia/src/index.ts"
       ]
     },
     "resolveJsonModule": true
