@@ -17,7 +17,6 @@ import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
-import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { Error } from '@/features/billing/components/error';
@@ -311,18 +310,6 @@ const routes = [
     ),
   },
 
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.pieces,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Pieces">
-          <ProjectSettingsLayout>
-            <ProjectPiecesPage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
   ...ProjectRouterWrapper({
     path: projectSettingsRoutes.environments,
     element: (
