@@ -21,7 +21,7 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-    > {
+> {
     const previousExecutionFile = (jobData.executionType === ExecutionType.RESUME || attempsStarted > 1) ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
 
@@ -149,7 +149,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 await runsMetadataQueue.add({
                     id: jobData.runId,
                     projectId: jobData.projectId,
-                    startTime: dayjs().toISOString(),
+                    startTime: jobData.executionType === ExecutionType.BEGIN ? dayjs().toISOString() : undefined,
                     status: FlowRunStatus.RUNNING,
                 })
 
