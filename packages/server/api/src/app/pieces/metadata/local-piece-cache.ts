@@ -37,6 +37,17 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
                 if (a.name !== b.name) {
                     return a.name.localeCompare(b.name)
                 }
+                const aValid = semVer.valid(a.version)
+                const bValid = semVer.valid(b.version)
+                if (!aValid && !bValid) {
+                    return b.version.localeCompare(a.version)
+                }
+                if (!aValid) {
+                    return 1
+                }
+                if (!bValid) {
+                    return -1
+                }
                 return semVer.rcompare(a.version, b.version)
             })
         })
