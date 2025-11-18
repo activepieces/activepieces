@@ -42,7 +42,7 @@ export const ProjectDashboardLayoutHeader = () => {
   const { embedState } = useEmbedding();
   const location = useLocation();
   const navigate = useNavigate();
-
+  const isEmbedded = embedState.isEmbedded;
   const flowsLink: ProjectDashboardLayoutHeaderTab = {
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
     label: t('Flows'),
@@ -54,7 +54,7 @@ export const ProjectDashboardLayoutHeader = () => {
   const tablesLink: ProjectDashboardLayoutHeaderTab = {
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
     label: t('Tables'),
-    show: platform.plan.tablesEnabled || !embedState.isEmbedded,
+    show: platform.plan.tablesEnabled,
     icon: Table2,
     hasPermission: checkAccess(Permission.READ_TABLE),
   };
@@ -78,14 +78,14 @@ export const ProjectDashboardLayoutHeader = () => {
     {
       to: authenticationSession.appendProjectRoutePrefix('/mcps'),
       label: t('MCP'),
-      show: platform.plan.mcpsEnabled || !embedState.isEmbedded,
+      show: platform.plan.mcpsEnabled,
       hasPermission: checkAccess(Permission.READ_MCP),
       icon: McpSvg,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/todos'),
       label: t('Todos'),
-      show: platform.plan.todosEnabled || !embedState.isEmbedded,
+      show: platform.plan.todosEnabled,
       icon: ListTodo,
       hasPermission: checkAccess(Permission.READ_TODOS),
     },
@@ -94,14 +94,16 @@ export const ProjectDashboardLayoutHeader = () => {
       icon: Package,
       label: t('Releases'),
       hasPermission:
-        project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
+        project.releasesEnabled &&
+        checkAccess(Permission.READ_PROJECT_RELEASE) &&
+        !isEmbedded,
       show: project.releasesEnabled,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
       label: t('Pieces'),
       icon: Puzzle,
-      show: true,
+      show: !isEmbedded,
       hasPermission: true,
     },
     {
@@ -110,7 +112,7 @@ export const ProjectDashboardLayoutHeader = () => {
       ),
       label: t('Environments'),
       icon: GitBranch,
-      show: true,
+      show: !isEmbedded,
       hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ];
@@ -128,139 +130,147 @@ export const ProjectDashboardLayoutHeader = () => {
 
   return (
     <div className="flex flex-col px-4 gap-1">
-      <ProjectDashboardPageHeader title={project?.displayName} />
+      {!isEmbedded && (
+        <ProjectDashboardPageHeader title={project?.displayName} />
+      )}
       <Tabs>
-        <TabsList variant="outline">
-          {flowsLink.show && flowsLink.hasPermission && (
-            <TabsTrigger
-              value="flows"
-              variant="outline"
-              className="pb-3"
-              onClick={() => navigate(flowsLink.to)}
-              data-state={
-                location.pathname.includes(flowsLink.to) ? 'active' : 'inactive'
-              }
-            >
-              <flowsLink.icon className="h-4 w-4 mr-2" />
-              {t('Flows')}
-            </TabsTrigger>
-          )}
-          {tablesLink.show && tablesLink.hasPermission && (
-            <TabsTrigger
-              value="tables"
-              variant="outline"
-              className="pb-3"
-              onClick={() => navigate(tablesLink.to)}
-              data-state={
-                location.pathname.includes(tablesLink.to)
-                  ? 'active'
-                  : 'inactive'
-              }
-            >
-              <tablesLink.icon className="h-4 w-4 mr-2" />
-              {t('Tables')}
-            </TabsTrigger>
-          )}
-
-          <Separator
-            orientation="vertical"
-            className="mx-2 h-5 self-center mb-2"
-          />
-
-          {runsLink.show && runsLink.hasPermission && (
-            <TabsTrigger
-              value="runs"
-              variant="outline"
-              className="pb-3"
-              onClick={() => navigate(runsLink.to)}
-              data-state={
-                location.pathname.includes(runsLink.to) ? 'active' : 'inactive'
-              }
-            >
-              <runsLink.icon className="h-4 w-4 mr-2" />
-              {t('Runs')}
-            </TabsTrigger>
-          )}
-          {pinnedItem && pinnedItem.show && pinnedItem.hasPermission && (
-            <TabsTrigger
-              value="pinned"
-              variant="outline"
-              className="pb-3"
-              onClick={() => navigate(pinnedItem.to)}
-              data-state={
-                location.pathname.includes(pinnedItem.to)
-                  ? 'active'
-                  : 'inactive'
-              }
-            >
-              <pinnedItem.icon className="h-4 w-4 mr-2" />
-              {pinnedItem.label}
-            </TabsTrigger>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              {(() => {
-                const filteredMoreItems = moreItems.filter(
-                  (item) => item.to !== pinnedItem?.to,
-                );
-                const activeItem = filteredMoreItems.find((item) =>
-                  location.pathname.includes(item.to),
-                );
-
-                if (activeItem) {
-                  return (
-                    <TabsTrigger
-                      value="more"
-                      variant="outline"
-                      className="pb-3"
-                      data-state="active"
-                    >
-                      <activeItem.icon className="h-4 w-4 mr-2" />
-                      {activeItem.label}
-                      <ChevronDown className="h-4 w-4 ml-1" />
-                    </TabsTrigger>
-                  );
+        {!embedState.hideSideNav && (
+          <TabsList variant="outline">
+            {flowsLink.show && flowsLink.hasPermission && (
+              <TabsTrigger
+                value="flows"
+                variant="outline"
+                className="pb-3"
+                onClick={() => navigate(flowsLink.to)}
+                data-state={
+                  location.pathname.includes(flowsLink.to)
+                    ? 'active'
+                    : 'inactive'
                 }
+              >
+                <flowsLink.icon className="h-4 w-4 mr-2" />
+                {t('Flows')}
+              </TabsTrigger>
+            )}
+            {tablesLink.show && tablesLink.hasPermission && (
+              <TabsTrigger
+                value="tables"
+                variant="outline"
+                className="pb-3"
+                onClick={() => navigate(tablesLink.to)}
+                data-state={
+                  location.pathname.includes(tablesLink.to)
+                    ? 'active'
+                    : 'inactive'
+                }
+              >
+                <tablesLink.icon className="h-4 w-4 mr-2" />
+                {t('Tables')}
+              </TabsTrigger>
+            )}
 
-                return (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="ml-2 h-auto text-muted-foreground hover:text-foreground mb-2"
-                  >
-                    {t('More')}
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                );
-              })()}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
-              {moreItems
-                .filter(
-                  (item) =>
-                    item.show &&
-                    item.hasPermission !== false &&
-                    item.to !== pinnedItem?.to,
-                )
-                .map((item) => {
-                  return (
-                    <DropdownMenuItem
-                      key={item.to}
-                      onClick={() => {
-                        setPinnedItem(item);
-                        navigate(item.to);
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <item.icon className={cn('size-4')} />
-                        <span>{item.label}</span>
-                      </div>
-                    </DropdownMenuItem>
+            <Separator
+              orientation="vertical"
+              className="mx-2 h-5 self-center mb-2"
+            />
+
+            {runsLink.show && runsLink.hasPermission && (
+              <TabsTrigger
+                value="runs"
+                variant="outline"
+                className="pb-3"
+                onClick={() => navigate(runsLink.to)}
+                data-state={
+                  location.pathname.includes(runsLink.to)
+                    ? 'active'
+                    : 'inactive'
+                }
+              >
+                <runsLink.icon className="h-4 w-4 mr-2" />
+                {t('Runs')}
+              </TabsTrigger>
+            )}
+            {pinnedItem && pinnedItem.show && pinnedItem.hasPermission && (
+              <TabsTrigger
+                value="pinned"
+                variant="outline"
+                className="pb-3"
+                onClick={() => navigate(pinnedItem.to)}
+                data-state={
+                  location.pathname.includes(pinnedItem.to)
+                    ? 'active'
+                    : 'inactive'
+                }
+              >
+                <pinnedItem.icon className="h-4 w-4 mr-2" />
+                {pinnedItem.label}
+              </TabsTrigger>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                {(() => {
+                  const filteredMoreItems = moreItems.filter(
+                    (item) => item.to !== pinnedItem?.to,
                   );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TabsList>
+                  const activeItem = filteredMoreItems.find((item) =>
+                    location.pathname.includes(item.to),
+                  );
+
+                  if (activeItem) {
+                    return (
+                      <TabsTrigger
+                        value="more"
+                        variant="outline"
+                        className="pb-3"
+                        data-state="active"
+                      >
+                        <activeItem.icon className="h-4 w-4 mr-2" />
+                        {activeItem.label}
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      </TabsTrigger>
+                    );
+                  }
+
+                  return (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-2 h-auto text-muted-foreground hover:text-foreground mb-2"
+                    >
+                      {t('More')}
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  );
+                })()}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                {moreItems
+                  .filter(
+                    (item) =>
+                      item.show &&
+                      item.hasPermission !== false &&
+                      item.to !== pinnedItem?.to,
+                  )
+                  .map((item) => {
+                    return (
+                      <DropdownMenuItem
+                        key={item.to}
+                        onClick={() => {
+                          setPinnedItem(item);
+                          navigate(item.to);
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <item.icon className={cn('size-4')} />
+                          <span>{item.label}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TabsList>
+        )}
       </Tabs>
     </div>
   );
