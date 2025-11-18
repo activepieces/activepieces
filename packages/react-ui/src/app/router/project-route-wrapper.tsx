@@ -114,7 +114,3 @@ export const ProjectRouterWrapper = ({
     ),
   },
 ];
-
-export const projectSettingsRoutes = {
-  environments: '/settings/environments',
-} as const;

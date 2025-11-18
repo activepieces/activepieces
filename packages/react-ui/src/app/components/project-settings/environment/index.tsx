@@ -15,7 +15,7 @@ import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 import { ReleaseCard } from './release-card';
 
-const EnvironmentPage = () => {
+const EnvironmentSettings = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
@@ -98,4 +98,4 @@ const EnvironmentPage = () => {
   );
 };
 
-export { EnvironmentPage };
+export { EnvironmentSettings };
