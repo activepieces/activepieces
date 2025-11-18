@@ -98,14 +98,13 @@ export const getAccessToken = async ({
     headers,
   });
 
-  const data: AccessTokenResponse = await response.json();
-
-  if (response.status !== 200) {
-    throw new Error(data?.error || data?.message);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
 
+  const data: AccessTokenResponse = await response.json();
   if (!data.access_token) {
-    throw new Error(data?.error || data?.message);
+    throw new Error('No access token found in response');
   }
 
   return data.access_token;
@@ -116,39 +115,38 @@ export const addTokenUsage = async (
   server: 'production' | 'staging',
   access_token: string
 ) => {
-  try {
-    const response = await fetch(baseUrlMap[server]['addTokenUrl'], {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${access_token}`,
-      },
-      body: JSON.stringify(data),
-    });
-    if (response.status !== 200) {
-      throw new Error(`API error: ${response.statusText}`);
-    }
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error('Failed to send token usage:', error);
-    throw error;
+  const response = await fetch(baseUrlMap[server].addTokenUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${access_token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
+
+  const result = await response.json();
+  return result;
 };
 
 export const getUsagePlan = async (
   server: 'production' | 'staging',
   access_token: string
 ) => {
-  const response = await fetch(baseUrlMap[server]['quotaCheckUrl'], {
+  const response = await fetch(baseUrlMap[server].quotaCheckUrl, {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${access_token}`,
     },
   });
-  if (response.status !== 201) {
-    throw new Error(`API error: ${response.statusText}`);
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
+
   const result: UsagePackage = await response.json();
   return result;
 };
@@ -157,15 +155,17 @@ export const getUserProfile = async (
   server: 'production' | 'staging',
   access_token: string
 ) => {
-  const response = await fetch(baseUrlMap[server]['myProfileUrl'], {
+  const response = await fetch(baseUrlMap[server].myProfileUrl, {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${access_token}`,
     },
   });
-  if (response.status !== 200) {
-    throw new Error(`API error: ${response.statusText}`);
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
+
   const result: UserInfo = await response.json();
   return result;
 };
@@ -184,29 +184,30 @@ export const getStoreData = async (
     store.put('userId', userInfo.userIAM2ID);
     userId = userInfo.userIAM2ID;
   }
-  return {
-    userId,
-    apiKey,
-  };
+
+  return { userId, apiKey };
 };
 
 export const getAiApiKey = async (
   server: 'production' | 'staging',
   access_token: string
 ) => {
-  const response = await fetch(baseUrlMap[server]['getAIKeyUrl'], {
-    method: 'GET', // This is the default, so it's implicitly GET
+  const response = await fetch(baseUrlMap[server].getAIKeyUrl, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${access_token}`,
     },
   });
-  if (response.status !== 201) {
-    throw new Error(`API error: ${response.statusText}`);
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
-  const result: { openAIKey?: string } = await response.json();
+
+  const result = await response.json();
   if (!result.openAIKey) {
-    throw new Error('No AI Api Key found for Avalant OpenAI');
+    throw new Error('No AI API Key found in response');
   }
+
   return result.openAIKey;
 };

@@ -1,7 +1,4 @@
 {
   "name": "@avalant/piece-promptx-gemini",
-  "version": "0.0.1",
-  "type": "commonjs",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts"
+  "version": "0.0.2"
 }

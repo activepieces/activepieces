@@ -78,7 +78,8 @@ export const askClaude = createAction({
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
-      description: `Array of roles to specify more accurate response.Please check [guide to Input Messages](https://docs.anthropic.com/en/api/messages-examples#vision).`,
+      defaultValue: undefined,
+      description: `Array of roles to specify more accurate response. Please check [guide to Input Messages](https://docs.anthropic.com/en/api/messages-examples#vision).`,
     }),
     thinkingMode: Property.Checkbox({
       displayName: 'Extended Thinking Mode',
@@ -162,17 +163,13 @@ export const askClaude = createAction({
       content: propsValue.prompt,
     });
 
-    type Content =
-      | { type: 'text'; text: string }
-      | {
-          type: 'image';
-          source: { type: 'base64'; media_type: string; data: string };
-        };
+    type Content = { type: 'text'; text: string } | { type: 'image', source: { type: 'base64'; media_type: string; data: string } };
+    type Message = { role: 'user' | 'assistant', content: Content };
     const rolesArray = propsValue.roles
-      ? (propsValue.roles as unknown as Array<Content>)
+      ? (propsValue.roles as unknown as Array<Message>)
       : [];
     const rolesEnum = ['user', 'assistant'];
-    const roles = rolesArray.map((item: any) => {
+    const roles = rolesArray.map((item) => {
       if (!rolesEnum.includes(item.role)) {
         throw new Error('The only available roles are: [user, assistant]');
       }
@@ -249,7 +246,7 @@ export const askClaude = createAction({
             role: 'assistant',
             content: response,
           });
-          
+
           await store.put(propsValue.memoryKey, messageHistory, StoreScope.PROJECT);
         }
 
@@ -313,7 +310,7 @@ export const askClaude = createAction({
     if (unauthorized) {
       throw new Error(unauthorizedMessage);
     }
-    
+
     return response;
   },
 });

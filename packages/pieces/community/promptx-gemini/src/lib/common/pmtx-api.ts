@@ -98,12 +98,11 @@ export const getAccessToken = async ({
     headers,
   });
 
-  const data: AccessTokenResponse = await response.json();
-
-  if (response.status !== 200) {
-    throw new Error(data?.error || data?.message);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
 
+  const data: AccessTokenResponse = await response.json();
   if (!data.access_token) {
     throw new Error(data?.error || data?.message);
   }
@@ -116,24 +115,19 @@ export const addTokenUsage = async (
   server: 'production' | 'staging',
   access_token: string
 ) => {
-  try {
-    const response = await fetch(baseUrlMap[server]['addTokenUrl'], {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${access_token}`,
-      },
-      body: JSON.stringify(data),
-    });
-    if (response.status !== 200) {
-      throw new Error(`API error: ${response.statusText}`);
-    }
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error('Failed to send token usage:', error);
-    throw error;
+  const response = await fetch(baseUrlMap[server]['addTokenUrl'], {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${access_token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
+  const result = await response.json();
+  return result;
 };
 
 export const getUsagePlan = async (
@@ -146,8 +140,8 @@ export const getUsagePlan = async (
       Authorization: `Bearer ${access_token}`,
     },
   });
-  if (response.status !== 201) {
-    throw new Error(`API error: ${response.statusText}`);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
   const result: UsagePackage = await response.json();
   return result;
@@ -163,8 +157,8 @@ export const getUserProfile = async (
       Authorization: `Bearer ${access_token}`,
     },
   });
-  if (response.status !== 200) {
-    throw new Error(`API error: ${response.statusText}`);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
   const result: UserInfo = await response.json();
   return result;
@@ -200,17 +194,17 @@ export const getAiApiKey = async (
       Authorization: `Bearer ${access_token}`,
     },
   });
-  if (response.status !== 201) {
-    throw new Error(`API error: ${response.statusText}`);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
   const result: { geminiKey?: string } = await response.json();
   if (!result.geminiKey) {
-    throw new Error('No AI Api Key found for Avalant geminiKey');
+    throw new Error('No AI API Key found for Avalant geminiKey');
   }
   return result.geminiKey;
 };
 
-export const getApiKeyFormAuth = async (
+export const getApiKeyFrommAuth = async (
   auth: PromptXAuthType
 ): Promise<string> => {
   let accessToken: string;
@@ -221,6 +215,6 @@ export const getApiKeyFormAuth = async (
     return geminiKey;
   } catch (error) {
     console.error(error);
-    throw new Error('Unable to fetch gemini key. Check connection');
+    throw new Error('Unable to fetch gemini key. Please check connection');
   }
 };

@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { googleGeminiAuth } from '../../index';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { getApiKeyFormAuth, PromptXAuthType } from '../common/pmtx-api';
+import { getApiKeyFrommAuth, PromptXAuthType } from '../common/pmtx-api';
 
 export const chatGemini = createAction({
   auth: googleGeminiAuth,
@@ -25,7 +25,7 @@ export const chatGemini = createAction({
       options: async ({ auth }) => {
         let geminiKey: string;
         try {
-          geminiKey = String(await getApiKeyFormAuth(auth as PromptXAuthType));
+          geminiKey = String(await getApiKeyFrommAuth(auth as PromptXAuthType));
         } catch (error) {
           console.error(error);
           return {
@@ -56,7 +56,7 @@ export const chatGemini = createAction({
     });
 
     const { model, prompt, memoryKey } = propsValue;
-    const geminiKey: string = await getApiKeyFormAuth(auth as PromptXAuthType);
+    const geminiKey: string = await getApiKeyFrommAuth(auth as PromptXAuthType);
     const genAI = new GoogleGenerativeAI(geminiKey);
     const geminiModel = genAI.getGenerativeModel({ model });
     let history: Content[] = [];

@@ -67,17 +67,17 @@ export const promptxAuth = PieceAuth.CustomAuth({
       headers,
     });
 
-    if (response.status === 200) {
-      return {
-        valid: true,
-      };
-    } else {
+    if (!response.ok) {
       const data = await response.json();
       return {
         valid: false,
         error: data?.error || data?.message,
       };
     }
+
+    return {
+      valid: true,
+    };
   },
 });
 

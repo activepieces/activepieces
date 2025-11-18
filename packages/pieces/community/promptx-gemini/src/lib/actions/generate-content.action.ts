@@ -1,7 +1,7 @@
 import { googleGeminiAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getApiKeyFormAuth, PromptXAuthType } from '../common/pmtx-api';
+import { getApiKeyFrommAuth, PromptXAuthType } from '../common/pmtx-api';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 
 export const generateContentAction = createAction({
@@ -25,7 +25,7 @@ export const generateContentAction = createAction({
       options: async ({ auth }) => {
         let geminiKey: string;
         try {
-          geminiKey = String(await getApiKeyFormAuth(auth as PromptXAuthType));
+          geminiKey = String(await getApiKeyFrommAuth(auth as PromptXAuthType));
         } catch (error) {
           console.error(error);
           return {
@@ -40,7 +40,7 @@ export const generateContentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const geminiKey: string = await getApiKeyFormAuth(auth as PromptXAuthType);
+    const geminiKey: string = await getApiKeyFrommAuth(auth as PromptXAuthType);
     const genAI = new GoogleGenerativeAI(geminiKey);
     const model = genAI.getGenerativeModel({ model: propsValue.model });
     const result = await model.generateContent(propsValue.prompt);

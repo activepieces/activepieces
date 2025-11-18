@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleGeminiAuth } from '../../index';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
-import { getApiKeyFormAuth, PromptXAuthType } from '../common/pmtx-api';
+import { getApiKeyFrommAuth, PromptXAuthType } from '../common/pmtx-api';
 
 export const generateContentFromImageAction = createAction({
   description:
@@ -35,7 +35,7 @@ export const generateContentFromImageAction = createAction({
       options: async ({ auth }) => {
         let geminiKey: string;
         try {
-          geminiKey = String(await getApiKeyFormAuth(auth as PromptXAuthType));
+          geminiKey = String(await getApiKeyFrommAuth(auth as PromptXAuthType));
         } catch (error) {
           console.error(error);
           return {
@@ -59,7 +59,7 @@ export const generateContentFromImageAction = createAction({
     try {
       const imageBuffer = Buffer.from(propsValue.image.base64, 'base64');
       await fs.writeFile(tempFilePath, imageBuffer);
-      const geminiKey: string = await getApiKeyFormAuth(
+      const geminiKey: string = await getApiKeyFrommAuth(
         auth as PromptXAuthType
       );
       const fileManager = new GoogleAIFileManager(geminiKey);

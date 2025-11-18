@@ -66,27 +66,28 @@ export const googleGeminiAuth = PieceAuth.CustomAuth({
       headers,
     });
 
-    if (response.status === 200) {
-      return {
-        valid: true,
-      };
-    } else {
+    if (!response.ok) {
       const data = await response.json();
       return {
         valid: false,
         error: data?.error || data?.message,
       };
     }
+
+    return {
+      valid: true,
+    };
   },
 });
 export const googleGemini = createPiece({
   displayName: 'PromptX Google Gemini',
   auth: googleGeminiAuth,
-  description: 'Talk to Google Gemini using your available PromptX credits. Use the many tools Gemini has to offer using your PromptX credits per request',
+  description:
+    'Talk to Google Gemini using your available PromptX credits. Use the many tools Gemini has to offer using your PromptX credits per request',
   minimumSupportedRelease: '0.63.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['tumrabert'],
+  authors: ['tumrabert', 'rupalbarman'],
   actions: [generateContentAction, generateContentFromImageAction, chatGemini],
   triggers: [],
 });
