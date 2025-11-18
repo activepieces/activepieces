@@ -6,7 +6,7 @@ export const opnformNewSubmission = createTrigger({
   auth: opnformAuth,
   name: 'new_submission',
   displayName: 'New Submission',
-  description: 'Triggers when Opnform receives a new submission',
+  description: 'Triggers when Opnform receives a new submission.',
   props: {
     workspaceId: workspaceIdProp,
     formId: formIdProp,
