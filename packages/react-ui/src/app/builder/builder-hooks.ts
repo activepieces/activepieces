@@ -13,7 +13,7 @@ import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { Messages } from '@/features/chat/chat-message-list';
+import { Messages } from '@/components/ui/chat/chat-message-list';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
