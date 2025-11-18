@@ -2,7 +2,7 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { cwd } from 'node:process'
-import { filePiecesUtils, runCommandWithLiveOutput } from '@activepieces/server-shared'
+import { filePiecesUtils, spawnWithKill } from '@activepieces/server-shared'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -46,7 +46,7 @@ export const devPiecesInstaller = (packages: string[], log: FastifyBaseLogger) =
 
         if (deps.size > 0) {
             log.info(chalk.yellow(`Installing Pieces Dependencies: ${Array.from(deps).join(' ')}`))
-            await runCommandWithLiveOutput(`bun install ${Array.from(deps).join(' ')} --no-save --silent`)
+            await spawnWithKill({ cmd: `bun install ${Array.from(deps).join(' ')} --no-save --silent`, printOutput: true })
         }
     }
  
@@ -59,7 +59,7 @@ export const devPiecesInstaller = (packages: string[], log: FastifyBaseLogger) =
         const apDependencies = Object.keys(dependencies ?? {}).filter(dep => dep.startsWith('@activepieces/') && packageName !== dep)
 
         apDependencies.forEach(async (dependency) => {
-            await runCommandWithLiveOutput(`bun link --cwd ${packagePath} --save ${dependency} --silent`).catch(e => {
+            await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency} --silent`, printOutput: true }).catch(e => {
                 log.error({
                     name: 'linkSharedActivepiecesPackagesToPiece',
                     message: JSON.stringify(e),
@@ -70,7 +70,7 @@ export const devPiecesInstaller = (packages: string[], log: FastifyBaseLogger) =
 
     async function initSharedPackagesLinks() {
         await Promise.all(Object.values(sharedPiecesPackages()).map(pkg => 
-            runCommandWithLiveOutput(`bun link --cwd ${pkg.path} --silent`).catch(e => {
+            spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --silent`, printOutput: true }).catch(e => {
                 log.error({
                     name: 'initSharedPackagesLinks',
                     message: JSON.stringify(e),

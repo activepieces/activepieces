@@ -103,6 +103,12 @@
       "@activepieces/piece-instabase": [
         "packages/pieces/community/instabase/src/index.ts"
       ],
+      "@activepieces/piece-manus": [
+        "packages/pieces/community/manus/src/index.ts"
+      ],
+      "@activepieces/piece-recall-ai": [
+        "packages/pieces/community/recall-ai/src/index.ts"
+      ],
       "@activepieces/piece-contextual-ai": [
         "packages/pieces/community/contextual-ai/src/index.ts"
       ]

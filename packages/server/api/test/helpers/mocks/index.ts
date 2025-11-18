@@ -25,6 +25,7 @@ import {
     AppConnectionType,
     assertNotNullOrUndefined,
     Cell,
+    ColorName,
     Field,
     FieldType,
     File,
@@ -49,6 +50,7 @@ import {
     PlatformPlan,
     PlatformRole,
     Project,
+    ProjectIcon,
     ProjectPlan,
     ProjectRelease,
     ProjectReleaseType,
@@ -175,6 +177,9 @@ export const createMockUserInvitation = (userInvitation: Partial<UserInvitation>
 }
 
 export const createMockProject = (project?: Partial<Project>): Project => {
+    const icon: ProjectIcon = {
+        color: faker.helpers.enumValue(ColorName),
+    }
     return {
         id: project?.id ?? apId(),
         created: project?.created ?? faker.date.recent().toISOString(),
@@ -186,6 +191,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
         metadata: project?.metadata ?? null,
+        icon,
     }
 }
 
