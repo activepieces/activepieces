@@ -15,11 +15,8 @@ export const runsMetadataQueue = runsMetadataQueueFactory({
     distributedStore: workerDistributedStore,
 })
 
-export const flowWorker = (log: FastifyBaseLogger): {
-    init: (params: { workerToken: string, postConnect: () => Promise<void> }) => Promise<void>
-    close: () => Promise<void>
-} => ({
-    async init({ workerToken: token, postConnect }): Promise<void> {
+export const flowWorker = (log: FastifyBaseLogger) => ({
+    async init({ workerToken: token, markAsHealthy }: FlowWorkerInitParams): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
         await engineRunnerSocket(log).init()
 
@@ -32,7 +29,7 @@ export const flowWorker = (log: FastifyBaseLogger): {
                 await registryPieceManager(log).warmup()
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
-                await postConnect()
+                await markAsHealthy()
             },
         })
     },
@@ -66,4 +63,9 @@ async function initRunsMetadataQueue(log: FastifyBaseLogger): Promise<void> {
     log.info({
         message: 'Initialized runs metadata queue for worker',
     }, '[flowWorker#init]')
+}
+
+type FlowWorkerInitParams = {
+    workerToken: string
+    markAsHealthy: () => Promise<void>
 }

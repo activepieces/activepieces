@@ -3,7 +3,7 @@ import { isNil } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { devPiecesBuilder, flowWorker } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
-import { healthStatus } from './health/health.module'
+import { healthStatusService } from './health/health.service'
 import { system } from './helper/system/system'
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
@@ -18,9 +18,7 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
 export async function workerPostBoot(app: FastifyInstance): Promise<void> {
     const workerToken = await generateWorkerToken()
-    await flowWorker(app.log).init({ workerToken, postConnect: async () => {
-        healthStatus.isReady = true
-    } })
+    await flowWorker(app.log).init({ workerToken, markAsHealthy: async () => healthStatusService.markWorkerHealthy() })
 }
 
 
