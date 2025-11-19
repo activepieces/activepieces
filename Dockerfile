@@ -31,7 +31,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && bun i isolated-vm@5.0.1
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src && bun i isolated-vm@5.0.1
 
 ### STAGE 1: Build ###
 FROM base AS build
@@ -74,7 +75,7 @@ RUN mkdir -p /usr/src/app/dist/packages/server/ \
     /usr/src/app/dist/packages/engine/ \
     /usr/src/app/dist/packages/shared/
 
-# Copy built files from build stage (includes node_modules from build stage)
+# Copy built files from build stage (includes production-only node_modules from dist/packages/server/api)
 COPY --from=build /usr/src/app/LICENSE .
 COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/engine/
 COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
