@@ -1,14 +1,16 @@
+import { isNil, Result, tryCatch } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
-import cron from 'node-cron'
 import { repoFactory } from '../../core/db/repo-factory'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { tryCatch } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import cron from 'node-cron'
+import { pubsub } from '../../helper/pubsub'
 
 let cache: PieceMetadataSchema[] = []
-
 const repo = repoFactory(PieceMetadataEntity)
+
+export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
 
 type State = {
     recentUpdate: string | undefined
@@ -17,45 +19,50 @@ type State = {
 
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
-        cache = await fetchPieces(log)
-
+        await updateCache(log)
         cron.schedule('*/15 * * * *', async () => {
             log.info('[localPieceCache] Refreshing pieces cache via cron job')
-
-            cache = await fetchPieces(log)
+            await updateCache(log)
+        })
+        await pubsub.subscribe(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, async () => {
+            log.info('[localPieceCache] Refreshing pieces cache via pubsub')
+            await updateCache(log)
         })
     },
-
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
-        if (!cache.length) {
-            cache = await fetchPieces(log)
-        }
-
         return cache
     },
 })
 
-async function fetchPieces(log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> {
+async function updateCache(log: FastifyBaseLogger): Promise<void> {
+    const piecesResult = await fetchPieces()
+    if (piecesResult.error) {
+        log.error({ error: piecesResult.error }, '[localPieceCache] Error fetching local pieces')
+        throw piecesResult.error
+    }
+    cache = piecesResult.data
+}
+
+async function fetchPieces(): Promise<Result<PieceMetadataSchema[], Error>> {
     const newestState: State | undefined = await repo()
         .createQueryBuilder()
         .select('MAX(updated)', 'recentUpdate')
         .addSelect('count(*)', 'count')
         .getRawOne()
 
-    if (newestState) {
+    if (!isNil(newestState)) {
         const newestInCache = cache.reduce((acc, piece) => {
             return Math.max(dayjs(piece.updated).unix(), acc)
         }, 0)
 
         const needUpdate = dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
         if (!needUpdate) {
-            return cache
+            return { data: cache, error: null }
         }
     }
 
-    const { data, error } = await tryCatch(async () => {
-        const piecesFromDatabase = await repo().find();
-
+    return tryCatch(async () => {
+        const piecesFromDatabase = await repo().find()
         return piecesFromDatabase.sort((a, b) => {
             if (a.name !== b.name) {
                 return a.name.localeCompare(b.name)
@@ -72,13 +79,6 @@ async function fetchPieces(log: FastifyBaseLogger): Promise<PieceMetadataSchema[
                 return -1
             }
             return semVer.rcompare(a.version, b.version)
-        });
+        })
     })
-    if (error) {
-        log.error({ error }, 'Error fetching local pieces');
-
-        throw error
-    }
-
-    return data
 }

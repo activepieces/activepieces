@@ -26,6 +26,8 @@ import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
+import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/local-piece-cache'
+import { pubsub } from '../helper/pubsub'
 
 export const pieceInstallService = (log: FastifyBaseLogger) => ({
     async installPiece(
@@ -57,7 +59,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
-
+            await pubsub.publish(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, "")
             return savedPiece
         }
         catch (error) {
