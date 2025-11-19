@@ -38,10 +38,10 @@ jobs:
           file: ./Dockerfile
           platforms: |
             linux/amd64
+            linux/arm64
           push: true
-          tags: ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
-          cache-from: type=registry,ref=ghcr.io/activepieces/activepieces-cloud:buildcache
-          cache-to: type=registry,ref=ghcr.io/activepieces/activepieces-cloud:buildcache,mode=max
+          tags: |
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}
 
       - name: Configure SSH
         run: |
