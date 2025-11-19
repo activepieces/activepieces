@@ -1,15 +1,17 @@
-import { memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { isNil, Result, tryCatch } from '@activepieces/shared'
+import { AppSystemProp, memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ApEnvironment, isNil, Result, tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import semVer from 'semver'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
+import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 
 let cache: PieceMetadataSchema[] | null = null
 const repo = repoFactory(PieceMetadataEntity)
+const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
 export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
 
@@ -31,6 +33,13 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         })
     },
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
+        if (environment === ApEnvironment.TESTING) {
+            const { data, error } = await fetchPieces()
+            if (error) {
+                throw error
+            }
+            return data
+        }
         if (isNil(cache)) {
             throw new Error('The cache is not yet initialized, this should not happen')
         }
