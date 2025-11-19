@@ -29,8 +29,6 @@ import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
-    await pieceSyncService(app.log).setup()
-    await pieceMetadataService(app.log).setup()
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
 }
 

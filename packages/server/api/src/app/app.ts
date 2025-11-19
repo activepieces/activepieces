@@ -182,6 +182,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(storeEntryModule)
     await app.register(folderModule)
     await app.register(flowModule)
+    await pieceSyncService(app.log).setup()
+    await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
