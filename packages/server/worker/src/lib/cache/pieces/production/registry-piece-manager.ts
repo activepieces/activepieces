@@ -41,7 +41,7 @@ const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
 }
 
 export const registryPieceManager = (log: FastifyBaseLogger) => ({
-    install: async ({ pieces, includeFilters, broadcast }: InstallParams & { broadcast: boolean }): Promise<void> => {
+    install: async ({ pieces, includeFilters, broadcast }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
             log.debug(
@@ -297,6 +297,7 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
+    broadcast: boolean
 }
 
 type PieceCheckIfAlreadyInstalledResult = {
