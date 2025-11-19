@@ -13,7 +13,7 @@ export const deleteStaleRunMetadata = (log: FastifyBaseLogger) => ({
             log.info('[deleteStaleRunMetadata] Already migrated, skipping')
             return
         }
-        const keys = await redisConnection.keys('runsMetdataKey:*')
+        const keys = await redisConnection.keys('runs_metadata:*')
         log.info({ count: keys.length }, '[deleteStaleRunMetadata] Found stale run metadata keys')
         for (const key of keys) {
             await redisConnection.expire(key, dayjs.duration(10, 'minute').asSeconds())
