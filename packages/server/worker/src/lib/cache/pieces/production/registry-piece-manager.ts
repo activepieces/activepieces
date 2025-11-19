@@ -53,7 +53,10 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         })
 
         const piecesToPersistOnRedis = await Promise.all(installPromises).then(results => results.flat())
-        await persistPiecesOnRedis(piecesToPersistOnRedis, broadcast)
+        await persistPiecesOnRedis(piecesToPersistOnRedis)
+        if (broadcast) {
+            await pubsub.publish(REDIS_INSTALL_PIECES_CHANNEL, JSON.stringify(piecesToPersistOnRedis))
+        }
     },
     warmup: async (): Promise<void> => {
         if (!workerMachine.preWarmCacheEnabled()) {
@@ -107,7 +110,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
         log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install (already installed)')
         return {
             piecesToInstall,
-            piecesToPersistOnRedis
+            piecesToPersistOnRedis,
         }
     }
     log.info({
@@ -122,7 +125,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
                 log.info({ rootWorkspace }, '[registryPieceManager] No new pieces to install in lock (already installed)')
                 return {
                     piecesToInstall,
-                    piecesToPersistOnRedis
+                    piecesToPersistOnRedis,
                 }
             }
             log.info({
@@ -168,7 +171,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
 
             return {
                 piecesToInstall,
-                piecesToPersistOnRedis
+                piecesToPersistOnRedis,
             }
         },
     })
@@ -249,10 +252,10 @@ async function partitionPiecesToInstallAndToPersist(rootWorkspace: string, piece
     const checkResult = await Promise.all(pieces.map(piece => pieceCheckIfAlreadyInstalled(rootWorkspace, piece)))
     const piecesToInstall = checkResult.filter(check => !check.installed).map((_check, index) => pieces[index])
     const piecesToPersistOnRedis = checkResult.filter(check => check.installed && check.source === 'disk').map((_check, index) => pieces[index])
-  
+
     return {
         piecesToInstall,
-        piecesToPersistOnRedis
+        piecesToPersistOnRedis,
     }
 }
 
@@ -281,13 +284,10 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
     await Promise.all(writeToDiskJobs)
 }
 
-async function persistPiecesOnRedis(pieces: PiecePackage[], broadcast: boolean): Promise<void> {
+async function persistPiecesOnRedis(pieces: PiecePackage[]): Promise<void> {
     if (isEmpty(pieces)) return
     const redis = await workerRedisConnections.useExisting()
     await redis.mset(pieces.map(piece => [redisUsedPiecesCacheKey(piece), JSON.stringify(piece)]).flat())
-    if (broadcast) {
-        await pubsub.publish(REDIS_INSTALL_PIECES_CHANNEL, JSON.stringify(pieces))
-    }
 }
 
 function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: PrivatePiecePackage): string {
