@@ -33,7 +33,6 @@ type TabId = 'general' | 'team' | 'alerts' | 'pieces' | 'environment';
 interface ProjectSettingsDialogProps {
   open: boolean;
   onClose: () => void;
-  projectId?: string;
   initialTab?: TabId;
   initialValues?: {
     projectName?: string;
@@ -45,7 +44,6 @@ interface ProjectSettingsDialogProps {
 export function ProjectSettingsDialog({
   open,
   onClose,
-  projectId,
   initialTab = 'general',
   initialValues,
 }: ProjectSettingsDialogProps) {
@@ -59,15 +57,15 @@ export function ProjectSettingsDialog({
   );
   const form = useForm<FormValues>({
     defaultValues: {
-      projectName: initialValues?.projectName || '',
+      projectName: initialValues?.projectName,
       icon: project.icon,
       aiCredits: initialValues?.aiCredits || '',
-      externalId: initialValues?.externalId || '',
+      externalId: initialValues?.externalId,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
-  const projectMutation = useGeneralSettingsMutation(projectId!, form);
+  const projectMutation = useGeneralSettingsMutation(project.id, form);
 
   const handleSave = (values: FormValues) => {
     projectMutation.mutate({
