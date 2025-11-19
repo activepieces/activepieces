@@ -1,6 +1,6 @@
 import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { fileSystemUtils, memoryLock, pubsubFactory } from '@activepieces/server-shared'
+import { exceptionHandler, fileSystemUtils, memoryLock, pubsubFactory, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ExecutionMode,
     groupBy,
@@ -11,6 +11,7 @@ import {
     PieceType,
     PrivatePiecePackage,
     tryCatch,
+    tryCatchSync,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
@@ -40,19 +41,19 @@ const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
 }
 
 export const registryPieceManager = (log: FastifyBaseLogger) => ({
-    install: async ({
-        pieces,
-        includeFilters,
-        broadcast,
-    }: InstallParams): Promise<void> => {
+    install: async ({ pieces, includeFilters }: InstallParams): Promise<PieceInstallationResult> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
-        for (const [packagePath, pieces] of Object.entries(groupedPieces)) {
+        const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
             log.debug(
-                { packagePath, pieceCount: pieces.length },
-                `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${pieces.length}`,
+                { packagePath, pieceCount: piecesInGroup.length },
+                `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${piecesInGroup.length}`,
             )
-            await installPieces(log, packagePath, pieces, includeFilters, broadcast)
-        }
+            const { newlyInstalledPieces } = await installPieces(log, packagePath, piecesInGroup, includeFilters)
+            return newlyInstalledPieces
+        })
+
+        const newlyInstalledPieces = await Promise.all(installPromises).then(results => results.flat())
+        return { newlyInstalledPieces }
     },
     warmup: async (): Promise<void> => {
         if (!workerMachine.preWarmCacheEnabled()) {
@@ -68,7 +69,6 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         await registryPieceManager(log).install({
             pieces: usedPieces,
             includeFilters: false,
-            broadcast: true,
         })
         log.info({
             piecesCount: usedPieces.length,
@@ -76,19 +76,17 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         }, '[registryPieceManager] Warmed up pieces cache')
     },
     distributedWarmup: async (): Promise<void> => {
-        await pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, async (channel, message) => {
+        await pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, (channel, message) => {
             log.debug({ channel }, '[registryPieceManager#subscribe] Received message')
-            const { data: pieces, error } = await tryCatch(async () => JSON.parse(message) as PiecePackage[])
+            const { data: pieces, error } = tryCatchSync(() => JSON.parse(message) as PiecePackage[])
             if (error) {
-                log.error({ error }, '[registryPieceManager#subscribe] Failed to parse message as pieces')
+                exceptionHandler.handle(error, log)
                 return
             }
-            if (isEmpty(pieces)) return
-            await registryPieceManager(log).install({
+            rejectedPromiseHandler(registryPieceManager(log).install({
                 pieces,
                 includeFilters: false,
-                broadcast: false,
-            })
+            }), log)
         })
     },
     getCustomPiecesPath: (platformId: string): string => {
@@ -100,36 +98,40 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
 
 })
 
-async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, broadcast: boolean): Promise<void> {
-    const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces, broadcast)
-    if (isEmpty(filteredPieces)) {
+async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean): Promise<PieceInstallationResult> {
+    const { piecesToInstall } = await pieceCheckAndInstallInRedisIfAlreadyInstalled(rootWorkspace, pieces)
+    if (isEmpty(piecesToInstall)) {
         log.debug({ rootWorkspace }, '[registryPieceManager] No new pieces to install (already installed)')
-        return
+        return {
+            newlyInstalledPieces: [],
+        }
     }
     log.info({
         rootWorkspace,
-        filteredPieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+        piecesToInstall: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
     }, '[registryPieceManager] Installing pieces in workspace')
-    await memoryLock.runExclusive({
+    return memoryLock.runExclusive({
         key: `install-pieces-${rootWorkspace}`,
         fn: async () => {
-            const filteredPieces = await filterPiecesThatAlreadyInstalled(rootWorkspace, pieces, broadcast)
-            if (isEmpty(filteredPieces)) {
+            const { piecesToInstall } = await pieceCheckAndInstallInRedisIfAlreadyInstalled(rootWorkspace, pieces)
+            if (isEmpty(piecesToInstall)) {
                 log.info({ rootWorkspace }, '[registryPieceManager] No new pieces to install in lock (already installed)')
-                return
+                return {
+                    newlyInstalledPieces: [],
+                }
             }
             log.info({
                 rootWorkspace,
-                pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[registryPieceManager] acquired lock and starting to install pieces')
 
             await createRootPackageJson({
                 path: rootWorkspace,
             })
 
-            await savePackageArchivesToDiskIfNotCached(rootWorkspace, filteredPieces)
+            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall)
 
-            await Promise.all(filteredPieces.map(piece => createPiecePackageJson({
+            await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
                 rootWorkspace,
                 piecePackage: piece,
             })))
@@ -138,28 +140,36 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
 
             const { error: installError } = await tryCatch(async () => packageManager(log).install({
                 path: rootWorkspace,
-                filtersPath: includeFilters ? filteredPieces.map(relativePiecePath) : [],
+                filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
             }))
 
             if (!isNil(installError)) {
                 log.error({
                     rootWorkspace,
-                    pieces: filteredPieces.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                    pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
                     error: installError,
                 }, '[registryPieceManager] Piece installation failed, rolling back')
-                await rollbackInstallation(rootWorkspace, filteredPieces)
+                await rollbackInstallation(rootWorkspace, piecesToInstall)
                 throw installError
             }
 
-            await markPiecesAsUsed(rootWorkspace, filteredPieces)
+            await markPiecesAsUsed(rootWorkspace, piecesToInstall)
 
             log.info({
                 rootWorkspace,
-                piecesCount: filteredPieces.length,
+                piecesCount: piecesToInstall.length,
                 timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
             }, '[registryPieceManager] Installed registry pieces using bun')
+
+            return {
+                newlyInstalledPieces: piecesToInstall,
+            }
         },
     })
+}
+
+type PieceInstallationResult = {
+    newlyInstalledPieces: PiecePackage[]
 }
 
 async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
@@ -234,31 +244,34 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
     await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8')
 }
 
-async function filterPiecesThatAlreadyInstalled(rootWorkspace: string, pieces: PiecePackage[], broadcast: boolean): Promise<PiecePackage[]> {
-    const piecesToSave: PiecePackage[] = []
-    const checkResults = await Promise.all(
-        pieces.map(async piece => {
-            const pieceFolder = piecePath(rootWorkspace, piece)
-            if (usedPiecesMemoryCache[pieceFolder]) {
-                return true
-            }
-            usedPiecesMemoryCache[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
-            if (usedPiecesMemoryCache[pieceFolder]) {
-                piecesToSave.push(piece)
-            }
-            return usedPiecesMemoryCache[pieceFolder]
-        }),
-    )
-
-    if (!isEmpty(piecesToSave)) {
+async function pieceCheckAndInstallInRedisIfAlreadyInstalled(rootWorkspace: string, pieces: PiecePackage[]): Promise<{
+    piecesToInstall: PiecePackage[]
+}> {
+    const checkResult = await Promise.all(pieces.map(piece => pieceCheckIfAlreadyInstalled(rootWorkspace, piece)))
+    const piecesToInstall = checkResult.filter(check => !check.installed).map((_check, index) => pieces[index])
+    const piecesToPersistOnRedis = checkResult.filter(check => check.installed && check.source === 'disk').map((_check, index) => pieces[index])
+    if (!isEmpty(piecesToPersistOnRedis)) {
         const redis = await workerRedisConnections.useExisting()
-        await redis.mset(piecesToSave.map(piece => [redisUsedPiecesCacheKey(piece), JSON.stringify(piece)]).flat())
-        if (broadcast) {
-            await pubsub.publish(REDIS_INSTALL_PIECES_CHANNEL, JSON.stringify(piecesToSave))
+        await redis.mset(piecesToPersistOnRedis.map(piece => [redisUsedPiecesCacheKey(piece), JSON.stringify(piece)]).flat())
+    }
+    return {
+        piecesToInstall,
+    }
+}
+
+async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PiecePackage): Promise<PieceCheckIfAlreadyInstalledResult> {
+    const pieceFolder = piecePath(rootWorkspace, piece)
+    if (usedPiecesMemoryCache[pieceFolder]) {
+        return {
+            installed: true,
+            source: 'memory',
         }
     }
-
-    return pieces.filter((_, idx) => !checkResults[idx])
+    usedPiecesMemoryCache[pieceFolder] = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
+    return {
+        installed: usedPiecesMemoryCache[pieceFolder],
+        source: 'disk',
+    }
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
@@ -278,5 +291,9 @@ function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: Priv
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
-    broadcast: boolean
+}
+
+type PieceCheckIfAlreadyInstalledResult = {
+    installed: boolean
+    source: 'memory' | 'disk'
 }
