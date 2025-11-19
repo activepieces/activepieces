@@ -23,6 +23,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
         }
     })
 
+
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.DISCONNECT, (socket) => {
         return async (_request: unknown) => {
             await machineService(app.log).onDisconnect({

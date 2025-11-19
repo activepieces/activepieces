@@ -32,9 +32,8 @@ import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
 import { In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import {
-    APArrayContains,
-} from '../../database/database-connection'
+import { isPostgres } from '../../database/database-common'
+import { APArrayContains } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -160,7 +159,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     flowVersionId: latestFlowVersion.id,
                     projectId: oldFlowRun.projectId,
                     failParentOnFailure: oldFlowRun.failParentOnFailure,
-                    parentRunId: oldFlowRun.id,
+                    parentRunId: oldFlowRun.parentRunId,
                 })
             }
         }
@@ -386,7 +385,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             steps,
         }
     },
-    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }) {
+    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }): Promise<EngineHttpResponse> {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: runId,
             projectId: undefined,
@@ -427,7 +426,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string) {
+async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
     await jobQueue(log).removeOneTimeJob({
         jobId: flowRun.id,
         platformId,
@@ -447,24 +446,36 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
         return []
     }
 
+    const parentRunIdPlaceholders = createSqlPlaceholders(parentRunIds.length, 0)
+    
+    const statusStartIndex = parentRunIds.length
+    const statusPlaceholders = createSqlPlaceholders(CANCELLABLE_STATUSES.length, statusStartIndex)
+
     const query = `
         WITH RECURSIVE descendants AS (
             SELECT *
             FROM flow_run
-            WHERE "parentRunId" = ANY($1)
-              AND status = ANY($2)
+            WHERE "parentRunId" IN (${parentRunIdPlaceholders})
+              AND status IN (${statusPlaceholders})
 
             UNION ALL
 
             SELECT f.*
             FROM flow_run f
             INNER JOIN descendants d ON f."parentRunId" = d.id
-            WHERE f.status = ANY($2)
+            WHERE f.status IN (${statusPlaceholders})
         )
         SELECT * FROM descendants
     `
 
-    const results = await flowRunRepo().query(query, [parentRunIds, CANCELLABLE_STATUSES])
+    const queryParams = 
+        [
+            ...parentRunIds,
+            ...CANCELLABLE_STATUSES,
+            ...(!isPostgres() ? CANCELLABLE_STATUSES : []),
+        ]
+
+    const results = await flowRunRepo().query(query, queryParams)
     return results as FlowRun[]
 }
 
@@ -610,6 +621,12 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
             await runsMetadataQueue(log).add(flowRun)
             return flowRun
     }
+}
+
+function createSqlPlaceholders(count: number, startIndex = 0): string {
+    return Array.from({ length: count }, (_, index) => {
+        return isPostgres() ? `$${startIndex + index + 1}` : '?'
+    }).join(',')
 }
 
 

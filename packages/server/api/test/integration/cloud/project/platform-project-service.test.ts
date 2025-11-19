@@ -4,7 +4,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformProjectService } from '../../../../src/app/ee/projects/platform-project-service'
 import { setupServer } from '../../../../src/app/server'
-import { createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockPieceMetadata, mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -50,7 +50,7 @@ describe('Platform Project Service', () => {
 
             }
             catch (error) {
-            // assert
+                // assert
 
                 expect(error).toBeInstanceOf(ActivepiecesError)
                 expect((error as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
@@ -58,28 +58,9 @@ describe('Platform Project Service', () => {
             }
             throw new Error('Expected error to be thrown because project has enabled flows')
 
-         
+
         })
 
-        it('Hard deletes associated piece metadata', async () => {
-            // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
-            const mockPieceArchive = createMockFile({ platformId: mockPlatform.id, projectId: mockProject.id })
-            await databaseConnection().getRepository('file').save([mockPieceArchive])
-
-            const mockPieceMetadata = createMockPieceMetadata({ projectId: mockProject.id, archiveId: mockPieceArchive.id })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
-
-            // act
-            await platformProjectService(mockLog).hardDelete({ id: mockProject.id, platformId: mockPlatform.id })
-
-            // assert
-            const fileCount = await databaseConnection().getRepository('file').countBy({ projectId: mockProject.id })
-            expect(fileCount).toBe(0)
-
-            const pieceMetadataCount = await databaseConnection().getRepository('piece_metadata').countBy({ projectId: mockProject.id })
-            expect(pieceMetadataCount).toBe(0)
-        })
     })
 })

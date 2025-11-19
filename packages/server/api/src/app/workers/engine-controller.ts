@@ -1,13 +1,11 @@
 
-import { FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType } from '@activepieces/shared'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
+import {  FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { engineResponseWatcher } from './engine-response-watcher'
-import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -40,17 +38,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
-        const { fileId } = request.params
-        const { data } = await fileService(request.log).getDataOrThrow({
-            fileId,
-            type: FileType.PACKAGE_ARCHIVE,
-        })
-        return reply
-            .type('application/zip')
-            .status(StatusCodes.OK)
-            .send(data)
-    })
+
 }
 
 
@@ -65,22 +53,6 @@ const GetAllFlowsByProjectParams = {
     },
     schema: {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
-    },
-}
-
-const GetFileRequestParams = {
-    config: {
-        security: {
-            kind: RouteKind.AUTHENTICATED,
-            authorization: {
-                type: AuthorizationType.ENGINE,
-            },
-        } as const,
-    },
-    schema: {
-        params: Type.Object({
-            fileId: Type.String(),
-        }),
     },
 }
 

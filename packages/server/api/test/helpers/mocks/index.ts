@@ -25,6 +25,7 @@ import {
     AppConnectionType,
     assertNotNullOrUndefined,
     Cell,
+    ColorName,
     Field,
     FieldType,
     File,
@@ -49,6 +50,7 @@ import {
     PlatformPlan,
     PlatformRole,
     Project,
+    ProjectIcon,
     ProjectPlan,
     ProjectRelease,
     ProjectReleaseType,
@@ -73,7 +75,7 @@ import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
-import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
+import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
@@ -175,6 +177,9 @@ export const createMockUserInvitation = (userInvitation: Partial<UserInvitation>
 }
 
 export const createMockProject = (project?: Partial<Project>): Project => {
+    const icon: ProjectIcon = {
+        color: faker.helpers.enumValue(ColorName),
+    }
     return {
         id: project?.id ?? apId(),
         created: project?.created ?? faker.date.recent().toISOString(),
@@ -186,6 +191,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
         metadata: project?.metadata ?? null,
+        icon,
     }
 }
 

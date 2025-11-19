@@ -4,11 +4,13 @@ import {
     ApId,
     apId,
     assertNotNullOrUndefined,
+    ColorName,
     ErrorCode,
     isNil,
     Metadata,
     PlatformRole,
     Project,
+    ProjectIcon,
     ProjectId,
     spreadIfDefined,
     UserId,
@@ -26,9 +28,14 @@ export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
+        const colors = Object.values(ColorName)
+        const icon: ProjectIcon = {
+            color: colors[Math.floor(Math.random() * colors.length)],
+        }
         const newProject: NewProject = {
             id: apId(),
             ...params,
+            icon,
             maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
@@ -83,6 +90,7 @@ export const projectService = {
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
                 ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+                ...spreadIfDefined('icon', request.icon),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -242,6 +250,7 @@ type UpdateParams = {
     releasesEnabled?: boolean
     metadata?: Metadata
     maxConcurrentJobs?: number
+    icon?: ProjectIcon
 }
 
 type CreateParams = {
