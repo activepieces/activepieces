@@ -7,14 +7,18 @@
     "version": {
       "currentVersionResolver": "git-tag",
       "preserveLocalDependencyProtocols": false,
-      "manifestRootsToUpdate": ["dist/{projectRoot}"]
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ]
     }
   },
   "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/assemblyai",
         "tsConfig": "packages/pieces/community/assemblyai/tsconfig.lib.json",
@@ -30,7 +34,11 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "nx-release-publish": {
       "options": {
@@ -39,7 +47,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     },
     "_generate-params": {
       "executor": "nx:run-commands",
@@ -62,6 +72,16 @@
           "nx format pieces-assemblyai"
         ]
       }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/assemblyai",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

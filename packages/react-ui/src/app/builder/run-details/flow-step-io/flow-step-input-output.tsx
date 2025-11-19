@@ -1,65 +1,84 @@
 import { t } from 'i18next';
 import { Timer } from 'lucide-react';
-import React from 'react';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import { FlowAction, StepOutput } from '@activepieces/shared';
+import {
+  FlowAction,
+  StepOutput,
+  StepOutputStatus,
+  flowStructureUtil,
+  AgentResult,
+} from '@activepieces/shared';
 
-type FlowStepInputOutputProps = {
+type Props = {
   stepDetails: StepOutput;
   selectedStep: FlowAction;
 };
 
-const tryParseJson = (value: unknown): unknown => {
-  if (typeof value !== 'string') return value;
+export const FlowStepInputOutput = ({ stepDetails, selectedStep }: Props) => {
+  const isAgent = flowStructureUtil.isAgentPiece(selectedStep);
+  const isRunning =
+    stepDetails.status === StepOutputStatus.RUNNING ||
+    stepDetails.status === StepOutputStatus.PAUSED;
 
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-};
+  const parsedOutput =
+    stepDetails.errorMessage ?? stepDetails.output ?? 'No output';
 
-const getStepOutput = (stepDetails: StepOutput): unknown => {
-  return stepDetails.errorMessage
-    ? tryParseJson(stepDetails.errorMessage)
-    : stepDetails.output;
-};
+  const tabCount = isAgent ? 3 : 2;
+  const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
 
-const FlowStepInputOutput = React.memo(
-  ({ stepDetails, selectedStep }: FlowStepInputOutputProps) => {
-    const stepOutput = getStepOutput(stepDetails);
-    const outputExists =
-      'output' in stepDetails || 'errorMessage' in stepDetails;
-
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex items-center leading-4 gap-2  px-4 justify-start mt-4">
+  return (
+    <ScrollArea className="h-full p-4">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-2 text-base font-medium">
           <StepStatusIcon status={stepDetails.status} size="5" />
-          <div>{selectedStep?.displayName}</div>
+          <span>{selectedStep.displayName}</span>
         </div>
-        <ScrollArea className="grow  py-4 px-4 ">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 leading-4 justify-start">
-              <Timer className="w-5 h-5" />
-              <div>
-                {t('Duration')}:{' '}
-                {formatUtils.formatDuration(stepDetails.duration ?? 0, false)}
-              </div>
-            </div>
-            <JsonViewer title={t('Input')} json={stepDetails.input} />
-            {outputExists && (
-              <JsonViewer title={t('Output')} json={stepOutput} />
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-    );
-  },
-);
 
-FlowStepInputOutput.displayName = 'FlowStepInputOutput';
-export { FlowStepInputOutput };
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Timer className="w-4 h-4" />
+          <span>
+            {t('Duration')}:{' '}
+            {formatUtils.formatDuration(stepDetails.duration ?? 0, false)}
+          </span>
+        </div>
+
+        <Tabs defaultValue={isAgent ? 'timeline' : 'input'} className="w-full">
+          <TabsList className={`w-full grid ${gridCols}`}>
+            <TabsTrigger value="input">{t('Input')}</TabsTrigger>
+            {isAgent && (
+              <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
+            )}
+            <TabsTrigger value="output">{t('Output')}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="input">
+            <JsonViewer json={stepDetails.input} title={t('Input')} />
+          </TabsContent>
+
+          <TabsContent value="timeline">
+            <AgentTimeline agentResult={stepDetails.output as AgentResult} />
+          </TabsContent>
+
+          <TabsContent value="output">
+            {isRunning ? (
+              <div className="mt-4 space-y-4">
+                <Skeleton className="h-8 w-1/3" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-4 w-1/4" />
+              </div>
+            ) : (
+              <JsonViewer json={parsedOutput} title={t('Output')} />
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ScrollArea>
+  );
+};

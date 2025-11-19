@@ -24,24 +24,11 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-wedof:build",
-          "nx run pieces-wedof:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/wedof",
-        "command": "npm install"
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-wedof {args.ver} {args.tag}",
@@ -59,6 +46,16 @@
           "packages/pieces/community/wedof/**/*.ts"
         ]
       }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/wedof",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "tags": []

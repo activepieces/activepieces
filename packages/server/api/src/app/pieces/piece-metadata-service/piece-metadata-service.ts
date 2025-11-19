@@ -1,6 +1,7 @@
 import { PieceMetadata, 
     PieceMetadataModel,
-    PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+    PieceMetadataModelSummary, 
+    PiecePackageInformation } from '@activepieces/pieces-framework'
 import {
     ApEdition,
     ListVersionsResponse,
@@ -70,8 +71,15 @@ type GetExactPieceVersionParams = {
     platformId: PlatformId
 }
 
+type RegistryParams = {
+    release: string
+    platformId?: string
+    edition: ApEdition
+}
+
 export type PieceMetadataService = {
     list(params: ListParams): Promise<PieceMetadataModelSummary[]>
+    registry(params: RegistryParams): Promise<PiecePackageInformation[]>
     get(params: GetOrThrowParams): Promise<PieceMetadataModel | undefined>
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>

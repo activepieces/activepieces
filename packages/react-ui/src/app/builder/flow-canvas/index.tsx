@@ -74,12 +74,11 @@ const createGraphKey = (flowVersion: FlowVersion) => {
           ? step.settings.branches.map((branch) => branch.branchName).join('-')
           : '0';
       const childrenKey = getChildrenKey(step);
-      const agentId = flowStructureUtil.getExternalAgentId(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
       }-${
         step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
-      }-${branchesNames}-${childrenKey}-${agentId}`;
+      }-${branchesNames}-${childrenKey}}`;
     }, '');
 };
 

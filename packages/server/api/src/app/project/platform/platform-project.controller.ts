@@ -12,7 +12,7 @@ import { platformProjectService } from './platform-project.service'
 
 const CreateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -26,7 +26,7 @@ const CreateProjectRequest = {
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -43,7 +43,7 @@ const UpdateProjectRequest = {
 
 const ListProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
@@ -61,7 +61,7 @@ const ListProjectRequest = {
 
 const DeleteProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {

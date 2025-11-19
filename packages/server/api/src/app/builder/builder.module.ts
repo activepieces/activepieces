@@ -1,4 +1,4 @@
-import { BuilderMessage, PrincipalType } from '@activepieces/shared'
+import { BuilderMessage, EndpointScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { builderService } from './builder.service'
@@ -46,7 +46,8 @@ const GetBuilderFlowRequestParams = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
     },
 }
 
@@ -68,6 +69,7 @@ const UpdateBuilderFlowRequestParams = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
     },
 }

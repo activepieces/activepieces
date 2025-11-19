@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-// import { PlanName } from '@activepieces/ee-shared';
+import { PlanName } from '@activepieces/shared';
 
 import {
   DEFAULT_ACTIVE_FLOWS,

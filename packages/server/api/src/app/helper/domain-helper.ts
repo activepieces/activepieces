@@ -25,6 +25,13 @@ export const domainHelper = {
     async getZeroApiUrl({ path }: InternalUrlParams): Promise<string> {
         return networkUtils.combineUrl(system.getOrThrow(AppSystemProp.ZERO_SERVICE_URL), path ?? '')
     },
+    async getApiUrlForWorker({ path, platformId }: PublicUrlParams): Promise<string> {
+        const hasWorkerModule = system.isWorker()
+        if (hasWorkerModule) {
+            return networkUtils.combineUrl('http://127.0.0.1:3000', path ?? '')
+        }
+        return this.getInternalApiUrl({ path: path ?? '', platformId })
+    },
 }
 
 

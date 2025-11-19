@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, EnginePrincipal, ErrorCode, isNil, PrincipalType, Project, ServicePrincipal, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserPrincipal, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
@@ -229,7 +229,7 @@ export const authenticationUtils = {
         }
     },
     async extractUserIdFromPrincipal(
-        principal: Principal,
+        principal: UserPrincipal | ServicePrincipal | EnginePrincipal,
     ): Promise<string> {
         if (principal.type === PrincipalType.USER) {
             return principal.id

@@ -51,14 +51,15 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         displayName: {
             type: String,
         },
-        notifyStatus: {
-            type: String,
-        },
         platformId: {
             ...ApIdSchema,
         },
         externalId: {
             type: String,
+            nullable: true,
+        },
+        maxConcurrentJobs: {
+            type: Number,
             nullable: true,
         },
         releasesEnabled: {

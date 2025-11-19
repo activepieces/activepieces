@@ -130,3 +130,9 @@ export const PieceMetadataModelSummary = Type.Composite([
   PiecePackageMetadata
 ])
 export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata;
+
+export const PiecePackageInformation = Type.Object({
+  name: Type.String(),
+  version: Type.String(),
+})
+export type PiecePackageInformation = Static<typeof PiecePackageInformation>

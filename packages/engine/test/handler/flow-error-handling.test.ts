@@ -23,7 +23,7 @@ describe('code piece with error handling', () => {
         })
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.runtime.status).toEqual('FAILED')
-        expect(result.steps.runtime.errorMessage).toEqual('Custom Runtime Error')
+        expect(result.steps.runtime.errorMessage).toContain('Custom Runtime Error')
     })
 
 })
@@ -69,7 +69,7 @@ describe('piece with error handling', () => {
 
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.send_http.status).toBe('FAILED')
-        expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError))
+        expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError, null, 2))
 
     }, 10000)
 

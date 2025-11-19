@@ -40,6 +40,8 @@ export const enum EngineSocketEvent {
     ENGINE_STDERR = 'engine-stderr',
     ENGINE_READY = 'engine-ready',
     ENGINE_OPERATION = 'engine-operation',
+    UPDATE_RUN_PROGRESS = 'update-run-progress',
+    SEND_FLOW_RESPONSE = 'send-flow-response',
 }
 
 
@@ -62,17 +64,17 @@ export type BaseEngineOperation = {
     internalApiUrl: string
     publicApiUrl: string
     timeoutInSeconds: number
+    platformId: PlatformId
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
-    platformId: PlatformId
     auth: AppConnectionValue
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number }
+export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number, platformId: PlatformId }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
@@ -95,7 +97,6 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
     executionType: T
-    tasks: number
     runEnvironment: RunEnvironment
     executionState: ExecutionState
     serverHandlerId: string | null

@@ -4,40 +4,42 @@ import { DeleteStoreEntryRequest, FlowId, isNil, PutStoreEntryRequest, STORE_KEY
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
 import { ExecutionError, FetchError, StorageError, StorageInvalidKeyError, StorageLimitError } from '../helper/execution-errors'
+import { utils } from '../utils'
 
 export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
             const url = buildUrl(apiUrl, key)
 
-            try {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const response = await fetch(url, {
                     headers: {
                         Authorization: `Bearer ${engineToken}`,
                     },
                 })
-
                 if (!response.ok) {
-                    return await handleResponseError({
+                    return handleResponseError({
                         key,
                         response,
                     })
                 }
 
-                return await response.json()
-            }
-            catch (e) {
+                return response.json()
+            }))
+
+            if (storeEntryError) {
                 return handleFetchError({
                     url,
-                    cause: e,
+                    cause: storeEntryError,
                 })
             }
+            return storeEntry
         },
 
         async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
             const url = buildUrl(apiUrl)
 
-            try {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const sizeOfValue = sizeof(request.value)
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
@@ -52,26 +54,28 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 })
 
                 if (!response.ok) {
-                    return await handleResponseError({
+                    return handleResponseError({
                         key: request.key,
                         response,
                     })
                 }
 
-                return await response.json()
-            }
-            catch (e) {
+                return response.json()
+            }))
+
+            if (storeEntryError) {
                 return handleFetchError({
                     url,
-                    cause: e,
+                    cause: storeEntryError,
                 })
             }
+            return storeEntry
         },
 
         async delete(request: DeleteStoreEntryRequest): Promise<null> {
             const url = buildUrl(apiUrl, request.key)
 
-            try {
+            const { data: storeEntry, error: storeEntryError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
@@ -87,13 +91,15 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
                 }
 
                 return null
-            }
-            catch (e) {
+            }))
+            
+            if (storeEntryError) {
                 return handleFetchError({
                     url,
-                    cause: e,
+                    cause: storeEntryError,
                 })
             }
+            return storeEntry
         },
     }
 }

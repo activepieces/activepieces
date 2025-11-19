@@ -1,4 +1,4 @@
-import { ListProjectMemberQueryParams, PrincipalType, ProjectMember, SeekPage } from '@activepieces/shared'
+import { EndpointScope, ListProjectMemberQueryParams, PrincipalType, ProjectMember, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -30,7 +30,8 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListProjectMemberRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['project-member'],
@@ -43,7 +44,8 @@ const ListProjectMemberRequest = {
 
 const DeleteProjectMemberRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['project-member'],

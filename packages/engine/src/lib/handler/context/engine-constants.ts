@@ -1,4 +1,5 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, isNil, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { EngineGenericError } from '../../helper/execution-errors'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -24,7 +25,7 @@ type EngineConstantsParams = {
     httpRequestId: string | null
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
-    testSingleStepMode?: boolean
+    stepNameToTest?: string
     logsUploadUrl?: string
     logsFileId?: string
 }
@@ -61,7 +62,7 @@ export class EngineConstants {
     public readonly httpRequestId: string | null
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
-    public readonly testSingleStepMode?: boolean
+    public readonly stepNameToTest?: string
     public readonly logsUploadUrl?: string
     public readonly logsFileId?: string
 
@@ -81,10 +82,10 @@ export class EngineConstants {
 
     public constructor(params: EngineConstantsParams) {
         if (!params.publicApiUrl.endsWith('/api/')) {
-            throw new Error('Public URL must end with a slash, got: ' + params.publicApiUrl)
+            throw new EngineGenericError('PublicUrlNotEndsWithSlashError', `Public URL must end with a slash, got: ${params.publicApiUrl}`)
         }
         if (!params.internalApiUrl.endsWith('/')) {
-            throw new Error('Internal API URL must end with a slash, got: ' + params.internalApiUrl)
+            throw new EngineGenericError('InternalApiUrlNotEndsWithSlashError', `Internal API URL must end with a slash, got: ${params.internalApiUrl}`)
         }
 
         this.flowId = params.flowId
@@ -103,7 +104,7 @@ export class EngineConstants {
         this.httpRequestId = params.httpRequestId
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
-        this.testSingleStepMode = params.testSingleStepMode
+        this.stepNameToTest = params.stepNameToTest
         this.logsUploadUrl = params.logsUploadUrl
         this.logsFileId = params.logsFileId
     }
@@ -130,7 +131,7 @@ export class EngineConstants {
             httpRequestId: input.httpRequestId ?? null,
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
-            testSingleStepMode: !isNil(input.stepNameToTest),
+            stepNameToTest: input.stepNameToTest ?? undefined,
             logsUploadUrl: input.logsUploadUrl,
             logsFileId: input.logsFileId,
         })
@@ -158,7 +159,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            testSingleStepMode: false,
+            stepNameToTest: undefined,
         })
     }
 
@@ -184,7 +185,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            testSingleStepMode: false,
+            stepNameToTest: undefined,
         })
     }
 
@@ -210,7 +211,7 @@ export class EngineConstants {
             httpRequestId: null,
             resumePayload: undefined,
             runEnvironment: undefined,
-            testSingleStepMode: false,
+            stepNameToTest: undefined,
         })
     }
 

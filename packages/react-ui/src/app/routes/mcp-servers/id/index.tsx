@@ -8,14 +8,14 @@ import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/drawer';
 import EditableTextWithPen from '@/components/ui/editable-text-with-pen';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { McpConfigPage } from '@/features/mcp/components/mcp-config';
+import { McpConnectPage } from '@/features/mcp/components/mcp-connect';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
-import { McpConfigPage } from './mcp-config';
-import { McpConnectPage } from './mcp-connect';
 import { McpHistoryPage } from './runs/mcp-runs';
 
 const tabs = [

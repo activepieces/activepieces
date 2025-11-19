@@ -37,6 +37,7 @@ export const TodoTimeline = ({
       content: activity.content,
       timestamp: new Date(activity.created),
       authorName: todoUtils.getAuthorName(activity),
+      userEmail: todoUtils.getAuthorEmail(activity),
       key: hash,
       id: activity.id,
     };
@@ -49,10 +50,9 @@ export const TodoTimeline = ({
       timestamp: new Date(todo.created),
       authorType: todoUtils.getAuthorType(todo),
       authorName: todoUtils.getAuthorName(todo),
-      userEmail: todo.createdByUser?.email,
+      userEmail: todoUtils.getAuthorEmail(todo),
       flowId: todo.flowId,
     },
-    ...(comments ?? []).map(formatComment),
   ]);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export const TodoTimeline = ({
               timestamp: new Date(todo.created),
               authorType: todoUtils.getAuthorType(todo),
               authorName: todoUtils.getAuthorName(todo),
-              userEmail: todo.createdByUser?.email,
+              userEmail: todoUtils.getAuthorEmail(todo),
               flowId: todo.flowId,
             }}
             showConnector={true}
@@ -111,7 +111,7 @@ export const TodoTimeline = ({
         </>
       ) : (
         <>
-          {activities.map((comment, index) => (
+          {(comments ?? []).map(formatComment).map((comment, index) => (
             <TodoComment
               key={comment.id}
               comment={comment}

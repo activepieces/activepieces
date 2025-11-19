@@ -18,6 +18,7 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { McpToolsIcon } from '@/features/mcp/components/mcp-tools-icon';
 import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -26,8 +27,6 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils, NEW_MCP_QUERY_PARAM } from '@/lib/utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { McpWithTools, Permission } from '@activepieces/shared';
-
-import { McpToolsIcon } from './mcp-tools-icon';
 
 const McpServersPage = () => {
   const navigate = useNavigate();

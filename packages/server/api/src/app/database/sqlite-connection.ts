@@ -80,6 +80,13 @@ import { AddRunFlowVersionIdForForeignKeySqlite1760346793809 } from './migration
 import { RestrictOnDeleteProjectForFlowSqlite1760376811542 } from './migration/sqlite/1760376811542-RestrictOnDeleteProjectForFlowSqlite'
 import { AddProfilePictureSqlite1760504355077 } from './migration/sqlite/1760504355077-add-profile-picture-sqlite'
 import { AddBuilderMessageEntity1760515329530 } from './migration/sqlite/1760515329530-add-builder-message-entity'
+import { RemoveTriggerRunEntity1760992394073 } from './migration/sqlite/1760992394073-RemoveTriggerRunEntity'
+import { RemoveProjectNotifyStatus1761056855716 } from './migration/sqlite/1761056855716-RemoveProjectNotifyStatus'
+import { DeprecateCopilotSQLITE1761223879376 } from './migration/sqlite/1761223879376-DeprecateCopilotSQLITE'
+import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761428653922-remove-agentid-from-mcp-entity'
+import { AddMaximumConcurrentJobsPerProjectSqlite1761499100171 } from './migration/sqlite/1761499100171-AddMaximumConcurrentJobsPerProjectSqlite'
+import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/1761574814842-RemoveTasksAndTasksLimitSqlite'
+import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -102,6 +109,13 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        DeleteLastChangelogDismissedAtSqlite1762018344394,
+        RemoveTasksAndTasksLimitSqlite1761574814842,
+        AddMaximumConcurrentJobsPerProjectSqlite1761499100171,
+        RemoveAgentidFromMcpEntity1761428653922,
+        DeprecateCopilotSQLITE1761223879376,
+        RemoveProjectNotifyStatus1761056855716,
+        RemoveTriggerRunEntity1760992394073,
         AddBuilderMessageEntity1760515329530,
         RestrictOnDeleteProjectForFlowSqlite1760376811542,
         AddProfilePictureSqlite1760504355077,

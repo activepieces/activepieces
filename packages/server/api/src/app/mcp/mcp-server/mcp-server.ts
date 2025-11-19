@@ -2,20 +2,26 @@ import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,
+    ExecuteActionResponse,
     isNil,
+    McpFlowRunMetadata,
     McpFlowTool,
+    McpPieceRunMetadata,
     McpPieceTool,
     McpRunStatus,
+    McpTool,
     mcpToolNaming,
     McpToolType,
     McpTrigger,
     TelemetryEventName,
-} from '@activepieces/shared'       
+    WorkerJobType,
+} from '@activepieces/shared'
 import { openai } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { flowService } from '../../flows/flow/flow.service'
@@ -26,31 +32,30 @@ import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
-import { mcpService } from '../mcp-service'
 import { mcpUtils } from '../mcp-utils'
-import { toolExecutor } from '../tool/tool-execution'
+import { toolInputsResolver } from '../tool/tool-inputs-resolver'
 
 
 export async function createMcpServer({
-    mcpId,
     logger,
     projectId,
+    tools,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
     const server = new McpServer({
         name: 'Activepieces',
         version: '1.0.0',
     })
 
-    const mcp = await mcpService(logger).getOrThrow({ mcpId, projectId })
-    const platformId = await projectService.getPlatformId(mcp.projectId)
-    const addedToolPromise = mcp.tools.map(tool => {
+    const platformId = await projectService.getPlatformId(projectId)
+    const addedToolPromise = tools.map(tool => {
         switch (tool.type) {
             case McpToolType.PIECE: {
-                return addPieceToServer(server, tool, mcp.projectId, platformId, logger)
+                return addPieceToServer(server, tool, projectId, platformId, logger)
             }
             case McpToolType.FLOW: {
-                return addFlowToServer(server, tool, mcpId, mcp.projectId, logger)
+                return addFlowToServer(server, tool, projectId, logger)
             }
         }
     })
@@ -134,7 +139,7 @@ async function addPieceToServer(
 
                 const auth = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
 
-                const { result, parsedInputs } = await toolExecutor.execute({
+                const parsedInputs = await toolInputsResolver.resolve({
                     auth,
                     userInstructions: params.instructions,
                     actionName: toolPieceMetadata.actionName,
@@ -143,12 +148,26 @@ async function addPieceToServer(
                     aiModel,
                     projectId,
                     platformId,
+                    preDefinedInputs: {},
+                })
+
+                const result = await userInteractionWatcher(logger)
+                    .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                    jobType: WorkerJobType.EXECUTE_TOOL,
+                    platformId,
+                    actionName: toolPieceMetadata.actionName,
+                    pieceName: toolPieceMetadata.pieceName,
+                    pieceVersion: toolPieceMetadata.pieceVersion,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    input: parsedInputs,
+                    projectId,
                 })
 
                 trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
                 const success = result.status === EngineResponseStatus.OK && result.result.success
 
-                await mcpRunService(logger).create({
+                await saveMcpRunOrSkip({
                     mcpId: mcpTool.mcpId,
                     toolId: mcpTool.id,
                     projectId,
@@ -160,6 +179,7 @@ async function addPieceToServer(
                     input: params,
                     output: result.result.output as Record<string, unknown>,
                     status: success ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
+                    logger,
                 })
 
                 if (success) {
@@ -186,7 +206,7 @@ async function addPieceToServer(
             catch (error) {
                 const isOpenAIProviderNotConnected = error instanceof Error && (error.name === 'AI_RetryError' || error.name === 'AI_APICallError')
                 const errorMessage = isOpenAIProviderNotConnected ? 'Please check if you have connected your OpenAI provider to Activepieces.' : JSON.stringify(error, null, 2)
-                await mcpRunService(logger).create({
+                await saveMcpRunOrSkip({
                     mcpId: mcpTool.mcpId,
                     toolId: mcpTool.id,
                     projectId,
@@ -198,6 +218,7 @@ async function addPieceToServer(
                     input: params,
                     output: { error: errorMessage },
                     status: McpRunStatus.FAILED,
+                    logger,
                 })
 
                 return {
@@ -215,7 +236,6 @@ async function addPieceToServer(
 async function addFlowToServer(
     server: McpServer,
     mcpTool: McpFlowTool,
-    mcpId: string,
     projectId: string,
     logger: FastifyBaseLogger,
 ): Promise<void> {
@@ -281,11 +301,11 @@ async function addFlowToServer(
                 failParentOnFailure: false,
             })
 
-            trackToolCall({ mcpId, toolName, projectId, logger })
+            trackToolCall({ mcpId: mcpTool.mcpId, toolName, projectId, logger })
             const success = isOkSuccess(response.status)
 
-            await mcpRunService(logger).create({
-                mcpId,
+            await saveMcpRunOrSkip({
+                mcpId: mcpTool.mcpId,
                 toolId: mcpTool.id,
                 projectId,
                 metadata: {
@@ -296,6 +316,7 @@ async function addFlowToServer(
                 input: params,
                 output: response,
                 status: response.status === StatusCodes.OK ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
+                logger,
             })
 
             if (success) {
@@ -335,6 +356,13 @@ function trackToolCall({ mcpId, toolName, projectId, logger }: TrackToolCallPara
     }), logger)
 }
 
+async function saveMcpRunOrSkip({ mcpId, toolId, projectId, metadata, input, output, status, logger }: SaveMcpRunParams) {
+    if (mcpId.startsWith('flow:')) {
+        return
+    }
+    await mcpRunService(logger).create({ mcpId, toolId, projectId, metadata, input, output, status })
+}
+
 
 
 type TrackToolCallParams = {
@@ -344,9 +372,20 @@ type TrackToolCallParams = {
     logger: FastifyBaseLogger
 }
 
-type CreateMcpServerRequest = {
+type SaveMcpRunParams = {
     mcpId: string
+    toolId: string
     projectId: string
+    metadata: McpPieceRunMetadata | McpFlowRunMetadata
+    input: Record<string, unknown>
+    output: Record<string, unknown>
+    status: McpRunStatus
+    logger: FastifyBaseLogger
+}
+
+type CreateMcpServerRequest = {
+    projectId: string
+    tools: McpTool[]
     logger: FastifyBaseLogger
 }
 

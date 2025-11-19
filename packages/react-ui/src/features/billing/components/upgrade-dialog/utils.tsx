@@ -4,10 +4,9 @@ import { ChevronRight } from 'lucide-react';
 // import {
 //   ApSubscriptionStatus,
 //   BillingCycle,
-//   PlanName,
 //   StripePlanName,
 // } from '@activepieces/ee-shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation, PlanName } from '@activepieces/shared';
 
 import {
   ADDON_PRICES,
@@ -25,19 +24,13 @@ import {
   DialogState,
   PricingCalculation,
 } from '.';
-import { ApSubscriptionStatus, BillingCycle, PlanName, StripePlanName } from './enums';
+import { ApSubscriptionStatus, BillingCycle, StripePlanName } from './enums';
 
 export const getCurrentPlanInfo = (
   platformBillingInformation?: PlatformBillingInformation,
 ): CurrentPlanInfo => {
-  const isTrial =
-    platformBillingInformation?.plan.stripeSubscriptionStatus ===
-    ApSubscriptionStatus.TRIALING;
-
   return {
-    plan: isTrial
-      ? PlanName.FREE
-      : (platformBillingInformation?.plan.plan as PlanName),
+    plan: platformBillingInformation?.plan.plan as PlanName,
     cycle: platformBillingInformation?.plan.stripeBillingCycle as BillingCycle,
     seats: platformBillingInformation?.plan.userSeatsLimit ?? DEFAULT_SEATS,
     activeFlows:
@@ -50,7 +43,6 @@ export const getCurrentPlanInfo = (
       platformBillingInformation?.plan.projectsLimit ?? DEFAULT_PROJECTS,
     subscriptionStatus: platformBillingInformation?.plan
       .stripeSubscriptionStatus as ApSubscriptionStatus,
-    isTrial,
   };
 };
 
@@ -141,7 +133,6 @@ export const getActionConfig = (
     seats: currentSeats,
     activeFlows: currentActiveFlows,
     projects: currentProjects,
-    isTrial,
   } = currentPlanInfo;
 
   const isFirstStep = currentStep === 1;
@@ -149,9 +140,7 @@ export const getActionConfig = (
   const selectedPlanEnum = selectedPlan as PlanName;
   const isSamePlan = currentPlan === selectedPlanEnum;
   const isDowngradingToFree =
-    selectedPlanEnum === PlanName.FREE &&
-    currentPlan !== PlanName.FREE &&
-    !isTrial;
+    selectedPlanEnum === PlanName.FREE && currentPlan !== PlanName.FREE;
 
   const isCycleChanged = currentCycle !== selectedCycle;
   const areAddonsChanged =
@@ -180,7 +169,7 @@ export const getActionConfig = (
   }
 
   if (isSecondStep) {
-    if (isTrial || currentPlan === PlanName.FREE) {
+    if (currentPlan === PlanName.FREE) {
       return {
         type: ActionType.CREATE_SUBSCRIPTION,
         label: t('Start Subscription'),

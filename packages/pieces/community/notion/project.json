@@ -23,12 +23,26 @@
           }
         ],
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/notion",
+        "command": "bun install --no-save"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   },

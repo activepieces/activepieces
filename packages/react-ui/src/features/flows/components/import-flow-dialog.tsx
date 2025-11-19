@@ -28,14 +28,17 @@ import {
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
   FlowTemplate,
+  isNil,
   PopulatedFlow,
   TelemetryEventName,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
@@ -45,6 +48,7 @@ export type ImportFlowDialogProps =
   | {
       insideBuilder: false;
       onRefresh: () => void;
+      folderId: string;
     }
   | {
       insideBuilder: true;
@@ -84,9 +88,9 @@ const ImportFlowDialog = (
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
-  const [selectedFolderName, setSelectedFolderName] = useState<
-    string | undefined
-  >(undefined);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
+    props.insideBuilder ? undefined : props.folderId,
+  );
 
   const { folders, isLoading } = foldersHooks.useFolders();
 
@@ -99,18 +103,21 @@ const ImportFlowDialog = (
   >({
     mutationFn: async (templates: FlowTemplate[]) => {
       const importPromises = templates.map(async (template) => {
-        const flow = props.insideBuilder
-          ? await flowsApi.get(props.flowId)
-          : await flowsApi.create({
-              displayName: template.name,
-              projectId: authenticationSession.getProjectId()!,
-              folderName:
-                selectedFolderName === undefined ||
-                selectedFolderName === 'Uncategorized'
-                  ? undefined
-                  : selectedFolderName,
-            });
-
+        let flow: PopulatedFlow | null = null;
+        if (props.insideBuilder) {
+          flow = await flowsApi.get(props.flowId);
+        } else {
+          const folder =
+            !isNil(selectedFolderId) &&
+            selectedFolderId !== UncategorizedFolderId
+              ? await foldersApi.get(selectedFolderId)
+              : undefined;
+          flow = await flowsApi.create({
+            displayName: template.name,
+            projectId: authenticationSession.getProjectId()!,
+            folderName: folder?.displayName,
+          });
+        }
         return await flowsApi.update(flow.id, {
           type: FlowOperationType.IMPORT_FLOW,
           request: {
@@ -143,7 +150,7 @@ const ImportFlowDialog = (
       });
 
       if (flows.length === 1) {
-        navigate(`/flows/${flows[0].id}`, { replace: true });
+        navigate(`/flows/${flows[0].id}`);
         return;
       }
       setIsDialogOpen(false);
@@ -193,8 +200,10 @@ const ImportFlowDialog = (
     setErrorMessage('');
     const file = files[0];
     const newTemplates: FlowTemplate[] = [];
-
-    if (file.type === 'application/zip' && !props.insideBuilder) {
+    const isZipFile =
+      file.type === 'application/zip' ||
+      file.type === 'application/x-zip-compressed';
+    if (isZipFile && !props.insideBuilder) {
       const zip = new JSZip();
       const zipContent = await zip.loadAsync(file);
       const jsonFiles = Object.keys(zipContent.files).filter((fileName) =>
@@ -221,17 +230,8 @@ const ImportFlowDialog = (
       setErrorMessage(t('Unsupported file type'));
       return;
     }
-
-    console.log('handleFileChange 3');
-    console.log(newTemplates);
-
     setTemplates(newTemplates);
   };
-
-  const handleFolderSelect = (folderName: string | undefined) => {
-    setSelectedFolderName(folderName);
-  };
-
   return (
     <Dialog
       open={isDialogOpen}
@@ -284,20 +284,23 @@ const ImportFlowDialog = (
                 </div>
               ) : (
                 <Select
-                  onValueChange={handleFolderSelect}
-                  defaultValue={selectedFolderName}
+                  onValueChange={(value) => setSelectedFolderId(value)}
+                  defaultValue={selectedFolderId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t('Select a folder')} />
+                    <SelectValue
+                      defaultValue={selectedFolderId}
+                      placeholder={t('Select a folder')}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>{t('Folders')}</SelectLabel>
-                      <SelectItem value="Uncategorized">
+                      <SelectItem value={UncategorizedFolderId}>
                         {t('Uncategorized')}
                       </SelectItem>
                       {folders?.map((folder) => (
-                        <SelectItem key={folder.id} value={folder.displayName}>
+                        <SelectItem key={folder.id} value={folder.id}>
                           {folder.displayName}
                         </SelectItem>
                       ))}

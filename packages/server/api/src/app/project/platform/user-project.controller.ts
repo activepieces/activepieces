@@ -12,7 +12,7 @@ import { platformProjectService } from './platform-project.service'
 
 export const userPlatformProjectController: FastifyPluginAsyncTypebox = async (fastify) => {
     // Overrides the same endpoint handler in the open source counter-part
-    fastify.get('/:id', async (request) => {
+    fastify.get('/:id', GetProjectRequestForUser, async (request) => {
         return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.principal.projectId)
     })
 
@@ -54,9 +54,15 @@ async function getPlatformsForUser(identityId: string, platformId: string) {
     return platforms
 }
 
+const GetProjectRequestForUser = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+}
+
 const ListProjectRequestForUser = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         response: {
@@ -68,7 +74,7 @@ const ListProjectRequestForUser = {
 
 const ListProjectsForPlatforms = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
     schema: {
         response: {

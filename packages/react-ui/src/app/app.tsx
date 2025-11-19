@@ -30,7 +30,6 @@ import {
   ResourceLockedParams,
 } from '@activepieces/shared';
 
-import { ChangelogProvider } from './components/changelog-provider';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
@@ -76,7 +75,6 @@ export function App() {
                     <ThemeProvider storageKey="vite-ui-theme">
                       <ApRouter />
                       <Toaster />
-                      <ChangelogProvider />
                     </ThemeProvider>
                   </React.Fragment>
                 </TooltipProvider>

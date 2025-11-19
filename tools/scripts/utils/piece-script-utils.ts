@@ -156,8 +156,8 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         const packageLockPath = join(folderPath, 'package.json');
         const packageExists = await stat(packageLockPath).catch(() => null);
         if (packageExists) {
-            console.info(`[loadPieceFromFolder] package.json exists, running npm install`)
-            execSync('npm install', { cwd: folderPath, stdio: 'inherit' });
+            console.info(`[loadPieceFromFolder] package.json exists, running bun install`)
+            execSync('bun install', { cwd: folderPath, stdio: 'inherit' });
         }
 
         const module = await import(

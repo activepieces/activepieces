@@ -1,3 +1,4 @@
+import { ActivepiecesError, ErrorCode, FlowStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -21,11 +22,11 @@ afterAll(async () => {
 
 describe('Platform Project Service', () => {
     describe('Hard delete Project', () => {
-        it('Hard deletes associated flows', async () => {
+        it('Hard deletes associated flows fails', async () => {
             // arrange
-            const { mockProject } = await mockAndSaveBasicSetup()
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
 
-            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            const mockFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.ENABLED })
             await databaseConnection().getRepository('flow').save([mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
@@ -43,18 +44,21 @@ describe('Platform Project Service', () => {
                 publishedVersionId: mockPublishedFlowVersion.id,
             })
 
-            // act
-            await platformProjectService(mockLog).hardDelete({ id: mockProject.id })
+            try {
+                // act
+                await platformProjectService(mockLog).hardDelete({ id: mockProject.id, platformId: mockPlatform.id })
 
+            }
+            catch (error) {
             // assert
-            const flowCount = await databaseConnection().getRepository('flow').countBy({ projectId: mockProject.id })
-            expect(flowCount).toBe(0)
 
-            const flowVersionCount = await databaseConnection().getRepository('flow_version').countBy({ flowId: mockFlow.id })
-            expect(flowVersionCount).toBe(0)
+                expect(error).toBeInstanceOf(ActivepiecesError)
+                expect((error as ActivepiecesError).error.code).toBe(ErrorCode.VALIDATION)
+                return
+            }
+            throw new Error('Expected error to be thrown because project has enabled flows')
 
-            const flowRunCount = await databaseConnection().getRepository('flow_run').countBy({ projectId: mockProject.id })
-            expect(flowRunCount).toBe(0)
+         
         })
 
         it('Hard deletes associated piece metadata', async () => {
@@ -68,7 +72,7 @@ describe('Platform Project Service', () => {
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
             // act
-            await platformProjectService(mockLog).hardDelete({ id: mockProject.id })
+            await platformProjectService(mockLog).hardDelete({ id: mockProject.id, platformId: mockPlatform.id })
 
             // assert
             const fileCount = await databaseConnection().getRepository('file').countBy({ projectId: mockProject.id })

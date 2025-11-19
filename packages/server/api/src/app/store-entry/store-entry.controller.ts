@@ -50,7 +50,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const CreateRequest =  {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
     },
     schema: {
         body: PutStoreEntryRequest,
@@ -59,7 +59,7 @@ const CreateRequest =  {
 
 const GetRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
     },
     schema: {
         querystring: GetStoreEntryRequest,
@@ -69,7 +69,7 @@ const GetRequest = {
 
 const DeleteStoreRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
     },
     schema: {
         querystring: DeleteStoreEntryRequest,

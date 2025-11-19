@@ -3,6 +3,7 @@ import {
     ErrorCode,
     isNil,
     isObject,
+    PrincipalType,
 } from '@activepieces/shared'
 import { preSerializationHookHandler } from 'fastify'
 
@@ -26,7 +27,9 @@ Payload | null
         { payload, principal: request.principal, route: request.routeOptions.config },
         'entitiesMustBeOwnedByCurrentProject',
     )
-    const principalProjectId = request.principal?.projectId
+    const principalProjectId = request.principal.type === PrincipalType.USER
+    || request.principal.type === PrincipalType.ENGINE
+        ? request.principal.projectId : undefined
 
     if (isObject(payload) && !isNil(principalProjectId)) {
         let verdict: AuthzVerdict = 'ALLOW'

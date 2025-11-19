@@ -21,7 +21,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger): PieceMetadataServi
     const source = system.getOrThrow<PiecesSource>(AppSystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
-        case PiecesSource.CLOUD_AND_DB:
             return FastDbPieceMetadataService(log)
         case PiecesSource.FILE:
             return FilePieceMetadataService(log)

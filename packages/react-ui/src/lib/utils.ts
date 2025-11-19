@@ -322,3 +322,23 @@ export const scrollToElementAndClickIt = (elementId: string) => {
   });
   element?.click();
 };
+
+export const routesThatRequireProjectId = {
+  runs: '/runs',
+  singleRun: '/runs/:runId',
+  flows: '/flows',
+  singleFlow: '/flows/:flowId',
+  connections: '/connections',
+  singleConnection: '/connections/:connectionId',
+  issues: '/issues',
+  singleIssue: '/issues/:issueId',
+  tables: '/tables',
+  singleTable: '/tables/:tableId',
+  todos: '/todos',
+  singleTodo: '/todos/:todoId',
+  settings: '/settings',
+  mcps: '/mcps',
+  singleMcp: '/mcps/:mcpId',
+  releases: '/releases',
+  singleRelease: '/releases/:releaseId',
+};

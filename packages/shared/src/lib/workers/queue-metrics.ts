@@ -5,7 +5,7 @@ export const WorkerJobStats = Type.Object({
     delayed: Type.Number(),
     prioritized: Type.Number(),
     waiting: Type.Number(),
-    "waiting-children": Type.Number(),
+    'waiting-children': Type.Number(),
     completed: Type.Number(),
     failed: Type.Number(),
     paused: Type.Number(),

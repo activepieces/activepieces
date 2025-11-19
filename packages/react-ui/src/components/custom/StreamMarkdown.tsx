@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
+// import remarkMath from 'remark-math';
 
 const StreamMarkdown = ({
   content,
@@ -94,7 +94,7 @@ const StreamMarkdown = ({
           em: ({ node, ...props }) => <em {...props} />,
         }}
         children={displayedContent}
-        remarkPlugins={[remarkMath]}
+        // remarkPlugins={[remarkMath]}
       />
       <div ref={bottomRef} />
     </div>

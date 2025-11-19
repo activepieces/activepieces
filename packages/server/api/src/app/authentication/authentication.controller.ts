@@ -15,12 +15,12 @@ import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 // import { eventsHooks } from '../helper/application-events'
 import dayjs from 'dayjs'
-import { distributedStore } from '../helper/key-value'
 import { system } from '../helper/system/system'
 import { mcpService } from '../mcp/mcp-service'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
+import { distributedStore } from '../database/redis-connections'
 
 export const authenticationController: FastifyPluginAsyncTypebox = async (
     app,
@@ -119,7 +119,7 @@ const rateLimitOptions: RateLimitOptions = {
 
 const SwitchProjectRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -129,7 +129,7 @@ const SwitchProjectRequestOptions = {
 
 const SwitchPlatformRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
         rateLimit: rateLimitOptions,
     },
     schema: {

@@ -1,13 +1,11 @@
 import { t } from 'i18next';
 import { Wand, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from '@/components/ui/use-toast';
 import { ActivateLicenseDialog } from '@/features/billing/components/activate-license-dialog';
 import { ActiveFlowAddon } from '@/features/billing/components/active-flow-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
@@ -25,23 +23,20 @@ import {
 } from '@/features/billing/lib/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApSubscriptionStatus, PlanName } from '@activepieces/ee-shared';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { ApSubscriptionStatus } from '@activepieces/ee-shared';
+import { ApEdition, ApFlagId, isNil, PlanName } from '@activepieces/shared';
 
 export default function Billing() {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
     useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const openDialog = useManagePlanDialogStore((state) => state.openDialog);
-  const navigate = useNavigate();
 
   const {
     data: platformPlanInfo,
     isLoading: isPlatformSubscriptionLoading,
     isError,
   } = billingQueries.usePlatformSubscription(platform.id);
-  const { mutate: startBusinessTrial, isPending: startingBusinessTrial } =
-    billingMutations.useStartTrial();
 
   const { mutate: redirectToPortalSession } = billingMutations.usePortalLink();
 
@@ -52,29 +47,10 @@ export default function Billing() {
   );
   const isBusinessPlan = platformPlanInfo?.plan.plan === PlanName.BUSINESS;
   const isPlus = platformPlanInfo?.plan.plan === PlanName.PLUS;
-  const isTrial = status === ApSubscriptionStatus.TRIALING;
   const isEnterprise =
     !isNil(platformPlanInfo?.plan.licenseKey) ||
     platformPlanInfo?.plan.plan === PlanName.ENTERPRISE ||
     edition === ApEdition.ENTERPRISE;
-
-  const handleStartBusinessTrial = () => {
-    startBusinessTrial(
-      { plan: PlanName.BUSINESS },
-      {
-        onSuccess: () => {
-          navigate('/platform/setup/billing/success');
-          toast({
-            title: t('Success'),
-            description: t('Business trial started successfully'),
-          });
-        },
-        onError: () => {
-          navigate(`/platform/setup/billing/error`);
-        },
-      },
-    );
-  };
 
   if (isPlatformSubscriptionLoading || isNil(platformPlanInfo)) {
     return (
@@ -100,17 +76,6 @@ export default function Billing() {
         beta={true}
       >
         <div className="flex items-center gap-2">
-          {platformPlanInfo.plan.eligibleForTrial === PlanName.BUSINESS && (
-            <Button
-              variant="outline"
-              onClick={handleStartBusinessTrial}
-              disabled={startingBusinessTrial}
-            >
-              {startingBusinessTrial && <LoadingSpinner className="size-4" />}
-              {t('Start Business Trial')}
-            </Button>
-          )}
-
           {isEnterprise ? (
             <Button
               variant="default"
@@ -143,11 +108,11 @@ export default function Billing() {
 
         <UsageCards platformSubscription={platformPlanInfo} />
 
-        {(isBusinessPlan || isPlus) && !isTrial && (
+        {(isBusinessPlan || isPlus) && (
           <ActiveFlowAddon platformSubscription={platformPlanInfo} />
         )}
 
-        {isBusinessPlan && !isTrial && (
+        {isBusinessPlan && (
           <div className="grid grid-cols-2 gap-6">
             <ProjectAddon platformSubscription={platformPlanInfo} />
             <UserSeatAddon platformSubscription={platformPlanInfo} />

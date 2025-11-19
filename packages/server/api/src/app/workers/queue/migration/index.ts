@@ -1,7 +1,6 @@
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis'
-import { distributedLock } from '../../../helper/lock'
+import { distributedLock, redisConnections } from '../../../database/redis-connections'
 import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'
 import { refillRenewWebhookJobs } from './refill-renew-webhook-jobs'
@@ -13,24 +12,22 @@ const QUEUE_MIGRATION_KEY = 'worker_jobs_version'
 
 export const queueMigration = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
-        const migrationLock = await distributedLock.acquireLock({
+        await distributedLock(log).runExclusive({
             key: 'job_migration_lock',
-            timeout: dayjs.duration(20, 'minute').asMilliseconds(),
-            log,
-        })
-        try {
-            if (await needMigration()) {
-                await refillPollingJobs(log).run()
-                await refillRenewWebhookJobs(log).run()
+            timeoutInSeconds: dayjs.duration(20, 'minute').asSeconds(),
+            fn: async () => {
+                if (await needMigration()) {
+                    await refillPollingJobs(log).run()
+                    await refillRenewWebhookJobs(log).run()
+                    await updateMigrationVersion()
+                }
+                await unifyOldQueuesIntoOne(log).run()
+                await removeRateLimitJobsQueue(log).run()
                 await refillPausedRuns(log).run()
-                await updateMigrationVersion()
-            }
-            await unifyOldQueuesIntoOne(log).run()
-            await removeRateLimitJobsQueue(log).run()
-        }
-        finally {
-            await migrationLock.release()
-        }
+
+            },
+        })
+      
     },
 })
 

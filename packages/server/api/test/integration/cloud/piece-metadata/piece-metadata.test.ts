@@ -61,7 +61,6 @@ describe('Piece Metadata API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
-                projectId: apId(),
             })
 
             // act
@@ -95,7 +94,7 @@ describe('Piece Metadata API', () => {
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata)
 
-            const { mockOwner, mockProject } = await mockAndSaveBasicSetup({
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
                 platform: {
                     filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
                     filteredPieceNames: [],
@@ -104,8 +103,11 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             // act
@@ -136,7 +138,6 @@ describe('Piece Metadata API', () => {
                 .save(mockPieceMetadata)
 
             const testToken = await generateMockToken({
-                projectId: apId(),
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
             })
@@ -357,10 +358,6 @@ describe('Piece Metadata API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
-                projectId: apId(),
-                platform: {
-                    id: apId(),
-                },
             })
 
             // act
@@ -428,10 +425,6 @@ describe('Piece Metadata API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
-                projectId: apId(),
-                platform: {
-                    id: apId(),
-                },
             })
 
             // act
@@ -471,10 +464,6 @@ describe('Piece Metadata API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
-                projectId: apId(),
-                platform: {
-                    id: apId(),
-                },
             })
 
             // act

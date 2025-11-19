@@ -1,7 +1,7 @@
 import { HttpMethod } from "@activepieces/pieces-common";
 import { VehicleEventsOperation, VehicleEventsBodyType } from "./type";
 
-const vehicleEventsBaseUrl = "https://vehicle-events-api.dimo.zone";
+const vehicleEventsBaseUrl = "https://vehicle-triggers-api.dimo.zone";
 const webhooksBaseUrl = `${vehicleEventsBaseUrl}/v1/webhooks`;
 const signalsUrl = `${webhooksBaseUrl}/signals`;
 const vehiclesUrl = `${webhooksBaseUrl}/vehicles`;

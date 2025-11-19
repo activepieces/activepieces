@@ -6,6 +6,7 @@ import {
   blocks,
   threadTs,
   singleSelectChannelInfo,
+  mentionOriginFlow,
 } from '../common/props';
 import { processMessageTimestamp, slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
@@ -38,14 +39,34 @@ export const slackSendMessageAction = createAction({
       required: false,
       defaultValue: false,
     }),
+    mentionOriginFlow,
+    unfurlLinks: Property.Checkbox({
+      displayName: 'Unfurl Links',
+      description: 'Enable link unfurling for this message',
+      required: false,
+      defaultValue: true,
+    }),
     blocks,
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file, blocks, replyBroadcast } =
+    const { text, channel, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
+    
+    const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
 
-    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+    if(blocks && Array.isArray(blocks)) { 
+      blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
+    }
+
+    if(mentionOriginFlow) {
+      (blockList as KnownBlock[])?.push({ type: 'context', elements: [
+        {
+          "type": "mrkdwn",
+          "text": `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
+        }
+      ] })
+    }
 
     return slackSendMessage({
       token,
@@ -57,6 +78,7 @@ export const slackSendMessageAction = createAction({
       file,
       blocks: blockList,
       replyBroadcast,
+      unfurlLinks,
     });
   },
 });

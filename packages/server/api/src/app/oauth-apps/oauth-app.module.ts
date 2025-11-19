@@ -1,8 +1,4 @@
-import {
-    assertNotNullOrUndefined,
-    ListOAuth2AppRequest,
-    OAuthApp,
-    SeekPage, UpsertOAuth2AppRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, ListOAuth2AppRequest, OAuthApp, PrincipalType, SeekPage, UpsertOAuth2AppRequest } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,
@@ -24,6 +20,9 @@ const readOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
         '/',
         {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
             schema: {
                 querystring: ListOAuth2AppRequest,
                 response: {
@@ -51,6 +50,9 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     app.post(
         '/',
         {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
             schema: {
                 body: UpsertOAuth2AppRequest,
             },
@@ -68,6 +70,9 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     app.delete(
         '/:id',
         {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
             schema: {
                 params: GetIdParams,
             },

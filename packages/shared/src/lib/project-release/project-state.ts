@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { AgentOutputField, AgentOutputType } from '../agents'
 import { Nullable, NullableEnum } from '../common'
 import { PopulatedFlow } from '../flows/flow'
 import { McpTool } from '../mcp'
@@ -19,13 +18,6 @@ export enum TableOperationType {
     UPDATE_TABLE = 'UPDATE_TABLE',
     CREATE_TABLE = 'CREATE_TABLE',
     DELETE_TABLE = 'DELETE_TABLE',
-}
-
-
-export enum AgentOperationType {
-    UPDATE_AGENT = 'UPDATE_AGENT',
-    CREATE_AGENT = 'CREATE_AGENT',
-    DELETE_AGENT = 'DELETE_AGENT',
 }
 
 export const FlowState = PopulatedFlow
@@ -68,27 +60,11 @@ export const McpState = Type.Object({
 })
 export type McpState = Static<typeof McpState>
 
-export const AgentState = Type.Object({
-    externalId: Type.String(),
-    displayName: Type.String(),
-    description: Type.String(),
-    systemPrompt: Type.String(),
-    profilePictureUrl: Type.String(),
-    maxSteps: Type.Number(),
-    outputType: Type.Optional(Type.Enum(AgentOutputType)),
-    outputFields: Type.Optional(Type.Array(AgentOutputField)),
-    runCompleted: Type.Number(),
-    mcp: McpState,
-})
-
-export type AgentState = Static<typeof AgentState>
-
 export const ProjectState = Type.Object({
     flows: Type.Array(PopulatedFlow),
     // NOTE: This is optional because in old releases, the connections, tables, agents and mcp state is not present
     connections: Type.Optional(Type.Array(ConnectionState)),
     tables: Type.Optional(Type.Array(TableState)),
-    agents: Type.Optional(Type.Array(AgentState)),
 })
 export type ProjectState = Static<typeof ProjectState>
 
@@ -139,28 +115,10 @@ export const TableOperation = Type.Union([
 ])
 export type TableOperation = Static<typeof TableOperation>
 
-export const AgentOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(AgentOperationType.UPDATE_AGENT),
-        newAgentState: AgentState,
-        agentState: AgentState,
-    }),
-    Type.Object({
-        type: Type.Literal(AgentOperationType.CREATE_AGENT),
-        agentState: AgentState,
-    }),
-    Type.Object({
-        type: Type.Literal(AgentOperationType.DELETE_AGENT),
-        agentState: AgentState,
-    }),
-])
-export type AgentOperation = Static<typeof AgentOperation>
-
 export const DiffState = Type.Object({
     flows: Type.Array(ProjectOperation),
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
-    agents: Type.Array(AgentOperation),
 })
 export type DiffState = Static<typeof DiffState>
 
@@ -204,7 +162,6 @@ export const ProjectSyncPlan = Type.Object({
     flows: Type.Array(FlowProjectOperation),
     connections: Type.Array(ConnectionOperation),
     tables: Type.Array(TableOperation),
-    agents: Type.Array(AgentOperation),
     errors: Type.Array(FlowSyncError),
 })
 export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>

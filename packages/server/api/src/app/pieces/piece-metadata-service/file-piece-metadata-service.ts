@@ -1,5 +1,5 @@
 
-import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, pieceTranslation } from '@activepieces/pieces-framework'
+import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 
 import {
@@ -83,6 +83,9 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 pieceMetadata,
                 projectId,
             })
+        },
+        async registry(): Promise<PiecePackageInformation[]> {
+            return []
         },
         async getOrThrow({
             name,

@@ -17,6 +17,7 @@ export const errorHandler = async (
             [ErrorCode.FEATURE_DISABLED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.AI_CREDIT_LIMIT_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
+            [ErrorCode.FILE_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
             [ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER]: StatusCodes.NOT_IMPLEMENTED,
@@ -41,6 +42,7 @@ export const errorHandler = async (
             [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: StatusCodes.CONFLICT,
             [ErrorCode.MCP_PIECE_REQUIRES_CONNECTION]: StatusCodes.BAD_REQUEST,
             [ErrorCode.MCP_PIECE_CONNECTION_MISMATCH]: StatusCodes.BAD_REQUEST,
+            [ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS]: StatusCodes.UNPROCESSABLE_ENTITY,
         }
         const statusCode =
       statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST

@@ -1,4 +1,5 @@
 import { TlsOptions } from 'node:tls'
+import 'pg'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
@@ -91,6 +92,13 @@ import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759
 import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
 import { RestrictOnDeleteProjectForFlow1760376319952 } from './migration/postgres/1760376319952-RestrictOnDeleteProjectForFlow'
 import { AddProfilePicture1760504093297 } from './migration/postgres/1760504093297-add-profile-picture'
+import { RemoveAgentidFromMcpEntity1760452015041 } from './migration/postgres/1760452015041-remove-agentid-from-mcp-entity'
+import { RemoveTriggerRunEntity1760993216501 } from './migration/postgres/1760993216501-RemoveTriggerRunEntity'
+import { RemoveProjectNotifyStatus1761056570728 } from './migration/postgres/1761056570728-RemoveProjectNotifyStatus'
+import { DeprecateCopilot1761221158764 } from './migration/postgres/1761221158764-DeprecateCopilot'
+import { AddMaximumConcurrentJobsPerProject1761245180906 } from './migration/postgres/1761245180906-AddMaximumConcurrentJobsPerProject'
+import { RemoveTasksAndTasksLimit1761570485475 } from './migration/postgres/1761570485475-RemoveTasksAndTasksLimit'
+import { DeleteLastChangelogDismissedAt1762018344394 } from './migration/postgres/1762018344394-DeleteLastChangelogDismissedAt'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -104,6 +112,13 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        DeleteLastChangelogDismissedAt1762018344394,
+        RemoveTasksAndTasksLimit1761570485475,
+        AddMaximumConcurrentJobsPerProject1761245180906,
+        DeprecateCopilot1761221158764,
+        RemoveProjectNotifyStatus1761056570728,
+        RemoveTriggerRunEntity1760993216501,
+        RemoveAgentidFromMcpEntity1760452015041,
         AddBuilderMessageEntity1758704404389,
         RestrictOnDeleteProjectForFlow1760376319952,
         AddProfilePicture1760504093297,
@@ -201,6 +216,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
             commonMigration.push()
             break
     }
+
 
     return commonMigration
 }

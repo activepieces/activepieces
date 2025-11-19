@@ -1,8 +1,8 @@
+import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis'
-import { apDayjs, apDayjsDuration } from '../dayjs-helper'
+import { redisConnections } from '../../database/redis-connections'
 import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
 
@@ -18,7 +18,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         systemJobsQueue = new Queue(
             SYSTEM_JOB_QUEUE,
             {
-                connection: await redisConnections.createNew(),
+                connection: await redisConnections.create(),
                 defaultJobOptions: {
                     attempts: 10,
                     backoff: {
@@ -42,7 +42,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                 await jobHandler(job.data)
             },
             {
-                connection: await redisConnections.createNew(),
+                connection: await redisConnections.create(),
                 concurrency: 1,
             },
         )
@@ -99,6 +99,7 @@ async function removeDeprecatedJobs(): Promise<void> {
     }
     const onetimeDeprecatedJobs = [
         'hard-delete-project',
+        'issues-reminder',
     ]
     const oneTimeJobs = await systemJobsQueue.getJobs()
     const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && (onetimeDeprecatedJobs.includes(f.name) || onetimeDeprecatedJobs.some(d => f.name.startsWith(d))))

@@ -33,12 +33,14 @@ export const useFlowsBulkActions = ({
   setSelectedRows,
   setRefresh,
   refetch,
+  folderId,
 }: {
   selectedRows: PopulatedFlow[];
   refresh: number;
   setSelectedRows: (selectedRows: PopulatedFlow[]) => void;
   setRefresh: (refresh: number) => void;
   refetch: () => void;
+  folderId: string;
 }) => {
   const userHasPermissionToUpdateFlow = useAuthorization().checkAccess(
     Permission.WRITE_FLOW
@@ -176,7 +178,7 @@ export const useFlowsBulkActions = ({
                   </ConfirmationDeleteDialog>
                 </PermissionNeededTooltip>
               )}
-              <CreateFlowDropdown />
+              <CreateFlowDropdown refetch={refetch} folderId={folderId} />
             </div>
           );
         },

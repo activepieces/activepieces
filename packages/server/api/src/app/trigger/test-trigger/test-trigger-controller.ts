@@ -30,7 +30,7 @@ const TestTriggerRequest = {
         body: TestTriggerRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
 
@@ -39,6 +39,6 @@ const CancelTestTriggerRequest = {
         body: CancelTestTriggerRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER] as const,
     },
 }

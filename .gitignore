@@ -8,7 +8,7 @@ tmp
 firebase-admin-sdk.json
 dev
 /cache
-logs/
+/logs/
 .env
 
 # SDK Build
@@ -76,3 +76,5 @@ scratch.md
 # Vite
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+/redis-binaries/
