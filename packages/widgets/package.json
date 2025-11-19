@@ -12,7 +12,7 @@
     "url": "https://github.com/rupalbarman"
   },
   "homepage": "https://github.com/avalang-global/AutomationX",
-  "version": "0.0.7",
+  "version": "0.0.10",
   "type": "module",
   "module": "index.esm.js",
   "main": "index.umd.js",
@@ -20,7 +20,8 @@
   "dependencies": {},
   "peerDependencies": {
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "showdown": "^2.1.0"
   },
   "unpkg": "index.umd.js",
   "jsdelivr": "index.umd.js",

@@ -19,6 +19,7 @@ export default defineConfig(() => ({
     }),
     replace({
       'process.env.NODE_ENV': JSON.stringify('production'),
+      preventAssignment: true,
     }),
   ],
   build: {
@@ -37,11 +38,12 @@ export default defineConfig(() => ({
     },
     rollupOptions: {
       // External packages that should not be bundled into your library.
-      external: ['react', 'react-dom'],
+      external: ['react', 'react-dom', 'showdown'],
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
+          showdown: 'showdown',
         },
       },
     },

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import showdown from 'showdown';
+
 import './ChatWidget.css';
 
 export interface ThemeOptions {
@@ -38,6 +40,16 @@ export interface ChatWidgetProps {
 const DEFAULT_WELCOME_MSG = '👋 Hi there! How can I help you today?';
 const DEFAULT_TITLE = 'Chat';
 
+const getOrCreateSessionId = () => {
+  const key = 'ax_chat_session_id';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+  return id;
+};
+
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
   webhookUrl,
   title,
@@ -52,7 +64,20 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   const [isMinimized, setIsMinimized] = useState(true);
   const [loading, setLoading] = useState(false);
 
+  const sessionIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const converter = new showdown.Converter({
+    tables: true,
+    simpleLineBreaks: true,
+    simplifiedAutoLink: true,
+    openLinksInNewWindow: true,
+    omitExtraWLInCodeBlocks: true,
+  });
+
+  useEffect(() => {
+    sessionIdRef.current = getOrCreateSessionId();
+  }, []);
 
   // Automatically scroll to bottom when messages update
   useEffect(() => {
@@ -71,7 +96,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          message: text,
+          sessionId: sessionIdRef.current,
+        }),
       });
 
       if (!res.ok) throw new Error('Network error');
@@ -163,7 +191,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                 }`}
                 style={msg.from === 'user' ? userMessageStyle : botMessageStyle}
               >
-                {msg.text}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: converter.makeHtml(msg.text),
+                  }}
+                ></div>
               </div>
             ))}
             {loading && <div className="ax-message ax-bot">...</div>}
