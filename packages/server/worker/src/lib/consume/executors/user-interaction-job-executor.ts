@@ -1,4 +1,4 @@
-import { AppConnectionValue, assertNotNullOrUndefined, UserInteractionJobData, WorkerJobType } from '@activepieces/shared'
+import { AppConnectionValue, EngineResponseStatus, isNil, UserInteractionJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
@@ -31,7 +31,15 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     engineToken,
                     flowVersionId: jobData.flowVersionId,
                 })
-                assertNotNullOrUndefined(flowVersion, 'flowVersion')
+                if (isNil(flowVersion)) {
+                    response = {
+                        status: EngineResponseStatus.OK,
+                        result: {},
+                        standardError: '',
+                        standardOutput: '',
+                    }
+                    break
+                }
                 response = await engineRunner(log).executeTrigger(engineToken, {
                     platformId: jobData.platformId,
                     hookType: jobData.hookType,
