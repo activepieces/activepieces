@@ -95,12 +95,17 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         })
     },
     getCustomPiecesPath: (platformId: string): string => {
-        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
-            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
+        switch (workerMachine.getSettings().EXECUTION_MODE) {
+            case ExecutionMode.SANDBOX_PROCESS:
+            case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
+                return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
+            case ExecutionMode.UNSANDBOXED:
+            case ExecutionMode.SANDBOX_CODE_ONLY:
+                return GLOBAL_CACHE_COMMON_PATH
+            default:
+                throw new Error('Invalid execution mode')
         }
-        return GLOBAL_CACHE_PATH_LATEST_VERSION
     },
-
 })
 
 async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean): Promise<PieceInstallationResult> {
