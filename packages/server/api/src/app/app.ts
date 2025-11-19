@@ -194,8 +194,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(humanInputModule)
     await app.register(tagsModule)
     await app.register(mcpModule)
-    await pieceSyncService(app.log).setup()
-    await pieceMetadataService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
