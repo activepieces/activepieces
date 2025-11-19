@@ -43,7 +43,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({
         pieces,
         includeFilters,
-        broadcast
+        broadcast,
     }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         for (const [packagePath, pieces] of Object.entries(groupedPieces)) {
@@ -71,7 +71,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         await registryPieceManager(log).install({
             pieces: usedPieces,
             includeFilters: false,
-            broadcast: true
+            broadcast: true,
         })
         log.info({
             piecesCount: usedPieces.length,
@@ -79,18 +79,18 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         }, '[registryPieceManager] Warmed up pieces cache')
     },
     distributedWarmup: async (): Promise<void> => {
-        pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, async (channel, message) => {
+        await pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, async (channel, message) => {
             log.debug({ channel }, '[registryPieceManager#subscribe] Received message')
             const { data: pieces, error } = await tryCatch(async () => JSON.parse(message) as PiecePackage[])
             if (error) {
                 log.error({ error }, '[registryPieceManager#subscribe] Failed to parse message as pieces')
                 return
             }
-            if (isEmpty(pieces)) return;
+            if (isEmpty(pieces)) return
             await registryPieceManager(log).install({
                 pieces,
                 includeFilters: false,
-                broadcast: false
+                broadcast: false,
             })
         })
     },

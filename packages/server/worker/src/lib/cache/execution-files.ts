@@ -51,7 +51,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
             await registryPieceManager(log).install({
                 pieces: nonDevPieces,
                 includeFilters: true,
-                broadcast: true
+                broadcast: true,
             })
             log.info({
                 pieces: nonDevPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),

@@ -3,7 +3,6 @@ import {
     ExecutionMode,
     isNil,
     MachineInformation,
-    PiecePackage,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
     WorkerSettingsResponse,
