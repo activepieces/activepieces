@@ -96,6 +96,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 })
                             }
 
+                            if (!isNil(runMetadata.requestId)) {
+                                await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
+                            }
                             if (!isNil(runMetadata.finishTime)) {
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
                             }
