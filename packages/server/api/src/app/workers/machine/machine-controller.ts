@@ -1,4 +1,4 @@
-import { PiecePackage, Principal, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { Principal, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../../core/websockets.service'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
@@ -28,15 +28,6 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
         return async (_request: unknown) => {
             await machineService(app.log).onDisconnect({
                 workerId: socket.handshake.auth.workerId,
-            })
-        }
-    })
-
-    websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.PIECES_INSTALLED, (socket) => {
-        return async ({ pieces }: { pieces: PiecePackage[] }) => {
-            await machineService(app.log).onPiecesInstalled(socket, {
-                workerId: socket.handshake.auth.workerId,
-                pieces,
             })
         }
     })

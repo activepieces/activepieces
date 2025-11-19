@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { emitWithAck as emitWithAckUtil, parseToJsonIfPossible, tryCatch, WebsocketServerEvent, WebsocketWorkerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { emitWithAck as emitWithAckUtil, tryCatch, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerMachine } from './utils/machine'
@@ -83,19 +83,6 @@ export const appSocket = (log: FastifyBaseLogger) => ({
         }, 15000)
     },
 
-    emit: async <T = unknown>(event: string, data: unknown): Promise<void> => {
-        if (!socket.connected) {
-            log.error({
-                message: 'Failed to emit event',
-                event,
-                data,
-                error: 'socket not connected',
-            })
-            return
-        }
-        socket.emit(event, data)
-    },
-    
     emitWithAck: async <T = unknown>(event: string, data: unknown): Promise<T> => {
         const result = await tryCatch(() => {
             return emitWithAckUtil<T>(socket, event, data, {
@@ -118,12 +105,6 @@ export const appSocket = (log: FastifyBaseLogger) => ({
         return result.data
     },
 
-    
-
-    addListener: <T>(event: WebsocketWorkerEvent, listener: (data: T) => void): void => {
-        socket.on(event, listener)
-    },
-    
     disconnect: (): void => {
         clearInterval(heartbeatInterval)
         if (socket) {

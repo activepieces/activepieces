@@ -44,12 +44,6 @@ export enum WebsocketServerEvent {
     WORKER_HEALTHCHECK = 'WORKER_HEALTHCHECK',
     EMIT_TEST_STEP_PROGRESS = 'EMIT_TEST_STEP_PROGRESS',
     EMIT_TEST_STEP_FINISHED = 'EMIT_TEST_STEP_FINISHED',
-    PIECES_INSTALLED = 'PIECES_INSTALLED',
 }
-
-export enum WebsocketWorkerEvent {
-    PIECES_INSTALLED = 'PIECES_INSTALLED',
-}
-
 
 export * from './socket-utils'

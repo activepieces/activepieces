@@ -1,6 +1,6 @@
 import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock, pubsubFactory } from '@activepieces/server-shared'
 import {
     ExecutionMode,
     groupBy,
@@ -11,8 +11,6 @@ import {
     PieceType,
     PrivatePiecePackage,
     tryCatch,
-    WebsocketServerEvent,
-    WebsocketWorkerEvent,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
@@ -21,13 +19,14 @@ import { workerMachine } from '../../../utils/machine'
 import { workerRedisConnections } from '../../../utils/worker-redis'
 import { packageManager } from '../../package-manager'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../../worker-cache'
-import { appSocket } from '../../../app-socket'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 const REDIS_USED_PIECES_CACHE_KEY = 'cache:pieces:v1'
+const REDIS_INSTALL_PIECES_CHANNEL = 'install-pieces'
+const pubsub = pubsubFactory(workerRedisConnections.create)
 
 const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
     switch (piece.packageType) {
@@ -55,9 +54,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             await installPieces(log, packagePath, pieces, includeFilters)
         }
         if (broadcast) {
-            await appSocket(log).emit(WebsocketServerEvent.PIECES_INSTALLED, {
-                pieces,
-            })
+            await pubsub.publish(REDIS_INSTALL_PIECES_CHANNEL, JSON.stringify(pieces))
         }
     },
     warmup: async (): Promise<void> => {
@@ -80,6 +77,22 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             piecesCount: usedPieces.length,
             timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
         }, '[registryPieceManager] Warmed up pieces cache')
+    },
+    distributedWarmup: async (): Promise<void> => {
+        pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, async (channel, message) => {
+            log.debug({ channel }, '[registryPieceManager#subscribe] Received message')
+            const { data: pieces, error } = await tryCatch(async () => JSON.parse(message) as PiecePackage[])
+            if (error) {
+                log.error({ error }, '[registryPieceManager#subscribe] Failed to parse message as pieces')
+                return
+            }
+            if (isEmpty(pieces)) return;
+            await registryPieceManager(log).install({
+                pieces,
+                includeFilters: false,
+                broadcast: false
+            })
+        })
     },
     getCustomPiecesPath: (platformId: string): string => {
         if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
