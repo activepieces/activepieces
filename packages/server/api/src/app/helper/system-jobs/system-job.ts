@@ -103,7 +103,7 @@ async function removeDeprecatedJobs(): Promise<void> {
     const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
     for (const job of oneTimeJobsFromQueue) {
         assertNotNullOrUndefined(job.id, 'Job id is required')
-        await systemJobsQueue.remove(job.id)
+        await job.remove()
     }
 }
 

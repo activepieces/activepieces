@@ -44,10 +44,6 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     install: async ({ pieces, includeFilters, broadcast }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            log.debug(
-                { packagePath, pieceCount: piecesInGroup.length },
-                `[registryPieceManager] Installing pieces in packagePath=${packagePath}; pieceCount=${piecesInGroup.length}`,
-            )
             const { piecesToPersistOnRedis } = await installPieces(log, packagePath, piecesInGroup, includeFilters)
             return piecesToPersistOnRedis
         })
@@ -60,7 +56,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     },
     warmup: async (): Promise<void> => {
         if (!workerMachine.preWarmCacheEnabled()) {
-            log.info('[registryPieceManager] Pre-warm cache is disabled')
+            log.info('[registryPieceManager] warmup cache is disabled')
             return
         }
         log.info('[registryPieceManager] Warming up pieces cache')
@@ -81,7 +77,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
     },
     distributedWarmup: async (): Promise<void> => {
         await pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, (channel, message) => {
-            log.debug({ channel }, '[registryPieceManager#subscribe] Received message')
+            log.debug({ channel }, '[registryPieceManager#subscribe] Received message from other worker to install pieces')
             const { data: pieces, error } = tryCatchSync(() => JSON.parse(message) as PiecePackage[])
             if (error) {
                 exceptionHandler.handle(error, log)
@@ -95,12 +91,17 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         })
     },
     getCustomPiecesPath: (platformId: string): string => {
-        if (workerMachine.getSettings().EXECUTION_MODE === ExecutionMode.SANDBOX_PROCESS) {
-            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
+        switch (workerMachine.getSettings().EXECUTION_MODE) {
+            case ExecutionMode.SANDBOX_PROCESS:
+            case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
+                return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
+            case ExecutionMode.UNSANDBOXED:
+            case ExecutionMode.SANDBOX_CODE_ONLY:
+                return GLOBAL_CACHE_COMMON_PATH
+            default:
+                throw new Error('Invalid execution mode')
         }
-        return GLOBAL_CACHE_PATH_LATEST_VERSION
     },
-
 })
 
 async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean): Promise<PieceInstallationResult> {
