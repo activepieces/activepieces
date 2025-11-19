@@ -14,6 +14,8 @@ import {
 import { cn } from '@/lib/utils';
 import { PROJECT_COLOR_PALETTE, ProjectWithLimits } from '@activepieces/shared';
 
+import { ApProjectDisplay } from '../../ap-project-display';
+
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
   isCurrentProject: boolean;
@@ -71,14 +73,12 @@ const ProjectSideBarItem = ({
             isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
           )}
         >
-          <div
-            onClick={() => handleProjectSelect(project.id)}
-            className="flex items-center gap-2"
-          >
-            {projectAvatar}
-            <span className="truncate text-ellipsis max-w-[250px]">
-              {project.displayName}
-            </span>
+          <div onClick={() => handleProjectSelect(project.id)}>
+            <ApProjectDisplay
+              title={project.displayName}
+              icon={project.icon}
+              maxLengthToNotShowTooltip={28}
+            />
           </div>
         </SidebarMenuButton>
       )}

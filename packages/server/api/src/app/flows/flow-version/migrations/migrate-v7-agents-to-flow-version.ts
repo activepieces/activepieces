@@ -48,6 +48,9 @@ export const moveAgentsToFlowVerion: Migration = {
                             }
                         }
                         else {
+                            if (isNil(tool.flow)) {
+                                return null
+                            }
                             const populatedFlow = JSON.parse(tool.flow) as PopulatedFlow
                             return {
                                 type: tool.type,
@@ -61,7 +64,7 @@ export const moveAgentsToFlowVerion: Migration = {
 
                     return {
                         agent,
-                        tools,
+                        tools: tools.filter((tool: unknown) => !isNil(tool)),
                     }
                 }
                 return null

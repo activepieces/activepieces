@@ -1,27 +1,38 @@
-import { DialogTitle } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
-import { Bell, Settings, Users } from 'lucide-react';
+import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PROJECT_COLOR_PALETTE,
+} from '@activepieces/shared';
+
+import { ApProjectDisplay } from '../ap-project-display';
 
 import { AlertsSettings } from './alerts';
-import { GeneralSettings } from './general';
+import { EnvironmentSettings } from './environment';
+import { GeneralSettings, FormValues } from './general';
+import { useGeneralSettingsMutation } from './general/hook';
+import { PiecesSettings } from './pieces';
 import { TeamSettings } from './team';
 
-type TabId = 'general' | 'team' | 'alerts';
+type TabId = 'general' | 'team' | 'alerts' | 'pieces' | 'environment';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
   onClose: () => void;
-  projectId?: string;
   initialTab?: TabId;
   initialValues?: {
     projectName?: string;
@@ -30,21 +41,15 @@ interface ProjectSettingsDialogProps {
   };
 }
 
-type FormValues = {
-  projectName: string;
-  aiCredits: string;
-  externalId?: string;
-};
-
 export function ProjectSettingsDialog({
   open,
   onClose,
-  projectId,
   initialTab = 'general',
   initialValues,
 }: ProjectSettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
+  const { project } = projectHooks.useCurrentProject();
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
   const { data: showProjectMembers } = flagsHooks.useFlag(
@@ -53,18 +58,35 @@ export function ProjectSettingsDialog({
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
+      icon: project.icon,
       aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
+  const projectMutation = useGeneralSettingsMutation(project.id, form);
+
+  const handleSave = (values: FormValues) => {
+    projectMutation.mutate({
+      displayName: values.projectName,
+      icon: values.icon,
+      externalId: values.externalId,
+      plan: {
+        aiCredits: values.aiCredits ? parseInt(values.aiCredits) : undefined,
+      },
+    });
+  };
+
   useEffect(() => {
-    if (open) {
-      form.reset(initialValues);
+    if (open && !isNil(project)) {
+      form.reset({
+        ...initialValues,
+        icon: project.icon,
+      });
       setActiveTab(initialTab);
     }
-  }, [open]);
+  }, [open, project]);
 
   const tabs = [
     {
@@ -86,63 +108,145 @@ export function ProjectSettingsDialog({
       icon: <Bell className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
     },
+    {
+      id: 'pieces' as TabId,
+      label: t('Pieces'),
+      icon: <Puzzle className="w-4 h-4" />,
+      disabled: false,
+    },
+    {
+      id: 'environment' as TabId,
+      label: t('Environment'),
+      icon: <GitBranch className="w-4 h-4" />,
+      disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
+    },
   ].filter((tab) => !tab.disabled);
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
         return (
-          <GeneralSettings
-            form={form}
-            projectId={projectId}
-            initialValues={initialValues}
-          />
+          <GeneralSettings form={form} isSaving={projectMutation.isPending} />
         );
       case 'team':
         return <TeamSettings />;
       case 'alerts':
         return <AlertsSettings />;
+      case 'pieces':
+        return <PiecesSettings />;
+      case 'environment':
+        return <EnvironmentSettings />;
       default:
         return null;
     }
   };
 
+  const renderTabHeader = () => {
+    return (
+      <span className="text-lg font-bold">
+        {tabs.find((tab) => tab.id === activeTab)?.label}
+      </span>
+    );
+  };
+  const renderDialogFooter = () => {
+    if (activeTab !== 'general') return null;
+
+    return (
+      <div className="border-t bg-background">
+        <div className="flex items-center justify-end gap-3 px-6 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            disabled={projectMutation.isPending}
+          >
+            {t('Close')}
+          </Button>
+          <Button
+            disabled={projectMutation.isPending}
+            size="sm"
+            onClick={form.handleSubmit(handleSave)}
+          >
+            {projectMutation.isPending ? (
+              <>
+                <LoadingSpinner className="w-4 h-4 mr-2" />
+                {t('Saving...')}
+              </>
+            ) : (
+              t('Save Changes')
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full max-h-[90vh] h-fit pb-4 flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="font-semibold">
-            {t('Project Settings')}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="flex h-[600px]">
-          <div className="w-56 pr-4">
-            <nav className="space-y-1">
-              {tabs.map((tab) => (
-                <Button
-                  variant="ghost"
-                  key={tab.id}
-                  className={cn(
-                    'w-full justify-start gap-2 text-left h-9 text-sm font-medium rounded-lg transition-all',
-                    {
-                      'bg-primary/10 text-primary hover:bg-primary/15':
-                        activeTab === tab.id,
-                      'hover:bg-muted/50': activeTab !== tab.id,
-                    },
-                  )}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </Button>
-              ))}
+      <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-sm flex flex-col p-0">
+        <div className="flex h-[700px]">
+          <div className="w-[238px]">
+            <nav className="space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col">
+              <ApProjectDisplay
+                title={project.displayName}
+                icon={project.icon}
+                containerClassName="px-3 py-4"
+                titleClassName="text-md font-bold"
+                maxLengthToNotShowTooltip={18}
+              />
+              <div className="flex flex-col px-2 gap-1">
+                {tabs.map((tab) => (
+                  <div
+                    key={tab.id}
+                    className={cn(
+                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-sidebar-active',
+                      {
+                        'bg-sidebar-active': activeTab === tab.id,
+                      },
+                    )}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </div>
+                ))}
+              </div>
             </nav>
           </div>
-          <div className="flex-1">
-            <ScrollArea className="h-full">
-              <div className="space-y-6 pr-4">{renderTabContent()}</div>
-            </ScrollArea>
+          <div className="flex-1 min-w-0 flex flex-col">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                {activeTab === 'general' && (
+                  <div
+                    className="flex items-center justify-center w-full h-[114px] rounded-tr-md"
+                    style={{
+                      backgroundColor:
+                        PROJECT_COLOR_PALETTE[project.icon.color]
+                          .backgroundColor,
+                    }}
+                  >
+                    <Avatar
+                      className="h-[50px] w-[50px] flex items-center justify-center rounded-sm"
+                      style={{
+                        backgroundColor:
+                          PROJECT_COLOR_PALETTE[project.icon.color].color,
+                        color:
+                          PROJECT_COLOR_PALETTE[project.icon.color].textColor,
+                      }}
+                    >
+                      <span className="text-xl">
+                        {project.displayName.charAt(0).toUpperCase()}
+                      </span>
+                    </Avatar>
+                  </div>
+                )}
+                <div className="flex flex-col gap-3 px-10 pt-4">
+                  {renderTabHeader()}
+                  {renderTabContent()}
+                </div>
+              </ScrollArea>
+            </div>
+            {renderDialogFooter()}
           </div>
         </div>
       </DialogContent>
