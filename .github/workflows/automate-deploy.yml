@@ -40,7 +40,7 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
 
       - name: Configure SSH
         run: |
