@@ -112,7 +112,6 @@ export const WorkerSettingsResponse = Type.Object({
     JWT_SECRET: Type.String(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: Type.Optional(Type.String()),
     EDITION: Type.String(),
-    PRE_WARM_CACHE: Type.Boolean(),
 })
 
 export type WorkerSettingsResponse = Static<typeof WorkerSettingsResponse>
