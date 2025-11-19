@@ -10,8 +10,15 @@ import {
   Tooltip,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  PlanName,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 
 import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
 
@@ -26,6 +33,11 @@ export function ActiveFlowAddon({
 
   const { plan, usage } = platformSubscription;
   const currentActiveFlows = usage.activeFlows || 0;
+
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const canManageActiveFlowsLimit =
+    edition !== ApEdition.COMMUNITY && plan.plan === PlanName.STANDARD;
+
   const activeFlowsLimit = plan.activeFlowsLimit;
   const usagePercentage =
     !isNil(activeFlowsLimit) && activeFlowsLimit > 0
@@ -47,16 +59,18 @@ export function ActiveFlowAddon({
               </p>
             </div>
           </div>
-          <Button
-            variant="default"
-            className="gap-2"
-            onClick={() => {
-              openDialog();
-            }}
-          >
-            <Plus className="w-4 h-4" />
-            {t('Manage Active Flows')}
-          </Button>
+          {canManageActiveFlowsLimit && (
+            <Button
+              variant="default"
+              className="gap-2"
+              onClick={() => {
+                openDialog();
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              {t('Manage Active Flows')}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-6">
