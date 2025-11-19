@@ -1,4 +1,4 @@
-import { ApId, FlowRun, ProjectId } from '@activepieces/shared'
+import { apId, ApId, FlowRun, ProjectId } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
@@ -46,7 +46,10 @@ export const runsMetadataQueueFactory = ({
                 throw new Error('Runs metadata queue not initialized')
             }
 
-            await distributedStore.merge(redisMetadataKey(params.id), params)
+            await distributedStore.merge(redisMetadataKey(params.id), {
+                ...params,
+                requestId: apId(),
+            })
 
             await queueInstance.add(
                 'update-run-metadata',
@@ -75,6 +78,7 @@ export type RunsMetadataJobData = {
 export type RunsMetadataUpsertData = Partial<FlowRun> & {
     id: ApId
     projectId: ProjectId
+    requestId?: string
 }
 
 type RunsMetadataQueueFactoryParams = {
