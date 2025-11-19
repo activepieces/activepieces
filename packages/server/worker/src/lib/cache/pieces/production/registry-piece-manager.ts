@@ -167,11 +167,6 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
         },
     })
 }
-
-type PieceInstallationResult = {
-    newlyInstalledPieces: PiecePackage[]
-}
-
 async function rollbackInstallation(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
     await Promise.all(pieces.map(piece => rm(path.resolve(rootWorkspace, relativePiecePath(piece)), {
         recursive: true,
@@ -296,4 +291,8 @@ type InstallParams = {
 type PieceCheckIfAlreadyInstalledResult = {
     installed: boolean
     source: 'memory' | 'disk'
+}
+
+type PieceInstallationResult = {
+    newlyInstalledPieces: PiecePackage[]
 }
