@@ -1,3 +1,4 @@
+import { memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { isNil, Result, tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,7 +8,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 
-let cache: PieceMetadataSchema[] = []
+let cache: PieceMetadataSchema[] | null = null
 const repo = repoFactory(PieceMetadataEntity)
 
 export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
@@ -20,16 +21,19 @@ type State = {
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         await updateCache(log)
-        cron.schedule('*/15 * * * *', async () => {
+        cron.schedule('*/15 * * * *', () => {
             log.info('[localPieceCache] Refreshing pieces cache via cron job')
-            await updateCache(log)
+            rejectedPromiseHandler(updateCache(log), log)
         })
-        await pubsub.subscribe(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, async () => {
+        await pubsub.subscribe(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, () => {
             log.info('[localPieceCache] Refreshing pieces cache via pubsub')
-            await updateCache(log)
+            rejectedPromiseHandler(updateCache(log), log)
         })
     },
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
+        if (isNil(cache)) {
+            throw new Error('The cache is not yet initialized, this should not happen')
+        }
         return cache
     },
 })
@@ -44,41 +48,47 @@ async function updateCache(log: FastifyBaseLogger): Promise<void> {
 }
 
 async function fetchPieces(): Promise<Result<PieceMetadataSchema[], Error>> {
-    const newestState: State | undefined = await repo()
-        .createQueryBuilder()
-        .select('MAX(updated)', 'recentUpdate')
-        .addSelect('count(*)', 'count')
-        .getRawOne()
+    return memoryLock.runExclusive({
+        key: 'fetch-pieces',
+        fn: async () => {
+            const newestState: State | undefined = await repo()
+                .createQueryBuilder()
+                .select('MAX(updated)', 'recentUpdate')
+                .addSelect('count(*)', 'count')
+                .getRawOne()
 
-    if (!isNil(newestState)) {
-        const newestInCache = cache.reduce((acc, piece) => {
-            return Math.max(dayjs(piece.updated).unix(), acc)
-        }, 0)
+            if (!isNil(newestState) && cache !== null) {
+                const newestInCache = cache.reduce((acc, piece) => {
+                    return Math.max(dayjs(piece.updated).unix(), acc)
+                }, 0)
 
-        const needUpdate = dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
-        if (!needUpdate) {
-            return { data: cache, error: null }
-        }
-    }
+                const needUpdate = dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
+                if (!needUpdate) {
+                    return { data: cache as PieceMetadataSchema[], error: null }
+                }
+            }
 
-    return tryCatch(async () => {
-        const piecesFromDatabase = await repo().find()
-        return piecesFromDatabase.sort((a, b) => {
-            if (a.name !== b.name) {
-                return a.name.localeCompare(b.name)
-            }
-            const aValid = semVer.valid(a.version)
-            const bValid = semVer.valid(b.version)
-            if (!aValid && !bValid) {
-                return b.version.localeCompare(a.version)
-            }
-            if (!aValid) {
-                return 1
-            }
-            if (!bValid) {
-                return -1
-            }
-            return semVer.rcompare(a.version, b.version)
-        })
+            return tryCatch(async () => {
+                const piecesFromDatabase = await repo().find()
+                return piecesFromDatabase.sort((a, b) => {
+                    if (a.name !== b.name) {
+                        return a.name.localeCompare(b.name)
+                    }
+                    const aValid = semVer.valid(a.version)
+                    const bValid = semVer.valid(b.version)
+                    if (!aValid && !bValid) {
+                        return b.version.localeCompare(a.version)
+                    }
+                    if (!aValid) {
+                        return 1
+                    }
+                    if (!bValid) {
+                        return -1
+                    }
+                    return semVer.rcompare(a.version, b.version)
+                })
+            })
+        },
     })
 }
+
