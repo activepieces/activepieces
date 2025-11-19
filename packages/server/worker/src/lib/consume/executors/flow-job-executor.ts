@@ -149,7 +149,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 await runsMetadataQueue.add({
                     id: jobData.runId,
                     projectId: jobData.projectId,
-                    startTime: dayjs().toISOString(),
+                    startTime: jobData.executionType === ExecutionType.BEGIN ? dayjs().toISOString() : undefined,
                     status: FlowRunStatus.RUNNING,
                 })
 

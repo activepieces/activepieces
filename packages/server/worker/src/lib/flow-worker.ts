@@ -32,6 +32,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                 await markAsHealthy()
             },
         })
+        await registryPieceManager(log).distributedWarmup()
     },
 
     async close(): Promise<void> {

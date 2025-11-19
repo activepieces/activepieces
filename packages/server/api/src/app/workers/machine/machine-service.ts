@@ -76,7 +76,6 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 REDIS_FAILED_JOB_RETENTION_DAYS: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
                 REDIS_FAILED_JOB_RETENTION_MAX_COUNT: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
                 EDITION: system.getOrThrow(AppSystemProp.EDITION),
-                PRE_WARM_CACHE: system.getBooleanOrThrow(WorkerSystemProp.PRE_WARM_CACHE),
             }
         },
         async onHeartbeat({
