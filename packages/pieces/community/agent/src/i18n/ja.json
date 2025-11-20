@@ -8,7 +8,7 @@
   "Structured Output": "構造化された出力",
   "Max steps": "最大歩数",
   "Describe what you want the assistant to do.": "アシスタントに何をさせたいのか説明してください。",
-  "Choose your AI model and provider": "AIモデルとプロバイダを選択",
+  "Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.": "AIモデルとプロバイダを選択してください。異なるモデルは、さまざまな機能、速度、コストを提供します。 OpenAIモデルは一般的なタスクに最適です。Anthropicは分析に優れており、Google Geminiは競争力のある価格設定を提供します。",
   "The numbder of interations the agent can do": "エージェントが行うことができる干渉のしびれです",
   "(openai) GPT-5": "(openai) GPT-5",
   "(openai) GPT-5 Chat": "(openai) GPT-5 チャット",
@@ -24,6 +24,8 @@
   "(openai) O3 Mini": "(openai) O3 Mini",
   "(openai) GPT-4 Turbo": "(openai) GPT-4 Turbo",
   "(openai) GPT-3.5 Turbo": "(openai) GPT-3.5 Turbo",
+  "(anthropic) Claude 4.5 Sonnet": "(人力学) クロード4.5 Sonnet",
+  "(anthropic) Claude 4.5 Haiku": "(アンスロピック)クロード4.5<unk>",
   "(anthropic) Claude 4 Sonnet": "(anthropic) クロード4 Sonnet",
   "(anthropic) Claude 3.5 Haiku": "(アンスロピック)クロード3.5<unk>",
   "(anthropic) Claude 4.1 Opus": "(人力学) クロード4.1 Opus",
@@ -34,6 +36,7 @@
   "(anthropic) Claude 3 Haiku": "(アンスロピック)クロード3 俳句format@@0",
   "(google) Gemini 2.5 Pro": "(google) Gemini 2.5 Pro",
   "(google) Gemini 2.5 Flash": "(google) Gemini 2.5 フラッシュ",
+  "(google) Gemini 2.5 Flash-Lite": "(google) Gemini 2.5 Flash-Lite",
   "(google) Gemini 2.5 Flash-Lite Preview": "(google) Gemini 2.5 Flash-Lite プレビュー",
   "(google) Gemini 2.0 Flash-Lite": "(google) Gemini 2.0 Flash-Lite"
 }

@@ -115,6 +115,7 @@ const PiecePackageMetadata = Type.Object({
   tags: Type.Optional(Type.Array(Type.String())),
   pieceType: Type.Enum(PieceType),
   packageType: Type.Enum(PackageType),
+  platformId: Type.Optional(Type.String()),
   archiveId: Type.Optional(Type.String()),
 })
 type PiecePackageMetadata = Static<typeof PiecePackageMetadata>

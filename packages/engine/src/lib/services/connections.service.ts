@@ -1,6 +1,6 @@
 import { AppConnection, AppConnectionStatus, AppConnectionType, BasicAuthConnectionValue, CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, FetchError } from '../helper/execution-errors'
+import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 import { utils } from '../utils'
     
 export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
@@ -30,6 +30,9 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
             }))
             
             if (connectionValueError) {
+                if (connectionValueError instanceof ExecutionError) {
+                    throw connectionValueError
+                }
                 return handleFetchError({
                     url,
                     cause: connectionValueError,

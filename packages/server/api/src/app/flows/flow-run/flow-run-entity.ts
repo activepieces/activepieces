@@ -33,8 +33,8 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
             nullable: true,
         },
-        logsFileId: { 
-            ...ApIdSchema, 
+        logsFileId: {
+            ...ApIdSchema,
             nullable: true,
         },
         parentRunId: {
@@ -54,12 +54,9 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             array: isPostgres(),
             nullable: true,
         },
-        duration: {
-            nullable: true,
-            type: Number,
-        },
         startTime: {
             type: TIMESTAMP_COLUMN_TYPE,
+            nullable: true,
         },
         finishTime: {
             nullable: true,
@@ -69,9 +66,14 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
-        failedStepName: {
+        failedStep: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
+        archivedAt: {
             type: String,
             nullable: true,
+            default: null,
         },
         stepNameToTest: {
             type: String,
@@ -80,20 +82,20 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
     },
     indices: [
         {
-            name: 'idx_run_project_id_environment_created_desc',
-            columns: ['projectId', 'environment', 'created'],
+            name: 'idx_run_project_id_environment_archived_at_created_desc',
+            columns: ['projectId', 'environment', 'archivedAt', 'created'],
         },
         {
-            name: 'idx_run_project_id_environment_status_created_desc',
-            columns: ['projectId', 'environment', 'status', 'created'],
+            name: 'idx_run_project_id_environment_status_archived_at_created_desc',
+            columns: ['projectId', 'environment', 'status', 'archivedAt', 'created'],
         },
         {
-            name: 'idx_run_project_id_flow_id_environment_created_desc',
-            columns: ['projectId', 'flowId', 'environment', 'created'],
+            name: 'idx_run_project_id_flow_id_environment_archived_at_created_desc',
+            columns: ['projectId', 'flowId', 'environment', 'archivedAt', 'created'],
         },
         {
-            name: 'idx_run_project_id_flow_id_environment_status_created_desc',
-            columns: ['projectId', 'flowId', 'environment', 'status', 'created'],
+            name: 'idx_run_project_id_flow_id_environment_status_archived_at_created_desc',
+            columns: ['projectId', 'flowId', 'environment', 'status', 'archivedAt', 'created'],
         },
         {
             name: 'idx_run_flow_id',
@@ -102,10 +104,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_logs_file_id',
             columns: ['logsFileId'],
-        },
-        {
-            name: 'idx_flow_run_flow_failed_step',
-            columns: ['flowId', 'failedStepName'],
         },
         {
             name: 'idx_run_parent_run_id',

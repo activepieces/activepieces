@@ -55,7 +55,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/fillout-forms",
-        "command": "bun install --no-save"
+        "command": "bun install --no-save --silent"
       },
       "dependsOn": [
         "^build"

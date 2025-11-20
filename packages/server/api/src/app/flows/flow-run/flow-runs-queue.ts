@@ -1,6 +1,5 @@
-import { apAxios, apDayjsDuration, AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { ApId, assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, ProjectId, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -13,32 +12,21 @@ import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
-let runsMetadataQueueInstance: Queue<RunsMetadataJobData> | undefined = undefined
 let runsMetadataWorker: Worker<RunsMetadataJobData> | undefined = undefined
 
-const redisMetadaKey = (runId: ApId) => `runs_metadata:${runId}`
+const queue = runsMetadataQueueFactory({ createRedisConnection: redisConnections.create, distributedStore })
 
 export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const queueName = 'runsMetadata'
-        const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
-        runsMetadataQueueInstance = new Queue<RunsMetadataJobData>(queueName, {
-            connection: await redisConnections.create(),
-            telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
-            defaultJobOptions: {
-                attempts: 5,
-                backoff: {
-                    type: 'exponential',
-                    delay: apDayjsDuration(8, 'minute').asMilliseconds(),
-                },
-                removeOnComplete: true,
-                removeOnFail: {
-                    age: apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds(),
-                    count: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
-                },
-            },
-        })
-        await runsMetadataQueueInstance.waitUntilReady()
+        const queueName = QueueName.RUNS_METADATA
+        const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED) ?? false
+
+        const config: RunsMetadataQueueConfig = {
+            isOtelEnabled,
+            redisFailedJobRetentionDays: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
+            redisFailedJobRetentionMaxCount: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
+        }
+        await queue.init(config)
         runsMetadataWorker = new Worker<RunsMetadataJobData>(
             queueName,
             async (job) => {
@@ -46,19 +34,14 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     jobId: job.id,
                     runId: job.data.runId,
                 }, '[runsMetadataQueue#worker] Saving runs metadata')
-                const key = redisMetadaKey(job.data.runId)
+                const key = redisMetadataKey(job.data.runId)
                 await distributedLock(log).runExclusive({
                     key: `runs_metadata_${job.data.runId}`,
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-                            log.info({
-                                jobId: job.id,
-                                runId: job.data.runId,
-                            }, '[runsMetadataQueue#worker] Acquired lock')
-
-                            assertNotNullOrUndefined(runsMetadataQueueInstance, 'Queue not initialized')
-                            await runsMetadataQueueInstance.removeDeduplicationKey(job.data.runId)
+                      
+                            await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
                                 log.info({
@@ -68,9 +51,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 return
                             }
 
-                            const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
+                            const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
-                            if (runExists) {
+                            if (!isNil(existingFlowRun)) {
                                 await flowRunRepo().update(job.data.runId, {
                                     ...spreadIfDefined('projectId', runMetadata.projectId),
                                     ...spreadIfDefined('flowId', runMetadata.flowId),
@@ -80,14 +63,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('finishTime', runMetadata.finishTime),
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
-                                    ...spreadIfDefined('duration', runMetadata.duration),
                                     ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
-                                    ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
+                                    ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
-                                    ...spreadIfDefined('created', runMetadata.created),
                                     ...spreadIfDefined('updated', runMetadata.updated),
                                 })
                                 savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
@@ -104,7 +85,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
-
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
                                 const platformId = await projectService.getPlatformId(savedFlowRun.projectId)
@@ -116,6 +96,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 })
                             }
 
+                            if (!isNil(runMetadata.requestId)) {
+                                await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
+                            }
                             if (!isNil(runMetadata.finishTime)) {
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
                             }
@@ -148,24 +131,19 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     },
 
     async add(params: RunsMetadataUpsertData): Promise<void> {
-
-        assertNotNullOrUndefined(runsMetadataQueueInstance, 'Runs metadata queue not initialized')
-        await distributedStore.merge(redisMetadaKey(params.id), params)
-
-        await runsMetadataQueueInstance.add(
-            'update-run-metadata',
-            { runId: params.id, projectId: params.projectId },
-            { deduplication: { id: params.id } },
-        )
+        log.info({
+            runId: params.id,
+            projectId: params.projectId,
+        }, '[runsMetadataQueue#add] Adding runs metadata to queue')
+        await queue.add(params)
     },
 
     get(): Queue<RunsMetadataJobData> {
-        assertNotNullOrUndefined(runsMetadataQueueInstance, 'Runs metadata queue not initialized')
-        return runsMetadataQueueInstance
+        return queue.get()
     },
     async close(): Promise<void> {
-        if (runsMetadataQueueInstance) {
-            await runsMetadataQueueInstance.close()
+        if (queue.get()) {
+            await queue.get().close()
         }
 
         if (runsMetadataWorker) {
@@ -174,8 +152,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     },
 
 })
-
-
 
 async function markParentRunAsFailed({
     parentRunId,
@@ -186,6 +162,10 @@ async function markParentRunAsFailed({
     const flowRun = await flowRunRepo().findOneByOrFail({
         id: parentRunId,
     })
+
+    if (flowRun.status === FlowRunStatus.CANCELED) {
+        return
+    }
 
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')
@@ -206,16 +186,4 @@ type MarkParentRunAsFailedParams = {
     childRunId: string
     projectId: string
     platformId: string
-}
-
-export const RunsMetadataJobData = Type.Object({
-    runId: Type.String(),
-    projectId: Type.String(),
-})
-
-export type RunsMetadataJobData = Static<typeof RunsMetadataJobData>
-
-export type RunsMetadataUpsertData = Partial<FlowRun> & {
-    id: ApId
-    projectId: ProjectId
 }
