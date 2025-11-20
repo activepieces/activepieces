@@ -1,13 +1,13 @@
 {
-  "Google Cloud's event streaming service": "Google Cloud's event streaming service",
-  "Service Key (JSON)": "Service Key (JSON)",
+  "Google Cloud's event streaming service": "Google 云流媒体服务",
+  "Service Key (JSON)": "服务密钥 (JSON)",
   "\nYou can get it from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey).\n": "\nYou can get it from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey).\n",
-  "Publish to topic": "Publish to topic",
-  "Publish message to topic": "Publish message to topic",
-  "Message": "Message",
-  "Topic": "Topic",
-  "New Message": "New Message",
-  "Trigger when a new message is sended.": "Trigger when a new message is sended.",
-  "Subscription name": "Subscription name",
-  "Ack Deadline Seconds": "Ack Deadline Seconds"
+  "Publish to topic": "发布到主题",
+  "Publish message to topic": "发布消息到主题",
+  "Message": "留言",
+  "Topic": "主题",
+  "New Message": "新消息",
+  "Trigger when a new message is sended.": "发送新消息时触发事件。",
+  "Subscription name": "订阅名称",
+  "Ack Deadline Seconds": "Ack 截止时间"
 }
