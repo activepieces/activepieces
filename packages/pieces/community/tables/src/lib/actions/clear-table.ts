@@ -26,7 +26,6 @@ export const clearTable = createAction({
     });
 
     return {
-      success: true,
       deletedCount: response.body.deletedCount,
     };
   },
