@@ -15,13 +15,3 @@ Dockerfile
 dist
 docs
 node_modules
-Thumbs.db
-desktop.ini
-$RECYCLE.BIN/
-System Volume Information/
-build
-.venv
-__pycache__
-logs
-**/node_modules/
-release_log

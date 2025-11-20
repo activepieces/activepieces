@@ -15,12 +15,13 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { migrateFlowVersionTemplate } from '../../flows/flow-version/migrations'
+import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { flowTemplateService } from './flow-template.service'
 import { communityTemplates } from './community-flow-template.module'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { system } from '../../helper/system/system'
 
 export const flowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
@@ -39,7 +40,14 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         return flowTemplateService.list(platformId, request.query)
     })
 
-    fastify.post('/', CreateParams, async (request, reply) => {
+    fastify.post('/', { ...CreateParams,  preValidation: async (request) => {
+        const migratedFlowTemplate = await migrateFlowVersionTemplate(request.body.template.trigger, request.body.template.schemaVersion)
+        request.body.template = {
+            ...request.body.template,
+            trigger: migratedFlowTemplate.trigger,
+            schemaVersion: migratedFlowTemplate.schemaVersion,
+        }
+    } }, async (request, reply) => {
         const { type } = request.body
         const platformId = request.principal.platform.id
         // if (type === TemplateType.PLATFORM) {

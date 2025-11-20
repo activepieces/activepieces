@@ -5,6 +5,7 @@ import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
+import 'sqlite3'
 import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-switch-to-router'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
 import { UpgradePieceVersionsToLatest1748253670449 } from './migration/common/1748253670449-UpgradePieceVersionsToLatest'
@@ -87,6 +88,7 @@ import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761
 import { AddMaximumConcurrentJobsPerProjectSqlite1761499100171 } from './migration/sqlite/1761499100171-AddMaximumConcurrentJobsPerProjectSqlite'
 import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/1761574814842-RemoveTasksAndTasksLimitSqlite'
 import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
+import { AddFailedStepDurationSqlite1762949199414 } from './migration/sqlite/1762949199414-AddFailedStepDurationSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -109,6 +111,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddFailedStepDurationSqlite1762949199414,
         DeleteLastChangelogDismissedAtSqlite1762018344394,
         RemoveTasksAndTasksLimitSqlite1761574814842,
         AddMaximumConcurrentJobsPerProjectSqlite1761499100171,

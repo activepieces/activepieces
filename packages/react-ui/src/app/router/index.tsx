@@ -36,6 +36,7 @@ import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 // import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
+import { ExplorePage } from '../routes/explore';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 // import { ResetPasswordPage } from '../routes/forget-password';
@@ -101,6 +102,16 @@ const routes = [
     element: <AuthenticatePage />,
   },
   ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.explore,
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Explore">
+          <ExplorePage />
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
     element: (
       <ProjectDashboardLayout>
@@ -162,18 +173,6 @@ const routes = [
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Runs">
-            <FlowsPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.issues,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Issues">
             <FlowsPage />
           </PageTitle>
         </RoutePermissionGuard>

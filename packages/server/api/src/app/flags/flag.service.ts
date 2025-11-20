@@ -280,12 +280,6 @@ export const flagService = {
                 created,
                 updated,
             },
-            {
-                id: ApFlagId.SHOW_TUTORIALS,
-                value: false,
-                created,
-                updated,
-            },
         )
 
         if (system.isApp()) {

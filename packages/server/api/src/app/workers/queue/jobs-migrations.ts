@@ -1,4 +1,4 @@
-import { apId, JobData, LATEST_JOB_DATA_SCHEMA_VERSION, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { apId, JobData, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'

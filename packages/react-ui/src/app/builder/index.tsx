@@ -21,17 +21,17 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { promptFlowApi, PromptMessage } from '@/features/flows/lib/prompt-to-flow-api';
 import {
-  FlowActionType,
-  ApEdition,
+  promptFlowApi,
+  PromptMessage,
+} from '@/features/flows/lib/prompt-to-flow-api';
+import {
   ApFlagId,
+  FlowActionType,
   FlowTriggerType,
   FlowVersionState,
   PieceTrigger,
@@ -54,6 +54,7 @@ import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 import { PromptToFlowSidebar } from './prompt-to-flow';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -98,35 +99,43 @@ const BuilderPage = () => {
   const location = useLocation();
   const { platform } = platformHooks.useCurrentPlatform();
   const [creditUsage, setCreditUsage] = useState(0);
-  const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep, setLeftSidebar, flow] =
-    useBuilderStateContext((state) => [
-      state.setRun,
-      state.flowVersion,
-      state.leftSidebar,
-      state.rightSidebar,
-      state.run,
-      state.selectedStep,
-      state.setLeftSidebar,
-      state.flow,
-    ]);
+  const [
+    setRun,
+    flowVersion,
+    leftSidebar,
+    rightSidebar,
+    run,
+    selectedStep,
+    setLeftSidebar,
+    flow,
+  ] = useBuilderStateContext((state) => [
+    state.setRun,
+    state.flowVersion,
+    state.leftSidebar,
+    state.rightSidebar,
+    state.run,
+    state.selectedStep,
+    state.setLeftSidebar,
+    state.flow,
+  ]);
 
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   useShowBuilderIsSavingWarningBeforeLeaving();
 
-  const { data: ZERO_API_URL } = flagsHooks.useFlag<string>(ApFlagId.ZERO_SERVICE_URL);
+  const { data: ZERO_API_URL } = flagsHooks.useFlag<string>(
+    ApFlagId.ZERO_SERVICE_URL,
+  );
   const reloadCreditUsage = () => {
     if (!ZERO_API_URL || !flow?.id) {
       return;
     }
-    promptFlowApi.getCreditUsage(
-      ZERO_API_URL,
-      flow.projectId,
-      flow.id
-    ).then((creditUsage) => {
-      setCreditUsage(creditUsage);
-    }).catch((error) => {
-      console.error('Failed to reload credit usage', error);
-    });
+    promptFlowApi
+      .getCreditUsage(ZERO_API_URL, flow.projectId, flow.id)
+      .then((creditUsage) => {
+        setCreditUsage(creditUsage);
+      })
+      .catch((error) => {
+        console.error('Failed to reload credit usage', error);
+      });
   };
 
   useEffect(() => {
@@ -329,7 +338,6 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      {edition === ApEdition.CLOUD && <UpgradeDialog />}
       <ChatDrawer />
     </div>
   );

@@ -56,7 +56,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/framework",
-        "command": "bun install --no-save"
+        "command": "bun install --no-save --silent"
       }
     }
   }

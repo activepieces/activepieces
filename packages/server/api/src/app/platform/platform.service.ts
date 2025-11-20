@@ -1,4 +1,4 @@
-// import { BillingCycle, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+// import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     AiOverageState,
@@ -229,8 +229,6 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             ...DEFAULT_PLAN,
             stripeSubscriptionStartDate: 0,
             stripeSubscriptionEndDate: 0,
-            // stripeBillingCycle: BillingCycle.MONTHLY,
-            stripeBillingCycle: 'monthly',
         }
     }
     // return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
@@ -238,7 +236,6 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
         ...DEFAULT_PLAN,
         stripeSubscriptionStartDate: 0,
         stripeSubscriptionEndDate: 0,
-        stripeBillingCycle: 'monthly',
     }
 }
 

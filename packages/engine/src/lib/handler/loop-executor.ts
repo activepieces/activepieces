@@ -1,6 +1,5 @@
-import { isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowRunStatus, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { ExecutionVerdict } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
 type LoopOnActionResolvedSettings = {
@@ -27,13 +26,18 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         let newExecutionContext = executionState.upsertStep(action.name, stepOutput)
 
         if (!Array.isArray(resolvedInput.items)) {
+            const errorMessage = JSON.stringify({
+                message: 'The items you have selected must be a list.',
+            })
             const failedStepOutput = stepOutput
                 .setStatus(StepOutputStatus.FAILED)
-                .setErrorMessage(JSON.stringify({
-                    message: 'The items you have selected must be a list.',
-                }))
+                .setErrorMessage(errorMessage)
                 .setDuration( performance.now() - stepStartTime)
-            return newExecutionContext.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED)
+            return newExecutionContext.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+                name: action.name,
+                displayName: action.displayName,
+                message: errorMessage,
+            } })
         }
 
         const firstLoopAction = action.firstLoopAction
@@ -59,7 +63,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
             newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
 
-            if (newExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
+            if (newExecutionContext.verdict.status !== FlowRunStatus.RUNNING) {
                 return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
             }
 
