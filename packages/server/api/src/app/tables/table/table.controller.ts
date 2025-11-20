@@ -94,7 +94,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             tableId: request.params.id,
             projectId: request.principal.projectId,
         })
-        await reply.status(StatusCodes.OK).send({ deletedCount: deletedRecords.length })
+        await reply.status(StatusCodes.NO_CONTENT).send()
         await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: request.params.id,
             projectId: request.principal.projectId,

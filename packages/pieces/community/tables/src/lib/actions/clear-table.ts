@@ -1,7 +1,6 @@
 import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ClearTableResponse } from '@activepieces/shared';
 
 export const clearTable = createAction({
   name: 'tables-clear-table',
@@ -15,7 +14,7 @@ export const clearTable = createAction({
     const { table_id: tableExternalId } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
 
-    const response = await httpClient.sendRequest<ClearTableResponse>({
+    await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${context.server.apiUrl}v1/tables/${tableId}/clear`,
       authentication: {
@@ -26,7 +25,7 @@ export const clearTable = createAction({
     });
 
     return {
-      deletedCount: response.body.deletedCount,
+      success: true,
     };
   },
 });
