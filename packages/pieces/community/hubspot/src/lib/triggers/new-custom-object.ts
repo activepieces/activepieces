@@ -7,11 +7,11 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant, isNil } from '@activepieces/shared';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
-import { MAX_SEARCH_PAGE_SIZE } from '../common/constants';
+import { MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import dayjs from 'dayjs';
 
 type Props = {
@@ -40,7 +40,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 
 		const items = [];
-		let after;
+		let after: string | undefined;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
@@ -68,6 +68,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 
 			// Stop fetching if it's a test
 			if (isTest) break;
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		return items.map((item) => ({

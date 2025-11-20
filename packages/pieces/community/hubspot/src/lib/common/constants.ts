@@ -1,5 +1,6 @@
 // https://developers.hubspot.com/docs/api-reference/search/guide#limitations
 export const MAX_SEARCH_PAGE_SIZE = 200;
+export const MAX_SEARCH_TOTAL_RESULTS = 10000;
 
 export const enum OBJECT_TYPE {
 	CONTACT = 'contact',

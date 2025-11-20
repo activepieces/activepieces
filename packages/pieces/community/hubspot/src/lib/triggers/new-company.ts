@@ -4,8 +4,8 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
-import { MarkdownVariant } from '@activepieces/shared';
-import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
+import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { hubspotAuth } from '../..';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
@@ -24,7 +24,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		const propertiesToRetrieve = [...defaultCompanyProperties, ...additionalProperties];
 
 		const items = [];
-		let after;
+		let after: string | undefined;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
@@ -51,6 +51,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 
 			// Stop fetching if it's a test
 			if (isTest) break;
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		return items.map((item) => ({
