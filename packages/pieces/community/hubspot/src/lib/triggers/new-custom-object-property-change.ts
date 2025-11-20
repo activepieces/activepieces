@@ -16,6 +16,7 @@ import { chunk } from '@activepieces/shared';
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
+import { MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 
 type Props = {
 	customObjectType?: string;
@@ -51,7 +52,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		let after;
 		do {
 			const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				after,
 				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: [

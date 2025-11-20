@@ -4,7 +4,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import dayjs from 'dayjs';
 import { hubspotAuth } from '../..';
 import { MarkdownVariant } from '@activepieces/shared';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
@@ -29,7 +29,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		do {
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.objects.tasks.searchApi.doSearch({
-				limit: isTest ? 10 : 100,
+				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
 				after,
 				properties: propertiesToRetrieve,
 				sorts: ['-hs_createdate'],

@@ -6,7 +6,7 @@ import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from 
 import dayjs from 'dayjs';
 import { hubspotAuth } from '../..';
 import { MarkdownVariant } from '@activepieces/shared';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -29,7 +29,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		do {
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.deals.searchApi.doSearch({
-				limit: isTest ? 10 : 100,
+				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
 				after,
 				properties: propertiesToRetrieve,
 				sorts: ['-createdate'],

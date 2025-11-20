@@ -17,7 +17,7 @@ import {
 	pipelineStageDropdown,
 	standardObjectPropertiesDropdown,
 } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/shared';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
@@ -44,7 +44,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		do {
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.deals.searchApi.doSearch({
-				limit: isTest ? 10 : 100,
+				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
 				properties: propertiesToRetrieve,
 				sorts: ['-hs_v2_date_entered_current_stage'],
 				after,
