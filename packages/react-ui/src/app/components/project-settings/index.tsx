@@ -152,7 +152,7 @@ export function ProjectSettingsDialog({
     if (activeTab !== 'general') return null;
 
     return (
-      <div className="border-t bg-background">
+      <div className="border-t bg-background rounded-br-md">
         <div className="flex items-center justify-end gap-3 px-6 py-4">
           <Button
             variant="outline"
@@ -186,11 +186,11 @@ export function ProjectSettingsDialog({
       <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-sm flex flex-col p-0">
         <div className="flex h-[700px]">
           <div className="w-[238px]">
-            <nav className="space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col">
+            <nav className="bg-sidebar space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
                 title={project.displayName}
                 icon={project.icon}
-                containerClassName="px-3 py-4"
+                containerClassName="px-3 my-4"
                 titleClassName="text-md font-bold"
                 maxLengthToNotShowTooltip={18}
               />
@@ -221,8 +221,7 @@ export function ProjectSettingsDialog({
                     className="flex items-center justify-center w-full h-[114px] rounded-tr-md"
                     style={{
                       backgroundColor:
-                        PROJECT_COLOR_PALETTE[project.icon.color]
-                          .backgroundColor,
+                        PROJECT_COLOR_PALETTE[project.icon.color].color + '26',
                     }}
                   >
                     <Avatar

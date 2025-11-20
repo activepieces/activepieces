@@ -508,6 +508,24 @@ It is strongly recommended that you add your credit card information to your Ope
         },
         streaming: false,
         languageModels: [
+             {
+                displayName: 'Gemini 3 Pro Preview',
+                instance: google('gemini-3-pro-preview'),
+                functionCalling: true,
+                webSearchCost: 0.035,
+                pricing: {
+                    promptThreshold: 200_000,
+                    input: {
+                        underThresholdRate: 2.00,
+                        overThresholdRate: 4.00,
+                    },
+                    output: {
+                        underThresholdRate: 12.00,
+                        overThresholdRate: 18.00,
+                    },  
+                    type: 'tiered',
+                },
+            },
             {
                 displayName: 'Gemini 2.5 Pro',
                 instance: google('gemini-2.5-pro'),
