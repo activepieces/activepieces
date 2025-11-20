@@ -4,6 +4,7 @@ import { volubileAuth } from './lib/auth';
 import { liveCallTrigger } from './lib/triggers/live-call-trigger';
 import { postCallTrigger } from './lib/triggers/post-call-trigger';
 import { returnContext } from './lib/actions/return-context';
+import {failoverTrigger} from "./lib/triggers/failover-trigger";
 
 
 
@@ -14,5 +15,5 @@ export const volubile = createPiece({
   logoUrl: "https://volubile.blob.core.windows.net/backoffice/assets/activepieces/volubile-icon.svg",
   authors: [],
   actions: [returnContext],
-  triggers: [preCallTrigger, liveCallTrigger, postCallTrigger],
+  triggers: [failoverTrigger, preCallTrigger, liveCallTrigger, postCallTrigger],
 });

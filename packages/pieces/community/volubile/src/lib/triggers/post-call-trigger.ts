@@ -1,4 +1,3 @@
-
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { agentsDropdown, WebhookActionConfig, TriggerType, volubileCommon, ActionStatus } from '../common';
 import { volubileAuth } from '../auth';

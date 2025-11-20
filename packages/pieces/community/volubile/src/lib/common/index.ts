@@ -18,6 +18,7 @@ type AgentListResponse = {
 };
 
 export enum TriggerType {
+  FAILOVER = 'FAILOVER',
   PRE_CALL = 'PRE_CALL',
   LIVE_CALL = 'LIVE_CALL',
   POST_CALL = 'POST_CALL',
