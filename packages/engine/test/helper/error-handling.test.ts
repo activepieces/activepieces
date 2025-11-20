@@ -1,4 +1,5 @@
-import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { FlowRunStatus } from '@activepieces/shared'
+import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { runWithExponentialBackoff } from '../../src/lib/helper/error-handling'
 import { buildCodeAction, generateMockEngineConstants } from '../handler/test-helper'
 
@@ -28,7 +29,10 @@ describe('runWithExponentialBackoff', () => {
     })
 
     it('should return resultExecutionState when verdict is not FAILED', async () => {
-        const resultExecutionState = FlowExecutorContext.empty().setVerdict(ExecutionVerdict.SUCCEEDED, undefined)
+        const resultExecutionState = FlowExecutorContext.empty().setVerdict({
+            status: FlowRunStatus.SUCCEEDED,
+            stopResponse: undefined,
+        })
         requestFunction.mockResolvedValue(resultExecutionState)
 
         const output = await runWithExponentialBackoff(executionState, action, constants, requestFunction)
@@ -39,7 +43,14 @@ describe('runWithExponentialBackoff', () => {
 
 
     it('should retry and return resultExecutionState when verdict is FAILED and retry is enabled', async () => {
-        const resultExecutionState = FlowExecutorContext.empty().setVerdict(ExecutionVerdict.FAILED, undefined)
+        const resultExecutionState = FlowExecutorContext.empty().setVerdict({
+            status: FlowRunStatus.FAILED,
+            failedStep: {
+                name: 'runtime',
+                displayName: 'runtime',
+                message: 'Custom Runtime Error',
+            },
+        })
 
         requestFunction.mockResolvedValue(resultExecutionState)
 
@@ -53,7 +64,14 @@ describe('runWithExponentialBackoff', () => {
     })
 
     it('should not retry and return resultExecutionState when verdict is FAILED but retry is disabled', async () => {
-        const resultExecutionState = FlowExecutorContext.empty().setVerdict(ExecutionVerdict.FAILED, undefined)
+        const resultExecutionState = FlowExecutorContext.empty().setVerdict({
+            status: FlowRunStatus.FAILED,
+            failedStep: {
+                name: 'runtime',
+                displayName: 'runtime',
+                message: 'Custom Runtime Error',
+            },
+        })
 
         requestFunction.mockResolvedValue(resultExecutionState)
 

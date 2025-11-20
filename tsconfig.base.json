@@ -82,6 +82,9 @@
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
+      "activepieces/piece-cashfree-payments": [
+        "packages/pieces/community/cashfree-payments/src/index.ts"
+      ],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
@@ -90,7 +93,24 @@
       "@activepieces/piece-housecall-pro": [
         "packages/pieces/community/housecall-pro/src/index.ts"
       ],
-      
+      "@activepieces/piece-chat-aid": [
+        "packages/pieces/community/chat-aid/src/index.ts"
+      ],
+      "@activepieces/piece-videoask": [
+        "packages/pieces/community/videoask/src/index.ts"
+      ],
+      "@activepieces/piece-presenton": [
+        "packages/pieces/community/presenton/src/index.ts"
+      ],
+      "@activepieces/piece-formspark": [
+        "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-tableau": [
+        "packages/pieces/community/tableau/src/index.ts"
+      ],
+      "@activepieces/piece-fragment":[
+        "packages/pieces/community/fragment/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },

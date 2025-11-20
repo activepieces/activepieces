@@ -4,8 +4,8 @@ import { RefreshCcwIcon } from 'lucide-react';
 import { useContext } from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Metrics } from '@/features/platform-admin/components/metrics';

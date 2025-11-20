@@ -3,6 +3,7 @@ import {
   FlowTemplate,
   PopulatedFlow,
   MarkdownVariant,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -12,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { CreateFlowWithAI } from './prompt-to-flow';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -163,7 +164,7 @@ const QuickStartPage = () => {
           <div className="text-lg">
             {t('Start quick with community templates')}
           </div>
-          <SelectFlowTemplateDialog>
+          <SelectFlowTemplateDialog folderId={UncategorizedFolderId}>
             <Button variant="outline-primary" className="gap-2">
               {t('Browse all templates')}
             </Button>

@@ -1,10 +1,10 @@
-import { BranchCondition, BranchExecutionType, BranchOperator, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, FlowRunStatus, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { EngineGenericError } from '../helper/execution-errors'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
 export const routerExecuter: BaseExecutor<RouterAction> = {
@@ -81,7 +81,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
                 constants,
             })
     
-            const shouldBreakExecution = executionState.verdict !== ExecutionVerdict.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
+            const shouldBreakExecution = executionState.verdict.status !== FlowRunStatus.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
             if (shouldBreakExecution) {
                 break
             }
@@ -89,9 +89,12 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return executionState
     })
     if (executionStateError) {
-        console.error(executionStateError)
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return executionState.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
+        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+            name: action.name,
+            displayName: action.displayName,
+            message: utils.formatError(executionStateError),
+        } })
     }
 
     return executionStateResult

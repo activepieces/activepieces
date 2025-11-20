@@ -36,9 +36,8 @@ import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
-import { FolderEntity } from '../flows/folder/folder.entity'
-import { IssueEntity } from '../flows/issues/issues-entity'
 import { FlowTemplateEntity } from '../flows/templates/flow-template.entity'
+import { FolderEntity } from '../flows/folder/folder.entity'
 import { DatabaseType, system } from '../helper/system/system'
 import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
 import { McpEntity } from '../mcp/mcp-server/mcp-entity'
@@ -93,7 +92,6 @@ function getEntities(): EntitySchema<unknown>[] {
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
-        IssueEntity,
         // AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,

@@ -77,7 +77,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/assemblyai",
-        "command": "bun install --no-save"
+        "command": "bun install --no-save --silent"
       },
       "dependsOn": [
         "^build"

@@ -1,18 +1,19 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { BeginExecuteFlowOperation, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 import { executionFiles } from '../cache/execution-files'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
 import { pieceEngineUtil } from '../utils/flow-engine-util'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
-import { EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperFlowResult, EngineHelperPropResult, EngineHelperResponse, EngineHelperResult, EngineHelperTriggerResult, EngineHelperValidateAuthResult, engineRunnerUtils } from './engine-runner-types'
+import { EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperPropResult, EngineHelperResponse, EngineHelperResult, EngineHelperTriggerResult, EngineHelperValidateAuthResult } from './engine-runner-types'
 import { engineProcessManager } from './process/engine-process-manager'
 
 type EngineConstants = 'publicApiUrl' | 'internalApiUrl' | 'engineToken'
 
 export const engineRunner = (log: FastifyBaseLogger) => ({
-    async executeFlow(engineToken: string, operation: Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
+    async executeFlow(engineToken: string, operation: Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>): Promise<EngineHelperResponse<never>> {
         log.debug({
             flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
@@ -168,13 +169,51 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
 }
 
 async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger, operation: EngineOperation, operationType: EngineOperationType, timeoutInSeconds: number): Promise<EngineHelperResponse<Result>> {
-    const startTime = Date.now()
     const { engine, stdError, stdOut } = await engineProcessManager.executeTask(operationType, operation, log, timeoutInSeconds)
-    return engineRunnerUtils(log).readResults({
-        timeInSeconds: (Date.now() - startTime) / 1000,
-        verdict: engine.status,
-        output: engine.response,
-        standardOutput: stdOut,
+
+    log.debug({
+        stdError: chalk.red(stdError),
+        stdOut: chalk.green(stdOut),
+    }, '[engineRunner#execute] error')
+
+    if (engine.status === EngineResponseStatus.TIMEOUT) {
+        throw new ActivepiecesError({
+            code: ErrorCode.EXECUTION_TIMEOUT,
+            params: {
+                standardOutput: stdOut,
+                standardError: stdError,
+            },
+        })
+    }
+    if (engine.status === EngineResponseStatus.MEMORY_ISSUE) {
+        throw new ActivepiecesError({
+            code: ErrorCode.MEMORY_ISSUE,
+            params: {
+                standardOutput: stdOut,
+                standardError: stdError,
+            },
+        })
+    }
+
+    const result = tryParseJson(engine.response)
+
+    return {
+        status: engine.status,
+        delayInSeconds: engine.delayInSeconds,
+        result: result as Result,
         standardError: stdError,
-    })
+        standardOutput: stdOut,
+    }
+
+}
+
+
+
+function tryParseJson(value: unknown): unknown {
+    try {
+        return JSON.parse(value as string)
+    }
+    catch (e) {
+        return value
+    }
 }

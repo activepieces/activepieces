@@ -5,12 +5,13 @@ import {
     ExecuteToolOperation,
     FlowAction,
     FlowActionType,
+    FlowRunStatus,
     PropertyExecutionType,
     StepOutput,
     StepOutputStatus,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from '../handler/context/flow-execution-context'
+import {  FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 
 export const toolOperation = {
@@ -55,7 +56,7 @@ async function executeActionForTool(input: ExecuteToolOperation): Promise<Execut
         constants: EngineConstants.fromExecuteActionInput(input),
     })
     return {
-        success: output.verdict !== ExecutionVerdict.FAILED,
+        success: output.verdict.status !== FlowRunStatus.FAILED,
         input: output.steps[step.name].input,
         output: cleanSampleData(output.steps[step.name]),
     }

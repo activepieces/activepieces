@@ -2,6 +2,7 @@ import { apAxios, AppSystemProp, exceptionHandler, QueueName, redisMetadataKey, 
 import { assertNotNullOrUndefined, FlowRun, FlowRunStatus, isNil, PauseMetadata, PauseType, spreadIfDefined, WebsocketClientEvent } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
@@ -40,11 +41,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-                            log.info({
-                                jobId: job.id,
-                                runId: job.data.runId,
-                            }, '[runsMetadataQueue#worker] Acquired lock')
-
+                      
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
@@ -55,21 +52,24 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 return
                             }
 
-                            const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
+                            const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
+                            const { duration, waitDuration, startTime } = await calculateComputedFields(runMetadata, existingFlowRun)
                             let savedFlowRun: FlowRun
-                            if (runExists) {
+                            if (!isNil(existingFlowRun)) {
                                 await flowRunRepo().update(job.data.runId, {
                                     ...spreadIfDefined('projectId', runMetadata.projectId),
                                     ...spreadIfDefined('flowId', runMetadata.flowId),
                                     ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
                                     ...spreadIfDefined('environment', runMetadata.environment),
-                                    ...spreadIfDefined('startTime', runMetadata.startTime),
+                                    ...spreadIfDefined('duration', duration),
+                                    ...spreadIfDefined('waitDuration', waitDuration),
+                                    ...spreadIfDefined('startTime', startTime),
                                     ...spreadIfDefined('finishTime', runMetadata.finishTime),
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
                                     ...spreadIfDefined('duration', runMetadata.duration),
                                     ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
-                                    ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
+                                    ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
@@ -88,9 +88,13 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
                                     return
                                 }
-                                savedFlowRun = await flowRunRepo().save(runMetadata)
+                                savedFlowRun = await flowRunRepo().save({
+                                    ...runMetadata,
+                                    ...spreadIfDefined('duration', duration),
+                                    ...spreadIfDefined('waitDuration', waitDuration),
+                                    ...spreadIfDefined('startTime', startTime),
+                                })
                             }
-
 
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
@@ -159,6 +163,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
 
 
+async function calculateComputedFields(runMetadata: RunsMetadataUpsertData, savedFlowRun: FlowRun | null): Promise<{ duration: number | undefined, waitDuration: number | undefined, startTime: string | undefined }> {
+    const startTime = savedFlowRun?.startTime ?? runMetadata.startTime
+    const finishTime = runMetadata.finishTime ?? savedFlowRun?.finishTime
+    const created = runMetadata.created ?? savedFlowRun?.created
+    const waitDuration = startTime && created ? dayjs(startTime).diff(dayjs(created), 'milliseconds') : undefined
+    const duration = startTime && finishTime ? dayjs(finishTime).diff(dayjs(startTime), 'milliseconds') : undefined
+    return { duration, waitDuration, startTime }
+}
+
 async function markParentRunAsFailed({
     parentRunId,
     childRunId,
@@ -168,6 +181,10 @@ async function markParentRunAsFailed({
     const flowRun = await flowRunRepo().findOneByOrFail({
         id: parentRunId,
     })
+
+    if (flowRun.status === FlowRunStatus.CANCELED) {
+        return
+    }
 
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')

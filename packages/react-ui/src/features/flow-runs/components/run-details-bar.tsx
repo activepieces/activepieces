@@ -54,6 +54,8 @@ function getStatusText(
       });
     case FlowRunStatus.INTERNAL_ERROR:
       return t('Run failed for an unknown reason, contact support.');
+    case FlowRunStatus.CANCELED:
+      return t('Run Cancelled');
   }
 }
 

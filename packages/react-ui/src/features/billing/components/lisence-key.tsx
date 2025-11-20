@@ -1,19 +1,27 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Shield, AlertTriangle, Check } from 'lucide-react';
+import { Shield, AlertTriangle, Check, Zap } from 'lucide-react';
+import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { formatUtils } from '@/lib/utils';
 import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
 
+import { ActivateLicenseDialog } from './activate-license-dialog';
 import { FeatureStatus } from './features-status';
 
 export const LicenseKey = ({
   platform,
+  isEnterprise,
 }: {
   platform: PlatformWithoutSensitiveData;
+  isEnterprise: boolean;
 }) => {
+  const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
+    useState(false);
+
   const expired =
     !isNil(platform?.plan?.licenseExpiresAt) &&
     dayjs(platform.plan.licenseExpiresAt).isBefore(dayjs());
@@ -61,6 +69,17 @@ export const LicenseKey = ({
               </p>
             </div>
           </div>
+          {isEnterprise && (
+            <Button
+              variant="default"
+              onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
+            >
+              <Zap className="w-4 h-4" />
+              {platform.plan.licenseKey
+                ? t('Update License')
+                : t('Activate License')}
+            </Button>
+          )}
         </div>
       </CardHeader>
 
@@ -91,6 +110,10 @@ export const LicenseKey = ({
           <FeatureStatus platform={platform} />
         </div>
       </CardContent>
+      <ActivateLicenseDialog
+        isOpen={isActivateLicenseKeyDialogOpen}
+        onOpenChange={setIsActivateLicenseKeyDialogOpen}
+      />
     </Card>
   );
 };

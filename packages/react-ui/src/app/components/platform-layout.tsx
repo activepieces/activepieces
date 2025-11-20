@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
@@ -26,7 +26,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
       ) : (
         <Navigate to="/" />
       )}
-      {edition === ApEdition.CLOUD && <UpgradeDialog />}
+      {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
