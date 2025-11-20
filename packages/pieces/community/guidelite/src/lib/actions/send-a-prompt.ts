@@ -1,13 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { guideliteAuth } from '../common/auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { assistantIdDropdown } from '../common/props';
 
 export const sendAPrompt = createAction({
   auth: guideliteAuth,
   name: 'sendAPrompt',
-  displayName: 'send a prompt',
+  displayName: 'Send a Prompt',
   description: 'Send a message to a Guidelite Assistant',
   props: {
     assistantId: assistantIdDropdown,

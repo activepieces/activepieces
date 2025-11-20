@@ -7,7 +7,7 @@ import { BASE_URL } from './lib/common/client';
 import { PieceCategory } from '@activepieces/shared';
 
 export const guidelite = createPiece({
-  displayName: 'Guidelite',
+  displayName: 'GuideLite',
   auth: guideliteAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/guidelite.png',
