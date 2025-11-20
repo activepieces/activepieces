@@ -1,7 +1,6 @@
 import { apDayjsDuration, getPlatformPlanNameKey } from '@activepieces/server-shared'
 import {
     ApEdition,
-    assertNotNullOrUndefined,
     ExecuteFlowJobData,
     isNil,
     JobData,
@@ -13,72 +12,22 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../utils/machine'
-import { workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
-import { jobQueue } from '../../../../api/src/app/workers/queue/job-queue';
-import { JobType } from '../../../../api/src/app/workers/queue/queue-manager';
+import {workerDistributedLock, workerDistributedStore, workerRedisConnections} from '../utils/worker-redis'
 import { throttledJobQueue } from '../../../../api/src/app/workers/queue/throttled-job-queue';
-import cron from 'node-cron';
-
+import dayjs from 'dayjs';
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 const projectActiveSetKey = (projectId: string): string => `active_jobs_set_2:${projectId}`
 const projectWaitingSetKey = (projectId: string): string => `waiting_jobs_set:${projectId}`
-const PRE_REQUEUE_JOBS_SET_KEY = `pre_requeue_jobs_set`
 
 export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
-    setup(): void {
-        // every 60s
-        cron.schedule('*/1 * * * *', async () => {
-            _log.info('[workerJobRateLimiter] Running scheduled task to requeue stalled waiting jobs if exists')
-
-            const redis = await workerRedisConnections.useExisting()
-
-            const now = Date.now()
-            const VISIBILITY_TIMEOUT_MS = 1 * 60 * 1000; // 1 minutes
-
-            const stalledJobs = await redis.zrangebyscore(
-                PRE_REQUEUE_JOBS_SET_KEY,
-                '-inf',
-                now - VISIBILITY_TIMEOUT_MS
-            )
-            if (stalledJobs.length === 0) {
-                _log.info('[workerJobRateLimiter] No stalled pre-requeue jobs found')
-                return
-            }
-
-            const byProject = stalledJobs.reduce((map, entry) => {
-                const [projectId, jobId] = entry.split(':')
-                if (!map.has(projectId)) {
-                    map.set(projectId, [])
-                }
-                map.get(projectId)!.push(jobId)
-                return map
-            }, new Map<string, string[]>())
-
-            for (const [projectId, jobIds] of byProject) {
-                if (jobIds.length === 0) continue
-
-                await redis
-                    .multi()
-                    .zadd(projectWaitingSetKey(projectId), ...jobIds.flatMap(id => [now, id]))
-                    .zrem(PRE_REQUEUE_JOBS_SET_KEY, ...stalledJobs.filter(entry => entry.startsWith(`${projectId}:`)))
-                    .exec()
-
-                this.requeueNextWaitingJobIfExists(projectId).catch(err =>
-                    _log.error(`[workerJobRateLimiter] Failed to requeue for project ${projectId}`, err)
-                )
-            }
-
-            _log.info(`[workerJobRateLimiter] Recovered ${stalledJobs.length} stalled jobs across ${byProject.size} projects`)
-        })
-    },
-
     async throttleJob(id: string, data: JobData): Promise<void> {
         const redis = await workerRedisConnections.useExisting()
 
         await redis.zadd(projectWaitingSetKey(data.projectId!), Date.now(), id)
 
-        await throttledJobQueue(_log).add({ id, data })
+        // 1 year delay, will be promoted manually when slot is available
+        await throttledJobQueue(_log).add({ id, data, delay: dayjs.duration(365, 'day').asMilliseconds() })
     },
 
     async onCompleteOrFailedJob(data: JobData, jobId: string | undefined): Promise<void> {
@@ -95,49 +44,34 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
 
         await redis.srem(projectActiveSetKey(castedJob.projectId), jobId)
 
-        await this.requeueNextWaitingJobIfExists(castedJob.projectId)
+        await this._requeueNextWaitingJobIfExists(castedJob.projectId)
     },
 
-    async requeueNextWaitingJobIfExists(projectId: string): Promise<void> {
-        const redis = await workerRedisConnections.useExisting()
+    async _requeueNextWaitingJobIfExists(projectId: string): Promise<void> {
+        const waitingSetKey = projectWaitingSetKey(projectId)
 
-        const nextJobId = await redis.eval(
-            `
-              local job = redis.call('ZPOPMIN', KEYS[1])  -- per-project waiting set
-              if not job or #job == 0 then
-                return nil
-              end
-            
-              local jobId = job[1]
-              local now = tonumber(ARGV[1])
-              local projectId = ARGV[2]
-            
-              -- Add to pre-requeue set: member = "projectId:jobId", score = now
-              redis.call('ZADD', KEYS[2], now, projectId .. ':' .. jobId)
-            
-              return jobId
-            `,
-            2,
-            projectWaitingSetKey(projectId),    // KEYS[1]
-            PRE_REQUEUE_JOBS_SET_KEY,           // KEYS[2]
-            Date.now().toString(),              // ARGV[1]
-            projectId                           // ARGV[2]
-        );
+        await workerDistributedLock(_log).runExclusive({
+            key: `lock:${waitingSetKey}`,
+            timeoutInSeconds: 20,
+            fn: async () => {
+                const redis = await workerRedisConnections.useExisting()
 
-        if (isNil(nextJobId)) {
-            return;
-        }
+                // Get the next job in the waiting set
+                const [nextJobId] = await redis.zrange(waitingSetKey, 0, 0)
+                if (isNil(nextJobId)) {
+                    return;
+                }
 
-        const nextJob = await throttledJobQueue(_log).getJobById(nextJobId as string)
-        assertNotNullOrUndefined(nextJob, 'nextJob')
+                const nextJob = await throttledJobQueue(_log).getJobById(nextJobId)
+                if (isNil(nextJob)) {
+                    return;
+                }
 
-        await jobQueue(_log).add({
-            data: nextJob.data as ExecuteFlowJobData,
-            type: JobType.ONE_TIME,
-            id: nextJobId as string,
+                await nextJob.promote()
+
+                await redis.zrem(waitingSetKey, nextJobId)
+            },
         })
-
-        await redis.zrem(PRE_REQUEUE_JOBS_SET_KEY, `${projectId}:${nextJobId}`)
     },
 
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{

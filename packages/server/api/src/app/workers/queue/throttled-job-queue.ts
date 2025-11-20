@@ -22,7 +22,7 @@ export const throttledJobQueue = (log: FastifyBaseLogger) => ({
 
         const queue = await ensureQueueExists(log)
 
-        await queue.add(params.id, data, { jobId: params.id })
+        await queue.add(params.id, data, { jobId: params.id, delay: params.delay })
     },
 
     async getJobById(jobId: string): Promise<Job<JobData> | null> {

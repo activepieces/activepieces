@@ -10,6 +10,7 @@ import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
 import { workerJobRateLimiter } from './consume/worker-job-rate-limiter';
+import { throttledJobQueueWorker } from './consume/throttled-job-queue-worker';
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,
@@ -32,8 +33,8 @@ export const flowWorker = (log: FastifyBaseLogger): {
                 await workerMachine.init(response, token, log)
                 await registryPieceManager(log).warmup()
                 await jobQueueWorker(log).start(token)
+                await throttledJobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
-                workerJobRateLimiter(log).setup()
             },
         })
     },
@@ -53,6 +54,7 @@ export const flowWorker = (log: FastifyBaseLogger): {
             await engineRunner(log).shutdownAllWorkers()
         }
         await jobQueueWorker(log).close()
+        await throttledJobQueueWorker(log).close()
     },
 })
 

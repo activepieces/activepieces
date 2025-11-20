@@ -20,7 +20,6 @@ import { workerMachine } from '../utils/machine'
 import { workerRedisConnections } from '../utils/worker-redis'
 import { jobConsmer } from './job-consmer'
 import { workerJobRateLimiter } from './worker-job-rate-limiter'
-import { throttledJobQueue } from '../../../../api/src/app/workers/queue/throttled-job-queue';
 
 let worker: Worker<JobData>
 
