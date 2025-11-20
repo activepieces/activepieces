@@ -250,7 +250,7 @@ const ClearTableRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: ClearTableResponse,
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }
