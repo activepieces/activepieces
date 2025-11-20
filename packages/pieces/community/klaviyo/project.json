@@ -1,0 +1,29 @@
+{
+  "name": "@activepieces/piece-klaviyo",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/klaviyo/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/klaviyo",
+        "main": "packages/pieces/community/klaviyo/src/index.ts",
+        "tsConfig": "packages/pieces/community/klaviyo/tsconfig.lib.json",
+        "assets": ["packages/pieces/community/klaviyo/*.md"]
+      }
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/publish.mjs klaviyo {args.ver} {args.tag}"
+      },
+      "dependsOn": ["build"]
+    },
+    "lint": {},
+    "test": {}
+  },
+  "tags": ["type:piece", "status:community"]
+}
+
