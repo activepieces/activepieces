@@ -26,9 +26,8 @@
           await httpClient.sendRequest({
             url: 'https://api.promptmate.io/v1/apps',
             method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: auth.auth as string,
+            headers: {
+              'x-api-key': auth.auth as string,
             },
           });
           return {
