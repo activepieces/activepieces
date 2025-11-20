@@ -42,3 +42,9 @@ export const ListTablesRequest = Type.Object({
 })
 
 export type ListTablesRequest = Static<typeof ListTablesRequest>
+
+export const ClearTableResponse = Type.Object({
+    deletedCount: Type.Number(),
+})
+
+export type ClearTableResponse = Static<typeof ClearTableResponse>
