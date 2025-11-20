@@ -18,5 +18,6 @@ export const deleteStaleRunMetadata = (log: FastifyBaseLogger) => ({
         for (const key of keys) {
             await redisConnection.expire(key, dayjs.duration(10, 'minute').asSeconds())
         }
+        await redisConnection.set(DELETE_STALE_RUN_METADATA_KEY, 'true')
     },
 })

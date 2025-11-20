@@ -1,4 +1,4 @@
-import { Metadata, Nullable, PiecesFilterType, SAFE_STRING_PATTERN } from '@activepieces/shared'
+import { Metadata, Nullable, PiecesFilterType, ProjectIcon, SAFE_STRING_PATTERN } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const UpdateProjectPlatformRequest = Type.Object({
@@ -8,6 +8,7 @@ export const UpdateProjectPlatformRequest = Type.Object({
     })),
     externalId: Type.Optional(Type.String()),
     metadata: Type.Optional(Metadata),
+    icon: Type.Optional(ProjectIcon),
     plan: Type.Optional(Type.Object({
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),

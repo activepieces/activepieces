@@ -1,6 +1,7 @@
 import semverMajor from 'semver/functions/major'
 import semverMinor from 'semver/functions/minor'
 import semverMinVersion from 'semver/ranges/min-version'
+import { assertNotNullOrUndefined } from '../common'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 
 /**
@@ -14,11 +15,13 @@ export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): 
 }
 
 /**
- * @param {string} alias - e.g. piece-activepieces
+ * @param {string} alias - e.g. piece-activepieces or @publisher/piece-activepieces
  * @returns {string} the piece name, e.g. activepieces
  */
 export const getPieceNameFromAlias = (alias: string): string => {
-    return alias.split('-').slice(1).join('-')
+    const fullPieceName =  alias.startsWith('@') ? alias.split('/').pop() : alias
+    assertNotNullOrUndefined(fullPieceName, 'Full piece name')
+    return fullPieceName.split('-').slice(1).join('-')
 }
 
 /**

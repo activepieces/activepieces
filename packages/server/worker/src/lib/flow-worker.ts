@@ -30,6 +30,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
                 await markAsHealthy()
+                await registryPieceManager(log).distributedWarmup()
             },
         })
     },

@@ -58,6 +58,21 @@ const ApiKeysPage = () => {
         );
       },
     },
+    {
+      accessorKey: 'lastUsedAt',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Last Used')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {row.original.lastUsedAt
+              ? formatUtils.formatDate(new Date(row.original.lastUsedAt))
+              : t('Never')}
+          </div>
+        );
+      },
+    },
   ];
 
   const { platform } = platformHooks.useCurrentPlatform();

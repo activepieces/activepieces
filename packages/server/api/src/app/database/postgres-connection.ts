@@ -294,6 +294,8 @@ import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/
 import { AddIconToProject1763377380235 } from './migration/postgres/1763377380235-AddIconToProject'
 import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
 
+import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
+
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
     if (useSsl === 'true') {
@@ -605,6 +607,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveUserSeatsLimitColumn1761762177701,
                 RemoveMcpAndTablesLimitsAndBillingCycles1762103191643,
                 RemoveUnusedPaymentMethodColoumn1762709208569,
+                AddLastUsedAtToApiKey1763378445660,
             )
             break
         case ApEdition.COMMUNITY:
