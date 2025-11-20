@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
 import { useEmbedding } from '@/components/embed-provider';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -21,7 +22,8 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { userHooks } from '@/hooks/user-hooks';
+import { ApFlagId, isNil, Permission, ProjectType } from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
@@ -38,6 +40,7 @@ export const ProjectDashboardPageHeader = ({
   beta?: boolean;
 }) => {
   const { project } = projectHooks.useCurrentProject();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
@@ -65,9 +68,13 @@ export const ProjectDashboardPageHeader = ({
     !isEmbedded &&
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    !isNil(projectMembers);
+    !isNil(projectMembers) &&
+    project.type === ProjectType.TEAM;
 
-  const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
+  const showInviteUserButton =
+    !isEmbedded &&
+    userHasPermissionToInviteUser &&
+    project.type === ProjectType.TEAM;
   const showSettingsButton = !isEmbedded;
   const isProjectPage = location.pathname.includes('/projects/');
 
@@ -86,7 +93,20 @@ export const ProjectDashboardPageHeader = ({
                 title={title}
                 maxLengthToNotShowTooltip={30}
                 titleClassName="text-lg font-semibold"
+                projectType={project.type}
               />
+              {project.type === ProjectType.PERSONAL && (
+                <Badge
+                  variant={
+                    currentUser?.id === project.ownerId ? 'outline' : 'accent'
+                  }
+                  className="text-xs font-medium"
+                >
+                  {currentUser?.id === project.ownerId
+                    ? 'Personal'
+                    : 'External'}
+                </Badge>
+              )}
               {beta && (
                 <div className="flex items-center">
                   <BetaBadge />
@@ -138,6 +158,7 @@ export const ProjectDashboardPageHeader = ({
                       title={project.displayName}
                       maxLengthToNotShowTooltip={23}
                       titleClassName="font-semibold"
+                      projectType={project.type}
                     />
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />

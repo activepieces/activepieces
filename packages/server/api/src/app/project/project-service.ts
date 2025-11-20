@@ -12,6 +12,7 @@ import {
     Project,
     ProjectIcon,
     ProjectId,
+    ProjectType,
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
@@ -80,19 +81,19 @@ export const projectService = {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
 
-        await projectRepo().update(
-            {
-                id: projectId,
-            },
-            {
-                ...spreadIfDefined('externalId', externalId),
-                ...spreadIfDefined('displayName', request.displayName),
-                ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
-                ...spreadIfDefined('metadata', request.metadata),
-                ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
-                ...spreadIfDefined('icon', request.icon),
-            },
-        )
+        const baseUpdate = {
+            ...spreadIfDefined('externalId', externalId),
+            ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+            ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+        }
+
+        const teamUpdate = request.type === ProjectType.TEAM ? {
+            ...spreadIfDefined('displayName', request.displayName),
+            ...spreadIfDefined('icon', request.icon),
+        } : {}
+
+        await projectRepo().update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         return this.getOneOrThrow(projectId)
     },
 
@@ -243,8 +244,8 @@ type ExistsParams = {
     isSoftDeleted?: boolean
 }
 
-
-type UpdateParams = {
+type UpdateTeamProjectParams = {
+    type: ProjectType.TEAM
     displayName?: string
     externalId?: string
     releasesEnabled?: boolean
@@ -253,9 +254,20 @@ type UpdateParams = {
     icon?: ProjectIcon
 }
 
+type UpdatePersonalProjectParams = {
+    type: ProjectType.PERSONAL
+    externalId?: string
+    releasesEnabled?: boolean
+    metadata?: Metadata
+    maxConcurrentJobs?: number
+}
+
+type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
+
 type CreateParams = {
     ownerId: UserId
     displayName: string
+    type: ProjectType
     platformId: string
     externalId?: string
     metadata?: Metadata

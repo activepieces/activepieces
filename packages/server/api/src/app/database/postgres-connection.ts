@@ -295,6 +295,7 @@ import { AddIconToProject1763377380235 } from './migration/postgres/176337738023
 import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
 
 import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
+import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -501,6 +502,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFailedStepAndDurationToRunPostgres1762886424449,
         RemoveDurationAndAddArchivedAtIdxPostgres1763378445659,
         AddIconToProject1763377380235,
+        AddProjectType1763644863137,
     ]
 
     const edition = system.getEdition()
