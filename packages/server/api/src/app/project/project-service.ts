@@ -90,6 +90,7 @@ export const projectService = {
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
                 ...spreadIfDefined('metadata', request.metadata),
                 ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+                ...spreadIfDefined('icon', request.icon),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -249,6 +250,7 @@ type UpdateParams = {
     releasesEnabled?: boolean
     metadata?: Metadata
     maxConcurrentJobs?: number
+    icon?: ProjectIcon
 }
 
 type CreateParams = {

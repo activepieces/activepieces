@@ -92,7 +92,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return isCloudPlanButNotEnterprise(platformPlan.plan)
     },
     checkActiveFlowsExceededLimit: async (platformId: string, metric: PlatformUsageMetric): Promise<void> => {
-        if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
+        if (ApEdition.COMMUNITY === edition) {
             return
         }
 

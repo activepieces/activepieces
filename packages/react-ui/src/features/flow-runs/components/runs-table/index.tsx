@@ -277,6 +277,7 @@ export const RunsTable = () => {
                 disabled={isDisabled}
                 variant="outline"
                 className="h-9 w-full"
+                loading={archiveRuns.isPending}
                 onClick={() => {
                   archiveRuns.mutate({
                     runIds: selectedRows.map((row) => row.id),
@@ -327,6 +328,7 @@ export const RunsTable = () => {
                     disabled={isDisabled}
                     variant="outline"
                     className="h-9 w-full"
+                    loading={cancelRuns.isPending}
                     onClick={() => {
                       cancelRuns.mutate({
                         runIds: selectedRows.map((row) => row.id),
@@ -366,7 +368,11 @@ export const RunsTable = () => {
               >
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild disabled={isDisabled}>
-                    <Button disabled={isDisabled} className="h-9 w-full">
+                    <Button
+                      disabled={isDisabled}
+                      className="h-9 w-full"
+                      loading={retryRuns.isPending}
+                    >
                       <RotateCw className="size-4 mr-1" />
                       {selectedRows.length > 0
                         ? `${t('Retry')} ${

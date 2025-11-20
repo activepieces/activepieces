@@ -124,7 +124,7 @@ const PiecesSettings = () => {
   );
 
   return (
-    <div className="w-fullj flex-col">
+    <div className="space-y-6">
       {!platform.plan.managePiecesEnabled && (
         <LockedAlert
           title={t('Control Pieces')}
