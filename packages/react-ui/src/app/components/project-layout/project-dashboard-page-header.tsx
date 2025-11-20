@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +23,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
+import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
 
 export const ProjectDashboardPageHeader = ({
@@ -65,15 +65,11 @@ export const ProjectDashboardPageHeader = ({
     !isEmbedded &&
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    !isNil(projectMembers) &&
-    projectMembers?.length > 0;
+    !isNil(projectMembers);
 
   const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
   const showSettingsButton = !isEmbedded;
   const isProjectPage = location.pathname.includes('/projects/');
-
-  const truncatedTitle = title.length > 30 ? `${title.slice(0, 30)}...` : title;
-  const shouldShowTooltip = title.length > 30;
 
   if (embedState.hidePageHeader) {
     return null;
@@ -86,16 +82,11 @@ export const ProjectDashboardPageHeader = ({
           <Separator orientation="vertical" className="h-5 mr-2" />
           <div>
             <div className="flex items-center gap-2">
-              {shouldShowTooltip ? (
-                <TextWithTooltip
-                  tooltipMessage={title}
-                  renderTrigger={() => (
-                    <h1 className="text-lg font-semibold">{truncatedTitle}</h1>
-                  )}
-                />
-              ) : (
-                <h1 className="text-lg font-semibold">{title}</h1>
-              )}
+              <ApProjectDisplay
+                title={title}
+                maxLengthToNotShowTooltip={30}
+                titleClassName="text-lg font-semibold"
+              />
               {beta && (
                 <div className="flex items-center">
                   <BetaBadge />
@@ -143,7 +134,11 @@ export const ProjectDashboardPageHeader = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="font-semibold">
-                    {project?.displayName}
+                    <ApProjectDisplay
+                      title={project.displayName}
+                      maxLengthToNotShowTooltip={23}
+                      titleClassName="font-semibold"
+                    />
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {showInviteUserButton && (
@@ -183,7 +178,6 @@ export const ProjectDashboardPageHeader = ({
       <ProjectSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        projectId={project?.id}
         initialTab={settingsInitialTab}
         initialValues={{
           projectName: project?.displayName,

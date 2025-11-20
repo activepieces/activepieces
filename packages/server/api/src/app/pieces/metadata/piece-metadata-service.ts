@@ -41,7 +41,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
 
     return {
         async setup(): Promise<void> {
-
             await localPieceCache(log).setup()
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
