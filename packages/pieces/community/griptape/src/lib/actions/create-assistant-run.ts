@@ -86,7 +86,7 @@ export const createAssistantRun = createAction({
     let runStatus = response.status;
     let runData = response;
 
-    while (runStatus !== 'COMPLETED') {
+    while (runStatus !== 'SUCCEEDED') {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       runData = await makeRequest(
