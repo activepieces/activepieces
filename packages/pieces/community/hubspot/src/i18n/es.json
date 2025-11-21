@@ -271,7 +271,7 @@
   "Triggers when a form is submitted.": "Dispara cuando se envía un formulario.",
   "Triggers when new line item is available.": "Se activa cuando hay disponible un nuevo elemento de línea.",
   "Triggers when new product is available.": "Dispara cuando el nuevo producto está disponible.",
-  "Trigger when new deal is available.": "Dispara cuando hay disponible una nueva oferta.",
+  "Trigger when new ticket is available.": "Activar cuando hay un nuevo ticket disponible.",
   "Triggers when a specified property is updated on a ticket.": "Dispara cuando una propiedad específica se actualiza en un ticket.",
   "Triggers when a product recently created or updated.": "Dispara cuando un producto creado o actualizado recientemente.",
   "Trigger when a new task is added.": "Activar cuando se añade una nueva tarea.",
