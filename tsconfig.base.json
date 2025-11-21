@@ -132,6 +132,9 @@
       ],
       "@activepieces/piece-guidelite": [
         "packages/pieces/community/guidelite/src/index.ts"
+      ],
+      "@activepieces/piece-bolna": [
+        "packages/pieces/community/bolna/src/index.ts"
       ]
     },
     "resolveJsonModule": true
