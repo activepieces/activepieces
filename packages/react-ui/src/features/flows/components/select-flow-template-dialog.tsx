@@ -36,7 +36,7 @@ const SelectFlowTemplateDialog = ({
   const { filteredTemplates, isLoading, search, setSearch } = useTemplates();
   const carousel = useRef<CarouselApi>();
   const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(
-    null
+    null,
   );
   const [activeTab, setActiveTab] = useState<string>('MY_TEMPLATE');
 

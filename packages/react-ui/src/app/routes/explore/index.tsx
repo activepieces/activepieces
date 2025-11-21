@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CreateFlowWithAI } from '@/app/components/prompt-to-flow';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,10 +49,16 @@ export const ExplorePage = () => {
   return (
     <>
       <DashboardPageHeader
-        title={t('Explore Templates')}
-        description={t('Browse and use pre-built flow templates')}
+        title={t('Explore Templates & AI')}
+        description={t(
+          'Browse and use pre-built flow templates or quickly create one using AI',
+        )}
       />
       <div className="px-4">
+        <div className="mb-4">
+          <CreateFlowWithAI />
+        </div>
+
         <div className="mb-4">
           <InputWithIcon
             icon={<Search className="w-4 h-4" />}

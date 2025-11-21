@@ -88,16 +88,6 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const quickStartLink: SidebarItemType = {
-    type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/quick-start'),
-    icon: Sparkles,
-    label: t('Quick Start'),
-    hasPermission: checkAccess(Permission.READ_FLOW),
-    isSubItem: false,
-    show: true,
-  };
-
   const flowsLink: SidebarItemType = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/flows'),
@@ -132,13 +122,9 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const items = [
-    quickStartLink,
-    flowsLink,
-    tablesLink,
-    todosLink,
-    releasesLink,
-  ].filter(permissionFilter);
+  const items = [flowsLink, tablesLink, todosLink, releasesLink].filter(
+    permissionFilter,
+  );
 
   const otherItems: SidebarItemType[] = [
     {

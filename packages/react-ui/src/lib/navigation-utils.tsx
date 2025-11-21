@@ -28,7 +28,7 @@ export const LOGIN_QUERY_PARAM = 'activepiecesLogin';
 export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
 
 export const useDefaultRedirectPath = () => {
-  return '/quick-start';
+  return '/explore';
 };
 
 export const useRedirectAfterLogin = () => {

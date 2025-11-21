@@ -66,7 +66,6 @@ import { ApTableEditorPage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
-import QuickStartPage from '../routes/quick-start';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
@@ -261,16 +260,6 @@ const routes = [
       <PageTitle title="Todo Testing">
         <TodoTestingPage />
       </PageTitle>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/quick-start',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Quick Start">
-          <QuickStartPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
     ),
   }),
   ...ProjectRouterWrapper({
