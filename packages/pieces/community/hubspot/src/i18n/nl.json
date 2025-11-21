@@ -271,7 +271,7 @@
   "Triggers when a form is submitted.": "Triggert wanneer een formulier wordt ingediend.",
   "Triggers when new line item is available.": "Triggert wanneer nieuw regelitem beschikbaar is.",
   "Triggers when new product is available.": "Triggert wanneer nieuw product beschikbaar is.",
-  "Trigger when new deal is available.": "Trigger wanneer er een nieuwe transactie beschikbaar is.",
+  "Trigger when new ticket is available.": "Trigger wanneer nieuw ticket beschikbaar is.",
   "Triggers when a specified property is updated on a ticket.": "Wordt uitgevoerd wanneer een opgegeven eigenschap wordt bijgewerkt op een ticket.",
   "Triggers when a product recently created or updated.": "Triggert wanneer een product onlangs is aangemaakt of bijgewerkt.",
   "Trigger when a new task is added.": "Trigger wanneer een nieuwe taak wordt toegevoegd.",
