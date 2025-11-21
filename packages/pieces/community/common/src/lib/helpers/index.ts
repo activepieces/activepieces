@@ -282,7 +282,6 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       }
 
       if (body) {
-        // Handle new body_type structure
         if (body_type && body_type !== 'none') {
           const bodyInput = body['data'];
           if (body_type === 'form_data') {
@@ -296,7 +295,6 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
             request.body = bodyInput;
           }
         } else if (!body_type) {
-          // Backward compatibility: if body_type is undefined, treat body as the payload (legacy JSON)
           request.body = body;
         }
       }
@@ -341,14 +339,12 @@ const handleBinaryResponse = async (
     const fileExtension: string =
       mime.extension(contentTypeValue ?? '') || 'txt';
     
-    // Convert ArrayBuffer to Buffer properly
     let bufferData: Buffer;
     if (bodyContent instanceof ArrayBuffer) {
       bufferData = Buffer.from(new Uint8Array(bodyContent));
     } else if (Buffer.isBuffer(bodyContent)) {
       bufferData = bodyContent;
     } else {
-      // string case - shouldn't happen in binary mode but handle it
       bufferData = Buffer.from(bodyContent);
     }
     
