@@ -52,11 +52,20 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                 break
             }
             case JobType.ONE_TIME: {
-                await queue.add(params.id, data, {
+                log.info({
+                    runId: params.id,
+                    queueName,
+                }, '[jobQueue#add] Adding one time job to queue')
+                const job = await queue.add(params.id, data, {
                     priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: params.delay,
                     jobId: params.id,
                 })
+                log.info({
+                    id: params.id,
+                    queueName,
+                    runId: job.id,
+                }, '[jobQueue#add] Added one time job to queue')
                 break
             }
         }

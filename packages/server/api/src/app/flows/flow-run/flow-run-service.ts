@@ -334,6 +334,21 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             failParentOnFailure: undefined,
             stepNameToTest,
         }, log)
+
+        log.info({
+            projectId,
+            flowId: flowVersion.flowId,
+            runId: flowRun.id,
+            stepNameToTest,
+        }, '[test] Getting sample data for flow')
+        const sampleData = !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined
+
+        log.info({
+            projectId,
+            flowId: flowVersion.flowId,
+            runId: flowRun.id,
+            stepNameToTest,
+        }, '[test] Adding flow run to queue')
         return addToQueue({
             flowRun,
             payload: triggerPayload,
@@ -343,7 +358,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             platformId: await projectService.getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
-            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
+            sampleData,
         }, log)
     },
     async getOne(params: GetOneParams): Promise<FlowRun | null> {
@@ -564,6 +579,10 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
     const traceContext: Record<string, string> = {}
     propagation.inject(context.active(), traceContext)
 
+    log.info({
+        runId: params.flowRun.id,
+        platformId: params.platformId,
+    }, '[addToQueue] Adding flow run to queue')
     await jobQueue(log).add({
         id: params.flowRun.id,
         type: JobType.ONE_TIME,
