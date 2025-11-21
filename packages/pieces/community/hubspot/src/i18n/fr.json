@@ -271,7 +271,7 @@
   "Triggers when a form is submitted.": "Déclenche lorsqu'un formulaire est soumis.",
   "Triggers when new line item is available.": "Déclenche quand un nouvel élément de ligne est disponible.",
   "Triggers when new product is available.": "Déclenche quand un nouveau produit est disponible.",
-  "Trigger when new deal is available.": "Déclencher quand une nouvelle offre est disponible.",
+  "Trigger when new ticket is available.": "Déclencher quand un nouveau ticket est disponible.",
   "Triggers when a specified property is updated on a ticket.": "Déclenche lorsqu'une propriété spécifiée est mise à jour sur un ticket.",
   "Triggers when a product recently created or updated.": "Déclenche lorsqu'un produit a récemment été créé ou mis à jour.",
   "Trigger when a new task is added.": "Déclencher lorsqu'une nouvelle tâche est ajoutée.",
