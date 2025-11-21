@@ -40,11 +40,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                     timeoutInSeconds: 30,
                     fn: async () => {
                         try {
-                            log.info({
-                                jobId: job.id,
-                                runId: job.data.runId,
-                            }, '[runsMetadataQueue#worker] Acquired lock')
-
+                      
                             await runsMetadataQueue(log).get().removeDeduplicationKey(job.data.runId)
                             const runMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(key)
                             if (isNil(runMetadata) || Object.keys(runMetadata).length === 0) {
@@ -55,9 +51,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 return
                             }
 
-                            const runExists = await flowRunRepo().existsBy({ id: job.data.runId })
+                            const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
                             let savedFlowRun: FlowRun
-                            if (runExists) {
+                            if (!isNil(existingFlowRun)) {
                                 await flowRunRepo().update(job.data.runId, {
                                     ...spreadIfDefined('projectId', runMetadata.projectId),
                                     ...spreadIfDefined('flowId', runMetadata.flowId),
@@ -67,14 +63,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('finishTime', runMetadata.finishTime),
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
-                                    ...spreadIfDefined('duration', runMetadata.duration),
                                     ...spreadIfDefined('pauseMetadata', runMetadata.pauseMetadata as PauseMetadata),
-                                    ...spreadIfDefined('failedStepName', runMetadata.failedStepName),
+                                    ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
-                                    ...spreadIfDefined('created', runMetadata.created),
                                     ...spreadIfDefined('updated', runMetadata.updated),
                                 })
                                 savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
@@ -91,7 +85,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 savedFlowRun = await flowRunRepo().save(runMetadata)
                             }
 
-
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(savedFlowRun.parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (shouldMarkParentAsFailed) {
                                 const platformId = await projectService.getPlatformId(savedFlowRun.projectId)
@@ -103,6 +96,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 })
                             }
 
+                            if (!isNil(runMetadata.requestId)) {
+                                await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
+                            }
                             if (!isNil(runMetadata.finishTime)) {
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
                             }
@@ -157,8 +153,6 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
 })
 
-
-
 async function markParentRunAsFailed({
     parentRunId,
     childRunId,
@@ -168,6 +162,10 @@ async function markParentRunAsFailed({
     const flowRun = await flowRunRepo().findOneByOrFail({
         id: parentRunId,
     })
+
+    if (flowRun.status === FlowRunStatus.CANCELED) {
+        return
+    }
 
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')

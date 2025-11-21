@@ -6,9 +6,9 @@ import {
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant, isNil } from '@activepieces/shared';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
@@ -28,12 +28,12 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		const propertiesToRetrieve = [...defaultLineItemProperties, ...additionalProperties];
 
 		const items = [];
-		let after;
+		let after: string | undefined;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.lineItems.searchApi.doSearch({
-				limit: isTest ? 10 : 100,
+				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
 				after,
 				properties: propertiesToRetrieve,
 				sorts: ['-createdate'],
@@ -56,6 +56,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 
 			// Stop fetching if it's a test
 			if (isTest) break;
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		return items.map((item) => ({

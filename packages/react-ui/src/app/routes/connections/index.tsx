@@ -18,7 +18,6 @@ import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -497,10 +496,6 @@ function AppConnectionsPage() {
   );
   return (
     <div className="flex-col w-full">
-      <DashboardPageHeader
-        title={t('Connections')}
-        description={t('Manage project connections to external systems.')}
-      />
       <DataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(

@@ -338,6 +338,28 @@ It is strongly recommended that you add your credit card information to your Ope
         streaming: false,
         languageModels: [
             {
+                displayName: 'Claude 4.5 Sonnet',
+                instance: anthropic('claude-sonnet-4-5-20250929'),
+                functionCalling: true,
+                webSearchCost: 0.01,
+                pricing: {
+                    input: 3.00,
+                    output: 15.00,
+                    type: 'flat',
+                },
+            },
+            {
+                displayName: 'Claude 4.5 Haiku',
+                instance: anthropic('claude-haiku-4-5-20251001'),
+                functionCalling: true,
+                webSearchCost: 0.01,
+                pricing: {
+                    input: 1.00,
+                    output: 5.00,
+                    type: 'flat',
+                },
+            },
+            {
                 displayName: 'Claude 4 Sonnet',
                 instance: anthropic('claude-sonnet-4-20250514'),
                 functionCalling: true,
@@ -486,6 +508,24 @@ It is strongly recommended that you add your credit card information to your Ope
         },
         streaming: false,
         languageModels: [
+             {
+                displayName: 'Gemini 3 Pro Preview',
+                instance: google('gemini-3-pro-preview'),
+                functionCalling: true,
+                webSearchCost: 0.035,
+                pricing: {
+                    promptThreshold: 200_000,
+                    input: {
+                        underThresholdRate: 2.00,
+                        overThresholdRate: 4.00,
+                    },
+                    output: {
+                        underThresholdRate: 12.00,
+                        overThresholdRate: 18.00,
+                    },  
+                    type: 'tiered',
+                },
+            },
             {
                 displayName: 'Gemini 2.5 Pro',
                 instance: google('gemini-2.5-pro'),
@@ -515,6 +555,20 @@ It is strongly recommended that you add your credit card information to your Ope
                         audio: 1.00,
                     },
                     output: 2.50,
+                    type: 'categorized',
+                },
+            },
+            {
+                displayName: 'Gemini 2.5 Flash-Lite',
+                instance: google('gemini-2.5-flash-lite'),
+                functionCalling: true,
+                webSearchCost: 0.035,
+                pricing: {
+                    input: {
+                        default: 0.10,
+                        audio: 0.30,
+                    },
+                    output: 0.40,   
                     type: 'categorized',
                 },
             },

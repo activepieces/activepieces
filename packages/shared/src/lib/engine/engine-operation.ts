@@ -234,6 +234,7 @@ export type ExecuteValidateAuthResponse =
 export type EngineResponse<T = unknown> = {
     status: EngineResponseStatus
     response: T
+    delayInSeconds?: number
     error?: string
 }
 

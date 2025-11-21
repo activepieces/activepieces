@@ -24,6 +24,8 @@
   "(openai) O3 Mini": "(openai) O3 Mini",
   "(openai) GPT-4 Turbo": "(openai) GPT-4 Turbo",
   "(openai) GPT-3.5 Turbo": "(openai) GPT-3.5 Turbo",
+  "(anthropic) Claude 4.5 Sonnet": "(anthropic) Claude 4.5 Sonnet",
+  "(anthropic) Claude 4.5 Haiku": "(anthropic) Claude 4.5 Haiku",
   "(anthropic) Claude 4 Sonnet": "(anthropic) Claude 4 Sonnet",
   "(anthropic) Claude 3.5 Haiku": "(anthropic) Claude 3.5 Haiku",
   "(anthropic) Claude 4.1 Opus": "(anthropic) Claude 4.1 Opus",
@@ -32,8 +34,10 @@
   "(anthropic) Claude 3 Opus": "(anthropic) Claude 3 Opus",
   "(anthropic) Claude 3 Sonnet": "(anthropic) Claude 3 Sonnet",
   "(anthropic) Claude 3 Haiku": "(anthropic) Claude 3 Haiku",
+  "(google) Gemini 3 Pro Preview": "(google) Gemini 3 Pro Preview",
   "(google) Gemini 2.5 Pro": "(google) Gemini 2.5 Pro",
   "(google) Gemini 2.5 Flash": "(google) Gemini 2.5 Flash",
+  "(google) Gemini 2.5 Flash-Lite": "(google) Gemini 2.5 Flash-Lite",
   "(google) Gemini 2.5 Flash-Lite Preview": "(google) Gemini 2.5 Flash-Lite Preview",
   "(google) Gemini 2.0 Flash-Lite": "(google) Gemini 2.0 Flash-Lite"
 }
