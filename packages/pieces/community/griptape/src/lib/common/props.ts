@@ -241,7 +241,7 @@ export const structureIdDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.structures.map((structure: any) => ({ 
+        options: response.structures.map((structure: any) => ({
           label: structure.name,
           value: structure.structure_id,
         })),
@@ -251,6 +251,96 @@ export const structureIdDropdown = Property.Dropdown({
         disabled: true,
         options: [],
         placeholder: 'Could not fetch structures',
+      };
+    }
+  },
+});
+
+export const assistantRunsDropdown = Property.Dropdown({
+  displayName: 'Assistant Run',
+  description: 'Select the assistant run',
+  required: true,
+  refreshers: ['assistant_id'],
+  options: async ({ auth, assistant_id }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    if (!assistant_id) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please select an assistant first',
+      };
+    }
+
+    try {
+      const response = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        `/assistants/${assistant_id}/runs`
+      );
+      return {
+        disabled: false,
+        options: response.runs.map((run: any) => ({
+          label: `${run.assistant_run_id} - ${run.status}`,
+          value: run.assistant_run_id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Could not fetch assistant runs',
+      };
+    }
+  },
+});
+
+export const structureRunsDropdown = Property.Dropdown({
+  displayName: 'Structure Run',
+  description: 'Select the structure run',
+  required: true,
+  refreshers: ['structure_id'],
+  options: async ({ auth, structure_id }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    if (!structure_id) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please select a structure first',
+      };
+    }
+
+    try {
+      const response = await makeRequest(
+        auth as string,
+        HttpMethod.GET,
+        `/structures/${structure_id}/runs`
+      );
+      return {
+        disabled: false,
+        options: response.runs.map((run: any) => ({
+          label: `${run.structure_run_id} - ${run.status}`,
+          value: run.structure_run_id,
+        })),
+      };
+    } catch (error) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Could not fetch structure runs',
       };
     }
   },
