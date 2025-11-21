@@ -8,7 +8,7 @@ export const griptapeAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await makeRequest(auth, HttpMethod.GET, `/api-keys/${auth}`);
+      await makeRequest(auth, HttpMethod.GET, `/organizations`);
       return {
         valid: true,
       };

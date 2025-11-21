@@ -286,7 +286,7 @@ export const assistantRunsDropdown = Property.Dropdown({
       );
       return {
         disabled: false,
-        options: response.runs.map((run: any) => ({
+        options: response.assistant_runs.map((run: any) => ({
           label: `${run.assistant_run_id} - ${run.status}`,
           value: run.assistant_run_id,
         })),
