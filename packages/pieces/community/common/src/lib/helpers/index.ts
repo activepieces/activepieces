@@ -7,6 +7,7 @@ import {
   StaticPropsValue,
   InputPropertyMap,
   FilesService,
+  DynamicPropsValue,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -19,6 +20,7 @@ import {
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
 import fs from 'fs';
 import mime from 'mime-types';
+import FormData from 'form-data';
 
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
@@ -147,10 +149,68 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         required: true,
         ...(props?.queryParams ?? {}),
       }),
-      body: Property.Json({
-        displayName: 'Body',
+      body_type: Property.StaticDropdown({
+        displayName: 'Body Type',
         required: false,
-        ...(props?.body ?? {}),
+        defaultValue: 'none',
+        options: {
+          disabled: false,
+          options: [
+            {
+              label: 'None',
+              value: 'none',
+            },
+            {
+              label: 'JSON',
+              value: 'json',
+            },
+            {
+              label: 'Form Data',
+              value: 'form_data',
+            },
+            {
+              label: 'Raw',
+              value: 'raw',
+            },
+          ],
+        },
+      }),
+      body: Property.DynamicProperties({
+        displayName: 'Body',
+        refreshers: ['body_type'],
+        required: false,
+        props: async ({ body_type }) => {
+          if (!body_type) return {};
+
+          const bodyTypeInput = body_type as unknown as string;
+
+          const fields: DynamicPropsValue = {};
+
+          switch (bodyTypeInput) {
+            case 'none':
+              break;
+            case 'json':
+              fields['data'] = Property.Json({
+                displayName: 'JSON Body',
+                required: true,
+                ...(props?.body ?? {}),
+              });
+              break;
+            case 'raw':
+              fields['data'] = Property.LongText({
+                displayName: 'Raw Body',
+                required: true,
+              });
+              break;
+            case 'form_data':
+              fields['data'] = Property.Object({
+                displayName: 'Form Data',
+                required: true,
+              });
+              break;
+          }
+          return fields;
+        },
       }),
       response_is_binary: Property.Checkbox({
         displayName: 'Response is Binary ?',
@@ -179,6 +239,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         headers,
         queryParams,
         body,
+        body_type,
         failsafe,
         timeout,
         response_is_binary,
@@ -199,7 +260,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               baseUrl: baseUrl(context.auth),
               relativePath: urlValue,
             });
-      const request: HttpRequest<Record<string, unknown>> = {
+      const request: HttpRequest = {
         method,
         url: fullUrl,
         headers: {
@@ -221,7 +282,23 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       }
 
       if (body) {
-        request.body = body;
+        // Handle new body_type structure
+        if (body_type && body_type !== 'none') {
+          const bodyInput = body['data'];
+          if (body_type === 'form_data') {
+            const formData = new FormData();
+            for (const key in bodyInput) {
+              formData.append(key, bodyInput[key]);
+            }
+            request.body = formData;
+            request.headers = { ...request.headers, ...formData.getHeaders() };
+          } else {
+            request.body = bodyInput;
+          }
+        } else if (!body_type) {
+          // Backward compatibility: if body_type is undefined, treat body as the payload (legacy JSON)
+          request.body = body;
+        }
       }
 
       try {
@@ -263,9 +340,21 @@ const handleBinaryResponse = async (
       : headers?.['content-type'];
     const fileExtension: string =
       mime.extension(contentTypeValue ?? '') || 'txt';
+    
+    // Convert ArrayBuffer to Buffer properly
+    let bufferData: Buffer;
+    if (bodyContent instanceof ArrayBuffer) {
+      bufferData = Buffer.from(new Uint8Array(bodyContent));
+    } else if (Buffer.isBuffer(bodyContent)) {
+      bufferData = bodyContent;
+    } else {
+      // string case - shouldn't happen in binary mode but handle it
+      bufferData = Buffer.from(bodyContent);
+    }
+    
     body = await files.write({
       fileName: `output.${fileExtension}`,
-      data: Buffer.from(bodyContent),
+      data: bufferData,
     });
   } else {
     body = bodyContent;
