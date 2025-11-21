@@ -1,4 +1,4 @@
-import { apId, ColorName } from '@activepieces/shared'
+import { apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 enum ProjectType {
@@ -6,7 +6,21 @@ enum ProjectType {
     PERSONAL = 'PERSONAL',
 }
 
-// Use the colors from shared; if we change them to icons in the future, we will need to update this migration.
+enum ColorName {
+    RED = 'RED',
+    BLUE = 'BLUE',
+    YELLOW = 'YELLOW',
+    PURPLE = 'PURPLE',
+    GREEN = 'GREEN',
+    PINK = 'PINK',
+    VIOLET = 'VIOLET',
+    ORANGE = 'ORANGE',
+    DARK_GREEN = 'DARK_GREEN',
+    CYAN = 'CYAN',
+    LAVENDER = 'LAVENDER',
+    DEEP_ORANGE = 'DEEP_ORANGE',
+}
+
 const COLORS = Object.values(ColorName)
 
 export class AddProjectType1763644863137 implements MigrationInterface {
