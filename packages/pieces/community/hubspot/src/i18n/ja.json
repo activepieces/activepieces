@@ -271,7 +271,7 @@
   "Triggers when a form is submitted.": "フォームが送信されたときにトリガーします。",
   "Triggers when new line item is available.": "新しい行項目が利用可能な場合にトリガーします。",
   "Triggers when new product is available.": "新しい製品が利用可能な場合にトリガーします。",
-  "Trigger when new deal is available.": "新しい取引が利用可能になったときにトリガーします。",
+  "Trigger when new ticket is available.": "新しいチケットが利用可能な場合にトリガーします。",
   "Triggers when a specified property is updated on a ticket.": "チケットで指定されたプロパティが更新されたときにトリガーされます。",
   "Triggers when a product recently created or updated.": "製品が最近作成または更新されたときにトリガーします。",
   "Trigger when a new task is added.": "新しいタスクが追加されたときにトリガーします。",
