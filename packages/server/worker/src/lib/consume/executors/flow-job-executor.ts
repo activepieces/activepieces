@@ -1,5 +1,5 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowExecutionState, flowExecutionStateKey, FlowId, FlowRunStatus, FlowStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowExecutionState, flowExecutionStateKey, FlowRunStatus, FlowStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -22,7 +22,7 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-> {
+    > {
     const previousExecutionFile = (jobData.executionType === ExecutionType.RESUME || attempsStarted > 1) ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
 
