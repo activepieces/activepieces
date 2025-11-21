@@ -76,8 +76,8 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         }, '[registryPieceManager] Warmed up pieces cache')
     },
     distributedWarmup: async (): Promise<void> => {
-        await pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, (channel, message) => {
-            log.debug({ channel }, '[registryPieceManager#subscribe] Received message from other worker to install pieces')
+        await pubsub.subscribe(REDIS_INSTALL_PIECES_CHANNEL, (message) => {
+            log.debug('[registryPieceManager#subscribe] Received message from other worker to install pieces')
             const { data: pieces, error } = tryCatchSync(() => JSON.parse(message) as PiecePackage[])
             if (error) {
                 exceptionHandler.handle(error, log)
@@ -250,9 +250,15 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
 }
 
 async function partitionPiecesToInstallAndToPersist(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
-    const checkResult = await Promise.all(pieces.map(piece => pieceCheckIfAlreadyInstalled(rootWorkspace, piece)))
-    const piecesToInstall = checkResult.filter(check => !check.installed).map((_check, index) => pieces[index])
-    const piecesToPersistOnRedis = checkResult.filter(check => check.installed && check.source === 'disk').map((_check, index) => pieces[index])
+    const piecesWithCheck = await Promise.all(
+        pieces.map(async (piece) => {
+            const check = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece);
+            return { piece, check };
+        })
+    );
+
+    const piecesToInstall = piecesWithCheck.filter(({ check }) => !check.installed).map(({ piece }) => piece)
+    const piecesToPersistOnRedis = piecesWithCheck.filter(({ check }) => check.installed && check.source === 'disk').map(({ piece }) => piece)
 
     return {
         piecesToInstall,

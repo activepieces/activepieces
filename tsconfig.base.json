@@ -133,6 +133,9 @@
       "@activepieces/piece-promptmate": [
         "packages/pieces/community/promptmate/src/index.ts"
       ],
+      "@activepieces/piece-guidelite": [
+        "packages/pieces/community/guidelite/src/index.ts"
+      ],
       "@activepieces/piece-bolna": [
         "packages/pieces/community/bolna/src/index.ts"
       ]
