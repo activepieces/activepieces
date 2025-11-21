@@ -149,7 +149,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         if (dbType === DatabaseType.SQLITE3) {
             queryString = `strftime('%s', ${this.alias}.${PAGINATION_KEY}) ${operator} strftime('%s', :${PAGINATION_KEY})`
         }
-        else if (dbType === DatabaseType.POSTGRES) {
+        else if (dbType === DatabaseType.POSTGRES || dbType === DatabaseType.PGLITE) {
             queryString = `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`
         }
         else {

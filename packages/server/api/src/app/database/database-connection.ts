@@ -60,6 +60,7 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
+import { createPgliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 
@@ -147,9 +148,15 @@ let _databaseConnection: DataSource | null = null
 
 export const databaseConnection = () => {
     if (isNil(_databaseConnection)) {
-        _databaseConnection = databaseType === DatabaseType.SQLITE3
-            ? createSqlLiteDataSource()
-            : createPostgresDataSource()
+        if (databaseType === DatabaseType.SQLITE3) {
+            _databaseConnection = createSqlLiteDataSource()
+        }
+        else if (databaseType === DatabaseType.PGLITE) {
+            _databaseConnection = createPgliteDataSource()
+        }
+        else {
+            _databaseConnection = createPostgresDataSource()
+        }
     }
     return _databaseConnection
 }
@@ -166,6 +173,7 @@ export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
 ): void {
     switch (getDatabaseType()) {
         case DatabaseType.POSTGRES:
+        case DatabaseType.PGLITE:
             queryBuilder.andWhere(`${columnName} @> :values`, { values })
             break
         case DatabaseType.SQLITE3:{
@@ -184,6 +192,7 @@ export function APArrayContains<T>(
     const databaseType = getDatabaseType()
     switch (databaseType) {
         case DatabaseType.POSTGRES:
+        case DatabaseType.PGLITE:
             return {
                 [columnName]: ArrayContains(values),
             }
