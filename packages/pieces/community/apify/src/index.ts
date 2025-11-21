@@ -1,8 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { getDatasetItems } from './lib/actions/get-dataset-items';
-import { getActors } from './lib/actions/get-actors';
-import { getLastRun } from './lib/actions/get-last-run';
 import { runActor } from './lib/actions/run-actor';
 import { createApifyClient } from './lib/common';
 import { getKeyValueStoreRecord } from './lib/actions/get-key-value-store-record';
@@ -51,6 +49,6 @@ export const apify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/apify.svg',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['buttonsbond'],
-  actions: [getDatasetItems, getActors, getLastRun, runActor, runTask, getKeyValueStoreRecord, scrapeSingleUrl],
+  actions: [getDatasetItems, runActor, runTask, getKeyValueStoreRecord, scrapeSingleUrl],
   triggers: [watchActorRunsTrigger, watchTaskRunsTrigger],
 });
