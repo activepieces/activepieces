@@ -1,5 +1,5 @@
 import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowRunStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowExecutionState, flowExecutionStateKey, FlowId, FlowRunStatus, FlowStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,7 @@ import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { engineRunner } from '../../compute'
 import { engineSocketHandlers } from '../../compute/process/engine-socket-handlers'
 import { runsMetadataQueue } from '../../flow-worker'
+import { workerRedisConnections } from '../../utils/worker-redis'
 
 const tracer = trace.getTracer('flow-job-executor')
 
@@ -21,7 +22,7 @@ async function prepareInput(
 ): Promise<
     | Omit<BeginExecuteFlowOperation, EngineConstants>
     | Omit<ResumeExecuteFlowOperation, EngineConstants>
-    > {
+> {
     const previousExecutionFile = (jobData.executionType === ExecutionType.RESUME || attempsStarted > 1) ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
 
@@ -137,6 +138,18 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             },
         }, async (span) => {
             try {
+                const shouldSkip = await shouldSkipDisabledFlow(jobData)
+                if (shouldSkip) {
+                    log.info({
+                        message: '[flowJobExecutor] Skipping flow because it is disabled',
+                        flowId: jobData.flowId,
+                        projectId: jobData.projectId,
+                    })
+                    return {
+                        status: ConsumeJobResponseStatus.OK,
+                    }
+                }
+
                 const flowVersion = await flowWorkerCache(log).getVersion({
                     engineToken,
                     flowVersionId: jobData.flowVersionId,
@@ -224,6 +237,23 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+
+async function shouldSkipDisabledFlow(jobData: ExecuteFlowJobData): Promise<boolean> {
+    if (jobData.environment === RunEnvironment.TESTING) {
+        return false
+    }
+    const redisConnection = await workerRedisConnections.useExisting()
+    const flowExecutionStateString = await redisConnection.get(flowExecutionStateKey(jobData.flowId))
+    if (isNil(flowExecutionStateString)) {
+        return false
+    }
+    const flowExecutionState = JSON.parse(flowExecutionStateString) as FlowExecutionState
+    if (!flowExecutionState.exists || flowExecutionState.flow.status === FlowStatus.DISABLED) {
+        return true
+    }
+    return false
+}
 
 type ExecuteFlowOptions = {
     jobData: ExecuteFlowJobData
