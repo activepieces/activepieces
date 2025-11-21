@@ -135,6 +135,9 @@
       ],
       "@activepieces/piece-bolna": [
         "packages/pieces/community/bolna/src/index.ts"
+      ],
+      "@activepieces/piece-appfollow": [
+        "packages/pieces/community/appfollow/src/index.ts"
       ]
     },
     "resolveJsonModule": true
