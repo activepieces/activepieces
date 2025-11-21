@@ -73,7 +73,7 @@ export const newTicketTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-ticket',
 	displayName: 'New Ticket',
-	description: 'Trigger when new deal is available.',
+	description: 'Trigger when new ticket is available.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
