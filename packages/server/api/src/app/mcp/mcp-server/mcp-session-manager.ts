@@ -19,7 +19,7 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
     return {
         init: async (): Promise<void> => {
 
-            pubsub.subscribe(`server:${serverId}`, async (channel, message) => {
+            pubsub.subscribe(`server:${serverId}`, async (message) => {
                 const { sessionId, body, operation } = JSON.parse(message)
                 logger.info({ sessionId, operation }, 'Received message')
 
