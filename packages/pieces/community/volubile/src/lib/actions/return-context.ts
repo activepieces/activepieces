@@ -7,8 +7,8 @@ import { StatusCodes } from 'http-status-codes';
 
 export const returnContext = createAction({
   name: 'returnContext',
-  displayName: 'Return Response',
-  description: 'return response',
+  displayName: 'Respond to the agent',
+  description: 'respond to the agent',
   props: {
     body: Property.Json({
       displayName: 'Response',
