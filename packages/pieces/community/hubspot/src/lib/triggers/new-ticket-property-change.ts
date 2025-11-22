@@ -5,9 +5,9 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { chunk } from '@activepieces/shared';
+import { chunk, isNil } from '@activepieces/shared';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -42,10 +42,10 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 		//fetch updated tickets
 		const updatedTickets = [];
-		let after;
+		let after: string | undefined;
 		do {
 			const response = await client.crm.tickets.searchApi.doSearch({
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				sorts: ['-hs_lastmodifieddate'],
 				after,
 				filterGroups: [
@@ -66,6 +66,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 			after = response.paging?.next?.after;
 			updatedTickets.push(...response.results);
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		if (updatedTickets.length === 0) {

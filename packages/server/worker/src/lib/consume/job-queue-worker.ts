@@ -3,9 +3,6 @@ import {
     assertNotNullOrUndefined,
     ConsumeJobResponseStatus,
     ExecutionType,
-    FlowExecutionState,
-    flowExecutionStateKey,
-    FlowStatus,
     isNil,
     JobData,
     LATEST_JOB_DATA_SCHEMA_VERSION,
@@ -109,13 +106,6 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
 async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
     shouldSkip: boolean
 }> {
-
-    const skipFlow = await shouldSkipDisabledFlow(job.data)
-    if (skipFlow) {
-        return {
-            shouldSkip: true,
-        }
-    }
     const deprecatedJobs = ['DELAYED_FLOW']
     if (deprecatedJobs.includes(job.data.jobType)) {
         return {
@@ -134,21 +124,6 @@ async function preHandler(workerToken: string, job: Job<JobData>): Promise<{
     }
 }
 
-async function shouldSkipDisabledFlow(data: JobData): Promise<boolean> {
-    if ('flowId' in data) {
-        const flowId = data.flowId
-        const redisConnection = await workerRedisConnections.useExisting()
-        const flowExecutionStateString = await redisConnection.get(flowExecutionStateKey(flowId))
-        if (isNil(flowExecutionStateString)) {
-            return false
-        }
-        const flowExecutionState = JSON.parse(flowExecutionStateString) as FlowExecutionState
-        if (!flowExecutionState.exists || flowExecutionState.flow.status === FlowStatus.DISABLED) {
-            return true
-        }
-    }
-    return false
-}
 
 function getWorkerQueueName(): string {
     const platformIdForDedicatedWorker = workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER

@@ -38,7 +38,11 @@ import { pieceListUtils } from './utils'
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
+
     return {
+        async setup(): Promise<void> {
+            await localPieceCache(log).setup()
+        },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 ...params,
@@ -212,22 +216,32 @@ export const getPiecePackageWithoutArchive = async (
         platformId,
     })
     switch (pieceMetadata.packageType) {
-        case PackageType.ARCHIVE: {
-            assertNotNullOrUndefined(pieceMetadata.archiveId, 'archiveId')
+        case PackageType.ARCHIVE:
+            assertNotNullOrUndefined(pieceMetadata.platformId, 'platformId is required')
             return {
-                packageType: PackageType.ARCHIVE,
-                pieceName: pkg.pieceName,
+                pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
-                platformId: platformId!,
                 pieceType: pieceMetadata.pieceType,
-                archiveId: pieceMetadata.archiveId,
+                packageType: pieceMetadata.packageType,
+                archiveId: pieceMetadata.archiveId!,
+                platformId: pieceMetadata.platformId,
             }
-        }
         case PackageType.REGISTRY: {
-            return {
-                packageType: PackageType.REGISTRY,
-                pieceName: pkg.pieceName,
+            const piecePlatformId = pieceMetadata.platformId
+            if (pieceMetadata.pieceType === PieceType.CUSTOM) {
+                assertNotNullOrUndefined(piecePlatformId, 'platformId is required')
+                return {  
+                    pieceName: pieceMetadata.name,
+                    pieceVersion: pieceMetadata.version,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    platformId: piecePlatformId,
+                }
+            }
+            return {  
+                pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
+                packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
             }
         }

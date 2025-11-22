@@ -110,7 +110,6 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-
         return paginationHelper.createPage<Alert>(data, newCursor)
     },
     async delete({ alertId }: { alertId: ApId }): Promise<void> {
@@ -128,11 +127,11 @@ export const alertsService = (log: FastifyBaseLogger) => ({
 })
 
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const { platformId } = params
+    const { platformId, flowRunId, projectId } = params
 
     const issueUrl = await domainHelper.getPublicUrl({
         platformId,
-        path: 'runs?limit=10#Issues',
+        path: `projects/${projectId}/runs/${flowRunId}`,
     })
 
     await emailService(log).sendIssueCreatedNotification({
@@ -177,7 +176,6 @@ type IssueParams = {
     flowName: string
     createdAt: string
 }
-
 
 type IssueToAlert = {
     flowVersionId: string

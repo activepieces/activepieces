@@ -68,6 +68,7 @@ import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { mcpModule } from './mcp/mcp-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
+import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { tagsModule } from './pieces/tags/tags-module'
 import { platformModule } from './platform/platform.module'
@@ -180,8 +181,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flagModule)
     await app.register(storeEntryModule)
     await app.register(folderModule)
-    await app.register(flowModule)
+    await pieceSyncService(app.log).setup()
+    await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
+    await app.register(flowModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
@@ -193,7 +196,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(humanInputModule)
     await app.register(tagsModule)
     await app.register(mcpModule)
-    await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(alertsModule)
     await app.register(invitationModule)

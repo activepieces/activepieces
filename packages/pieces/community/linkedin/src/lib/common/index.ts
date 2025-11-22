@@ -19,7 +19,7 @@ export const linkedinCommon = {
   baseUrl: 'https://api.linkedin.com',
   linkedinHeaders: {
     'X-Restli-Protocol-Version': '2.0.0',
-    'LinkedIn-Version': '202411',
+    'LinkedIn-Version': '202511',
   },
   text: Property.LongText({
     displayName: 'Text',
