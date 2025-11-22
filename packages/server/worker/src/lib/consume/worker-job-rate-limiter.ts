@@ -75,7 +75,6 @@ export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
         const redis = await workerRedisConnections.useExisting()
         const projectId = castedJob.projectId
 
-        await redis.srem(projectActiveSetKey(projectId), jobId)
         const waitingSetKey = projectWaitingSetKey(projectId)
         const waitingSize = await redis.zcard(waitingSetKey)
         if (waitingSize === 0) {
@@ -98,8 +97,15 @@ export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
                     message: '[workerJobRateLimiter] Promoting next job',
                     jobId: nextJobId,
                 })
+                await redis.multi()
+                    .srem(projectActiveSetKey(projectId), jobId)
+                    .zadd(projectActiveSetKey(projectId), nextJobId)
+                    .zrem(waitingSetKey, nextJobId)
+                    .exec()
+
                 await nextJob.promote()
-                await redis.zrem(waitingSetKey, nextJobId)
+
+
             },
         })
     },
@@ -130,6 +136,11 @@ export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
                 local setKey = KEYS[1]
                 local jobId = ARGV[1]
                 local maxConcurrent = tonumber(ARGV[2])
+                
+                -- If the job is already in the set, do not rate limit
+                if redis.call('SISMEMBER', setKey, jobId) == 1 then
+                    return 0 -- Job is already counted, should not rate limit
+                end
                 
                 local size = redis.call('SCARD', setKey)
                 if size >= maxConcurrent then
