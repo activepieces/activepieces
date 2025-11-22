@@ -252,10 +252,10 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
 async function partitionPiecesToInstallAndToPersist(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
     const piecesWithCheck = await Promise.all(
         pieces.map(async (piece) => {
-            const check = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece);
-            return { piece, check };
-        })
-    );
+            const check = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece)
+            return { piece, check }
+        }),
+    )
 
     const piecesToInstall = piecesWithCheck.filter(({ check }) => !check.installed).map(({ piece }) => piece)
     const piecesToPersistOnRedis = piecesWithCheck.filter(({ check }) => check.installed && check.source === 'disk').map(({ piece }) => piece)

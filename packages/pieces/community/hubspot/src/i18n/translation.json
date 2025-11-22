@@ -271,7 +271,7 @@
   "Triggers when a form is submitted.": "Triggers when a form is submitted.",
   "Triggers when new line item is available.": "Triggers when new line item is available.",
   "Triggers when new product is available.": "Triggers when new product is available.",
-  "Trigger when new deal is available.": "Trigger when new deal is available.",
+  "Trigger when new ticket is available.": "Trigger when new ticket is available.",
   "Triggers when a specified property is updated on a ticket.": "Triggers when a specified property is updated on a ticket.",
   "Triggers when a product recently created or updated.": "Triggers when a product recently created or updated.",
   "Trigger when a new task is added.": "Trigger when a new task is added.",
