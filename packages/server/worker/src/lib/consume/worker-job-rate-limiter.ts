@@ -1,6 +1,7 @@
 import { getPlatformPlanNameKey, QueueName } from '@activepieces/server-shared'
 import {
     ApEdition,
+    assertNotNullOrUndefined,
     ExecuteFlowJobData,
     isNil,
     JobData,
@@ -19,28 +20,31 @@ import { workerDistributedLock, workerDistributedStore, workerRedisConnections }
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 const projectActiveSetKey = (projectId: string): string => `active_jobs_set_2:${projectId}`
 const projectWaitingSetKey = (projectId: string): string => `waiting_jobs_set:${projectId}`
+const projectWaitingKeyLock = (projectId: string): string => `lock:waiting_jobs_set:${projectId}`
 let throttledJobQueue: Queue<JobData> | undefined
 
 export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
         throttledJobQueue = new Queue<JobData>(QueueName.THROTTLED_JOBS, {
             connection: await workerRedisConnections.create(),
-            telemetry: isOtpEnabled ? new BullMQOtel(QueueName.THROTTLED_JOBS) : undefined,
+            telemetry: workerMachine.getSettings().OTEL_ENABLED ? new BullMQOtel(QueueName.THROTTLED_JOBS) : undefined,
         })
         await throttledJobQueue.waitUntilReady()
 
     },
     async throttleJob(id: string, data: JobData): Promise<void> {
         const redis = await workerRedisConnections.useExisting()
-        await redis.zadd(projectWaitingSetKey(data.projectId!), Date.now(), id)
-        await this.getThrottledJobQueue().add(id, data, { jobId: id, delay: dayjs.duration(365, 'day').asMilliseconds() })
-    },
-    getThrottledJobQueue(): Queue<JobData> {
-        if (isNil(throttledJobQueue)) {
-            throw new Error('Throttled job queue not initialized')
-        }
-        return throttledJobQueue
+        const projectId = data.projectId
+        assertNotNullOrUndefined(projectId, 'projectId')
+        const waitingSetKey = projectWaitingSetKey(projectId)
+        await workerDistributedLock(log).runExclusive({
+            key: projectWaitingKeyLock(projectId),
+            timeoutInSeconds: 20,
+            fn: async () => {
+                await redis.zadd(waitingSetKey, Date.now(), id)
+                await getThrottledJobQueue().add(id, data, { jobId: id, delay: dayjs.duration(365, 'day').asMilliseconds() })
+            },
+        })
     },
     async close(): Promise<void> {
         if (!isNil(throttledJobQueue)) {
@@ -68,14 +72,14 @@ export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
         }
 
         await workerDistributedLock(log).runExclusive({
-            key: `lock:${waitingSetKey}`,
+            key: projectWaitingKeyLock(projectId),
             timeoutInSeconds: 20,
             fn: async () => {
                 const [nextJobId] = await redis.zrange(waitingSetKey, 0, 0)
                 if (isNil(nextJobId)) {
                     return
                 }
-                const nextJob = await workerJobRateLimiter(log).getThrottledJobQueue().getJob(nextJobId)
+                const nextJob = await getThrottledJobQueue().getJob(nextJobId)
                 if (isNil(nextJob)) {
                     return
                 }
@@ -88,8 +92,6 @@ export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
             },
         })
     },
-
-
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
     }> {
@@ -150,6 +152,12 @@ const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
     [PlanName.ENTERPRISE]: 30,
 }
 
+function getThrottledJobQueue(): Queue<JobData> {
+    if (isNil(throttledJobQueue)) {
+        throw new Error('Throttled job queue not initialized')
+    }
+    return throttledJobQueue
+}
 
 function concurrentJobsFromPlan({ platformId, storedValues }: GetConcurrentJobsFromPlanParams): number | null {
     if (workerMachine.getSettings().EDITION !== ApEdition.CLOUD) {
