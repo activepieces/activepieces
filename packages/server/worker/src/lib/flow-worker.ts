@@ -7,20 +7,16 @@ import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
 import { jobQueueWorker } from './consume/job-queue-worker'
+import { workerJobRateLimiter } from './consume/worker-job-rate-limiter'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
-import { workerJobRateLimiter } from './consume/worker-job-rate-limiter';
-import { throttledJobQueueWorker } from './consume/throttled-job-queue-worker';
 
-export const runsMetadataQueue = runsMetadataQueueFactory({ 
+export const runsMetadataQueue = runsMetadataQueueFactory({
     createRedisConnection: workerRedisConnections.create,
     distributedStore: workerDistributedStore,
 })
 
-export const flowWorker = (log: FastifyBaseLogger): {
-    init: (params: { workerToken: string }) => Promise<void>
-    close: () => Promise<void>
-} => ({
+export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token }: { workerToken: string }): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
         await engineRunnerSocket(log).init()
@@ -32,9 +28,10 @@ export const flowWorker = (log: FastifyBaseLogger): {
                 const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
                 await workerMachine.init(response, token, log)
                 await registryPieceManager(log).warmup()
-                await jobQueueWorker(log).start(token)
-                await throttledJobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
+                await workerJobRateLimiter(log).init()
+                await jobQueueWorker(log).start(token)
+
             },
         })
     },
@@ -49,12 +46,12 @@ export const flowWorker = (log: FastifyBaseLogger): {
 
         await workerRedisConnections.destroy()
         await workerDistributedLock(log).destroy()
-        
+
         if (workerMachine.hasSettings()) {
             await engineRunner(log).shutdownAllWorkers()
         }
         await jobQueueWorker(log).close()
-        await throttledJobQueueWorker(log).close()
+        await workerJobRateLimiter(log).close()
     },
 })
 

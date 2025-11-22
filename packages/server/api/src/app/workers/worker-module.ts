@@ -7,8 +7,8 @@ import { workerMachineController } from './machine/machine-controller'
 import { jobQueue } from './queue/job-queue'
 import { queueMigration } from './queue/migration'
 import { setupBullMQBoard } from './queue/redis-bullboard'
+import { throttleQueueWorker } from './queue/throttle-queue-worker'
 import { flowWorkerController } from './worker-controller'
-import { throttledJobQueue } from './queue/throttled-job-queue';
 
 export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, {
@@ -21,14 +21,14 @@ export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
         prefix: '/v1/worker-machines',
     })
     await jobQueue(app.log).init()
-    await throttledJobQueue(app.log).init()
+    await throttleQueueWorker(app.log).init()
     await runsMetadataQueue(app.log).init()
     await setupBullMQBoard(app)
 
     app.addHook('onClose', async () => {
         await runsMetadataQueue(app.log).close()
         await jobQueue(app.log).close()
-        await throttledJobQueue(app.log).close()
+        await throttleQueueWorker(app.log).close()
         await pubsub.close()
     })
 }

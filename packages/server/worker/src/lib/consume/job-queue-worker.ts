@@ -31,7 +31,7 @@ export const jobQueueWorker = (log: FastifyBaseLogger) => ({
         }
         const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
         const queueName = getWorkerQueueName()
-        worker = new Worker<JobData>(queueName, async (job, token) => {
+        worker = new Worker<JobData>(queueName, async (job) => {
             try {
                 const jobId = job.id
                 const { shouldSkip } = await preHandler(workerToken, job)

@@ -1,4 +1,4 @@
-import { apDayjsDuration, getPlatformPlanNameKey } from '@activepieces/server-shared'
+import { getPlatformPlanNameKey, QueueName } from '@activepieces/server-shared'
 import {
     ApEdition,
     ExecuteFlowJobData,
@@ -6,30 +6,47 @@ import {
     JobData,
     PlanName,
     PlatformId,
-    ProjectId,
     RunEnvironment,
-    WorkerJobType
+    WorkerJobType,
 } from '@activepieces/shared'
+import { Queue } from 'bullmq'
+import { BullMQOtel } from 'bullmq-otel'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../utils/machine'
-import {workerDistributedLock, workerDistributedStore, workerRedisConnections} from '../utils/worker-redis'
-import { throttledJobQueue } from '../../../../api/src/app/workers/queue/throttled-job-queue';
-import dayjs from 'dayjs';
+import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from '../utils/worker-redis'
 
 export const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 const projectActiveSetKey = (projectId: string): string => `active_jobs_set_2:${projectId}`
 const projectWaitingSetKey = (projectId: string): string => `waiting_jobs_set:${projectId}`
+let throttledJobQueue: Queue<JobData> | undefined
 
-export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
+export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
+    async init(): Promise<void> {
+        const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
+        throttledJobQueue = new Queue<JobData>(QueueName.THROTTLED_JOBS, {
+            connection: await workerRedisConnections.create(),
+            telemetry: isOtpEnabled ? new BullMQOtel(QueueName.THROTTLED_JOBS) : undefined,
+        })
+        await throttledJobQueue.waitUntilReady()
+
+    },
     async throttleJob(id: string, data: JobData): Promise<void> {
         const redis = await workerRedisConnections.useExisting()
-
         await redis.zadd(projectWaitingSetKey(data.projectId!), Date.now(), id)
-
-        // 1 year delay, will be promoted manually when slot is available
-        await throttledJobQueue(_log).add({ id, data, delay: dayjs.duration(365, 'day').asMilliseconds() })
+        await this.getThrottledJobQueue().add(id, data, { jobId: id, delay: dayjs.duration(365, 'day').asMilliseconds() })
     },
-
+    getThrottledJobQueue(): Queue<JobData> {
+        if (isNil(throttledJobQueue)) {
+            throw new Error('Throttled job queue not initialized')
+        }
+        return throttledJobQueue
+    },
+    async close(): Promise<void> {
+        if (!isNil(throttledJobQueue)) {
+            await throttledJobQueue.close()
+        }
+    },
     async onCompleteOrFailedJob(data: JobData, jobId: string | undefined): Promise<void> {
         const projectRateLimiterEnabled = workerMachine.getSettings().PROJECT_RATE_LIMITER_ENABLED
         if (!RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType) || !projectRateLimiterEnabled || isNil(jobId)) {
@@ -41,44 +58,42 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
         }
 
         const redis = await workerRedisConnections.useExisting()
+        const projectId = castedJob.projectId
 
-        await redis.srem(projectActiveSetKey(castedJob.projectId), jobId)
-
-        await this._requeueNextWaitingJobIfExists(castedJob.projectId)
-    },
-
-    async _requeueNextWaitingJobIfExists(projectId: string): Promise<void> {
+        await redis.srem(projectActiveSetKey(projectId), jobId)
         const waitingSetKey = projectWaitingSetKey(projectId)
+        const waitingSize = await redis.zcard(waitingSetKey)
+        if (waitingSize === 0) {
+            return
+        }
 
-        await workerDistributedLock(_log).runExclusive({
+        await workerDistributedLock(log).runExclusive({
             key: `lock:${waitingSetKey}`,
             timeoutInSeconds: 20,
             fn: async () => {
-                const redis = await workerRedisConnections.useExisting()
-
-                // Get the next job in the waiting set
                 const [nextJobId] = await redis.zrange(waitingSetKey, 0, 0)
                 if (isNil(nextJobId)) {
-                    return;
+                    return
                 }
-
-                const nextJob = await throttledJobQueue(_log).getJobById(nextJobId)
+                const nextJob = await workerJobRateLimiter(log).getThrottledJobQueue().getJob(nextJobId)
                 if (isNil(nextJob)) {
-                    return;
+                    return
                 }
-
+                log.info({
+                    message: '[workerJobRateLimiter] Promoting next job',
+                    jobId: nextJobId,
+                })
                 await nextJob.promote()
-
                 await redis.zrem(waitingSetKey, nextJobId)
             },
         })
     },
 
+
     async shouldBeLimited(jobId: string | undefined, data: JobData): Promise<{
         shouldRateLimit: boolean
     }> {
         const projectRateLimiterEnabled = workerMachine.getSettings().PROJECT_RATE_LIMITER_ENABLED
-        const flowTimeoutInMilliseconds = apDayjsDuration(workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, 'seconds').add(1, 'minute').asMilliseconds()
         if (isNil(data.projectId) || !projectRateLimiterEnabled || isNil(jobId) || !RATE_LIMIT_WORKER_JOB_TYPES.includes(data.jobType)) {
             return {
                 shouldRateLimit: false,
@@ -91,8 +106,7 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             }
         }
 
-        const maxConcurrentJobsPerProject = await getMaxConcurrentJobsPerProject({
-            projectId: data.projectId,
+        const maxConcurrentJobsPerProject = await getMaxConcurrentJobs({
             platformId: data.platformId,
         })
         const setKey = projectActiveSetKey(data.projectId)
@@ -115,12 +129,12 @@ export const workerJobRateLimiter = (_log: FastifyBaseLogger) => ({
             1,
             setKey,
             jobId,
-            maxConcurrentJobsPerProject
-        );
+            maxConcurrentJobsPerProject,
+        )
 
         return {
-            shouldRateLimit: result === 1
-        };
+            shouldRateLimit: result === 1,
+        }
     },
 
 })
@@ -135,6 +149,7 @@ const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
     [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
     [PlanName.ENTERPRISE]: 30,
 }
+
 
 function concurrentJobsFromPlan({ platformId, storedValues }: GetConcurrentJobsFromPlanParams): number | null {
     if (workerMachine.getSettings().EDITION !== ApEdition.CLOUD) {
@@ -151,7 +166,7 @@ function concurrentJobsFromPlan({ platformId, storedValues }: GetConcurrentJobsF
     return PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName] ?? null
 }
 
-async function getMaxConcurrentJobsPerProject({ projectId, platformId }: GetMaximumConcurrentJovsPerProjectParams): Promise<number> {
+async function getMaxConcurrentJobs({ platformId }: GetMaximumConcurrentJovsPerProjectParams): Promise<number> {
     const storedValues = await workerDistributedStore.getAll<string>([getPlatformPlanNameKey(platformId)])
 
     const concurrentJobsFromPlanValue = concurrentJobsFromPlan({ platformId, storedValues })
@@ -169,5 +184,4 @@ type GetConcurrentJobsFromPlanParams = {
 
 type GetMaximumConcurrentJovsPerProjectParams = {
     platformId: PlatformId
-    projectId: ProjectId | undefined
 }

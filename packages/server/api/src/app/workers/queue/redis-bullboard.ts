@@ -1,15 +1,16 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, QueueName } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
+import { Queue } from 'bullmq'
 import { FastifyInstance } from 'fastify'
+import { redisConnections } from '../../database/redis-connections'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { system } from '../../helper/system/system'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
 import { jobQueue } from './job-queue'
-import { throttledJobQueue } from './throttled-job-queue';
 
 const QUEUE_BASE_PATH = '/ui'
 
@@ -46,8 +47,8 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
 
     const allQueues = [
         ...jobQueueAdapters,
+        new BullMQAdapter(new Queue(QueueName.THROTTLED_JOBS, { connection: await redisConnections.create() })),
         new BullMQAdapter(systemJobsQueue),
-        new BullMQAdapter(throttledJobQueue(app.log).get()),
         new BullMQAdapter(runsMetadataQueue(app.log).get()),
     ]
 
@@ -60,7 +61,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
     app.addHook('onRequest', (req, reply, next) => {
         const routerPath = req.routeOptions.url
-        assertNotNullOrUndefined(routerPath, 'routerPath is undefined'  )    
+        assertNotNullOrUndefined(routerPath, 'routerPath is undefined')
         if (!routerPath.startsWith(QUEUE_BASE_PATH)) {
             next()
         }
