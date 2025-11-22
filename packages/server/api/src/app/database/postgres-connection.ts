@@ -1,5 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
+import { PGliteDriver } from "typeorm-pglite";
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
@@ -293,8 +294,8 @@ import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postg
 import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
 import { AddIconToProject1763377380235 } from './migration/postgres/1763377380235-AddIconToProject'
 import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
-
 import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
+import { types } from '@electric-sql/pglite';
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -623,8 +624,30 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 
+export const createPGliteDataSource = (): DataSource => {
+
+    return new DataSource({
+        type: "postgres",
+        driver: new PGliteDriver({
+            serializers: {
+                [types.BOOL]: (val) => {
+                  if (val === true || val === 'true' || val === 1) return 'TRUE';
+                  if (val === false || val === 'false' || val === 0) return 'FALSE';
+                  return val;
+                },
+
+              },
+        }).driver,    
+        migrationsRun: true,
+        migrationsTransactionMode: 'each',
+        migrations: getMigrations(),
+        synchronize: false,
+        ...commonProperties,
+    })
+}
+
 export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig: MigrationConfig =  {
+    const migrationConfig: MigrationConfig = {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),

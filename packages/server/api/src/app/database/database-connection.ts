@@ -60,7 +60,7 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
-import { createPostgresDataSource } from './postgres-connection'
+import { createPGliteDataSource, createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
@@ -147,9 +147,19 @@ let _databaseConnection: DataSource | null = null
 
 export const databaseConnection = () => {
     if (isNil(_databaseConnection)) {
-        _databaseConnection = databaseType === DatabaseType.SQLITE3
-            ? createSqlLiteDataSource()
-            : createPostgresDataSource()
+        switch (databaseType) {
+            case DatabaseType.SQLITE3:
+                _databaseConnection = createSqlLiteDataSource()
+                break
+            case DatabaseType.POSTGRES:
+                _databaseConnection = createPostgresDataSource()
+                break
+            case DatabaseType.PGLITE:
+                _databaseConnection = createPGliteDataSource()
+                break
+            default:
+                throw new Error(`Unsupported database type: ${databaseType}`)
+        }
     }
     return _databaseConnection
 }
@@ -166,6 +176,7 @@ export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
 ): void {
     switch (getDatabaseType()) {
         case DatabaseType.POSTGRES:
+        case DatabaseType.PGLITE:
             queryBuilder.andWhere(`${columnName} @> :values`, { values })
             break
         case DatabaseType.SQLITE3:{
@@ -184,6 +195,7 @@ export function APArrayContains<T>(
     const databaseType = getDatabaseType()
     switch (databaseType) {
         case DatabaseType.POSTGRES:
+        case DatabaseType.PGLITE:
             return {
                 [columnName]: ArrayContains(values),
             }

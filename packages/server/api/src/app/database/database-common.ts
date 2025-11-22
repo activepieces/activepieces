@@ -18,10 +18,11 @@ export const TIMESTAMP_COLUMN_TYPE =
       ? 'datetime'
       : 'timestamp with time zone'
 export const COLLATION =
-  databaseType === DatabaseType.SQLITE3 ? undefined : 'en_natural'
+  databaseType === DatabaseType.SQLITE3 || databaseType === DatabaseType.PGLITE ? undefined : 'en_natural'
 
 export function isPostgres(): boolean {
-    return databaseType === DatabaseType.POSTGRES
+    return databaseType === DatabaseType.POSTGRES 
+    || databaseType === DatabaseType.PGLITE
 }
 
 export const ApIdSchema = {
