@@ -1,4 +1,4 @@
-import { getPlatformPlanNameKey, QueueName } from '@activepieces/server-shared'
+import { apDayjsDuration, getPlatformPlanNameKey, QueueName } from '@activepieces/server-shared'
 import {
     ApEdition,
     assertNotNullOrUndefined,
@@ -28,6 +28,17 @@ export const workerJobRateLimiter = (log: FastifyBaseLogger) => ({
         throttledJobQueue = new Queue<JobData>(QueueName.THROTTLED_JOBS, {
             connection: await workerRedisConnections.create(),
             telemetry: workerMachine.getSettings().OTEL_ENABLED ? new BullMQOtel(QueueName.THROTTLED_JOBS) : undefined,
+            defaultJobOptions: {
+                attempts: 5,
+                backoff: {
+                    type: 'exponential',
+                    delay: apDayjsDuration(8, 'minute').asMilliseconds(),
+                },
+                removeOnComplete: true,
+                removeOnFail: {
+                    age: apDayjsDuration(30, 'day').asSeconds(),
+                },
+            },
         })
         await throttledJobQueue.waitUntilReady()
 
