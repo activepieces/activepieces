@@ -1,20 +1,23 @@
 
-import { QueueName } from '@activepieces/server-shared'
+import { AppSystemProp, QueueName } from '@activepieces/server-shared'
 import { ExecuteFlowJobData, isNil, JobData } from '@activepieces/shared'
 import { Worker } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { workerMachine } from 'server-worker'
 import { redisConnections } from '../../database/redis-connections'
+import { system } from '../../helper/system/system'
 import { jobQueue } from './job-queue'
 import { JobType } from './queue-manager'
 
 let throttledWorker: Worker<JobData> | undefined
+const projectRateLimiterEnabled = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
+const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
 
 export const throttleQueueWorker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const isOtpEnabled = workerMachine.getSettings().OTEL_ENABLED
-
+        if (!projectRateLimiterEnabled) {
+            return
+        }
         throttledWorker = new Worker<JobData>(QueueName.THROTTLED_JOBS, async (job) => {
             log.info({
                 message: '[throttledJobQueueWorker] Re-adding job to main job queue',
@@ -27,8 +30,7 @@ export const throttleQueueWorker = (log: FastifyBaseLogger) => ({
             })
         }, {
             connection: await redisConnections.create(),
-            telemetry: isOtpEnabled ? new BullMQOtel(QueueName.WORKER_JOBS) : undefined,
-            concurrency: workerMachine.getSettings().WORKER_CONCURRENCY,
+            telemetry: isOtpEnabled ? new BullMQOtel(QueueName.THROTTLED_JOBS) : undefined,
             autorun: true,
             stalledInterval: 30000,
             maxStalledCount: 5,
@@ -37,6 +39,9 @@ export const throttleQueueWorker = (log: FastifyBaseLogger) => ({
         await throttledWorker.waitUntilReady()
     },
     async close(): Promise<void> {
+        if (!projectRateLimiterEnabled) {
+            return
+        }
         if (!isNil(throttledWorker)) {
             await throttledWorker.close()
         }
