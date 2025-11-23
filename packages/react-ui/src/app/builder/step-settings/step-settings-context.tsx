@@ -7,8 +7,8 @@ import {
   useRef,
   useState,
 } from 'react';
-
 import {
+  buildSchemaForPieceProps,
   PieceMetadataModel,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
@@ -73,7 +73,7 @@ export const StepSettingsProvider = ({
   const updateFormSchema = useCallback(
     (key: string, newFieldPropertyMap: PiecePropertyMap) => {
       setFormSchema((prevSchema) => {
-        const newFieldSchema = formUtils.buildSchema(newFieldPropertyMap);
+        const newFieldSchema = buildSchemaForPieceProps(newFieldPropertyMap, undefined);
         const currentSchema = { ...prevSchema };
         const keyUpdated = createUpdatedSchemaKey(key);
         setAtPath(currentSchema, keyUpdated, newFieldSchema);
