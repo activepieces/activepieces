@@ -22,7 +22,10 @@ export type ErrorHandlingOptionsParam = Static<typeof ErrorHandlingOptionsParam>
 
 type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[], ActionProps extends InputPropertyMap> = {
   name: string
-  auth?: PieceAuth,
+  /**
+   * this parameter is used to infer the type of the piece auth value in run and test methods
+   */
+  auth?: PieceAuth
   displayName: string
   description: string
   props: ActionProps

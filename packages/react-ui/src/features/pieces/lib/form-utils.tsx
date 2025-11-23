@@ -40,11 +40,11 @@ import {
   PieceTriggerSettings,
 } from '@activepieces/shared';
 
-const addAuthToPieceProps = (
+function addAuthToPieceProps(
   props: PiecePropertyMap,
   auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
   requireAuth: boolean,
-): PiecePropertyMap => {
+): PiecePropertyMap {
   if (!requireAuth || isNil(auth)) {
     const newProps = Object.keys(props).reduce((acc, key) => {
       if (key !== 'auth') {
@@ -64,7 +64,7 @@ const addAuthToPieceProps = (
     ...props,
     ...spreadIfDefined('auth', auth),
   };
-};
+}
 
 const buildInputSchemaForStep = (
   type: FlowActionType | FlowTriggerType,
@@ -109,13 +109,13 @@ const buildInputSchemaForStep = (
   }
 };
 
-export const getDefaultPropertyValue = ({
+function getDefaultPropertyValue({
   property,
   dynamicInputModeToggled,
 }: {
   property: PieceProperty;
   dynamicInputModeToggled: boolean;
-}) => {
+}) {
   switch (property.type) {
     case PropertyType.ARRAY: {
       const isInlinedItemMode = dynamicInputModeToggled && property.properties;
@@ -179,9 +179,9 @@ export const getDefaultPropertyValue = ({
       return '';
     }
   }
-};
+}
 
-export const getDefaultValueForProperties = ({
+function getDefaultValueForProperties({
   props,
   existingInput,
   propertySettings,
@@ -189,7 +189,7 @@ export const getDefaultValueForProperties = ({
   props: PiecePropertyMap | OAuth2Props;
   existingInput: Record<string, unknown>;
   propertySettings?: Record<string, PropertySettings>;
-}): Record<string, unknown> => {
+}): Record<string, unknown> {
   return Object.entries(props).reduce<Record<string, unknown>>(
     (defaultValues, [propertyName, property]) => {
       defaultValues[propertyName] =
@@ -206,9 +206,9 @@ export const getDefaultValueForProperties = ({
     },
     {},
   );
-};
+}
 
-const buildConnectionSchema = (auth: PieceAuthProperty) => {
+function buildConnectionSchema(auth: PieceAuthProperty) {
   if (isNil(auth)) {
     return Type.Object({
       request: Type.Composite([
@@ -280,7 +280,7 @@ const buildConnectionSchema = (auth: PieceAuthProperty) => {
         ]),
       });
   }
-};
+}
 
 export const formUtils = {
   /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
@@ -630,4 +630,5 @@ export const formUtils = {
   },
   getDefaultValueForProperties,
   buildConnectionSchema,
+  getDefaultPropertyValue,
 };

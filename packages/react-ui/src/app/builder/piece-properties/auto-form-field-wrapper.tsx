@@ -14,128 +14,20 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
-import { getDefaultPropertyValue } from '@/features/pieces/lib/form-utils';
+import { formUtils } from '@/features/pieces/lib/form-utils';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowTrigger,
+  isNil,
   PropertyExecutionType,
 } from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
-type inputNameLiteral = `settings.input.${string}`;
-
-const isInputNameLiteral = (
-  inputName: string,
-): inputName is inputNameLiteral => {
-  return inputName.match(/settings\.input\./) !== null;
-};
-
-type AutoFormFieldWrapperProps = {
-  children: React.ReactNode;
-  allowDynamicValues: boolean;
-  propertyName: string;
-  property: PieceProperty;
-  hideDescription?: boolean;
-  placeBeforeLabelText?: boolean;
-  disabled: boolean;
-  field: ControllerRenderProps;
-  inputName: string;
-  dynamicInputModeToggled?: boolean;
-};
-
-const getDefaultValueForDynamicValue = (
-  property: PieceProperty,
-  currentValue: unknown,
-) => {
-  if (property.type === PropertyType.ARRAY) {
-    return getDefaultPropertyValue({ property, dynamicInputModeToggled: true });
-  }
-
-  return typeof currentValue === 'string' || typeof currentValue === 'number'
-    ? currentValue
-    : JSON.stringify(currentValue);
-};
-
-const DynamicValueToggle = ({
-  propertyName,
-  inputName,
-  property,
-  disabled,
-  isToggled,
-}: {
-  propertyName: string;
-  inputName: string;
-  property: PieceProperty;
-  disabled: boolean;
-  isToggled: boolean;
-}) => {
-  const form = useFormContext<FlowAction | FlowTrigger>();
-  const handleDynamicValueToggleChange = (mode: PropertyExecutionType) => {
-    const propertySettingsForSingleProperty = {
-      ...form.getValues().settings?.propertySettings?.[propertyName],
-      type: mode,
-    };
-    form.setValue(
-      `settings.propertySettings.${propertyName}`,
-      propertySettingsForSingleProperty,
-      {
-        shouldValidate: true,
-      },
-    );
-    if (isInputNameLiteral(inputName)) {
-      const currentValue = form.getValues(inputName);
-      const newValue =
-        mode === PropertyExecutionType.DYNAMIC
-          ? getDefaultValueForDynamicValue(property, currentValue)
-          : getDefaultPropertyValue({
-              property,
-              dynamicInputModeToggled: false,
-            });
-      form.setValue(inputName, newValue, {
-        shouldValidate: true,
-      });
-    } else {
-      throw new Error(
-        'inputName is not a member of step settings input, you might be using dynamic properties where you should not',
-      );
-    }
-  };
-  return (
-    <div className="flex gap-2 items-center">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Toggle
-            pressed={isToggled}
-            onPressedChange={(newIsToggled) =>
-              handleDynamicValueToggleChange(
-                newIsToggled
-                  ? PropertyExecutionType.DYNAMIC
-                  : PropertyExecutionType.MANUAL,
-              )
-            }
-            disabled={disabled}
-          >
-            <SquareFunction
-              className={cn('size-5', {
-                'text-foreground': isToggled,
-                'text-muted-foreground': !isToggled,
-              })}
-            />
-          </Toggle>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="bg-background">
-          {t('Dynamic value')}
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-};
-
-const AutoFormFieldWrapper = ({
+function AutoFormFieldWrapper({
   placeBeforeLabelText = false,
   children,
   hideDescription,
@@ -146,39 +38,18 @@ const AutoFormFieldWrapper = ({
   disabled,
   field,
   dynamicInputModeToggled,
-}: AutoFormFieldWrapperProps) => {
-  const isArrayProperty = property.type === PropertyType.ARRAY;
+}: AutoFormFieldWrapperProps) {
+  const isArrayProperty = property?.type === PropertyType.ARRAY;
   return (
     <FormItem className="flex flex-col gap-1">
       <FormLabel className="flex items-center gap-1 ">
         {placeBeforeLabelText && !dynamicInputModeToggled && children}
-        {(property.type === PropertyType.FILE ||
-          property.type === PropertyType.DATE_TIME) && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {property.type === PropertyType.FILE ? (
-                <File className="w-4 h-4 stroke-foreground/55"></File>
-              ) : (
-                property.type === PropertyType.DATE_TIME && (
-                  <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
-                )
-              )}
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <>
-                {property.type === PropertyType.FILE &&
-                  t('File Input i.e a url or file passed from a previous step')}
-                {property.type === PropertyType.DATE_TIME &&
-                  t('Date Input must comply with ISO 8601 format')}
-              </>
-            </TooltipContent>
-          </Tooltip>
-        )}
         <div className="pt-1">
-          <span>{t(property.displayName)}</span>{' '}
-          {property.required && <span className="text-destructive">*</span>}
+          <span>{t(property?.displayName ?? t('Connection'))}</span>{' '}
+          {isNil(property) ||
+            (property?.required && <span className="text-destructive">*</span>)}
         </div>
-
+        {property && <PropertyTypeTooltip property={property} />}
         <span className="grow"></span>
         {allowDynamicValues && (
           <DynamicValueToggle
@@ -192,14 +63,14 @@ const AutoFormFieldWrapper = ({
       </FormLabel>
       <AutoFormFielWrapperErrorBoundary
         field={field}
-        property={property}
+        property={property ?? null}
         dynamicInputModeToggled={dynamicInputModeToggled}
       >
         {dynamicInputModeToggled && !isArrayProperty && (
           <TextInputWithMentions
             disabled={disabled}
             onChange={field.onChange}
-            initialValue={field.value ?? property.defaultValue ?? null}
+            initialValue={field.value ?? null}
           />
         )}
 
@@ -209,7 +80,7 @@ const AutoFormFieldWrapper = ({
             arrayProperties={property.properties}
             inputName={inputName}
             onChange={field.onChange}
-            value={field.value ?? property.defaultValue ?? null}
+            value={field.value ?? null}
           />
         )}
 
@@ -218,24 +89,19 @@ const AutoFormFieldWrapper = ({
         )}
       </AutoFormFielWrapperErrorBoundary>
 
-      {property.description && !hideDescription && (
+      {property?.description && !hideDescription && (
         <ReadMoreDescription text={t(property.description)} />
       )}
     </FormItem>
   );
-};
+}
 
-const AutoFormFielWrapperErrorBoundary = ({
+function AutoFormFielWrapperErrorBoundary({
   children,
   field,
   property,
   dynamicInputModeToggled,
-}: {
-  children: React.ReactNode;
-  field: ControllerRenderProps;
-  property: PieceProperty;
-  dynamicInputModeToggled?: boolean;
-}) => {
+}: AutoFormFielWrapperErrorBoundaryProps) {
   return (
     <ErrorBoundary
       fallbackRender={() => (
@@ -269,19 +135,178 @@ const AutoFormFielWrapperErrorBoundary = ({
       {children}
     </ErrorBoundary>
   );
-};
+}
 
-const stringifyValue = (value: unknown) => {
+function getValueForInputOnDynamicToggleChange(
+  property: PieceProperty | null,
+  mode: PropertyExecutionType,
+  currentValue: unknown,
+) {
+  if (property) {
+    switch (mode) {
+      case PropertyExecutionType.DYNAMIC: {
+        if (property.type === PropertyType.ARRAY) {
+          return formUtils.getDefaultPropertyValue({
+            property,
+            dynamicInputModeToggled: true,
+          });
+        }
+        //to show what the selected value is for dropdowns
+        if (
+          typeof currentValue === 'string' ||
+          typeof currentValue === 'number'
+        ) {
+          return currentValue;
+        }
+        return JSON.stringify(currentValue);
+      }
+      case PropertyExecutionType.MANUAL:
+        return formUtils.getDefaultPropertyValue({
+          property,
+          dynamicInputModeToggled: false,
+        });
+    }
+  }
+  return '';
+}
+
+function DynamicValueToggle({
+  propertyName,
+  inputName,
+  property,
+  disabled,
+  isToggled,
+}: DynamicValueToggleProps) {
+  const form = useFormContext<FlowAction | FlowTrigger>();
+  function updatePropertySettings(mode: PropertyExecutionType) {
+    const propertySettingsForSingleProperty = {
+      ...form.getValues().settings?.propertySettings?.[propertyName],
+      type: mode,
+    };
+    form.setValue(
+      `settings.propertySettings.${propertyName}`,
+      propertySettingsForSingleProperty,
+    );
+  }
+  function handleDynamicValueToggleChange(mode: PropertyExecutionType) {
+    updatePropertySettings(mode);
+    if (isInputNameLiteral(inputName)) {
+      const currentValue = form.getValues(inputName);
+      const newValue = property
+        ? getValueForInputOnDynamicToggleChange(property, mode, currentValue)
+        : '';
+      form.setValue(inputName, newValue, {
+        shouldValidate: true,
+      });
+    } else {
+      throw new Error(
+        'inputName is not a member of step settings input, you might be using dynamic properties where you should not',
+      );
+    }
+  }
+  return (
+    <div className="flex gap-2 items-center">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Toggle
+            pressed={isToggled}
+            onPressedChange={(newIsToggled) =>
+              handleDynamicValueToggleChange(
+                newIsToggled
+                  ? PropertyExecutionType.DYNAMIC
+                  : PropertyExecutionType.MANUAL,
+              )
+            }
+            disabled={disabled}
+          >
+            <SquareFunction
+              className={cn('size-5', {
+                'text-foreground': isToggled,
+                'text-muted-foreground': !isToggled,
+              })}
+            />
+          </Toggle>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="bg-background">
+          {t('Dynamic value')}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
+  if (
+    property.type !== PropertyType.FILE &&
+    property.type !== PropertyType.DATE_TIME
+  ) {
+    return null;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {property.type === PropertyType.FILE ? (
+          <File className="w-4 h-4 stroke-foreground/55"></File>
+        ) : (
+          property.type === PropertyType.DATE_TIME && (
+            <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
+          )
+        )}
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <>
+          {property.type === PropertyType.FILE &&
+            t('File Input i.e a url or file passed from a previous step')}
+          {property.type === PropertyType.DATE_TIME &&
+            t('Date Input must comply with ISO 8601 format')}
+        </>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+function stringifyValue(value: unknown) {
   try {
-    if (value === undefined) {
-      return 'undefined';
+    if (typeof value === 'string' || typeof value === 'number') {
+      return value;
     }
     return JSON.stringify(value);
   } catch (e) {
     return value;
   }
-};
+}
 
 AutoFormFieldWrapper.displayName = 'AutoFormFieldWrapper';
 
 export { AutoFormFieldWrapper };
+
+type DynamicValueToggleProps = {
+  propertyName: string;
+  inputName: string;
+  property: PieceProperty | null;
+  disabled: boolean;
+  isToggled: boolean;
+};
+
+type AutoFormFieldWrapperProps = {
+  children: React.ReactNode;
+  allowDynamicValues: boolean;
+  propertyName: string;
+  hideDescription?: boolean;
+  placeBeforeLabelText?: boolean;
+  disabled: boolean;
+  field: ControllerRenderProps;
+  inputName: string;
+  dynamicInputModeToggled?: boolean;
+  property: PieceProperty | null;
+};
+type AutoFormFielWrapperErrorBoundaryProps = {
+  children: React.ReactNode;
+  field: ControllerRenderProps;
+  property: PieceProperty | null;
+  dynamicInputModeToggled?: boolean;
+};
+function isInputNameLiteral(
+  inputName: string,
+): inputName is `settings.input.${string}` {
+  return inputName.match(/settings\.input\./) !== null;
+}

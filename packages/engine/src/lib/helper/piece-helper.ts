@@ -234,5 +234,8 @@ const validateAuth = async ({
                 server,
             })
         }
+        default: {
+            throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
+        }
     }
 }
