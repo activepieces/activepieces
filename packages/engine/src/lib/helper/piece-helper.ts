@@ -163,14 +163,7 @@ const validateAuth = async ({
     server,
     authValue,
     pieceAuth,
-}: {
-    server: {
-        apiUrl: string
-        publicUrl: string
-    }
-    authValue: AppConnectionValue
-    pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
-}): Promise<ExecuteValidateAuthResponse> => {
+}: ValidateAuthParams): Promise<ExecuteValidateAuthResponse> => {
     if (isNil(pieceAuth)) {
         return {
             valid: true,
@@ -238,4 +231,13 @@ const validateAuth = async ({
             throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
         }
     }
+}
+
+type ValidateAuthParams = {
+    server: {
+        apiUrl: string
+        publicUrl: string
+    }
+    authValue: AppConnectionValue
+    pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
 }

@@ -95,12 +95,7 @@ export const newConnectionUtils = {
     suggestedExternalId,
     suggestedDisplayName,
     pieceName,
-  }: {
-    auth: PieceAuthProperty;
-    suggestedExternalId: string;
-    suggestedDisplayName: string;
-    pieceName: string;
-  }): Partial<UpsertAppConnectionRequestBody> {
+  }: DefaultValuesParams): Partial<UpsertAppConnectionRequestBody> {
     const projectId = authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId');
     if (!auth) {
@@ -203,4 +198,11 @@ export const isConnectionNameUnique = async (
     (connection) => connection.displayName === displayName,
   );
   return isNil(existingConnection);
+};
+
+type DefaultValuesParams = {
+  auth: PieceAuthProperty;
+  suggestedExternalId: string;
+  suggestedDisplayName: string;
+  pieceName: string;
 };
