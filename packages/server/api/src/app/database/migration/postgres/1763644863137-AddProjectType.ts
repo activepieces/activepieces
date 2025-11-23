@@ -52,9 +52,11 @@ export class AddProjectType1763644863137 implements MigrationInterface {
                 SET "type" = '${ProjectType.PERSONAL}'
             `)
             excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
+            system.globalLogger().info({
+                excludedUsers: excludedUsers.length,
+            }, 'AddProjectType1763644863137 up')
         }
-   
-        
+
         if (users.length > 0) {
             const values: string[] = []
             const params: (string | boolean)[] = []
@@ -82,15 +84,18 @@ export class AddProjectType1763644863137 implements MigrationInterface {
                 params.push(id, created, updated, ownerId, displayName, type, platformId, icon, releasesEnabled)
                 paramIndex += 9
             }
-            
-            await queryRunner.query(
-                `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
-                VALUES ${values.join(', ')}`,
-                params,
-            )
-            system.globalLogger().info({
-                projectsCreated: values.length,
-            }, 'AddProjectType1763644863137 up')
+
+            if (values.length > 0) {
+                // Ensure VALUES is not empty before running the insert, to avoid syntax error at end of input
+                await queryRunner.query(
+                    `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
+                    VALUES ${values.join(', ')}`,
+                    params,
+                )
+                system.globalLogger().info({
+                    projectsCreated: values.length,
+                }, 'AddProjectType1763644863137 up')
+            }
         }
 
         await queryRunner.query(`
@@ -102,10 +107,9 @@ export class AddProjectType1763644863137 implements MigrationInterface {
         await queryRunner.query(`
             DELETE FROM "project" WHERE "type" = '${ProjectType.PERSONAL}'
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "type"
         `)
     }
-
 }
