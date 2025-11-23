@@ -1,9 +1,8 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
-
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,9 +30,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
 import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import {
-  getPredefinedOAuth2App,
   oauthAppsQueries,
-  PieceToClientIdMap,
 } from '@/features/connections/lib/oauth-apps-hooks';
 import {
   getAuthPropertyForValue,
@@ -47,51 +44,20 @@ import {
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   isNil,
-  OAuth2GrantType,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-
 import { newConnectionUtils } from '../../features/connections/lib/utils';
 import { formUtils } from '../../features/pieces/lib/form-utils';
-
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { MutliAuthList, SelectedAuth } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
+import { oauth2Utils, PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
 
-type ConnectionDialogProps = {
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  open: boolean;
-  setOpen: (
-    open: boolean,
-    connection?: AppConnectionWithoutSensitiveData,
-  ) => void;
-  reconnectConnection: AppConnectionWithoutSensitiveData | null;
-  isGlobalConnection: boolean;
-  externalIdComingFromSdk?: string | null;
-};
 
-type CreateOrEditConnectionDialogContentProps = {
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  pieceToClientIdMap: PieceToClientIdMap;
-  reconnectConnection: AppConnectionWithoutSensitiveData | null;
-  isGlobalConnection: boolean;
-  externalIdComingFromSdk?: string | null;
-  setOpen: (
-    open: boolean,
-    connection?: AppConnectionWithoutSensitiveData,
-  ) => void;
-};
 
-type CreateOrEditConnectionSectionProps =
-  CreateOrEditConnectionDialogContentProps & {
-    onShowSelectAuthButtonClicked: () => void;
-    showSelectAuthButton: boolean;
-    selectedAuth: SelectedAuth;
-  };
-
-const CreateOrEditConnectionSection = ({
+function CreateOrEditConnectionSection({
   piece,
   reconnectConnection,
   isGlobalConnection,
@@ -100,7 +66,7 @@ const CreateOrEditConnectionSection = ({
   selectedAuth,
   onShowSelectAuthButtonClicked,
   showSelectAuthButton,
-}: CreateOrEditConnectionSectionProps) => {
+}: CreateOrEditConnectionSectionProps) {
   const formSchema = formUtils.buildConnectionSchema(selectedAuth.authProperty);
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
     piece,
@@ -264,13 +230,10 @@ const CreateOrEditConnectionSection = ({
     </>
   );
 };
-const SelectConnectionSettings = ({
+function SelectConnectionSettings({
   selectedAuth,
   piece,
-}: {
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  selectedAuth: SelectedAuth;
-}) => {
+}: SelectConnectionSettingsProps) {
   switch (selectedAuth.authProperty.type) {
     case PropertyType.SECRET_TEXT:
       return (
@@ -302,11 +265,15 @@ const SelectConnectionSettings = ({
       );
   }
 };
-const CreateOrEditConnectionDialogContent = React.memo(
-  (props: CreateOrEditConnectionDialogContentProps) => {
+
+type SelectConnectionSettingsProps = {
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  selectedAuth: SelectedAuth;
+};
+function CreateOrEditConnectionDialogContent(props: CreateOrEditConnectionDialogContentProps) {
     const piece = props.piece;
     const hasPredefinedOAuth2App = !isNil(
-      getPredefinedOAuth2App(props.pieceToClientIdMap, piece.name),
+      oauth2Utils.getPredefinedOAuth2App(props.piecesOAuth2AppsMap, piece.name),
     );
     const hasBothGrantTypes =
       !isNil(piece.auth) &&
@@ -317,8 +284,8 @@ const CreateOrEditConnectionDialogContent = React.memo(
       Array.isArray(piece.auth) || hasBothGrantTypes || hasPredefinedOAuth2App;
     const [selectedAuth, setSelectedAuth] = useState<SelectedAuth | null>(
       getInitialGrantTypeAndOAuth2App(
-        getInitiallySelectedAuth(piece.auth, props.reconnectConnection),
-        props.pieceToClientIdMap,
+        getInitiallySelectedAuthInList(piece.auth, props.reconnectConnection),
+        props.piecesOAuth2AppsMap,
         piece.name,
       ),
     );
@@ -339,7 +306,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
           selectedAuth && (
             <MutliAuthList
               pieceName={piece.name}
-              pieceToClientIdMap={props.pieceToClientIdMap}
+              piecesOAuth2AppsMap={props.piecesOAuth2AppsMap}
               selectedAuth={selectedAuth}
               pieceAuth={Array.isArray(piece.auth) ? piece.auth : [piece.auth]}
               setSelectedAuth={setSelectedAuth}
@@ -350,29 +317,22 @@ const CreateOrEditConnectionDialogContent = React.memo(
           )}
       </>
     );
-  },
-);
+  
+  }
 
 CreateOrEditConnectionDialogContent.displayName =
   'CreateOrEditConnectionDialogContent';
 
-const CreateOrEditConnectionDialog = React.memo(
-  ({
+function CreateOrEditConnectionDialog({
     piece,
     open,
     setOpen,
     reconnectConnection,
     isGlobalConnection,
     externalIdComingFromSdk,
-  }: ConnectionDialogProps) => {
-    const { data: pieceToClientIdMap, isPending: loadingPieceToClientIdMap } =
-      oauthAppsQueries.usePieceToClientIdMap();
-    const hasOAuth2PieceAuth =
-      !isNil(piece.auth) &&
-      ((!Array.isArray(piece.auth) &&
-        piece.auth.type === PropertyType.OAUTH2) ||
-        (Array.isArray(piece.auth) &&
-          piece.auth.some((auth) => auth.type === PropertyType.OAUTH2)));
+  }: ConnectionDialogProps) {
+    const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
+      oauthAppsQueries.usePiecesOAuth2AppsMap();
     return (
       <Dialog
         open={open}
@@ -383,7 +343,7 @@ const CreateOrEditConnectionDialog = React.memo(
           onInteractOutside={(e) => e.preventDefault()}
           className="max-h-[70vh] px-0  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
         >
-          {loadingPieceToClientIdMap && hasOAuth2PieceAuth ? (
+          {loadingPiecesOAuth2AppsMap && hasOAuth2PieceAuth(piece) ? (
             <>
               <DialogHeader className="mb-0">
                 <DialogTitle className="px-5">
@@ -406,7 +366,7 @@ const CreateOrEditConnectionDialog = React.memo(
           ) : (
             <CreateOrEditConnectionDialogContent
               piece={piece}
-              pieceToClientIdMap={pieceToClientIdMap ?? {}}
+              piecesOAuth2AppsMap={piecesOAuth2AppsMap ?? {}}
               setOpen={setOpen}
               reconnectConnection={reconnectConnection}
               isGlobalConnection={isGlobalConnection}
@@ -416,16 +376,24 @@ const CreateOrEditConnectionDialog = React.memo(
         </DialogContent>
       </Dialog>
     );
-  },
-);
+}
+function hasOAuth2PieceAuth(piece: PieceMetadataModelSummary | PieceMetadataModel) {
+  if(isNil(piece.auth)) {
+    return false;
+  }
+  if(Array.isArray(piece.auth)) {
+    return piece.auth.some((auth) => auth.type === PropertyType.OAUTH2);
+  }
+  return piece.auth.type === PropertyType.OAUTH2;
+}
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };
 
-const getInitiallySelectedAuth = (
+function getInitiallySelectedAuthInList(
   auth: PieceAuthProperty[] | PieceAuthProperty | undefined,
   reconnectConnection: AppConnectionWithoutSensitiveData | null,
-) => {
+) {
   if (!Array.isArray(auth)) {
     return auth ?? null;
   }
@@ -443,25 +411,19 @@ const getInitiallySelectedAuth = (
   return auth[0] ?? null;
 };
 
-const getInitialGrantTypeAndOAuth2App = (
+function getInitialGrantTypeAndOAuth2App(
   selectedAuth: PieceAuthProperty | null,
-  pieceToClientIdMap: PieceToClientIdMap,
+  piecesOAuth2AppsMap: PiecesOAuth2AppsMap,
   pieceName: string,
-): SelectedAuth | null => {
+): SelectedAuth | null {
   if (isNil(selectedAuth)) {
     return null;
   }
 
   if (selectedAuth.type === PropertyType.OAUTH2) {
-    const grantType = isNil(selectedAuth.grantType)
-      ? OAuth2GrantType.AUTHORIZATION_CODE
-      : selectedAuth.grantType;
     return {
-      grantType:
-        grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
-          ? OAuth2GrantType.AUTHORIZATION_CODE
-          : grantType,
-      oauth2App: getPredefinedOAuth2App(pieceToClientIdMap, pieceName) ?? {
+      grantType: oauth2Utils.getGrantType(selectedAuth),
+      oauth2App: oauth2Utils.getPredefinedOAuth2App(piecesOAuth2AppsMap, pieceName) ?? {
         oauth2Type: AppConnectionType.OAUTH2,
         clientId: null,
       },
@@ -474,3 +436,34 @@ const getInitialGrantTypeAndOAuth2App = (
     authProperty: selectedAuth,
   };
 };
+
+type ConnectionDialogProps = {
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  open: boolean;
+  setOpen: (
+    open: boolean,
+    connection?: AppConnectionWithoutSensitiveData,
+  ) => void;
+  reconnectConnection: AppConnectionWithoutSensitiveData | null;
+  isGlobalConnection: boolean;
+  externalIdComingFromSdk?: string | null;
+};
+
+type CreateOrEditConnectionDialogContentProps = {
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  piecesOAuth2AppsMap: PiecesOAuth2AppsMap;
+  reconnectConnection: AppConnectionWithoutSensitiveData | null;
+  isGlobalConnection: boolean;
+  externalIdComingFromSdk?: string | null;
+  setOpen: (
+    open: boolean,
+    connection?: AppConnectionWithoutSensitiveData,
+  ) => void;
+};
+
+type CreateOrEditConnectionSectionProps =
+  CreateOrEditConnectionDialogContentProps & {
+    onShowSelectAuthButtonClicked: () => void;
+    showSelectAuthButton: boolean;
+    selectedAuth: SelectedAuth;
+  };

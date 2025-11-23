@@ -46,8 +46,8 @@ const PlatformPiecesPage = () => {
     includeHidden: true,
   });
 
-  const { refetch: refetchPiecesClientIdsMap } =
-    oauthAppsQueries.usePieceToClientIdMap();
+  const { refetch: refetchPiecesOAuth2AppsMap } =
+    oauthAppsQueries.usePiecesOAuth2AppsMap();
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -162,7 +162,7 @@ const PlatformPiecesPage = () => {
                     pieceName={row.original.name}
                     onConfigurationDone={() => {
                       refetchPieces();
-                      refetchPiecesClientIdsMap();
+                      refetchPiecesOAuth2AppsMap();
                     }}
                     isEnabled={isEnabled}
                   />

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,27 +33,13 @@ import {
 import { formUtils } from '../../features/pieces/lib/form-utils';
 import { AutoPropertiesFormComponent } from '../builder/piece-properties/auto-properties-form';
 
-type OAuth2ConnectionSettingsProps = {
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  authProperty: OAuth2Property<OAuth2Props>;
-  oauth2App: OAuth2App;
-  grantType: OAuth2GrantType;
-};
 
-const OAuth2ConnectionSettings = ({
+function OAuth2ConnectionSettings({
   authProperty,
   oauth2App,
   piece,
   grantType,
-}: OAuth2ConnectionSettingsProps) => {
-  const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-  );
-  const [readyToConnect, setReadyToConnect] = useState(false);
-  const redirectUrl =
-    oauth2App.oauth2Type === AppConnectionType.CLOUD_OAUTH2
-      ? 'https://secrets.activepieces.com/redirect'
-      : thirdPartyUrl ?? 'no_redirect_url_found';
+}: OAuth2ConnectionSettingsProps) {
 
   const form = useFormContext<{
     request:
@@ -61,78 +47,15 @@ const OAuth2ConnectionSettings = ({
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
   }>();
+  const isConnectButtonEnabled = useIsConnectButtonEnabled(authProperty, form);
+  const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
+  );
+  const redirectUrl =
+    oauth2App.oauth2Type === AppConnectionType.CLOUD_OAUTH2
+      ? 'https://secrets.activepieces.com/redirect'
+      : thirdPartyUrl ?? 'no_redirect_url_found';
 
-  const hasCode = form.getValues().request.value.code;
-  useEffect(() => {
-    form.setValue('request.value.redirect_url', redirectUrl, {
-      shouldValidate: true,
-    });
-    const defaultValuesForProps = Object.fromEntries(
-      Object.entries(
-        formUtils.getDefaultValueForProperties({
-          props: authProperty.props ?? {},
-          existingInput: {},
-        }),
-      ).map(([key, value]) => [key, value === undefined ? '' : value]),
-    );
-    form.setValue('request.value.props', defaultValuesForProps, {
-      shouldValidate: true,
-    });
-    form.setValue(
-      'request.value.client_secret',
-      oauth2App.oauth2Type === AppConnectionType.OAUTH2 ? '' : 'FAKE_SECRET',
-      { shouldValidate: true },
-    );
-    form.setValue(
-      'request.value.client_id',
-      oauth2App.oauth2Type === AppConnectionType.OAUTH2
-        ? ''
-        : oauth2App.clientId,
-      { shouldValidate: true },
-    );
-    form.setValue('request.value.grant_type', grantType, {
-      shouldValidate: true,
-    });
-    form.setValue(
-      'request.value.code',
-      grantType === OAuth2GrantType.CLIENT_CREDENTIALS ? 'FAKE_CODE' : '',
-      { shouldValidate: true },
-    );
-    form.setValue('request.value.code_challenge', '', { shouldValidate: true });
-    form.setValue('request.value.type', oauth2App.oauth2Type, {
-      shouldValidate: true,
-    });
-    form.setValue('request.type', oauth2App.oauth2Type, {
-      shouldValidate: true,
-    });
-  }, []);
-
-  form.watch((values) => {
-    const hasClientId =
-      !isNil(values.request?.value?.client_id) &&
-      values.request?.value?.client_id !== '';
-    const hasClientSecret =
-      values.request?.type === AppConnectionType.OAUTH2 &&
-      !isNil(values.request?.value?.client_secret) &&
-      values.request?.value?.client_secret !== '';
-    const propsValues = values.request?.value?.props ?? {};
-    const arePropsValid = authProperty.props
-      ? Object.keys(authProperty.props).reduce((acc, key) => {
-          return (
-            acc &&
-            ((!isNil(propsValues[key]) && propsValues[key] !== '') ||
-              !authProperty.props?.[key]?.required)
-          );
-        }, true)
-      : true;
-    setReadyToConnect(
-      hasClientId &&
-        (oauth2App.oauth2Type !== AppConnectionType.OAUTH2 ||
-          hasClientSecret) &&
-        arePropsValid,
-    );
-  });
-  const [refresh, setRefresh] = useState(0);
   const openPopup = async (
     redirectUrl: string,
     clientId: string,
@@ -154,8 +77,15 @@ const OAuth2ConnectionSettings = ({
     form.setValue('request.value.code_challenge', codeChallenge, {
       shouldValidate: true,
     });
-    setRefresh(refresh + 1);
   };
+  useSetDefaultValues({
+    redirectUrl,
+    authProperty,
+    oauth2App,
+    grantType,
+    form,
+  });
+  const hasCode = form.getValues().request.value.code;
 
   return (
     <div className="flex flex-col gap-4">
@@ -224,7 +154,7 @@ const OAuth2ConnectionSettings = ({
             <Button
               size={'sm'}
               variant={'basic'}
-              disabled={!readyToConnect}
+              disabled={!isConnectButtonEnabled}
               type="button"
               onClick={async () =>
                 openPopup(
@@ -262,3 +192,88 @@ const OAuth2ConnectionSettings = ({
 
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
+
+
+function useSetDefaultValues({
+  redirectUrl,
+  authProperty,
+  oauth2App,
+  grantType,
+  form
+}: UseSetDefaultValuesProps) {
+  useEffect(() => {
+    form.setValue('request.value.redirect_url', redirectUrl, {
+      shouldValidate: true,
+    });
+    const defaultValuesForProps = Object.fromEntries(
+      Object.entries(
+        formUtils.getDefaultValueForProperties({
+          props: authProperty.props ?? {},
+          existingInput: {},
+        }),
+      ).map(([key, value]) => [key, value === undefined ? '' : value]),
+    );
+    form.setValue('request.value.props', defaultValuesForProps, {
+      shouldValidate: true,
+    });
+    form.setValue(
+      'request.value.client_id',
+      oauth2App.oauth2Type === AppConnectionType.OAUTH2
+        ? ''
+        : oauth2App.clientId,
+      { shouldValidate: true },
+    );
+    form.setValue('request.value.grant_type', grantType, {
+      shouldValidate: true,
+    });
+    form.setValue('request.value.code_challenge', '', { shouldValidate: true });
+    form.setValue('request.value.type', oauth2App.oauth2Type, {
+      shouldValidate: true,
+    });
+    form.setValue('request.type', oauth2App.oauth2Type, {
+      shouldValidate: true,
+    });
+  }, []);
+}
+
+function useIsConnectButtonEnabled(authProperty: OAuth2Property<OAuth2Props>, form: UseFormReturn<{
+  request: UpsertCloudOAuth2Request | UpsertOAuth2Request | UpsertPlatformOAuth2Request;
+}>){
+  const values = form.getValues();
+  const hasClientId =
+  !isNil(values.request?.value?.client_id) &&
+  values.request?.value?.client_id.length > 0;
+const hasClientSecret =
+  values.request?.type === AppConnectionType.OAUTH2 &&
+  !isNil(values.request?.value?.client_secret) &&
+  values.request?.value?.client_secret.length > 0;
+const propsValues = values.request?.value?.props ?? {};
+const arePropsValid = authProperty.props
+  ? Object.keys(authProperty.props).reduce((acc, key) => {
+      return (
+        acc &&
+        ((!isNil(propsValues[key]) && propsValues[key].length > 0) ||
+          !authProperty.props?.[key]?.required)
+      );
+    }, true)
+  : true;
+  const isClientSecretRequired = values.request?.type === AppConnectionType.OAUTH2;
+  return hasClientId && (!isClientSecretRequired || hasClientSecret) && arePropsValid;
+}
+
+type UseSetDefaultValuesProps = {
+  redirectUrl: string;
+  authProperty: OAuth2Property<OAuth2Props>;
+  oauth2App: OAuth2App;
+  grantType: OAuth2GrantType;
+  form: UseFormReturn<{
+    request: UpsertCloudOAuth2Request | UpsertOAuth2Request | UpsertPlatformOAuth2Request;
+  }>;
+};
+
+type OAuth2ConnectionSettingsProps = {
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  authProperty: OAuth2Property<OAuth2Props>;
+  oauth2App: OAuth2App;
+  grantType: OAuth2GrantType;
+};
