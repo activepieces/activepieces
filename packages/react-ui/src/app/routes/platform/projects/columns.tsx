@@ -2,6 +2,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Lock, User } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
@@ -32,31 +33,25 @@ export const projectsTableColumns = ({
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
         const isPersonal = row.original.type === ProjectType.PERSONAL;
+        const isOwner = row.original.ownerId === currentUserId;
 
         return (
           <div className="text-left flex items-center justify-start ">
             {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
             {isPersonal && <User className="size-4 mr-1.5"></User>}
-            {row.original.displayName}
+            <span>{row.original.displayName}</span>
+            {isOwner && (
+              <Badge variant={'outline'} className="text-xs font-medium ml-2">
+                You
+              </Badge>
+            )}
           </div>
         );
       },
     },
     {
       accessorKey: 'type',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Type')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left flex items-center gap-2">
-            <span>
-              {formatUtils.convertEnumToHumanReadable(row.original.type)}{' '}
-              Project
-            </span>
-          </div>
-        );
-      },
+      enableHiding: true,
     },
     {
       accessorKey: 'ai-tokens',

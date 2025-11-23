@@ -23,7 +23,13 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { ApFlagId, isNil, Permission, ProjectType } from '@activepieces/shared';
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+} from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
@@ -50,6 +56,7 @@ export const ProjectDashboardPageHeader = ({
   const location = useLocation();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { checkAccess } = useAuthorization();
+  const { data: user } = userHooks.useCurrentUser();
   const userHasPermissionToReadProjectMembers = checkAccess(
     Permission.READ_PROJECT_MEMBER,
   );
@@ -95,18 +102,13 @@ export const ProjectDashboardPageHeader = ({
                 titleClassName="text-lg font-semibold"
                 projectType={project.type}
               />
-              {project.type === ProjectType.PERSONAL && (
-                <Badge
-                  variant={
-                    currentUser?.id === project.ownerId ? 'outline' : 'accent'
-                  }
-                  className="text-xs font-medium"
-                >
-                  {currentUser?.id === project.ownerId
-                    ? 'Personal'
-                    : 'External'}
-                </Badge>
-              )}
+              {project.type === ProjectType.PERSONAL &&
+                user?.platformRole === PlatformRole.ADMIN &&
+                currentUser?.id === project.ownerId && (
+                  <Badge variant={'outline'} className="text-xs font-medium">
+                    You
+                  </Badge>
+                )}
               {beta && (
                 <div className="flex items-center">
                   <BetaBadge />
