@@ -24,12 +24,7 @@ import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import {
-  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
-  OAuth2GrantType,
-  PieceScope,
-} from '@activepieces/shared';
+import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -143,7 +138,6 @@ const PlatformPiecesPage = () => {
         {
           id: 'actions',
           cell: ({ row }) => {
-           
             return (
               <div className="flex justify-end">
                 {shouldShowOauth2SettingForPiece(row.original) && (
@@ -240,12 +234,16 @@ export { PlatformPiecesPage };
 
 function shouldShowOauth2SettingForPiece(piece: PieceMetadataModelSummary) {
   const pieceAuth = Array.isArray(piece.auth)
-    ? piece.auth.find(
-        (auth) => auth.type === PropertyType.OAUTH2,
-      )
+    ? piece.auth.find((auth) => auth.type === PropertyType.OAUTH2)
     : piece.auth;
-  if(isNil(pieceAuth)) {  return false; }
-  if(pieceAuth.type !== PropertyType.OAUTH2) { return false; }
-  if(pieceAuth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS) { return false; }
-  return true
+  if (isNil(pieceAuth)) {
+    return false;
+  }
+  if (pieceAuth.type !== PropertyType.OAUTH2) {
+    return false;
+  }
+  if (pieceAuth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
+    return false;
+  }
+  return true;
 }

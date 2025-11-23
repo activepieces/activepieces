@@ -4,13 +4,11 @@ import { t } from 'i18next';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { OAuth2App, PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
+import { PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
 import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 
 import { oauthAppsApi } from './api/oauth-apps';
-
-
 
 export const oauthAppsMutations = {
   useDeleteOAuthApp: (refetch: () => void, setOpen: (open: boolean) => void) =>
@@ -91,7 +89,7 @@ export const oauthAppsQueries = {
           ? {}
           : await oauthAppsApi.listCloudOAuth2Apps(edition!);
         const appsMap: PiecesOAuth2AppsMap = {};
-        
+
         Object.entries(cloudApps).forEach(([pieceName, app]) => {
           appsMap[pieceName] = {
             cloudOAuth2App: {

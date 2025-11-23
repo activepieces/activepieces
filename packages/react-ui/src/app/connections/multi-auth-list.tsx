@@ -12,7 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { OAuth2App, PiecesOAuth2AppsMap, oauth2Utils } from '@/lib/oauth2-utils';
+import {
+  OAuth2App,
+  PiecesOAuth2AppsMap,
+  oauth2Utils,
+} from '@/lib/oauth2-utils';
 import { formatUtils } from '@/lib/utils';
 import {
   OAuth2Property,
@@ -27,9 +31,6 @@ import {
   OAuth2GrantType,
 } from '@activepieces/shared';
 
-
-
-
 export function MutliAuthList({
   pieceAuth,
   setSelectedAuth,
@@ -38,7 +39,6 @@ export function MutliAuthList({
   pieceName,
   selectedAuth,
 }: MutliAuthListProps) {
-  debugger
   const authItems: RadioGroupListItem<SelectedAuth>[] = pieceAuth
     .filter((auth): auth is PieceAuthProperty => !isNil(auth))
     .flatMap((auth) => {
@@ -90,9 +90,7 @@ export function MutliAuthList({
       </DialogFooter>
     </>
   );
-};
-
-
+}
 
 const getDisplayName = (auth: PieceAuthProperty): string => {
   if (
@@ -172,8 +170,7 @@ function createOAuth2Options(
   }
 
   return options;
-};
-
+}
 
 export type SelectedAuth =
   | {

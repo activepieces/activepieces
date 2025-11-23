@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -33,14 +33,12 @@ import {
 import { formUtils } from '../../features/pieces/lib/form-utils';
 import { AutoPropertiesFormComponent } from '../builder/piece-properties/auto-properties-form';
 
-
 function OAuth2ConnectionSettings({
   authProperty,
   oauth2App,
   piece,
   grantType,
 }: OAuth2ConnectionSettingsProps) {
-
   const form = useFormContext<{
     request:
       | UpsertCloudOAuth2Request
@@ -188,18 +186,17 @@ function OAuth2ConnectionSettings({
       )}
     </div>
   );
-};
+}
 
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
-
 
 function useSetDefaultValues({
   redirectUrl,
   authProperty,
   oauth2App,
   grantType,
-  form
+  form,
 }: UseSetDefaultValuesProps) {
   useEffect(() => {
     form.setValue('request.value.redirect_url', redirectUrl, {
@@ -236,29 +233,38 @@ function useSetDefaultValues({
   }, []);
 }
 
-function useIsConnectButtonEnabled(authProperty: OAuth2Property<OAuth2Props>, form: UseFormReturn<{
-  request: UpsertCloudOAuth2Request | UpsertOAuth2Request | UpsertPlatformOAuth2Request;
-}>){
+function useIsConnectButtonEnabled(
+  authProperty: OAuth2Property<OAuth2Props>,
+  form: UseFormReturn<{
+    request:
+      | UpsertCloudOAuth2Request
+      | UpsertOAuth2Request
+      | UpsertPlatformOAuth2Request;
+  }>,
+) {
   const values = form.getValues();
   const hasClientId =
-  !isNil(values.request?.value?.client_id) &&
-  values.request?.value?.client_id.length > 0;
-const hasClientSecret =
-  values.request?.type === AppConnectionType.OAUTH2 &&
-  !isNil(values.request?.value?.client_secret) &&
-  values.request?.value?.client_secret.length > 0;
-const propsValues = values.request?.value?.props ?? {};
-const arePropsValid = authProperty.props
-  ? Object.keys(authProperty.props).reduce((acc, key) => {
-      return (
-        acc &&
-        ((!isNil(propsValues[key]) && propsValues[key].length > 0) ||
-          !authProperty.props?.[key]?.required)
-      );
-    }, true)
-  : true;
-  const isClientSecretRequired = values.request?.type === AppConnectionType.OAUTH2;
-  return hasClientId && (!isClientSecretRequired || hasClientSecret) && arePropsValid;
+    !isNil(values.request?.value?.client_id) &&
+    values.request?.value?.client_id.length > 0;
+  const hasClientSecret =
+    values.request?.type === AppConnectionType.OAUTH2 &&
+    !isNil(values.request?.value?.client_secret) &&
+    values.request?.value?.client_secret.length > 0;
+  const propsValues = values.request?.value?.props ?? {};
+  const arePropsValid = authProperty.props
+    ? Object.keys(authProperty.props).reduce((acc, key) => {
+        return (
+          acc &&
+          ((!isNil(propsValues[key]) && propsValues[key].length > 0) ||
+            !authProperty.props?.[key]?.required)
+        );
+      }, true)
+    : true;
+  const isClientSecretRequired =
+    values.request?.type === AppConnectionType.OAUTH2;
+  return (
+    hasClientId && (!isClientSecretRequired || hasClientSecret) && arePropsValid
+  );
 }
 
 type UseSetDefaultValuesProps = {
@@ -267,7 +273,10 @@ type UseSetDefaultValuesProps = {
   oauth2App: OAuth2App;
   grantType: OAuth2GrantType;
   form: UseFormReturn<{
-    request: UpsertCloudOAuth2Request | UpsertOAuth2Request | UpsertPlatformOAuth2Request;
+    request:
+      | UpsertCloudOAuth2Request
+      | UpsertOAuth2Request
+      | UpsertPlatformOAuth2Request;
   }>;
 };
 

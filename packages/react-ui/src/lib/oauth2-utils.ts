@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { useSearchParams } from 'react-router-dom';
 
+import { OAuth2Property } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
@@ -15,7 +16,6 @@ import {
   PROVIDER_NAME_QUERY_PARAM,
   STATE_QUERY_PARAM,
 } from './navigation-utils';
-import { OAuth2Property } from '@activepieces/pieces-framework';
 
 let currentPopup: Window | null = null;
 
@@ -152,9 +152,11 @@ type OAuth2PopupResponse = {
   codeChallenge: string | undefined;
 };
 
-function getGrantType(property: OAuth2Property<any>)
-{
-  if(isNil(property.grantType) || property.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE) {
+function getGrantType(property: OAuth2Property<any>) {
+  if (
+    isNil(property.grantType) ||
+    property.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
+  ) {
     return OAuth2GrantType.AUTHORIZATION_CODE;
   }
   return property.grantType;
@@ -165,8 +167,7 @@ function getPredefinedOAuth2App(
   pieceName: string,
 ): OAuth2App | null {
   const pieceOAuth2Apps = piecesOAuth2AppsMap[pieceName];
-  debugger;
-  if(isNil(pieceOAuth2Apps)) {
+  if (isNil(pieceOAuth2Apps)) {
     return null;
   }
   if (pieceOAuth2Apps.platformOAuth2App) {
@@ -176,7 +177,7 @@ function getPredefinedOAuth2App(
     return pieceOAuth2Apps.cloudOAuth2App;
   }
   return null;
-};
+}
 
 export type OAuth2App =
   | {
@@ -190,16 +191,18 @@ export type OAuth2App =
       clientId: null;
     };
 
-    
-export type PiecesOAuth2AppsMap = Record<string, {
-  cloudOAuth2App: OAuth2App | null;
-  platformOAuth2App: OAuth2App | null;
-} | undefined>;
+export type PiecesOAuth2AppsMap = Record<
+  string,
+  | {
+      cloudOAuth2App: OAuth2App | null;
+      platformOAuth2App: OAuth2App | null;
+    }
+  | undefined
+>;
 
-    
 export const oauth2Utils = {
   openOAuth2Popup,
   useThirdPartyLogin,
   getGrantType,
-  getPredefinedOAuth2App
+  getPredefinedOAuth2App,
 };

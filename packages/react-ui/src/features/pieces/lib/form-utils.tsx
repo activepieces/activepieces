@@ -38,7 +38,6 @@ import {
   PieceTriggerSettings,
 } from '@activepieces/shared';
 
-
 function buildInputSchemaForStep(
   type: FlowActionType | FlowTriggerType,
   piece: PieceMetadata | null,
@@ -66,7 +65,7 @@ function buildInputSchemaForStep(
       ) {
         return buildSchemaForPieceProps(
           piece.triggers[actionNameOrTriggerName].props,
-          piece.auth
+          piece.auth,
         );
       }
       return Type.Object({});
@@ -74,7 +73,7 @@ function buildInputSchemaForStep(
     default:
       throw new Error('Unsupported type: ' + type);
   }
-};
+}
 
 function getDefaultPropertyValue({
   property,
