@@ -142,33 +142,6 @@ export function ProjectDashboardSidebar() {
             className={cn(state === 'collapsed' ? 'mb-3' : 'mb-5')}
           />
 
-          {personalProject && (
-            <>
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <SidebarMenu
-                    className={cn(
-                      state === 'collapsed' ? 'flex flex-col items-center' : '',
-                    )}
-                  >
-                    <ProjectSideBarItem
-                      key={personalProject.id}
-                      project={personalProject}
-                      isCurrentProject={location.pathname.includes(
-                        `/projects/${personalProject.id}`,
-                      )}
-                      handleProjectSelect={handleProjectSelect}
-                    />
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-
-              <SidebarSeparator
-                className={cn(state === 'collapsed' ? 'my-3' : 'mt-5 mb-3')}
-              />
-            </>
-          )}
-
           <SidebarGroup>
             {state === 'expanded' && (
               <div className="flex items-center justify-between">
@@ -238,6 +211,16 @@ export function ProjectDashboardSidebar() {
                     : '',
                 )}
               >
+                {personalProject && (
+                  <ProjectSideBarItem
+                    key={personalProject.id}
+                    project={personalProject}
+                    isCurrentProject={location.pathname.includes(
+                      `/projects/${personalProject.id}`,
+                    )}
+                    handleProjectSelect={handleProjectSelect}
+                  />
+                )}
                 {teamProjects?.map((p) => (
                   <ProjectSideBarItem
                     key={p.id}

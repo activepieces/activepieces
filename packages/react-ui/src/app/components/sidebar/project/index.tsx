@@ -82,13 +82,19 @@ const ProjectSideBarItem = ({
             isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
           )}
         >
-          <div onClick={() => handleProjectSelect(project.id)}>
+          <div
+            onClick={() => handleProjectSelect(project.id)}
+            className="w-full flex items-center justify-between gap-2"
+          >
             <ApProjectDisplay
               title={project.displayName}
               icon={project.icon}
               maxLengthToNotShowTooltip={28}
               projectType={project.type}
             />
+            {project.type === ProjectType.PERSONAL && (
+              <span className="text-xs text-muted-foreground">Private</span>
+            )}
           </div>
         </SidebarMenuButton>
       )}
