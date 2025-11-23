@@ -1,5 +1,6 @@
 import { ApEdition, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
 enum ProjectType {
@@ -44,7 +45,7 @@ export class AddProjectType1763644863137 implements MigrationInterface {
         `)
 
         let excludedUsers: string[] = []
-        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+        if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             const rows = await queryRunner.query('SELECT "ownerId" FROM "project"')
             await queryRunner.query(`
                 UPDATE "project"
@@ -87,6 +88,9 @@ export class AddProjectType1763644863137 implements MigrationInterface {
                 VALUES ${values.join(', ')}`,
                 params,
             )
+            system.globalLogger().info({
+                projectsCreated: values.length,
+            }, 'AddProjectType1763644863137 up')
         }
 
         await queryRunner.query(`
