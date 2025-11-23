@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/shared'
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 enum ProjectType {
     TEAM = 'TEAM',
@@ -29,10 +29,10 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -51,7 +51,7 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
@@ -82,21 +82,21 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
                 "icon",
                 '${ProjectType.TEAM}'
             FROM "project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "project"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
             WHERE "deleted" IS NULL
-        `);
+        `)
 
         const users = await queryRunner.query(`
             SELECT u."id", u."platformId", ui."firstName" 
@@ -144,14 +144,14 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
         
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -169,7 +169,7 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
@@ -198,17 +198,17 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
                 "maxConcurrentJobs",
                 "icon"
             FROM "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
             WHERE "deleted" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
     }
 
 }

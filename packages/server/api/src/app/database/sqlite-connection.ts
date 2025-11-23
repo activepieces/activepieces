@@ -345,7 +345,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveProjectIdFromPieceMetdataSqlite1763243032686,
         AddIconToProjectSqlite1763378269381,
         RemoveFlowRunDurationSqlite1763417279729,
-        AddProjectTypeSqlite1763896147042
+        AddProjectTypeSqlite1763896147042,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
