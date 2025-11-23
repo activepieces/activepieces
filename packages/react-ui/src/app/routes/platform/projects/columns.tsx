@@ -40,7 +40,7 @@ export const projectsTableColumns = ({
             {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
             {isPersonal && <User className="size-4 mr-1.5"></User>}
             <span>{row.original.displayName}</span>
-            {isOwner && (
+            {isPersonal && isOwner && (
               <Badge variant={'outline'} className="text-xs font-medium ml-2">
                 You
               </Badge>
