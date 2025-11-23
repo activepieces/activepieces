@@ -1,5 +1,4 @@
 import { PlatformId, ProjectId } from '@activepieces/shared'
-import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
     PIECES_ANALYTICS = 'pieces-analytics',
@@ -23,7 +22,7 @@ type AiUsageReportSystemJobData = {
     idempotencyKey: string
 }
 
-type SystemJobDataMap = {
+export type SystemJobDataMap = {
     [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
     [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
@@ -31,37 +30,4 @@ type SystemJobDataMap = {
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
-}
-
-export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
-
-export type SystemJobDefinition<T extends SystemJobName> = {
-    name: T
-    data: SystemJobData<T>
-    jobId?: string
-}
-
-export type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: SystemJobData<T>) => Promise<void>
-
-type OneTimeJobSchedule = {
-    type: 'one-time'
-    date: Dayjs
-}
-
-type RepeatedJobSchedule = {
-    type: 'repeated'
-    cron: string
-}
-
-export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
-
-type UpsertJobParams<T extends SystemJobName> = {
-    job: SystemJobDefinition<T>
-    schedule: JobSchedule
-}
-
-export type SystemJobSchedule = {
-    init(): Promise<void>
-    upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
-    close(): Promise<void>
 }

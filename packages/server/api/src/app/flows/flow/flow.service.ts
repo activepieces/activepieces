@@ -7,6 +7,7 @@ import {
     Cursor,
     ErrorCode,
     Flow,
+    FlowActionStatus,
     FlowId,
     FlowOperationRequest,
     FlowOperationType,
@@ -22,6 +23,7 @@ import {
     PopulatedFlow,
     ProjectId,
     SeekPage, TelemetryEventName, UncategorizedFolderId, UserId,
+    WebsocketClientEvent,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -40,6 +42,11 @@ import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { DurableSystemJobName } from '../../helper/system-jobs/types/durable-jobs'
+import { SystemJobData } from '../../helper/system-jobs/types'
+import { Job } from 'bullmq'
+import { websocketService } from '../../core/websockets.service'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
@@ -52,6 +59,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             publishedVersionId: null,
             externalId: externalId ?? apId(),
             metadata: request.metadata,
+            actionStatus: FlowActionStatus.NONE,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -450,25 +458,88 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async delete({ id, projectId }: DeleteParams): Promise<void> {
+    async delete({ id, projectId }: DeleteParams): Promise<{
+        message: string
+    }> {
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: DurableSystemJobName.DELETE_FLOW,
+                data: {
+                    flowId: id,
+                    projectId,
+                    flowToDelete: undefined,
+                    preDeleteDone: false,
+                    dbDeleteDone: false,
+                },
+                jobId: `delete-flow-${id}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: dayjs().add(1, 'second'),
+            },
+        })
+        await flowRepo().update(id, {
+            actionStatus: FlowActionStatus.DELETING,
+        })
+        return {
+            message: 'Flow deletion started',
+        }
+    },
+
+    async deleteJobHandler(job: Job<SystemJobData<DurableSystemJobName.DELETE_FLOW>>): Promise<void> {
+        const { flowId, projectId, flowToDelete, preDeleteDone, dbDeleteDone } = job.data
+
         await distributedLock(log).runExclusive({
-            key: id,
+            key: flowId,
             timeoutInSeconds: 10,
             fn: async () => {
-                const flowToDelete = await this.getOneOrThrow({
-                    id,
+                const flow = flowToDelete ?? await this.getOneOrThrow({
+                    id: flowId,
                     projectId,
                 })
 
-                rejectedPromiseHandler(flowSideEffects(log).preDelete({
-                    flowToDelete,
-                }), log)
+                if (isNil(flowToDelete)) {
+                    await job.updateData({
+                        ...job.data,
+                        flowToDelete: flow,
+                    })
+                }
 
-                await flowRepo().delete({ id })
-                await flowExecutionCache(log).delete(id)
+                if (!preDeleteDone) {
+                    await flowSideEffects(log).preDelete({
+                        flowToDelete: flow,
+                    })
+
+                    await job.updateData({
+                        ...job.data,
+                        preDeleteDone: true,
+                    })
+                }
+
+                if (!dbDeleteDone) {
+                    await flowRepo().delete({ id: flowId })
+                    await job.updateData({
+                        ...job.data,
+                        dbDeleteDone: true,
+                    })
+                }
+
+                await flowExecutionCache(log).delete(flowId)
             },
         })
+    },
 
+    async postDeleteFlow({ id, projectId, status, failedReason }: PostDeleteParams ) {
+        if (status === "failed") {
+            await flowRepo().update(id, {
+                actionStatus: FlowActionStatus.NONE,
+            })
+        }
+        websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_DELETE, {
+            id,
+            status,
+            failedReason,
+        })
     },
 
     async getAllEnabled(): Promise<PopulatedFlow[]> {
@@ -690,6 +761,13 @@ type UpdatePublishedVersionIdParams = {
 type DeleteParams = {
     id: FlowId
     projectId: ProjectId
+}
+
+type PostDeleteParams = {
+    id: FlowId
+    projectId: ProjectId
+    status: "success" | "failed"
+    failedReason?: string
 }
 
 type NewFlow = Omit<Flow, 'created' | 'updated'>
