@@ -72,6 +72,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
       projectId: authenticationSession.getProjectId()!,
       limit: 1000,
     },
+    pieceAuth: params.piece.auth,
     extraKeys: [params.piece.name, authenticationSession.getProjectId()!],
     staleTime: 0,
   });
