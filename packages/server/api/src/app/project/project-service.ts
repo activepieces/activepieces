@@ -154,7 +154,13 @@ export const projectService = {
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
         const filters = await getUsersFilters(params)
-        return projectRepo().findBy(filters)
+        return projectRepo().find({
+            where: filters,
+            order: {
+                type: 'ASC',
+                created: 'ASC',
+            },
+        })
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
         const filters = await getUsersFilters(params)
