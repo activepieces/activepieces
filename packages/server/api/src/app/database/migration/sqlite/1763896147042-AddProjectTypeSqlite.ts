@@ -1,5 +1,6 @@
-import { apId } from '@activepieces/shared'
+import { ApEdition, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 enum ProjectType {
     TEAM = 'TEAM',
@@ -103,6 +104,16 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
             FROM "user" u
             INNER JOIN "user_identity" ui ON u."identityId" = ui."id"
         `)
+   
+        let excludedUsers: string[] = []
+        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
+            const rows = await queryRunner.query('SELECT "ownerId" FROM "project"')
+            await queryRunner.query(`
+                UPDATE "project"
+                SET "type" = '${ProjectType.PERSONAL}'
+            `)
+            excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
+        }
         
         if (users.length > 0) {
             const values: string[] = []
@@ -110,6 +121,9 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
             let paramIndex = 1
 
             for (const user of users) {
+                if (excludedUsers.includes(user.id)) {
+                    continue
+                }
                 const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)]
 
                 const id = apId()
