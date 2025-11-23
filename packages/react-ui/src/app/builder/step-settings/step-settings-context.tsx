@@ -9,9 +9,9 @@ import {
 } from 'react';
 
 import {
-  buildSchemaForPieceProps,
   PieceMetadataModel,
   PiecePropertyMap,
+  piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
 import { FlowAction, setAtPath, FlowTrigger } from '@activepieces/shared';
 
@@ -74,7 +74,7 @@ export const StepSettingsProvider = ({
   const updateFormSchema = useCallback(
     (key: string, newFieldPropertyMap: PiecePropertyMap) => {
       setFormSchema((prevSchema) => {
-        const newFieldSchema = buildSchemaForPieceProps(
+        const newFieldSchema = piecePropertiesUtils.buildSchema(
           newFieldPropertyMap,
           undefined,
         );

@@ -2,7 +2,7 @@ import { TSchema, Type } from '@sinclair/typebox';
 import { t } from 'i18next';
 
 import {
-  buildSchemaForPieceProps,
+  piecePropertiesUtils,
   OAuth2Props,
   PieceAuthProperty,
   PieceMetadata,
@@ -50,7 +50,7 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.actions[actionNameOrTriggerName]
       ) {
-        return buildSchemaForPieceProps(
+        return piecePropertiesUtils.buildSchema(
           piece.actions[actionNameOrTriggerName].props,
           piece.auth,
         );
@@ -63,7 +63,7 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.triggers[actionNameOrTriggerName]
       ) {
-        return buildSchemaForPieceProps(
+        return piecePropertiesUtils.buildSchema(
           piece.triggers[actionNameOrTriggerName].props,
           piece.auth,
         );
@@ -216,7 +216,7 @@ function buildConnectionSchema(auth: PieceAuthProperty) {
           connectionSchema,
           Type.Object({
             value: Type.Object({
-              props: buildSchemaForPieceProps(auth.props, undefined),
+              props: piecePropertiesUtils.buildSchema(auth.props, undefined),
             }),
           }),
         ]),

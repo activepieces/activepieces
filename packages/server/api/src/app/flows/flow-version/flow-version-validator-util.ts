@@ -1,6 +1,6 @@
 import {
-    buildSchemaForPieceProps,
     PieceAuthProperty,
+    piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
 import {
@@ -203,7 +203,7 @@ function validateProps(
     input: Record<string, unknown> | undefined,
     auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
 ): ValidationResult {
-    const propsSchema = buildSchemaForPieceProps(props, auth)
+    const propsSchema = piecePropertiesUtils.buildSchema(props, auth)
     const propsValidator = TypeCompiler.Compile(propsSchema)
     const valid = propsValidator.Check(input)
     const cleanInput = !isNil(input) ? Object.fromEntries(
