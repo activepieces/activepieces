@@ -188,7 +188,7 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     const user = await userService.getOneOrFail({ id: params.userId })
     const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-    
+
     if (isPrivilegedUser) {
         // Platform admins and operators can see all projects in their platform
         return [{
@@ -196,17 +196,23 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
             ...displayNameFilter,
         }]
     }
-    
+
     // Only fetch project memberships for non-privileged users
     const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
         platformId: params.platformId,
         userId: params.userId,
     })
-    
+
+    const personalProjects = await projectRepo().findBy({
+        platformId: params.platformId,
+        ownerId: params.userId,
+        type: ProjectType.PERSONAL,
+    })
+
     // Regular members can only see projects they're members of
     return [{
         platformId: params.platformId,
-        id: In(projectIds),
+        id: In([...projectIds, ...personalProjects.map((project) => project.id)]),
         ...displayNameFilter,
     }]
 }
