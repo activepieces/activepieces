@@ -10,25 +10,7 @@ import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 
 import { oauthAppsApi } from './api/oauth-apps';
 
-export type PieceToClientIdMap = {
-  [
-    pieceName: `${string}-${
-      | AppConnectionType.CLOUD_OAUTH2
-      | AppConnectionType.PLATFORM_OAUTH2}`
-  ]: {
-    oauth2Type:
-      | AppConnectionType.CLOUD_OAUTH2
-      | AppConnectionType.PLATFORM_OAUTH2;
-    clientId: string;
-  };
-};
-
-const makeAppKey = (
-  pieceName: string,
-  type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2,
-) => {
-  return `${pieceName}-${type}` as const;
-};
+const makeAppKey = (pieceName: string, type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2) => `${pieceName}-${type}` as const;
 
 export const getPredefinedOAuth2App = (
   pieceToClientIdMap: PieceToClientIdMap,
@@ -50,6 +32,7 @@ export const getPredefinedOAuth2App = (
 };
 
 export const oauthAppsMutations = {
+  
   useDeleteOAuthApp: (refetch: () => void, setOpen: (open: boolean) => void) =>
     useMutation({
       mutationFn: async (credentialId: string) => {
@@ -147,4 +130,17 @@ export const oauthAppsQueries = {
       staleTime: 0,
     });
   },
+};
+
+export type PieceToClientIdMap = {
+  [
+    pieceName: `${string}-${
+      | AppConnectionType.CLOUD_OAUTH2
+      | AppConnectionType.PLATFORM_OAUTH2}`
+  ]: {
+    oauth2Type:
+      | AppConnectionType.CLOUD_OAUTH2
+      | AppConnectionType.PLATFORM_OAUTH2;
+    clientId: string;
+  };
 };

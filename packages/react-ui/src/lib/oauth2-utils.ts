@@ -15,17 +15,7 @@ import {
 } from './navigation-utils';
 
 let currentPopup: Window | null = null;
-export type OAuth2App =
-  | {
-      oauth2Type:
-        | AppConnectionType.CLOUD_OAUTH2
-        | AppConnectionType.PLATFORM_OAUTH2;
-      clientId: string;
-    }
-  | {
-      oauth2Type: AppConnectionType.OAUTH2;
-      clientId: null;
-    };
+
 export const oauth2Utils = {
   openOAuth2Popup,
   useThirdPartyLogin,
@@ -162,4 +152,12 @@ type OAuth2PopupParams = {
 type OAuth2PopupResponse = {
   code: string;
   codeChallenge: string | undefined;
+};
+
+export type OAuth2App = {
+  oauth2Type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
+  clientId: string;
+} | {
+  oauth2Type: AppConnectionType.OAUTH2;
+  clientId: null;
 };

@@ -73,26 +73,25 @@ export const PieceAuth = {
 };
 
 export type ExtractPieceAuthPropertyTypeForMethods<T extends PieceAuthProperty | PieceAuthProperty[]> = T extends PieceAuthProperty[] ? T[number] : T;
-export const getAuthPropertyForValue = ({
-  authValueType,
-  pieceAuth
-}: {
-  authValueType: AppConnectionType
-  pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
-})=>{
-  if(!Array.isArray(pieceAuth) || isNil(pieceAuth)) {
+
+export function getAuthPropertyForValue({ authValueType, pieceAuth }: GetAuthPropertyForValue) {
+  if (!Array.isArray(pieceAuth) || isNil(pieceAuth)) {
     return pieceAuth;
   }
-    return pieceAuth.find(auth => {
-    switch (auth.type) {
-        case PropertyType.BASIC_AUTH:
-            return authValueType === AppConnectionType.BASIC_AUTH
-        case PropertyType.SECRET_TEXT:
-            return authValueType === AppConnectionType.SECRET_TEXT
-        case PropertyType.OAUTH2:
-            return authValueType === AppConnectionType.OAUTH2 || authValueType === AppConnectionType.CLOUD_OAUTH2 || authValueType === AppConnectionType.PLATFORM_OAUTH2
-        case PropertyType.CUSTOM_AUTH:
-          return authValueType === AppConnectionType.CUSTOM_AUTH
-    }
-  })
+  return pieceAuth.find(auth => authConnectionTypeToPropertyType[authValueType] === auth.type);
+}
+
+type GetAuthPropertyForValue = {
+  authValueType: AppConnectionType
+  pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}
+
+const authConnectionTypeToPropertyType: Record<AppConnectionType, PropertyType | undefined> = {
+  [AppConnectionType.OAUTH2]: PropertyType.OAUTH2,
+  [AppConnectionType.CLOUD_OAUTH2]: PropertyType.OAUTH2,
+  [AppConnectionType.PLATFORM_OAUTH2]: PropertyType.OAUTH2,
+  [AppConnectionType.BASIC_AUTH]: PropertyType.BASIC_AUTH,
+  [AppConnectionType.CUSTOM_AUTH]: PropertyType.CUSTOM_AUTH,
+  [AppConnectionType.SECRET_TEXT]: PropertyType.SECRET_TEXT,
+  [AppConnectionType.NO_AUTH]: undefined,
 }
