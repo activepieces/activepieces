@@ -24,7 +24,7 @@ enum ColorName {
 }
 
 const COLORS = Object.values(ColorName)
-const BATCH_SIZE = 5000
+const BATCH_SIZE = 1000
 
 export class AddProjectType1763644863137 implements MigrationInterface {
     name = 'AddProjectType1763644863137'
