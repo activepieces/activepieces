@@ -195,7 +195,7 @@ function getAuthPropsToProcess(authValue: AppConnectionValue, auth: PieceAuthPro
         pieceAuth: auth,
     })
     const doesAuthHaveProps = usedAuthProperty?.type === PropertyType.CUSTOM_AUTH || usedAuthProperty?.type === PropertyType.OAUTH2
-    if(doesAuthHaveProps && !isNil(usedAuthProperty?.props)) {
+    if (doesAuthHaveProps && !isNil(usedAuthProperty?.props)) {
         return usedAuthProperty.props
     }
     return null
