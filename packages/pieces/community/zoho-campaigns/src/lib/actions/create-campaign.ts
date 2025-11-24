@@ -10,7 +10,8 @@ export const createCampaign = createAction({
     'Create a new campaign with campaign name, subject, topic, sender name/address, and mailing list.',
   props: zohoCampaignsCommon.createCampaignProperties(),
   async run({ auth, propsValue }) {
-    const { access_token: accessToken, location } = auth as any;
+    const location = auth.props?.['location'] || 'zoho.com';
+    const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,
       zohoCampaignsCommon.createCampaignSchema
