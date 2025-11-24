@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export const BASE_URL = `https://app.chatsistant.com/api/v1`;
+export const BASE_URL = `https://api.pushbullet.com/v2`;
 
 export async function makeRequest(
   access_token: string,
