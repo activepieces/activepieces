@@ -24,7 +24,11 @@ export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) 
 
 export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post('/:id', UpdateProjectRequest, async (request) => {
-        return projectService.update(request.params.id, request.body)
+        const project = await projectService.getOneOrThrow(request.params.id)
+        return projectService.update(request.params.id, {
+            type: project.type,
+            ...request.body,
+        })
     })
 }
 
