@@ -6,7 +6,9 @@ import {
   PieceSelectorPieceItem,
   PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
+import {
+  piecePropertiesUtils
+} from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowActionType,
@@ -82,13 +84,15 @@ const isStepInitiallyValid = (
         overrideDefaultSettings && 'input' in overrideDefaultSettings
           ? overrideDefaultSettings.input
           : undefined;
-      const inputValidity = checkPieceInputValidity(
-        overridingInput ?? getInitalStepInput(pieceSelectorItem),
+      const input = overridingInput ?? getInitalStepInput(pieceSelectorItem);
+      const schema = piecePropertiesUtils.buildSchema(
         pieceSelectorItem.actionOrTrigger.props,
+        pieceSelectorItem.pieceMetadata.auth,
       );
+      const isValid = Value.Errors(schema, input).First() === undefined;
       const needsAuth = pieceSelectorItem.actionOrTrigger.requireAuth;
       const hasAuth = !isNil(pieceSelectorItem.pieceMetadata.auth);
-      return inputValidity && (!needsAuth || !hasAuth);
+      return isValid && (!needsAuth || !hasAuth);
     }
     case FlowActionType.LOOP_ON_ITEMS: {
       if (
@@ -284,22 +288,6 @@ const getDefaultStepValues = ({
     default:
       throw new Error('Unsupported type: ' + pieceSelectorItem.type);
   }
-};
-
-const checkPieceInputValidity = (
-  input: Record<string, unknown>,
-  props: PiecePropertyMap,
-) => {
-  return Object.entries(props).reduce((acc, [key, property]) => {
-    if (
-      property.required &&
-      property.type !== PropertyType.DYNAMIC &&
-      isNil(input[key])
-    ) {
-      return false;
-    }
-    return acc;
-  }, true);
 };
 
 // Adjusts piece list height to prevent overflow on short screens
