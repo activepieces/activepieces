@@ -4,7 +4,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { processInputText } from './lib/actions/process-input-text';
 
 export const denserAi = createPiece({
-  displayName: 'DenserAI',
+  displayName: 'Denser.ai',
   auth: denserAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/denser-ai.png',
