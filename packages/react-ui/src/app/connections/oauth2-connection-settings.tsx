@@ -1,3 +1,4 @@
+import { Value } from '@sinclair/typebox/value';
 import { t } from 'i18next';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
@@ -17,6 +18,7 @@ import {
   OAuth2Props,
   PieceMetadataModel,
   PieceMetadataModelSummary,
+  piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
 import {
   resolveValueFromProps,
@@ -53,19 +55,20 @@ function OAuth2ConnectionSettings({
       : thirdPartyUrl ?? 'no_redirect_url_found';
 
   const hasCode = form.getValues().request.value.code;
-
+  const showRedirectUrlInput =
+    oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
+    grantType === OAuth2GrantType.AUTHORIZATION_CODE;
   return (
     <div className="flex flex-col gap-4">
-      {oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
-        grantType === OAuth2GrantType.AUTHORIZATION_CODE && (
-          <div className="flex flex-col gap-2">
-            <FormLabel>{t('Redirect URL')}</FormLabel>
-            <FormControl>
-              <Input disabled type="text" value={redirectUrl} />
-            </FormControl>
-            <FormMessage />
-          </div>
-        )}
+      {showRedirectUrlInput && (
+        <div className="flex flex-col gap-2">
+          <FormLabel>{t('Redirect URL')}</FormLabel>
+          <FormControl>
+            <Input disabled type="text" value={redirectUrl} />
+          </FormControl>
+          <FormMessage />
+        </div>
+      )}
 
       {oauth2App.oauth2Type === AppConnectionType.OAUTH2 && (
         <>
@@ -117,42 +120,33 @@ function OAuth2ConnectionSettings({
           </div>
           <div className="text-sm">{piece.displayName}</div>
           <div className="flex-grow"></div>
-          {!hasCode && (
-            <Button
-              size={'sm'}
-              variant={'basic'}
-              disabled={!isConnectButtonEnabled}
-              type="button"
-              onClick={async () =>
+          <Button
+            size={'sm'}
+            variant={'basic'}
+            className={hasCode ? 'text-destructive' : ''}
+            disabled={!isConnectButtonEnabled}
+            type="button"
+            onClick={async () => {
+              if (!hasCode) {
                 openPopup(
                   redirectUrl,
                   form.getValues().request.value.client_id,
                   form.getValues().request.value.props,
                   authProperty,
                   form,
-                )
-              }
-            >
-              {t('Connect')}
-            </Button>
-          )}
-          {hasCode && (
-            <Button
-              size={'sm'}
-              variant={'basic'}
-              className="text-destructive"
-              onClick={() => {
+                );
+              } else {
                 form.setValue('request.value.code', '', {
                   shouldValidate: true,
                 });
                 form.setValue('request.value.code_challenge', '', {
                   shouldValidate: true,
                 });
-              }}
-            >
-              {t('Disconnect')}
-            </Button>
-          )}
+              }
+            }}
+          >
+            {hasCode ? t('Disconnect') : t('Connect')}
+          </Button>
         </div>
       )}
     </div>
@@ -180,15 +174,9 @@ function useIsConnectButtonEnabled(
     !isNil(values.request?.value?.client_secret) &&
     values.request?.value?.client_secret.length > 0;
   const propsValues = values.request?.value?.props ?? {};
-  const arePropsValid = authProperty.props
-    ? Object.keys(authProperty.props).reduce((acc, key) => {
-        return (
-          acc &&
-          ((!isNil(propsValues[key]) && propsValues[key].length > 0) ||
-            !authProperty.props?.[key]?.required)
-        );
-      }, true)
-    : true;
+  const porps = authProperty.props ?? {};
+  const schema = piecePropertiesUtils.buildSchema(porps, undefined);
+  const arePropsValid = Value.Errors(schema, propsValues).First() === undefined;
   const isClientSecretRequired =
     values.request?.type === AppConnectionType.OAUTH2;
   return (

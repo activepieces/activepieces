@@ -68,8 +68,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 default:
                     throw new Error(`Unknown authorization method: ${authorizationMethod}`)
             }
+            const urlSearchParams = new URLSearchParams(Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)])))
             const response = (
-                await apAxios.post(request.tokenUrl, new URLSearchParams(Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)]))), {
+                await apAxios.post(request.tokenUrl, urlSearchParams, {
                     headers,
                 })
             ).data
