@@ -150,6 +150,9 @@
       ],
       "@activepieces/piece-denser-ai": [
         "packages/pieces/community/denser-ai/src/index.ts"
+      ],
+      "@activepieces/piece-oracle-fusion-erp": [
+        "packages/pieces/community/oracle-fusion-erp/src/index.ts"
       ]
     },
     "resolveJsonModule": true
