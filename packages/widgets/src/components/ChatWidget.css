@@ -87,18 +87,24 @@
   display: flex;
   border-top: 1px solid #e1e5ea;
   padding: 8px;
-  align-items: center;
   gap: 6px;
 }
 
-.ax-chat-footer input {
+.ax-chat-footer textarea {
   flex: 1;
-  border: 1px solid #d0d7de;
-  border-radius: 8px;
+  min-height: 40px;
+  max-height: 150px;
+  resize: none;
+  overflow-y: auto;
+  border: 1px solid;
+  border-radius: 10px;
   padding: 10px 12px;
   outline: none;
   font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  line-height: 1.4;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  box-sizing: border-box;
+  background: transparent;
 }
 
 .ax-chat-footer input:focus {
@@ -112,6 +118,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
+  align-self: flex-end;
 }
 
 .ax-chat-footer button:hover {

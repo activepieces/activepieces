@@ -250,6 +250,7 @@
     "rss-parser": "3.13.0",
     "samlify": "2.10.0",
     "semver": "7.6.0",
+    "showdown": "2.1.0",
     "simple-git": "3.21.0",
     "slackify-markdown": "4.4.0",
     "socket.io": "4.8.1",

@@ -66,6 +66,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
   const sessionIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const converter = new showdown.Converter({
     tables: true,
@@ -75,6 +76,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     omitExtraWLInCodeBlocks: true,
   });
 
+  const adjustTextAreaHeight = () => {
+    const textArea = textAreaRef.current;
+    if (textArea) {
+      textArea.style.height = 'auto'; // Reset height before adjusting
+      textArea.style.height = `${textArea.scrollHeight}px`; // Set height based on content
+    }
+  };
+
   useEffect(() => {
     sessionIdRef.current = getOrCreateSessionId();
   }, []);
@@ -83,6 +92,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Adjust height on input change
+  useEffect(() => {
+    adjustTextAreaHeight();
+  }, [input]);
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -203,13 +217,22 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           </div>
 
           <div className="ax-chat-footer">
-            <input
-              type="text"
+            <textarea
+              ref={textAreaRef}
               placeholder="Type a message..."
               value={input}
               style={inputStyle}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              onChange={(e) => {
+                setInput(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                // Submit on Enter WITHOUT Shift
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              rows={1}
             />
             <button
               onClick={sendMessage}
