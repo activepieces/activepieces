@@ -12,6 +12,7 @@ import {
     PlatformRole,
     Principal,
     PrincipalType,
+    ProjectType,
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -43,6 +44,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             externalId: request.body.externalId ?? undefined,
             metadata: request.body.metadata ?? undefined,
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
+            type: ProjectType.TEAM,
         })
         await projectLimitsService(request.log).upsert({
             nickname: 'platform',

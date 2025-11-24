@@ -12,6 +12,7 @@ import {
     Project,
     ProjectIcon,
     ProjectId,
+    ProjectType,
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
@@ -80,19 +81,19 @@ export const projectService = {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
 
-        await projectRepo().update(
-            {
-                id: projectId,
-            },
-            {
-                ...spreadIfDefined('externalId', externalId),
-                ...spreadIfDefined('displayName', request.displayName),
-                ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
-                ...spreadIfDefined('metadata', request.metadata),
-                ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
-                ...spreadIfDefined('icon', request.icon),
-            },
-        )
+        const baseUpdate = {
+            ...spreadIfDefined('externalId', externalId),
+            ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+            ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+        }
+
+        const teamUpdate = request.type === ProjectType.TEAM ? {
+            ...spreadIfDefined('displayName', request.displayName),
+            ...spreadIfDefined('icon', request.icon),
+        } : {}
+
+        await projectRepo().update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         return this.getOneOrThrow(projectId)
     },
 
@@ -153,7 +154,13 @@ export const projectService = {
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
         const filters = await getUsersFilters(params)
-        return projectRepo().findBy(filters)
+        return projectRepo().find({
+            where: filters,
+            order: {
+                type: 'ASC',
+                created: 'ASC',
+            },
+        })
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
         const filters = await getUsersFilters(params)
@@ -187,7 +194,7 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     const user = await userService.getOneOrFail({ id: params.userId })
     const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-    
+
     if (isPrivilegedUser) {
         // Platform admins and operators can see all projects in their platform
         return [{
@@ -195,17 +202,23 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
             ...displayNameFilter,
         }]
     }
-    
+
     // Only fetch project memberships for non-privileged users
     const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
         platformId: params.platformId,
         userId: params.userId,
     })
-    
+
+    const personalProjects = await projectRepo().findBy({
+        platformId: params.platformId,
+        ownerId: params.userId,
+        type: ProjectType.PERSONAL,
+    })
+
     // Regular members can only see projects they're members of
     return [{
         platformId: params.platformId,
-        id: In(projectIds),
+        id: In([...projectIds, ...personalProjects.map((project) => project.id)]),
         ...displayNameFilter,
     }]
 }
@@ -243,8 +256,8 @@ type ExistsParams = {
     isSoftDeleted?: boolean
 }
 
-
-type UpdateParams = {
+type UpdateTeamProjectParams = {
+    type: ProjectType.TEAM
     displayName?: string
     externalId?: string
     releasesEnabled?: boolean
@@ -253,9 +266,20 @@ type UpdateParams = {
     icon?: ProjectIcon
 }
 
+type UpdatePersonalProjectParams = {
+    type: ProjectType.PERSONAL
+    externalId?: string
+    releasesEnabled?: boolean
+    metadata?: Metadata
+    maxConcurrentJobs?: number
+}
+
+type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
+
 type CreateParams = {
     ownerId: UserId
     displayName: string
+    type: ProjectType
     platformId: string
     externalId?: string
     metadata?: Metadata

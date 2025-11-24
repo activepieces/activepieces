@@ -21,8 +21,12 @@ const ReleaseCard = () => {
     onSuccess: () => {
       refetch();
       toast({
-        title: t('Releases Enabled'),
-        description: t('You have successfully enabled releases'),
+        title: !project.releasesEnabled
+          ? t('Releases Enabled')
+          : t('Releases Disabled'),
+        description: !project.releasesEnabled
+          ? t('You have successfully enabled releases')
+          : t('You have successfully disabled releases'),
         duration: 3000,
       });
     },
