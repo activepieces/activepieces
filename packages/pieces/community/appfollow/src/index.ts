@@ -11,7 +11,7 @@ import { replyToReview } from './lib/actions/reply-to-review';
 import { addUser } from './lib/actions/add-user';
 
 export const appfollow = createPiece({
-  displayName: 'Appfollow',
+  displayName: 'AppFollow',
   auth: appfollowAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/appfollow.png',
