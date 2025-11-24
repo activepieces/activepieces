@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Plus, Globe } from 'lucide-react';
-import { memo, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
@@ -38,22 +38,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-type ConnectionSelectProps = {
-  disabled: boolean;
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  isTrigger: boolean;
-};
-const addBrackets = (str: string) => `{{connections['${str}']}}`;
-const removeBrackets = (str: string | undefined) => {
-  if (isNil(str)) {
-    return undefined;
-  }
-  return str.replace(
-    /\{\{connections\['(.*?)'\]\}\}/g,
-    (_, connectionName) => connectionName,
-  );
-};
-const ConnectionSelect = memo((params: ConnectionSelectProps) => {
+function ConnectionSelect(params: ConnectionSelectProps) {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
@@ -272,7 +257,25 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
       )}
     ></FormField>
   );
-});
+}
 
 ConnectionSelect.displayName = 'ConnectionSelect';
 export { ConnectionSelect };
+
+type ConnectionSelectProps = {
+  disabled: boolean;
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  isTrigger: boolean;
+};
+function addBrackets(str: string) {
+  return `{{connections['${str}']}}`;
+}
+function removeBrackets(str: string | undefined) {
+  if (isNil(str)) {
+    return undefined;
+  }
+  return str.replace(
+    /\{\{connections\['(.*?)'\]\}\}/g,
+    (_, connectionName) => connectionName,
+  );
+}

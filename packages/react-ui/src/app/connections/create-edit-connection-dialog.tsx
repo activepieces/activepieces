@@ -52,7 +52,7 @@ import { formUtils } from '../../features/pieces/lib/form-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
-import { MutliAuthList, SelectedAuth } from './multi-auth-list';
+import { MutliAuthList, AuthListItem } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
@@ -63,8 +63,8 @@ function CreateOrEditConnectionSection({
   externalIdComingFromSdk,
   setOpen,
   selectedAuth,
-  onShowSelectAuthButtonClicked,
-  showSelectAuthButton,
+  onTryAnotherMethodButtonClicked,
+  showTryAnotherMethodButton,
 }: CreateOrEditConnectionSectionProps) {
   const formSchema = formUtils.buildConnectionSchema(selectedAuth.authProperty);
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
@@ -185,10 +185,7 @@ function CreateOrEditConnectionSection({
               </div>
             )}
             <div className="mt-3.5">
-              <SelectConnectionSettings
-                selectedAuth={selectedAuth}
-                piece={piece}
-              />
+              <ConnectionSettings selectedAuth={selectedAuth} piece={piece} />
             </div>
           </ScrollArea>
           {errorMessage && (
@@ -201,11 +198,11 @@ function CreateOrEditConnectionSection({
           )}
           <DialogFooter className="mt-0">
             <div className="mx-5 flex gap-2 w-full">
-              {showSelectAuthButton && (
+              {showTryAnotherMethodButton && (
                 <Button
                   variant="outline"
                   type="button"
-                  onClick={onShowSelectAuthButtonClicked}
+                  onClick={onTryAnotherMethodButtonClicked}
                 >
                   {t('Try another method')}
                 </Button>
@@ -229,10 +226,7 @@ function CreateOrEditConnectionSection({
     </>
   );
 }
-function SelectConnectionSettings({
-  selectedAuth,
-  piece,
-}: SelectConnectionSettingsProps) {
+function ConnectionSettings({ selectedAuth, piece }: ConnectionSettingsProps) {
   switch (selectedAuth.authProperty.type) {
     case PropertyType.SECRET_TEXT:
       return (
@@ -265,62 +259,53 @@ function SelectConnectionSettings({
   }
 }
 
-type SelectConnectionSettingsProps = {
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  selectedAuth: SelectedAuth;
-};
 function CreateOrEditConnectionDialogContent(
   props: CreateOrEditConnectionDialogContentProps,
 ) {
   const piece = props.piece;
-  const hasPredefinedOAuth2App = !isNil(
-    oauth2Utils.getPredefinedOAuth2App(props.piecesOAuth2AppsMap, piece.name),
+  const [selectedAuth, setSelectedAuth] = useState<AuthListItem | null>(
+    piece.auth
+      ? getInitiallySelectedAuthListItem(
+          piece.auth,
+          props.reconnectConnection,
+          props.piecesOAuth2AppsMap,
+          piece.name,
+        )
+      : null,
   );
-
-  const [selectedAuth, setSelectedAuth] = useState<SelectedAuth | null>(
-    getInitialGrantTypeAndOAuth2App(
-      getInitiallySelectedAuthInList(piece.auth, props.reconnectConnection),
-      props.piecesOAuth2AppsMap,
-      piece.name,
-    ),
-  );
-  const [showSelectAuthDialog, setShowSelectAuthDialog] = useState(false);
+  const [showMultiAuthList, setShowMultiAuthList] = useState(false);
   if (isNil(piece.auth)) {
     return null;
   }
-  const pieceAuth = Array.isArray(piece.auth) ? piece.auth : [piece.auth];
-  const hasBothGrantTypes = pieceAuth.some(
-    (auth) =>
-      auth.type === PropertyType.OAUTH2 &&
-      auth.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
+  const hasPredefinedOAuth2App = !isNil(
+    oauth2Utils.getPredefinedOAuth2App(props.piecesOAuth2AppsMap, piece.name),
   );
   const hasMultipleAuth =
-    Array.isArray(pieceAuth) || hasBothGrantTypes || hasPredefinedOAuth2App;
+    Array.isArray(piece.auth) ||
+    doesAuthPropertySupportBothGrantTypes(piece.auth) ||
+    hasPredefinedOAuth2App;
   return (
     <>
-      {!showSelectAuthDialog && selectedAuth && (
+      {!showMultiAuthList && selectedAuth && (
         <CreateOrEditConnectionSection
           {...props}
           selectedAuth={selectedAuth}
-          onShowSelectAuthButtonClicked={() => setShowSelectAuthDialog(true)}
-          showSelectAuthButton={hasMultipleAuth}
+          onTryAnotherMethodButtonClicked={() => setShowMultiAuthList(true)}
+          showTryAnotherMethodButton={hasMultipleAuth}
         />
       )}
-      {showSelectAuthDialog &&
-        hasMultipleAuth &&
-        piece.auth &&
-        selectedAuth && (
-          <MutliAuthList
-            pieceName={piece.name}
-            piecesOAuth2AppsMap={props.piecesOAuth2AppsMap}
-            selectedAuth={selectedAuth}
-            pieceAuth={Array.isArray(piece.auth) ? piece.auth : [piece.auth]}
-            setSelectedAuth={setSelectedAuth}
-            confirmSelectedAuth={() => {
-              setShowSelectAuthDialog(false);
-            }}
-          />
-        )}
+      {showMultiAuthList && hasMultipleAuth && piece.auth && selectedAuth && (
+        <MutliAuthList
+          pieceName={piece.name}
+          piecesOAuth2AppsMap={props.piecesOAuth2AppsMap}
+          selectedItem={selectedAuth}
+          pieceAuth={Array.isArray(piece.auth) ? piece.auth : [piece.auth]}
+          setSelectedItem={setSelectedAuth}
+          confirmSelectedItem={() => {
+            setShowMultiAuthList(false);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -390,39 +375,39 @@ function hasOAuth2PieceAuth(
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };
 
-function getInitiallySelectedAuthInList(
-  auth: PieceAuthProperty[] | PieceAuthProperty | undefined,
+function getInitallySelectedAuthProperty(
+  auth: PieceAuthProperty[] | PieceAuthProperty,
   reconnectConnection: AppConnectionWithoutSensitiveData | null,
-) {
-  if (!Array.isArray(auth)) {
-    return auth ?? null;
-  }
-  if (auth.length === 0) {
-    return null;
-  }
-  if (reconnectConnection) {
-    return (
-      getAuthPropertyForValue({
+): PieceAuthProperty | undefined {
+  if (Array.isArray(auth)) {
+    if (reconnectConnection) {
+      return getAuthPropertyForValue({
         authValueType: reconnectConnection.type,
         pieceAuth: auth,
-      }) ?? null
-    );
+      });
+    }
+    return auth.at(0);
   }
-  return auth[0] ?? null;
+  return auth;
 }
 
-function getInitialGrantTypeAndOAuth2App(
-  selectedAuth: PieceAuthProperty | null,
+function getInitiallySelectedAuthListItem(
+  auth: PieceAuthProperty[] | PieceAuthProperty,
+  reconnectConnection: AppConnectionWithoutSensitiveData | null,
   piecesOAuth2AppsMap: PiecesOAuth2AppsMap,
   pieceName: string,
-): SelectedAuth | null {
-  if (isNil(selectedAuth)) {
+): AuthListItem | null {
+  const authProperty = getInitallySelectedAuthProperty(
+    auth,
+    reconnectConnection,
+  );
+  if (!authProperty) {
     return null;
   }
-
-  if (selectedAuth.type === PropertyType.OAUTH2) {
+  if (authProperty.type === PropertyType.OAUTH2) {
     return {
-      grantType: oauth2Utils.getGrantType(selectedAuth),
+      authProperty,
+      grantType: oauth2Utils.getGrantType(authProperty),
       oauth2App: oauth2Utils.getPredefinedOAuth2App(
         piecesOAuth2AppsMap,
         pieceName,
@@ -430,16 +415,25 @@ function getInitialGrantTypeAndOAuth2App(
         oauth2Type: AppConnectionType.OAUTH2,
         clientId: null,
       },
-      authProperty: selectedAuth,
     };
   }
   return {
+    authProperty,
     grantType: null,
     oauth2App: null,
-    authProperty: selectedAuth,
   };
 }
-
+function doesAuthPropertySupportBothGrantTypes(
+  authProperty: PieceAuthProperty | PieceAuthProperty[],
+): boolean {
+  if (Array.isArray(authProperty)) {
+    return authProperty.some(doesAuthPropertySupportBothGrantTypes);
+  }
+  return (
+    authProperty.type === PropertyType.OAUTH2 &&
+    authProperty.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
+  );
+}
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
@@ -466,7 +460,12 @@ type CreateOrEditConnectionDialogContentProps = {
 
 type CreateOrEditConnectionSectionProps =
   CreateOrEditConnectionDialogContentProps & {
-    onShowSelectAuthButtonClicked: () => void;
-    showSelectAuthButton: boolean;
-    selectedAuth: SelectedAuth;
+    onTryAnotherMethodButtonClicked: () => void;
+    showTryAnotherMethodButton: boolean;
+    selectedAuth: AuthListItem;
   };
+
+type ConnectionSettingsProps = {
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  selectedAuth: AuthListItem;
+};

@@ -25,7 +25,6 @@ import {
   DEFAULT_CONNECTION_DISPLAY_NAME,
 } from '@activepieces/pieces-framework';
 import {
-  isNil,
   AppConnectionType,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2GrantType,
@@ -33,17 +32,15 @@ import {
 
 export function MutliAuthList({
   pieceAuth,
-  setSelectedAuth,
-  confirmSelectedAuth,
+  setSelectedItem,
+  confirmSelectedItem,
   piecesOAuth2AppsMap,
   pieceName,
-  selectedAuth,
+  selectedItem,
 }: MutliAuthListProps) {
-  const authItems: RadioGroupListItem<SelectedAuth>[] = pieceAuth
-    .filter((auth): auth is PieceAuthProperty => !isNil(auth))
-    .flatMap((auth) => {
+  const authItems: RadioGroupListItem<AuthListItem>[] = pieceAuth.flatMap(
+    (auth) => {
       const displayName = getDisplayName(auth);
-
       if (auth.type === PropertyType.OAUTH2) {
         const predefinedOAuth2App = oauth2Utils.getPredefinedOAuth2App(
           piecesOAuth2AppsMap,
@@ -57,10 +54,11 @@ export function MutliAuthList({
         value: { authProperty: auth, grantType: null, oauth2App: null },
         description: auth.description,
       };
-    });
+    },
+  );
 
   const selectedOption = authItems.find((auth) =>
-    deepEqual(auth.value, selectedAuth),
+    deepEqual(auth.value, selectedItem),
   );
 
   return (
@@ -75,7 +73,7 @@ export function MutliAuthList({
       <RadioGroupList
         className="px-5 mt-5"
         items={authItems}
-        onChange={setSelectedAuth}
+        onChange={setSelectedItem}
         value={selectedOption?.value ?? null}
       />
       <DialogFooter className="mt-4">
@@ -83,7 +81,7 @@ export function MutliAuthList({
           <DialogClose asChild>
             <Button variant="outline">{t('Cancel')}</Button>
           </DialogClose>
-          <Button variant="default" onClick={() => confirmSelectedAuth()}>
+          <Button variant="default" onClick={() => confirmSelectedItem()}>
             {t('Continue')}
           </Button>
         </div>
@@ -108,8 +106,8 @@ function createOAuth2Options(
   auth: OAuth2Property<any>,
   displayName: string,
   predefinedOAuth2App: OAuth2App | null,
-): RadioGroupListItem<SelectedAuth>[] {
-  const options: RadioGroupListItem<SelectedAuth>[] = [];
+): RadioGroupListItem<AuthListItem>[] {
+  const options: RadioGroupListItem<AuthListItem>[] = [];
   const grantType = auth.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE;
 
   const emptyOAuth2App: OAuth2App = {
@@ -172,7 +170,7 @@ function createOAuth2Options(
   return options;
 }
 
-export type SelectedAuth =
+export type AuthListItem =
   | {
       authProperty: Exclude<PieceAuthProperty, OAuth2Property<any>>;
       grantType: null;
@@ -186,9 +184,9 @@ export type SelectedAuth =
 
 type MutliAuthListProps = {
   pieceAuth: PieceAuthProperty[];
-  setSelectedAuth: (auth: SelectedAuth) => void;
-  confirmSelectedAuth: () => void;
+  setSelectedItem: (auth: AuthListItem) => void;
+  confirmSelectedItem: () => void;
   piecesOAuth2AppsMap: PiecesOAuth2AppsMap;
-  selectedAuth: SelectedAuth;
+  selectedItem: AuthListItem;
   pieceName: string;
 };
