@@ -6,7 +6,7 @@ import { AUTHENTICATION_PROPERTY_NAME, isEmpty, isNil } from "@activepieces/shar
 
 function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAuthProperty[] | undefined): TSchema {
     const entries = Object.entries(props);
-    const nullableType: TSchema[] = [Type.Null(), Type.Undefined()];
+    const nullableType = [Type.Null(), Type.Undefined()];
     const nonNullableUnknownPropType = Type.Not(
       Type.Union(nullableType),
       Type.Unknown(),
@@ -16,12 +16,7 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
       switch (property.type) {
         case PropertyType.MARKDOWN:
           propsSchema[name] = Type.Optional(
-            Type.Union([
-              Type.Null(),
-              Type.Undefined(),
-              Type.Never(),
-              Type.Unknown(),
-            ]),
+            Type.Union([Type.Null(), Type.Undefined(), Type.Never(), Type.Unknown()]),
           );
           break;
         case PropertyType.DATE_TIME:
@@ -42,7 +37,6 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
           ]);
           break;
         case PropertyType.NUMBER:
-          // Because it could be a variable
           propsSchema[name] = Type.Union([
             Type.String({
               minLength: property.required ? 1 : undefined,
@@ -51,8 +45,6 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
           ]);
           break;
         case PropertyType.STATIC_DROPDOWN:
-          propsSchema[name] = nonNullableUnknownPropType;
-          break;
         case PropertyType.DROPDOWN:
           propsSchema[name] = nonNullableUnknownPropType;
           break;
@@ -71,7 +63,9 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
             Type.Array(arrayItemSchema, {
               minItems: property.required ? 1 : undefined,
             }),
+            //for inline items mode
             Type.Record(Type.String(), Type.Unknown()),
+            //for normal dynamic input mode
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),
