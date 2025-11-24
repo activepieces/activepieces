@@ -424,6 +424,7 @@ export const createSalesInvoiceAction = createAction({
                 percentage: tax.value.toString(),
               }));
             } catch (error) {
+              // Ignore error, use empty array as fallback
             }
         }
 

@@ -1,7 +1,6 @@
 import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../../index';
 import { BexioClient } from '../common/client';
-import { bexioCommonProps } from '../common/props';
 
 export const createSalesQuoteAction = createAction({
   auth: bexioAuth,
@@ -487,6 +486,7 @@ export const createSalesQuoteAction = createAction({
               percentage: tax.value.toString(),
             }));
           } catch (error) {
+            // Ignore error, use empty array as fallback
           }
         }
 
