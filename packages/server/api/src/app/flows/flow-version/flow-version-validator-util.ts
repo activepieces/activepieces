@@ -203,14 +203,13 @@ function validateProps(
     input: Record<string, unknown> | undefined,
     auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
 ): ValidationResult {
-    const propsSchema = piecePropertiesUtils.buildSchema(props, auth)
-    const propsValidator = TypeCompiler.Compile(propsSchema)
-    const valid = propsValidator.Check(input)
+    const propsWithAuthSchema = piecePropertiesUtils.buildSchema(props, auth)
+    const inputValidator = TypeCompiler.Compile(propsWithAuthSchema)
     const cleanInput = !isNil(input) ? Object.fromEntries(
-        Object.keys(props).map(key => [key, input?.[key]]),
+        Object.keys(propsWithAuthSchema.properties).map(key => [key, input?.[key]]),
     ) : undefined
     return {
-        valid,
+        valid: inputValidator.Check(cleanInput),
         cleanInput,
     }
 }
