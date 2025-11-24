@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -26,6 +27,7 @@ import {
   PlatformRole,
   PROJECT_COLOR_PALETTE,
   ProjectIcon,
+  ProjectType,
 } from '@activepieces/shared';
 
 export type FormValues = {
@@ -44,94 +46,96 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const { project } = projectHooks.useCurrentProject();
 
   const colorOptions = Object.values(ColorName);
 
   return (
     <Form {...form}>
       <div className="space-y-6">
-        <div>
-          <Label htmlFor="projectName" className="text-sm font-medium">
-            {t('Project Name')}
-          </Label>
-          <div className="flex mt-2">
-            <FormField
-              name="icon"
-              render={({ field }) => {
-                const currentColor: ColorName = field.value.color;
-                return (
-                  <FormItem>
-                    <Popover
-                      open={colorPickerOpen}
-                      onOpenChange={setColorPickerOpen}
-                    >
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-10 px-3 rounded-r-none border-r flex items-center gap-1"
-                          disabled={isSaving}
-                        >
-                          <div
-                            className="h-3 w-3 rounded-none flex-shrink-0"
-                            style={{
-                              backgroundColor:
-                                PROJECT_COLOR_PALETTE[currentColor].color,
-                            }}
-                          />
-                          <ChevronDown className="h-3 w-3" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-3" align="start">
-                        <div className="grid grid-cols-6 gap-2">
-                          {colorOptions.map((colorName) => (
-                            <Button
-                              key={colorName}
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className={cn(
-                                'h-8 w-8 rounded-sm transition-all hover:scale-110 p-0',
-                                currentColor === colorName &&
-                                  'ring-2 ring-offset-2 ring-foreground',
-                              )}
+        {project.type === ProjectType.TEAM && (
+          <div>
+            <Label htmlFor="projectName" className="text-sm font-medium">
+              {t('Project Name')}
+            </Label>
+            <div className="flex mt-2">
+              <FormField
+                name="icon"
+                render={({ field }) => {
+                  const currentColor: ColorName = field.value.color;
+                  return (
+                    <FormItem>
+                      <Popover
+                        open={colorPickerOpen}
+                        onOpenChange={setColorPickerOpen}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-10 px-3 rounded-r-none border-r flex items-center gap-1"
+                            disabled={isSaving}
+                          >
+                            <div
+                              className="h-3 w-3 rounded-none flex-shrink-0"
                               style={{
                                 backgroundColor:
-                                  PROJECT_COLOR_PALETTE[colorName].color,
+                                  PROJECT_COLOR_PALETTE[currentColor].color,
                               }}
-                              onClick={() => {
-                                field.onChange({ color: colorName });
-                                setColorPickerOpen(false);
-                              }}
-                              disabled={isSaving}
                             />
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-3" align="start">
+                          <div className="grid grid-cols-6 gap-2">
+                            {colorOptions.map((colorName) => (
+                              <Button
+                                key={colorName}
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className={cn(
+                                  'h-8 w-8 rounded-sm transition-all hover:scale-110 p-0',
+                                  currentColor === colorName &&
+                                    'ring-2 ring-offset-2 ring-foreground',
+                                )}
+                                style={{
+                                  backgroundColor:
+                                    PROJECT_COLOR_PALETTE[colorName].color,
+                                }}
+                                onClick={() => {
+                                  field.onChange({ color: colorName });
+                                  setColorPickerOpen(false);
+                                }}
+                                disabled={isSaving}
+                              />
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+              <FormField
+                name="projectName"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <Input
+                      {...field}
+                      id="projectName"
+                      placeholder={t('Project Name')}
+                      className="h-10 rounded-l-none border-l-0"
+                      disabled={isSaving}
+                    />
                     <FormMessage />
                   </FormItem>
-                );
-              }}
-            />
-            <FormField
-              name="projectName"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <Input
-                    {...field}
-                    id="projectName"
-                    placeholder={t('Project Name')}
-                    className="h-10 rounded-l-none border-l-0"
-                    disabled={isSaving}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                )}
+              />
+            </div>
           </div>
-        </div>
-
+        )}
         {platform.plan.manageProjectsEnabled && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField

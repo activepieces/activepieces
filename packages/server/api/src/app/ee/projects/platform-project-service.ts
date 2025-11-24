@@ -11,6 +11,7 @@ import {
     PlatformId,
     Project,
     ProjectId,
+    ProjectType,
     ProjectWithLimits,
     SeekPage,
     spreadIfDefined,
@@ -57,9 +58,12 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectService.update(projectId, request)
+        const project = await projectService.getOneOrThrow(projectId)
+        await projectService.update(projectId, {
+            type: project.type,
+            ...request,
+        })
         if (!isNil(request.plan)) {
-            const project = await projectService.getOneOrThrow(projectId)
             const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
             if (platform.plan.manageProjectsEnabled) {
                 await projectLimitsService(log).upsert(
@@ -113,7 +117,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
 })
 
 async function getProjects(params: GetAllParams & { projectIds?: string[] }, log: FastifyBaseLogger): Promise<SeekPage<ProjectWithLimits>> {
-    const { cursorRequest, limit, platformId, displayName, externalId, projectIds } = params
+    const { cursorRequest, limit, platformId, displayName, externalId, projectIds, types } = params
     const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
     const paginator = buildPaginator({
         entity: ProjectEntity,
@@ -130,6 +134,7 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
         ...spreadIfDefined('externalId', externalId),
         ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
+        ...(types ? { type: In(types) } : {}),
     }
 
     const queryBuilder = projectRepo()
@@ -161,6 +166,7 @@ type GetAllParams = {
     externalId?: string
     cursorRequest: Cursor | null
     limit: number
+    types?: ProjectType[]
 }
 
 async function enrichProject(
