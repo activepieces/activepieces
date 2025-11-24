@@ -33,7 +33,11 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { projectHooks } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
-import { isNil, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+import {
+  isNil,
+  PROJECT_COLOR_PALETTE,
+  ProjectType,
+} from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
@@ -43,7 +47,7 @@ import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar() {
-  const { data: projects } = projectHooks.useProjects();
+  const { data: allProjects } = projectHooks.useProjects();
   const { embedState } = useEmbedding();
   const { state, setOpen } = useSidebar();
   const location = useLocation();
@@ -52,6 +56,15 @@ export function ProjectDashboardSidebar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
+  const teamProjects = useMemo(() => {
+    return allProjects?.filter((project) => project.type === ProjectType.TEAM);
+  }, [allProjects]);
+
+  const personalProject = useMemo(() => {
+    return allProjects?.find(
+      (project) => project.type === ProjectType.PERSONAL,
+    );
+  }, [allProjects]);
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -73,17 +86,17 @@ export function ProjectDashboardSidebar() {
   const items = [exploreLink].filter(permissionFilter);
 
   const filteredProjects = useMemo(() => {
-    if (!projects) return [];
-    if (!searchQuery.trim()) return projects;
+    if (!teamProjects) return [];
+    if (!searchQuery.trim()) return teamProjects;
 
     const query = searchQuery.toLowerCase().trim();
-    return projects.filter((project) =>
+    return teamProjects.filter((project) =>
       project.displayName.toLowerCase().includes(query),
     );
-  }, [projects, searchQuery]);
+  }, [teamProjects, searchQuery]);
 
   const handleProjectSelect = async (projectId: string) => {
-    const project = projects?.find((p) => p.id === projectId);
+    const project = allProjects?.find((p) => p.id === projectId);
     if (project) {
       await setCurrentProject(queryClient, project);
       navigate('/');
@@ -198,7 +211,17 @@ export function ProjectDashboardSidebar() {
                     : '',
                 )}
               >
-                {projects?.map((p) => (
+                {personalProject && (
+                  <ProjectSideBarItem
+                    key={personalProject.id}
+                    project={personalProject}
+                    isCurrentProject={location.pathname.includes(
+                      `/projects/${personalProject.id}`,
+                    )}
+                    handleProjectSelect={handleProjectSelect}
+                  />
+                )}
+                {teamProjects?.map((p) => (
                   <ProjectSideBarItem
                     key={p.id}
                     project={p}
