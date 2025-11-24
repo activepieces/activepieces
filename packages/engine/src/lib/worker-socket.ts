@@ -77,7 +77,7 @@ export const workerSocket = {
                     status: EngineResponseStatus.INTERNAL_ERROR,
                     error: utils.formatError(resultError),
                 }
-                console.error('Error handling operation:', engineError)
+                console.error('Error handling operation:', utils.formatError(resultError))
                 await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, engineError)
             }
         })
