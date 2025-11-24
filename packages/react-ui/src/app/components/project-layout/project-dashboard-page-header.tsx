@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
-import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -50,7 +50,7 @@ export const ProjectDashboardPageHeader = ({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'team'
+    'general' | 'members'
   >('general');
   const { embedState } = useEmbedding();
   const location = useLocation();
@@ -173,7 +173,7 @@ export const ProjectDashboardPageHeader = ({
                   {showProjectMembersIcons && (
                     <DropdownMenuItem
                       onClick={() => {
-                        setSettingsInitialTab('team');
+                        setSettingsInitialTab('members');
                         setSettingsOpen(true);
                       }}
                     >
