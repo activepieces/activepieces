@@ -25,24 +25,19 @@ export const propsProcessor = {
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
         const authValue: AppConnectionValue | undefined = resolvedInput[AUTHENTICATION_PROPERTY_NAME]
-
-        if (authValue) {
-            const authPropertyToValidate = getAuthPropertyForValue({
-                authValueType: authValue.type,
-                pieceAuth: auth,
-            })
-            const authRequiresValidation = authPropertyToValidate && (authPropertyToValidate.type === PropertyType.CUSTOM_AUTH || authPropertyToValidate.type === PropertyType.OAUTH2) && !isNil(authPropertyToValidate.props) && requireAuth
-            if (authRequiresValidation) {
+        if (authValue && requireAuth) {
+            const authPropsToProcess = getAuthPropsToProcess(authValue, auth)
+            if (authPropsToProcess) {
                 const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
                     resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-                    authPropertyToValidate.props,
+                    authPropsToProcess,
                     undefined,
-                    requireAuth,
+                    false,
                     {},
                 )
-                processedInput.auth = authProcessedInput
+                processedInput[AUTHENTICATION_PROPERTY_NAME] = authProcessedInput
                 if (Object.keys(authErrors).length > 0) {
-                    errors.auth = authErrors
+                    errors[AUTHENTICATION_PROPERTY_NAME] = authErrors
                 }
             }
         }
@@ -189,4 +184,19 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
         }
         return []
     }
+}
+
+function getAuthPropsToProcess(authValue: AppConnectionValue, auth: PieceAuthProperty | PieceAuthProperty[] | undefined):  | null {
+    if (isNil(auth)) {
+        return null
+    }
+    const usedAuthProperty = getAuthPropertyForValue({
+        authValueType: authValue.type,
+        pieceAuth: auth,
+    })
+    const doesAuthHaveProps = usedAuthProperty?.type === PropertyType.CUSTOM_AUTH || usedAuthProperty?.type === PropertyType.OAUTH2
+    if(doesAuthHaveProps && !isNil(usedAuthProperty?.props)) {
+        return usedAuthProperty.props
+    }
+    return null
 }
