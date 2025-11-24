@@ -1,0 +1,12 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "strict": true,
+    "noImplicitAny": true,
+    "outDir": "../../../dist/packages/pieces/klaviyo",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts"]
+}

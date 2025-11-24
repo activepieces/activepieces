@@ -1,0 +1,18 @@
+{
+  "name": "piece-klaviyo",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/klaviyo/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/klaviyo",
+        "main": "packages/pieces/klaviyo/src/index.ts",
+        "tsConfig": "packages/pieces/klaviyo/tsconfig.json",
+        "assets": ["packages/pieces/klaviyo/*.md"]
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@activepieces/piece-klaviyo",
+  "displayName": "Klaviyo",
+  "version": "0.0.1",
+  "description": "Enterprise marketing automation for email, SMS, and data.",
+  "main": "src/index.ts",
+  "keywords": [
+    "activepieces",
+    "klaviyo",
+    "marketing",
+    "crm"
+  ],
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*"
+  }
+}
