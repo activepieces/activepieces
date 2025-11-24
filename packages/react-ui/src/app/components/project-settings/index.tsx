@@ -25,10 +25,10 @@ import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
 import { useGeneralSettingsMutation } from './general/hook';
+import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
-import { TeamSettings } from './team';
 
-type TabId = 'general' | 'team' | 'alerts' | 'pieces' | 'environment';
+type TabId = 'general' | 'members' | 'alerts' | 'pieces' | 'environment';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -96,8 +96,8 @@ export function ProjectSettingsDialog({
       disabled: false,
     },
     {
-      id: 'team' as TabId,
-      label: t('Team'),
+      id: 'members' as TabId,
+      label: t('Members'),
       icon: <Users className="w-4 h-4" />,
       disabled:
         !checkAccess(Permission.READ_PROJECT_MEMBER) || !showProjectMembers,
@@ -128,8 +128,8 @@ export function ProjectSettingsDialog({
         return (
           <GeneralSettings form={form} isSaving={projectMutation.isPending} />
         );
-      case 'team':
-        return <TeamSettings />;
+      case 'members':
+        return <MembersSettings />;
       case 'alerts':
         return <AlertsSettings />;
       case 'pieces':
