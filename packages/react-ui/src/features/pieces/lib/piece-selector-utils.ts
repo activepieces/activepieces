@@ -6,9 +6,7 @@ import {
   PieceSelectorPieceItem,
   PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  piecePropertiesUtils
-} from '@activepieces/pieces-framework';
+import { piecePropertiesUtils } from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowActionType,

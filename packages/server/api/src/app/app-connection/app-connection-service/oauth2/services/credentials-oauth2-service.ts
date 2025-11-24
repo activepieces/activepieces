@@ -25,7 +25,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
     }: ClaimOAuth2Request): Promise<OAuth2ConnectionValueWithApp> {
         try {
             const grantType = request.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE
-            const body: Record<string, string> = {
+            const body: Record<string, unknown> = {
                 grant_type: grantType,
             }
             switch (grantType) {
@@ -69,7 +69,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                     throw new Error(`Unknown authorization method: ${authorizationMethod}`)
             }
             const response = (
-                await apAxios.post(request.tokenUrl, new URLSearchParams(body), {
+                await apAxios.post(request.tokenUrl, new URLSearchParams(Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)]))), {
                     headers,
                 })
             ).data
@@ -133,7 +133,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 }
                 if (appConnection.props) {
                     Object.entries(appConnection.props).forEach(([key, value]) => {
-                        body[key] = value
+                        body[key] = String(value)
                     })
                 }
                 break

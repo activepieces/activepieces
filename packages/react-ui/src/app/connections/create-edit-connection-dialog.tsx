@@ -31,6 +31,7 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
 import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { oauth2Utils, PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
 import {
   getAuthPropertyForValue,
@@ -40,6 +41,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  ApFlagId,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
@@ -72,6 +74,9 @@ function CreateOrEditConnectionSection({
     reconnectConnection,
     externalIdComingFromSdk,
   );
+  const { data: redirectUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
+  );
   const form = useForm<{
     request: UpsertAppConnectionRequestBody & {
       projectIds: string[];
@@ -84,6 +89,9 @@ function CreateOrEditConnectionSection({
           suggestedExternalId: externalId,
           suggestedDisplayName: displayName,
           pieceName: piece.name,
+          oauth2App: selectedAuth.oauth2App,
+          grantType: selectedAuth.grantType,
+          redirectUrl: redirectUrl ?? '',
         }),
         projectIds: reconnectConnection?.projectIds ?? [],
       },

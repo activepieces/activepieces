@@ -110,5 +110,5 @@ type OAuth2TokenUrlParams = {
     projectId: string | undefined
     platformId: PlatformId
     pieceName: string
-    props?: Record<string, string>
+    props?: Record<string, unknown>
 }

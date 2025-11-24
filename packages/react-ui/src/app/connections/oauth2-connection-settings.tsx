@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { useEffect } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,6 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { formUtils } from '../../features/pieces/lib/form-utils';
 import { AutoPropertiesFormComponent } from '../builder/piece-properties/auto-properties-form';
 
 function OAuth2ConnectionSettings({
@@ -54,35 +52,6 @@ function OAuth2ConnectionSettings({
       ? 'https://secrets.activepieces.com/redirect'
       : thirdPartyUrl ?? 'no_redirect_url_found';
 
-  const openPopup = async (
-    redirectUrl: string,
-    clientId: string,
-    props: Record<string, string> | undefined,
-  ) => {
-    const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
-    const authUrl = resolveValueFromProps(props, authProperty.authUrl);
-    const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
-      authUrl,
-      clientId,
-      redirectUrl,
-      scope,
-      prompt: authProperty.prompt,
-      pkce: authProperty.pkce ?? false,
-      pkceMethod: authProperty.pkceMethod ?? 'plain',
-      extraParams: authProperty.extra ?? {},
-    });
-    form.setValue('request.value.code', code, { shouldValidate: true });
-    form.setValue('request.value.code_challenge', codeChallenge, {
-      shouldValidate: true,
-    });
-  };
-  useSetDefaultValues({
-    redirectUrl,
-    authProperty,
-    oauth2App,
-    grantType,
-    form,
-  });
   const hasCode = form.getValues().request.value.code;
 
   return (
@@ -156,9 +125,11 @@ function OAuth2ConnectionSettings({
               type="button"
               onClick={async () =>
                 openPopup(
-                  redirectUrl!,
+                  redirectUrl,
                   form.getValues().request.value.client_id,
                   form.getValues().request.value.props,
+                  authProperty,
+                  form,
                 )
               }
             >
@@ -190,48 +161,6 @@ function OAuth2ConnectionSettings({
 
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
-
-function useSetDefaultValues({
-  redirectUrl,
-  authProperty,
-  oauth2App,
-  grantType,
-  form,
-}: UseSetDefaultValuesProps) {
-  useEffect(() => {
-    form.setValue('request.value.redirect_url', redirectUrl, {
-      shouldValidate: true,
-    });
-    const defaultValuesForProps = Object.fromEntries(
-      Object.entries(
-        formUtils.getDefaultValueForProperties({
-          props: authProperty.props ?? {},
-          existingInput: {},
-        }),
-      ).map(([key, value]) => [key, value === undefined ? '' : value]),
-    );
-    form.setValue('request.value.props', defaultValuesForProps, {
-      shouldValidate: true,
-    });
-    form.setValue(
-      'request.value.client_id',
-      oauth2App.oauth2Type === AppConnectionType.OAUTH2
-        ? ''
-        : oauth2App.clientId,
-      { shouldValidate: true },
-    );
-    form.setValue('request.value.grant_type', grantType, {
-      shouldValidate: true,
-    });
-    form.setValue('request.value.code_challenge', '', { shouldValidate: true });
-    form.setValue('request.value.type', oauth2App.oauth2Type, {
-      shouldValidate: true,
-    });
-    form.setValue('request.type', oauth2App.oauth2Type, {
-      shouldValidate: true,
-    });
-  }, []);
-}
 
 function useIsConnectButtonEnabled(
   authProperty: OAuth2Property<OAuth2Props>,
@@ -267,18 +196,35 @@ function useIsConnectButtonEnabled(
   );
 }
 
-type UseSetDefaultValuesProps = {
-  redirectUrl: string;
-  authProperty: OAuth2Property<OAuth2Props>;
-  oauth2App: OAuth2App;
-  grantType: OAuth2GrantType;
+async function openPopup(
+  redirectUrl: string,
+  clientId: string,
+  props: Record<string, unknown> | undefined,
+  authProperty: OAuth2Property<OAuth2Props>,
   form: UseFormReturn<{
     request:
       | UpsertCloudOAuth2Request
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
-  }>;
-};
+  }>,
+) {
+  const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
+  const authUrl = resolveValueFromProps(props, authProperty.authUrl);
+  const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
+    authUrl,
+    clientId,
+    redirectUrl,
+    scope,
+    prompt: authProperty.prompt,
+    pkce: authProperty.pkce ?? false,
+    pkceMethod: authProperty.pkceMethod ?? 'plain',
+    extraParams: authProperty.extra ?? {},
+  });
+  form.setValue('request.value.code', code, { shouldValidate: true });
+  form.setValue('request.value.code_challenge', codeChallenge, {
+    shouldValidate: true,
+  });
+}
 
 type OAuth2ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
