@@ -29,7 +29,7 @@ export const sendALink = createAction({
     const { url, title, body } = context.propsValue;
 
     const response = await makeRequest(
-      context.auth.access_token,
+      context.auth as string,
       HttpMethod.POST,
       '/pushes',
       {
@@ -40,6 +40,6 @@ export const sendALink = createAction({
       }
     );
 
-    return response
+    return response;
   },
 });

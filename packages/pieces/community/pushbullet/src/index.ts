@@ -24,12 +24,10 @@ export const pushbullet = createPiece({
       auth: bushbulletAuth,
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
-        const access_token = (auth as OAuth2PropertyValue).access_token;
-        console.log(access_token);
-
+        const access_token = auth;
         return {
           Authorization: `Bearer ${access_token as string}`,
-           'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
         };
       },
     }),
