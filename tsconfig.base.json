@@ -138,6 +138,9 @@
       ],
       "@activepieces/piece-griptape": [
         "packages/pieces/community/griptape/src/index.ts"
+      ],
+      "@activepieces/piece-bexio": [
+        "packages/pieces/community/bexio/src/index.ts"
       ]
     },
     "resolveJsonModule": true
