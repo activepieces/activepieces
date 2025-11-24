@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Plus, Globe } from 'lucide-react';
 import { memo, useState } from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
@@ -97,7 +97,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
           {isLoadingConnections && (
             <div className="flex flex-col gap-2">
               <FormLabel>
-                {t('Connections')} <span className="text-destructive">*</span>
+                {t('Connection')} <span className="text-destructive">*</span>
               </FormLabel>
               <SearchableSelect
                 options={[]}
@@ -112,13 +112,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               />
             </div>
           )}
-          {!isLoadingConnections && (
+          {!isLoadingConnections && params.piece.auth && (
             <AutoFormFieldWrapper
-              property={null}
+              property={params.piece.auth}
               propertyName="auth"
-              field={field as unknown as ControllerRenderProps}
+              field={field}
               disabled={params.disabled}
-              hideDescription={true}
               inputName="settings.input.auth"
               allowDynamicValues={!params.isTrigger}
               dynamicInputModeToggled={dynamicInputModeToggled}

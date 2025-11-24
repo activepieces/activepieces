@@ -16,11 +16,14 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { cn } from '@/lib/utils';
-import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
+import {
+  PieceAuthProperty,
+  PieceProperty,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import {
   FlowAction,
   FlowTrigger,
-  isNil,
   PropertyExecutionType,
 } from '@activepieces/shared';
 
@@ -30,7 +33,6 @@ import { TextInputWithMentions } from './text-input-with-mentions';
 function AutoFormFieldWrapper({
   placeBeforeLabelText = false,
   children,
-  hideDescription,
   allowDynamicValues,
   propertyName,
   inputName,
@@ -39,33 +41,42 @@ function AutoFormFieldWrapper({
   field,
   dynamicInputModeToggled,
 }: AutoFormFieldWrapperProps) {
-  const isArrayProperty = property?.type === PropertyType.ARRAY;
+  const isArrayProperty =
+    !isPieceAuthProperty(property) && property.type === PropertyType.ARRAY;
+  const isAuthProperty = isPieceAuthProperty(property);
   return (
-    <FormItem className="flex flex-col gap-1">
-      <FormLabel className="flex items-center gap-1 ">
-        {placeBeforeLabelText && !dynamicInputModeToggled && children}
-        <div className="pt-1">
-          <span>{t(property?.displayName ?? t('Connection'))}</span>{' '}
-          {isNil(property) ||
-            (property?.required && <span className="text-destructive">*</span>)}
-        </div>
-        {property && <PropertyTypeTooltip property={property} />}
-        <span className="grow"></span>
-        {allowDynamicValues && (
-          <DynamicValueToggle
-            propertyName={propertyName}
-            inputName={inputName}
-            property={property}
-            disabled={disabled}
-            isToggled={dynamicInputModeToggled ?? false}
-          />
-        )}
-      </FormLabel>
-      <AutoFormFielWrapperErrorBoundary
-        field={field}
-        property={property ?? null}
-        dynamicInputModeToggled={dynamicInputModeToggled}
-      >
+    <AutoFormFielWrapperErrorBoundary
+      field={field}
+      property={property ?? null}
+      dynamicInputModeToggled={dynamicInputModeToggled}
+    >
+      <FormItem className="flex flex-col gap-1">
+        <FormLabel className="flex items-center gap-1 ">
+          {placeBeforeLabelText && !dynamicInputModeToggled && children}
+          <div className="pt-1">
+            <span>
+              {isAuthProperty ? t('Connection') : property.displayName}
+            </span>{' '}
+            {isAuthProperty ||
+              (property.required && (
+                <span className="text-destructive">*</span>
+              ))}
+          </div>
+          {property && !isAuthProperty && (
+            <PropertyTypeTooltip property={property} />
+          )}
+          <span className="grow"></span>
+          {allowDynamicValues && (
+            <DynamicValueToggle
+              propertyName={propertyName}
+              inputName={inputName}
+              property={property}
+              disabled={disabled}
+              isToggled={dynamicInputModeToggled ?? false}
+            />
+          )}
+        </FormLabel>
+
         {dynamicInputModeToggled && !isArrayProperty && (
           <TextInputWithMentions
             disabled={disabled}
@@ -87,12 +98,12 @@ function AutoFormFieldWrapper({
         {!placeBeforeLabelText && !dynamicInputModeToggled && (
           <div>{children}</div>
         )}
-      </AutoFormFielWrapperErrorBoundary>
 
-      {property?.description && !hideDescription && (
-        <ReadMoreDescription text={t(property.description)} />
-      )}
-    </FormItem>
+        {!isAuthProperty && property.description && (
+          <ReadMoreDescription text={t(property.description)} />
+        )}
+      </FormItem>
+    </AutoFormFielWrapperErrorBoundary>
   );
 }
 
@@ -138,36 +149,37 @@ function AutoFormFielWrapperErrorBoundary({
 }
 
 function getValueForInputOnDynamicToggleChange(
-  property: PieceProperty | null,
-  mode: PropertyExecutionType,
+  property: PieceProperty | PieceAuthProperty[],
+  newMode: PropertyExecutionType,
   currentValue: unknown,
 ) {
-  if (property) {
-    switch (mode) {
-      case PropertyExecutionType.DYNAMIC: {
-        if (property.type === PropertyType.ARRAY) {
-          return formUtils.getDefaultPropertyValue({
-            property,
-            dynamicInputModeToggled: true,
-          });
-        }
-        //to show what the selected value is for dropdowns
-        if (
-          typeof currentValue === 'string' ||
-          typeof currentValue === 'number'
-        ) {
-          return currentValue;
-        }
-        return JSON.stringify(currentValue);
-      }
-      case PropertyExecutionType.MANUAL:
+  const isAuthProperty = isPieceAuthProperty(property);
+  switch (newMode) {
+    case PropertyExecutionType.DYNAMIC: {
+      if (!isAuthProperty && property.type === PropertyType.ARRAY) {
         return formUtils.getDefaultPropertyValue({
           property,
-          dynamicInputModeToggled: false,
+          dynamicInputModeToggled: true,
         });
+      }
+      //to show what the selected value is for dropdowns
+      if (
+        typeof currentValue === 'string' ||
+        typeof currentValue === 'number'
+      ) {
+        return currentValue;
+      }
+      return JSON.stringify(currentValue);
     }
+    case PropertyExecutionType.MANUAL:
+      if (isAuthProperty) {
+        return '';
+      }
+      return formUtils.getDefaultPropertyValue({
+        property,
+        dynamicInputModeToggled: false,
+      });
   }
-  return '';
 }
 
 function DynamicValueToggle({
@@ -192,9 +204,11 @@ function DynamicValueToggle({
     updatePropertySettings(mode);
     if (isInputNameLiteral(inputName)) {
       const currentValue = form.getValues(inputName);
-      const newValue = property
-        ? getValueForInputOnDynamicToggleChange(property, mode, currentValue)
-        : '';
+      const newValue = getValueForInputOnDynamicToggleChange(
+        property,
+        mode,
+        currentValue,
+      );
       form.setValue(inputName, newValue, {
         shouldValidate: true,
       });
@@ -282,7 +296,7 @@ export { AutoFormFieldWrapper };
 type DynamicValueToggleProps = {
   propertyName: string;
   inputName: string;
-  property: PieceProperty | null;
+  property: PieceProperty | PieceAuthProperty[];
   disabled: boolean;
   isToggled: boolean;
 };
@@ -294,19 +308,33 @@ type AutoFormFieldWrapperProps = {
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
   disabled: boolean;
-  field: ControllerRenderProps;
+  field: ControllerRenderProps<any, string>;
   inputName: string;
   dynamicInputModeToggled?: boolean;
-  property: PieceProperty | null;
+  property: PieceProperty | PieceAuthProperty[];
 };
 type AutoFormFielWrapperErrorBoundaryProps = {
   children: React.ReactNode;
   field: ControllerRenderProps;
-  property: PieceProperty | null;
+  property: PieceProperty | PieceAuthProperty[] | null;
   dynamicInputModeToggled?: boolean;
 };
 function isInputNameLiteral(
   inputName: string,
 ): inputName is `settings.input.${string}` {
   return inputName.match(/settings\.input\./) !== null;
+}
+function isPieceAuthProperty(
+  property: PieceProperty | PieceAuthProperty[],
+): property is PieceAuthProperty[] {
+  const authPropertyTypes = [
+    PropertyType.SECRET_TEXT,
+    PropertyType.BASIC_AUTH,
+    PropertyType.OAUTH2,
+    PropertyType.CUSTOM_AUTH,
+  ];
+  return (
+    Array.isArray(property) ||
+    authPropertyTypes.some((authType) => property.type === authType)
+  );
 }
