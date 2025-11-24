@@ -57,10 +57,9 @@ function AutoFormFieldWrapper({
             <span>
               {isAuthProperty ? t('Connection') : property.displayName}
             </span>{' '}
-            {isAuthProperty ||
-              (property.required && (
-                <span className="text-destructive">*</span>
-              ))}
+            {(isAuthProperty || property.required) && (
+              <span className="text-destructive">*</span>
+            )}
           </div>
           {property && !isAuthProperty && (
             <PropertyTypeTooltip property={property} />
