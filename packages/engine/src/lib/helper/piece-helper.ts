@@ -159,6 +159,13 @@ export const pieceHelper = {
 type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, devPieces: string[], constants: EngineConstants }
 
 
+function mismatchAuthTypeErrorMessage(pieceAuthType: PropertyType, connectionType: AppConnectionType): ExecuteValidateAuthResponse {
+    return {
+        valid: false,
+        error: `Connection value type does not match piece auth type: ${pieceAuthType} !== ${connectionType}`,
+    }
+}
+
 const validateAuth = async ({
     server,
     authValue,
@@ -185,10 +192,7 @@ const validateAuth = async ({
             valid: true,
         }
     }
-    const mismatchAuthTypeErrorMessage = (pieceAuthType: PropertyType, connectionType: AppConnectionType)=> ({
-        valid: false,
-        error: `Connection value type does not match piece auth type: ${pieceAuthType} !== ${connectionType}`,
-    })
+  
 
     switch (usedPieceAuth.type) {
         case PropertyType.OAUTH2:{
