@@ -138,6 +138,9 @@
       ],
       "@activepieces/piece-griptape": [
         "packages/pieces/community/griptape/src/index.ts"
+      ],
+      "@activepieces/piece-denser-ai": [
+        "packages/pieces/community/denser-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
