@@ -3,7 +3,6 @@ import { couchbaseAuth } from '../..';
 import {
   couchbaseCommonProps,
   apiGet,
-  LooseObject,
   checkForErrors,
 } from '../common';
 import { httpClient } from '@activepieces/pieces-common';
@@ -25,7 +24,7 @@ export default createAction({
     }
 
     const response = await httpClient.sendRequest(apiGet(
-      context.auth,
+      context.auth.props,
       "SELECT RAW data FROM `" + collectionName + "` data USE KEYS $1",
       [context.propsValue.id]
     ));

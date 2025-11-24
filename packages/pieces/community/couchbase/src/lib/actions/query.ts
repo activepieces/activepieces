@@ -1,4 +1,4 @@
-import { createAction, LongTextProperty, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { couchbaseAuth } from '../..';
 import {
   couchbaseCommonProps,
@@ -98,7 +98,7 @@ export default createAction({
     }
 
     const response = await httpClient.sendRequest(
-      apiGet(context.auth, query, (context.propsValue.arguments || []) as string[])
+      apiGet(context.auth.props, query, (context.propsValue.arguments || []) as string[])
     );
 
     checkForErrors(response);

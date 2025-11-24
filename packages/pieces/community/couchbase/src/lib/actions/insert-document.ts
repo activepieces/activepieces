@@ -3,7 +3,6 @@ import { couchbaseAuth } from '../..';
 import {
   couchbaseCommonProps,
   apiPost,
-  LooseObject,
   checkForErrors,
 } from '../common';
 import {v4 as uuid } from 'uuid';
@@ -28,7 +27,7 @@ export default createAction({
     }
 
     const response = await httpClient.sendRequest(apiPost(
-      context.auth,
+      context.auth.props,
       "INSERT INTO `" + collectionName + "` ( KEY, VALUE ) VALUES (?, " + JSON.stringify(context.propsValue.document) + ")",
       [id]
     ));

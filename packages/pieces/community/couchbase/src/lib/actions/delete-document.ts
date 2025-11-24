@@ -3,8 +3,6 @@ import { couchbaseAuth } from '../..';
 import {
   couchbaseCommonProps,
   apiPost,
-  scopeId,
-  LooseObject,
   checkForErrors,
 } from '../common';
 import { httpClient } from '@activepieces/pieces-common';
@@ -26,7 +24,7 @@ export default createAction({
     }
 
     const response = await httpClient.sendRequest(apiPost(
-      context.auth,
+      context.auth.props,
       "DELETE FROM `" + collectionName + "` USE KEYS ?",
       [context.propsValue.id]
     ));

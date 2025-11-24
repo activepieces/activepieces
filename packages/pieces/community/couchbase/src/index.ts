@@ -55,7 +55,6 @@
         username: z.string().min(1),
         password: z.string().min(1),
         bucket: z.string().min(1),
-        scope: z.string().min(1),
       });
 
       if (!(auth.queryApi)) {

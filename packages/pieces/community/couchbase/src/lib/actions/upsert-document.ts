@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { couchbaseAuth } from '../..';
-import { couchbaseCommonProps, apiPost, LooseObject, checkForErrors } from '../common';
+import { couchbaseCommonProps, apiPost, checkForErrors } from '../common';
 import {v4 as uuid } from 'uuid';
 import { httpClient } from '@activepieces/pieces-common';
 
@@ -23,7 +23,8 @@ export default createAction({
     }
 
     const response = await httpClient.sendRequest(apiPost(
-      context.auth,
+      context.auth.props,
+
       "UPSERT INTO `" + collectionName + "` ( KEY, VALUE ) VALUES (?, " + JSON.stringify(context.propsValue.document) + ")",
       [id]
     ));
