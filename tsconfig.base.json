@@ -139,6 +139,9 @@
       "@activepieces/piece-bolna": [
         "packages/pieces/community/bolna/src/index.ts"
       ],
+      "@activepieces/piece-appfollow": [
+        "packages/pieces/community/appfollow/src/index.ts"
+      ],
       "@activepieces/piece-griptape": [
         "packages/pieces/community/griptape/src/index.ts"
       ]
