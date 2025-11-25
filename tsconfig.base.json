@@ -153,6 +153,9 @@
       ],
       "@activepieces/piece-denser-ai": [
         "packages/pieces/community/denser-ai/src/index.ts"
+      ],
+      "@activepieces/piece-phantombuster": [
+        "packages/pieces/community/phantombuster/src/index.ts"
       ]
     },
     "resolveJsonModule": true
