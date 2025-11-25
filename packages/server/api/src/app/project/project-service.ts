@@ -225,7 +225,6 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
         }]
     }
 
-    // Regular members can only see projects they're members of and their own personal project
     const teamProjects = await projectRepo().findBy({
         platformId: params.platformId,
         type: ProjectType.TEAM,
