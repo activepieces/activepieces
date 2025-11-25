@@ -160,6 +160,9 @@
       "@activepieces/piece-phantombuster": [
         "packages/pieces/community/phantombuster/src/index.ts"
       ],
+      "@activepieces/piece-openmic-ai": [
+        "packages/pieces/community/openmic-ai/src/index.ts"
+      ],
       "@activepieces/piece-datafuel": [
         "packages/pieces/community/datafuel/src/index.ts"
       ],
@@ -168,6 +171,12 @@
       ],
       "@activepieces/piece-chatnode": [
         "packages/pieces/community/chatnode/src/index.ts"
+      ],
+      "@activepieces/piece-greip": [
+        "packages/pieces/community/greip/src/index.ts"
+      ],
+      "@activepieces/piece-chaindesk": [
+        "packages/pieces/community/chaindesk/src/index.ts"
       ]
     },
     "resolveJsonModule": true
