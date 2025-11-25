@@ -19,11 +19,11 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     ServicePrincipal,
+    TeamProjectsLimit,
     UserPrincipal,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -143,29 +143,30 @@ const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal 
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string): Promise<void> {
-    const edition = system.getEdition()
-    switch (edition) {
-        case ApEdition.COMMUNITY:{
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+
+    switch (platform.plan.teamProjectsLimit) {
+        case TeamProjectsLimit.NONE:{
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'COMMUNITY_EDITION_REACHED',
+                    message: 'Team projects are not available on your current plan',
                 },
             })
         }
-        case ApEdition.CLOUD:{
+        case TeamProjectsLimit.ONE:{
             const projectsCount = await projectService.countByPlatformIdAndType(platformId, ProjectType.TEAM)
             if (projectsCount >= 1) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
-                        message: 'CLOUD_EDITION_REACHED',
+                        message: 'You have reached the maximum of 1 team project allowed on your plan',
                     },
                 })
             }
             break
         }
-        case ApEdition.ENTERPRISE:{
+        case TeamProjectsLimit.UNLIMITED:{
             break
         }
     }

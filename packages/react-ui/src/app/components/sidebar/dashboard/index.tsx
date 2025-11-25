@@ -40,6 +40,7 @@ import {
   isNil,
   PlatformRole,
   ProjectType,
+  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
@@ -48,6 +49,7 @@ import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 export function ProjectDashboardSidebar() {
   const {
@@ -67,8 +69,8 @@ export function ProjectDashboardSidebar() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const projectsScrollRef = useRef<HTMLDivElement>(null);
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: currentUser } = userHooks.useCurrentUser();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const {
     data: searchResults,
@@ -94,21 +96,21 @@ export function ProjectDashboardSidebar() {
   }, [projectPages]);
 
   const shouldShowNewProjectButton = useMemo(() => {
-    if (edition === ApEdition.COMMUNITY) {
+    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
       return false;
     }
     return currentUser?.platformRole === PlatformRole.ADMIN;
-  }, [edition]);
+  }, [platform.plan.teamProjectsLimit]);
 
   const shouldDisableNewProjectButton = useMemo(() => {
-    if (edition === ApEdition.CLOUD) {
+    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
       const teamProjects = allProjects.filter(
         (project) => project.type === ProjectType.TEAM,
       );
       return teamProjects.length >= 1;
     }
     return false;
-  }, [edition, allProjects]);
+  }, [platform.plan.teamProjectsLimit, allProjects]);
 
   const isSearchMode = debouncedSearchQuery.length > 0;
 
