@@ -51,7 +51,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             systemJobsQueue.waitUntilReady(),
             systemJobWorker.waitUntilReady(),
         ])
-        const { error } = await tryCatch(async () => await removeDeprecatedJobs())
+        const { error } = await tryCatch(async () => removeDeprecatedJobs())
         if (!isNil(error)) {
             log.error({ error }, 'Error removing deprecated jobs')
         }

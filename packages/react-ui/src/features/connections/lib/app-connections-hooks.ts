@@ -4,7 +4,7 @@ import { UseFormReturn } from 'react-hook-form';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { projectMembersApi } from '@/features/team/lib/project-members-api';
+import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {

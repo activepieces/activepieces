@@ -21,7 +21,7 @@ import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { Error } from '@/features/billing/components/error';
 import { Success } from '@/features/billing/components/success';
-import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+import { AcceptInvitation } from '@/features/members/component/accept-invitation';
 import { routesThatRequireProjectId } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 

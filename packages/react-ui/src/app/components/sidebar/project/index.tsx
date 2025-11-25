@@ -1,3 +1,5 @@
+import { User } from 'lucide-react';
+
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +14,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PROJECT_COLOR_PALETTE, ProjectWithLimits } from '@activepieces/shared';
+import {
+  PROJECT_COLOR_PALETTE,
+  ProjectType,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../../ap-project-display';
 
@@ -29,17 +35,20 @@ const ProjectSideBarItem = ({
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
 
-  const projectAvatar = (
-    <Avatar
-      className="size-6 flex items-center justify-center rounded-sm"
-      style={{
-        backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
-        color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
-      }}
-    >
-      {project.displayName.charAt(0).toUpperCase()}
-    </Avatar>
-  );
+  const projectAvatar =
+    project.type === ProjectType.TEAM ? (
+      <Avatar
+        className="size-6 flex items-center justify-center rounded-sm"
+        style={{
+          backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
+          color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
+        }}
+      >
+        {project.displayName.charAt(0).toUpperCase()}
+      </Avatar>
+    ) : (
+      <User className="size-5 flex items-center justify-center" />
+    );
 
   return (
     <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
@@ -73,12 +82,19 @@ const ProjectSideBarItem = ({
             isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
           )}
         >
-          <div onClick={() => handleProjectSelect(project.id)}>
+          <div
+            onClick={() => handleProjectSelect(project.id)}
+            className="w-full flex items-center justify-between gap-2"
+          >
             <ApProjectDisplay
               title={project.displayName}
               icon={project.icon}
               maxLengthToNotShowTooltip={28}
+              projectType={project.type}
             />
+            {project.type === ProjectType.PERSONAL && (
+              <span className="text-xs text-muted-foreground">Private</span>
+            )}
           </div>
         </SidebarMenuButton>
       )}

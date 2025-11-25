@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
 import { useEmbedding } from '@/components/embed-provider';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,12 +17,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
-import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { userHooks } from '@/hooks/user-hooks';
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+} from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
@@ -38,15 +46,17 @@ export const ProjectDashboardPageHeader = ({
   beta?: boolean;
 }) => {
   const { project } = projectHooks.useCurrentProject();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'team'
+    'general' | 'members'
   >('general');
   const { embedState } = useEmbedding();
   const location = useLocation();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { checkAccess } = useAuthorization();
+  const { data: user } = userHooks.useCurrentUser();
   const userHasPermissionToReadProjectMembers = checkAccess(
     Permission.READ_PROJECT_MEMBER,
   );
@@ -65,9 +75,13 @@ export const ProjectDashboardPageHeader = ({
     !isEmbedded &&
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    !isNil(projectMembers);
+    !isNil(projectMembers) &&
+    project.type === ProjectType.TEAM;
 
-  const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
+  const showInviteUserButton =
+    !isEmbedded &&
+    userHasPermissionToInviteUser &&
+    project.type === ProjectType.TEAM;
   const showSettingsButton = !isEmbedded;
   const isProjectPage = location.pathname.includes('/projects/');
 
@@ -86,7 +100,15 @@ export const ProjectDashboardPageHeader = ({
                 title={title}
                 maxLengthToNotShowTooltip={30}
                 titleClassName="text-lg font-semibold"
+                projectType={project.type}
               />
+              {project.type === ProjectType.PERSONAL &&
+                user?.platformRole === PlatformRole.ADMIN &&
+                currentUser?.id === project.ownerId && (
+                  <Badge variant={'outline'} className="text-xs font-medium">
+                    You
+                  </Badge>
+                )}
               {beta && (
                 <div className="flex items-center">
                   <BetaBadge />
@@ -138,6 +160,7 @@ export const ProjectDashboardPageHeader = ({
                       title={project.displayName}
                       maxLengthToNotShowTooltip={23}
                       titleClassName="font-semibold"
+                      projectType={project.type}
                     />
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -150,7 +173,7 @@ export const ProjectDashboardPageHeader = ({
                   {showProjectMembersIcons && (
                     <DropdownMenuItem
                       onClick={() => {
-                        setSettingsInitialTab('team');
+                        setSettingsInitialTab('members');
                         setSettingsOpen(true);
                       }}
                     >
