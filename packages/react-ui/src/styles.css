@@ -212,4 +212,12 @@ body {
   .dark .group:hover .scrollbar-hover {
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

@@ -1,20 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Compass, Search, Loader2 } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -33,11 +26,7 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { projectHooks } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
-import {
-  isNil,
-  PROJECT_COLOR_PALETTE,
-  ProjectType,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
@@ -47,24 +36,73 @@ import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar() {
-  const { data: allProjects } = projectHooks.useProjects();
+  const {
+    data: projectPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = projectHooks.useProjectsInfinite(20);
   const { embedState } = useEmbedding();
   const { state, setOpen } = useSidebar();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
-  const teamProjects = useMemo(() => {
-    return allProjects?.filter((project) => project.type === ProjectType.TEAM);
-  }, [allProjects]);
+  const projectsScrollRef = useRef<HTMLDivElement>(null);
 
-  const personalProject = useMemo(() => {
-    return allProjects?.find(
-      (project) => project.type === ProjectType.PERSONAL,
+  const { data: searchResults, isLoading: isSearching } =
+    projectHooks.useProjects({ displayName: debouncedSearchQuery, limit: 100 });
+
+  useEffect(() => {
+    if (!searchOpen) {
+      setSearchQuery('');
+    }
+  }, [searchOpen]);
+
+  const allProjects = useMemo(() => {
+    const projects = projectPages?.pages.flatMap((page) => page.data) ?? [];
+    const uniqueProjects = Array.from(
+      new Map(projects.map((project) => [project.id, project])).values(),
     );
-  }, [allProjects]);
+    return uniqueProjects;
+  }, [projectPages]);
+
+  const isSearchMode = debouncedSearchQuery.length > 0;
+
+  const displayProjects = useMemo(() => {
+    if (isSearchMode) {
+      return searchResults ?? [];
+    }
+    return allProjects;
+  }, [isSearchMode, searchResults, allProjects]);
+
+  useEffect(() => {
+    const scrollContainer = projectsScrollRef.current;
+    if (!scrollContainer || isSearchMode) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const scrollThreshold = 100;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+      if (
+        distanceFromBottom < scrollThreshold &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+
+    handleScroll();
+
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isSearchMode]);
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -85,23 +123,12 @@ export function ProjectDashboardSidebar() {
 
   const items = [exploreLink].filter(permissionFilter);
 
-  const filteredProjects = useMemo(() => {
-    if (!teamProjects) return [];
-    if (!searchQuery.trim()) return teamProjects;
-
-    const query = searchQuery.toLowerCase().trim();
-    return teamProjects.filter((project) =>
-      project.displayName.toLowerCase().includes(query),
-    );
-  }, [teamProjects, searchQuery]);
-
   const handleProjectSelect = async (projectId: string) => {
-    const project = allProjects?.find((p) => p.id === projectId);
+    const project = displayProjects?.find((p) => p.id === projectId);
     if (project) {
       await setCurrentProject(queryClient, project);
       navigate('/');
       setSearchOpen(false);
-      setSearchQuery('');
     }
   };
 
@@ -126,9 +153,13 @@ export function ProjectDashboardSidebar() {
           className={cn(
             state === 'collapsed' ? 'gap-2' : 'gap-0',
             'scrollbar-hover',
+            'cursor-default',
+            'flex',
+            'flex-col',
+            'overflow-hidden',
           )}
         >
-          <SidebarGroup>
+          <SidebarGroup className="cursor-default flex-shrink-0">
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
@@ -139,10 +170,13 @@ export function ProjectDashboardSidebar() {
           </SidebarGroup>
 
           <SidebarSeparator
-            className={cn(state === 'collapsed' ? 'mb-3' : 'mb-5')}
+            className={cn(
+              state === 'collapsed' ? 'mb-3' : 'mb-5',
+              'flex-shrink-0',
+            )}
           />
 
-          <SidebarGroup>
+          <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
             {state === 'expanded' && (
               <div className="flex items-center justify-between">
                 <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
@@ -157,53 +191,32 @@ export function ProjectDashboardSidebar() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="w-[280px] p-0"
+                    className="w-[280px] p-3"
                     align="start"
                     side="right"
                     sideOffset={8}
                   >
-                    <Command>
-                      <CommandInput
-                        placeholder={t('Search projects...')}
-                        value={searchQuery}
-                        onValueChange={setSearchQuery}
-                      />
-                      <CommandList>
-                        <CommandEmpty>{t('No projects found.')}</CommandEmpty>
-                        <CommandGroup>
-                          {filteredProjects.map((project) => (
-                            <CommandItem
-                              key={project.id}
-                              value={project.id}
-                              onSelect={handleProjectSelect}
-                              className="flex items-center gap-2 cursor-pointer"
-                            >
-                              <Avatar
-                                className="size-6 flex items-center justify-center rounded-sm"
-                                style={{
-                                  backgroundColor:
-                                    PROJECT_COLOR_PALETTE[project.icon.color]
-                                      .color,
-                                  color:
-                                    PROJECT_COLOR_PALETTE[project.icon.color]
-                                      .textColor,
-                                }}
-                              >
-                                {project.displayName.charAt(0)}
-                              </Avatar>
-                              <span className="flex-1 truncate">
-                                {project.displayName}
-                              </span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
+                    <Input
+                      placeholder={t('Search projects...')}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-9"
+                      autoFocus
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
             )}
-            <SidebarGroupContent>
+            <div
+              ref={projectsScrollRef}
+              className={cn(
+                'flex-1 overflow-y-auto',
+                state === 'collapsed'
+                  ? 'flex flex-col items-center scrollbar-none'
+                  : 'scrollbar-hover',
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
               <SidebarMenu
                 className={cn(
                   state === 'collapsed'
@@ -211,35 +224,42 @@ export function ProjectDashboardSidebar() {
                     : '',
                 )}
               >
-                {personalProject && (
+                {displayProjects.map((project) => (
                   <ProjectSideBarItem
-                    key={personalProject.id}
-                    project={personalProject}
+                    key={project.id}
+                    project={project}
                     isCurrentProject={location.pathname.includes(
-                      `/projects/${personalProject.id}`,
-                    )}
-                    handleProjectSelect={handleProjectSelect}
-                  />
-                )}
-                {teamProjects?.map((p) => (
-                  <ProjectSideBarItem
-                    key={p.id}
-                    project={p}
-                    isCurrentProject={location.pathname.includes(
-                      `/projects/${p.id}`,
+                      `/projects/${project.id}`,
                     )}
                     handleProjectSelect={handleProjectSelect}
                   />
                 ))}
+                {(isFetchingNextPage || (isSearchMode && isSearching)) && (
+                  <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {state === 'expanded' && <span>{t('Loading...')}</span>}
+                  </div>
+                )}
+                {isSearchMode &&
+                  !isSearching &&
+                  displayProjects.length === 0 && (
+                    <div className="px-2 py-2 text-sm text-muted-foreground">
+                      {state === 'expanded' && t('No projects found.')}
+                    </div>
+                  )}
               </SidebarMenu>
-            </SidebarGroupContent>
+            </div>
           </SidebarGroup>
-          <div className="flex-grow" />
-          <div className="px-2">
-            {state === 'expanded' && <SidebarUsageLimits />}
-          </div>
         </SidebarContent>
-        <SidebarFooter onClick={(e) => e.stopPropagation()}>
+        <SidebarFooter
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-default"
+        >
+          {state === 'expanded' && (
+            <div className="mb-2">
+              <SidebarUsageLimits />
+            </div>
+          )}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

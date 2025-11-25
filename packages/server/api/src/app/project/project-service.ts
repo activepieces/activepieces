@@ -5,6 +5,7 @@ import {
     apId,
     assertNotNullOrUndefined,
     ColorName,
+    EndpointScope,
     ErrorCode,
     isNil,
     Metadata,
@@ -65,14 +66,14 @@ export const projectService = {
     },
 
     async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
-        const projects = await projectRepo().find({
-            select: {
-                id: true,
-            },
-            where: {
-                platformId,
-            },
-        })
+        const projects = await projectRepo()
+            .createQueryBuilder('project')
+            .select('project.id')
+            .where({ platformId })
+            .orderBy('project.type', 'ASC')
+            .addOrderBy('project.displayName', 'ASC')
+            .addOrderBy('project.id', 'ASC')
+            .getMany()
 
         return projects.map((project) => project.id)
     },
@@ -154,13 +155,13 @@ export const projectService = {
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
         const filters = await getUsersFilters(params)
-        return projectRepo().find({
-            where: filters,
-            order: {
-                type: 'ASC',
-                created: 'ASC',
-            },
-        })
+        return projectRepo()
+            .createQueryBuilder('project')
+            .where(filters)
+            .orderBy('project.type', 'ASC')
+            .addOrderBy('project.displayName', 'ASC')
+            .addOrderBy('project.id', 'ASC')
+            .getMany()
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
         const filters = await getUsersFilters(params)
@@ -195,30 +196,51 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
 
-    if (isPrivilegedUser) {
-        // Platform admins and operators can see all projects in their platform
+    if (!isPrivilegedUser) {
+        // Regular members can only see projects they're members of and their own personal project
+        const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+            platformId: params.platformId,
+            userId: params.userId,
+        })
+
+        const personalProjects = await projectRepo().findBy({
+            platformId: params.platformId,
+            ownerId: params.userId,
+            type: ProjectType.PERSONAL,
+        })
+
+        return [{
+            platformId: params.platformId,
+            id: In([...projectIds, ...personalProjects.map((project) => project.id)]),
+            ...displayNameFilter,
+        }]
+    }
+
+
+    if (params.scope === EndpointScope.PLATFORM) {
+        // Platform admins and operators can see all projects inside platform
         return [{
             platformId: params.platformId,
             ...displayNameFilter,
         }]
     }
 
-    // Only fetch project memberships for non-privileged users
-    const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+    // Regular members can only see projects they're members of and their own personal project
+    const teamProjects = await projectRepo().findBy({
         platformId: params.platformId,
-        userId: params.userId,
+        type: ProjectType.TEAM,
     })
 
-    const personalProjects = await projectRepo().findBy({
+    const myPersonalProject = await projectRepo().findOneBy({
         platformId: params.platformId,
         ownerId: params.userId,
         type: ProjectType.PERSONAL,
     })
 
-    // Regular members can only see projects they're members of
+    // Platform admin but in his dashboard he can see all projects inside platform & his own personal project only
     return [{
         platformId: params.platformId,
-        id: In([...projectIds, ...personalProjects.map((project) => project.id)]),
+        id: In([...teamProjects.map((project) => project.id), ...(myPersonalProject?.id ? [myPersonalProject.id] : [])]),
         ...displayNameFilter,
     }]
 }
@@ -244,6 +266,7 @@ type GetAllForUserParams = {
     platformId: string
     userId: string
     displayName?: string
+    scope?: EndpointScope
 }
 
 type GetOneByOwnerAndPlatformParams = {
@@ -297,3 +320,4 @@ type AddProjectToPlatformParams = {
 }
 
 type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>
+

@@ -1,5 +1,6 @@
 import {
     CreatePlatformProjectRequest,
+    ListProjectRequestForPlatformQueryParams,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import {
@@ -57,7 +58,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
-    app.get('/', ListProjectRequestForApiKey, async (request) => {
+    app.get('/', ListProjectRequestForPlatform, async (request) => {
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
@@ -66,8 +67,11 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
             cursorRequest: request.query.cursor ?? null,
+            displayName: request.query.displayName,
+            types: request.query.types,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             userId,
+            scope: EndpointScope.PLATFORM,
         })
     })
 
@@ -173,20 +177,16 @@ const CreateProjectRequest = {
     },
 }
 
-const ListProjectRequestForApiKey = {
+const ListProjectRequestForPlatform = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE] as const,
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
-        querystring: Type.Object({
-            externalId: Type.Optional(Type.String()),
-            limit: Type.Optional(Type.Number({})),
-            cursor: Type.Optional(Type.String({})),
-        }),
+        querystring: ListProjectRequestForPlatformQueryParams,
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
