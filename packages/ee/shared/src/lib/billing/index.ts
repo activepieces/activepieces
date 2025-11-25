@@ -1,4 +1,4 @@
-import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
@@ -85,7 +85,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
+    teamProjectsLimit: TeamProjectsLimit.ONE,
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
@@ -110,7 +110,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
+    teamProjectsLimit: TeamProjectsLimit.NONE,
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,

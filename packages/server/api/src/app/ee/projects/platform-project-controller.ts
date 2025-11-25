@@ -18,6 +18,7 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     ServicePrincipal,
+    TeamProjectsLimit,
     UserPrincipal,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
@@ -25,7 +26,7 @@ import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformProjectService } from './platform-project-service'
 import { projectLimitsService } from './project-plan/project-plan.service'
 
@@ -33,9 +34,10 @@ const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateProjectRequest, async (request, reply) => {
-        await platformMustHaveFeatureEnabled(platform => platform.plan.manageProjectsEnabled).call(app, request, reply)
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
+        await assertMaximumNumberOfProjectsReachedByEdition(platformId)
+
         const platform = await platformService.getOneOrThrow(platformId)
 
         const project = await projectService.create({
@@ -136,6 +138,36 @@ const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal 
                 message: 'ACTIVE_PROJECT',
             },
         })
+    }
+}
+
+async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string): Promise<void> {
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+
+    switch (platform.plan.teamProjectsLimit) {
+        case TeamProjectsLimit.NONE: {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Team projects are not available on your current plan',
+                },
+            })
+        }
+        case TeamProjectsLimit.ONE: {
+            const projectsCount = await projectService.countByPlatformIdAndType(platformId, ProjectType.TEAM)
+            if (projectsCount >= 1) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FEATURE_DISABLED,
+                    params: {
+                        message: 'Maximum limit of 1 team project reached for this plan. Upgrade your plan to add more team projects.',
+                    },
+                })
+            }
+            break
+        }
+        case TeamProjectsLimit.UNLIMITED: {
+            break
+        }
     }
 }
 
