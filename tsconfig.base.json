@@ -168,6 +168,9 @@
       ],
       "@activepieces/piece-chatnode": [
         "packages/pieces/community/chatnode/src/index.ts"
+      ],
+      "@activepieces/piece-chaindesk": [
+        "packages/pieces/community/chaindesk/src/index.ts"
       ]
     },
     "resolveJsonModule": true
