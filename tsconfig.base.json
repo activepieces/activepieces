@@ -169,6 +169,9 @@
       "@activepieces/piece-chatnode": [
         "packages/pieces/community/chatnode/src/index.ts"
       ],
+      "@activepieces/piece-greip": [
+        "packages/pieces/community/greip/src/index.ts"
+      ],
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
       ]
