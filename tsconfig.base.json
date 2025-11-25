@@ -183,6 +183,9 @@
       ],
       "@activepieces/piece-youform": [
         "packages/pieces/community/youform/src/index.ts"
+      ],
+      "@activepieces/piece-flow-parser": [
+        "packages/pieces/community/flow-parser/src/index.ts"
       ]
     },
     "resolveJsonModule": true
