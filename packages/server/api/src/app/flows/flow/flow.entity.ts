@@ -1,5 +1,6 @@
 import {
     Flow,
+    FlowOperationStatus,
     FlowRun,
     FlowStatus,
     FlowVersion,
@@ -56,9 +57,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
-        deleted: {
-            type: Boolean,
-            default: false,
+        operationStatus: {
+            type: String,
+            enum: FlowOperationStatus,
+            nullable: false,
+            default: FlowOperationStatus.NONE,
         }
     },
     indices: [

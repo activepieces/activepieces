@@ -8,6 +8,7 @@ import {
     Flow,
     FlowId,
     FlowOperationRequest,
+    FlowOperationStatus,
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
@@ -53,7 +54,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             publishedVersionId: null,
             externalId: externalId ?? apId(),
             metadata: request.metadata,
-            deleted: false,
+            operationStatus: FlowOperationStatus.NONE,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -104,7 +105,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryWhere: Record<string, unknown> = { projectId, deleted: false }
+        const queryWhere: Record<string, unknown> = { projectId, operationStatus: Not(FlowOperationStatus.DELETING) }
 
         if (folderId !== undefined) {
             queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
@@ -457,7 +458,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id,
             projectId,
         })
-        if (flow.deleted) return
+        if (flow.operationStatus !== FlowOperationStatus.NONE) return
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.DELETE_FLOW,
@@ -474,7 +475,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
         await flowRepo().update(id, {
-            deleted: true,
+            operationStatus: FlowOperationStatus.DELETING,
         })
     },
 
