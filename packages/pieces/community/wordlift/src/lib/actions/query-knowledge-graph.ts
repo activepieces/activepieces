@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { wordliftAuth } from '../../index';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -18,12 +18,13 @@ export const queryKnowledgeGraph = createAction({
   },
   async run(context) {
     const { query } = context.propsValue;
+    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: '/graphql',
+      url: 'https://api.wordlift.io/graphql',
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: {

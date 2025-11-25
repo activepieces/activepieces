@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { wordliftAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 export const askAgent = createAction({
   auth: wordliftAuth,
@@ -28,12 +28,13 @@ export const askAgent = createAction({
   },
   async run(context) {
     const { message, model, security } = context.propsValue;
+    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: '/ask',
+      url: 'https://api.wordlift.io/ask',
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: {
