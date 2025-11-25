@@ -38,7 +38,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await platformMustHaveFeatureEnabled(platform => platform.plan.manageProjectsEnabled).call(app, request, reply)
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-        await assertEditionIsNotReachedForCreatingProject(platformId)
+        await assertMaximumNumberOfProjectsReachedByEdition(platformId)
 
         const platform = await platformService.getOneOrThrow(platformId)
 
@@ -143,7 +143,7 @@ const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal 
     }
 }
 
-async function assertEditionIsNotReachedForCreatingProject(platformId: string): Promise<void> {
+async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string): Promise<void> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         throw new ActivepiecesError({
