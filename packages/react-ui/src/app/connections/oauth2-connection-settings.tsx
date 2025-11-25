@@ -1,4 +1,3 @@
-import { Value } from '@sinclair/typebox/value';
 import { t } from 'i18next';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
@@ -18,7 +17,6 @@ import {
   OAuth2Props,
   PieceMetadataModel,
   PieceMetadataModelSummary,
-  piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
 import {
   resolveValueFromProps,
@@ -45,7 +43,10 @@ function OAuth2ConnectionSettings({
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
   }>();
-  const isConnectButtonEnabled = useIsConnectButtonEnabled(authProperty, form);
+  const isClientIdValid = isNil(form.formState.errors.request?.value?.client_id);
+  const isClientSecretValid = oauth2App.oauth2Type !== AppConnectionType.OAUTH2 || form.getValues('request.value.client_secret');
+  const isPropsValid = isNil(form.formState.errors.request?.value?.props);
+  const isConnectButtonEnabled = isClientIdValid && isClientSecretValid && isPropsValid;
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
@@ -81,7 +82,6 @@ function OAuth2ConnectionSettings({
                 <FormControl>
                   <Input {...field} type="text" placeholder={t('Client ID')} />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -98,7 +98,6 @@ function OAuth2ConnectionSettings({
                     placeholder={t('Client Secret')}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -156,33 +155,6 @@ function OAuth2ConnectionSettings({
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
 
-function useIsConnectButtonEnabled(
-  authProperty: OAuth2Property<OAuth2Props>,
-  form: UseFormReturn<{
-    request:
-      | UpsertCloudOAuth2Request
-      | UpsertOAuth2Request
-      | UpsertPlatformOAuth2Request;
-  }>,
-) {
-  const values = form.getValues();
-  const hasClientId =
-    !isNil(values.request?.value?.client_id) &&
-    values.request?.value?.client_id.length > 0;
-  const hasClientSecret =
-    values.request?.type === AppConnectionType.OAUTH2 &&
-    !isNil(values.request?.value?.client_secret) &&
-    values.request?.value?.client_secret.length > 0;
-  const propsValues = values.request?.value?.props ?? {};
-  const porps = authProperty.props ?? {};
-  const schema = piecePropertiesUtils.buildSchema(porps, undefined);
-  const arePropsValid = Value.Errors(schema, propsValues).First() === undefined;
-  const isClientSecretRequired =
-    values.request?.type === AppConnectionType.OAUTH2;
-  return (
-    hasClientId && (!isClientSecretRequired || hasClientSecret) && arePropsValid
-  );
-}
 
 async function openPopup(
   redirectUrl: string,

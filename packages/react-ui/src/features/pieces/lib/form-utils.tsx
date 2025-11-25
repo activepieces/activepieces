@@ -222,7 +222,7 @@ function buildConnectionSchema(auth: PieceAuthProperty) {
         ]),
       });
     case PropertyType.OAUTH2:
-      return Type.Object({
+     return Type.Object({
         request: Type.Composite([
           Type.Omit(
             Type.Union([
@@ -230,8 +230,22 @@ function buildConnectionSchema(auth: PieceAuthProperty) {
               UpsertCloudOAuth2Request,
               UpsertPlatformOAuth2Request,
             ]),
-            ['externalId', 'displayName'],
+            ['externalId', 'displayName','value'],
           ),
+          Type.Object({
+            //props in the request schema is any object, so we need to build a schema for it
+            value: Type.Composite([Type.Omit(Type.Union([
+                UpsertOAuth2Request.properties.value,
+                UpsertCloudOAuth2Request.properties.value,
+                UpsertPlatformOAuth2Request.properties.value,
+              ]),
+              ['props']
+            ),
+            Type.Object({
+                props: Type.Optional(piecePropertiesUtils.buildSchema(auth.props ?? {}, undefined)),
+              }),
+          ]),
+          }),
           connectionSchema,
         ]),
       });
