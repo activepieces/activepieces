@@ -154,7 +154,7 @@
       "@activepieces/piece-denser-ai": [
         "packages/pieces/community/denser-ai/src/index.ts"
       ],
-"@activepieces/piece-oracle-fusion-erp": [
+      "@activepieces/piece-oracle-fusion-erp": [
         "packages/pieces/community/oracle-fusion-erp/src/index.ts"
       ],
       "@activepieces/piece-ask-handle": [
@@ -177,33 +177,6 @@
       ],
       "@activepieces/piece-greip": [
         "packages/pieces/community/greip/src/index.ts"
-      ],
-      "@activepieces/piece-chaindesk": [
-        "packages/pieces/community/chaindesk/src/index.ts"
-
-      ],
-
-      "@activepieces/piece-linkup": [
-
-        "packages/pieces/community/linkup/src/index.ts"
-
-      ],
-
-      "@activepieces/piece-youform": [
-
-        "packages/pieces/community/youform/src/index.ts"
-
-      ],
-
-      "@activepieces/piece-flow-parser": [
-
-        "packages/pieces/community/flow-parser/src/index.ts"
-
-      ],
-
-      "@activepieces/piece-oracle-fusion-erp": [
-
-        "packages/pieces/community/oracle-fusion-erp/src/index.ts"
       ]
     },
     "resolveJsonModule": true
