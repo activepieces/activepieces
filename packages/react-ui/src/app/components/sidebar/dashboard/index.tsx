@@ -30,13 +30,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
-  ApEdition,
-  ApFlagId,
   isNil,
   PlatformRole,
   ProjectType,
@@ -49,7 +47,6 @@ import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 export function ProjectDashboardSidebar() {
   const {
@@ -243,22 +240,34 @@ export function ProjectDashboardSidebar() {
                       ) : (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:bg-transparent hover:text-muted-foreground"
-                              onClick={() =>
-                                window.open(
-                                  'https://www.activepieces.com/pricing',
-                                  '_blank',
-                                )
-                              }
-                            >
-                              <Plus />
-                            </Button>
+                            <div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled
+                                className="h-6 w-6"
+                              >
+                                <Plus />
+                              </Button>
+                            </div>
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{t('Upgrade Plan')}</p>
+                          <TooltipContent className="max-w-[250px]">
+                            <p className="text-xs mb-1">
+                              {t(
+                                'You reached the limit of 1 project on the free plan.',
+                              )}{' '}
+                              <button
+                                className="text-xs text-primary underline hover:no-underline"
+                                onClick={() =>
+                                  window.open(
+                                    'https://www.activepieces.com/pricing',
+                                    '_blank',
+                                  )
+                                }
+                              >
+                                {t('View pricing')}
+                              </button>
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       )}
