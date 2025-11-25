@@ -59,7 +59,6 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         },
         operationStatus: {
             type: String,
-            enum: FlowOperationStatus,
             nullable: false,
             default: FlowOperationStatus.NONE,
         },

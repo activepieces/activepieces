@@ -21,7 +21,7 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, tryCatch, UncategorizedFolderId, UserId,
+    SeekPage, TelemetryEventName, UncategorizedFolderId, UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -454,11 +454,18 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        const flow =  await this.getOneOrThrow({
+        const flow = await this.getOneOrThrow({
             id,
             projectId,
         })
-        if (flow.operationStatus !== FlowOperationStatus.NONE) return
+        if (flow.operationStatus !== FlowOperationStatus.NONE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_OPERATION_INVALID,
+                params: {
+                    message: `Flow ${id} is already being ${flow.operationStatus}`,
+                },
+            })
+        }
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.DELETE_FLOW,
@@ -479,36 +486,28 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async deleteJobHandler(data: SystemJobData<SystemJobName.DELETE_FLOW>): Promise<void> {
+    async backgroundDeleteHandler(data: SystemJobData<SystemJobName.DELETE_FLOW>): Promise<void> {
         const { flow, preDeleteDone, dbDeleteDone } = data
         const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
         assertNotNullOrUndefined(job, 'job is required')
-        const { error } = await tryCatch(async () => {
-            if (!preDeleteDone) {
-                await flowSideEffects(log).preDelete({
-                    flowToDelete: flow,
-                })
-                await job.updateData({
-                    ...data,
-                    preDeleteDone: true,
-                })
-            }
-            if (!dbDeleteDone) {
-                await flowRepo().delete({ id: flow.id })
-                await job.updateData({
-                    ...data,
-                    preDeleteDone: true,
-                    dbDeleteDone: true,
-                })
-            }
-
-            await flowExecutionCache(log).delete(flow.id)
-        })
-        if (error) {
-            log.error({ error }, '[FlowService#deleteJobHandler]')
-            throw error
+        if (!preDeleteDone) {
+            await flowSideEffects(log).preDelete({
+                flowToDelete: flow,
+            })
+            await job.updateData({
+                ...data,
+                preDeleteDone: true,
+            })
         }
-        log.info({ flowId: flow.id }, '[FlowService#deleteJobHandler] deleted flow')
+        if (!dbDeleteDone) {
+            await flowRepo().delete({ id: flow.id })
+            await job.updateData({
+                ...data,
+                preDeleteDone: true,
+                dbDeleteDone: true,
+            })
+        }
+        await flowExecutionCache(log).delete(flow.id)
     },
 
     async getAllEnabled(): Promise<PopulatedFlow[]> {

@@ -21,9 +21,7 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 "publishedVersionId" varchar(21),
                 "externalId" varchar NOT NULL,
                 "metadata" text,
-                "operationStatus" varchar CHECK(
-                    "operationStatus" IN ('NONE', 'DELETING', 'PUBLISHING', 'UNPUBLISHING')
-                ) NOT NULL DEFAULT ('NONE'),
+                "operationStatus" varchar NOT NULL DEFAULT ('NONE'),
                 CONSTRAINT "UQ_15375936ad7b8c5dc3f50783a22" UNIQUE ("publishedVersionId"),
                 CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder" ("id") ON DELETE
@@ -226,6 +224,7 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 "publishedVersionId" varchar(21),
                 "externalId" varchar NOT NULL,
                 "metadata" text,
+                "operationStatus" varchar NOT NULL DEFAULT ('NONE'),
                 CONSTRAINT "UQ_15375936ad7b8c5dc3f50783a22" UNIQUE ("publishedVersionId"),
                 CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_flow_folder_id" FOREIGN KEY ("folderId") REFERENCES "folder" ("id") ON DELETE

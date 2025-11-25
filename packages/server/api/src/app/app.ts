@@ -208,7 +208,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoModule)
     await app.register(todoActivityModule)
     await app.register(solutionsModule)
-    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowService(app.log).deleteJobHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowService(app.log).backgroundDeleteHandler(data))
 
     app.get(
         '/redirect',
