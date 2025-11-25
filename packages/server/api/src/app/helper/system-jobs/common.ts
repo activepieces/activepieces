@@ -29,7 +29,7 @@ type DeleteFlowDurableSystemJobData =  {
     flow: Flow
     preDeleteDone: boolean
     dbDeleteDone: boolean
-  }
+}
 
 type SystemJobDataMap = {
     [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData

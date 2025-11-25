@@ -62,7 +62,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             enum: FlowOperationStatus,
             nullable: false,
             default: FlowOperationStatus.NONE,
-        }
+        },
     },
     indices: [
         {

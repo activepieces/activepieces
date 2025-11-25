@@ -25,6 +25,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
+import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -296,7 +297,6 @@ import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migrat
 
 import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
-import { AddFlowOperationStatusField1764079041445 } from './migration/1764079041445-AddFlowOperationStatusField'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

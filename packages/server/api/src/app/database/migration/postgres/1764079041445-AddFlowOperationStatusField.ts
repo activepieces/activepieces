@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddFlowOperationStatusField1764079041445 implements MigrationInterface {
     name = 'AddFlowOperationStatusField1764079041445'

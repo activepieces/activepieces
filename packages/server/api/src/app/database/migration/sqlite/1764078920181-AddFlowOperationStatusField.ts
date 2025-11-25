@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddFlowOperationStatusField1764078920181 implements MigrationInterface {
     name = 'AddFlowOperationStatusField1764078920181'
@@ -6,10 +6,10 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -30,7 +30,7 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 SET NULL ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow"(
                     "id",
@@ -53,26 +53,26 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 "externalId",
                 "metadata"
             FROM "flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow"
                 RENAME TO "flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -91,7 +91,7 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
@@ -120,34 +120,34 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 "maxConcurrentJobs",
                 "icon"
             FROM "project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "project"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
             WHERE "deleted" IS NULL
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -165,7 +165,7 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
@@ -194,27 +194,27 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 "maxConcurrentJobs",
                 "icon"
             FROM "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
             WHERE "deleted" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow"
                 RENAME TO "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -232,7 +232,7 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 SET NULL ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow"(
                     "id",
@@ -255,16 +255,16 @@ export class AddFlowOperationStatusField1764078920181 implements MigrationInterf
                 "externalId",
                 "metadata"
             FROM "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
-        `);
+        `)
     }
 
 }
