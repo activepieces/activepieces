@@ -11,7 +11,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { BASE_URL } from './lib/common/client';
 
 export const openmicAi = createPiece({
-  displayName: 'openmic.ai',
+  displayName: 'OpenMic AI',
   auth: openmicAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/openmic-ai.png',
