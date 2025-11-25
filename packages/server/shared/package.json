@@ -6,7 +6,7 @@
   "typings": "./src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-framework": "0.20.2",
-    "@activepieces/shared": "0.25.2",
+    "@activepieces/shared": "0.26.0",
     "tslib": "2.6.2",
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
@@ -23,6 +23,8 @@
     "ioredis": "5.4.1",
     "redlock": "5.0.0-beta.2",
     "redis-memory-server": "0.13.0",
-    "chalk": "4.1.2"
+    "bullmq": "5.61.0",
+    "bullmq-otel": "1.0.1",
+    "tree-kill": "1.2.2"
   }
 }

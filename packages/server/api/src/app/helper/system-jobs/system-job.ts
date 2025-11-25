@@ -1,5 +1,5 @@
 import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, spreadIfDefined, tryCatch } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -51,7 +51,10 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             systemJobsQueue.waitUntilReady(),
             systemJobWorker.waitUntilReady(),
         ])
-        await removeDeprecatedJobs()
+        const { error } = await tryCatch(async () => removeDeprecatedJobs())
+        if (!isNil(error)) {
+            log.error({ error }, 'Error removing deprecated jobs')
+        }
     },
 
     async upsertJob({ job, schedule }): Promise<void> {
@@ -91,21 +94,20 @@ async function removeDeprecatedJobs(): Promise<void> {
         'usage-report',
         'archive-old-issues',
         'platform-usage-report',
+        'hard-delete-project',
+        'seven-days-in-trial',
+        'issue-reminder',
     ]
     const allSystemJobs = await systemJobsQueue.getJobSchedulers()
-    const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && (deprecatedJobs.includes(f.key) || deprecatedJobs.some(d => f.key.startsWith(d))))
+    const deprecatedJobsFromQueue = allSystemJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
     for (const job of deprecatedJobsFromQueue) {
         await systemJobsQueue.removeJobScheduler(job.id ?? job.key)
     }
-    const onetimeDeprecatedJobs = [
-        'hard-delete-project',
-        'issues-reminder',
-    ]
     const oneTimeJobs = await systemJobsQueue.getJobs()
-    const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && (onetimeDeprecatedJobs.includes(f.name) || onetimeDeprecatedJobs.some(d => f.name.startsWith(d))))
+    const oneTimeJobsFromQueue = oneTimeJobs.filter(f => !isNil(f) && !isNil(f.id) && !isNil(f.name) && (deprecatedJobs.includes(f.name) || deprecatedJobs.some(d => f.name.startsWith(d))))
     for (const job of oneTimeJobsFromQueue) {
         assertNotNullOrUndefined(job.id, 'Job id is required')
-        await systemJobsQueue.remove(job.id)
+        await job.remove()
     }
 }
 

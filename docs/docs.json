@@ -381,6 +381,7 @@
                   "install/options/easypanel",
                   "install/options/aws",
                   "install/options/gcp",
+                  "install/options/railway",
                   "install/options/elestio"
                 ]
               }

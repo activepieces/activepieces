@@ -202,7 +202,7 @@ export function PlatformSidebar() {
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <div className="w-full py-2 flex items-center gap-2">
+        <div className="w-full pb-2 flex items-center gap-2">
           <Link
             to={defaultRoute}
             className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}

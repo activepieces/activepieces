@@ -51,6 +51,8 @@ module.exports = {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
+          active: 'hsl(var(--sidebar-active))',
+          progress: 'hsl(var(--sidebar-progress))',
         },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

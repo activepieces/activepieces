@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffectOnce } from 'react-use';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,7 +18,6 @@ import {
   RowDataWithActions,
   BulkAction,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
@@ -27,100 +27,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { isNil, ProjectWithLimits } from '@activepieces/shared';
+import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 
+import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';
-
-const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
-  {
-    accessorKey: 'displayName',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} />
-    ),
-    cell: ({ row }) => {
-      const locked = row.original.plan.locked;
-
-      return (
-        <div className="text-left flex items-center justify-start ">
-          {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
-          {row.original.displayName}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'ai-tokens',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
-          {!isNil(row.original.plan.aiCredits)
-            ? formatUtils.formatNumber(row.original.plan.aiCredits)
-            : '-'}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'users',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Active Users')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {row.original.analytics.activeUsers} /{' '}
-          {row.original.analytics.totalUsers}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'flows',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Active Flows')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {row.original.analytics.activeFlows} /{' '}
-          {row.original.analytics.totalFlows}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'createdAt',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'externalId',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('External ID')} />
-    ),
-    cell: ({ row }) => {
-      const displayValue =
-        isNil(row.original.externalId) || row.original.externalId?.length === 0
-          ? '-'
-          : row.original.externalId;
-      return <div className="text-left">{displayValue}</div>;
-    },
-  },
-];
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -130,8 +43,23 @@ export default function ProjectsPage() {
   const navigate = useNavigate();
   const isEnabled = platform.plan.manageProjectsEnabled;
   const { data: currentProject } = projectHooks.useCurrentProject();
+  const { data: currentUser } = userHooks.useCurrentUser();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffectOnce(() => {
+    const types = searchParams.getAll('type');
+    if (types.length === 0) {
+      setSearchParams(
+        (prev) => {
+          const newParams = new URLSearchParams(prev);
+          newParams.append('type', ProjectType.TEAM);
+          return newParams;
+        },
+        { replace: true },
+      );
+    }
+  });
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['projects', searchParams.toString()],
@@ -140,10 +68,12 @@ export default function ProjectsPage() {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
       const displayName = searchParams.get('displayName') ?? undefined;
+      const types = searchParams.getAll('type') as ProjectType[];
       return projectApi.list({
         cursor: cursor ?? undefined,
         limit: limit ? parseInt(limit) : undefined,
         displayName,
+        types: types.length > 0 ? types : undefined,
       });
     },
   });
@@ -163,6 +93,11 @@ export default function ProjectsPage() {
     },
     onError: () => {},
   });
+
+  const columns = useMemo(
+    () => projectsTableColumns({ platform, currentUserId: currentUser?.id }),
+    [platform, currentUser?.id],
+  );
 
   const columnsWithCheckbox: ColumnDef<
     RowDataWithActions<ProjectWithLimits>
@@ -401,6 +336,19 @@ export default function ProjectsPage() {
               type: 'input',
               title: t('Name'),
               accessorKey: 'displayName',
+              icon: CheckIcon,
+            },
+            {
+              type: 'select',
+              title: t('Type'),
+              accessorKey: 'type',
+              options: Object.values(ProjectType).map((type) => {
+                return {
+                  label:
+                    formatUtils.convertEnumToHumanReadable(type) + ' Project',
+                  value: type,
+                };
+              }),
               icon: CheckIcon,
             },
           ]}

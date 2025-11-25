@@ -10,11 +10,15 @@ import { engineProcessManager } from '../compute/process/engine-process-manager'
 const execAsync = promisify(exec)
 
 let settings: WorkerSettingsResponse | undefined
-
+let workerToken: string | undefined
 const workerId = apId()
 
 export const workerMachine = {
     getWorkerId: () => workerId,
+    getWorkerToken: () => {
+        assertNotNullOrUndefined(workerToken, 'Worker token is not set')
+        return workerToken
+    },
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
         const cpus = os.cpus()
@@ -46,7 +50,6 @@ export const workerMachine = {
                 ...spreadIfDefined('ENVIRONMENT', settings?.ENVIRONMENT),
                 ...spreadIfDefined('MAX_FILE_SIZE_MB', settings?.MAX_FILE_SIZE_MB?.toString()),
                 ...spreadIfDefined('SANDBOX_MEMORY_LIMIT', settings?.SANDBOX_MEMORY_LIMIT),
-                ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
                 ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', settings?.PLATFORM_ID_FOR_DEDICATED_WORKER),
@@ -60,12 +63,14 @@ export const workerMachine = {
     isDedicatedWorker: () => {
         return !isNil(workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
-    init: async (_settings: WorkerSettingsResponse, log: FastifyBaseLogger) => {
+    init: async (_settings: WorkerSettingsResponse, _workerToken: string, log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
             ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
             ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)),
         }
+
+        workerToken = _workerToken
 
         const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
@@ -116,6 +121,10 @@ export const workerMachine = {
     },
     getPlatformIdForDedicatedWorker: (): string | undefined => {
         return environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
+    },
+    preWarmCacheEnabled: () => {
+        const enabledVar = environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE)
+        return isNil(enabledVar) || environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE) === 'true'
     },
 }
 
@@ -220,7 +229,7 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
         NODE_OPTIONS: '--enable-source-maps',
         AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
         AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
-        AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,
+        AP_DEV_PIECES: workerMachine.getSettings().DEV_PIECES.join(','),
         AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
         AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
         AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,

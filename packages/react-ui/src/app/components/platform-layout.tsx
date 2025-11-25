@@ -2,8 +2,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
@@ -12,21 +12,21 @@ import { PlatformSidebar } from './sidebar/platform';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const showPlatformAdminDashboard = useIsPlatformAdmin();
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       {showPlatformAdminDashboard ? (
         <SidebarProvider>
           <PlatformSidebar />
-          <SidebarInset className="px-4 overflow-auto pb-4">
+          <SidebarInset className="px-4 overflow-auto pb-4 pt-4">
             {children}
           </SidebarInset>
         </SidebarProvider>
       ) : (
         <Navigate to="/" />
       )}
-      {edition === ApEdition.CLOUD && <UpgradeDialog />}
+      {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

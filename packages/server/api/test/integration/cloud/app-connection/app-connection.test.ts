@@ -9,7 +9,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { pieceMetadataService } from '../../../../src/app/pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {

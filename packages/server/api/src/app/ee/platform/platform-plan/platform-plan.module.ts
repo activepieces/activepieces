@@ -1,12 +1,10 @@
-import { BillingCycle } from '@activepieces/ee-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import Stripe from 'stripe'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
-import { AI_CREDIT_PRICE_ID } from './platform-plan-helper'
 import { platformPlanController } from './platform-plan.controller'
-import { platformPlanService } from './platform-plan.service'
+import { AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
 import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper } from './stripe-helper'
 
@@ -29,7 +27,7 @@ export const platformPlanModule: FastifyPluginAsyncTypebox = async (app) => {
 
         const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-        const item = subscription.items.data.find((item) => [AI_CREDIT_PRICE_ID[BillingCycle.MONTHLY], AI_CREDIT_PRICE_ID[BillingCycle.ANNUAL]].includes(item.price.id ))
+        const item = subscription.items.data.find((item) => AI_CREDIT_PRICE_ID === item.price.id)
         if (isNil(item)) {
             return
         }

@@ -1,8 +1,8 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { issuesService } from '../../../flows/issues/issues-service'
+import { redisConnections } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -136,13 +136,39 @@ export const emailService = (log: FastifyBaseLogger) => ({
         platformId: string
         projectName: string
     }): Promise<void> {
-        const issues = await issuesService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
-        if (issues.data.length === 0) {
+        const redisConnection = await redisConnections.useExisting()
+        const globalAlertsKey = `alerts:flowFailures:${job.platformId}:${job.projectId}`
+
+        const storedAlerts = await redisConnection.lrange(globalAlertsKey, 0, -1)
+        if (storedAlerts.length === 0) {
             return
         }
 
-        const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const parsedAlerts = storedAlerts.map((a) => {
+            try {
+                return JSON.parse(a)
+            }
+            catch {
+                return null
+            }
+        }).filter((a) => !isNil(a))
+
+        const issuesForProject = parsedAlerts.filter(
+            (a) => a.projectId === job.projectId,
+        )
+
+        if (issuesForProject.length === 0) {
+            return
+        }
+
+        const alerts = await alertsService(log).list({
+            projectId: job.projectId,
+            cursor: undefined,
+            limit: 50,
+        })
+        const emails = alerts.data
+            .filter((alert) => alert.channel === AlertChannel.EMAIL)
+            .map((alert) => alert.receiver)
 
         if (emails.length === 0) {
             return
@@ -153,10 +179,11 @@ export const emailService = (log: FastifyBaseLogger) => ({
             path: 'runs?limit=10#Issues',
         })
 
-        const issuesWithFormattedDate = issues.data.map((issue) => ({
+        const issuesWithFormattedDate = issuesForProject.map((issue) => ({
             ...issue,
-            created: dayjs(issue.created).format('MMM D, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'),
+            createdAt: issue.createdAt
+                ? issue.createdAt
+                : dayjs().format('MMM D, h:mm a'),
         }))
 
         await emailSender(log).send({
@@ -166,14 +193,13 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 name: 'issues-summary',
                 vars: {
                     issuesUrl,
-                    issuesCount: issues.data.length.toString(),
+                    issuesCount: issuesWithFormattedDate.length.toString(),
                     projectName: job.projectName,
                     issues: JSON.stringify(issuesWithFormattedDate),
                 },
             },
         })
     },
-
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
