@@ -5,7 +5,6 @@ import {
 } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
-    ApEdition,
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
@@ -146,7 +145,7 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string)
     const platform = await platformService.getOneWithPlanOrThrow(platformId)
 
     switch (platform.plan.teamProjectsLimit) {
-        case TeamProjectsLimit.NONE:{
+        case TeamProjectsLimit.NONE: {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -154,19 +153,19 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string)
                 },
             })
         }
-        case TeamProjectsLimit.ONE:{
+        case TeamProjectsLimit.ONE: {
             const projectsCount = await projectService.countByPlatformIdAndType(platformId, ProjectType.TEAM)
             if (projectsCount >= 1) {
                 throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
+                    code: ErrorCode.FEATURE_DISABLED,
                     params: {
-                        message: 'You have reached the maximum of 1 team project allowed on your plan',
+                        message: 'Maximum limit of 1 team project reached for this plan. Upgrade your plan to add more team projects.',
                     },
                 })
             }
             break
         }
-        case TeamProjectsLimit.UNLIMITED:{
+        case TeamProjectsLimit.UNLIMITED: {
             break
         }
     }
