@@ -86,6 +86,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import { flowService } from './flows/flow/flow.service'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -207,6 +208,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoModule)
     await app.register(todoActivityModule)
     await app.register(solutionsModule)
+    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowService(app.log).deleteJobHandler(data))
 
     app.get(
         '/redirect',

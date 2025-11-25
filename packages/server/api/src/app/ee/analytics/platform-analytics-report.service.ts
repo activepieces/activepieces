@@ -237,6 +237,7 @@ async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, proj
         externalId: row.flow_externalId,
         publishedVersionId: row.flow_publishedVersionId,
         metadata: row.flow_metadata,
+        deleted: row.flow_deleted,
         version: flowVersionService(log).removeConnectionsAndSampleDataFromFlowVersion({
             id: row.version_id,
             flowId: row.flow_id,

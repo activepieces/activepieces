@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/shared'
-import { SystemJobHandler, SystemJobName } from './types'
+import { SystemJobHandler, SystemJobName } from './common'
 
 const jobHandlers = new Map<SystemJobName, SystemJobHandler>()
 

@@ -3,9 +3,8 @@ import { assertNotNullOrUndefined, isNil, spreadIfDefined, tryCatch } from '@act
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
-import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './types'
+import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
-import { systemJobEventHandler } from './event-handlers'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
@@ -13,7 +12,6 @@ const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
-export let systemJobQueueEvents: QueueEvents
 
 export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule => ({
     async init(): Promise<void> {
@@ -33,7 +31,6 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
 
         systemJobsQueue = new Queue(SYSTEM_JOB_QUEUE, queueConfig)
-        systemJobQueueEvents = new QueueEvents(SYSTEM_JOB_QUEUE, queueConfig)
 
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
@@ -51,7 +48,6 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
 
         await Promise.all([
             systemJobsQueue.waitUntilReady(),
-            systemJobQueueEvents.waitUntilReady(),
             systemJobWorker.waitUntilReady(),
         ])
         const { error } = await tryCatch(async () => await removeDeprecatedJobs())
@@ -78,6 +74,10 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
     },
 
+    async getJob<T extends SystemJobName>(jobId: string) {
+        return await systemJobsQueue.getJob(jobId) as Job<SystemJobData<T>> | undefined
+    },
+
     async close(): Promise<void> {
         if (isNil(systemJobsQueue)) {
             return
@@ -86,7 +86,6 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         await Promise.all([
             systemJobWorker.close(),
             systemJobsQueue.close(),
-            systemJobQueueEvents.close(),
         ])
     },
 })

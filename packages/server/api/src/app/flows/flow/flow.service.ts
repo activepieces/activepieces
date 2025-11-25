@@ -1,4 +1,3 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -7,7 +6,6 @@ import {
     Cursor,
     ErrorCode,
     Flow,
-    FlowActionStatus,
     FlowId,
     FlowOperationRequest,
     FlowOperationType,
@@ -22,12 +20,11 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UncategorizedFolderId, UserId,
-    WebsocketClientEvent,
+    SeekPage, TelemetryEventName, tryCatch, UncategorizedFolderId, UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { AddAPArrayContainsToQueryBuilder } from '../../database/database-connection'
 import { distributedLock } from '../../database/redis-connections'
@@ -43,10 +40,7 @@ import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { DurableSystemJobName } from '../../helper/system-jobs/types/durable-jobs'
-import { SystemJobData } from '../../helper/system-jobs/types'
-import { Job } from 'bullmq'
-import { websocketService } from '../../core/websockets.service'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
@@ -59,7 +53,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             publishedVersionId: null,
             externalId: externalId ?? apId(),
             metadata: request.metadata,
-            actionStatus: FlowActionStatus.NONE,
+            deleted: false,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -110,7 +104,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryWhere: Record<string, unknown> = { projectId }
+        const queryWhere: Record<string, unknown> = { projectId, deleted: false }
 
         if (folderId !== undefined) {
             queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
@@ -458,20 +452,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async delete({ id, projectId }: DeleteParams): Promise<{
-        message: string
-    }> {
+    async delete({ id, projectId }: DeleteParams): Promise<void> {
+        const flow =  await this.getOneOrThrow({
+            id,
+            projectId,
+        })
+        if (flow.deleted) return
         await systemJobsSchedule(log).upsertJob({
             job: {
-                name: DurableSystemJobName.DELETE_FLOW,
+                name: SystemJobName.DELETE_FLOW,
                 data: {
-                    flowId: id,
-                    projectId,
-                    flowToDelete: undefined,
+                    flow,
                     preDeleteDone: false,
                     dbDeleteDone: false,
                 },
-                jobId: `delete-flow-${id}`,
+                jobId: `delete-flow-${flow.id}`,
             },
             schedule: {
                 type: 'one-time',
@@ -479,67 +474,40 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
         await flowRepo().update(id, {
-            actionStatus: FlowActionStatus.DELETING,
+            deleted: true,
         })
-        return {
-            message: 'Flow deletion started',
-        }
     },
 
-    async deleteJobHandler(job: Job<SystemJobData<DurableSystemJobName.DELETE_FLOW>>): Promise<void> {
-        const { flowId, projectId, flowToDelete, preDeleteDone, dbDeleteDone } = job.data
-
-        await distributedLock(log).runExclusive({
-            key: flowId,
-            timeoutInSeconds: 10,
-            fn: async () => {
-                const flow = flowToDelete ?? await this.getOneOrThrow({
-                    id: flowId,
-                    projectId,
+    async deleteJobHandler(data: SystemJobData<SystemJobName.DELETE_FLOW>): Promise<void> {
+        const { flow, preDeleteDone, dbDeleteDone } = data
+        const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
+        assertNotNullOrUndefined(job, 'job is required')
+        const { error } = await tryCatch(async () => {
+            if (!preDeleteDone) {
+                await flowSideEffects(log).preDelete({
+                    flowToDelete: flow,
                 })
+                await job.updateData({
+                    ...data,
+                    preDeleteDone: true,
+                })
+            }
+            if (!dbDeleteDone) {
+                await flowRepo().delete({ id: flow.id })
+                await job.updateData({
+                    ...data,
+                    preDeleteDone: true,
+                    dbDeleteDone: true,
+                })
+            }
 
-                if (isNil(flowToDelete)) {
-                    await job.updateData({
-                        ...job.data,
-                        flowToDelete: flow,
-                    })
-                }
-
-                if (!preDeleteDone) {
-                    await flowSideEffects(log).preDelete({
-                        flowToDelete: flow,
-                    })
-
-                    await job.updateData({
-                        ...job.data,
-                        preDeleteDone: true,
-                    })
-                }
-
-                if (!dbDeleteDone) {
-                    await flowRepo().delete({ id: flowId })
-                    await job.updateData({
-                        ...job.data,
-                        dbDeleteDone: true,
-                    })
-                }
-
-                await flowExecutionCache(log).delete(flowId)
-            },
+            await flowExecutionCache(log).delete(flow.id)
         })
-    },
-
-    async postDeleteFlow({ id, projectId, status, failedReason }: PostDeleteParams ) {
-        if (status === "failed") {
-            await flowRepo().update(id, {
-                actionStatus: FlowActionStatus.NONE,
-            })
+        if (error) {
+            log.error({ error }, '[FlowService#deleteJobHandler]')
+            throw error
         }
-        websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_DELETE, {
-            id,
-            status,
-            failedReason,
-        })
+        log.info({ flowId: flow.id }, '[FlowService#deleteJobHandler] deleted flow')
     },
 
     async getAllEnabled(): Promise<PopulatedFlow[]> {
@@ -763,12 +731,6 @@ type DeleteParams = {
     projectId: ProjectId
 }
 
-type PostDeleteParams = {
-    id: FlowId
-    projectId: ProjectId
-    status: "success" | "failed"
-    failedReason?: string
-}
 
 type NewFlow = Omit<Flow, 'created' | 'updated'>
 
