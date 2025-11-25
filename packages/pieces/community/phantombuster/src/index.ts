@@ -7,7 +7,7 @@ import { BASE_URL } from './lib/common/client';
 import { PieceCategory } from '@activepieces/shared';
 
 export const phantombuster = createPiece({
-  displayName: 'Phantombuster',
+  displayName: 'PhantomBuster',
   auth: phantombusterAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/phantombuster.png',
