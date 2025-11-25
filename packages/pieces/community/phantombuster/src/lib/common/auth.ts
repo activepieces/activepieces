@@ -1,4 +1,6 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { makeRequest } from './client';
 
 const authHelpDescription = `
 1. Login to your Pushbullet Dashboard.
@@ -11,4 +13,19 @@ export const phantombusterAuth = PieceAuth.SecretText({
   displayName: 'API Token',
   description: authHelpDescription,
   required: true,
+  validate: async (auth) => {
+    try {
+      await makeRequest(
+        auth.auth as string,
+        HttpMethod.GET,
+        '/agents/fetch-all'
+      );
+      return { valid: true };
+    } catch (e) {
+      return {
+        valid: false,
+        error: 'Invalid API key or insufficient permissions',
+      };
+    }
+  },
 });

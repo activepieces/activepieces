@@ -3,6 +3,7 @@ import { phantombusterAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { agentIdDropdown } from '../common/props';
+import { outside } from 'semver';
 
 export const launchPhantom = createAction({
   auth: phantombusterAuth,
@@ -31,7 +32,7 @@ export const launchPhantom = createAction({
   },
   async run(context) {
     const body: Record<string, unknown> = {
-      agentId: context.propsValue.agentId,
+      id: context.propsValue.agentId,
     };
 
     if (context.propsValue.argument !== undefined) {
@@ -63,14 +64,14 @@ export const launchPhantom = createAction({
             `/agents/fetch-output?id=${context.propsValue.agentId}`,
             undefined
           );
-
+          console.log(outputResponse);
           if (outputResponse) {
             output = outputResponse;
             const status = outputResponse.status;
 
             if (
               status === 'finished' ||
-              status === 'launch error' ||
+              status === 'error' ||
               status === 'unknown'
             ) {
               isCompleted = true;

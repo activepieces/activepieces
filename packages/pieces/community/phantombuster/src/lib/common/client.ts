@@ -9,11 +9,12 @@ export async function makeRequest(
   body?: unknown
 ) {
   try {
+    console.log( `${BASE_URL}${path}`)
     const response = await httpClient.sendRequest({
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        'X-Phantombuster-Key-1': `${apiKey}`,
+        'X-Phantombuster-Key': `${apiKey}`,
         'Content-Type': 'application/json',
       },
       body,
