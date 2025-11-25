@@ -58,9 +58,8 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
-    app.get('/', ListProjectRequestForPlatform, async (request) => {
-        const platformId = request.principal.platform.id
-        assertNotNullOrUndefined(platformId, 'platformId')
+    app.get('/', ListProjectRequestForPlatform, async (request, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
 
         const userId = await getUserId(request.principal)
         return platformProjectService(request.log).getAllForPlatform({
@@ -111,10 +110,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 async function getUserId(principal: Principal): Promise<string> {
     if (principal.type === PrincipalType.SERVICE) {
         const platform = await platformService.getOneOrThrow(principal.platform.id)
-        const user = await userService.getOneOrFail({
-            id: platform.ownerId,
-        })
-        return user.id
+        return platform.ownerId
     }
     return principal.id
 }
