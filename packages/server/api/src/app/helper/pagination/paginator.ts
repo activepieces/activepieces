@@ -29,6 +29,8 @@ export type PagingResult<Entity> = {
 const PAGINATION_KEY = 'created'
 
 export default class Paginator<Entity extends ObjectLiteral> {
+    public static readonly NO_LIMIT = -1
+
     private afterCursor: string | null = null
 
     private beforeCursor: string | null = null
@@ -73,36 +75,59 @@ export default class Paginator<Entity extends ObjectLiteral> {
         this.orderBy = orderBy
     }
 
-    public async paginate(
+    public async paginate<T = Entity>(
         builder: SelectQueryBuilder<Entity>,
-    ): Promise<PagingResult<Entity>> {
+    ): Promise<PagingResult<T>> {
 
-        const entities = 
-            await this.appendPagingQuery(builder).getMany()
+        const result = await this.appendPagingQuery(builder).getRawAndEntities()
 
-        const hasMore = entities.length > this.limit
+        const mergedData = result.entities.map((entity, index) => {
+            const rawRow = result.raw[index]
+            const additionalColumns: Record<string, unknown> = {}
 
-        if (hasMore) {
-            entities.splice(entities.length - 1, 1)
+            for (const [key, value] of Object.entries(rawRow)) {
+                if (!key.startsWith(`${this.alias}_`)) {
+                    additionalColumns[key] = value
+                }
+            }
+            
+            return {
+                ...entity,
+                ...additionalColumns,
+            } as T
+        })
+
+        // If unlimited mode, return all results without cursor logic
+        if (this.isUnlimited()) {
+            return {
+                data: mergedData,
+                cursor: { beforeCursor: null, afterCursor: null },
+            }
         }
 
-        if (entities.length === 0) {
-            return this.toPagingResult(entities)
+        const hasMore = mergedData.length > this.limit
+
+        if (hasMore) {
+            mergedData.splice(mergedData.length - 1, 1)
+        }
+
+        if (mergedData.length === 0) {
+            return this.toPagingResult(mergedData)
         }
 
         if (!this.hasAfterCursor() && this.hasBeforeCursor()) {
-            entities.reverse()
+            mergedData.reverse()
         }
 
         if (this.hasBeforeCursor() || hasMore) {
-            this.nextAfterCursor = this.encode(entities[entities.length - 1])
+            this.nextAfterCursor = this.encode(mergedData[mergedData.length - 1] as unknown as Entity)
         }
 
         if (this.hasAfterCursor() || (hasMore && this.hasBeforeCursor())) {
-            this.nextBeforeCursor = this.encode(entities[0])
+            this.nextBeforeCursor = this.encode(mergedData[0] as unknown as Entity)
         }
         
-        return this.toPagingResult(entities)
+        return this.toPagingResult(mergedData)
     }
 
     private getCursor(): CursorResult {
@@ -118,20 +143,23 @@ export default class Paginator<Entity extends ObjectLiteral> {
         const cursors: CursorParam = {}
         const clonedBuilder = new SelectQueryBuilder<Entity>(builder)
 
-        if (this.hasAfterCursor()) {
-            Object.assign(cursors, this.decode(this.afterCursor!))
-        }
-        else if (this.hasBeforeCursor()) {
-            Object.assign(cursors, this.decode(this.beforeCursor!))
+        if (!this.isUnlimited()) {
+            if (this.hasAfterCursor()) {
+                Object.assign(cursors, this.decode(this.afterCursor!))
+            }
+            else if (this.hasBeforeCursor()) {
+                Object.assign(cursors, this.decode(this.beforeCursor!))
+            }
+
+            if (Object.keys(cursors).length > 0) {
+                clonedBuilder.andWhere(
+                    new Brackets((where) => this.buildCursorQuery(where, cursors)),
+                )
+            }
+
+            clonedBuilder.take(this.limit + 1)
         }
 
-        if (Object.keys(cursors).length > 0) {
-            clonedBuilder.andWhere(
-                new Brackets((where) => this.buildCursorQuery(where, cursors)),
-            )
-        }
-
-        clonedBuilder.take(this.limit + 1)
         for (const [key, value] of Object.entries(this.buildOrder())) {
             clonedBuilder.addOrderBy(key, value)
         }
@@ -190,6 +218,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private hasBeforeCursor(): boolean {
         return this.beforeCursor !== null
+    }
+
+    private isUnlimited(): boolean {
+        return this.limit === Paginator.NO_LIMIT
     }
 
     private encode(entity: Entity): string {

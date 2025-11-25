@@ -21,7 +21,11 @@ import {
     PlatformId,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UncategorizedFolderId, UserId,
+    SeekPage,
+    TelemetryEventName,
+    TriggerSource,
+    UncategorizedFolderId,
+    UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -31,10 +35,11 @@ import { AddAPArrayContainsToQueryBuilder } from '../../database/database-connec
 import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import Paginator from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -79,9 +84,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 
     async list({
-        projectId,
+        projectIds,
+        platformId,
         cursorRequest,
-        limit,
+        limit = Paginator.NO_LIMIT,
         folderId,
         status,
         name,
@@ -89,6 +95,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         agentExternalIds,
         externalIds,
         versionState = FlowVersionState.DRAFT,
+        includeTriggerSource = true,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -102,23 +109,63 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryWhere: Record<string, unknown> = { projectId }
+
+        const queryBuilder = flowRepo().createQueryBuilder('ff')
+
+        if (projectIds) {
+            queryBuilder.where({ projectId: In(projectIds) })
+        }
+        else {
+            queryBuilder
+                .innerJoin('project', 'project', 'project.id = ff."projectId"')
+                .where('project."platformId" = :platformId', { platformId })
+        }
 
         if (folderId !== undefined) {
-            queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
+            queryBuilder.andWhere({ folderId: folderId === UncategorizedFolderId ? IsNull() : folderId })
         }
 
         if (status !== undefined) {
-            queryWhere.status = In(status)
+            queryBuilder.andWhere({ status: In(status) })
         }
 
-        const queryBuilder = flowRepo().createQueryBuilder('ff')
-            .leftJoin(
+        const latestVersionSubquery = flowVersionRepo()
+            .createQueryBuilder('fv_sub')
+            .select('fv_sub.id')
+            .where('fv_sub."flowId" = ff.id')
+            .orderBy('fv_sub.created', 'DESC')
+            .limit(1)
+
+        if (versionState === FlowVersionState.DRAFT) {
+            queryBuilder.leftJoinAndMapOne(
+                'ff.version',
                 'flow_version',
                 'latest_version',
-                'latest_version."flowId" = ff.id AND latest_version.id = (SELECT id FROM flow_version WHERE "flowId" = ff.id ORDER BY created DESC LIMIT 1)',
+                `latest_version."flowId" = ff.id AND latest_version.id = (${latestVersionSubquery.getQuery()})`,
             )
-            .where(queryWhere)
+        }
+        else {
+            queryBuilder.leftJoin(
+                'flow_version',
+                'latest_version',
+                `latest_version."flowId" = ff.id AND latest_version.id = (${latestVersionSubquery.getQuery()})`,
+            )
+            queryBuilder.leftJoinAndMapOne(
+                'ff.version',
+                'flow_version',
+                'published_version',
+                'published_version.id = ff.publishedVersionId',
+            )
+        }
+
+        if (includeTriggerSource) {
+            queryBuilder.leftJoinAndMapOne(
+                'ff.triggerSource',
+                'trigger_source',
+                'ts',
+                'ts."flowId" = ff.id AND ts.deleted IS NULL',
+            )
+        }
 
         if (name !== undefined) {
             queryBuilder.andWhere('LOWER(latest_version."displayName") LIKE LOWER(:name)', { name: `%${name}%` })
@@ -136,28 +183,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
             AddAPArrayContainsToQueryBuilder(queryBuilder, 'latest_version."agentIds"', agentExternalIds)
         }
 
-        const paginationResult = await paginator.paginate(queryBuilder)
+        const paginationResult = await paginator.paginate<Flow & { version: FlowVersion, triggerSource?: TriggerSource }>(queryBuilder)
 
-        const populatedFlowPromises: Promise<PopulatedFlow | null>[] = paginationResult.data.map(async (flow) => {
-            const version = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flow.id,
-                versionId: (versionState === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
-            })
-            const triggerSource = await triggerSourceService(log).getByFlowId({
-                flowId: flow.id,
-                projectId: flow.projectId,
-                simulate: undefined,
-            })
+        const populatedFlows = paginationResult.data.map((flow) => {
             return {
                 ...flow,
-                version,
-                triggerSource: triggerSource ? {
-                    schedule: triggerSource.schedule,
-                } : undefined,
+                version: flow.version,
+                triggerSource: includeTriggerSource && flow.triggerSource
+                    ? {
+                        schedule: flow.triggerSource.schedule,
+                    }
+                    : undefined,
             }
         })
-
-        const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
     async exists(id: FlowId): Promise<boolean> {
@@ -470,17 +508,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
 
     },
-
-    async getAllEnabled(): Promise<PopulatedFlow[]> {
-        const flows = await flowRepo().findBy({
-            status: FlowStatus.ENABLED,
-        })
-        return Promise.all(flows.map(async (flow) => this.getOnePopulatedOrThrow({
-            id: flow.id,
-            projectId: flow.projectId,
-            versionId: flow.publishedVersionId ?? undefined,
-        })))
-    },
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
         const flows = await flowRepo().findBy({
@@ -628,18 +655,23 @@ type CreateParams = {
     externalId?: string
 }
 
-type ListParams = {
-    projectId: ProjectId
-    cursorRequest: Cursor | null
-    limit: number
-    folderId: string | undefined
-    status: FlowStatus[] | undefined
-    name: string | undefined
+type ListParamsBase = {
+    cursorRequest?: Cursor
+    limit?: number
+    folderId?: string
+    status?: FlowStatus[]
+    name?: string
     versionState?: FlowVersionState
     externalIds?: string[]
     connectionExternalIds?: string[]
     agentExternalIds?: string[]
+    includeTriggerSource?: boolean
 }
+
+type ListParams = ListParamsBase & (
+    | { projectIds: ProjectId[], platformId?: never }
+    | { projectIds?: never, platformId: PlatformId }
+)
 
 type GetOneParams = {
     id: FlowId
