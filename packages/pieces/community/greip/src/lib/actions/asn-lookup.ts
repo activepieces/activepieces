@@ -67,7 +67,7 @@ export const asnLookup = createAction({
 
     return await greipApiCall({
       method: HttpMethod.GET,
-      path: '/asn',
+      path: '/lookup/asn',
       queryParams,
       auth: context.auth,
     });
