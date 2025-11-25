@@ -1,5 +1,4 @@
 import {
-    ContextVersion,
     DropdownProperty,
     DynamicProperties,
     ExecutePropsResult,
@@ -28,8 +27,8 @@ import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, devPieces, executionState, constants, searchValue, contextVersion }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
-        const property = await pieceLoader.getPropOrThrow({
+    async executeProps({ params, devPieces, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
+        const { property, piece } = await pieceLoader.getPropertyOrThrow({
             params,
             devPieces,
         })
@@ -41,7 +40,7 @@ export const pieceHelper = {
                 apiUrl: constants.internalApiUrl,
                 projectId: params.projectId,
                 engineToken: params.engineToken,
-                contextVersion,
+                contextVersion: piece.contextVersion,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -68,7 +67,7 @@ export const pieceHelper = {
                     engineToken: params.engineToken,
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
-                    contextVersion,
+                    contextVersion: piece.contextVersion,
                 }),
             }
           
@@ -192,5 +191,5 @@ export const pieceHelper = {
     },
 }
 
-type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, devPieces: string[], constants: EngineConstants, contextVersion: ContextVersion | undefined }
+type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, devPieces: string[], constants: EngineConstants }
 

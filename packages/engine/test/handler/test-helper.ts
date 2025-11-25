@@ -1,6 +1,5 @@
 import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
-import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
@@ -18,11 +17,6 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             },
             engineToken: params?.engineToken ?? 'engineToken',
             projectId: params?.projectId ?? 'projectId',
-            propsResolver: params?.propsResolver ?? createPropsResolver({
-                projectId: 'projectId',
-                engineToken: 'engineToken',
-                apiUrl: 'http://127.0.0.1:3000',
-            }),
             triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
             progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
             serverHandlerId: params?.serverHandlerId ?? null,

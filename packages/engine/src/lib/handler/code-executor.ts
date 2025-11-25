@@ -1,5 +1,6 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { CodeAction, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
@@ -24,8 +25,8 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const stepStartTime = performance.now()
-    const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<Record<string, unknown>>({
+    const stepStartTime = performance.now() 
+    const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
     })

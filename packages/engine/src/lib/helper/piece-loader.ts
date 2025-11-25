@@ -73,7 +73,7 @@ export const pieceLoader = {
         }
     },
 
-    getPropOrThrow: async ({ params, devPieces }: GetPropParams) => {
+    getPropertyOrThrow: async ({ params, devPieces }: GetPropertyParams) => {
         const { piece: piecePackage, actionOrTriggerName, propertyName } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
@@ -91,9 +91,9 @@ export const pieceLoader = {
             })
         }
 
-        const prop = (actionOrTrigger.props as PiecePropertyMap)[propertyName]
+        const property = (actionOrTrigger.props as PiecePropertyMap)[propertyName]
 
-        if (isNil(prop)) {
+        if (isNil(property)) {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
@@ -105,7 +105,7 @@ export const pieceLoader = {
             })
         }
 
-        return prop
+        return { property, piece }
     },
 
     getPackageAlias: ({ pieceName, pieceVersion, devPieces }: GetPackageAliasParams) => {
@@ -195,7 +195,7 @@ type GetPieceAndActionParams = {
     devPieces: string[]
 }
 
-type GetPropParams = {
+type GetPropertyParams = {
     params: ExecutePropsOptions
     devPieces: string[]
 }

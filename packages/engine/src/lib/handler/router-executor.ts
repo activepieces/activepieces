@@ -1,3 +1,4 @@
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { BranchCondition, BranchExecutionType, BranchOperator, FlowRunStatus, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { EngineGenericError } from '../helper/execution-errors'
@@ -13,7 +14,7 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         executionState,
         constants,
     }) {
-        const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<RouterActionSettings>({
+        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
             unresolvedInput: {
                 ...action.settings,
             },

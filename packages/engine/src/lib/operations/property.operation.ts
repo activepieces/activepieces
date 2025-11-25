@@ -11,7 +11,7 @@ import { pieceHelper } from '../helper/piece-helper'
 
 export const propertyOperation = {
     execute: async (operation: ExecutePropsOptions): Promise<EngineResponse<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>>> => {
-        const input = operation as ExecutePropsOptions
+        const input = operation 
         const output = await pieceHelper.executeProps({
             params: input,
             devPieces: EngineConstants.DEV_PIECES,
