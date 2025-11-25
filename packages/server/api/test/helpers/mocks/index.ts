@@ -34,6 +34,7 @@ import {
     FileType,
     FilteredPieceBehavior,
     Flow,
+    FlowOperationStatus,
     FlowRun,
     FlowRunStatus,
     FlowStatus,
@@ -494,6 +495,7 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
         projectId: flow?.projectId ?? apId(),
         status: flow?.status ?? faker.helpers.enumValue(FlowStatus),
         folderId: flow?.folderId ?? null,
+        operationStatus: flow?.operationStatus ?? FlowOperationStatus.NONE,
         publishedVersionId: flow?.publishedVersionId ?? null,
         externalId: flow?.externalId ?? apId(),
     }
