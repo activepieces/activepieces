@@ -18,7 +18,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         const queueConfig = {
             connection: await redisConnections.create(),
             defaultJobOptions: {
-                attempts: 10,
+                attempts: 2,
                 backoff: {
                     type: 'exponential',
                     delay: FIFTEEN_MINUTES,
