@@ -177,7 +177,7 @@
       ],
       "@activepieces/piece-greip": [
         "packages/pieces/community/greip/src/index.ts"
-      ],
+      ]
     },
     "resolveJsonModule": true
   },
