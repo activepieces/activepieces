@@ -8,15 +8,15 @@ import {
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
-import path from 'path';
-import fs from 'fs/promises';
+import { ContextVersion, LATEST_CONTEXT_VERSION } from './context/versioning';
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
 {
   private readonly _actions: Record<string, Action> = {};
   private readonly _triggers: Record<string, Trigger> = {};
-
+  // can be undefined because older versions didn't have this property
+  public readonly contextVersion: ContextVersion | undefined = LATEST_CONTEXT_VERSION;
   constructor(
     public readonly displayName: string,
     public readonly logoUrl: string,

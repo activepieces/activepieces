@@ -13,18 +13,26 @@ import {
 import {
   InputPropertyMap,
   PiecePropValueSchema,
+  PropertyType,
+  SecretTextProperty,
   StaticPropsValue,
-} from './property';
-import { PieceAuthProperty } from './property/authentication';
+} from '../property';
+import { PieceAuthProperty } from '../property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
-type BaseContext<
+export type BaseContext<
   PieceAuth extends PieceAuthProperty,
   Props extends InputPropertyMap
 > = {
   flows: FlowsContext;
   step: StepContext;
-  auth: PiecePropValueSchema<PieceAuth>;
+  auth: PieceAuth extends SecretTextProperty<boolean> ? {
+    type: PropertyType.SECRET_TEXT;
+    value: {secretText: string};
+  }: {
+    type: Exclude<PieceAuth['type'], PropertyType.SECRET_TEXT>;
+    value: PiecePropValueSchema<PieceAuth>;
+  }
   propsValue: StaticPropsValue<Props>;
   store: Store;
   project: {
@@ -64,6 +72,7 @@ type WebhookTriggerHookContext<
 > = BaseContext<PieceAuth, TriggerProps> & {
   webhookUrl: string;
   payload: TriggerPayload;
+  server: ServerContext;
 };
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty,
@@ -74,9 +83,7 @@ export type TriggerHookContext<
   : S extends TriggerStrategy.POLLING
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
-  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
-      server: ServerContext;
-    }
+  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> 
   : never;
 
 export type TestOrRunHookContext<
@@ -167,7 +174,7 @@ export type OutputContext = {
   }) => Promise<void>;
 }
 
-export type BaseActionContext<
+ type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
   ActionProps extends InputPropertyMap
@@ -177,7 +184,6 @@ export type BaseActionContext<
   server: ServerContext;
   files: FilesService;
   output: OutputContext;
-  serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>,

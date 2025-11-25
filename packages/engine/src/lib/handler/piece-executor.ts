@@ -13,6 +13,7 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { backwardCompatabilityContextUtils } from '@activepieces/pieces-framework'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -124,11 +125,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 target: 'actions',
                 hookResponse: params.hookResponse,
+                contextVersion: piece.contextVersion,
             }),
-            /*
-                @deprecated Use server.publicApiUrl instead.
-            */
-            serverUrl: constants.publicApiUrl,
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
@@ -145,9 +143,14 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
+        const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
+            contextVersion: piece.contextVersion,
+            context,
+            serverUrl: constants.publicApiUrl,
+        })
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
-        const output = await runMethodToExecute(context)
+        const output = await runMethodToExecute(backwardCompatibleContext)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)

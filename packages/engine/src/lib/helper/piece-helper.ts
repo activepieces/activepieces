@@ -26,9 +26,10 @@ import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
+import { ContextVersion } from '@activepieces/pieces-framework'
 
 export const pieceHelper = {
-    async executeProps({ params, devPieces, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
+    async executeProps({ params, devPieces, executionState, constants, searchValue, contextVersion }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
         const property = await pieceLoader.getPropOrThrow({
             params,
             devPieces,
@@ -36,12 +37,12 @@ export const pieceHelper = {
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
             throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property.type} for ${property.displayName}`)
         }
-
         const { data: executePropsResult, error: executePropsError } = await utils.tryCatchAndThrowOnEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
                 projectId: params.projectId,
                 engineToken: params.engineToken,
+                contextVersion,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -68,9 +69,10 @@ export const pieceHelper = {
                     engineToken: params.engineToken,
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
+                    contextVersion,
                 }),
             }
-        
+          
             switch (property.type) {
                 case PropertyType.DYNAMIC: {
                     const dynamicProperty = property as DynamicProperties<boolean>
@@ -191,5 +193,5 @@ export const pieceHelper = {
     },
 }
 
-type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, devPieces: string[], constants: EngineConstants }
+type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, devPieces: string[], constants: EngineConstants, contextVersion: ContextVersion | undefined }
 

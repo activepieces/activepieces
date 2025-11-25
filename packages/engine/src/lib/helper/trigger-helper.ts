@@ -12,6 +12,7 @@ import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
 import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
+import { backwardCompatabilityContextUtils } from '@activepieces/pieces-framework'
 
 type Listener = {
     events: string[]
@@ -27,7 +28,7 @@ export const triggerHelper = {
             throw new EngineGenericError('TriggerNameNotSetError', 'Trigger name is not set')
         }
 
-        const { pieceTrigger, processedInput } = await prepareTriggerExecution({
+        const { pieceTrigger, processedInput, piece} = await prepareTriggerExecution({
             pieceName,
             pieceVersion,
             triggerName,
@@ -67,9 +68,9 @@ export const triggerHelper = {
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
                 target: 'triggers',
+                contextVersion: piece.contextVersion,
             }),
         }
-
         await pieceTrigger.onStart(context)
     },
 
@@ -144,6 +145,7 @@ export const triggerHelper = {
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
                 target: 'triggers',
+                contextVersion: piece.contextVersion,
             }),
         }
         switch (params.hookType) {
@@ -284,6 +286,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         apiUrl,
         projectId,
         engineToken,
+        contextVersion: piece.contextVersion,
     }).resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState: FlowExecutorContext.empty(),
