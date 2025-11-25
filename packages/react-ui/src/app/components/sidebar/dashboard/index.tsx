@@ -254,7 +254,7 @@ export function ProjectDashboardSidebar() {
                           <TooltipContent className="max-w-[250px]">
                             <p className="text-xs mb-1">
                               {t(
-                                'You reached the limit of 1 project on the free plan.',
+                                'Upgrade your plan to create additional team projects.',
                               )}{' '}
                               <button
                                 className="text-xs text-primary underline hover:no-underline"
@@ -265,7 +265,7 @@ export function ProjectDashboardSidebar() {
                                   )
                                 }
                               >
-                                {t('View pricing')}
+                                {t('View Plans')}
                               </button>
                             </p>
                           </TooltipContent>
