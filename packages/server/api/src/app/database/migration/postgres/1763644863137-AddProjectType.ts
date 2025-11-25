@@ -24,6 +24,7 @@ enum ColorName {
 }
 
 const COLORS = Object.values(ColorName)
+const BATCH_SIZE = 1000
 
 export class AddProjectType1763644863137 implements MigrationInterface {
     name = 'AddProjectType1763644863137'
@@ -56,44 +57,50 @@ export class AddProjectType1763644863137 implements MigrationInterface {
                 excludedUsers: excludedUsers.length,
             }, 'AddProjectType1763644863137 up')
         }
-   
-        
+
         if (users.length > 0) {
-            const values: string[] = []
-            const params: (string | boolean)[] = []
-            let paramIndex = 1
+            const eligibleUsers = users.filter((user: { id: string }) => !excludedUsers.includes(user.id))
+            let totalCreated = 0
+            for (let i = 0; i < eligibleUsers.length; i += BATCH_SIZE) {
+                const batch = eligibleUsers.slice(i, i + BATCH_SIZE)
+                const values: string[] = []
+                const params: (string | boolean)[] = []
+                let paramIndex = 1
 
-            for (const user of users) {
-                if (excludedUsers.includes(user.id)) {
-                    continue
+                for (const user of batch) {
+                    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)]
+
+                    const id = apId()
+                    const created = new Date().toISOString()
+                    const updated = new Date().toISOString()
+                    const ownerId = user.id
+                    const displayName = user.firstName + '\'s Project'
+                    const type = ProjectType.PERSONAL
+                    const platformId = user.platformId
+                    const icon = JSON.stringify({ color: randomColor })
+                    const releasesEnabled = false
+
+                    values.push(
+                        `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7}, $${paramIndex + 8})`,
+                    )
+                    params.push(id, created, updated, ownerId, displayName, type, platformId, icon, releasesEnabled)
+                    paramIndex += 9
                 }
-                const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)]
 
-                const id = apId()
-                const created = new Date().toISOString()
-                const updated = new Date().toISOString()
-                const ownerId = user.id
-                const displayName = user.firstName + '\'s Project'
-                const type = ProjectType.PERSONAL
-                const platformId = user.platformId
-                const icon = JSON.stringify({ color: randomColor })
-                const releasesEnabled = false
-
-                values.push(
-                    `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7}, $${paramIndex + 8})`,
-                )
-                params.push(id, created, updated, ownerId, displayName, type, platformId, icon, releasesEnabled)
-                paramIndex += 9
+                if (values.length > 0) {
+                    await queryRunner.query(
+                        `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
+                        VALUES ${values.join(', ')}`,
+                        params,
+                    )
+                    totalCreated += values.length
+                    system.globalLogger().info({
+                        projectsCreated: totalCreated,
+                        batchSize: values.length,
+                        batchStart: i,
+                    }, 'AddProjectType1763644863137 up BATCH')
+                }
             }
-            
-            await queryRunner.query(
-                `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
-                VALUES ${values.join(', ')}`,
-                params,
-            )
-            system.globalLogger().info({
-                projectsCreated: values.length,
-            }, 'AddProjectType1763644863137 up')
         }
 
         await queryRunner.query(`
@@ -105,10 +112,9 @@ export class AddProjectType1763644863137 implements MigrationInterface {
         await queryRunner.query(`
             DELETE FROM "project" WHERE "type" = '${ProjectType.PERSONAL}'
         `)
-        
+
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "type"
         `)
     }
-
 }

@@ -1,5 +1,6 @@
 import {
     CreatePlatformProjectRequest,
+    ListProjectRequestForPlatformQueryParams,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import {
@@ -12,6 +13,7 @@ import {
     PlatformRole,
     Principal,
     PrincipalType,
+    ProjectType,
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -43,6 +45,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             externalId: request.body.externalId ?? undefined,
             metadata: request.body.metadata ?? undefined,
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
+            type: ProjectType.TEAM,
         })
         await projectLimitsService(request.log).upsert({
             nickname: 'platform',
@@ -55,17 +58,19 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
-    app.get('/', ListProjectRequestForApiKey, async (request) => {
-        const platformId = request.principal.platform.id
-        assertNotNullOrUndefined(platformId, 'platformId')
+    app.get('/', ListProjectRequestForPlatform, async (request, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
 
         const userId = await getUserId(request.principal)
         return platformProjectService(request.log).getAllForPlatform({
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
             cursorRequest: request.query.cursor ?? null,
+            displayName: request.query.displayName,
+            types: request.query.types,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             userId,
+            scope: EndpointScope.PLATFORM,
         })
     })
 
@@ -105,10 +110,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 async function getUserId(principal: Principal): Promise<string> {
     if (principal.type === PrincipalType.SERVICE) {
         const platform = await platformService.getOneOrThrow(principal.platform.id)
-        const user = await userService.getOneOrFail({
-            id: platform.ownerId,
-        })
-        return user.id
+        return platform.ownerId
     }
     return principal.id
 }
@@ -171,20 +173,16 @@ const CreateProjectRequest = {
     },
 }
 
-const ListProjectRequestForApiKey = {
+const ListProjectRequestForPlatform = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE] as const,
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
-        querystring: Type.Object({
-            externalId: Type.Optional(Type.String()),
-            limit: Type.Optional(Type.Number({})),
-            cursor: Type.Optional(Type.String({})),
-        }),
+        querystring: ListProjectRequestForPlatformQueryParams,
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },

@@ -55,6 +55,7 @@ import {
     ProjectRelease,
     ProjectReleaseType,
     ProjectRole,
+    ProjectType,
     Record,
     RoleType,
     RunEnvironment,
@@ -191,6 +192,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
         metadata: project?.metadata ?? null,
+        type: project?.type ?? ProjectType.TEAM,
         icon,
     }
 }

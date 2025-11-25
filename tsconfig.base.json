@@ -145,11 +145,38 @@
       "@activepieces/piece-griptape": [
         "packages/pieces/community/griptape/src/index.ts"
       ],
+      "@activepieces/piece-bexio": [
+        "packages/pieces/community/bexio/src/index.ts"
+      ],
       "@activepieces/piece-pushbullet": [
         "packages/pieces/community/pushbullet/src/index.ts"
       ],
       "@activepieces/piece-denser-ai": [
         "packages/pieces/community/denser-ai/src/index.ts"
+      ],
+      "@activepieces/piece-ask-handle": [
+        "packages/pieces/community/ask-handle/src/index.ts"
+      ],
+      "@activepieces/piece-phantombuster": [
+        "packages/pieces/community/phantombuster/src/index.ts"
+      ],
+      "@activepieces/piece-openmic-ai": [
+        "packages/pieces/community/openmic-ai/src/index.ts"
+      ],
+      "@activepieces/piece-datafuel": [
+        "packages/pieces/community/datafuel/src/index.ts"
+      ],
+      "@activepieces/piece-doctly": [
+        "packages/pieces/community/doctly/src/index.ts"
+      ],
+      "@activepieces/piece-chatnode": [
+        "packages/pieces/community/chatnode/src/index.ts"
+      ],
+      "@activepieces/piece-greip": [
+        "packages/pieces/community/greip/src/index.ts"
+      ],
+      "@activepieces/piece-chaindesk": [
+        "packages/pieces/community/chaindesk/src/index.ts"
       ]
     },
     "resolveJsonModule": true
