@@ -28,6 +28,7 @@ import { EditProjectDialog } from '@/features/projects/components/edit-project-d
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { platformProjectApi } from '@/lib/platform-project-api';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
@@ -64,12 +65,12 @@ export default function ProjectsPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['projects', searchParams.toString()],
     staleTime: 0,
-    queryFn: () => {
+    queryFn: async () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
       const displayName = searchParams.get('displayName') ?? undefined;
       const types = searchParams.getAll('type') as ProjectType[];
-      return projectApi.list({
+      return await platformProjectApi.list({
         cursor: cursor ?? undefined,
         limit: limit ? parseInt(limit) : undefined,
         displayName,
