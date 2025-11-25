@@ -153,6 +153,9 @@
       ],
       "@activepieces/piece-denser-ai": [
         "packages/pieces/community/denser-ai/src/index.ts"
+      ],
+      "@activepieces/piece-datafuel": [
+        "packages/pieces/community/datafuel/src/index.ts"
       ]
     },
     "resolveJsonModule": true
