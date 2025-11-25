@@ -159,6 +159,9 @@
       ],
       "@activepieces/piece-phantombuster": [
         "packages/pieces/community/phantombuster/src/index.ts"
+      ],
+      "@activepieces/piece-openmic-ai": [
+        "packages/pieces/community/openmic-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true

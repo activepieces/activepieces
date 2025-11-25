@@ -18,7 +18,7 @@ export const askHandle = createPiece({
     createMessage,
     createLead,
     listRooms,
-    listLeads,
+    listLeads,    
   ],
   triggers: [
     newMessageTrigger,
