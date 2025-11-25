@@ -28,6 +28,7 @@ import {
   PROJECT_COLOR_PALETTE,
   ProjectIcon,
   ProjectType,
+  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 export type FormValues = {
@@ -136,7 +137,7 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
             </div>
           </div>
         )}
-        {platform.plan.manageProjectsEnabled && (
+        {platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               name="aiCredits"

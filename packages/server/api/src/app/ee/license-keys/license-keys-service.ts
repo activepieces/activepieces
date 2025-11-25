@@ -1,5 +1,5 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TelemetryEventName } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -129,6 +129,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
+        const teamProjectsLimit = key.manageProjectsEnabled ? TeamProjectsLimit.UNLIMITED : system.getEdition() === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
         await platformService.update({
             id: platformId,
             plan: {
@@ -143,7 +144,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customAppearanceEnabled: key.customAppearanceEnabled,
                 globalConnectionsEnabled: key.globalConnectionsEnabled,
                 customRolesEnabled: key.customRolesEnabled,
-                manageProjectsEnabled: key.manageProjectsEnabled,
+                teamProjectsLimit,
                 managePiecesEnabled: key.managePiecesEnabled,
                 mcpsEnabled: key.mcpsEnabled,
                 todosEnabled: key.todosEnabled,

@@ -32,6 +32,7 @@ import {
   ProjectWithLimits,
   ApErrorParams,
   ErrorCode,
+  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 interface EditProjectDialogProps {
@@ -164,7 +165,7 @@ export function EditProjectDialog({
               )}
             />
 
-            {platform.plan.manageProjectsEnabled && (
+            {platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE && (
               <FormField
                 name="aiCredits"
                 render={({ field }) => (

@@ -78,6 +78,13 @@ export const projectService = {
         return projects.map((project) => project.id)
     },
 
+    async countByPlatformIdAndType(platformId: string, type: ProjectType): Promise<number> {
+        return projectRepo().countBy({
+            platformId,
+            type,
+        })
+    },
+
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)

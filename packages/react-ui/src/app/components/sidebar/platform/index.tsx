@@ -25,7 +25,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
 import { ApSidebareGroup, SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem } from '../ap-sidebar-item';
@@ -57,7 +57,7 @@ export function PlatformSidebar() {
       to: '/platform/projects',
       label: t('Projects'),
       icon: LayoutGrid,
-      locked: !platform.plan.manageProjectsEnabled,
+      locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
       isSubItem: false,
       show: true,
     },
