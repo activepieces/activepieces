@@ -22,14 +22,24 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         procps \
         locales \
         locales-all \
+        unzip \
+        curl \
+        ca-certificates \
         libcap-dev && \
     yarn config set python /usr/bin/python3
+
+# Install bun using official curl installer
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.1"
+
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="${BUN_INSTALL}/bin:${PATH}"
+
+RUN bun --version
 
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
     node-gyp \
-    bun@1.3.1 \
     npm@9.9.3 \
     pm2@6.0.10 \
     typescript@4.9.4
