@@ -159,6 +159,12 @@
       ],
       "@activepieces/piece-phantombuster": [
         "packages/pieces/community/phantombuster/src/index.ts"
+      ],
+      "@activepieces/piece-datafuel": [
+        "packages/pieces/community/datafuel/src/index.ts"
+      ],
+      "@activepieces/piece-doctly": [
+        "packages/pieces/community/doctly/src/index.ts"
       ]
     },
     "resolveJsonModule": true
