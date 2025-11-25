@@ -76,7 +76,7 @@ export const emailValidation = createAction({
 
     return await greipApiCall({
       method: HttpMethod.GET,
-      path: '/email',
+      path: '/scoring/email',
       queryParams,
       auth: context.auth,
     });

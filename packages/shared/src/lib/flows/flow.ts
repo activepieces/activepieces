@@ -11,6 +11,13 @@ export enum FlowStatus {
     DISABLED = 'DISABLED',
 }
 
+export enum FlowOperationStatus {
+    NONE = 'NONE',
+    DELETING = 'DELETING',
+    ENABLING = 'ENABLING',
+    DISABLING = 'DISABLING',
+}
+
 export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
 
 export type FlowExecutionState = {
@@ -29,6 +36,7 @@ export const Flow = Type.Object({
     status: Type.Enum(FlowStatus),
     publishedVersionId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
+    operationStatus: Type.Enum(FlowOperationStatus),
 })
 
 export type Flow = Static<typeof Flow>
