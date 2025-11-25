@@ -14,8 +14,8 @@ export enum FlowStatus {
 export enum FlowOperationStatus {
     NONE = 'NONE',
     DELETING = 'DELETING',
-    PUBLISHING = 'PUBLISHING',
-    UNPUBLISHING = 'UNPUBLISHING',
+    ENABLING = 'ENABLING',
+    DISABLING = 'DISABLING',
 }
 
 export const flowExecutionStateKey = (flowId: FlowId) => `flow-execution-state:${flowId}`
