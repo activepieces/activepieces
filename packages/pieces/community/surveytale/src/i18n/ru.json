@@ -1,9 +1,7 @@
 {
-  "SurveyTale": "Формбрики",
-  "Open source Survey Platform": "Платформа опросов с открытым исходным кодом",
-  "APP URL": "URL приложения",
+  "SurveyTale": "SurveyTale",
   "API Key": "Ключ API",
-  "\n  **Enable Basic Authentication:**\n  1. Login to your SurveyTale account\n  2. On the top-right, click on your account dropdown\n  3. Select 'Product Settings'\n  4. On the left, select 'API Keys'\n  5. Click on 'Add Production API Key'\n  6. On the popup form, enter the 'API Key Label' to name the Key\n  7. Copy the API key and paste it below.\n\n  **APP URL:**\n  - The API URL for SurveyTale example the cloud is at https://app.surveytale.com\n  - **Note: make sure there is no trailing slash and no /api**\n": "\n  **Включить базовую аутентификацию:**\n  1. Войдите в свою учетную запись SurveyTale\n  2. В правом верхнем углу выберите раскрывающийся список\n  3. Выберите «Настройки товара»\n  4. Слева выберите «API Keys»\n  5. Нажмите на 'Add Production API Key'\n  6. На всплывающей форме введите 'API Key Label' для названия ключа\n  7. Скопируйте ключ API и вставьте его ниже.\n\n  **URL-адрес приложения:**\n  — URL-адрес API для SurveyTale, например, облако https://app. ormbricks.com\n  - **Примечание: не существует конечной черты и нет /api**\n",
+  "\n  **How to get your API Key:**\n  1. Login to your SurveyTale account\n  2. On the bottom-left, click on your account dropdown\n  3. Select 'Organization' from the popup menu\n  4. Select the 'API Keys' tab\n  5. Click on 'Add API Key'\n  6. On the popup form, enter the 'API Key Label' and under Project Access click \"Add Permission\", select the desired project and assign \"Read\" permission\n  7. Copy the API key and paste it below.\n": "\n  **Как получить ключ API:**\n  1. Войдите в свою учетную запись SurveyTale\n  2. В левом нижнем углу нажмите на выпадающее меню вашей учетной записи\n  3. Выберите 'Organization' во всплывающем меню\n  4. Выберите вкладку 'API Keys'\n  5. Нажмите 'Add API Key'\n  6. В форме введите 'API Key Label' и в разделе Project Access нажмите \"Add Permission\", выберите нужный проект и назначьте разрешение \"Read\"\n  7. Скопируйте ключ API и вставьте его ниже.\n",
   "Custom API Call": "Пользовательский вызов API",
   "Make a custom API call to a specific endpoint": "Сделать пользовательский API вызов к определенной конечной точке",
   "Method": "Метод",

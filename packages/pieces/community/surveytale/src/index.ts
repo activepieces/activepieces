@@ -6,69 +6,47 @@ import {
 import {
   createPiece,
   PieceAuth,
-  PiecePropValueSchema,
-  Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
 
-const markdownPropertyDescription = `
-  **Enable Basic Authentication:**
-  1. Login to your SurveyTale account
-  2. On the top-right, click on your account dropdown
-  3. Select 'Product Settings'
-  4. On the left, select 'API Keys'
-  5. Click on 'Add Production API Key'
-  6. On the popup form, enter the 'API Key Label' to name the Key
-  7. Copy the API key and paste it below.
+export const SURVEYTALE_BASE_URL = 'https://app.surveytale.com';
 
-  **APP URL:**
-  - The API URL for SurveyTale example the cloud is at https://app.surveytale.com
-  - **Note: make sure there is no trailing slash and no /api**
+const markdownPropertyDescription = `
+  **How to get your API Key:**
+  1. Login to your SurveyTale account
+  2. On the bottom-left, click on your account dropdown
+  3. Select 'Organization' from the popup menu
+  4. Select the 'API Keys' tab
+  5. Click on 'Add API Key'
+  6. On the popup form, enter the 'API Key Label' and under Project Access click "Add Permission", select the desired project and assign "Read" permission
+  7. Copy the API key and paste it below.
 `;
 
-export type SurveyTaleAuthType = {
-  appUrl: string;
-  apiKey: string;
-};
-
-export const surveyTaleAuth = PieceAuth.CustomAuth({
+export const surveyTaleAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
   required: true,
   description: markdownPropertyDescription,
-  props: {
-    appUrl: Property.ShortText({
-      displayName: 'APP URL',
-      required: true,
-      defaultValue: 'https://app.surveytale.com',
-    }),
-    apiKey: Property.ShortText({
-      displayName: 'API Key',
-      required: true,
-    }),
-  },
   validate: async ({ auth }) => {
     try {
-      const authValue = auth as PiecePropValueSchema<typeof surveyTaleAuth>;
-      console.log('[SurveyTale] Starting validation...', { url: authValue.appUrl });
+      const apiKey = auth as string;
 
-      const response = await httpClient.sendRequest({
+      await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${authValue.appUrl}/api/v1/management/me`,
+        url: `${SURVEYTALE_BASE_URL}/api/v1/management/me`,
         headers: {
-          'x-api-key': authValue.apiKey,
+          'x-api-key': apiKey,
         },
-        timeout: 10000, // 10 second timeout
+        timeout: 10000,
       });
 
-      console.log('[SurveyTale] Validation successful!', { status: response.status });
       return {
         valid: true,
       };
     } catch (error) {
-      console.error('[SurveyTale] Validation failed:', error);
       return {
         valid: false,
-        error: `Connection failed: ${error instanceof Error ? error.message : 'Please check your APP URL and API key'}`,
+        error: `Connection failed: ${error instanceof Error ? error.message : 'Please check your API key'}`,
       };
     }
   },
@@ -87,10 +65,10 @@ export const surveytale = createPiece({
       auth: surveyTaleAuth,
       authMapping: async (auth) => {
         return {
-          'x-api-key': (auth as SurveyTaleAuthType).apiKey,
+          'x-api-key': auth as string,
         };
       },
-      baseUrl: (auth) => `${(auth as SurveyTaleAuthType).appUrl}/api/v1`,
+      baseUrl: () => `${SURVEYTALE_BASE_URL}/api/v1`,
     }),
   ],
   triggers,

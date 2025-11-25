@@ -1,5 +1,4 @@
 import {
-  PiecePropValueSchema,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -9,7 +8,7 @@ import {
   HttpRequest,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { surveyTaleAuth } from '../..';
+import { surveyTaleAuth, SURVEYTALE_BASE_URL } from '../..';
 
 export const surveyTaleRegisterTrigger = ({
   name,
@@ -45,13 +44,13 @@ export const surveyTaleRegisterTrigger = ({
             };
           }
 
-          const authValue = auth as PiecePropValueSchema<typeof surveyTaleAuth>;
+          const apiKey = auth as string;
 
           const response = await httpClient.sendRequest<{ data: Survey[] }>({
             method: HttpMethod.GET,
-            url: `${authValue.appUrl}/api/v1/management/surveys`,
+            url: `${SURVEYTALE_BASE_URL}/api/v1/management/surveys`,
             headers: {
-              'x-api-key': authValue.apiKey,
+              'x-api-key': apiKey,
             },
           });
 
@@ -78,16 +77,17 @@ export const surveyTaleRegisterTrigger = ({
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
+      const apiKey = context.auth as string;
       const response = await httpClient.sendRequest<WebhookInformation>({
         method: HttpMethod.POST,
-        url: `${context.auth.appUrl}/api/v1/webhooks`,
+        url: `${SURVEYTALE_BASE_URL}/api/v1/webhooks`,
         body: {
           url: context.webhookUrl,
           triggers: [eventType],
           surveyIds: context.propsValue.survey_id ?? [],
         },
         headers: {
-          'x-api-key': context.auth.apiKey as string,
+          'x-api-key': apiKey,
         },
       });
       await context.store.put<WebhookInformation>(
@@ -96,15 +96,16 @@ export const surveyTaleRegisterTrigger = ({
       );
     },
     async onDisable(context) {
+      const apiKey = context.auth as string;
       const webhook = await context.store.get<WebhookInformation>(
         `surveytale_${name}_trigger`
       );
       if (webhook?.data.id != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
-          url: `${context.auth.appUrl}/api/v1/webhooks/${webhook.data.id}`,
+          url: `${SURVEYTALE_BASE_URL}/api/v1/webhooks/${webhook.data.id}`,
           headers: {
-            'x-api-key': context.auth.apiKey as string,
+            'x-api-key': apiKey,
           },
         };
         await httpClient.sendRequest(request);
