@@ -18,8 +18,50 @@ export async function askHandleApiCall(
       },
       body,
     });
-    return response.body;
+
+    if (response.status >= 200 && response.status < 300) {
+      return response.body;
+    }
+
+    throw new Error(
+      `AskHandle API error: ${response.status} ${JSON.stringify(response.body)}`
+    );
   } catch (error: any) {
+    const statusCode = error.response?.status;
+    const errorData = error.response?.body || error.response?.data;
+
+    if (statusCode) {
+      switch (statusCode) {
+        case 400:
+          throw new Error(
+            `Bad Request: Invalid request parameters. Please check your data.`
+          );
+        case 401:
+          throw new Error(
+            'Authentication Failed: Invalid API key. Please verify your AskHandle credentials.'
+          );
+        case 403:
+          throw new Error(
+            'Access Forbidden: You do not have permission to access this resource.'
+          );
+        case 404:
+          throw new Error(
+            'Resource Not Found: The requested resource does not exist.'
+          );
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          throw new Error(
+            `Server Error (${statusCode}): AskHandle API is experiencing issues. Please try again later.`
+          );
+        default:
+          throw new Error(
+            `AskHandle API Error (${statusCode}): ${error.message || 'Unknown error occurred'}`
+          );
+      }
+    }
+
     throw new Error(`Unexpected error: ${error.message || String(error)}`);
   }
 }
