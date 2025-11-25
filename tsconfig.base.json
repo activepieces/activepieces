@@ -154,7 +154,7 @@
       "@activepieces/piece-denser-ai": [
         "packages/pieces/community/denser-ai/src/index.ts"
       ],
-      "@activepieces/piece-oracle-fusion-erp": [
+"@activepieces/piece-oracle-fusion-erp": [
         "packages/pieces/community/oracle-fusion-erp/src/index.ts"
       ],
       "@activepieces/piece-ask-handle": [
@@ -177,6 +177,9 @@
       ],
       "@activepieces/piece-greip": [
         "packages/pieces/community/greip/src/index.ts"
+      ],
+      "@activepieces/piece-chaindesk": [
+        "packages/pieces/community/chaindesk/src/index.ts" main
       ]
     },
     "resolveJsonModule": true
