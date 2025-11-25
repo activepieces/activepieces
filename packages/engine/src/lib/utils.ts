@@ -1,11 +1,10 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
-import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { Result, tryCatch } from '@activepieces/shared'
 import { ExecutionError, ExecutionErrorType } from './helper/execution-errors'
 import { createConnectionService } from './services/connections.service'
-import { ContextVersion } from 'packages/pieces/community/framework/src/lib/context/versioning'
 
 export type FileEntry = {
     name: string

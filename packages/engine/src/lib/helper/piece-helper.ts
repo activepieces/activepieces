@@ -1,4 +1,5 @@
 import {
+    ContextVersion,
     DropdownProperty,
     DynamicProperties,
     ExecutePropsResult,
@@ -7,8 +8,7 @@ import {
     PiecePropertyMap,
     pieceTranslation,
     PropertyType,
-    StaticPropsValue,
-} from '@activepieces/pieces-framework'
+    StaticPropsValue } from '@activepieces/pieces-framework'
 import {
     BasicAuthConnectionValue,
     CustomAuthConnectionValue,
@@ -26,7 +26,6 @@ import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
-import { ContextVersion } from '@activepieces/pieces-framework'
 
 export const pieceHelper = {
     async executeProps({ params, devPieces, executionState, constants, searchValue, contextVersion }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {

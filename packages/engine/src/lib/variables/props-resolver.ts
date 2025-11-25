@@ -1,10 +1,10 @@
+import { ContextVersion } from '@activepieces/pieces-framework'
 import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from '../services/connections.service'
 import { utils } from '../utils'
-import { ContextVersion } from 'packages/pieces/community/framework/src/lib/context/versioning'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
@@ -54,7 +54,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
     resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>,
-    contextVersion: ContextVersion | undefined
+    contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
     let longestResultLength = 0
@@ -63,7 +63,7 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
         resolvedValues[tokenPart] = await resolveSingleToken({
             ...resolveOptions,
             variableName,
-            contextVersion: contextVersion,
+            contextVersion,
         })
         if (Array.isArray(resolvedValues[tokenPart])) {
             longestResultLength = Math.max(longestResultLength, resolvedValues[tokenPart].length)
@@ -138,7 +138,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (censoredInput) {
         return '**REDACTED**'
     }
-    const connection = await createConnectionService({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion}).obtain(connectionName)
+    const connection = await createConnectionService({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection

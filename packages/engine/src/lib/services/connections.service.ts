@@ -1,9 +1,8 @@
+import { BaseContext, ContextVersion, InputPropertyMap, PieceAuthProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, isNil } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 import { utils } from '../utils'
-import { BaseContext, InputPropertyMap, PieceAuthProperty, PropertyType } from '@activepieces/pieces-framework'
-import { ContextVersion } from '@activepieces/pieces-framework'
     
 export const createConnectionService = ({ projectId, engineToken, apiUrl, contextVersion }: CreateConnectionServiceParams): ConnectionService => {
     return {
@@ -59,7 +58,7 @@ const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
 
 const getConnectionValue = (connection: AppConnection, contextVersion: ContextVersion | undefined): ConnectionValue => {
     //for backward compatibility, we need to return the connection value as is
-    if(isNil(contextVersion)) {
+    if (isNil(contextVersion)) {
         switch (connection.value.type) {
             case AppConnectionType.SECRET_TEXT:
                 return connection.value.secret_text as unknown as ConnectionValue
@@ -94,7 +93,7 @@ const getConnectionValue = (connection: AppConnection, contextVersion: ContextVe
         case AppConnectionType.OAUTH2:
             return {
                 type: PropertyType.OAUTH2,
-                value: connection.value
+                value: connection.value,
             }
         case AppConnectionType.NO_AUTH:
             return {
