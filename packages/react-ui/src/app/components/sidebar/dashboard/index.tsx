@@ -30,14 +30,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
-  ApEdition,
-  ApFlagId,
   isNil,
   PlatformRole,
   ProjectType,
@@ -225,7 +222,7 @@ export function ProjectDashboardSidebar() {
                 <div className="flex items-center gap-1">
                   {shouldShowNewProjectButton && (
                     <>
-                      {false ? (
+                      {!shouldDisableNewProjectButton ? (
                         <NewProjectDialog
                           onCreate={() => {
                             refetchProjects();
