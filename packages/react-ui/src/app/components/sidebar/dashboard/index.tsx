@@ -187,7 +187,7 @@ export function ProjectDashboardSidebar() {
                       size="icon"
                       className="h-6 w-6 hover:bg-accent"
                     >
-                      <Search className="text-muted-foreground" />
+                      <Search />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
