@@ -43,10 +43,15 @@ function OAuth2ConnectionSettings({
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
   }>();
-  const isClientIdValid = isNil(form.formState.errors.request?.value?.client_id);
-  const isClientSecretValid = oauth2App.oauth2Type !== AppConnectionType.OAUTH2 || form.getValues('request.value.client_secret');
+  const isClientIdValid = isNil(
+    form.formState.errors.request?.value?.client_id,
+  );
+  const isClientSecretValid =
+    oauth2App.oauth2Type !== AppConnectionType.OAUTH2 ||
+    form.getValues('request.value.client_secret');
   const isPropsValid = isNil(form.formState.errors.request?.value?.props);
-  const isConnectButtonEnabled = isClientIdValid && isClientSecretValid && isPropsValid;
+  const isConnectButtonEnabled =
+    isClientIdValid && isClientSecretValid && isPropsValid;
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
@@ -154,7 +159,6 @@ function OAuth2ConnectionSettings({
 
 OAuth2ConnectionSettings.displayName = 'OAuth2ConnectionSettings';
 export { OAuth2ConnectionSettings };
-
 
 async function openPopup(
   redirectUrl: string,
