@@ -185,12 +185,15 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
     async getIdsOfProjects({
         userId,
         platformId,
+        isPrivilegedUser,
     }: GetIdsOfProjectsParams): Promise<string[]> {
         const edition = system.getEdition()
         if (edition === ApEdition.COMMUNITY) {
             return []
         }
-        const members = await repo().findBy({
+        const members = isPrivilegedUser ? await repo().findBy({
+            platformId: Equal(platformId),
+        }) : await repo().findBy({
             userId,
             platformId: Equal(platformId),
         })
@@ -215,6 +218,7 @@ type ListParams = {
 type GetIdsOfProjectsParams = {
     userId: UserId
     platformId: PlatformId
+    isPrivilegedUser?: boolean
 }
 
 type UpsertParams = {
