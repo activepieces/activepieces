@@ -1,8 +1,8 @@
-import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     EngineResponseStatus,
-    ExecuteActionResponse,
+    ExecuteToolResponse,
+    ExecutionToolStatus,
     isNil,
     McpFlowRunMetadata,
     McpFlowTool,
@@ -16,15 +16,11 @@ import {
     TelemetryEventName,
     WorkerJobType,
 } from '@activepieces/shared'       
-import { openai } from '@ai-sdk/openai'
-import { LanguageModelV2 } from '@ai-sdk/provider'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -35,7 +31,6 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
 import { mcpUtils } from '../mcp-utils'
-import { toolInputsResolver } from '../tool/tool-inputs-resolver'
 
 
 export async function createMcpServer({
@@ -61,38 +56,6 @@ export async function createMcpServer({
     })
     await Promise.all(addedToolPromise)
     return { server }
-}
-
-async function initializeOpenAIModel({
-    platformId,
-    projectId,
-    mcpId,
-}: {
-    platformId: string
-    projectId: string
-    mcpId: string
-}): Promise<LanguageModelV2> {
-    const model = 'gpt-4.1'
-    const baseURL = await domainHelper.getPublicApiUrl({
-        path: '/v1/ai-providers/proxy/openai',
-        platformId,
-    })
-
-    const engineToken = await accessTokenManager.generateEngineToken({
-        platformId,
-        projectId,
-    })
-
-    return createAIModel({
-        providerName: 'openai',
-        modelInstance: openai(model),
-        engineToken,
-        baseURL,
-        metadata: {
-            feature: AIUsageFeature.MCP,
-            mcpid: mcpId,
-        },
-    })
 }
 
 async function addPieceToServer(
@@ -131,28 +94,9 @@ async function addPieceToServer(
         toolSchema,
         async (params) => {
             try {
-                const aiModel = await initializeOpenAIModel({
-                    platformId,
-                    projectId,
-                    mcpId: mcpTool.mcpId,
-                })
-                
-                const auth = !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
-                
-                const parsedInputs = await toolInputsResolver.resolve({
-                    auth,
-                    userInstructions: params.instructions,
-                    actionName: toolPieceMetadata.actionName,
-                    pieceName: toolPieceMetadata.pieceName,
-                    pieceVersion: toolPieceMetadata.pieceVersion,
-                    aiModel,
-                    projectId,
-                    platformId,
-                    preDefinedInputs: {},
-                })
 
-                const result = await userInteractionWatcher(logger)
-                    .submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                const engineResponse = await userInteractionWatcher(logger)
+                    .submitAndWaitForResponse<EngineHelperResponse<ExecuteToolResponse>>({
                     jobType: WorkerJobType.EXECUTE_TOOL,
                     platformId,
                     actionName: toolPieceMetadata.actionName,
@@ -160,12 +104,17 @@ async function addPieceToServer(
                     pieceVersion: toolPieceMetadata.pieceVersion,
                     packageType: pieceMetadata.packageType,
                     pieceType: pieceMetadata.pieceType,
-                    input: parsedInputs,
+                    predefinedInput: {
+                        auth: !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
+                    },
+                    instruction: params.instructions,
                     projectId,
                 })
 
                 trackToolCall({ mcpId: mcpTool.mcpId, toolName: toolActionName, projectId, logger })
-                const success = result.status === EngineResponseStatus.OK && result.result.success
+
+                const mcpResult = engineResponse.result
+                const success = engineResponse.status === EngineResponseStatus.OK && mcpResult.status === ExecutionToolStatus.SUCCESS
 
                 await saveMcpRunOrSkip({
                     mcpId: mcpTool.mcpId,
@@ -177,8 +126,8 @@ async function addPieceToServer(
                         actionName: toolPieceMetadata.actionName,
                     },
                     input: params,
-                    output: result.result.output as Record<string, unknown>,
-                    status: success ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
+                    output: mcpResult.output as unknown as Record<string, unknown>,
+                    status: mcpResult.status === ExecutionToolStatus.SUCCESS ? McpRunStatus.SUCCESS : McpRunStatus.FAILED,
                     logger,
                 })
 
@@ -187,9 +136,9 @@ async function addPieceToServer(
                         success: true,
                         content: [{
                             type: 'text',
-                            text: `${JSON.stringify(result.result.output, null, 2)}`,
+                            text: `${JSON.stringify(engineResponse.result.output, null, 2)}`,
                         }],
-                        resolvedFields: parsedInputs,
+                        resolvedFields: mcpResult.resolvedInput,
                     }
                 }
                 else {
@@ -197,9 +146,9 @@ async function addPieceToServer(
                         success: false,
                         content: [{
                             type: 'text',
-                            text: `${JSON.stringify(result.standardError || result.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
+                            text: `${JSON.stringify(engineResponse.standardError || engineResponse.result.output || { error: 'Unknown engine error occurred' }, null, 2)}`,
                         }],
-                        resolvedFields: parsedInputs,
+                        resolvedFields: mcpResult.resolvedInput,
                     }
                 }
             }

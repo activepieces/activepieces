@@ -80,7 +80,8 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
     pieceVersion: string
-    input: Record<string, unknown>
+    predefinedInput: Record<string, unknown>
+    instruction: string
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -209,6 +210,18 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
             H extends TriggerHookType.RENEW ? Record<string, never> :
                 H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
                     ExecuteOnEnableTriggerResponse
+
+export enum ExecutionToolStatus {
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
+export type ExecuteToolResponse = {
+    status: ExecutionToolStatus
+    output?: unknown
+    resolvedInput: Record<string, unknown>
+    errorMessage?: unknown
+}
 
 export type ExecuteActionResponse = {
     success: boolean

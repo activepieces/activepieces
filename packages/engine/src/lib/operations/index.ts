@@ -15,8 +15,8 @@ import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'
 import { propertyOperation } from './property.operation'
-import { toolOperation } from './tool.operation'
 import { triggerHookOperation } from './trigger-hook.operation'
+import { toolOperation } from '../mcp'
 
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
