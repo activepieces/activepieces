@@ -1,4 +1,5 @@
 import {
+  AppConnectionType,
   AppConnectionValue,
   ExecutionType,
   FlowRunId,
@@ -11,9 +12,10 @@ import {
   TriggerStrategy,
 } from '@activepieces/shared';
 import {
+  BasicAuthProperty,
+  CustomAuthProperty,
   InputPropertyMap,
-  PiecePropValueSchema,
-  PropertyType,
+  OAuth2Property,
   SecretTextProperty,
   StaticPropsValue,
 } from '../property';
@@ -26,13 +28,7 @@ export type BaseContext<
 > = {
   flows: FlowsContext;
   step: StepContext;
-  auth: PieceAuth extends SecretTextProperty<boolean> ? {
-    type: PropertyType.SECRET_TEXT;
-    value: {secretText: string};
-  }: {
-    type: Exclude<PieceAuth['type'], PropertyType.SECRET_TEXT>;
-    value: PiecePropValueSchema<PieceAuth>;
-  }
+  auth: AppConnectionValue<AppConnectionValueForAuthProperty<PieceAuth>>;
   propsValue: StaticPropsValue<Props>;
   store: Store;
   project: {
@@ -41,6 +37,13 @@ export type BaseContext<
   };
   connections: ConnectionsManager;
 };
+
+
+type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = T extends SecretTextProperty<boolean> ? AppConnectionType.SECRET_TEXT :
+  T extends BasicAuthProperty ? AppConnectionType.BASIC_AUTH :
+  T extends CustomAuthProperty<any> ? AppConnectionType.CUSTOM_AUTH :
+  T extends OAuth2Property<any> ? AppConnectionType.OAUTH2 :
+  never;
 
 type AppWebhookTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
@@ -83,7 +86,7 @@ export type TriggerHookContext<
   : S extends TriggerStrategy.POLLING
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
-  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> 
+  ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
   : never;
 
 export type TestOrRunHookContext<
@@ -161,8 +164,8 @@ export type OnStartContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap
 > = Omit<BaseContext<PieceAuth, TriggerProps>, 'flows'> & {
-   run: Pick<RunContext, 'id'>;
-   payload: unknown;
+  run: Pick<RunContext, 'id'>;
+  payload: unknown;
 }
 
 
@@ -174,7 +177,7 @@ export type OutputContext = {
   }) => Promise<void>;
 }
 
- type BaseActionContext<
+type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
   ActionProps extends InputPropertyMap
