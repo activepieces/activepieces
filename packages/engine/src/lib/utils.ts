@@ -23,25 +23,20 @@ export const utils = {
         const entries: FileEntry[] = []
 
         async function walkRecursive(currentPath: string) {
-            try {
-                const items = await fs.readdir(currentPath, { withFileTypes: true })
+            const items = await fs.readdir(currentPath, { withFileTypes: true })
 
-                for (const item of items) {
-                    const fullPath = path.join(currentPath, item.name)
-                    const absolutePath = path.resolve(fullPath)
+            for (const item of items) {
+                const fullPath = path.join(currentPath, item.name)
+                const absolutePath = path.resolve(fullPath)
 
-                    entries.push({
-                        name: item.name,
-                        path: absolutePath,
-                    })
+                entries.push({
+                    name: item.name,
+                    path: absolutePath,
+                })
 
-                    if (item.isDirectory()) {
-                        await walkRecursive(fullPath)
-                    }
+                if (item.isDirectory()) {
+                    await walkRecursive(fullPath)
                 }
-            }
-            catch {
-                // Skip directories that can't be read
             }
         }
 
