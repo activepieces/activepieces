@@ -156,6 +156,9 @@
       ],
       "@activepieces/piece-ask-handle": [
         "packages/pieces/community/ask-handle/src/index.ts"
+      ],
+      "@activepieces/piece-phantombuster": [
+        "packages/pieces/community/phantombuster/src/index.ts"
       ]
     },
     "resolveJsonModule": true
