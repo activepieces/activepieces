@@ -15,13 +15,16 @@ export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): 
 }
 
 /**
- * @param {string} alias - e.g. piece-activepieces or @publisher/piece-activepieces
+ * @param {string} alias - e.g. piece-activepieces or @publisher/piece-activepieces or activepieces or @publisher/activepieces 
  * @returns {string} the piece name, e.g. activepieces
  */
 export const getPieceNameFromAlias = (alias: string): string => {
     const fullPieceName =  alias.startsWith('@') ? alias.split('/').pop() : alias
     assertNotNullOrUndefined(fullPieceName, 'Full piece name')
-    return fullPieceName.split('-').slice(1).join('-')
+    if (fullPieceName.startsWith('piece-')){
+        return fullPieceName.split('-').slice(1).join('-')
+    }
+    return fullPieceName
 }
 
 /**
