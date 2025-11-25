@@ -1,10 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search, Loader2 } from 'lucide-react';
+import { Compass, Search, Loader2, Plus } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
+import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,9 +25,22 @@ import {
   useSidebar,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  PlatformRole,
+  ProjectType,
+} from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
@@ -41,6 +55,7 @@ export function ProjectDashboardSidebar() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch: refetchProjects,
   } = projectHooks.useProjectsInfinite(20);
   const { embedState } = useEmbedding();
   const { state, setOpen } = useSidebar();
@@ -52,9 +67,17 @@ export function ProjectDashboardSidebar() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const projectsScrollRef = useRef<HTMLDivElement>(null);
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { data: currentUser } = userHooks.useCurrentUser();
 
-  const { data: searchResults, isLoading: isSearching } =
-    projectHooks.useProjects({ displayName: debouncedSearchQuery, limit: 100 });
+  const {
+    data: searchResults,
+    isLoading: isSearching,
+    refetch: refetchSearchResults,
+  } = projectHooks.useProjects({
+    displayName: debouncedSearchQuery,
+    limit: 100,
+  });
 
   useEffect(() => {
     if (!searchOpen) {
@@ -69,6 +92,23 @@ export function ProjectDashboardSidebar() {
     );
     return uniqueProjects;
   }, [projectPages]);
+
+  const shouldShowNewProjectButton = useMemo(() => {
+    if (edition === ApEdition.COMMUNITY) {
+      return false;
+    }
+    return currentUser?.platformRole === PlatformRole.ADMIN;
+  }, [edition]);
+
+  const shouldDisableNewProjectButton = useMemo(() => {
+    if (edition === ApEdition.CLOUD) {
+      const teamProjects = allProjects.filter(
+        (project) => project.type === ProjectType.TEAM,
+      );
+      return teamProjects.length >= 1;
+    }
+    return false;
+  }, [edition, allProjects]);
 
   const isSearchMode = debouncedSearchQuery.length > 0;
 
@@ -180,31 +220,74 @@ export function ProjectDashboardSidebar() {
             {state === 'expanded' && (
               <div className="flex items-center justify-between">
                 <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 hover:bg-accent"
+                <div className="flex items-center gap-1">
+                  {shouldShowNewProjectButton && (
+                    <>
+                      {!shouldDisableNewProjectButton ? (
+                        <NewProjectDialog
+                          onCreate={() => {
+                            refetchProjects();
+                            refetchSearchResults();
+                          }}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 hover:bg-accent"
+                          >
+                            <Plus />
+                          </Button>
+                        </NewProjectDialog>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:bg-transparent hover:text-muted-foreground"
+                              onClick={() =>
+                                window.open(
+                                  'https://www.activepieces.com/pricing',
+                                  '_blank',
+                                )
+                              }
+                            >
+                              <Plus />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t('Upgrade Plan')}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </>
+                  )}
+                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-accent"
+                      >
+                        <Search />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[280px] p-3"
+                      align="start"
+                      side="right"
+                      sideOffset={8}
                     >
-                      <Search />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-[280px] p-3"
-                    align="start"
-                    side="right"
-                    sideOffset={8}
-                  >
-                    <Input
-                      placeholder={t('Search projects...')}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-9"
-                      autoFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                      <Input
+                        placeholder={t('Search projects...')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-9"
+                        autoFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             )}
             <div

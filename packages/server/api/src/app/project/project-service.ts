@@ -65,11 +65,12 @@ export const projectService = {
         })
     },
 
-    async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
+    async getProjectIdsByPlatform(platformId: string, type?: ProjectType): Promise<string[]> {
         const projects = await projectRepo()
             .createQueryBuilder('project')
             .select('project.id')
             .where({ platformId })
+            .andWhere(type ? { type } : {})
             .orderBy('project.type', 'ASC')
             .addOrderBy('project.displayName', 'ASC')
             .addOrderBy('project.id', 'ASC')

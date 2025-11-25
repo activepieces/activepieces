@@ -5,6 +5,7 @@ import {
 } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
+    ApEdition,
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
@@ -22,6 +23,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -36,6 +38,8 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await platformMustHaveFeatureEnabled(platform => platform.plan.manageProjectsEnabled).call(app, request, reply)
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
+        await assertEditionIsNotReachedForCreatingProject(platformId)
+
         const platform = await platformService.getOneOrThrow(platformId)
 
         const project = await projectService.create({
@@ -136,6 +140,29 @@ const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal 
                 message: 'ACTIVE_PROJECT',
             },
         })
+    }
+}
+
+async function assertEditionIsNotReachedForCreatingProject(platformId: string): Promise<void> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'COMMUNITY_EDITION_REACHED',
+            },
+        })
+    }
+    if (edition === ApEdition.CLOUD) {
+        const projects = await projectService.getProjectIdsByPlatform(platformId, ProjectType.TEAM)
+        if (projects.length >= 1) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'CLOUD_EDITION_REACHED',
+                },
+            })
+        }
     }
 }
 
