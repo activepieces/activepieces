@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient, HttpMessageBody } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient, HttpMessageBody, QueryParams } from '@activepieces/pieces-common';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { greipAuth } from './auth';
 
@@ -26,12 +26,21 @@ export async function greipApiCall<T extends HttpMessageBody>({
     'Content-Type': 'application/json',
   };
 
+  const qs: QueryParams = {};
+  if (queryParams) {
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== null && value !== undefined) {
+        qs[key] = String(value);
+      }
+    }
+  }
+
   try {
     const response = await httpClient.sendRequest<T>({
       method,
       url,
       headers,
-      queryParams,
+      queryParams: qs,
       body,
     });
 
