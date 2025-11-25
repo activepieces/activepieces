@@ -171,6 +171,9 @@
       ],
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
+      ],
+      "@activepieces/piece-youform": [
+        "packages/pieces/community/youform/src/index.ts"
       ]
     },
     "resolveJsonModule": true
