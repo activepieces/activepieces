@@ -65,18 +65,24 @@ export const projectService = {
         })
     },
 
-    async getProjectIdsByPlatform(platformId: string, type?: ProjectType): Promise<string[]> {
+    async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
         const projects = await projectRepo()
             .createQueryBuilder('project')
             .select('project.id')
             .where({ platformId })
-            .andWhere(type ? { type } : {})
             .orderBy('project.type', 'ASC')
             .addOrderBy('project.displayName', 'ASC')
             .addOrderBy('project.id', 'ASC')
             .getMany()
 
         return projects.map((project) => project.id)
+    },
+
+    async countByPlatformIdAndType(platformId: string, type: ProjectType): Promise<number> {
+        return projectRepo().countBy({
+            platformId,
+            type,
+        })
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {

@@ -27,7 +27,7 @@ import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformProjectService } from './platform-project-service'
 import { projectLimitsService } from './project-plan/project-plan.service'
 
@@ -35,7 +35,6 @@ const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateProjectRequest, async (request, reply) => {
-        await platformMustHaveFeatureEnabled(platform => platform.plan.manageProjectsEnabled).call(app, request, reply)
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         await assertMaximumNumberOfProjectsReachedByEdition(platformId)
@@ -145,23 +144,29 @@ const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal 
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string): Promise<void> {
     const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'COMMUNITY_EDITION_REACHED',
-            },
-        })
-    }
-    if (edition === ApEdition.CLOUD) {
-        const projects = await projectService.getProjectIdsByPlatform(platformId, ProjectType.TEAM)
-        if (projects.length >= 1) {
+    switch (edition) {
+        case ApEdition.COMMUNITY:{
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'CLOUD_EDITION_REACHED',
+                    message: 'COMMUNITY_EDITION_REACHED',
                 },
             })
+        }
+        case ApEdition.CLOUD:{
+            const projectsCount = await projectService.countByPlatformIdAndType(platformId, ProjectType.TEAM)
+            if (projectsCount >= 1) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'CLOUD_EDITION_REACHED',
+                    },
+                })
+            }
+            break
+        }
+        case ApEdition.ENTERPRISE:{
+            break
         }
     }
 }

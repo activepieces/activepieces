@@ -66,8 +66,8 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         customAppearanceEnabled: {
             type: Boolean,
         },
-        manageProjectsEnabled: {
-            type: Boolean,
+        teamProjectsLimit: {
+            type: String,
         },
         projectRolesEnabled: {
             type: Boolean,

@@ -31,7 +31,11 @@ import { userHooks } from '@/hooks/user-hooks';
 import { platformProjectApi } from '@/lib/platform-project-api';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
+import {
+  ProjectType,
+  ProjectWithLimits,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 
 import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';
@@ -42,7 +46,7 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
-  const isEnabled = platform.plan.manageProjectsEnabled;
+  const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
   const { data: currentProject } = projectHooks.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
 

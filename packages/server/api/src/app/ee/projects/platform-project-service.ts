@@ -16,6 +16,7 @@ import {
     ProjectWithLimits,
     SeekPage,
     spreadIfDefined,
+    TeamProjectsLimit,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -68,7 +69,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         })
         if (!isNil(request.plan)) {
             const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-            if (platform.plan.manageProjectsEnabled) {
+            if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
