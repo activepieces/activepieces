@@ -168,6 +168,9 @@
       ],
       "@activepieces/piece-chatnode": [
         "packages/pieces/community/chatnode/src/index.ts"
+      ],
+      "@activepieces/piece-wordlift": [
+        "packages/pieces/community/wordlift/src/index.ts"
       ]
     },
     "resolveJsonModule": true
