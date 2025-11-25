@@ -107,6 +107,21 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             }
             return piece
         },
+        async getAllUnfiltered(platformId: PlatformId): Promise<Map<string, PieceMetadataModel>> {
+            const allPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
+                platformId,
+                release: undefined,
+                log,
+            })
+            
+            const pieceMap = new Map<string, PieceMetadataModel>()
+            for (const piece of allPieces) {
+                if (!pieceMap.has(piece.name)) {
+                    pieceMap.set(piece.name, piece)
+                }
+            }
+            return pieceMap
+        },
         async getOrThrow({ projectId, version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ projectId, version, name, platformId })
             if (isNil(piece)) {

@@ -1,5 +1,6 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment } from '@activepieces/shared'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, assertNotNullOrUndefined, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -53,8 +54,11 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
     const totalFlows = countFlows(flows, undefined)
     const totalProjects = await countProjects(platformId)
     const { totalUsers, activeUsers } = await analyzeUsers(platformId)
-    const { uniquePiecesUsed, topPieces } = await analyzePieces(log, flows, platformId)
-    const activeFlowsWithAI = await numberOfFlowsWithAI(log, flows, platformId)
+    
+    const pieceMetadataMap = await pieceMetadataService(log).getAllUnfiltered(platformId)    
+    const { uniquePiecesUsed, topPieces } = analyzePieces(flows, pieceMetadataMap)
+    const activeFlowsWithAI = numberOfFlowsWithAI(flows, pieceMetadataMap)
+
     const { topProjects, activeProjects } = await analyzeProjects(flows)
     const runsUsage = await analyzeRuns(platformId)
     return {
@@ -77,10 +81,15 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
 }
 
 async function analyzeProjects(flows: PopulatedFlow[]) {
+    const projectIds = [...new Set(flows.map(flow => flow.projectId))]
+    const projects = await projectRepo().findBy(projectIds.map(id => ({ id })))
+    const projectMap = new Map(projects.map(project => [project.id, project]))
+
     const projectUsage: Record<string, AnalyticsProjectReportItem> = {}
     for (const flow of flows) {
         const projectId = flow.projectId
-        const project = await projectRepo().findOneByOrFail({ id: projectId })
+        const project = projectMap.get(projectId)
+        assertNotNullOrUndefined(project, 'project')
         if (!projectUsage[projectId]) {
             projectUsage[projectId] = { id: projectId, activeFlows: 0, totalFlows: 0, displayName: project.displayName }
         }
@@ -101,34 +110,29 @@ async function analyzeProjects(flows: PopulatedFlow[]) {
 }
 
 
-async function numberOfFlowsWithAI(log: FastifyBaseLogger, flows: PopulatedFlow[], platformId: PlatformId) {
-    const aiPiecePromises = flows.flatMap(flow => {
+
+function numberOfFlowsWithAI(flows: PopulatedFlow[], pieceMetadataMap: Map<string, PieceMetadataModel>): number {
+    let count = 0
+    for (const flow of flows) {
         const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
-        return usedPieces.map(piece => pieceMetadataService(log).get({
-            name: piece,
-            version: undefined,
-            projectId: flow.projectId,
-            platformId,
-            entityManager: undefined,
-        }))
-    }).filter((f) => f !== undefined)
-    const pieceMetadataList = await Promise.all(aiPiecePromises)
-    return pieceMetadataList.filter(pieceMetadata => pieceMetadata?.categories?.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)).length
+        const hasAIPiece = usedPieces.some(pieceName => {
+            const metadata = pieceMetadataMap.get(pieceName)
+            return metadata?.categories?.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)
+        })
+        if (hasAIPiece) {
+            count++
+        }
+    }
+    return count
 }
 
-async function analyzePieces(log: FastifyBaseLogger, flows: PopulatedFlow[], platformId: PlatformId) {
+function analyzePieces(flows: PopulatedFlow[], pieceMetadataMap: Map<string, PieceMetadataModel>) {
     const pieces: Record<string, AnalyticsPieceReportItem> = {}
     for (const flow of flows) {
         const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
         for (const piece of usedPieces) {
             if (!pieces[piece]) {
-                const pieceMetadata = await pieceMetadataService(log).get({
-                    name: piece,
-                    version: undefined,
-                    projectId: flow.projectId,
-                    platformId,
-                    entityManager: undefined,
-                })
+                const pieceMetadata = pieceMetadataMap.get(piece)
                 if (!isNil(pieceMetadata)) {
                     pieces[piece] = {
                         name: piece,
@@ -160,32 +164,30 @@ async function countProjects(platformId: PlatformId) {
 async function analyzeUsers(platformId: PlatformId) {
     const oneMonthAgo = dayjs().subtract(1, 'month').toISOString()
     
-    const result = await userRepo()
-        .createQueryBuilder('user')
-        .select('COUNT(DISTINCT user.id)', 'totalUsers')
-        .addSelect(subQuery => {
-            return subQuery
-                .select('COUNT(DISTINCT sub_user.id)')
-                .from('user', 'sub_user')
-                .innerJoin(
-                    'audit_event',
-                    'audit_event',
-                    'audit_event."userId" = sub_user.id',
-                )
-                .where('sub_user."platformId" = :platformId')
-                .andWhere('audit_event.action IN (:...actions)')
-                .andWhere('audit_event.created > :oneMonthAgo')
-        }, 'activeUsers')
-        .where('user."platformId" = :platformId', { platformId })
-        .setParameters({
+    const totalUsersResult = await userRepo()
+        .createQueryBuilder('usr')
+        .select('COUNT(DISTINCT usr.id)', 'totalUsers')
+        .where('usr.platformId = :platformId', { platformId })
+        .getRawOne()
+
+    const activeUsersResult = await userRepo()
+        .createQueryBuilder('usr')
+        .select('COUNT(DISTINCT usr.id)', 'activeUsers')
+        .innerJoin(
+            'audit_event',
+            'ae',
+            'ae.userId = usr.id',
+        )
+        .where('usr.platformId = :platformId', { platformId })
+        .andWhere('ae.action IN (:...actions)', { 
             actions: [ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP],
-            oneMonthAgo,
         })
+        .andWhere('ae.created > :oneMonthAgo', { oneMonthAgo })
         .getRawOne()
     
     return {
-        activeUsers: parseInt(result.activeUsers),
-        totalUsers: parseInt(result.totalUsers),
+        activeUsers: parseInt(activeUsersResult.activeUsers),
+        totalUsers: parseInt(totalUsersResult.totalUsers),
     }
 }
 
