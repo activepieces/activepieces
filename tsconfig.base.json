@@ -177,6 +177,9 @@
       ],
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
+      ],
+      "@activepieces/piece-linkup": [
+        "packages/pieces/community/linkup/src/index.ts"
       ]
     },
     "resolveJsonModule": true
