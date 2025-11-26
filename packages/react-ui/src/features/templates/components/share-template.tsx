@@ -6,9 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
+import {
+  ApErrorParams,
+  ErrorCode,
+  FlowOperationType,
+  FlowTemplate,
+} from '@activepieces/shared';
 
 import { LoadingSpinner } from '../../../components/ui/spinner';
 import { PieceIconList } from '../../pieces/components/piece-icon-list';
@@ -34,6 +41,28 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
     },
     onSuccess: (data) => {
       navigate(`/flows/${data.id}`);
+    },
+    onError: (error) => {
+      if (api.isError(error)) {
+        const apError = error.response?.data as ApErrorParams;
+        if (apError.code === ErrorCode.PERMISSION_DENIED) {
+          toast({
+            title: t('Import Failed'),
+            description: t("You don't have permission to import this template"),
+            variant: 'default',
+          });
+          return;
+        }
+        if (apError.code === ErrorCode.AUTHORIZATION) {
+          toast({
+            title: t('Import Failed'),
+            description: t('Please sign in to import this template'),
+            variant: 'default',
+          });
+          return;
+        }
+      }
+      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
