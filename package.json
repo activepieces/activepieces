@@ -124,9 +124,9 @@
     "@uiw/codemirror-theme-github": "4.23.0",
     "@uiw/react-codemirror": "4.23.0",
     "@xyflow/react": "12.3.5",
-    "ai": "5.0.52",
+    "ai": "5.0.12",
     "async-mutex": "0.4.0",
-    "axios": "1.12.0",
+    "axios": "1.8.3",
     "axios-retry": "4.4.1",
     "bcrypt": "6.0.0",
     "boring-avatars": "1.11.2",
@@ -409,11 +409,5 @@
   },
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node"
-  },
-  "pnpm": {
-    "overrides": {
-      "body-parser": "^2.2.1",
-      "sirv": "^3.0.2"
-    }
   }
 }
