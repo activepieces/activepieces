@@ -10,6 +10,7 @@ import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
+import { auditLogRepo } from '../audit-logs/audit-event-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 
@@ -170,15 +171,12 @@ async function analyzeUsers(platformId: PlatformId) {
         .where('usr.platformId = :platformId', { platformId })
         .getRawOne()
 
-    const activeUsersResult = await userRepo()
-        .createQueryBuilder('usr')
-        .select('COUNT(DISTINCT usr.id)', 'activeUsers')
-        .innerJoin(
-            'audit_event',
-            'ae',
-            'ae.userId = usr.id',
-        )
-        .where('usr.platformId = :platformId', { platformId })
+    const activeUsersResult = await auditLogRepo()
+        .createQueryBuilder('ae')
+        .select('COUNT(DISTINCT ae.userId)', 'activeUsers')
+        .innerJoin('user', 'usr', 'usr.id = ae.userId')
+        .where('ae.platformId = :platformId', { platformId })
+        .andWhere('usr.platformId = :platformId', { platformId })
         .andWhere('ae.action IN (:...actions)', { 
             actions: [ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP],
         })
