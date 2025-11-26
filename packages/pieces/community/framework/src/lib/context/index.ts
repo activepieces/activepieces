@@ -28,7 +28,7 @@ export type BaseContext<
 > = {
   flows: FlowsContext;
   step: StepContext;
-  auth: AppConnectionValue<AppConnectionValueForAuthProperty<PieceAuth>>;
+  auth: AppConnectionValueForAuthProperty<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
   store: Store;
   project: {
@@ -39,12 +39,17 @@ export type BaseContext<
 };
 
 
-type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = T extends SecretTextProperty<boolean> ? AppConnectionType.SECRET_TEXT :
-  T extends BasicAuthProperty ? AppConnectionType.BASIC_AUTH :
-  T extends CustomAuthProperty<any> ? AppConnectionType.CUSTOM_AUTH :
-  T extends OAuth2Property<any> ? AppConnectionType.OAUTH2 :
-  never;
+type ExtractCustomAuthProps<T> = T extends CustomAuthProperty<infer Props> ? Props : never;
 
+type ExtractOAuth2Props<T> = T extends OAuth2Property<infer Props> ? Props : never;
+
+
+type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = 
+  T extends SecretTextProperty<boolean> ? AppConnectionValue<AppConnectionType.SECRET_TEXT> :
+  T extends BasicAuthProperty ? AppConnectionValue<AppConnectionType.BASIC_AUTH> :
+  T extends CustomAuthProperty<any> ? AppConnectionValue<AppConnectionType.CUSTOM_AUTH, StaticPropsValue<ExtractCustomAuthProps<T>>> :
+  T extends OAuth2Property<any> ? AppConnectionValue<AppConnectionType.OAUTH2, StaticPropsValue<ExtractOAuth2Props<T>>> :
+  never;
 type AppWebhookTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap
