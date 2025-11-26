@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { ChevronDown, Info, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -122,6 +123,7 @@ const RoleCell = ({
           variant="outline"
           className="w-[150px] justify-between cursor-not-allowed"
           disabled={true}
+          onClick={(e) => e.stopPropagation()}
         >
           <span>{roleName}</span>
           <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
@@ -138,6 +140,7 @@ const RoleCell = ({
             variant="outline"
             className="w-[150px] justify-between"
             disabled={!userHasPermissionToUpdateRole}
+            onClick={(e) => e.stopPropagation()}
           >
             <span>{roleName}</span>
             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
@@ -168,6 +171,7 @@ const ActionsCell = ({
   row: { original: MemberRowData };
   refetch: () => void;
 }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
   const { project } = projectHooks.useCurrentProject();
 
@@ -194,8 +198,24 @@ const ActionsCell = ({
   }
 
   return (
-    <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
+    <>
+      <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={!userHasPermissionToDelete}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeleteDialog(true);
+          }}
+          className="h-8 w-8 p-0"
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </PermissionNeededTooltip>
       <ConfirmationDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
         title={
           row.original.type === 'invitation'
             ? t('Remove {email}', { email: row.original.data.email })
@@ -215,16 +235,9 @@ const ActionsCell = ({
             : `${row.original.data.user.firstName} ${row.original.data.user.lastName}`
         }
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={!userHasPermissionToDelete}
-          className="h-8 w-8 p-0"
-        >
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
+        <div style={{ display: 'none' }} />
       </ConfirmationDeleteDialog>
-    </PermissionNeededTooltip>
+    </>
   );
 };
 
@@ -232,6 +245,7 @@ export const membersTableColumns = ({
   refetch,
 }: MembersTableColumnsProps): (ColumnDef<RowDataWithActions<MemberRowData>> & {
   accessorKey: string;
+  notClickable?: boolean;
 })[] => [
   {
     accessorKey: 'member',
@@ -277,26 +291,16 @@ export const membersTableColumns = ({
   },
   {
     accessorKey: 'role',
+    notClickable: true,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Role')} />
     ),
-    cell: ({ row }) => {
-      return (
-        <div onClick={(e) => e.stopPropagation()}>
-          <RoleCell row={row} refetch={refetch} />
-        </div>
-      );
-    },
+    cell: ({ row }) => <RoleCell row={row} refetch={refetch} />,
   },
-  {
-    accessorKey: 'actions',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
-    cell: ({ row }) => {
-      return (
-        <div onClick={(e) => e.stopPropagation()}>
-          <ActionsCell row={row} refetch={refetch} />
-        </div>
-      );
-    },
-  },
+];
+
+export const membersTableActions = ({ refetch }: MembersTableColumnsProps) => [
+  (row: RowDataWithActions<MemberRowData>) => (
+    <ActionsCell row={{ original: row }} refetch={refetch} />
+  ),
 ];
