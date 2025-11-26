@@ -4,7 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { Output } from 'ai';
-import z, { ZodSchema, ZodType } from "zod";
+import z, { date, ZodSchema, ZodType } from "zod";
 import { ZodTypeDef } from "zod/v3";
 
 type AIModel = {
@@ -30,6 +30,23 @@ export const agentCommon = {
             chunks.push(chunk)
         }
         return chunks[chunks.length - 1]
+    },
+
+    systemPrompt() {
+        return  `
+            You are a helpful, proactive AI assistant. Today's date is ${new Date().toISOString().split('T')[0]}.
+
+            Help the user get things done quickly and accurately.
+
+            CRITICAL FINAL STEP:
+            When the user's goal is complete (or clearly failed/abandoned), you MUST end your response by calling the tool exactly once:
+
+            - markAsFinished({ success: true })  → goal achieved or user is satisfied  
+            - markAsFinished({ success: false }) → goal failed, impossible, or user gave up
+
+            Decide based on context. When in doubt, default to true.
+            Never ask the user if it succeeded — just call the tool and stop.
+        `.trim();
     },
 
     getStructuredOutputSchema(
