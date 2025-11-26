@@ -78,7 +78,7 @@ export type OAuth2ConnectionValueWithApp = {
 export type NoAuthConnectionValue = {
     type: AppConnectionType.NO_AUTH
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export type AppConnectionValue<T extends AppConnectionType = AppConnectionType, PropsType extends Record<string, unknown> = Record<string, unknown>> =
     T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
         T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
