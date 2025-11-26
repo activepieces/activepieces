@@ -142,12 +142,16 @@ const DynamicPropertiesImplementation = React.memo(
 
             if (!readonly) {
               // previously the schema didn't have this property, so we need to set it
-              if(!form.getValues().settings?.propertySettings?.[props.propertyName]) {
-              form.setValue(
-                `settings.propertySettings.${props.propertyName}.type`,
-                PropertyExecutionType.MANUAL as unknown,
-              )
-            }
+              if (
+                !form.getValues().settings?.propertySettings?.[
+                  props.propertyName
+                ]
+              ) {
+                form.setValue(
+                  `settings.propertySettings.${props.propertyName}.type`,
+                  PropertyExecutionType.MANUAL as unknown,
+                );
+              }
               form.setValue(
                 `settings.propertySettings.${props.propertyName}.schema`,
                 schemaWithoutDropdownOptions,
