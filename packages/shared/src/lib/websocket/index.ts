@@ -10,6 +10,7 @@ export enum WebsocketClientEvent {
     TODO_CHANGED = 'TODO_CHANGED',
     TODO_ACTIVITY_CHANGED = 'TODO_ACTIVITY_CHANGED',
     TODO_ACTIVITY_CREATED = 'TODO_ACTIVITY_CREATED',
+    FLOW_STATUS_UPDATED = 'FLOW_STATUS_UPDATED',
 }
 
 export const TodoChanged = Type.Object({

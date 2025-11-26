@@ -1,5 +1,6 @@
 import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, isNil, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { flowBackgroundJobs } from '../../../../flows/flow/flow.jobs'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { projectService } from '../../../../project/project-service'
 export const projectStateHelper = (log: FastifyBaseLogger) => ({
@@ -44,7 +45,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         })
 
         if (!isNil(updatedFlow.publishedVersionId)) {
-            await flowService(log).updateStatus({
+            await flowBackgroundJobs(log).addUpdateStatusJob({
                 id: updatedFlow.id,
                 projectId,
                 newStatus: newFlow.status,

@@ -1,7 +1,6 @@
 import {
     ActivepiecesError,
     apId,
-    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
@@ -31,17 +30,15 @@ import { AddAPArrayContainsToQueryBuilder } from '../../database/database-connec
 import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
-import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
+import { flowBackgroundJobs } from './flow.jobs'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
@@ -287,19 +284,25 @@ export const flowService = (log: FastifyBaseLogger) => ({
                             projectId,
                             platformId,
                         })
-                        await this.updateStatus({
+                        await flowBackgroundJobs(log).addUpdateStatusJob({
                             id,
                             projectId,
                             newStatus: operation.request.status ?? FlowStatus.ENABLED,
+                        })
+                        await flowRepo().update(id, {
+                            operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
                         })
                         break
                     }
 
                     case FlowOperationType.CHANGE_STATUS: {
-                        await this.updateStatus({
+                        await flowBackgroundJobs(log).addUpdateStatusJob({
                             id,
                             projectId,
                             newStatus: operation.request.status,
+                        })
+                        await flowRepo().update(id, {
+                            operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
                         })
                         break
                     }
@@ -369,47 +372,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId,
         })
     },
-
-    async updateStatus({
-        id,
-        projectId,
-        newStatus,
-        entityManager,
-    }: UpdateStatusParams): Promise<PopulatedFlow> {
-        const flowToUpdate = await this.getOneOrThrow({
-            id,
-            projectId,
-            entityManager,
-        })
-
-        const publishedFlowVersionId = flowToUpdate.publishedVersionId
-        if (flowToUpdate.status !== newStatus) {
-            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
-            const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flowToUpdate.id,
-                versionId: publishedFlowVersionId,
-                entityManager,
-            })
-
-            await flowRepo(entityManager).save(flowToUpdate)
-
-            await flowSideEffects(log).preUpdateStatus({
-                flowToUpdate,
-                publishedFlowVersion,
-                newStatus,
-            })
-
-            flowToUpdate.status = newStatus
-            await flowRepo(entityManager).save(flowToUpdate)
-            await flowExecutionCache(log).delete(id)
-        }
-
-        return this.getOnePopulatedOrThrow({
-            id,
-            projectId,
-            entityManager,
-        })
-    },
     async updatedPublishedVersionId({
         id,
         userId,
@@ -466,48 +428,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.DELETE_FLOW,
-                data: {
-                    flow,
-                    preDeleteDone: false,
-                    dbDeleteDone: false,
-                },
-                jobId: `delete-flow-${flow.id}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: dayjs().add(1, 'second'),
-            },
-        })
+        await flowBackgroundJobs(log).addDeleteJob(flow)
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
-    },
-
-    async backgroundDeleteHandler(data: SystemJobData<SystemJobName.DELETE_FLOW>): Promise<void> {
-        const { flow, preDeleteDone, dbDeleteDone } = data
-        const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
-        assertNotNullOrUndefined(job, 'job is required')
-        if (!preDeleteDone) {
-            await flowSideEffects(log).preDelete({
-                flowToDelete: flow,
-            })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-            })
-        }
-        if (!dbDeleteDone) {
-            await flowRepo().delete({ id: flow.id })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-                dbDeleteDone: true,
-            })
-        }
-        await flowExecutionCache(log).delete(flow.id)
     },
 
     async getAllEnabled(): Promise<PopulatedFlow[]> {
@@ -710,13 +634,6 @@ type UpdateParams = {
     projectId: ProjectId
     operation: FlowOperationRequest
     platformId: PlatformId
-}
-
-type UpdateStatusParams = {
-    id: FlowId
-    projectId: ProjectId
-    newStatus: FlowStatus
-    entityManager?: EntityManager
 }
 
 type UpdatePublishedVersionIdParams = {
