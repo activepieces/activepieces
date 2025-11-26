@@ -11,7 +11,7 @@ export const sendMessage = createAction({
     tenantId: Property.ShortText({
       displayName: 'Tenant ID',
       description:
-        'The unique ID of your Orimon chatbot. To get it: Login to your dashboard and click on the bot configuration page. At the top in the URL bar, copy the value starting after "tenant/" to the end.',
+        'To get it: Login to your dashboard and click on the bot configuration page. At the top in the URL bar, copy the value starting after "tenant/" to the end.',
       required: true,
     }),
     messageText: Property.LongText({

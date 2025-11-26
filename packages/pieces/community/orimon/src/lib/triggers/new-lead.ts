@@ -19,24 +19,44 @@ To enable this trigger, follow these steps to configure the webhook in your Orim
 
 ### Step-by-Step Setup:
 
-1. **Login to Orimon Dashboard** - Go to [https://orimon.ai/login](https://orimon.ai/login) and sign in with your Google account or manual credentials
-2. **Go to Bot Overview** - Once logged in, you should see an icon for your bot. Click on it to go to the bot's overview page
+1. **Login to Orimon Dashboard** - [https://orimon.ai/login](https://orimon.ai/login).
+2. **Go to Bot Overview**.
 3. **Navigate to LeadFlow Integrations** - On the overview page, click on the **Settings** tab, then select **LeadFlow Integrations**
 4. **Select Webhook** - Click on the "Webhook" option from the integrations page
 5. **Paste the Webhook URL** - In the "Webhook URL" input field, paste the following URL:
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
-6. **Verify the Connection** - Orimon will send a test POST request to verify the webhook endpoint. Make sure your server responds with a status code of 200
-7. **Submit** - Click the "Submit" button to save the configuration    `,
+6. **Submit** - Click the "Submit" button to save the configuration    `,
     }),
   },
   sampleData: {
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '+1234567890',
-    dynamicfield: {},
-    userInfo: {},
+    email: 'test@test.com',
+    host: 'channel-connector.orimon.ai',
+    origin: 'https://bot.orimon.ai',
+    referer:
+      'https://bot.orimon.ai/deploy/index.html?tenantId=tenantId&testBot=true&defaultOpen=true',
+    clientIp: '111.11.1.111',
+    userIp: '111.11.1.111',
+    userIpCity: 'Mumbai',
+    userIpCountry: 'IN',
+    platform_info: {
+      description: 'Chrome 142.0.0.0 on Windows 10 64-bit',
+      layout: 'Blink',
+      manufacturer: null,
+      name: 'Chrome',
+      prerelease: null,
+      product: null,
+      ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+      version: '142.0.0.0',
+      os: {
+        architecture: 64,
+        family: 'Windows',
+        version: '10',
+      },
+      device: 'Desktop',
+      device_name: 'NA',
+    },
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
