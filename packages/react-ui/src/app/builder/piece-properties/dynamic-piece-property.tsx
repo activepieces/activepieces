@@ -8,7 +8,11 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
-import { FlowAction, FlowTrigger, PropertyExecutionType } from '@activepieces/shared';
+import {
+  FlowAction,
+  FlowTrigger,
+  PropertyExecutionType,
+} from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
