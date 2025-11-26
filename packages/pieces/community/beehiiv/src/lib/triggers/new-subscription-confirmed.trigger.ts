@@ -65,7 +65,7 @@ export const newSubscriptionConfirmedTrigger = createTrigger({
 	},
 	async run(context) {
 		const payload = context.payload.body as WebhookPayload;
-		return [payload];
+		return [payload.data];
 	},
 	sampleData: {
 		created: 1666800076,
