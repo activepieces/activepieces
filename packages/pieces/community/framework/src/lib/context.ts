@@ -15,6 +15,9 @@ import {
   PiecePropValueSchema,
   StaticPropsValue,
 } from './property';
+
+import { Output, StreamTextResult, ToolSet } from 'ai'
+import { LanguageModelV2 } from '@ai-sdk/provider'
 import { PieceAuthProperty } from './property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
@@ -143,6 +146,18 @@ export type ServerContext = {
   token: string;
 };
 
+export type AgentRunParams = {
+  model: LanguageModelV2;
+  systemPrompt: string;
+  prompt: string;
+  maxSteps: number
+  experimental_output?: ReturnType<typeof Output.object>;
+}
+
+export type AgentContext = {
+  run: (params: AgentRunParams) => Promise<StreamTextResult<ToolSet, unknown>>
+}
+
 export type RunContext = {
   id: FlowRunId;
   stop: StopHook;
@@ -175,6 +190,7 @@ export type BaseActionContext<
   executionType: ET;
   tags: TagsManager;
   server: ServerContext;
+  agent: AgentContext;
   files: FilesService;
   output: OutputContext;
   serverUrl: string;

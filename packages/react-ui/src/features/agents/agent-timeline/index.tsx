@@ -71,6 +71,10 @@ export const AgentTimeline = ({
         <div className="space-y-7 pb-4">
           {result.prompt && <PromptBlock prompt={result.prompt} />}
 
+          {
+            result.message && <MarkdownBlock step={{ markdown: result.message, type: ContentBlockType.MARKDOWN }} index={1} />
+          }
+
           {steps.map((step, index) => {
             switch (step.type) {
               case ContentBlockType.MARKDOWN:

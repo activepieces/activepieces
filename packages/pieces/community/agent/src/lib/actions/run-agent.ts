@@ -1,8 +1,6 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { AIErrorResponse } from '@activepieces/common-ai'
 import { agentCommon, AI_MODELS } from '../common';
-import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
-import { APICallError, stepCountIs, streamText } from 'ai';
+import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus } from '@activepieces/shared';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -86,121 +84,46 @@ export const runAgent = createAction({
     const { prompt, maxSteps, agentTools, structuredOutput, aiModel } = context.propsValue
     const { server } = context
 
-    const result: AgentResult = {
+  const result: AgentResult = {
       prompt,
       steps: [],
       status: AgentTaskStatus.IN_PROGRESS,
       message: null,
+      structuredOutput: null
     }
-
-    const commonParams = {
-        apiUrl: context.server.apiUrl,
-        token: server.token,
-        flowId: context.flows.current.id,
-        flowVersionId: context.flows.current.version.id,
-        stepName: context.step.name
-    }
-
-    const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
-        outputFields: structuredOutput as AgentOutputField[],
-        tools: agentTools as McpTool[],
-        ...commonParams
-    })
 
     const selectedModel = agentCommon.getModelById(aiModel as string)
     const baseURL = `${server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`
-    const modelInstance = agentCommon.createModel({
+    const model = agentCommon.createModel({
       model: selectedModel,
       token: server.token,
       baseURL,
       flowId: context.flows.current.id,
     })
-    
-    const systemPrompt = agentCommon.constructSystemPrompt(prompt)
-    const { fullStream } = streamText({
-      model: modelInstance,
-      system: systemPrompt,
-      prompt: prompt,
-      stopWhen: stepCountIs(maxSteps),
-      tools: await agentToolInstance.tools()
+
+    const stream = await context.agent.run({
+      maxSteps,
+      model,
+      prompt,
+      systemPrompt: 'you are a helpful assisstant',
+      experimental_output: agentCommon.getStructuredOutputSchema(structuredOutput as AgentOutputField[] || [])
     })
 
-    let currentText = ''
-    for await (const chunk of fullStream) {
-      
-      if (chunk.type === 'text-delta') {
-          currentText += chunk.text
-      }
-      else if (chunk.type === 'tool-call') { 
-          if (currentText.length > 0) {
-              result.steps.push({
-                  type: ContentBlockType.MARKDOWN,
-                  markdown: currentText,
-              })
-              currentText = ''
-              context.output.update({ data: { 
-                ...result
-              }})
-          }
-          const metadata = agentCommon.getMetadata(chunk.toolName, agentTools as McpTool[], {
-              toolName: chunk.toolName,
-              toolCallId: chunk.toolCallId,
-              type: ContentBlockType.TOOL_CALL,
-              status: ToolCallStatus.IN_PROGRESS,
-              input: chunk.input as Record<string, unknown>,
-              output: undefined,
-              startTime: new Date().toISOString(),
-          })
-          result.steps.push(metadata)
-          context.output.update({ data: { 
-            ...result
-          }})
-      }
-      else if (chunk.type === 'tool-result') {
-          const lastBlockIndex = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
-          const lastBlock = result.steps[lastBlockIndex] as ToolCallContentBlock
-          assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
-          result.steps[lastBlockIndex] = {
-              ...lastBlock,
-              status: ToolCallStatus.COMPLETED,
-              endTime: new Date().toISOString(),
-              output: chunk.output,
-          }
-          context.output.update({ data: { 
-            ...result
-          }})
-      }
-      else if (chunk.type === 'error') {
-          result.status = AgentTaskStatus.FAILED
-          if (APICallError.isInstance(chunk.error)) {
-              const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
-              result.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
-          }
-          else {
-              result.message = agentCommon.concatMarkdown(result.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
-          }
-          context.output.update({ data: { 
-            ...result
-          }})
-          return result
-      }
+    let message = ''
+    for await (const chuck of stream.textStream) {
+      message += chuck
+      await context.output.update({ data: {
+        ...result,
+        message: message
+      }})
     }
 
-    if (currentText.length > 0) {
-      result.steps.push({
-          type: ContentBlockType.MARKDOWN,
-          markdown: currentText,
-      })
-    }
+    const output = await agentCommon.collectStream(stream.experimental_partialOutputStream)
 
-    const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
+    result.status = AgentTaskStatus.COMPLETED
+    result.structuredOutput = output
+    result.message = message
 
-    result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
-    result.message = agentCommon.concatMarkdown(result.steps)
-    context.output.update({ data: { 
-      ...result
-    }})
-
-    return result
+    return result 
   }
 });
