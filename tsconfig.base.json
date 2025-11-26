@@ -186,6 +186,9 @@
       ],
       "@activepieces/piece-flow-parser": [
         "packages/pieces/community/flow-parser/src/index.ts"
+      ],
+      "@activepieces/piece-writesonic-bulk": [
+        "packages/pieces/community/writesonic-bulk/src/index.ts"
       ]
     },
     "resolveJsonModule": true
