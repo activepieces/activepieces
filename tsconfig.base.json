@@ -186,7 +186,8 @@
       ],
       "@activepieces/piece-flow-parser": [
         "packages/pieces/community/flow-parser/src/index.ts"
-      ]
+      ],
+      "@pragmaia/mineru": ["packages/pieces/custom/mineru/src/index.ts"]
     },
     "resolveJsonModule": true
   },
