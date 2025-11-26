@@ -109,7 +109,6 @@ export default class Paginator<Entity extends ObjectLiteral> {
             } as T
         })
 
-        // If unlimited mode, return all results without cursor logic
         if (this.isUnlimited()) {
             return {
                 data: mergedData,

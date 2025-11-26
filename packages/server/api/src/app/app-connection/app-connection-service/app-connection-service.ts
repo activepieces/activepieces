@@ -296,14 +296,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-        // TODO (@amrdb): join flows with connections when we get rid of sqlite
         const flowIdsByExternalId = await fetchFlowIdsForConnections(log, data)
 
         const promises = data.map(async (encryptedConnection) => {
             const apConnection: AppConnection = await appConnectionHandler(log).decryptConnection(encryptedConnection)
             const owner = mapToUserWithMetaInformation(encryptedConnection.owner)
             const flowIds = flowIdsByExternalId.get(apConnection.externalId) ?? []
-            
+
             return {
                 ...apConnection,
                 owner,
