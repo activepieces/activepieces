@@ -180,6 +180,15 @@
       ],
       "@activepieces/piece-orimon": [
         "packages/pieces/community/orimon/src/index.ts"
+      ],
+      "@activepieces/piece-linkup": [
+        "packages/pieces/community/linkup/src/index.ts"
+      ],
+      "@activepieces/piece-youform": [
+        "packages/pieces/community/youform/src/index.ts"
+      ],
+      "@activepieces/piece-flow-parser": [
+        "packages/pieces/community/flow-parser/src/index.ts"
       ]
     },
     "resolveJsonModule": true

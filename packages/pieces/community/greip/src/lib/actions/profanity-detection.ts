@@ -98,7 +98,7 @@ export const profanityDetection = createAction({
 
     return await greipApiCall({
       method: HttpMethod.GET,
-      path: '/profanity',
+      path: '/scoring/profanity',
       queryParams,
       auth: context.auth,
     });

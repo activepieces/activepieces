@@ -296,6 +296,8 @@ import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migrat
 
 import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
+import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
+import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -503,6 +505,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveDurationAndAddArchivedAtIdxPostgres1763378445659,
         AddIconToProject1763377380235,
         AddProjectType1763644863137,
+        AddFlowOperationStatusField1764079041445,
     ]
 
     const edition = system.getEdition()
@@ -610,6 +613,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveMcpAndTablesLimitsAndBillingCycles1762103191643,
                 RemoveUnusedPaymentMethodColoumn1762709208569,
                 AddLastUsedAtToApiKey1763378445660,
+                RenameManageProjectsToTeamProjectLimits1764100884963,
             )
             break
         case ApEdition.COMMUNITY:

@@ -107,7 +107,7 @@ export const ipLookup = createAction({
 
     return await greipApiCall({
       method: HttpMethod.GET,
-      path: '/ip',
+      path: '/lookup/ip',
       queryParams,
       auth: context.auth,
     });
