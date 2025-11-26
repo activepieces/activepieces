@@ -210,15 +210,13 @@ function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
 }
 
 async function analyzeRuns(platformId: PlatformId): Promise<AnalyticsRunsUsageItem[]> {
-    const threeMonthsAgo = dayjs().subtract(3, 'months').toDate()
-    
     const runsData = await flowRunRepo()
         .createQueryBuilder('flow_run')
         .select('DATE(flow_run.created)', 'day')
         .addSelect('COUNT(*)', 'totalRuns')
         .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
         .where('project."platformId" = :platformId', { platformId })
-        .andWhere('flow_run.created >= :threeMonthsAgo', { threeMonthsAgo })
+        .andWhere('flow_run.created >= now() - interval \'3 months\'')
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
         .groupBy('DATE(flow_run.created)')
         .orderBy('DATE(flow_run.created)', 'ASC')
