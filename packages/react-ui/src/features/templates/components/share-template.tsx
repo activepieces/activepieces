@@ -53,14 +53,6 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
           });
           return;
         }
-        if (apError.code === ErrorCode.AUTHORIZATION) {
-          toast({
-            title: t('Import Failed'),
-            description: t('Please sign in to import this template'),
-            variant: 'default',
-          });
-          return;
-        }
       }
       toast(INTERNAL_ERROR_TOAST);
     },
