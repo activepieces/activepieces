@@ -6,6 +6,7 @@ import { imageToPdf } from './lib/actions/image-to-pdf';
 import { pdfPageCount } from './lib/actions/pdf-page-count';
 import { extractPdfPages } from './lib/actions/extract-pdf-pages';
 import { mergePdfs } from './lib/actions/merge-pdfs';
+import { removePassword } from './lib/actions/remove-password';
 
 export const PDF = createPiece({
   displayName: 'PDF',
@@ -27,6 +28,7 @@ export const PDF = createPiece({
     pdfPageCount,
     extractPdfPages,
     mergePdfs,
+    removePassword,
   ],
   triggers: [],
 });
