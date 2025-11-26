@@ -1,16 +1,16 @@
 {
-  "Create tasks for project members to take actions, useful for approvals, reviews, and manual actions performed by humans": "创建任务让项目成员采取行动、有益于核准、评论和人类的手动操作",
-  "Create Todo": "创建待办事项",
-  "Wait for Approval": "等待批准",
-  "Create Todo and Wait": "创建待办事项并等待",
-  "Creates a todo for a user, requiring them to respond or take action.": "为用户创建待办事宜，要求他们响应或采取行动。",
-  "Pauses the flow and wait for the approval from the user": "暂停流量并等待用户批准",
-  "Creates a todo for a user and wait for their response or take action.": "为用户创建待办事项并等待他们的回应或采取行动。",
+  "Create tasks for project members to take actions, useful for approvals, reviews, and manual actions performed by humans": "Create tasks for project members to take actions, useful for approvals, reviews, and manual actions performed by humans",
+  "Create Todo": "Create Todo",
+  "Wait for Approval": "Wait for Approval",
+  "Create Todo and Wait": "Create Todo and Wait",
+  "Creates a todo for a user, requiring them to respond or take action.": "Creates a todo for a user, requiring them to respond or take action.",
+  "Pauses the flow and wait for the approval from the user": "Pauses the flow and wait for the approval from the user",
+  "Creates a todo for a user and wait for their response or take action.": "Creates a todo for a user and wait for their response or take action.",
   "Title": "标题",
   "Description": "描述",
   "Assignee": "Assignee",
-  "Status Options": "状态选项",
+  "Status Options": "Status Options",
   "Task ID": "Task ID",
-  "These details will be displayed for the assignee. Add the full context so they can take proper action, You can also use markdown formatting.": "这些详细信息将显示给受让人。添加完整的上下文以便他们能够采取适当的行动，您也可以使用标记格式化方法。",
-  "The ID of the task to wait for approval": "等待批准的任务的 ID"
+  "These details will be displayed for the assignee. Add the full context so they can take proper action, You can also use markdown formatting.": "These details will be displayed for the assignee. Add the full context so they can take proper action, You can also use markdown formatting.",
+  "The ID of the task to wait for approval": "The ID of the task to wait for approval"
 }
