@@ -1,4 +1,8 @@
 {
   "name": "@avalant/piece-microsoft-outlook-email",
-  "version": "0.0.8"
+  "version": "0.0.9",
+  "dependencies": {
+    "@microsoft/microsoft-graph-client": "3.0.7",
+    "@microsoft/microsoft-graph-types": "2.40.0"
+  }
 }

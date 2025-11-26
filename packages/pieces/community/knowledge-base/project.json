@@ -5,30 +5,26 @@
   "projectType": "library",
   "release": {
     "version": {
-      "generatorOptions": {
-        "packageRoot": "dist/{projectRoot}",
-        "currentVersionResolver": "git-tag"
-      }
+      "manifestRootsToUpdate": ["dist/{projectRoot}"],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
     }
   },
   "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/knowledge-base",
         "tsConfig": "packages/pieces/community/knowledge-base/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/knowledge-base/package.json",
         "main": "packages/pieces/community/knowledge-base/src/index.ts",
-        "assets": [
-          "packages/pieces/community/knowledge-base/*.md"
-        ],
+        "assets": ["packages/pieces/community/knowledge-base/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": ["prebuild", "^build"]
     },
     "nx-release-publish": {
       "options": {
@@ -37,9 +33,15 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/knowledge-base",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": ["^build"]
     }
   }
 }

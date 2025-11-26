@@ -1,4 +1,8 @@
 {
   "name": "@avalant/piece-promptx-claude",
-  "version": "0.0.7"
+  "version": "0.0.8",
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.39.0",
+    "ajv": "8.12.0"
+  }
 }

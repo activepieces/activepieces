@@ -1,7 +1,8 @@
 {
   "name": "@avalant/piece-kimi-k2",
-  "version": "0.0.1",
-  "type": "commonjs",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts"
+  "version": "0.0.2",
+  "dependencies": {
+    "tiktoken": "1.0.11",
+    "openai": "4.67.1"
+  }
 }

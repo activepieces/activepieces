@@ -1,4 +1,12 @@
 {
   "name": "@avalant/piece-promptx-gemini",
-  "version": "0.0.2"
+  "version": "0.0.3",
+  "dependencies": {
+    "@google/genai": "1.29.0",
+    "@google/generative-ai": "0.21.0",
+    "wav": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/wav": "^1.0.4"
+  }
 }

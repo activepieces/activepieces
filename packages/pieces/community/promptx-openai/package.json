@@ -1,4 +1,7 @@
 {
   "name": "@avalant/piece-promptx-openai",
-  "version": "0.0.8"
+  "version": "0.0.9",
+  "dependencies": {
+    "openai": "4.67.1"
+  }
 }
