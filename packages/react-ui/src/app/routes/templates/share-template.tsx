@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 
 import { FullLogo } from '@/components/ui/full-logo';
 import { ShareTemplate } from '@/features/templates/components/share-template';
@@ -10,7 +10,6 @@ import { isNil } from '@activepieces/shared';
 const ShareTemplatePage = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const token = authenticationSession.getToken();
-  const navigate = useNavigate();
   const location = useLocation();
 
   if (!templateId) {
@@ -18,9 +17,12 @@ const ShareTemplatePage = () => {
   }
 
   if (isNil(token)) {
-    const currentPath = `${location.pathname}${location.search}`;
-    navigate(`/sign-in?${FROM_QUERY_PARAM}=${encodeURIComponent(currentPath)}`);
-    return;
+    return (
+      <Navigate
+        to={`/sign-in?${FROM_QUERY_PARAM}=${location.pathname}${location.search}`}
+        replace
+      />
+    );
   }
 
   return (
