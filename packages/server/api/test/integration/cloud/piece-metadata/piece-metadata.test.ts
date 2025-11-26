@@ -31,7 +31,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    await databaseConnection().getRepository('piece_metadata').delete({})
+    await databaseConnection().getRepository('piece_metadata').createQueryBuilder().delete().execute()
 })
 
 afterAll(async () => {
