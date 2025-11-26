@@ -174,14 +174,14 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   }),
-  {
+  ...ProjectRouterWrapper({
     path: '/templates/:templateId',
     element: (
       <PageTitle title="Share Template">
         <ShareTemplatePage />
       </PageTitle>
     ),
-  },
+  }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRelease,
     element: (
