@@ -1,4 +1,3 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -9,6 +8,7 @@ import {
     Flow,
     FlowId,
     FlowOperationRequest,
+    FlowOperationStatus,
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
@@ -36,6 +36,8 @@ import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import Paginator from '../../helper/pagination/paginator'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
@@ -57,6 +59,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             publishedVersionId: null,
             externalId: externalId ?? apId(),
             metadata: request.metadata,
+            operationStatus: FlowOperationStatus.NONE,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -489,24 +492,60 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        await distributedLock(log).runExclusive({
-            key: id,
-            timeoutInSeconds: 10,
-            fn: async () => {
-                const flowToDelete = await this.getOneOrThrow({
-                    id,
-                    projectId,
-                })
-
-                rejectedPromiseHandler(flowSideEffects(log).preDelete({
-                    flowToDelete,
-                }), log)
-
-                await flowRepo().delete({ id })
-                await flowExecutionCache(log).delete(id)
+        const flow = await this.getOneOrThrow({
+            id,
+            projectId,
+        })
+        if (flow.operationStatus !== FlowOperationStatus.NONE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_OPERATION_INVALID,
+                params: {
+                    message: `Flow ${id} is already being ${flow.operationStatus}`,
+                },
+            })
+        }
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.DELETE_FLOW,
+                data: {
+                    flow,
+                    preDeleteDone: false,
+                    dbDeleteDone: false,
+                },
+                jobId: `delete-flow-${flow.id}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: dayjs().add(1, 'second'),
             },
         })
+        await flowRepo().update(id, {
+            operationStatus: FlowOperationStatus.DELETING,
+        })
+    },
 
+    async backgroundDeleteHandler(data: SystemJobData<SystemJobName.DELETE_FLOW>): Promise<void> {
+        const { flow, preDeleteDone, dbDeleteDone } = data
+        const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
+        assertNotNullOrUndefined(job, 'job is required')
+        if (!preDeleteDone) {
+            await flowSideEffects(log).preDelete({
+                flowToDelete: flow,
+            })
+            await job.updateData({
+                ...data,
+                preDeleteDone: true,
+            })
+        }
+        if (!dbDeleteDone) {
+            await flowRepo().delete({ id: flow.id })
+            await job.updateData({
+                ...data,
+                preDeleteDone: true,
+                dbDeleteDone: true,
+            })
+        }
+        await flowExecutionCache(log).delete(flow.id)
     },
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
@@ -723,6 +762,7 @@ type DeleteParams = {
     id: FlowId
     projectId: ProjectId
 }
+
 
 type NewFlow = Omit<Flow, 'created' | 'updated'>
 
