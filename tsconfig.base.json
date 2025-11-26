@@ -12,7 +12,10 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2021", "dom"],
+    "lib": [
+      "es2021",
+      "dom"
+    ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -20,10 +23,18 @@
       "@activepieces/common-ai": [
         "packages/pieces/community/common-ai/src/index.ts"
       ],
-      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
-      "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
-      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/ee-auth": [
+        "packages/ee/auth/src/index.ts"
+      ],
+      "@activepieces/ee-shared": [
+        "packages/ee/shared/src/index.ts"
+      ],
+      "@activepieces/ee/billing/ui": [
+        "packages/ee/billing/ui/src/index.ts"
+      ],
+      "@activepieces/engine": [
+        "packages/engine/src/main.ts"
+      ],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
       ],
@@ -45,31 +56,45 @@
       "@activepieces/piece-square": [
         "packages/pieces/community/square/src/index.ts"
       ],
-      "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
-      "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@ee/*": ["packages/ee/*"],
-      "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
-      "activepieces/piece-microsoft-dynamics-365-business-central": [
+      "@activepieces/server-shared": [
+        "packages/server/shared/src/index.ts"
+      ],
+      "@activepieces/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@ee/*": [
+        "packages/ee/*"
+      ],
+      "Aminos": [
+        "packages/pieces/community/Aminos/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
       ],
-      "activepieces/piece-microsoft-dynamics-crm": [
+      "@activepieces/piece-microsoft-dynamics-crm": [
         "packages/pieces/community/microsoft-dynamics-crm/src/index.ts"
       ],
-      "activepieces/piece-microsoft-sharepoint": [
+      "@activepieces/piece-microsoft-sharepoint": [
         "packages/pieces/community/microsoft-sharepoint/src/index.ts"
       ],
-      "activepieces/piece-snowflake": [
+      "@activepieces/piece-snowflake": [
         "packages/pieces/community/snowflake/src/index.ts"
       ],
-      "activepieces/piece-zuora": [
+      "@activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
-      "activepieces/piece-cashfree-payments": [
+      "@activepieces/piece-cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
-      "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
-      "server-worker": ["packages/server/worker/src/index.ts"],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
+      "ee-embed-sdk": [
+        "packages/ee/ui/embed-sdk/src/index.ts"
+      ],
+      "server-worker": [
+        "packages/server/worker/src/index.ts"
+      ],
+      "ui-feature-forms": [
+        "packages/ui/features-forms/src/index.ts"
+      ],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
       ],
@@ -154,7 +179,7 @@
       "@activepieces/piece-denser-ai": [
         "packages/pieces/community/denser-ai/src/index.ts"
       ],
-"@activepieces/piece-oracle-fusion-erp": [
+      "@activepieces/piece-oracle-fusion-erp": [
         "packages/pieces/community/oracle-fusion-erp/src/index.ts"
       ],
       "@activepieces/piece-ask-handle": [
@@ -179,10 +204,13 @@
         "packages/pieces/community/greip/src/index.ts"
       ],
       "@activepieces/piece-chaindesk": [
-        "packages/pieces/community/chaindesk/src/index.ts" 
+        "packages/pieces/community/chaindesk/src/index.ts"
       ]
     },
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }
