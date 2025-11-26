@@ -15,8 +15,8 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
 {
   private readonly _actions: Record<string, Action> = {};
   private readonly _triggers: Record<string, Trigger> = {};
-  // can be undefined because older versions didn't have this property
-  public readonly contextVersion: ContextVersion | undefined = LATEST_CONTEXT_VERSION;
+  // this method didn't exist in older version
+  public getContextInfo: (() => { version: ContextVersion } )| undefined = () => ({ version: LATEST_CONTEXT_VERSION }); 
   constructor(
     public readonly displayName: string,
     public readonly logoUrl: string,
@@ -46,7 +46,8 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       authors: this.authors,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
-      maximumSupportedRelease: this.maximumSupportedRelease
+      maximumSupportedRelease: this.maximumSupportedRelease,
+      contextInfo: this.getContextInfo?.()
     };
   }
 
@@ -110,7 +111,7 @@ type PieceEventProcessors = {
   }) => boolean;
 };
 
-type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n'> & {
+type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n' | 'getContextInfo'> & {
   authors?: PieceMetadata['authors']
   i18n?: PieceMetadata['i18n']
 }

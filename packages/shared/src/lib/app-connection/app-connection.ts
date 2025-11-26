@@ -49,7 +49,8 @@ export type BaseOAuth2ConnectionValue = {
     scope: string
     token_url: string
     authorization_method?: OAuth2AuthorizationMethod
-    data: Record<string, unknown>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: Record<string, any>
     props?: Record<string, string>
     grant_type?: OAuth2GrantType
 }

@@ -50,7 +50,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             devPieces: constants.devPieces,
         })
 
-        const { resolvedInput, censoredInput } = await constants.getPropsResolver(piece.contextVersion).resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver(piece.getContextInfo?.().version).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -124,7 +124,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 target: 'actions',
                 hookResponse: params.hookResponse,
-                contextVersion: piece.contextVersion,
+                contextVersion: piece.getContextInfo?.().version,
             }),
             run: {
                 id: constants.flowRunId,
@@ -143,7 +143,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             },
         }
         const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
-            contextVersion: piece.contextVersion,
+            contextVersion: piece.getContextInfo?.().version,
             context,
             serverUrl: constants.publicApiUrl,
         })

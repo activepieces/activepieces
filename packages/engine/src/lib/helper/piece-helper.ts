@@ -40,7 +40,7 @@ export const pieceHelper = {
                 apiUrl: constants.internalApiUrl,
                 projectId: params.projectId,
                 engineToken: params.engineToken,
-                contextVersion: piece.contextVersion,
+                contextVersion: piece.getContextInfo?.().version,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -67,7 +67,7 @@ export const pieceHelper = {
                     engineToken: params.engineToken,
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
-                    contextVersion: piece.contextVersion,
+                    contextVersion: piece.getContextInfo?.().version,
                 }),
             }
           
