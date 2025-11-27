@@ -182,26 +182,26 @@ export const Property = {
   MultiSelectDropdown<T, R extends boolean = boolean, PieceAuth extends PieceAuthProperty | undefined = undefined>(
     request: Properties<MultiSelectDropdownProperty<T, R, PieceAuth>>
   ): R extends true
-    ? MultiSelectDropdownProperty<T, true>
-    : MultiSelectDropdownProperty<T, false> {
+    ? MultiSelectDropdownProperty<T, true, PieceAuth>
+    : MultiSelectDropdownProperty<T, false, PieceAuth> {
     return {
       ...request,
       valueSchema: undefined,
       type: PropertyType.MULTI_SELECT_DROPDOWN,
     } as unknown as R extends true
-      ? MultiSelectDropdownProperty<T, true>
-      : MultiSelectDropdownProperty<T, false>;
+      ? MultiSelectDropdownProperty<T, true, PieceAuth>
+      : MultiSelectDropdownProperty<T, false, PieceAuth>;
   },
   DynamicProperties<R extends boolean = boolean, PieceAuth extends PieceAuthProperty | undefined = undefined>(
     request: Properties<DynamicProperties<R,PieceAuth>>
-  ): R extends true ? DynamicProperties<true> : DynamicProperties<false> {
+  ): R extends true ? DynamicProperties<true, PieceAuth> : DynamicProperties<false, PieceAuth> {
     return {
       ...request,
       valueSchema: undefined,
       type: PropertyType.DYNAMIC,
     } as unknown as R extends true
-      ? DynamicProperties<true>
-      : DynamicProperties<false>;
+      ? DynamicProperties<true, PieceAuth>
+      : DynamicProperties<false, PieceAuth>;
   },
   StaticMultiSelectDropdown<T, R extends boolean = boolean>(
     request: Properties<StaticMultiSelectDropdownProperty<T, R>>
