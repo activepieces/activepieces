@@ -39,14 +39,8 @@ export type DynamicProperties<R extends boolean, PieceAuth extends PieceAuthProp
 {
    //dummy property to define auth property value inside props value
   auth: PieceAuth
-  props: (
-    propsValue: Record<string, DynamicPropsValue> & {
-      auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
-    },
-    ctx: PropertyContext
-  ) => Promise<InputPropertyMap>;
+  props: DynamicPropertiesOptions<PieceAuth>
   refreshers: string[];
- 
 } &
   TPropertyValue<
     DynamicPropsValue,
@@ -54,3 +48,9 @@ export type DynamicProperties<R extends boolean, PieceAuth extends PieceAuthProp
     R
   >;
 
+  type DynamicPropertiesOptions<PieceAuth extends PieceAuthProperty | undefined = undefined> = (
+    propsValue: Record<string, unknown> & {
+      auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
+    },
+    ctx: PropertyContext,
+  ) => Promise<InputPropertyMap>;

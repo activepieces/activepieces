@@ -21,6 +21,9 @@ export const DropdownProperty = Type.Composite([
 ]);
 
 export type DropdownProperty<T, R extends boolean, PieceAuth extends PieceAuthProperty | undefined = undefined> = BasePropertySchema & {
+  /**
+   * A dummy property used to infer {@code PieceAuth} type
+   */
   auth: PieceAuth;
   refreshers: string[];
   refreshOnSearch?: boolean;
@@ -41,6 +44,9 @@ export type MultiSelectDropdownProperty<
   R extends boolean,
   PieceAuth extends PieceAuthProperty | undefined = undefined
 > = BasePropertySchema & {
+  /**
+   * A dummy property used to infer {@code PieceAuth} type
+   */
   auth: PieceAuth;
   refreshers: string[];
   refreshOnSearch?: boolean;
