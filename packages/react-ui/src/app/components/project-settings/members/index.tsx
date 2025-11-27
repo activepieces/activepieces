@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -11,11 +11,7 @@ import { userInvitationsHooks } from '@/features/members/lib/user-invitations-ho
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
 
-import {
-  membersTableColumns,
-  membersTableActions,
-  MemberRowData,
-} from './columns';
+import { membersTableColumns, MemberRowData } from './columns';
 
 export const MembersSettings = () => {
   const {
@@ -37,10 +33,10 @@ export const MembersSettings = () => {
     Permission.WRITE_INVITATION,
   );
 
-  const refetch = () => {
+  const refetch = useCallback(() => {
     refetchProjectMembers();
     refetchInvitations();
-  };
+  }, [refetchProjectMembers, refetchInvitations]);
 
   const combinedData: MemberRowData[] = useMemo(() => {
     const members: MemberRowData[] =
@@ -78,13 +74,13 @@ export const MembersSettings = () => {
     });
   }, [combinedData, filterValue]);
 
-  const columns = membersTableColumns({
-    refetch,
-  });
-
-  const actions = membersTableActions({
-    refetch,
-  });
+  const columns = useMemo(
+    () =>
+      membersTableColumns({
+        refetch,
+      }),
+    [refetch],
+  );
 
   return (
     <div className="space-y-4">
@@ -107,7 +103,6 @@ export const MembersSettings = () => {
           next: null,
           previous: null,
         }}
-        actions={actions}
         isLoading={projectMembersIsPending || invitationsIsPending}
         hidePagination={true}
         emptyStateTextTitle={t('No members found')}

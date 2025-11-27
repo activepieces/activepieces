@@ -1,5 +1,11 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons';
-import { UserPlus, UsersRound, Users, Settings } from 'lucide-react';
+import {
+  UserPlus,
+  UsersRound,
+  Users,
+  Settings,
+  PencilIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -11,14 +17,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -32,6 +37,7 @@ import {
 } from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
+import { ProjectAvatar } from '../project-avatar';
 import { ProjectSettingsDialog } from '../project-settings';
 
 export const ProjectDashboardPageHeader = ({
@@ -49,6 +55,7 @@ export const ProjectDashboardPageHeader = ({
   const { data: currentUser } = userHooks.useCurrentUser();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [renameProjectOpen, setRenameProjectOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
     'general' | 'members'
   >('general');
@@ -84,6 +91,10 @@ export const ProjectDashboardPageHeader = ({
     project.type === ProjectType.TEAM;
   const showSettingsButton = !isEmbedded;
   const isProjectPage = location.pathname.includes('/projects/');
+
+  const showRenameProjectButton =
+    project.type !== ProjectType.PERSONAL &&
+    checkAccess(Permission.WRITE_PROJECT);
 
   if (embedState.hidePageHeader) {
     return null;
@@ -154,16 +165,26 @@ export const ProjectDashboardPageHeader = ({
                     <DotsHorizontalIcon className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-semibold">
-                    <ApProjectDisplay
-                      title={project.displayName}
-                      maxLengthToNotShowTooltip={23}
-                      titleClassName="font-semibold"
+                <DropdownMenuContent align="end" className="w-60">
+                  <div className="mb-2">
+                    <ProjectAvatar
+                      displayName={project.displayName}
                       projectType={project.type}
+                      iconColor={project.icon.color}
+                      size="md"
+                      showBackground={true}
+                      showDetails={true}
+                      createdDate={new Date(project.created)}
                     />
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                  </div>
+                  {showRenameProjectButton && (
+                    <DropdownMenuItem
+                      onClick={() => setRenameProjectOpen(true)}
+                    >
+                      <PencilIcon className="w-4 h-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                  )}
                   {showInviteUserButton && (
                     <DropdownMenuItem onClick={() => setInviteOpen(true)}>
                       <UserPlus className="w-4 h-4 mr-2" />
@@ -198,6 +219,15 @@ export const ProjectDashboardPageHeader = ({
       </div>
       {children}
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
+      <EditProjectDialog
+        open={renameProjectOpen}
+        onClose={() => setRenameProjectOpen(false)}
+        projectId={project.id}
+        initialValues={{
+          projectName: project?.displayName,
+        }}
+        renameOnly={true}
+      />
       <ProjectSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
