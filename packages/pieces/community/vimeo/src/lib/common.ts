@@ -1,4 +1,4 @@
-  import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 
 export async function apiRequest({
