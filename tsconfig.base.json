@@ -186,6 +186,9 @@
       ],
       "@activepieces/piece-flow-parser": [
         "packages/pieces/community/flow-parser/src/index.ts"
+      ],
+      "@activepieces/piece-wizychat": [
+        "packages/pieces/community/wizychat/src/index.ts"
       ]
     },
     "resolveJsonModule": true
