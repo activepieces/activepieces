@@ -44,7 +44,7 @@ type ExtractCustomAuthProps<T> = T extends CustomAuthProperty<infer Props> ? Pro
 type ExtractOAuth2Props<T> = T extends OAuth2Property<infer Props> ? Props : never;
 
 
-type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = 
+export type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = 
   T extends SecretTextProperty<boolean> ? AppConnectionValue<AppConnectionType.SECRET_TEXT> :
   T extends BasicAuthProperty ? AppConnectionValue<AppConnectionType.BASIC_AUTH> :
   T extends CustomAuthProperty<any> ? AppConnectionValue<AppConnectionType.CUSTOM_AUTH, StaticPropsValue<ExtractCustomAuthProps<T>>> :
