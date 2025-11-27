@@ -186,9 +186,18 @@ export const flowService = (log: FastifyBaseLogger) => ({
             AddAPArrayOverlapsToQueryBuilder(queryBuilder, 'latest_version."agentIds"', agentExternalIds, 'agentExternalIds')
         }
 
-        const paginationResult = await paginator.paginate<Flow & { version: FlowVersion, triggerSource?: TriggerSource }>(queryBuilder)
+        const paginationResult = await paginator.paginate<Flow & { version: FlowVersion | null, triggerSource?: TriggerSource }>(queryBuilder)
 
         const populatedFlows = paginationResult.data.map((flow) => {
+            if (isNil(flow.version)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'FlowVersion',
+                        message: `flowId=${flow.id}`,
+                    },
+                })
+            }
             return {
                 ...flow,
                 version: flow.version,
