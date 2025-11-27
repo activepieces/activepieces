@@ -79,7 +79,7 @@ export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| u
   auth: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
   authMapping?: (
-    auth: AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>,
+    auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>,
     propsValue: StaticPropsValue<any>
   ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
@@ -104,10 +104,11 @@ export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| u
     description: description
       ? description
       : 'Make a custom API call to a specific endpoint',
-    auth: auth ? auth : undefined,
+    auth,
     requireAuth: auth ? true : false,
     props: {
       url: Property.DynamicProperties({
+        auth,
         displayName: '',
         required: true,
         refreshers: [],
@@ -185,12 +186,11 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         timeout,
         response_is_binary,
       } = context.propsValue;
-
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
-      const auth = context.auth;
-      const authValue = !isNil(authMapping)
-        ? await authMapping(, context.propsValue)
+
+      const authValue = !isNil(authMapping) 
+        ? await authMapping(context.auth, context.propsValue)
         : {};
 
       const urlValue = url['url'] as string;

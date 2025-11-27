@@ -53,7 +53,7 @@ export type Action<
 > = IAction<PieceAuth, ActionProps>
 
 export const createAction = <
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty| undefined = undefined,
   ActionProps extends InputPropertyMap = any
 >(
   params: CreateActionParams<PieceAuth, ActionProps>,
