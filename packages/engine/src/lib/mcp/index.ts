@@ -191,7 +191,7 @@ async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOp
     const dynamicProperties = response.options
     const dynamicSchema: Record<string, z.ZodTypeAny> = {}
     for (const [key, value] of Object.entries(dynamicProperties)) {
-        dynamicSchema[key] = await propertyToSchema(key, value, operation);
+        dynamicSchema[key] = await propertyToSchema(key, value, operation, resolvedInput);
     }
     return z.object(dynamicSchema);;
 }
