@@ -6,10 +6,11 @@ export const toolsOperation = {
     execute: async (operation: ExecuteToolOperation): Promise<EngineResponse<ExecuteToolResponse>> => {
         const provider = createOpenAI({
             apiKey: operation.engineToken,
-            baseURL: `${operation.publicApiUrl}/v1`,
+            baseURL: `${operation.publicApiUrl}v1/ai-providers/proxy/openai/v1`,
             headers: {
                 'Authorization': `Bearer ${operation.engineToken}`,
                 'ap-feature': 'MCP',
+                'ap-mcp-id': `tool:${operation.actionName}`,
             },
         })
         return mcpExecutor.execute({
