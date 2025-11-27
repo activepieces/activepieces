@@ -23,13 +23,69 @@ export const modelDropdown = Property.Dropdown({
         resourceUri: '/v1/models?type=image',
       });
 
-      // Handle different response structures
-      let models: Array<{ id: string; name?: string; provider?: string }> = [];
+      let models: Array<{ 
+        id: string; 
+        name: string; 
+        provider: string;
+        category: string;
+        isFree: boolean;
+        isFast: boolean;
+        isPremium: boolean;
+      }> = [];
       
-      if (Array.isArray(response)) {
-        models = response;
-      } else if (response && typeof response === 'object') {
-        if (Array.isArray(response.data)) {
+      if (response && typeof response === 'object') {
+        const keys = Object.keys(response);
+        if (keys.length > 0 && typeof response[keys[0]] === 'object') {
+          models = keys.map((modelId) => {
+            const modelData = response[modelId];
+            const provider = modelData.providers?.[0]?.id || 
+                          modelData.providers?.[0]?.name || 
+                          '';
+            const modelName = modelId.split('/').pop() || modelId;
+            
+            const isFree = modelId.includes(':free') || 
+              modelData.providers?.some((p: any) => 
+                p.pricing?.value === 0 || 
+                (p.pricing?.type === 'fixed' && p.pricing?.value === 0)
+              ) || false;
+            
+            const nameLower = modelName.toLowerCase();
+            const isFast = nameLower.includes('fast') || 
+              nameLower.includes('turbo') || 
+              nameLower.includes('schnell') || 
+              nameLower.includes('flash') || 
+              nameLower.includes('lightning') ||
+              nameLower.includes('mini');
+            
+            const isPremium = nameLower.includes('pro') || 
+              nameLower.includes('ultra') || 
+              nameLower.includes('max') ||
+              nameLower.includes('quality');
+            
+            let category = '';
+            if (isFree) {
+              category = 'Free';
+            } else if (isFast) {
+              category = 'Fast';
+            } else if (isPremium) {
+              category = 'Premium';
+            } else {
+              category = 'Standard';
+            }
+            
+            return {
+              id: modelId,
+              name: modelName,
+              provider,
+              category,
+              isFree,
+              isFast,
+              isPremium,
+            };
+          });
+        } else if (Array.isArray(response)) {
+          models = response;
+        } else if (Array.isArray(response.data)) {
           models = response.data;
         } else if (Array.isArray(response.models)) {
           models = response.models;
@@ -46,16 +102,28 @@ export const modelDropdown = Property.Dropdown({
         };
       }
 
+      const sortedModels = models.sort((a, b) => {
+        if (a.isFree && !b.isFree) return -1;
+        if (!a.isFree && b.isFree) return 1;
+        if (a.isFast && !b.isFast) return -1;
+        if (!a.isFast && b.isFast) return 1;
+        if (a.isPremium && !b.isPremium) return -1;
+        if (!a.isPremium && b.isPremium) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
       return {
         disabled: false,
-        options: models.map((model) => {
-          const modelId = model.id || (model as any).model_id || '';
-          const modelName = model.name || (model as any).model_name || '';
-          const provider = model.provider || (model as any).provider_name || '';
+        options: sortedModels.map((model) => {
+          const modelId = model.id || '';
+          const modelName = model.name || modelId.split('/').pop() || modelId;
+          const provider = model.provider || '';
+          const category = model.category || '';
           
-          const label = modelName 
-            ? `${modelName}${provider ? ` (${provider})` : ''}`
-            : modelId;
+          // Create label with clear category prefix using brackets
+          const label = provider 
+            ? `[${category}] ${modelName} (${provider})`
+            : `[${category}] ${modelName}`;
           
           return {
             label,
@@ -63,10 +131,11 @@ export const modelDropdown = Property.Dropdown({
           };
         }),
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error fetching models:', error);
       return {
         disabled: true,
-        placeholder: 'Failed to load models',
+        placeholder: `Failed to load models: ${error.message || 'Unknown error'}`,
         options: [],
       };
     }
