@@ -83,21 +83,21 @@ export const newFile = createTrigger({
 	type: TriggerStrategy.POLLING,
 	onEnable: async (context) => {
 		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
+			auth: context.auth.props,
 			store: context.store,
 			propsValue: context.propsValue,
 		});
 	},
 	onDisable: async (context) => {
 		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
+			auth: context.auth.props,
 			store: context.store,
 			propsValue: context.propsValue,
 		});
 	},
 	run: async (context) => {
 		return await pollingHelper.poll(polling, {
-			auth: context.auth,
+			auth: context.auth.props,
 			store: context.store,
 			propsValue: context.propsValue,
 			files: context.files,
@@ -105,7 +105,7 @@ export const newFile = createTrigger({
 	},
 	test: async (context) => {
 		return await pollingHelper.test(polling, {
-			auth: context.auth,
+			auth: context.auth.props,
 			store: context.store,
 			propsValue: context.propsValue,
 			files: context.files,
