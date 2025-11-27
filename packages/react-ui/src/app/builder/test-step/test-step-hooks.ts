@@ -298,23 +298,13 @@ export const testStepHooks = {
         ) {
           return params.preExistingSampleData;
         }
-        const todoParams =
-          params?.type === 'todoAction'
-            ? {
-                isForTodo: true as const,
-                onProgress: params.onProgress,
-              }
-            : {
-                isForTodo: false as const,
-                onProgress: undefined,
-              };
         const response = await flowRunsApi.testStep({
           socket,
           request: {
             flowVersionId,
             stepName: currentStep.name,
           },
-          ...todoParams,
+          onProgress: params?.onProgress,
         });
         return response;
       },
@@ -363,9 +353,10 @@ type TestActionMutationParams =
   | {
       preExistingSampleData: StepRunResponse;
       type: 'webhookAction';
+      onProgress: undefined;
     }
   | {
-      type: 'todoAction';
+      type: 'todoAction' | 'agentAction';
       onProgress: (progress: StepRunResponse) => void;
     }
   | undefined;
