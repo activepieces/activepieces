@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { wizychatAuth } from './lib/common/auth';
+import { askChatbot } from './lib/actions/ask-chatbot';
 
 export const wizychat = createPiece({
   displayName: 'WizyChat',
@@ -9,6 +10,6 @@ export const wizychat = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/wizychat.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['sanket-a11y'],
-  actions: [],
+  actions: [askChatbot],
   triggers: [],
 });
