@@ -7,7 +7,6 @@ import {
   StaticPropsValue,
   InputPropertyMap,
   FilesService,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -17,7 +16,7 @@ import {
   QueryParams,
   httpClient,
 } from '../http';
-import { AppConnectionType, assertNotNullOrUndefined, isNil } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
 import fs from 'fs';
 import mime from 'mime-types';
 
@@ -189,7 +188,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       assertNotNullOrUndefined(url, 'URL');
 
       const authValue = !isNil(authMapping)
-        ? await authMapping(getAuthValueForAuthMapping(context.auth), context.propsValue)
+        ? await authMapping(context.auth, context.propsValue)
         : {};
 
       const urlValue = url['url'] as string;
@@ -279,15 +278,3 @@ const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
 };
 
-
-function getAuthValueForAuthMapping(auth:AppConnectionValueForAuthProperty<PieceAuthProperty> ) {
-  switch (auth.type) {
-    case AppConnectionType.SECRET_TEXT:
-      return auth.secret_text;
-    case AppConnectionType.OAUTH2:
-    case AppConnectionType.BASIC_AUTH:
-      return auth
-    case AppConnectionType.CUSTOM_AUTH:
-      return auth.props;
-  }
-}

@@ -34,7 +34,7 @@ export const matchPerson = createAction({
         'Content-Type': 'application/json',
       },
       body: {
-        api_key: auth.secret_text,
+        api_key: auth,
         email: propsValue.email,
       }
     });
