@@ -23,12 +23,12 @@ import { PieceAuthProperty } from '../property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
 export type BaseContext<
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined,
   Props extends InputPropertyMap
 > = {
   flows: FlowsContext;
   step: StepContext;
-  auth: AppConnectionValueForAuthProperty<PieceAuth>;
+  auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
   propsValue: StaticPropsValue<Props>;
   store: Store;
   project: {
@@ -44,7 +44,7 @@ type ExtractCustomAuthProps<T> = T extends CustomAuthProperty<infer Props> ? Pro
 type ExtractOAuth2Props<T> = T extends OAuth2Property<infer Props> ? Props : never;
 
 
-type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = 
+export  type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = 
   T extends SecretTextProperty<boolean> ? AppConnectionValue<AppConnectionType.SECRET_TEXT> :
   T extends BasicAuthProperty ? AppConnectionValue<AppConnectionType.BASIC_AUTH> :
   T extends CustomAuthProperty<any> ? AppConnectionValue<AppConnectionType.CUSTOM_AUTH, StaticPropsValue<ExtractCustomAuthProps<T>>> :
@@ -184,7 +184,7 @@ export type OutputContext = {
 
 type BaseActionContext<
   ET extends ExecutionType,
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined,
   ActionProps extends InputPropertyMap
 > = BaseContext<PieceAuth, ActionProps> & {
   executionType: ET;
@@ -200,19 +200,19 @@ type BaseActionContext<
 };
 
 type BeginExecutionActionContext<
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined = undefined,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>;
 
 type ResumeExecutionActionContext<
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined = undefined,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
   resumePayload: ResumePayload;
 };
 
 export type ActionContext<
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined = undefined,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > =
   | BeginExecutionActionContext<PieceAuth, ActionProps>

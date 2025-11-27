@@ -21,6 +21,7 @@ import { PropertyType } from './property-type';
 import { LongTextProperty, ShortTextProperty } from './text-property';
 import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-property';
 import { ColorProperty } from './color-property';
+import { PieceAuthProperty } from '../authentication';
 
 export const InputProperty = Type.Union([
   ShortTextProperty,
@@ -154,16 +155,16 @@ export const Property = {
       ? ObjectProperty<true>
       : ObjectProperty<false>;
   },
-  Dropdown<T, R extends boolean = boolean>(
-    request: Properties<DropdownProperty<T, R>>
-  ): R extends true ? DropdownProperty<T, true> : DropdownProperty<T, false> {
+  Dropdown<T, R extends boolean = boolean, PieceAuth extends PieceAuthProperty | undefined = undefined>(
+    request: Properties<DropdownProperty<T, R, PieceAuth>>
+  ): R extends true ? DropdownProperty<T, true, PieceAuth> : DropdownProperty<T, false, PieceAuth> {
     return {
       ...request,
       valueSchema: undefined,
       type: PropertyType.DROPDOWN,
     } as unknown as R extends true
-      ? DropdownProperty<T, true>
-      : DropdownProperty<T, false>;
+      ? DropdownProperty<T, true, PieceAuth>
+      : DropdownProperty<T, false, PieceAuth>;
   },
   StaticDropdown<T, R extends boolean = boolean>(
     request: Properties<StaticDropdownProperty<T, R>>
@@ -178,8 +179,8 @@ export const Property = {
       ? StaticDropdownProperty<T, true>
       : StaticDropdownProperty<T, false>;
   },
-  MultiSelectDropdown<T, R extends boolean = boolean>(
-    request: Properties<MultiSelectDropdownProperty<T, R>>
+  MultiSelectDropdown<T, R extends boolean = boolean, PieceAuth extends PieceAuthProperty | undefined = undefined>(
+    request: Properties<MultiSelectDropdownProperty<T, R, PieceAuth>>
   ): R extends true
     ? MultiSelectDropdownProperty<T, true>
     : MultiSelectDropdownProperty<T, false> {
@@ -191,8 +192,8 @@ export const Property = {
       ? MultiSelectDropdownProperty<T, true>
       : MultiSelectDropdownProperty<T, false>;
   },
-  DynamicProperties<R extends boolean = boolean>(
-    request: Properties<DynamicProperties<R>>
+  DynamicProperties<R extends boolean = boolean, PieceAuth extends PieceAuthProperty | undefined = undefined>(
+    request: Properties<DynamicProperties<R,PieceAuth>>
   ): R extends true ? DynamicProperties<true> : DynamicProperties<false> {
     return {
       ...request,
