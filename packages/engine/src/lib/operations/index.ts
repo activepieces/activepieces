@@ -16,7 +16,7 @@ import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'
 import { propertyOperation } from './property.operation'
 import { triggerHookOperation } from './trigger-hook.operation'
-import { toolOperation } from '../mcp'
+import { toolsOperation } from './tools.operation'
 
 
 export async function execute(operationType: EngineOperationType, operation: EngineOperation): Promise<EngineResponse<unknown>> {
@@ -34,7 +34,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
             return triggerHookOperation.execute(operation as ExecuteTriggerOperation<TriggerHookType>)
         }
         case EngineOperationType.EXECUTE_TOOL: {
-            return toolOperation.execute(operation as ExecuteToolOperation)
+            return toolsOperation.execute(operation as ExecuteToolOperation)
         }
         case EngineOperationType.EXECUTE_VALIDATE_AUTH: {
             return authValidationOperation.execute(operation as ExecuteValidateAuthOperation)
