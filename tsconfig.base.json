@@ -178,6 +178,9 @@
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
       ],
+      "@activepieces/piece-orimon": [
+        "packages/pieces/community/orimon/src/index.ts"
+      ],
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
       ],
