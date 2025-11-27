@@ -1,5 +1,5 @@
 import { activeCampaignAuth } from '../../';
-import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { ActiveCampaignClient } from './client';
 import { CUSTOM_FIELD_TYPE } from './constants';
 
@@ -22,7 +22,7 @@ export const activecampaignCommon = {
 						options: [],
 					};
 				}
-				const client = makeClient(auth as PiecePropValueSchema<typeof activeCampaignAuth>);
+				const client = makeClient((auth as AppConnectionValueForAuthProperty<typeof activeCampaignAuth>).props);
 				const res = await client.listContactLists();
 
 				return {
@@ -74,14 +74,14 @@ export const activecampaignCommon = {
 					options: [],
 				};
 			}
-			const client = makeClient(auth as PiecePropValueSchema<typeof activeCampaignAuth>);
+			const client = makeClient((auth as AppConnectionValueForAuthProperty<typeof activeCampaignAuth>).props);
 			const res = await client.listContacts();
 
 			return {
 				disabled: false,
 				options: res.contacts.map((contact) => {
 					return {
-						label: `${contact.firstName} ${contact.lastName}` ?? contact.email,
+						label: contact.firstName && contact.lastName ? `${contact.firstName} ${contact.lastName}` : contact.email,
 						value: contact.id,
 					};
 				}),
@@ -121,9 +121,8 @@ export const activecampaignCommon = {
 		props: async ({ auth }) => {
 			if (!auth) return {};
 
-			const client = makeClient(auth as PiecePropValueSchema<typeof activeCampaignAuth>);
+			const client = makeClient((auth as AppConnectionValueForAuthProperty<typeof activeCampaignAuth>).props);
 			const res = await client.listAccountCustomFields();
-
 			const fields: DynamicPropsValue = {};
 
 			for (const field of res.accountCustomFieldMeta) {
@@ -209,8 +208,7 @@ export const activecampaignCommon = {
 		required: true,
 		props: async ({ auth }) => {
 			if (!auth) return {};
-
-			const client = makeClient(auth as PiecePropValueSchema<typeof activeCampaignAuth>);
+			const client = makeClient((auth as AppConnectionValueForAuthProperty<typeof activeCampaignAuth>).props);
 			const res = await client.listContactCustomFields();
 
 			const fields: DynamicPropsValue = {};
