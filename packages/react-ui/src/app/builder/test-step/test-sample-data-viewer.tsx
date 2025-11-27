@@ -1,24 +1,15 @@
 import { t } from 'i18next';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import {
-  AGENT_PIECE_NAME,
-  AgentResult,
-  FlowAction,
-  FlowActionType,
-  isNil,
-  StepOutputStatus,
-} from '@activepieces/shared';
-
+import { AGENT_PIECE_NAME, AgentResult, FlowAction, FlowActionType, isNil, StepOutputStatus } from '@activepieces/shared';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
-
-import { AgentTestStep } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { AgentTestStep } from './agent-test-step';
 
 const isRunAgent = (step?: FlowAction) => {
   return (
@@ -31,12 +22,13 @@ const isRunAgent = (step?: FlowAction) => {
 
 type RetestSampleDataViewerProps = {
   isValid: boolean;
+  currentStep?: FlowAction;
   isTesting: boolean;
+  agentResult?: AgentResult;
   sampleData: unknown;
   sampleDataInput: unknown | null;
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
-  currentStep?: FlowAction;
   children?: React.ReactNode;
   consoleLogs?: string | null;
 } & RetestButtonProps;
@@ -84,31 +76,15 @@ export const TestSampleDataViewer = React.memo(
     sampleDataInput,
     errorMessage,
     lastTestDate,
+    agentResult,
     currentStep,
     children,
     consoleLogs,
     isSaving,
     onRetest,
   }: RetestSampleDataViewerProps) => {
-    const [agentResult, setAgentResult] = useState<AgentResult | undefined>(
-      isRunAgent(currentStep) ? (sampleData as AgentResult) : undefined,
-    );
-
-    useEffect(() => {
-      if (isRunAgent(currentStep) && sampleData) {
-        setAgentResult(sampleData as AgentResult);
-      }
-    }, [sampleData]);
-
-    const handleRetest = () => {
-      if (isRunAgent(currentStep)) {
-        setAgentResult(undefined);
-      }
-      onRetest();
-    };
-
     const renderViewer = () => {
-      if (isRunAgent(currentStep)) {
+      if (isRunAgent(currentStep) && !isNil(agentResult)) {
         return (
           <AgentTestStep
             agentResult={agentResult}
@@ -116,7 +92,6 @@ export const TestSampleDataViewer = React.memo(
           />
         );
       }
-
       if (isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs)) {
         return (
           <JsonViewer json={errorMessage ?? sampleData} title={t('Output')} />
@@ -197,7 +172,7 @@ export const TestSampleDataViewer = React.memo(
                 isValid={isValid}
                 isSaving={isSaving}
                 isTesting={isTesting}
-                onRetest={handleRetest}
+                onRetest={onRetest}
               />
             </TestButtonTooltip>
           </div>

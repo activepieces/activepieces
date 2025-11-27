@@ -19,19 +19,16 @@ export enum ColorName {
     DEEP_ORANGE = 'DEEP_ORANGE',
 }
 
-export const ListProjectRequestForUserQueryParams = Type.Object({
-    cursor: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Number()),
-    displayName: Type.Optional(Type.String()),
-})
-
-export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequestForUserQueryParams>
-
 export type ProjectId = ApId
 
 export enum PiecesFilterType {
     NONE = 'NONE',
     ALLOWED = 'ALLOWED',
+}
+    
+export enum ProjectType {
+    TEAM = 'TEAM',
+    PERSONAL = 'PERSONAL',
 }
 
 export const ProjectUsage = Type.Object({
@@ -73,6 +70,7 @@ export const Project = Type.Object({
     displayName: Type.String(),
     platformId: ApId,
     maxConcurrentJobs: Nullable(Type.Number()),
+    type: Type.Enum(ProjectType),
     icon: ProjectIcon,
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),

@@ -161,13 +161,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_DELETED,
-            data: {
-                flow,
-                flowVersion: flow.version,
-            },
-        })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,
             externalId: flow.externalId,
@@ -179,6 +172,13 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         await flowService(request.log).delete({
             id: request.params.id,
             projectId: request.principal.projectId,
+        })
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
