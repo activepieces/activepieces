@@ -47,15 +47,15 @@ export type InputProperty =
   | LongTextProperty<boolean>
   | MarkDownProperty
   | CheckboxProperty<boolean>
-  | DropdownProperty<any, boolean>
+  | DropdownProperty<any, boolean, PieceAuthProperty | undefined>
   | StaticDropdownProperty<any, boolean>
   | NumberProperty<boolean>
   | ArrayProperty<boolean>
   | ObjectProperty<boolean>
   | JsonProperty<boolean>
-  | MultiSelectDropdownProperty<unknown, boolean>
+  | MultiSelectDropdownProperty<unknown, boolean, PieceAuthProperty | undefined>
   | StaticMultiSelectDropdownProperty<unknown, boolean>
-  | DynamicProperties<boolean>
+  | DynamicProperties<boolean, PieceAuthProperty | undefined>
   | DateTimeProperty<boolean>
   | FileProperty<boolean>
   | CustomProperty<boolean>
