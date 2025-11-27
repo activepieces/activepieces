@@ -1,13 +1,14 @@
-import { assertNotNullOrUndefined, EngineResponseStatus, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, McpRunStatus, PieceAction, PropertyExecutionType, StepOutput, StepOutputStatus } from "@activepieces/shared"
+import { EngineResponseStatus, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from "@activepieces/shared"
 import { EngineResponse, ExecuteToolOperation } from "@activepieces/shared"
 import { pieceLoader } from "../helper/piece-loader";
 import { EngineConstants } from "../handler/context/engine-constants";
 import { tsort } from "./tsort";
 import { FlowExecutorContext } from "../handler/context/flow-execution-context";
 import { flowExecutor } from "../handler/flow-executor";
-import { Action, ActionBase, PropertyType } from "@activepieces/pieces-framework";
+import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from "@activepieces/pieces-framework";
 import { z } from "zod/v4";
 import { generateObject, LanguageModel } from "ai";
+import { pieceHelper } from "../helper/piece-helper";
 
 export const mcpExecutor = {
     execute: async (operation: ExecuteToolOperationWithModel): Promise<EngineResponse<ExecuteToolResponse>> => {
@@ -18,8 +19,8 @@ export const mcpExecutor = {
             devPieces: EngineConstants.DEV_PIECES
         });
         const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
-        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model)
-
+        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
+        console.log("RESOLVED INPUT " + JSON.stringify(resolvedInput));
         const step: PieceAction = {
             name: operation.actionName,
             displayName: operation.actionName,
@@ -57,25 +58,32 @@ export const mcpExecutor = {
     }
 }
 
-async function resolveProperties(depthToPropertyMap: Record<number, string[]>, instruction: string, action: Action, model: LanguageModel): Promise<Record<string, unknown>> {
-    let result: Record<string, unknown> = {}
+async function resolveProperties(depthToPropertyMap: Record<number, string[]>, instruction: string, action: Action, model: LanguageModel, operation: ExecuteToolOperation): Promise<Record<string, unknown>> {
+    let result: Record<string, unknown> = operation.predefinedInput
     for (const [_, properties] of Object.entries(depthToPropertyMap)) {
         const propertyToFill: Record<string, z.ZodTypeAny> = {}
+        const propertyPrompts: string[] = []
         for (const property of properties) {
             const propertyFromAction = action.props[property]
             const propertyType = propertyFromAction.type
             const skip = [PropertyType.BASIC_AUTH, PropertyType.OAUTH2, PropertyType.CUSTOM_AUTH, PropertyType.CUSTOM, PropertyType.MARKDOWN]
-            if (skip.includes(propertyType)) {
+            if (skip.includes(propertyType) || property in operation.predefinedInput) {
                 continue
             }
-            const propertySchema = propertyToSchema(action, property)
+            const propertyPrompt = await buildPromptForProperty(property, propertyFromAction, operation, result)
+            if (!isNil(propertyPrompt)) {
+                propertyPrompts.push(propertyPrompt);
+            }
+            const propertySchema = await propertyToSchema(property, propertyFromAction, operation, result)
             propertyToFill[property] = propertyFromAction.required ? propertySchema : propertySchema.nullish()
         }
         const schemaObject = z.object(propertyToFill) as z.ZodTypeAny;
+        const extractionPrompt = constructExtractionPrompt(instruction, propertyToFill, propertyPrompts);
+   
         const { object } = await generateObject({
             model: model,
             schema: schemaObject,
-            prompt: constructExtractionPrompt(instruction, propertyToFill),
+            prompt: extractionPrompt,
         });
         result = {
             ...result,
@@ -85,7 +93,7 @@ async function resolveProperties(depthToPropertyMap: Record<number, string[]>, i
     return result
 }
 
-const constructExtractionPrompt = (instruction: string, propertyToFill: Record<string, z.ZodTypeAny>): string => {
+const constructExtractionPrompt = (instruction: string, propertyToFill: Record<string, z.ZodTypeAny>, propertyPrompts: string[]): string => {
     const propertyNames = Object.keys(propertyToFill).join('", "');
     return `
 You are an expert at understanding API schemas and filling out properties based on user instructions.
@@ -94,6 +102,8 @@ TASK: Fill out the properties "${propertyNames}" based on the user's instruction
 
 USER INSTRUCTIONS:
 ${instruction}
+
+${propertyPrompts.join('\n')}
 
 IMPORTANT:
 - For dropdown, multi-select dropdown, and static dropdown properties, YOU MUST SELECT VALUES FROM THE PROVIDED OPTIONS ARRAY ONLY.
@@ -112,9 +122,8 @@ type ExecuteToolOperationWithModel = ExecuteToolOperation & {
 }
 
 
-function propertyToSchema(action: ActionBase, propertyName: string): z.ZodTypeAny {
-    const property = action.props[propertyName];
-    assertNotNullOrUndefined(property, `Property ${propertyName} not found in action ${action.name}`);
+async function propertyToSchema(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
+    let schema: z.ZodTypeAny
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
@@ -122,31 +131,89 @@ function propertyToSchema(action: ActionBase, propertyName: string): z.ZodTypeAn
         case PropertyType.DATE_TIME:
         case PropertyType.FILE:
         case PropertyType.COLOR:
-            return z.string();
+            schema = z.string();
+            break;
         case PropertyType.DROPDOWN:
-        case PropertyType.STATIC_DROPDOWN:
-            return z.string();
+        case PropertyType.STATIC_DROPDOWN: {
+            schema = z.union([z.string(), z.number(), z.record(z.string(), z.unknown())])
+            break;
+        }
         case PropertyType.MULTI_SELECT_DROPDOWN:
-        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-            return z.array(z.string());
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN: {
+            schema = z.union([z.array(z.string()), z.array(z.record(z.string(), z.unknown()))])
+            break;
+        }
         case PropertyType.NUMBER:
-            return z.number();
+            schema = z.number();
+            break;
         case PropertyType.ARRAY:
             return z.array(z.unknown());
         case PropertyType.OBJECT:
-            return z.record(z.string(), z.unknown());
+            schema = z.record(z.string(), z.unknown());
+            break;
         case PropertyType.JSON:
-            return z.record(z.string(), z.unknown());
-        case PropertyType.DYNAMIC:
-            return z.record(z.string(), z.unknown());
+            schema = z.record(z.string(), z.unknown());
+            break;
+        case PropertyType.DYNAMIC: {
+            schema = await buildDynamicSchema(propertyName, operation, resolvedInput);
+            break;
+        }
         case PropertyType.CHECKBOX:
-            return z.boolean();
+            schema = z.boolean();
+            break;
+        case PropertyType.CUSTOM:
+            schema = z.string();
+            break;
         case PropertyType.OAUTH2:
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
         case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`);
-        case PropertyType.CUSTOM:
-            return z.string();
     }
+    if (property.defaultValue) {
+        schema = schema.default(property.defaultValue);
+    }
+    if (property.description) {
+        schema = schema.describe(property.description);
+    }
+    return property.required ? schema : schema.nullish()
+}
+
+async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
+    const response = await pieceHelper.executeProps({
+        ...operation,
+        propertyName: propertyName,
+        actionOrTriggerName: operation.actionName,
+        input: resolvedInput,
+        sampleData: {},
+        searchValue: undefined,
+    }) as unknown as ExecutePropsResult<PropertyType.DYNAMIC>
+    const dynamicProperties = response.options
+    const dynamicSchema: Record<string, z.ZodTypeAny> = {}
+    for (const [key, value] of Object.entries(dynamicProperties)) {
+        dynamicSchema[key] = await propertyToSchema(key, value, operation);
+    }
+    return z.object(dynamicSchema);;
+}
+
+
+async function buildPromptForProperty(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<string | null> {
+    if (property.type === PropertyType.DROPDOWN || property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
+        const options = await loadOptions(propertyName, operation, input);
+        return `The options for the property "${propertyName}" are: ${JSON.stringify(options)}`;
+    }
+    return null;
+}
+
+async function loadOptions(propertyName: string, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<DropdownOption<unknown>[]> {
+    const response = await pieceHelper.executeProps({
+        ...operation,
+        propertyName: propertyName,
+        actionOrTriggerName: operation.actionName,
+        input: input,
+        sampleData: {},
+        searchValue: undefined,
+    }) as unknown as ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>
+    const options = response.options
+    return options.options
 }
