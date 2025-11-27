@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -24,7 +25,7 @@ const props = {
   app_ext_id: application_ext_idDropdown,
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof appfollowAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { app_ext_id } = propsValue;
@@ -32,7 +33,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
     const toDate = formatDate(Date.now());
     const url = `/reviews?ext_id=${app_ext_id}&from=${fromDate}&to=${toDate}`;
 
-    const response = await makeRequest(auth, HttpMethod.GET, url);
+    const response = await makeRequest(auth.secret_text, HttpMethod.GET, url);
     return response
       .filter((item: any) => {
         const itemEpochMS = dayjs(item.created).valueOf();
@@ -79,13 +80,11 @@ export const newReview = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {
