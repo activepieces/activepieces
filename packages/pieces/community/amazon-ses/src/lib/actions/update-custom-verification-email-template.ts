@@ -26,12 +26,13 @@ export const updateCustomVerificationEmailTemplate = createAction({
   description: 'Modify an existing custom verification email template',
   props: {
     templateName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Template to Update',
       description: 'Select custom verification template to modify',
       required: true,
       refreshers: ['loadCurrentContent'],
       options: async ({ auth }) => {
-        const templates = await getCustomVerificationTemplates(auth as any);
+        const templates = await getCustomVerificationTemplates(auth.props);
 
         if (templates.length === 0) {
           return {
@@ -58,12 +59,13 @@ export const updateCustomVerificationEmailTemplate = createAction({
       defaultValue: true,
     }),
     fromEmailAddress: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'From Email',
       description: 'Verified sender email address',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        const verifiedIdentities = await getVerifiedIdentities(auth.props);
         return createIdentityDropdownOptions(verifiedIdentities);
       },
     }),
@@ -113,7 +115,7 @@ export const updateCustomVerificationEmailTemplate = createAction({
       validateUrls,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     validateCustomVerificationTemplateName(templateName);
 

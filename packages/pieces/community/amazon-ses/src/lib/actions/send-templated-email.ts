@@ -21,22 +21,24 @@ export const sendTemplatedEmail = createAction({
   description: 'Send personalized emails using pre-created templates',
   props: {
     fromEmailAddress: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'From Email',
       description: 'Verified sender email address',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        const verifiedIdentities = await getVerifiedIdentities(auth.props);
         return createIdentityDropdownOptions(verifiedIdentities);
       },
     }),
     templateName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Email Template',
       description: 'Select template to use for this email',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const templates = await getEmailTemplates(auth as any);
+        const templates = await getEmailTemplates(auth.props);
 
         if (templates.length === 0) {
           return {
@@ -87,12 +89,13 @@ export const sendTemplatedEmail = createAction({
       required: false,
     }),
     configurationSetName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Configuration Set',
       description: 'SES configuration set for tracking',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
-        const configSets = await getConfigurationSets(auth as any);
+        const configSets = await getConfigurationSets(auth.props);
         return createConfigSetDropdownOptions(configSets);
       },
     }),
@@ -128,7 +131,7 @@ export const sendTemplatedEmail = createAction({
       returnPathArn,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     if (
       !templateData ||
