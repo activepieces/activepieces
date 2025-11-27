@@ -15,23 +15,22 @@ let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
 
 export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule => ({
     async init(): Promise<void> {
-        systemJobsQueue = new Queue(
-            SYSTEM_JOB_QUEUE,
-            {
-                connection: await redisConnections.create(),
-                defaultJobOptions: {
-                    attempts: 10,
-                    backoff: {
-                        type: 'exponential',
-                        delay: FIFTEEN_MINUTES,
-                    },
-                    removeOnComplete: true,
-                    removeOnFail: {
-                        age: ONE_MONTH,
-                    },
+        const queueConfig = {
+            connection: await redisConnections.create(),
+            defaultJobOptions: {
+                attempts: 2,
+                backoff: {
+                    type: 'exponential',
+                    delay: FIFTEEN_MINUTES,
+                },
+                removeOnComplete: true,
+                removeOnFail: {
+                    age: ONE_MONTH,
                 },
             },
-        )
+        }
+
+        systemJobsQueue = new Queue(SYSTEM_JOB_QUEUE, queueConfig)
 
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
@@ -73,6 +72,10 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             await systemJobsQueue.add(job.name, job.data, jobOptions)
             return
         }
+    },
+
+    async getJob<T extends SystemJobName>(jobId: string) {
+        return await systemJobsQueue.getJob(jobId) as Job<SystemJobData<T>> | undefined
     },
 
     async close(): Promise<void> {

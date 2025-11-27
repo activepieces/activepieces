@@ -19,7 +19,7 @@ async function checkCertainKeyPreHandler(
 ): Promise<void> {
 
     const key = req.headers[API_KEY_HEADER] as string | undefined
-    if (key === API_KEY || isNil(API_KEY)) {
+    if (key !== API_KEY || isNil(API_KEY)) {
         await res.status(StatusCodes.FORBIDDEN).send({ message: 'Forbidden' })
         throw new Error('Forbidden')
     }

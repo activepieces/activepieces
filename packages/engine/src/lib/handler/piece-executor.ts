@@ -145,7 +145,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
             contextVersion: piece.getContextInfo?.().version,
             context,
-            serverUrl: constants.publicApiUrl,
         })
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
