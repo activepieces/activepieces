@@ -205,12 +205,13 @@ export const findTicketsAction = createAction({
 
     let query = 'type:ticket';
 
+    // https://support.zendesk.com/hc/en-us/articles/4408886879258-Zendesk-Support-search-reference
     switch (search_type) {
       case 'id':
         if (!ticket_id) {
           throw new Error('Ticket ID is required when searching by ID.');
         }
-        query += ` id:${ticket_id}`;
+        query += ` ${ticket_id}`;
         break;
       case 'status':
         if (!status) {
