@@ -3,7 +3,6 @@ import React, { useContext, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   FlowAction,
@@ -74,9 +73,7 @@ const TestStepSectionImplementation = React.memo(
     });
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
-    const [liveAgentResult, setLiveAgentResult] = useState<AgentResult | null>(
-      null,
-    );
+    const [liveAgentResult, setLiveAgentResult] = useState<AgentResult | null>(null);
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         mutationKey,
@@ -165,14 +162,11 @@ const TestStepSectionImplementation = React.memo(
             </TestButtonTooltip>
           </div>
         )}
-        {sampleDataExists && isRunAgent(currentStep) && (
-          <AgentTimeline
-            agentResult={liveAgentResult ?? (sampleData as AgentResult)}
-          />
-        )}
-        {sampleDataExists && !isRunAgent(currentStep) && (
+        {sampleDataExists && (
           <TestSampleDataViewer
             isValid={currentStep.valid}
+            currentStep={currentStep}
+            agentResult={liveAgentResult ?? (sampleData as AgentResult)}
             isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}

@@ -6,7 +6,7 @@ import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { AgentResult } from '@activepieces/shared';
 
 type AgentTestStepProps = {
-  agentResult?: AgentResult;
+  agentResult: AgentResult;
   errorMessage?: string;
 };
 
