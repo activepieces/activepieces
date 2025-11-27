@@ -5,6 +5,7 @@ import {
     ActivepiecesError,
     assertNotNullOrUndefined,
     Cursor,
+    EndpointScope,
     ErrorCode,
     FlowStatus,
     isNil,
@@ -15,6 +16,7 @@ import {
     ProjectWithLimits,
     SeekPage,
     spreadIfDefined,
+    TeamProjectsLimit,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -26,6 +28,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
@@ -48,6 +51,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             platformId: user.platformId,
             userId: params.userId,
             displayName: params.displayName,
+            scope: params.scope,
         })
         return getProjects({
             ...params,
@@ -65,7 +69,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         })
         if (!isNil(request.plan)) {
             const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-            if (platform.plan.manageProjectsEnabled) {
+            if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
@@ -123,9 +127,22 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
         entity: ProjectEntity,
         query: {
             limit,
-            order: 'ASC',
             afterCursor: decodedCursor.nextCursor,
             beforeCursor: decodedCursor.previousCursor,
+            orderBy: [
+                {
+                    field: 'type',
+                    order: Order.ASC,
+                },
+                {
+                    field: 'displayName',
+                    order: Order.ASC,
+                },
+                {
+                    field: 'id',
+                    order: Order.ASC,
+                },
+            ],
         },
     })
     const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
@@ -158,6 +175,7 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
 
 type GetAllForParamsAndUser = {
     userId: string
+    scope?: EndpointScope
 } & GetAllParams
 
 type GetAllParams = {

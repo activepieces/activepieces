@@ -3,7 +3,6 @@ import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,15 +11,10 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
-import {
-  ApFlagId,
-  isNil,
-  Permission,
-  PROJECT_COLOR_PALETTE,
-  ProjectType,
-} from '@activepieces/shared';
+import { ApFlagId, isNil, Permission, ProjectType } from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
+import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
@@ -226,31 +220,15 @@ export function ProjectSettingsDialog({
           <div className="flex-1 min-w-0 flex flex-col">
             <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full">
-                {activeTab === 'general' &&
-                  project.type === ProjectType.TEAM && (
-                    <div
-                      className="flex items-center justify-center w-full h-[114px] rounded-tr-md"
-                      style={{
-                        backgroundColor:
-                          PROJECT_COLOR_PALETTE[project.icon.color].color +
-                          '26',
-                      }}
-                    >
-                      <Avatar
-                        className="h-[50px] w-[50px] flex items-center justify-center rounded-sm"
-                        style={{
-                          backgroundColor:
-                            PROJECT_COLOR_PALETTE[project.icon.color].color,
-                          color:
-                            PROJECT_COLOR_PALETTE[project.icon.color].textColor,
-                        }}
-                      >
-                        <span className="text-xl">
-                          {project.displayName.charAt(0).toUpperCase()}
-                        </span>
-                      </Avatar>
-                    </div>
-                  )}
+                {activeTab === 'general' && (
+                  <ProjectAvatar
+                    displayName={project.displayName}
+                    projectType={project.type}
+                    iconColor={project.icon.color}
+                    size="md"
+                    showBackground={true}
+                  />
+                )}
                 <div className="flex flex-col gap-3 px-10 pt-4">
                   {renderTabHeader()}
                   {renderTabContent()}
