@@ -192,6 +192,9 @@
       ],
       "@activepieces/piece-image-router": [
         "packages/pieces/community/image-router/src/index.ts"
+      ],
+      "@activepieces/piece-pollybot-ai": [
+        "packages/pieces/community/pollybot-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
