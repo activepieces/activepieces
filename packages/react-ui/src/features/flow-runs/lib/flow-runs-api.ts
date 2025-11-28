@@ -89,7 +89,7 @@ export const flowRunsApi = {
           if (response.runId === stepRun.id) {
             onProgress(response);
           }
-        }
+        };
         socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
       }
     });

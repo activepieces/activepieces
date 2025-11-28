@@ -2,6 +2,7 @@ import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { runAgent } from '../agent'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
@@ -13,7 +14,6 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { runAgent } from '../agent'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -119,8 +119,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             },
             agent: {
                 run: async (params) => {
-                    return await runAgent(params)
-                }
+                    return runAgent(params)
+                },
             },
             propsValue: processedInput,
             tags: createTagsManager(params),

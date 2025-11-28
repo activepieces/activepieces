@@ -73,7 +73,9 @@ const TestStepSectionImplementation = React.memo(
     });
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
-    const [liveAgentResult, setLiveAgentResult] = useState<AgentResult | null>(null);
+    const [liveAgentResult, setLiveAgentResult] = useState<AgentResult | null>(
+      null,
+    );
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         mutationKey,

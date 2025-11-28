@@ -6,10 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import { AGENT_PIECE_NAME, AgentResult, FlowAction, FlowActionType, isNil, StepOutputStatus } from '@activepieces/shared';
+import {
+  AGENT_PIECE_NAME,
+  AgentResult,
+  FlowAction,
+  FlowActionType,
+  isNil,
+  StepOutputStatus,
+} from '@activepieces/shared';
+
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
-import { TestButtonTooltip } from './test-step-tooltip';
+
 import { AgentTestStep } from './agent-test-step';
+import { TestButtonTooltip } from './test-step-tooltip';
 
 const isRunAgent = (step?: FlowAction) => {
   return (
