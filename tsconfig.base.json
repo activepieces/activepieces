@@ -190,6 +190,9 @@
       "@activepieces/piece-flow-parser": [
         "packages/pieces/community/flow-parser/src/index.ts"
       ],
+      "@activepieces/piece-documentpro": [
+        "packages/pieces/community/documentpro/src/index.ts"
+      ],
       "@activepieces/piece-image-router": [
         "packages/pieces/community/image-router/src/index.ts"
       ]
