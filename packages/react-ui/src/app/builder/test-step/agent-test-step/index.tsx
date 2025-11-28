@@ -3,7 +3,14 @@ import { t } from 'i18next';
 import { JsonViewer } from '@/components/json-viewer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
-import { AGENT_PIECE_NAME, AgentResult, AgentTaskStatus, FlowAction, FlowActionType, isNil } from '@activepieces/shared';
+import {
+  AGENT_PIECE_NAME,
+  AgentResult,
+  AgentTaskStatus,
+  FlowAction,
+  FlowActionType,
+  isNil,
+} from '@activepieces/shared';
 
 export const isRunAgent = (step?: FlowAction) => {
   return (
@@ -15,11 +22,11 @@ export const isRunAgent = (step?: FlowAction) => {
 };
 
 export const defaultAgentOutput = {
-    prompt: '',
-    status: AgentTaskStatus.IN_PROGRESS,
-    steps: [],
-    message: null,
-}
+  prompt: '',
+  status: AgentTaskStatus.IN_PROGRESS,
+  steps: [],
+  message: null,
+};
 
 type AgentTestStepProps = {
   agentResult?: AgentResult;
@@ -30,7 +37,6 @@ export const AgentTestStep = ({
   agentResult,
   errorMessage,
 }: AgentTestStepProps) => {
-
   return (
     <div className="flex flex-col justify-center w-full items-start">
       <Tabs defaultValue="timeline" className="w-full">

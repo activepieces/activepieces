@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   type AgentResult,
@@ -14,7 +16,6 @@ import {
   PromptBlock,
   ThinkingBlock,
 } from './timeline-blocks';
-import { t } from 'i18next';
 
 type AgentTimelineProps = {
   className?: string;
@@ -25,16 +26,8 @@ export const AgentTimeline = ({
   agentResult,
   className = '',
 }: AgentTimelineProps) => {
-
-
-  console.log("loaui")
-  console.log(agentResult)
-  console.log("loaui")
-
   if (isNil(agentResult)) {
-    return (
-      <p>{t("No agent output available")}</p>
-    )
+    return <p>{t('No agent output available')}</p>;
   }
 
   return (
@@ -43,7 +36,9 @@ export const AgentTimeline = ({
         <div className="absolute left-2 top-4 bottom-8 w-[1px] bg-border" />
 
         <div className="space-y-7 pb-4">
-          {agentResult.prompt.length > 0 && <PromptBlock prompt={agentResult.prompt} />}
+          {agentResult.prompt.length > 0 && (
+            <PromptBlock prompt={agentResult.prompt} />
+          )}
           {agentResult.steps.map((step, index) => {
             switch (step.type) {
               case ContentBlockType.MARKDOWN:
@@ -67,7 +62,9 @@ export const AgentTimeline = ({
             />
           )}
 
-          {agentResult.status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
+          {agentResult.status === AgentTaskStatus.IN_PROGRESS && (
+            <ThinkingBlock />
+          )}
 
           {agentResult.status === AgentTaskStatus.COMPLETED && <DoneBlock />}
 

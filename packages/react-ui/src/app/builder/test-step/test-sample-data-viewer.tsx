@@ -12,8 +12,14 @@ import {
   isNil,
   StepOutputStatus,
 } from '@activepieces/shared';
+
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
-import { AgentTestStep, defaultAgentOutput, isRunAgent } from './agent-test-step';
+
+import {
+  AgentTestStep,
+  defaultAgentOutput,
+  isRunAgent,
+} from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type RetestSampleDataViewerProps = {
@@ -81,10 +87,13 @@ export const TestSampleDataViewer = React.memo(
   }: RetestSampleDataViewerProps) => {
     const renderViewer = () => {
       if (isRunAgent(currentStep)) {
-        const resolvedAgentResult = agentResult
-          ?? (sampleData && typeof sampleData === "object" && Object.keys(sampleData).length > 0
-              ? sampleData as AgentResult
-              : defaultAgentOutput);
+        const resolvedAgentResult =
+          agentResult ??
+          (sampleData &&
+          typeof sampleData === 'object' &&
+          Object.keys(sampleData).length > 0
+            ? (sampleData as AgentResult)
+            : defaultAgentOutput);
 
         return (
           <AgentTestStep
