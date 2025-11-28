@@ -13,6 +13,7 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { runAgent } from '../agent'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -115,6 +116,11 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 token: constants.engineToken,
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
+            },
+            agent: {
+                run: async (params) => {
+                    return await runAgent(params)
+                }
             },
             propsValue: processedInput,
             tags: createTagsManager(params),

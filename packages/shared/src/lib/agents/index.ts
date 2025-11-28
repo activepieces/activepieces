@@ -1,11 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion, Nullable } from '../common'
 
-export const agentbuiltInToolsNames = {
-    markAsComplete: 'markAsComplete',
-    updateTableRecord: 'updateTableRecord',
-}
-
 export enum AgentOutputFieldType {
     TEXT = 'text',
     NUMBER = 'number',
@@ -30,6 +25,7 @@ export type AgentResult = {
     steps: AgentStepBlock[]
     status: AgentTaskStatus
     message: string | null
+    structuredOutput?: unknown
 }
 
 export enum AgentPieceProps {
