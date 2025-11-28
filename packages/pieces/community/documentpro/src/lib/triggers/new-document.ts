@@ -16,7 +16,7 @@ export const newDocument = createTrigger({
 **In DocumentPro Dashboard:**
    - Navigate to your desired Workflow
    - Go to the "Workflow" tab
-   - Find the "Webhook" option in the export section
+   - Find the "Webhook Notification" option in the export section
    - Set the Webhook Endpoint URL to:
             \`\`\`text
 			{{webhookUrl}}

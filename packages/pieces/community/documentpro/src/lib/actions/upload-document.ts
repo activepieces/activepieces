@@ -2,10 +2,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { documentproAuth } from '../common/auth';
 
-export const newDocument = createAction({
+export const uploaddocument = createAction({
   auth: documentproAuth,
-  name: 'newDocument',
-  displayName: 'New document',
+  name: 'uploadDocument',
+  displayName: 'Upload document',
   description: 'Uploads a document to a DocumentPro parser',
   props: {
     file: Property.File({
@@ -20,7 +20,8 @@ export const newDocument = createAction({
 
     const formData = new FormData();
     const fileBuffer = Buffer.from(file.base64, 'base64');
-    const blob = new Blob([fileBuffer]);
+    const mimeType = file.extension ? `application/${file.extension}` : 'application/octet-stream';
+    const blob = new Blob([fileBuffer], { type: mimeType });
     formData.append('file', blob, file.filename);
 
     const response = await httpClient.sendRequest({
@@ -28,7 +29,8 @@ export const newDocument = createAction({
       url: 'https://api.documentpro.ai/v1/documents',
       headers: {
         'x-api-key': context.auth,
-      },
+        'Content-Type': 'multipart/form-data',
+      }, 
       body: formData,
     });
 
