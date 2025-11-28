@@ -13,6 +13,8 @@ import {
   isNil,
   StepRunResponse,
   PopulatedTodo,
+  AGENT_PIECE_NAME,
+  AgentResult,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -71,6 +73,7 @@ const TestStepSectionImplementation = React.memo(
     });
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
+    const [liveAgentResult, setLiveAgentResult] = useState<AgentResult | null>(null);
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         mutationKey,
@@ -86,7 +89,7 @@ const TestStepSectionImplementation = React.memo(
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const handleTodoCreateTask = async () => {
+    const handleTodoTest = async () => {
       setActiveDialog(DialogType.TODO_CREATE_TASK);
       testAction({
         type: 'todoAction',
@@ -107,10 +110,20 @@ const TestStepSectionImplementation = React.memo(
         },
       });
     };
+    const handleAgentTest = async () => {
+      testAction({
+        type: 'agentAction',
+        onProgress: async (progress: StepRunResponse) => {
+          setLiveAgentResult(progress.output as AgentResult);
+        },
+      });
+    };
 
     const onTestButtonClick = async () => {
       if (isTodoCreateTask(currentStep)) {
-        handleTodoCreateTask();
+        handleTodoTest();
+      } else if (isRunAgent(currentStep)) {
+        handleAgentTest();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
       } else {
@@ -151,8 +164,9 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            currentStep={currentStep}
             isValid={currentStep.valid}
+            currentStep={currentStep}
+            agentResult={liveAgentResult ?? (sampleData as AgentResult)}
             isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
@@ -229,4 +243,13 @@ const getTodoIdFromStepRunResponse = (stepRunResponse: StepRunResponse) => {
     return stepRunResponse.output.id;
   }
   return null;
+};
+
+const isRunAgent = (step?: FlowAction) => {
+  return (
+    !isNil(step) &&
+    step.type === FlowActionType.PIECE &&
+    step.settings.pieceName === AGENT_PIECE_NAME &&
+    step.settings.actionName === 'run_agent'
+  );
 };

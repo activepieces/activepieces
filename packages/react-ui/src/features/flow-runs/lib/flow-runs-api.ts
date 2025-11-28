@@ -19,17 +19,9 @@ import {
 type TestStepParams = {
   socket: Socket;
   request: CreateStepRunRequestBody;
-} & (
-  | {
-      isForTodo: true;
-      onProgress: (progress: StepRunResponse) => void;
-    }
-  | {
-      isForTodo: false;
-      onProgress: undefined;
-    }
-);
-
+  // optional callback for steps like agent and todo
+  onProgress?: (progress: StepRunResponse) => void;
+};
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
     return api.get<SeekPage<FlowRun>>('/v1/flow-runs', request);
@@ -59,26 +51,21 @@ export const flowRunsApi = {
     onUpdate(initialRun);
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
-    const { socket, request, isForTodo, onProgress } = params;
+    const { socket, request, onProgress } = params;
     const stepRun = await api.post<FlowRun>(
       '/v1/sample-data/test-step',
       request,
     );
 
     return new Promise<StepRunResponse>((resolve, reject) => {
-      let handleStepProgress: ((response: StepRunResponse) => void) | null =
-        null;
       const handleStepFinished = (response: StepRunResponse) => {
         if (response.runId === stepRun.id) {
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
             handleStepFinished,
           );
-          if (handleStepProgress) {
-            socket.off(
-              WebsocketClientEvent.TEST_STEP_PROGRESS,
-              handleStepProgress,
-            );
+          if (onProgress) {
+            socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, onProgress);
           }
           socket.off('error', handleError);
           resolve(response);
@@ -87,24 +74,23 @@ export const flowRunsApi = {
 
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        if (handleStepProgress) {
-          socket.off(
-            WebsocketClientEvent.TEST_STEP_PROGRESS,
-            handleStepProgress,
-          );
+        if (onProgress) {
+          socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, onProgress);
         }
         socket.off('error', handleError);
         reject(error);
       };
+
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
       socket.on('error', handleError);
-      if (isForTodo) {
-        handleStepProgress = (response: StepRunResponse) => {
+
+      if (onProgress) {
+        const handleOnProgress = (response: StepRunResponse) => {
           if (response.runId === stepRun.id) {
             onProgress(response);
           }
-        };
-        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleStepProgress);
+        }
+        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
       }
     });
   },
