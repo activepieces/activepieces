@@ -4,7 +4,7 @@ import {
     PieceMetadata,
     PropertyType,
 } from '@activepieces/pieces-framework'
-import { EngineResponseStatus, ExecuteActionResponse, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowVersionState, SourceCode, TriggerHookType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, ExecuteToolResponse, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowVersionState, SourceCode, TriggerHookType } from '@activepieces/shared'
 
 export type CodeArtifact = {
     name: string
@@ -30,6 +30,8 @@ export type EngineHelperPropResult = {
 
 export type EngineHelperActionResult = ExecuteActionResponse
 
+export type EngineHelperToolResult = ExecuteToolResponse
+
 export type EngineHelperValidateAuthResult = ExecuteValidateAuthResponse
 
 export type EngineHelperCodeResult = ExecuteActionResponse
@@ -39,6 +41,7 @@ export type EngineHelperResult =
     | EngineHelperFlowResult
     | EngineHelperTriggerResult
     | EngineHelperPropResult
+    | EngineHelperToolResult
     | EngineHelperCodeResult
     | EngineHelperExtractPieceInformation
     | EngineHelperActionResult
