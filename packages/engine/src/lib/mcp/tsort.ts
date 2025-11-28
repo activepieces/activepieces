@@ -1,4 +1,4 @@
-import { PiecePropertyMap } from "@activepieces/pieces-framework"
+import { PiecePropertyMap } from '@activepieces/pieces-framework'
 
 export const tsort = {
     sortPropertiesByDependencies(properties: PiecePropertyMap): Record<number, string[]> {
@@ -9,7 +9,7 @@ export const tsort = {
         Object.entries(properties).forEach(([key, property]) => {
             const hasRefreshers = 'refreshers' in property && property.refreshers && Array.isArray(property.refreshers) && property.refreshers.length > 0
             if (hasRefreshers) {
-                for (const refresher of (property as any).refreshers) {
+                for (const refresher of property.refreshers) {
                     if (typeof properties[refresher] === 'undefined' || properties[refresher] === null) {
                         continue
                     }
@@ -51,6 +51,6 @@ export const tsort = {
         }
 
         return depthToPropertyMap
-    }
+    },
 }
 

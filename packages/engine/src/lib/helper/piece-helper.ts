@@ -20,15 +20,15 @@ import {
     SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
+import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
-import { testExecutionContext } from '../handler/context/test-execution-context'
 
 export const pieceHelper = {
-    async executeProps( operation : ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
+    async executeProps( operation: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
         const constants = EngineConstants.fromExecutePropertyInput(operation)
         const executionState = await testExecutionContext.stateFromFlowVersion({
             apiUrl: operation.internalApiUrl,

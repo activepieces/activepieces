@@ -1,6 +1,6 @@
-import { EngineResponse, ExecuteToolOperation, ExecuteToolResponse } from "@activepieces/shared"
-import { mcpExecutor } from "../mcp"
+import { EngineResponse, ExecuteToolOperation, ExecuteToolResponse } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
+import { mcpExecutor } from '../mcp'
 
 export const toolsOperation = {
     execute: async (operation: ExecuteToolOperation): Promise<EngineResponse<ExecuteToolResponse>> => {
@@ -17,5 +17,5 @@ export const toolsOperation = {
             ...operation,
             model: provider.chat('gpt-4.1'),
         })
-    }
+    },
 }
