@@ -163,8 +163,8 @@ export const ExecuteToolJobData = Type.Object({
     pieceVersion: Type.String(),
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
-    input: Type.Record(Type.String(), Type.Unknown()),
-
+    predefinedInput: Type.Record(Type.String(), Type.Unknown()),
+    instruction: Type.String(),
 })
 export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 
