@@ -54,15 +54,15 @@ export default defineConfig({
     //     icon: AP_FAVICON,
     // }),
     checker({
-        typescript: true,
-        // todo(Rupal): Fix this once FE is cleaned up, make it same as activepieces
-        // typescript: {
-        //     buildMode: true,
-        //     tsconfigPath: './tsconfig.json',
-        //     root: __dirname,
-        // },
+      typescript: true,
+      // todo(Rupal): Fix this once FE is cleaned up, make it same as activepieces
+      // typescript: {
+      //     buildMode: true,
+      //     tsconfigPath: './tsconfig.json',
+      //     root: __dirname,
+      // },
     }),
-    ],
+  ],
 
   build: {
     outDir: '../../dist/packages/react-ui',

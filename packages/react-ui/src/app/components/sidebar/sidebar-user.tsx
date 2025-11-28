@@ -21,9 +21,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
@@ -34,6 +41,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
+  const { state } = useSidebar();
   const location = useLocation();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
@@ -43,6 +51,7 @@ export function SidebarUser() {
   const isExternalLogin = !isNil(loginUrl);
 
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
+  const isCollapsed = state === 'collapsed';
 
   if (isExternalLogin) {
     return null;
@@ -62,28 +71,47 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex items-center gap-2 w-full text-left text-sm">
-                <UserAvatar
-                  name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
-                  size={32}
-                  disableTooltip={true}
-                />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {user.firstName}
-                  </span>
-                  <span className="truncate text-xs">{user.email}</span>
+          {isCollapsed ? (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger className="flex items-center justify-center size-9 rounded-md hover:bg-accent cursor-pointer">
+                    <UserAvatar
+                      name={user.firstName + ' ' + user.lastName}
+                      email={user.email}
+                      size={28}
+                      disableTooltip={true}
+                    />
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center">
+                  {user.firstName + ' ' + user.lastName}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <div className="flex items-center gap-2 w-full text-left text-sm">
+                  <UserAvatar
+                    name={user.firstName + ' ' + user.lastName}
+                    email={user.email}
+                    size={32}
+                    disableTooltip={true}
+                  />
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {user.firstName + ' ' + user.lastName}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
                 </div>
-                <ChevronsUpDown className="ml-auto size-4" />
-              </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+          )}
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side="right"
@@ -101,7 +129,7 @@ export function SidebarUser() {
 
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    {user.firstName}
+                    {user.firstName + ' ' + user.lastName}
                   </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
@@ -134,7 +162,7 @@ export function SidebarUser() {
 }
 
 function SidebarPlatformAdminButton() {
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const messages = notificationHooks.useNotifications();

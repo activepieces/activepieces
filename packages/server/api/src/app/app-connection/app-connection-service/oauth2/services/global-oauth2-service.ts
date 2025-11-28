@@ -7,7 +7,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../../../helper/domain-helper'
 import { globalOAuthAppService } from '../../../../oauth-apps/global-oauth-app.service'
-import { pieceMetadataService } from '../../../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../../../pieces/metadata/piece-metadata-service'
 import { ClaimOAuth2Request, RefreshOAuth2Request } from '../oauth2-service'
 import { credentialsOauth2Service } from './credentials-oauth2-service'
 

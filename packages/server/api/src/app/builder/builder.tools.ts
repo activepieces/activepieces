@@ -23,7 +23,7 @@ import { z } from 'zod'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
-import { pieceMetadataService } from '../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import {
     findBranchIndexFromNameInRouter,
     getDefaultPropertySettingsForActionOrTrigger,

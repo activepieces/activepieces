@@ -4,7 +4,6 @@ import { Plus, Trash2, Table2 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -222,11 +221,6 @@ const McpServersPage = () => {
       lockDescription={t('Create and manage your MCP servers')}
     >
       <div className="flex flex-col h-full">
-        <DashboardPageHeader
-          title={t('MCP Servers')}
-          description={t('Create and manage your MCP servers')}
-        ></DashboardPageHeader>
-
         <DataTable
           filters={[]}
           emptyStateIcon={<Table2 className="size-14" />}

@@ -69,6 +69,7 @@ export default function AnalyticsPage() {
             </Button>
           )}
         </DashboardPageHeader>
+        <Separator />
         <Metrics report={isLoading ? undefined : data} />
         <Separator />
         <RunsAnalytics report={isLoading ? undefined : data} />

@@ -3,7 +3,6 @@ import axios from 'axios'
 import { environmentMigrations } from './env-migrations'
 
 export const systemConstants = {
-    PACKAGE_ARCHIVE_PATH: 'cache/archives',
     ENGINE_EXECUTABLE_PATH: 'dist/packages/engine/main.js',
 }
 
@@ -55,7 +54,6 @@ export enum AppSystemProp {
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
     OTEL_ENABLED = 'OTEL_ENABLED',
     PAUSED_FLOW_TIMEOUT_DAYS = 'PAUSED_FLOW_TIMEOUT_DAYS',
-    PIECES_SOURCE = 'PIECES_SOURCE',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     PM2_ENABLED = 'PM2_ENABLED',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',
@@ -119,10 +117,6 @@ export enum AppSystemProp {
     ZERO_PUBLIC_URL = 'ZERO_PUBLIC_URL',
     PROMPTX_OPENAI_KEY = 'PROMPTX_OPENAI_KEY',
 }
-export enum PiecesSource {
-    DB = 'DB',
-    FILE = 'FILE',
-}
 
 export enum ContainerType {
     WORKER = 'WORKER',
@@ -138,6 +132,7 @@ export enum WorkerSystemProp {
     // Optional
     WORKER_CONCURRENCY = 'WORKER_CONCURRENCY',
     PLATFORM_ID_FOR_DEDICATED_WORKER = 'PLATFORM_ID_FOR_DEDICATED_WORKER',
+    PRE_WARM_CACHE = 'PRE_WARM_CACHE',
 }
 
 

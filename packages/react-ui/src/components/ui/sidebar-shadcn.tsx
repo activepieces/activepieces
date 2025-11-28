@@ -294,8 +294,8 @@ Sidebar.displayName = 'Sidebar';
 
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
+  React.ComponentProps<typeof Button> & { iconClassName?: string }
+>(({ className, onClick, iconClassName, ...props }, ref) => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -304,14 +304,14 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn('h-7 w-7', className)}
+      className={cn(className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeft />
+      <PanelLeft className={iconClassName} />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
@@ -355,8 +355,8 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        'relative flex w-full flex-1 flex-col bg-background max-h-[calc(100vh-1rem)]',
-        'md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow',
+        'relative flex w-full flex-1 flex-col bg-background max-h-[calc(100vh)]',
+        'md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border-l',
         className,
       )}
       {...props}
@@ -552,7 +552,8 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+        default:
+          'hover:bg-sidebar-accent active:bg-sidebar-active hover:text-sidebar-accent-foreground',
         outline:
           'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]',
       },
@@ -778,8 +779,8 @@ const SidebarSkeleton = ({ numOfItems }: { numOfItems: number }) => {
         <SidebarMenuItem key={index}>
           <SidebarMenuButton disabled className="px-2">
             <div className="flex items-center w-full">
-              <div className="w-4 h-4 mr-2 bg-gray-300 dark:bg-gray-600 rounded animate-pulse" />
-              <div className="bg-gray-300 w-full rounded dark:bg-gray-600 animate-pulse h-4" />
+              <div className="w-4 h-4 mr-2 bg-muted rounded animate-pulse" />
+              <div className="bg-muted w-full rounded animate-pulse h-4" />
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>

@@ -1,5 +1,3 @@
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   CreatePlatformProjectRequest,
   ListProjectRequestForUserQueryParams,
@@ -9,6 +7,9 @@ import {
   SeekPage,
   UpdateProjectRequestInCommunity,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectApi = {
   current: async () => {
@@ -20,7 +21,10 @@ export const projectApi = {
   get: async (projectId: string) => {
     return api.get<ProjectWithLimits>(`/v1/users/projects/${projectId}`);
   },
-  update: async (projectId: string, request: UpdateProjectRequestInCommunity) => {
+  update: async (
+    projectId: string,
+    request: UpdateProjectRequestInCommunity,
+  ) => {
     return api.post<Project>(`/v1/projects/${projectId}`, request);
   },
   create: async (request: CreatePlatformProjectRequest) => {
@@ -30,8 +34,6 @@ export const projectApi = {
     return api.delete<void>(`/v1/projects/${projectId}`);
   },
   listForPlatforms: async () => {
-    return api.get<ProjectsWithPlatform[]>(
-      '/v1/users/projects/platforms',
-    );
+    return api.get<ProjectsWithPlatform[]>('/v1/users/projects/platforms');
   },
 };

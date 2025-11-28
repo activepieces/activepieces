@@ -2,6 +2,7 @@ import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFacto
 import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
 import { engineRunner } from './compute'
 import { engineRunnerSocket } from './compute/engine-runner-socket'
@@ -14,11 +15,8 @@ export const runsMetadataQueue = runsMetadataQueueFactory({
     distributedStore: workerDistributedStore,
 })
 
-export const flowWorker = (log: FastifyBaseLogger): {
-    init: (params: { workerToken: string }) => Promise<void>
-    close: () => Promise<void>
-} => ({
-    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+export const flowWorker = (log: FastifyBaseLogger) => ({
+    async init({ workerToken: token, markAsHealthy }: FlowWorkerInitParams): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
         await engineRunnerSocket(log).init()
 
@@ -27,9 +25,12 @@ export const flowWorker = (log: FastifyBaseLogger): {
             onConnect: async () => {
                 const request = await workerMachine.getSystemInfo()
                 const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
-                await workerMachine.init(response, log)
+                await workerMachine.init(response, token, log)
+                await registryPieceManager(log).warmup()
                 await jobQueueWorker(log).start(token)
                 await initRunsMetadataQueue(log)
+                await markAsHealthy()
+                await registryPieceManager(log).distributedWarmup()
             },
         })
     },
@@ -63,4 +64,9 @@ async function initRunsMetadataQueue(log: FastifyBaseLogger): Promise<void> {
     log.info({
         message: 'Initialized runs metadata queue for worker',
     }, '[flowWorker#init]')
+}
+
+type FlowWorkerInitParams = {
+    workerToken: string
+    markAsHealthy: () => Promise<void>
 }
