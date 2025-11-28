@@ -9,9 +9,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, isNil, Permission, ProjectType } from '@activepieces/shared';
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+} from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectAvatar } from '../project-avatar';
@@ -51,6 +59,9 @@ export function ProjectSettingsDialog({
   const { data: showProjectMembers } = flagsHooks.useFlag(
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
+  const { platform } = platformHooks.useCurrentPlatform();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
@@ -86,12 +97,16 @@ export function ProjectSettingsDialog({
     previousOpenRef.current = open;
   }, [open, project]);
 
+  const hasGeneralSettings =
+    project.type === ProjectType.TEAM ||
+    (platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN);
+
   const tabs = [
     {
       id: 'general' as TabId,
       label: t('General'),
       icon: <Settings className="w-4 h-4" />,
-      disabled: false,
+      disabled: !hasGeneralSettings,
     },
     {
       id: 'members' as TabId,

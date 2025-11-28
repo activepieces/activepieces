@@ -99,6 +99,13 @@ export function ProjectDashboardSidebar() {
     return currentUser?.platformRole === PlatformRole.ADMIN;
   }, [platform.plan.teamProjectsLimit]);
 
+  const shouldShowSearchButton = useMemo(() => {
+    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+      return false;
+    }
+    return true;
+  }, [platform.plan.teamProjectsLimit]);
+
   const shouldDisableNewProjectButton = useMemo(() => {
     if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
       const teamProjects = allProjects.filter(
@@ -273,31 +280,33 @@ export function ProjectDashboardSidebar() {
                       )}
                     </>
                   )}
-                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-accent"
+                  {shouldShowSearchButton && (
+                    <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:bg-accent"
+                        >
+                          <Search />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[280px] p-3"
+                        align="start"
+                        side="right"
+                        sideOffset={8}
                       >
-                        <Search />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[280px] p-3"
-                      align="start"
-                      side="right"
-                      sideOffset={8}
-                    >
-                      <Input
-                        placeholder={t('Search projects...')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-9"
-                        autoFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                        <Input
+                          placeholder={t('Search projects...')}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="h-9"
+                          autoFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </div>
               </div>
             )}
