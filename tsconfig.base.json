@@ -178,6 +178,9 @@
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
       ],
+      "@activepieces/piece-orimon": [
+        "packages/pieces/community/orimon/src/index.ts"
+      ],
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
       ],
@@ -187,8 +190,13 @@
       "@activepieces/piece-flow-parser": [
         "packages/pieces/community/flow-parser/src/index.ts"
       ],
+<<<<<<< HEAD
       "@activepieces/piece-documentpro": [
         "packages/pieces/community/documentpro/src/index.ts"
+=======
+      "@activepieces/piece-image-router": [
+        "packages/pieces/community/image-router/src/index.ts"
+>>>>>>> upstream/main
       ]
     },
     "resolveJsonModule": true
