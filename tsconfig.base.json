@@ -178,6 +178,9 @@
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
       ],
+      "@activepieces/piece-orimon": [
+        "packages/pieces/community/orimon/src/index.ts"
+      ],
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
       ],
@@ -189,6 +192,9 @@
       ],
       "@activepieces/piece-writesonic-bulk": [
         "packages/pieces/community/writesonic-bulk/src/index.ts"
+      ],
+      "@activepieces/piece-image-router": [
+        "packages/pieces/community/image-router/src/index.ts"
       ]
     },
     "resolveJsonModule": true
