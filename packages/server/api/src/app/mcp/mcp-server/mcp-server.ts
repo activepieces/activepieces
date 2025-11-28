@@ -8,6 +8,8 @@ import {
     McpFlowTool,
     McpPieceRunMetadata,
     McpPieceTool,
+    McpProperty,
+    McpPropertyType,
     McpRunStatus,
     McpTool,
     mcpToolNaming,
@@ -30,8 +32,6 @@ import { WebhookFlowVersionToRun } from '../../webhooks/webhook-handler'
 import { webhookService } from '../../webhooks/webhook.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { mcpRunService } from '../mcp-run/mcp-run.service'
-import { mcpUtils } from '../mcp-utils'
-
 
 export async function createMcpServer({
     logger,
@@ -105,7 +105,7 @@ async function addPieceToServer(
                     packageType: pieceMetadata.packageType,
                     pieceType: pieceMetadata.pieceType,
                     predefinedInput: {
-                        auth: !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined
+                        auth: !isNil(toolPieceMetadata.connectionExternalId) ? `{{connections['${toolPieceMetadata.connectionExternalId}']}}` : undefined,
                     },
                     instruction: params.instructions,
                     projectId,
@@ -213,7 +213,7 @@ async function addFlowToServer(
     const zodFromInputSchema = Object.fromEntries(
         inputSchema.map(prop => [
             mcpToolNaming.fixProperty(prop.name),
-            mcpUtils.mcpPropertyToZod(prop),
+            mcpPropertyToZod(prop),
         ]),
     )
     server.tool(
@@ -290,6 +290,37 @@ async function addFlowToServer(
 
 }
 
+
+function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
+    let schema: z.ZodTypeAny
+
+    switch (property.type) {
+        case McpPropertyType.TEXT:
+        case McpPropertyType.DATE:
+            schema = z.string()
+            break
+        case McpPropertyType.NUMBER:
+            schema = z.number()
+            break
+        case McpPropertyType.BOOLEAN:
+            schema = z.boolean()
+            break
+        case McpPropertyType.ARRAY:
+            schema = z.array(z.string())
+            break
+        case McpPropertyType.OBJECT:
+            schema = z.record(z.string(), z.string())
+            break
+        default:
+            schema = z.unknown()
+    }
+
+    if (property.description) {
+        schema = schema.describe(property.description)
+    }
+
+    return property.required ? schema : schema.nullish()
+}
 
 function isOkSuccess(status: number) {
     return Math.floor(status / 100) === 2
