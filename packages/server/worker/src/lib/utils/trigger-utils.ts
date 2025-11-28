@@ -6,6 +6,7 @@ import {
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
+    PieceTriggerSettings,
     PlatformId,
     ProjectId,
     TriggerHookType,
@@ -13,8 +14,8 @@ import {
     TriggerRunStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { pieceWorkerCache } from '../cache/piece-worker-cache'
 import { engineRunner } from '../compute'
-import { pieceEngineUtil } from './flow-engine-util'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
 import { workerRedisConnections } from './worker-redis'
@@ -36,7 +37,13 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
         }
         const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
 
-        const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, flowVersion)
+        const triggerSettings = flowVersion.trigger.settings as PieceTriggerSettings
+        const triggerPiece = await pieceWorkerCache(log).getPiece({
+            engineToken,
+            pieceName: triggerSettings.pieceName,
+            pieceVersion: triggerSettings.pieceVersion,
+            platformId,
+        })
         await triggerRunStats(log, await workerRedisConnections.useExisting()).save({
             platformId,
             pieceName: triggerPiece.pieceName,

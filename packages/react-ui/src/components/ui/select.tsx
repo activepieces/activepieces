@@ -138,15 +138,27 @@ SelectItem.displayName = SelectPrimitive.Item.displayName;
 
 const SelectAction = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }
->(({ className, children, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & {
+    children: React.ReactNode;
+    disabled?: boolean;
+  }
+>(({ className, children, disabled, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
       'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none hover:bg-accent hover:text-accent-foreground',
       className,
+      { 'text-muted-foreground cursor-not-allowed': disabled },
     )}
     {...props}
+    onClick={(e) => {
+      if (disabled) {
+        e.preventDefault();
+        e.stopPropagation();
+      } else {
+        props.onClick?.(e);
+      }
+    }}
   >
     {children}
   </div>

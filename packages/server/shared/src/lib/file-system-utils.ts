@@ -1,4 +1,4 @@
-import { access, mkdir } from 'node:fs/promises'
+import { access, mkdir, unlink } from 'node:fs/promises'
 
 
 export const INFINITE_LOCK_TIMEOUT = 60 * 60 * 1000
@@ -29,6 +29,12 @@ export const fileSystemUtils = {
                 return
             }
             throw e
+        }
+    },
+
+    deleteFile: async (path: string): Promise<void> => {
+        if (await fileSystemUtils.fileExists(path)) {
+            await unlink(path)
         }
     },
 }

@@ -91,7 +91,6 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
     await app.register(healthModule)
-
     return app
 }
 

@@ -15,7 +15,7 @@ const tracer = trace.getTracer('job-consumer')
 
 
 export const jobConsmer = (log: FastifyBaseLogger) => ({
-    async consumeJob(job: Job<JobData>, workerToken: string): Promise<ConsumeJobResponse> {
+    async consumeJob(job: Job<JobData>): Promise<ConsumeJobResponse> {
         const { id: jobId, data: jobData, attemptsStarted } = job
         assertNotNullOrUndefined(jobId, 'jobId')
         const timeoutInSeconds = getTimeoutForWorkerJob(jobData.jobType)
@@ -54,7 +54,6 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                                 jobId,
                                 data: jobData,
                                 engineToken,
-                                workerToken,
                                 timeoutInSeconds,
                             })
                             span.setAttribute('worker.completed', true)
@@ -72,7 +71,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                         }
                         case WorkerJobType.EXECUTE_WEBHOOK: {
                             span.setAttribute('worker.webhookExecution', true)
-                            return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
+                            return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, timeoutInSeconds)
                         }
                     }
                 }

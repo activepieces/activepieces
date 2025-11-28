@@ -89,6 +89,9 @@ import { AddMaximumConcurrentJobsPerProjectSqlite1761499100171 } from './migrati
 import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/1761574814842-RemoveTasksAndTasksLimitSqlite'
 import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
 import { AddFailedStepDurationSqlite1762949199414 } from './migration/sqlite/1762949199414-AddFailedStepDurationSqlite'
+import { RemoveProjectIdFromPieceMetdataSqlite1763243032686 } from './migration/sqlite/1763243032686-RemoveProjectIdFromPieceMetdataSqlite'
+import { AddIconToProjectSqlite1763378269381 } from './migration/sqlite/1763378269381-AddIconToProjectSqlite'
+import { RemoveFlowRunDurationSqlite1763417279729 } from './migration/sqlite/1763417279729-RemoveFlowRunDurationSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -111,6 +114,9 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        RemoveFlowRunDurationSqlite1763417279729,
+        AddIconToProjectSqlite1763378269381,
+        RemoveProjectIdFromPieceMetdataSqlite1763243032686,
         AddFailedStepDurationSqlite1762949199414,
         DeleteLastChangelogDismissedAtSqlite1762018344394,
         RemoveTasksAndTasksLimitSqlite1761574814842,

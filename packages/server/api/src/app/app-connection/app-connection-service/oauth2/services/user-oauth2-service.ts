@@ -6,9 +6,16 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { oauthAppService } from '../../../../oauth-apps/oauth-app.service'
-import { pieceMetadataService } from '../../../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../../../pieces/metadata/piece-metadata-service'
 import { ClaimOAuth2Request, RefreshOAuth2Request } from '../oauth2-service'
 import { credentialsOauth2Service } from './credentials-oauth2-service'
+// import {
+//     ClaimOAuth2Request,
+//     RefreshOAuth2Request,
+// } from '../../app-connection/app-connection-service/oauth2/oauth2-service'
+// import { credentialsOauth2Service } from '../../app-connection/app-connection-service/oauth2/services/credentials-oauth2-service'
+// import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+// import { oauthAppService } from '../oauth-apps/oauth-app.service'
 
 export const userOAuth2Service = (log: FastifyBaseLogger) => ({
     claim: async ({

@@ -1,33 +1,48 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PackageType, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { trace } from '@opentelemetry/api'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 import { executionFiles } from '../cache/execution-files'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
-import { pieceEngineUtil } from '../utils/flow-engine-util'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
-import { EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperPropResult, EngineHelperResponse, EngineHelperResult, EngineHelperTriggerResult, EngineHelperValidateAuthResult } from './engine-runner-types'
+import { CodeArtifact, EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperFlowResult, EngineHelperPropResult, EngineHelperResponse, EngineHelperResult, EngineHelperTriggerResult, EngineHelperValidateAuthResult } from './engine-runner-types'
 import { engineProcessManager } from './process/engine-process-manager'
+
+const tracer = trace.getTracer('engine-runner')
 
 type EngineConstants = 'publicApiUrl' | 'internalApiUrl' | 'engineToken'
 
 export const engineRunner = (log: FastifyBaseLogger) => ({
-    async executeFlow(engineToken: string, operation: Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>): Promise<EngineHelperResponse<never>> {
-        log.debug({
-            flowVersion: operation.flowVersion.id,
-            projectId: operation.projectId,
-        }, '[threadEngineRunner#executeFlow]')
-        await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.projectId, operation.platformId)
+    async executeFlow(engineToken: string, operation: Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
+        return tracer.startActiveSpan('engineRunner.executeFlow', {
+            attributes: {
+                'flow.versionId': operation.flowVersion.id,
+                'flow.projectId': operation.projectId,
+                'flow.platformId': operation.platformId,
+            },
+        }, async (span) => {
+            try {
+                log.debug({
+                    flowVersion: operation.flowVersion.id,
+                    projectId: operation.projectId,
+                }, '[threadEngineRunner#executeFlow]')
+                await prepareFlowSandbox(log, engineToken, operation.flowVersion, operation.projectId, operation.platformId)
 
-        const input: ExecuteFlowOperation = {
-            ...operation,
-            engineToken,
-            publicApiUrl: workerMachine.getPublicApiUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
-        }
+                const input: ExecuteFlowOperation = {
+                    ...operation,
+                    engineToken,
+                    publicApiUrl: workerMachine.getPublicApiUrl(),
+                    internalApiUrl: workerMachine.getInternalApiUrl(),
+                }
 
-        return execute(log, input, EngineOperationType.EXECUTE_FLOW, operation.timeoutInSeconds)
+                return await execute<EngineHelperFlowResult>(log, input, EngineOperationType.EXECUTE_FLOW, operation.timeoutInSeconds)
+            }
+            finally {
+                span.end()
+            }
+        })
     },
     async executeTrigger<T extends TriggerHookType>(engineToken: string, operation: Omit<ExecuteTriggerOperation<T>, EngineConstants>): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
         log.debug({
@@ -35,12 +50,14 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeTrigger]')
 
-        const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
+        const triggerSettings = operation.flowVersion.trigger.settings as PieceTriggerSettings
+        const triggerPiece = await pieceWorkerCache(log).getPiece({
             engineToken,
-            stepName: operation.flowVersion.trigger.name,
-            flowVersion: operation.flowVersion,
+            pieceName: triggerSettings.pieceName,
+            pieceVersion: triggerSettings.pieceVersion,
+            platformId: operation.platformId,
         })
+
         const input: ExecuteTriggerOperation<TriggerHookType> = {
             platformId: operation.platformId,
             projectId: operation.projectId,
@@ -48,38 +65,28 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
             webhookUrl: operation.webhookUrl,
             triggerPayload: operation.triggerPayload,
             test: operation.test,
-            flowVersion: lockedVersion,
+            flowVersion: operation.flowVersion,
             appWebhookUrl: await webhookUtils(log).getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
                 publicApiUrl: workerMachine.getPublicApiUrl(),
             }),
             publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
-            webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
+            webhookSecret: await webhookSecretsUtils.getWebhookSecret(operation.flowVersion),
             engineToken,
             timeoutInSeconds: operation.timeoutInSeconds,
         }
         await executionFiles(log).provision({
             pieces: [triggerPiece],
             codeSteps: [],
-            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         return execute(log, input, EngineOperationType.EXECUTE_TRIGGER_HOOK, operation.timeoutInSeconds)
     },
-    async extractPieceMetadata(engineToken: string, operation: ExecuteExtractPieceMetadataOperation): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
+    async extractPieceMetadata(operation: ExecuteExtractPieceMetadataOperation): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         log.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
-
-        const lockedPiece = await pieceEngineUtil.enrichPieceWithArchive(engineToken, {
-            name: operation.pieceName,
-            version: operation.pieceVersion,
-            packageType: operation.packageType,
-            pieceType: operation.pieceType,
-            archiveId: operation.packageType === PackageType.ARCHIVE ? operation.archiveId : undefined,
-        })
         await executionFiles(log).provision({
-            pieces: [lockedPiece],
+            pieces: [operation],
             codeSteps: [],
-            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         return execute(log, operation, EngineOperationType.EXTRACT_PIECE_METADATA, operation.timeoutInSeconds)
     },
@@ -87,12 +94,9 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
 
         log.debug({ ...operation.piece, platformId: operation.platformId }, '[threadEngineRunner#executeValidateAuth]')
 
-        const { piece } = operation
-        const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
-            pieces: [lockedPiece],
+            pieces: [operation.piece],
             codeSteps: [],
-            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
@@ -109,13 +113,9 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
             stepName: operation.actionOrTriggerName,
         }, '[threadEngineRunner#executeProp]')
 
-        const { piece } = operation
-
-        const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, piece)
         await executionFiles(log).provision({
-            pieces: [lockedPiece],
+            pieces: [operation.piece],
             codeSteps: [],
-            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
 
         const input: ExecutePropsOptions = {
@@ -129,11 +129,15 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
     async excuteTool(engineToken: string, operation: Omit<ExecuteToolOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         log.debug({ operation }, '[threadEngineRunner#excuteTool]')
 
-        const lockedPiece = await pieceEngineUtil.resolveExactVersion(engineToken, operation)
+        const toolPiece = await pieceWorkerCache(log).getPiece({
+            engineToken,
+            pieceName: operation.pieceName,
+            pieceVersion: operation.pieceVersion,
+            platformId: operation.platformId,
+        })
         await executionFiles(log).provision({
-            pieces: [lockedPiece],
+            pieces: [toolPiece],
             codeSteps: [],
-            customPiecesPath: executionFiles(log).getCustomPiecesPath(operation),
         })
         const input: ExecuteToolOperation = {
             ...operation,
@@ -149,61 +153,106 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
 })
 
 async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion, projectId: string, platformId: string): Promise<void> {
-    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-    const pieces = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE).map(async (step) => {
-        const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
-        const pieceMetadata = await pieceWorkerCache(log).getPiece({
-            engineToken,
-            pieceName,
-            pieceVersion,
-            projectId,
-        })
-        return pieceEngineUtil.enrichPieceWithArchive(engineToken, pieceMetadata)
+    return tracer.startActiveSpan('prepareFlowSandbox', {
+        attributes: {
+            'sandbox.flowVersionId': flowVersion.id,
+            'sandbox.projectId': projectId,
+            'sandbox.platformId': platformId,
+        },
+    }, async (span) => {
+        try {
+            const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+            const pieceSteps = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE)
+            span.setAttribute('sandbox.pieceStepsCount', pieceSteps.length)
+            
+            const pieces = pieceSteps.map(async (step) => {
+                const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
+                return pieceWorkerCache(log).getPiece({
+                    engineToken,
+                    pieceName,
+                    pieceVersion,
+                    platformId,
+                })
+            })
+            const codeSteps = getCodePieces(flowVersion)
+            span.setAttribute('sandbox.codeStepsCount', codeSteps.length)
+            
+            await executionFiles(log).provision({
+                pieces: await Promise.all(pieces),
+                codeSteps,
+            })
+        }
+        finally {
+            span.end()
+        }
     })
-    const codeSteps = pieceEngineUtil.getCodeSteps(flowVersion)
-    await executionFiles(log).provision({
-        pieces: await Promise.all(pieces),
-        codeSteps,
-        customPiecesPath: executionFiles(log).getCustomPiecesPath({ platformId }),
+}
+
+function getCodePieces(flowVersion: FlowVersion): CodeArtifact[] {
+    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+    return steps.filter((step) => step.type === FlowActionType.CODE).map((step) => {
+        const codeAction = step as CodeAction
+        return {
+            name: codeAction.name,
+            flowVersionId: flowVersion.id,
+            flowVersionState: flowVersion.state,
+            sourceCode: codeAction.settings.sourceCode,
+        }
     })
 }
 
 async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger, operation: EngineOperation, operationType: EngineOperationType, timeoutInSeconds: number): Promise<EngineHelperResponse<Result>> {
-    const { engine, stdError, stdOut } = await engineProcessManager.executeTask(operationType, operation, log, timeoutInSeconds)
+    return tracer.startActiveSpan('engineRunner.execute', {
+        attributes: {
+            'engine.operationType': operationType,
+            'engine.timeoutInSeconds': timeoutInSeconds,
+        },
+    }, async (span) => {
+        try {
+            const { engine, stdError, stdOut } = await engineProcessManager.executeTask(operationType, operation, log, timeoutInSeconds)
 
-    log.debug({
-        stdError: chalk.red(stdError),
-        stdOut: chalk.green(stdOut),
-    }, '[engineRunner#execute] error')
+            log.debug({
+                stdError: chalk.red(stdError),
+                stdOut: chalk.green(stdOut),
+            }, '[engineRunner#execute] error')
 
-    if (engine.status === EngineResponseStatus.TIMEOUT) {
-        throw new ActivepiecesError({
-            code: ErrorCode.EXECUTION_TIMEOUT,
-            params: {
-                standardOutput: stdOut,
+            span.setAttribute('engine.responseStatus', engine.status)
+
+            if (engine.status === EngineResponseStatus.TIMEOUT) {
+                span.recordException(new Error('Execution timeout'))
+                throw new ActivepiecesError({
+                    code: ErrorCode.EXECUTION_TIMEOUT,
+                    params: {
+                        standardOutput: stdOut,
+                        standardError: stdError,
+                    },
+                })
+            }
+            if (engine.status === EngineResponseStatus.MEMORY_ISSUE) {
+                span.recordException(new Error('Memory issue'))
+                throw new ActivepiecesError({
+                    code: ErrorCode.MEMORY_ISSUE,
+                    params: {
+                        standardOutput: stdOut,
+                        standardError: stdError,
+                    },
+                })
+            }
+
+            const result = tryParseJson(engine.response)
+
+            return {
+                status: engine.status,
+                delayInSeconds: engine.delayInSeconds,
+                result: result as Result,
                 standardError: stdError,
-            },
-        })
-    }
-    if (engine.status === EngineResponseStatus.MEMORY_ISSUE) {
-        throw new ActivepiecesError({
-            code: ErrorCode.MEMORY_ISSUE,
-            params: {
                 standardOutput: stdOut,
-                standardError: stdError,
-            },
-        })
-    }
-
-    const result = tryParseJson(engine.response)
-
-    return {
-        status: engine.status,
-        delayInSeconds: engine.delayInSeconds,
-        result: result as Result,
-        standardError: stdError,
-        standardOutput: stdOut,
-    }
+            }
+        }
+        finally {
+            span.end()
+        }
+    })
 
 }
 

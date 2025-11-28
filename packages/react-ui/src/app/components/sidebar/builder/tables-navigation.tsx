@@ -94,8 +94,8 @@ export function TablesNavigation() {
   }
 
   return (
-    <SidebarGroup className="pb-2 max-h-[calc(50%-10px)] pr-0">
-      <SidebarGroupLabel className="flex px-2 text-sm text-foreground font-semibold justify-between items-center w-full mb-1">
+    <SidebarGroup className="max-h-[calc(50%-10px)]">
+      <SidebarGroupLabel className="flex text-sm text-foreground font-semibold justify-between items-center w-full mb-1">
         {t('Tables')}
         <Tooltip>
           <TooltipTrigger>
@@ -114,7 +114,7 @@ export function TablesNavigation() {
       </SidebarGroupLabel>
       <ScrollArea ref={scrollAreaRef} scrollHideDelay={2} showGradient>
         <SidebarGroupContent>
-          <SidebarMenu className="pr-2">
+          <SidebarMenu>
             {tables?.data.map((table) => (
               <TableItem
                 key={table.id}

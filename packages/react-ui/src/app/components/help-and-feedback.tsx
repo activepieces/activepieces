@@ -10,27 +10,50 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 export const HelpAndFeedback = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { state } = useSidebar();
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  const isCollapsed = state === 'collapsed';
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <SidebarMenuButton className="px-2 py-5">
-          <div className="flex items-center gap-2">
-            <QuestionMarkCircledIcon className="size-4" />
-            <span>{t('Help & Feedback')}</span>
-          </div>
-          <ChevronRight className="size-4 ml-auto" />
-        </SidebarMenuButton>
-      </DropdownMenuTrigger>
+      {isCollapsed ? (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger className="flex items-center justify-center size-9 rounded-md hover:bg-accent cursor-pointer">
+                <QuestionMarkCircledIcon className="size-5" />
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center">
+              {t('Help & Feedback')}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuButton className="px-2 py-5">
+            <div className="flex items-center gap-2">
+              <QuestionMarkCircledIcon className="size-5" />
+              <span>{t('Help & Feedback')}</span>
+            </div>
+            <ChevronRight className="size-4 ml-auto" />
+          </SidebarMenuButton>
+        </DropdownMenuTrigger>
+      )}
       <DropdownMenuContent align="end" side="right" className="w-[220px]">
         <DropdownMenuItem asChild>
           <Link

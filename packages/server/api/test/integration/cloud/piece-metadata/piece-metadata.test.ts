@@ -6,10 +6,11 @@ import {
     PlatformRole,
     PrincipalType,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { localPieceCache } from '../../../../src/app/pieces/metadata/local-piece-cache'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -21,10 +22,12 @@ import {
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 beforeEach(async () => {
@@ -57,6 +60,8 @@ describe('Piece Metadata API', () => {
             await databaseConnection()
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata2)
+
+            await localPieceCache(mockLog).setup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -93,6 +98,8 @@ describe('Piece Metadata API', () => {
             await databaseConnection()
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata)
+
+            await localPieceCache(mockLog).setup()
 
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
                 platform: {
@@ -137,6 +144,7 @@ describe('Piece Metadata API', () => {
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata)
 
+            await localPieceCache(mockLog).setup()
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
@@ -179,11 +187,18 @@ describe('Piece Metadata API', () => {
         })
     })
     describe('List Piece Metadata endpoint', () => {
-        it('Should list platform and project pieces', async () => {
+        it('Should list platform pieces', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 platform: {
                     filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
                     filteredPieceNames: [],
+                },
+            })
+
+            const { mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
                 },
             })
             const mockProject = await createProjectAndPlan({
@@ -192,16 +207,12 @@ describe('Piece Metadata API', () => {
             })
 
 
-            const mockProject2 = await createProjectAndPlan({
-                platformId: mockPlatform.id,
-                ownerId: mockOwner.id,
-            })
 
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
                 name: 'a',
                 pieceType: PieceType.CUSTOM,
-                projectId: mockProject.id,
+                platformId: mockPlatform.id,
                 displayName: 'a',
             })
             const mockPieceMetadataB = createMockPieceMetadata({
@@ -212,8 +223,7 @@ describe('Piece Metadata API', () => {
             const mockPieceMetadataC = createMockPieceMetadata({
                 name: 'c',
                 pieceType: PieceType.CUSTOM,
-                projectId: mockProject2.id,
-                platformId: mockPlatform.id,
+                platformId: mockPlatform2.id,
                 displayName: 'c',
             })
             const mockPieceMetadataD = createMockPieceMetadata({
@@ -230,6 +240,8 @@ describe('Piece Metadata API', () => {
                     mockPieceMetadataC,
                     mockPieceMetadataD,
                 ])
+
+            await localPieceCache(mockLog).setup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -257,74 +269,6 @@ describe('Piece Metadata API', () => {
             expect(responseBody?.[2].id).toBe(mockPieceMetadataD.id)
         })
 
-        it('Should list project pieces', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                platform: {
-                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-                    filteredPieceNames: [],
-                },
-            })
-
-            const mockProject1 = await createProjectAndPlan({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-            })
-
-            const mockProject2 = await createProjectAndPlan({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-            })
-
-            // arrange
-            const mockPieceMetadataA = createMockPieceMetadata({
-                name: 'a',
-                pieceType: PieceType.CUSTOM,
-                projectId: mockProject1.id,
-                platformId: mockPlatform.id,
-                displayName: 'a',
-            })
-            const mockPieceMetadataB = createMockPieceMetadata({
-                name: 'b',
-                pieceType: PieceType.OFFICIAL,
-                displayName: 'b',
-            })
-            const mockPieceMetadataC = createMockPieceMetadata({
-                name: 'c',
-                pieceType: PieceType.CUSTOM,
-                projectId: mockProject2.id,
-                platformId: mockPlatform.id,
-                displayName: 'c',
-            })
-            await databaseConnection()
-                .getRepository('piece_metadata')
-                .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
-
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                projectId: mockProject1.id,
-                id: mockOwner.id,
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody).toHaveLength(2)
-            expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
-            expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
-        })
         it('Should list correct version by piece name', async () => {
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
@@ -359,6 +303,7 @@ describe('Piece Metadata API', () => {
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
             })
+            await localPieceCache(mockLog).setup()
 
             // act
             const exactVersionResponse = await app?.inject({
@@ -422,6 +367,8 @@ describe('Piece Metadata API', () => {
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
 
+            await localPieceCache(mockLog).setup()
+
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
@@ -460,6 +407,8 @@ describe('Piece Metadata API', () => {
             await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
+
+            await localPieceCache(mockLog).setup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
@@ -520,6 +469,8 @@ describe('Piece Metadata API', () => {
             await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
+
+            await localPieceCache(mockLog).setup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -582,6 +533,8 @@ describe('Piece Metadata API', () => {
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
 
+            await localPieceCache(mockLog).setup()
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
@@ -642,6 +595,8 @@ describe('Piece Metadata API', () => {
             await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
+
+            await localPieceCache(mockLog).setup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,

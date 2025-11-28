@@ -83,7 +83,6 @@ export const WorkerSettingsResponse = Type.Object({
     MAX_FILE_SIZE_MB: Type.Number(),
     SANDBOX_MEMORY_LIMIT: Type.String(),
     SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
-    PIECES_SOURCE: Type.String(),
     DEV_PIECES: Type.Array(Type.String()),
     SENTRY_DSN: Type.Optional(Type.String()),
     LOKI_PASSWORD: Type.Optional(Type.String()),

@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { arch } from 'node:process'
-import { execPromise, fileSystemUtils, PiecesSource } from '@activepieces/server-shared'
+import { execPromise, fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { registryPieceManager } from '../../../cache/pieces/production/registry-piece-manager'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { workerMachine } from '../../../utils/machine'
 import { EngineProcess } from './engine-factory-types'
@@ -30,7 +31,7 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
         await execPromise(`${isolateBinaryPath} --box-id=${workerIndex} --init`)
 
         const propagatedEnvVars = getEnvironmentVariables(options.env, workerId)
-        const dirsToBindArgs: string[] = await getDirsToBindArgs(params.flowVersionId, params.customPiecesPath, params.reusable)
+        const dirsToBindArgs: string[] = await getDirsToBindArgs(log, params.flowVersionId, params.platformId, params.reusable)
         const args = [
             ...dirsToBindArgs,
             '--share-net',
@@ -68,7 +69,7 @@ function getEnvironmentVariables(env: Record<string, string | undefined>, worker
     }).map(([key, value]) => `--env=${key}='${value}'`)
 }
 
-async function getDirsToBindArgs(flowVersionId: string | undefined, customPiecesPath: string, reusable: boolean): Promise<string[]> {
+async function getDirsToBindArgs(log: FastifyBaseLogger, flowVersionId: string | undefined, platformId: string, reusable: boolean): Promise<string[]> {
     const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
 
     const dirsToBind = [
@@ -76,32 +77,39 @@ async function getDirsToBindArgs(flowVersionId: string | undefined, customPieces
         `--dir=/etc/=${etcDir}`,
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
     ]
-    
-    if (reusable) {
-        dirsToBind.push(`--dir=/codes=${path.resolve(GLOBAL_CODE_CACHE_PATH)}`)
+
+    const codePieceDirectoryToBind = await getCodePieceDirectoryToBind(flowVersionId, reusable)
+    if (!isNil(codePieceDirectoryToBind)) {
+        dirsToBind.push(codePieceDirectoryToBind)
     }
-    else {
-        const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
-        if (fExists) {
-            dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
-        }
-    }
-    
+
+    const customPiecesPath = registryPieceManager(log).getCustomPiecesPath(platformId)
     if (customPiecesPath) {
+        dirsToBind.push(`--dir=/node_modules=${path.resolve(customPiecesPath, 'node_modules')}:maybe`)
         dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
     }
 
-    const piecesSource = workerMachine.getSettings().PIECES_SOURCE
+    const devPieces = workerMachine.getSettings().DEV_PIECES
 
-    if (piecesSource === PiecesSource.FILE) {
+    if (devPieces.length > 0) {
         const basePath = path.resolve(__dirname.split('/dist')[0])
 
         dirsToBind.push(
-            `--dir=${path.join(basePath, '.pnpm')}=/${path.join(basePath, '.pnpm')}:maybe`,
             `--dir=${path.join(basePath, 'dist')}=/${path.join(basePath, 'dist')}:maybe`,
             `--dir=${path.join(basePath, 'node_modules')}=/${path.join(basePath, 'node_modules')}:maybe`,
         )
     }
 
     return dirsToBind
+}
+
+async function getCodePieceDirectoryToBind(flowVersionId: string | undefined, reusable: boolean): Promise<string | undefined> {
+    if (reusable) {
+        return `--dir=/codes=${path.resolve(GLOBAL_CODE_CACHE_PATH)}`
+    }
+    const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
+    if (fExists) {
+        return `--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`
+    }
+    return undefined
 }
