@@ -1,6 +1,17 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { agentsDropdown, WebhookActionConfig, TriggerType, volubileCommon, ActionStatus } from '../common';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
+import {
+  ActionStatus,
+  agentsDropdown,
+  TriggerType,
+  volubileCommon,
+  WebhookActionConfig,
+} from '../common';
 import { volubileAuth } from '../auth';
+
 export const postCallTrigger = createTrigger({
   name: 'postCallTrigger',
   displayName: 'Post Call Trigger',
@@ -9,8 +20,7 @@ export const postCallTrigger = createTrigger({
     agentId: agentsDropdown,
     sampleData: Property.Json({
       displayName: 'Sample data',
-      description:
-        'Set the test input data',
+      description: 'Set the test input data',
       defaultValue: {},
       required: false,
     }),
@@ -20,7 +30,11 @@ export const postCallTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async test(context) {
     const data = context.propsValue.sampleData;
-    if (data === null || data === undefined || Object.keys(data!).length === 0) {
+    if (
+      data === null ||
+      data === undefined ||
+      Object.keys(data!).length === 0
+    ) {
       return [
         await volubileCommon.getContext(
           context.auth,
@@ -33,9 +47,7 @@ export const postCallTrigger = createTrigger({
     return [data];
   },
   async onEnable(context) {
-    const status = await context.store.get<ActionStatus>(
-      `_prev_status`
-    );
+    const status = await context.store.get<ActionStatus>(`_prev_status`);
     await volubileCommon.subscribeWebhook(
       context.auth,
       context.propsValue.agentId!,
@@ -43,23 +55,18 @@ export const postCallTrigger = createTrigger({
         url: context.webhookUrl,
         name: context.webhookUrl.split('/').pop(),
         trigger: TriggerType.POST_CALL,
-        status: status
-      } as WebhookActionConfig,
+        status: status ?? ActionStatus.DISABLED,
+      } as WebhookActionConfig
     );
   },
-  async onDisable(context){
-    const response = await volubileCommon.unsubscribeWebhook(
-      context.auth,
-      {
-        url: context.webhookUrl,
-        trigger: TriggerType.POST_CALL
-      } as WebhookActionConfig,
-    );
-    await context.store.put<ActionStatus>(
-      `_prev_status`, response.body
-    );
+  async onDisable(context) {
+    const response = await volubileCommon.unsubscribeWebhook(context.auth, {
+      url: context.webhookUrl,
+      trigger: TriggerType.POST_CALL,
+    } as WebhookActionConfig);
+    await context.store.put<ActionStatus>(`_prev_status`, response.body);
   },
-  async run(context){
-    return [context.payload.body]
-  }
-})
+  async run(context) {
+    return [context.payload.body];
+  },
+});

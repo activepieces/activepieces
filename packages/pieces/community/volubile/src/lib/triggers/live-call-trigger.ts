@@ -1,8 +1,16 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { volubileAuth } from '../auth';
-import { ActionStatus, agentsDropdown, LiveWebhookActionConfig, TriggerType, volubileCommon } from '../common';
-
-
+import {
+  ActionStatus,
+  agentsDropdown,
+  LiveWebhookActionConfig,
+  TriggerType,
+  volubileCommon,
+} from '../common';
 
 export const liveCallTrigger = createTrigger({
   name: 'liveCallTrigger',
@@ -20,12 +28,14 @@ export const liveCallTrigger = createTrigger({
     }),
     description: Property.LongText({
       displayName: 'Action Description',
-      description: 'Description of the action, it should explain when and why the agent should call this action',
+      description:
+        'Description of the action, it should explain when and why the agent should call this action',
       required: true,
     }),
     schemaProperties: Property.Array({
       displayName: 'Dynamic properties',
-      description: 'Define the properties expected in the webhook payload that the Agent will infer based on the conversation',
+      description:
+        'Define the properties expected in the webhook payload that the Agent will infer based on the conversation',
       required: false,
       defaultValue: [],
       properties: {
@@ -54,11 +64,11 @@ export const liveCallTrigger = createTrigger({
             options: [
               { label: 'String', value: 'string' },
               { label: 'Integer', value: 'integer' },
-              { label: 'Boolean', value: 'boolean' }
-            ]
-          }
+              { label: 'Boolean', value: 'boolean' },
+            ],
+          },
         }),
-      }
+      },
     }),
     sampleData: Property.Json({
       displayName: 'Sample data',
@@ -73,7 +83,11 @@ export const liveCallTrigger = createTrigger({
   },
   async test(context) {
     const data = context.propsValue.sampleData;
-    if (data === null || data === undefined || Object.keys(data!).length === 0) {
+    if (
+      data === null ||
+      data === undefined ||
+      Object.keys(data!).length === 0
+    ) {
       return [
         await volubileCommon.getContext(
           context.auth,
@@ -87,14 +101,16 @@ export const liveCallTrigger = createTrigger({
   },
   async onEnable(context) {
     let schema;
-    if (context.propsValue.inputSchema != null && typeof context.propsValue.inputSchema === 'object' && Object.keys(context.propsValue.inputSchema).length > 0) {
+    if (
+      context.propsValue.inputSchema != null &&
+      typeof context.propsValue.inputSchema === 'object' &&
+      Object.keys(context.propsValue.inputSchema).length > 0
+    ) {
       schema = context.propsValue.inputSchema;
     } else {
       schema = buildJsonSchema(context.propsValue.schemaProperties ?? []);
     }
-    const status = await context.store.get<ActionStatus>(
-      `_prev_status`
-    );
+    const status = await context.store.get<ActionStatus>(`_prev_status`);
     await volubileCommon.subscribeWebhook(
       context.auth,
       context.propsValue.agentId!,
@@ -104,29 +120,24 @@ export const liveCallTrigger = createTrigger({
         name: context.propsValue.name,
         description: context.propsValue.description,
         schema: schema,
-        status: status,
-      } as LiveWebhookActionConfig,
+        status: status ?? ActionStatus.DISABLED,
+      } as LiveWebhookActionConfig
     );
   },
 
   async onDisable(context) {
-    const response = await volubileCommon.unsubscribeWebhook(
-      context.auth,
-      {
-        url: context.webhookUrl + '/sync',
-        trigger: TriggerType.LIVE_CALL,
-        name: context.propsValue.name,
-        description: context.propsValue.description
-      } as LiveWebhookActionConfig,
-    );
+    const response = await volubileCommon.unsubscribeWebhook(context.auth, {
+      url: context.webhookUrl + '/sync',
+      trigger: TriggerType.LIVE_CALL,
+      name: context.propsValue.name,
+      description: context.propsValue.description,
+    } as LiveWebhookActionConfig);
 
-    await context.store.put<ActionStatus>(
-      `_prev_status`, response.body
-    );
+    await context.store.put<ActionStatus>(`_prev_status`, response.body);
   },
 
   async run(context) {
-    return [context.payload.body]
+    return [context.payload.body];
   },
 });
 
@@ -137,7 +148,7 @@ function buildJsonSchema(properties: Array<any>) {
   for (const prop of properties) {
     schemaProperties[prop.name] = {
       type: prop.type,
-      description: prop.description || undefined
+      description: prop.description || undefined,
     };
 
     if (prop.required) {
@@ -149,6 +160,6 @@ function buildJsonSchema(properties: Array<any>) {
     type: 'object',
     properties: schemaProperties,
     required: required.length > 0 ? required : undefined,
-    additionalProperties: false
+    additionalProperties: false,
   };
 }

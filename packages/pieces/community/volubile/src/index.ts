@@ -4,15 +4,14 @@ import { volubileAuth } from './lib/auth';
 import { liveCallTrigger } from './lib/triggers/live-call-trigger';
 import { postCallTrigger } from './lib/triggers/post-call-trigger';
 import { returnContext } from './lib/actions/return-context';
-import {failoverTrigger} from "./lib/triggers/failover-trigger";
-
-
+import { failoverTrigger } from './lib/triggers/failover-trigger';
 
 export const volubile = createPiece({
-  displayName: "Volubile",
+  displayName: 'Volubile',
   auth: volubileAuth,
-  minimumSupportedRelease: '0.20.0',
-  logoUrl: "https://volubile.blob.core.windows.net/backoffice/assets/activepieces/volubile-icon.svg",
+  minimumSupportedRelease: '0.73.0',
+  logoUrl:
+    'https://volubile.blob.core.windows.net/backoffice/assets/activepieces/volubile-icon.svg',
   authors: [],
   actions: [returnContext],
   triggers: [failoverTrigger, preCallTrigger, liveCallTrigger, postCallTrigger],

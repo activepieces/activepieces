@@ -37,7 +37,11 @@ export const preCallTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async test(context) {
     const data = context.propsValue.sampleData;
-    if (data === null || data === undefined || Object.keys(data!).length === 0) {
+    if (
+      data === null ||
+      data === undefined ||
+      Object.keys(data!).length === 0
+    ) {
       return [
         await volubileCommon.getContext(
           context.auth,
@@ -50,30 +54,26 @@ export const preCallTrigger = createTrigger({
     return [data];
   },
   async onEnable(context) {
-    const status = await context.store.get<ActionStatus>(
-      `_prev_status`
-    );
+    const status = await context.store.get<ActionStatus>(`_prev_status`);
     await volubileCommon.subscribeWebhook(
       context.auth,
       context.propsValue.agentId!,
       {
-        url: context.webhookUrl + "/sync",
+        url: context.webhookUrl + '/sync',
         name: context.webhookUrl.split('/').pop(),
         trigger: TriggerType.PRE_CALL,
-        context: await context.store.get('context'),
-        status: status ?? ActionStatus.DISABLED
+        context: (await context.store.get('context')) ?? {},
+        status: status ?? ActionStatus.DISABLED,
       } as PreWebhookActionConfig
     );
   },
   async onDisable(context) {
     const response = await volubileCommon.unsubscribeWebhook(context.auth, {
-      url: context.webhookUrl + "/sync",
+      url: context.webhookUrl + '/sync',
       trigger: TriggerType.PRE_CALL,
-      context: await context.store.get('context'),
+      context: (await context.store.get('context')) ?? {},
     } as PreWebhookActionConfig);
-    await context.store.put<ActionStatus>(
-      `_prev_status`, response.body
-    );
+    await context.store.put<ActionStatus>(`_prev_status`, response.body);
   },
   async run(context) {
     return [context.payload.body];

@@ -1,10 +1,12 @@
 import {
-  DropdownOption, PiecePropValueSchema, Property
+  AppConnectionValueForAuthProperty,
+  DropdownOption,
+  Property,
 } from '@activepieces/pieces-framework';
 import {
-  HttpRequest,
-  HttpMethod,
   httpClient,
+  HttpMethod,
+  HttpRequest,
 } from '@activepieces/pieces-common';
 import { volubileAuth } from '../auth';
 
@@ -47,7 +49,8 @@ export interface LiveWebhookActionConfig extends WebhookActionConfig {
   schema: any;
 }
 
-export const agentsDropdown = Property.Dropdown<string>({
+export const agentsDropdown = Property.Dropdown<string, true, typeof volubileAuth>({
+  auth: volubileAuth,
   displayName: 'Agent',
   description: 'Agent Name',
   required: true,
@@ -60,7 +63,7 @@ export const agentsDropdown = Property.Dropdown<string>({
         placeholder: 'Please connect your account first',
       };
     }
-    const authValue = auth as PiecePropValueSchema<typeof volubileAuth>;
+    const authValue = auth as AppConnectionValueForAuthProperty<typeof volubileAuth>;
 
     const options: DropdownOption<string>[] = [];
     let hasMore = true;
@@ -70,15 +73,13 @@ export const agentsDropdown = Property.Dropdown<string>({
     do {
       const request: HttpRequest = {
         method: HttpMethod.GET,
-        url: `${authValue.baseUrl}/agents`,
+        url: `${authValue.props.baseUrl}/agents`,
         headers: {
-          'X-Api-Key': authValue.apiKey as string,
+          'X-Api-Key': authValue.props.apiKey as string,
         },
         queryParams : {
           'size': pageSize,
-          'page': page.toString(),
-
-
+          'page': page.toString()
         }
       };
 
@@ -104,13 +105,13 @@ export const agentsDropdown = Property.Dropdown<string>({
 });
 
 export const volubileCommon = {
-  getContext: async (auth: PiecePropValueSchema<typeof volubileAuth>, agentId: string, trigger: TriggerType) => {
+  getContext: async (auth: AppConnectionValueForAuthProperty<typeof volubileAuth>, agentId: string, trigger: TriggerType) => {
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${auth.baseUrl}/integrations/hooks/agents/${agentId}/${trigger}/context`,
+      url: `${auth.props.baseUrl}/integrations/hooks/agents/${agentId}/${trigger}/context`,
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': auth.apiKey,
+        'X-Api-Key': auth.props.apiKey,
       },
       queryParams: {},
     };
@@ -119,16 +120,16 @@ export const volubileCommon = {
     return response.body;
   },
   subscribeWebhook: async (
-    auth: PiecePropValueSchema<typeof volubileAuth>,
+    auth: AppConnectionValueForAuthProperty<typeof volubileAuth>,
     agentId: string,
     config: WebhookActionConfig,
   ) => {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${auth.baseUrl}/integrations/hooks/agents/${agentId}/subscribe`,
+      url: `${auth.props.baseUrl}/integrations/hooks/agents/${agentId}/subscribe`,
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': auth.apiKey,
+        'X-Api-Key': auth.props.apiKey,
       },
       body: {
         ...config,
@@ -139,15 +140,15 @@ export const volubileCommon = {
     await httpClient.sendRequest(request);
   },
   unsubscribeWebhook: async (
-    auth: PiecePropValueSchema<typeof volubileAuth>,
+    auth: AppConnectionValueForAuthProperty<typeof volubileAuth>,
     config: WebhookActionConfig,
   ) => {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${auth.baseUrl}/integrations/hooks/unsubscribe`,
+      url: `${auth.props.baseUrl}/integrations/hooks/unsubscribe`,
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': auth.apiKey,
+        'X-Api-Key': auth.props.apiKey,
       },
       body: {
         ...config,
