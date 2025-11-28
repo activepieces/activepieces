@@ -1,5 +1,5 @@
 import { AgentRunParams } from '@activepieces/pieces-framework'
-import { Experimental_Agent as Agent, hasToolCall, stepCountIs, StreamTextResult, tool, ToolSet } from 'ai'
+import { streamText, hasToolCall, stepCountIs, StreamTextResult, tool, ToolSet } from 'ai'
 import { markAsFinishSchema } from './tools-schema'
 
 export const tools =  {
@@ -13,23 +13,16 @@ export const tools =  {
 } as ToolSet
 
 export async function runAgent(params: AgentRunParams): Promise<StreamTextResult<ToolSet, unknown>> {
-    const agent = new Agent({
+    const stream = streamText({
         model: params.model,
+        prompt: params.prompt,
         system: params.systemPrompt,
         stopWhen: [
             stepCountIs(params.maxSteps),
             hasToolCall('markAsFinish'),
         ],
         experimental_output: params.experimental_output,
-        toolChoice: {
-            type: 'tool',
-            toolName: 'markAsFinish',
-        },
         tools,
-    })
-
-    const stream = agent.stream({
-        prompt: params.prompt,
     })
 
     return stream

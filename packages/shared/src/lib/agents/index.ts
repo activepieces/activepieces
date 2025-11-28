@@ -59,32 +59,34 @@ export enum ToolCallType {
     INTERNAL = 'INTERNAL',
 }
 
-const ToolCallBase = {
-    type: Type.Literal(ContentBlockType.TOOL_CALL),
-    input: Nullable(Type.Record(Type.String(), Type.Unknown())),
-    output: Type.Optional(Type.Unknown()),
-    toolName: Type.String(),
-    status: Type.Enum(ToolCallStatus),
-    toolCallId: Type.String(),
-    startTime: Type.String(),
-    endTime: Type.Optional(Type.String()),
-}
+const ToolCallBaseSchema = Type.Object({
+  type: Type.Literal(ContentBlockType.TOOL_CALL),
+  input: Nullable(Type.Record(Type.String(), Type.Unknown())),
+  output: Type.Optional(Type.Unknown()),
+  toolName: Type.String(),
+  status: Type.Enum(ToolCallStatus),
+  toolCallId: Type.String(),
+  startTime: Type.String(),
+  endTime: Type.Optional(Type.String()),
+})
+
+export type ToolCallBase = Static<typeof ToolCallBaseSchema>
 
 export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
     Type.Object({
-        ...ToolCallBase,
+        ...ToolCallBaseSchema.properties,
         toolCallType: Type.Literal(ToolCallType.INTERNAL),
         displayName: Type.String(),
     }),
     Type.Object({
-        ...ToolCallBase,
+        ...ToolCallBaseSchema.properties,
         toolCallType: Type.Literal(ToolCallType.PIECE),
         pieceName: Type.String(),
         pieceVersion: Type.String(),
         actionName: Type.String(),
     }),
     Type.Object({
-        ...ToolCallBase,
+        ...ToolCallBaseSchema.properties,
         toolCallType: Type.Literal(ToolCallType.FLOW),
         displayName: Type.String(),
         flowId: Type.String(),

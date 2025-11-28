@@ -3,6 +3,7 @@ import {
   type AgentResult,
   AgentTaskStatus,
   ContentBlockType,
+  isNil,
 } from '@activepieces/shared';
 
 import {
@@ -13,36 +14,37 @@ import {
   PromptBlock,
   ThinkingBlock,
 } from './timeline-blocks';
+import { t } from 'i18next';
 
 type AgentTimelineProps = {
   className?: string;
-  agentResult: AgentResult;
+  agentResult?: AgentResult;
 };
 
 export const AgentTimeline = ({
   agentResult,
   className = '',
 }: AgentTimelineProps) => {
-  const { steps = [], status } = agentResult;
+
+
+  console.log("loaui")
+  console.log(agentResult)
+  console.log("loaui")
+
+  if (isNil(agentResult)) {
+    return (
+      <p>{t("No agent output available")}</p>
+    )
+  }
+
   return (
     <div className={`h-full flex w-full flex-col ${className}`}>
       <ScrollArea className="flex-1 min-h-0 relative">
         <div className="absolute left-2 top-4 bottom-8 w-[1px] bg-border" />
 
         <div className="space-y-7 pb-4">
-          {agentResult.prompt && <PromptBlock prompt={agentResult.prompt} />}
-
-          {agentResult.message && (
-            <MarkdownBlock
-              step={{
-                markdown: agentResult.message,
-                type: ContentBlockType.MARKDOWN,
-              }}
-              index={1}
-            />
-          )}
-
-          {steps.map((step, index) => {
+          {agentResult.prompt.length > 0 && <PromptBlock prompt={agentResult.prompt} />}
+          {agentResult.steps.map((step, index) => {
             switch (step.type) {
               case ContentBlockType.MARKDOWN:
                 return <MarkdownBlock key={index} step={step} index={index} />;
@@ -55,11 +57,21 @@ export const AgentTimeline = ({
             }
           })}
 
-          {status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
+          {!isNil(agentResult.message) && (
+            <MarkdownBlock
+              step={{
+                markdown: agentResult.message,
+                type: ContentBlockType.MARKDOWN,
+              }}
+              index={1}
+            />
+          )}
 
-          {status === AgentTaskStatus.COMPLETED && <DoneBlock />}
+          {agentResult.status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
 
-          {status === AgentTaskStatus.FAILED && <FailedBlock />}
+          {agentResult.status === AgentTaskStatus.COMPLETED && <DoneBlock />}
+
+          {agentResult.status === AgentTaskStatus.FAILED && <FailedBlock />}
         </div>
       </ScrollArea>
     </div>

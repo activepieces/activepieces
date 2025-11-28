@@ -1,6 +1,8 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon, AI_MODELS } from '../common';
-import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus } from '@activepieces/shared';
+import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
+import { APICallError } from 'ai';
+import { AIErrorResponse } from '@activepieces/common-ai';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -105,23 +107,61 @@ export const runAgent = createAction({
       maxSteps,
       model,
       prompt,
-      systemPrompt: 'you are a helpful assisstant',
+      systemPrompt: agentCommon.systemPrompt(),
       experimental_output: agentCommon.getStructuredOutputSchema(structuredOutput as AgentOutputField[] || [])
     })
 
     let message = ''
-    for await (const chuck of stream.textStream) {
-      message += chuck
-      await context.output.update({ data: {
-        ...result,
-        message: message
-      }})
+
+    for await (const chuck of stream.fullStream) {
+        if (chuck.type === 'text-delta') {
+          message += chuck.text
+        }
+        if (chuck.type === 'tool-call') {
+          const toolData = chuck
+          const metadata = agentCommon.getToolMetadata({
+            toolName: toolData.toolName,
+            baseTool: {
+              toolName: toolData.toolName,
+              toolCallId: toolData.toolCallId,
+              type: ContentBlockType.TOOL_CALL,
+              status: ToolCallStatus.IN_PROGRESS,
+              input: toolData.input as Record<string, unknown>,
+              output: undefined,
+              startTime: new Date().toISOString(),
+            },
+            tools: agentTools as McpTool[]
+          })
+          result.steps.push(metadata)
+          await context.output.update({ data: { ...result }})
+        }
+        if (chuck.type === 'tool-result') {
+          const toolIdx = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chuck.toolCallId)
+          const tool = result.steps[toolIdx] as ToolCallContentBlock
+          assertNotNullOrUndefined(tool, 'Last block must be a tool call')
+          result.steps[toolIdx] = {
+              ...tool,
+              status: ToolCallStatus.COMPLETED,
+              endTime: new Date().toISOString(),
+              output: chuck.output,
+          }
+          context.output.update({ data: { ...result }})
+        }
+        if (chuck.type === 'error') {
+          if (APICallError.isInstance(chuck.error)) {
+              const errorResponse = (chuck.error as { data: AIErrorResponse })?.data
+              result.message = errorResponse?.error?.message ?? JSON.stringify(chuck.error)
+          }
+          else {
+              result.message = "Error running agent"
+          }
+          result.status = AgentTaskStatus.FAILED
+          return result
+        }
     }
 
-    const output = await agentCommon.collectStream(stream.experimental_partialOutputStream)
-
     result.status = AgentTaskStatus.COMPLETED
-    result.structuredOutput = output
+    result.structuredOutput = !isNil(structuredOutput) && await agentCommon.collectStream(stream.experimental_partialOutputStream)
     result.message = message
 
     return result 

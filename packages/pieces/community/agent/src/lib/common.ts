@@ -1,10 +1,10 @@
 import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from "@activepieces/common-ai";
-import { AgentOutputFieldType, AgentOutputField } from "@activepieces/shared"
+import { AgentOutputFieldType, AgentOutputField, McpTool, ToolCallContentBlock, ToolCallBase, ToolCallType, McpToolType, assertNotNullOrUndefined } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { Output } from 'ai';
-import z, { date, ZodSchema, ZodType } from "zod";
+import z, { ZodType } from "zod";
 import { ZodTypeDef } from "zod/v3";
 
 type AIModel = {
@@ -32,6 +32,42 @@ export const agentCommon = {
         return chunks[chunks.length - 1]
     },
 
+    getToolMetadata({ toolName, tools, baseTool }: GetToolMetadaParams ): ToolCallContentBlock {
+        if (toolName === 'markAsFinish') {
+            return {
+                ...baseTool,
+                toolCallType: ToolCallType.INTERNAL,
+                displayName: 'Mark as Complete'
+            }
+        }
+
+        const tool = tools.find((tool) => tool.toolName === toolName)
+        assertNotNullOrUndefined(tool, `Tool ${toolName} not found`)
+
+        switch (tool.type) {
+            case McpToolType.PIECE: {
+                const pieceMetadata = tool.pieceMetadata
+                assertNotNullOrUndefined(pieceMetadata, 'Piece metadata is required')
+                return {
+                    ...baseTool,
+                    toolCallType: ToolCallType.PIECE,
+                    pieceName: pieceMetadata.pieceName,
+                    pieceVersion: pieceMetadata.pieceVersion,
+                    actionName: tool.pieceMetadata.actionName,
+                }
+            }
+            case McpToolType.FLOW: {
+                assertNotNullOrUndefined(tool.flowId, 'Flow ID is required')
+                return {
+                    ...baseTool,
+                    toolCallType: ToolCallType.FLOW,
+                    displayName: tool.flow?.version?.displayName ?? 'Unknown',
+                    flowId: tool.flowId,
+                }
+            }
+        }
+    },
+
     systemPrompt() {
         return  `
             You are a helpful, proactive AI assistant. Today's date is ${new Date().toISOString().split('T')[0]}.
@@ -51,7 +87,7 @@ export const agentCommon = {
 
     getStructuredOutputSchema(
         outputFields: AgentOutputField[]
-    ): ReturnType<typeof Output.object> {
+    ): ReturnType<typeof Output.object> | undefined {
         const shape: Record<string, z.ZodType> = {}
 
         for (const field of outputFields) {
@@ -59,23 +95,20 @@ export const agentCommon = {
                 case AgentOutputFieldType.TEXT:
                     shape[field.displayName] = z.string()
                     break
-
                 case AgentOutputFieldType.NUMBER:
                     shape[field.displayName] = z.number()
                     break
-
                 case AgentOutputFieldType.BOOLEAN:
                     shape[field.displayName] = z.boolean()
                     break
-
                 default:
                     shape[field.displayName] = z.any()
             }
         }
 
-        return Output.object({
+        return Object.keys.length > 0 ? Output.object({
             schema: z.object(shape) as ZodType<Record<string, unknown>, ZodTypeDef, any>,
-        });
+        }) : undefined;
     },
 
     getModelById(modelId: string): AIModel {
@@ -113,4 +146,10 @@ type CreateAIModelParams = {
     token: string;
     baseURL: string;
     flowId: string;
+}
+
+type GetToolMetadaParams = {
+    toolName: string;
+    tools: McpTool[];
+    baseTool: ToolCallBase;
 }

@@ -7,27 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
 import {
-  AGENT_PIECE_NAME,
   AgentResult,
   FlowAction,
-  FlowActionType,
   isNil,
   StepOutputStatus,
 } from '@activepieces/shared';
-
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
-
-import { AgentTestStep } from './agent-test-step';
+import { AgentTestStep, defaultAgentOutput, isRunAgent } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
-
-const isRunAgent = (step?: FlowAction) => {
-  return (
-    !isNil(step) &&
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === AGENT_PIECE_NAME &&
-    step.settings.actionName === 'run_agent'
-  );
-};
 
 type RetestSampleDataViewerProps = {
   isValid: boolean;
@@ -93,10 +80,15 @@ export const TestSampleDataViewer = React.memo(
     onRetest,
   }: RetestSampleDataViewerProps) => {
     const renderViewer = () => {
-      if (isRunAgent(currentStep) && !isNil(agentResult)) {
+      if (isRunAgent(currentStep)) {
+        const resolvedAgentResult = agentResult
+          ?? (sampleData && typeof sampleData === "object" && Object.keys(sampleData).length > 0
+              ? sampleData as AgentResult
+              : defaultAgentOutput);
+
         return (
           <AgentTestStep
-            agentResult={agentResult}
+            agentResult={resolvedAgentResult}
             errorMessage={errorMessage}
           />
         );

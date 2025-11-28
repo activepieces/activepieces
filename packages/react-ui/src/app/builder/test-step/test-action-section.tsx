@@ -13,7 +13,6 @@ import {
   isNil,
   StepRunResponse,
   PopulatedTodo,
-  AGENT_PIECE_NAME,
   AgentResult,
 } from '@activepieces/shared';
 
@@ -25,6 +24,7 @@ import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { testStepHooks } from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { defaultAgentOutput, isRunAgent } from './agent-test-step';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
@@ -73,9 +73,7 @@ const TestStepSectionImplementation = React.memo(
     });
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
-    const [liveAgentResult, setLiveAgentResult] = useState<AgentResult | null>(
-      null,
-    );
+    const [liveAgentResult, setLiveAgentResult] = useState<AgentResult | undefined>(undefined);
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         mutationKey,
@@ -125,6 +123,7 @@ const TestStepSectionImplementation = React.memo(
       if (isTodoCreateTask(currentStep)) {
         handleTodoTest();
       } else if (isRunAgent(currentStep)) {
+        setLiveAgentResult(defaultAgentOutput)
         handleAgentTest();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
@@ -168,7 +167,7 @@ const TestStepSectionImplementation = React.memo(
           <TestSampleDataViewer
             isValid={currentStep.valid}
             currentStep={currentStep}
-            agentResult={liveAgentResult ?? (sampleData as AgentResult)}
+            agentResult={liveAgentResult}
             isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
@@ -245,13 +244,4 @@ const getTodoIdFromStepRunResponse = (stepRunResponse: StepRunResponse) => {
     return stepRunResponse.output.id;
   }
   return null;
-};
-
-const isRunAgent = (step?: FlowAction) => {
-  return (
-    !isNil(step) &&
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === AGENT_PIECE_NAME &&
-    step.settings.actionName === 'run_agent'
-  );
 };
