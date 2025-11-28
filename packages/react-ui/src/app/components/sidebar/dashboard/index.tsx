@@ -219,6 +219,7 @@ export function ProjectDashboardSidebar() {
           <div className="flex-grow" />
           <div className="px-2">
             {state === 'expanded' && <SidebarUsageLimits />}
+            {state === 'expanded' && <SidebarPlatformAdminButton />}
           </div>
         </SidebarContent>
         <SidebarFooter onClick={(e) => e.stopPropagation()}>
