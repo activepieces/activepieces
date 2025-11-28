@@ -259,7 +259,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
-            await app.register(adminPlatformModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
@@ -291,6 +290,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(adminPlatformModule)
             await app.register(platformPlanModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
