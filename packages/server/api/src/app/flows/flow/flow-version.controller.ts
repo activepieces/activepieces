@@ -6,14 +6,16 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowService } from './flow.service'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { FlowEntity } from './flow.entity'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) => {
 
-    fastify.get('/:flowId/versions', ListVersionParams, async (request) => {
+    fastify.get('/:id/versions', ListVersionParams, async (request) => {
         const flow = await flowService(request.log).getOneOrThrow({
-            id: request.params.flowId,
+            id: request.params.id,
             projectId: request.principal.projectId,
         })
         return flowVersionService(request.log).list({
@@ -27,11 +29,14 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) 
 
 const ListVersionParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+        }),
     },
     schema: {
         params: Type.Object({
-            flowId: Type.String(),
+            id: Type.String(),
         }),
         querystring: ListFlowVersionRequest,
         response: {

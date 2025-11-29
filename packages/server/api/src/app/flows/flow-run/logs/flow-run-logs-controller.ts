@@ -5,11 +5,12 @@ import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../../file/file.service'
 import { s3Helper } from '../../../file/s3-helper'
 import { flowRunLogsService } from './flow-run-logs-service'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
     app.put('/logs', {
         config: {
-            allowedPrincipals: ALL_PRINCIPAL_TYPES,
+            security: publicAccess(),
         },
         schema: {
             querystring: UploadLogsQueryParams,
@@ -40,7 +41,7 @@ export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/logs', {
         config: {
-            allowedPrincipals: ALL_PRINCIPAL_TYPES,
+            security: publicAccess(),
         },
         schema: {
             querystring: UploadLogsQueryParams,

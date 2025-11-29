@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
+  CountFlowsRequest,
   CreateFlowRequest,
   ErrorCode,
   FlowOperationRequest,
@@ -84,7 +85,7 @@ export const flowsApi = {
   delete(flowId: string) {
     return api.delete<void>(`/v1/flows/${flowId}`);
   },
-  count() {
-    return api.get<number>('/v1/flows/count');
+  count(request: CountFlowsRequest) {
+    return api.get<number>('/v1/flows/count', request);
   },
 };

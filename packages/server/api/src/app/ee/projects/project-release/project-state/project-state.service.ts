@@ -62,6 +62,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     const table = await tableService.create({
                         projectId,
                         request: {
+                            projectId,
                             name: operation.tableState.name,
                             externalId: operation.tableState.externalId,
                         },

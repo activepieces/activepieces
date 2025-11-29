@@ -6,6 +6,8 @@ import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-s
 import { recordSideEffects } from '../record/record-side-effects'
 import { recordService } from '../record/record.service'
 import { tableService } from './table.service'
+import { TableEntity } from './table.entity'
+import { engineAccess, projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -107,8 +109,9 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.BODY
+        }),
     },
     schema: {
         body: CreateTableRequest,
@@ -120,8 +123,9 @@ const CreateRequest = {
 
 const GetTablesRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.READ_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['tables'],
@@ -136,8 +140,10 @@ const GetTablesRequest = {
 
 const DeleteRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
     },
 
     schema: {
@@ -155,8 +161,10 @@ const DeleteRequest = {
 
 const GetTableByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.READ_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
     },
     schema: {
         tags: ['tables'],
@@ -173,8 +181,10 @@ const GetTableByIdRequest = {
 
 const ExportTableRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.READ_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
     },
     schema: {
         tags: ['tables'],
@@ -191,8 +201,7 @@ const ExportTableRequest = {
 
 const CreateTableWebhook = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: engineAccess(),
     },
     schema: {
         tags: ['tables'],
@@ -207,8 +216,10 @@ const CreateTableWebhook = {
 
 const DeleteTableWebhook = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
     },
     schema: {
         tags: ['tables'],
@@ -223,8 +234,10 @@ const DeleteTableWebhook = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
     },
     schema: {
         tags: ['tables'],
@@ -239,8 +252,10 @@ const UpdateRequest = {
 
 const ClearTableRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
     },
     schema: {
         tags: ['tables'],

@@ -1,7 +1,6 @@
 import {
     ApId,
     assertNotNullOrUndefined,
-    EndpointScope,
     ListUsersRequestBody,
     PrincipalType,
     SeekPage,
@@ -15,6 +14,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userService } from '../user-service'
+import { platformAdminOnly } from '@activepieces/server-shared'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -70,8 +70,7 @@ const ListUsersRequest = {
         [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
 }
 
@@ -86,8 +85,7 @@ const UpdateUserRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
 }
 
@@ -98,7 +96,6 @@ const DeleteUserRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
 }

@@ -4,7 +4,6 @@ import {
     ApId,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
-    EndpointScope,
     ListGlobalConnectionsRequestQuery,
     PrincipalType,
     SeekPage,
@@ -17,11 +16,11 @@ import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { eventsHooks } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformAdminOnly } from '@activepieces/server-shared'
 
 export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
 }
 
@@ -110,8 +109,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         tags: ['global-connections'],
@@ -125,8 +123,7 @@ const UpsertGlobalConnectionRequest = {
 
 const UpdateGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         tags: ['global-connections'],
@@ -140,8 +137,7 @@ const UpdateGlobalConnectionRequest = {
 
 const ListGlobalConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         tags: ['global-connections'],
@@ -155,8 +151,7 @@ const ListGlobalConnectionsRequest = {
 
 const DeleteGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         tags: ['global-connections'],

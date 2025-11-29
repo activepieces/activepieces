@@ -3,6 +3,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { flagService } from './flag.service'
 import { flagHooks } from './flags.hooks'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const flagModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flagController, { prefix: '/v1/flags' })
@@ -13,7 +14,7 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             logLevel: 'silent',
         },

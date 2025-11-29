@@ -10,8 +10,8 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { oauthAppService } from './oauth-app.service'
+import { platformAdminOnly, publicPlatformAccess } from '@activepieces/server-shared'
 
 export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(readOauthAppModule)
@@ -27,7 +27,7 @@ const readOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+                security: publicPlatformAccess([PrincipalType.USER])
             },
             schema: {
                 querystring: ListOAuth2AppRequest,
@@ -48,7 +48,6 @@ const readOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const writeOauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(oauthAppController, { prefix: '/v1/oauth-apps' })
 }
 
@@ -57,7 +56,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+                security: platformAdminOnly([PrincipalType.USER])
             },
             schema: {
                 body: UpsertOAuth2AppRequest,
@@ -77,7 +76,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         '/:id',
         {
             config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+                security: platformAdminOnly([PrincipalType.USER])
             },
             schema: {
                 params: GetIdParams,

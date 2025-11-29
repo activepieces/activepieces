@@ -21,12 +21,7 @@ export const platformApi = {
   },
 
   verifyLicenseKey(licenseKey: string) {
-    const platformId = authenticationSession.getPlatformId();
-    if (!platformId) {
-      throw Error('No platform id found');
-    }
     return api.post<void>(`/v1/license-keys/verify`, {
-      platformId,
       licenseKey,
     });
   },

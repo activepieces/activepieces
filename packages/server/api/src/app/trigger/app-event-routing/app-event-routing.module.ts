@@ -4,6 +4,7 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import {
+    publicAccess,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
@@ -54,8 +55,8 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
         '/:pieceUrl',
         {
             config: {
+                security: publicAccess(),
                 rawBody: true,
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
         },
         async (

@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { humanInputService } from './human-input.service'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const chatController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/chat/:flowId', GetChatRequest, async (request) => {
@@ -14,7 +15,7 @@ export const chatController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetChatRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         description: 'Get a chat UI by flow id',

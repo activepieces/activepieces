@@ -1,13 +1,11 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
+import { AppSystemProp, AuthorizationType, networkUtils, publicAccess, publicPlatformAccess, RouteKind } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
     PrincipalType,
     SignInRequest,
     SignUpRequest,
     SwitchPlatformRequest,
-    SwitchProjectRequest,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
@@ -77,14 +75,6 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         })
     })
 
-    app.post('/switch-project', SwitchProjectRequestOptions, async (request) => {
-        const user = await userService.getOneOrFail({ id: request.principal.id })
-        return authenticationService(request.log).switchProject({
-            identityId: user.identityId,
-            projectId: request.body.projectId,
-            currentPlatformId: request.principal.platform.id,
-        })
-    })
 }
 
 const rateLimitOptions: RateLimitOptions = {
@@ -95,19 +85,11 @@ const rateLimitOptions: RateLimitOptions = {
     timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
 
-const SwitchProjectRequestOptions = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        rateLimit: rateLimitOptions,
-    },
-    schema: {
-        body: SwitchProjectRequest,
-    },
-}
+
 
 const SwitchPlatformRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: publicPlatformAccess([PrincipalType.USER]),
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -117,7 +99,7 @@ const SwitchPlatformRequestOptions = {
 
 const SignUpRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -127,7 +109,7 @@ const SignUpRequestOptions = {
 
 const SignInRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
         rateLimit: rateLimitOptions,
     },
     schema: {

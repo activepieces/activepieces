@@ -31,12 +31,14 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
+import { rbacService } from '../../ee/authentication/project-role/rbac-service'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { flowService } from './flow.service'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { FlowEntity } from './flow.entity'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -60,8 +62,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', {
         config: {
-            allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-            permission: Permission.UPDATE_FLOW_STATUS,
+            security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.UPDATE_FLOW_STATUS, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
         },
         schema: {
             tags: ['flows'],
@@ -84,7 +88,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
-        await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
+        await rbacService(request.log).assertUserHasPermissionToFlow({ principal: request.principal, operationType: request.body.type, projectId: request.project.id })
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
@@ -246,8 +250,9 @@ async function assertThatFlowIsNotBeingUsed(
 
 const CreateFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.BODY
+        })
     },
     schema: {
         tags: ['flows'],
@@ -263,8 +268,9 @@ const CreateFlowRequestOptions = {
 
 const ListFlowsRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.QUERY
+        })
     },
     schema: {
         tags: ['flows'],
@@ -279,8 +285,9 @@ const ListFlowsRequestOptions = {
 
 const CountFlowsRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.QUERY
+        })
     },
     schema: {
         querystring: CountFlowsRequest,
@@ -289,8 +296,10 @@ const CountFlowsRequestOptions = {
 
 const GetFlowTemplateRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+        })
     },
     schema: {
         tags: ['flows'],
@@ -308,8 +317,9 @@ const GetFlowTemplateRequestOptions = {
 
 const GetFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_FLOW, {
+            type: ProjectResourceType.QUERY
+        })
     },
     schema: {
         tags: ['flows'],
@@ -327,8 +337,10 @@ const GetFlowRequestOptions = {
 
 const DeleteFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_FLOW, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+        })
     },
     schema: {
         tags: ['flows'],

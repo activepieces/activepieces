@@ -12,8 +12,9 @@ import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
 import { appConnectionService } from './app-connection-service/app-connection-service'
+import { engineAccess } from '@activepieces/server-shared'
 
-export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (app) => {
+export const appConnectionEngineController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
         const enginePrincipal = (request.principal as EnginePrincipal)
@@ -42,7 +43,7 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
 
 const GetAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: engineAccess()
     },
     schema: {
         params: GetAppConnectionForWorkerRequestQuery,

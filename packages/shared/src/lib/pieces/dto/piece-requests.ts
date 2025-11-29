@@ -94,6 +94,7 @@ export const PieceOptionRequest = Type.Object({
     flowId: Type.String(),
     flowVersionId: Type.String(),
     input: Type.Any({}),
+    projectId: Type.String(),
     searchValue: Type.Optional(Type.String()),
 })
 

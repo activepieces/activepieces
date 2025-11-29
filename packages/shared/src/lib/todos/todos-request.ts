@@ -54,6 +54,7 @@ export type ResolveTodoRequestQuery = Static<typeof ResolveTodoRequestQuery>
 
 export const ListTodoActivitiesQueryParams = Type.Object({
     todoId: ApId,
+    projectId: ApId,
     type: Type.Optional(Type.String()),
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
@@ -63,6 +64,7 @@ export type ListTodoActivitiesQueryParams = Static<typeof ListTodoActivitiesQuer
 
 export const CreateTodoActivityRequestBody = Type.Object({
     todoId: ApId,
+    projectId: ApId,
     content: Type.String(),
 })
 export type CreateTodoActivityRequestBody = Static<typeof CreateTodoActivityRequestBody>

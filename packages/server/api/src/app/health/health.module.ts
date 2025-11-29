@@ -1,3 +1,4 @@
+import { publicAccess } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -12,7 +13,7 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
         },
         async (_request, reply) => {

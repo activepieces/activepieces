@@ -3,6 +3,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { mcpRunService } from './mcp-run.service'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 
 const DEFAULT_LIMIT = 10
 
@@ -24,8 +25,9 @@ export const mcpRunController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetMcpRunRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.READ_MCP],
+        security: projectAccess([PrincipalType.USER], Permission.READ_MCP, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['mcp-run'],

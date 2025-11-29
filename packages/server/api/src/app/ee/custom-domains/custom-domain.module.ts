@@ -10,8 +10,9 @@ import {
 } from '@fastify/type-provider-typebox'
 import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
+import { platformAdminOnly } from '@activepieces/server-shared'
 
 const GetOneRequest = Type.Object({
     id: Type.String(),
@@ -20,42 +21,37 @@ type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 
 const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post(
-        '/',
-        {
-            schema: {
-                body: AddDomainRequest,
-            },
-            config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
-            },
+    app.post('/', {
+        schema: {
+            body: AddDomainRequest,
         },
-        async (request, reply) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-
-            const domain = await customDomainService.getOneByDomain({
-                domain: request.body.domain,
-            })
-
-            if (domain) {
-                return reply.status(HttpStatusCode.Conflict).send({
-                    message: `Domain ${request.body.domain} already exists`,
-                })
-            }
-
-            const customDomain = await customDomainService.create({
-                domain: request.body.domain,
-                platformId,
-            })
-
-            return reply.status(StatusCodes.CREATED).send(customDomain)
+        config: {
+            security: platformAdminOnly([PrincipalType.USER] as const),
         },
+    }, async (request, reply) => {
+        const platformId = request.principal.platform.id
+
+        const domain = await customDomainService.getOneByDomain({
+            domain: request.body.domain,
+        })
+
+        if (domain) {
+            return reply.status(HttpStatusCode.Conflict).send({
+                message: `Domain ${request.body.domain} already exists`,
+            })
+        }
+
+        const customDomain = await customDomainService.create({
+            domain: request.body.domain,
+            platformId,
+        })
+
+        return reply.status(StatusCodes.CREATED).send(customDomain)
+    },
     )
 
     app.get(
@@ -65,7 +61,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                 querystring: ListCustomDomainsRequest,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+                security: platformAdminOnly([PrincipalType.USER] as const),
             },
         },
         async (request) => {
@@ -86,7 +82,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                 params: GetOneRequest,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
+                security: platformAdminOnly([PrincipalType.USER] as const),
             },
         },
         async (request) => {

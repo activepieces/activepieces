@@ -65,7 +65,6 @@ export const authenticationUtils = {
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: project.id,
             platform: {
                 id: params.platformId,
             },
@@ -188,12 +187,20 @@ export const authenticationUtils = {
     async extractUserIdFromPrincipal(
         principal: UserPrincipal | ServicePrincipal | EnginePrincipal,
     ): Promise<string> {
-        if (principal.type === PrincipalType.USER) {
-            return principal.id
+        switch (principal.type) {
+            case PrincipalType.USER:
+                return principal.id
+            case PrincipalType.SERVICE:{
+                const platform = await platformService.getOneOrThrow(principal.platform.id)
+                return platform.ownerId
+            }
+            case PrincipalType.ENGINE:{
+                const project = await projectService.getOneOrThrow(principal.projectId)
+                return project.ownerId
+            }
+            default:
+                throw new Error(`Unsupported principal type`)
         }
-        // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
-        const project = await projectService.getOneOrThrow(principal.projectId)
-        return project.ownerId
     },
 }
 

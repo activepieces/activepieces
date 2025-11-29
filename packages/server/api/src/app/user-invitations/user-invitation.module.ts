@@ -1,8 +1,6 @@
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
     InvitationStatus,
     InvitationType,
@@ -23,10 +21,11 @@ import dayjs from 'dayjs'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
-import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
+import { rbacService } from '../ee/authentication/project-role/rbac-service'
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -157,15 +156,20 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
         })
     }
     await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
-    await assertRoleHasPermission(request.principal, permission, request.log)
+    await rbacService(request.log).assertPrinicpalAccessToProject({ principal: request.principal, permission, projectId })
 }
 
 
 const ListUserInvitationsRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_INVITATION,
-        scope: EndpointScope.PLATFORM,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PLATFORM,
+                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                adminOnly: false,
+            },
+        } as const,
     },
     schema: {
         tags: ['user-invitations'],
@@ -179,7 +183,9 @@ const ListUserInvitationsRequestParams = {
 
 const AcceptUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: {
+            kind: RouteKind.PUBLIC,
+        } as const,
     },
     schema: {
         body: Type.Object({
@@ -190,8 +196,14 @@ const AcceptUserInvitationRequestParams = {
 
 const DeleteInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PLATFORM,
+                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                adminOnly: false,
+            },
+        } as const,
     },
     schema: {
         tags: ['user-invitations'],
@@ -207,8 +219,14 @@ const DeleteInvitationRequestParams = {
 
 const UpsertUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                adminOnly: false,
+                type: AuthorizationType.PLATFORM,
+                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+            },
+        } as const,
     },
     schema: {
         body: SendUserInvitationRequest,

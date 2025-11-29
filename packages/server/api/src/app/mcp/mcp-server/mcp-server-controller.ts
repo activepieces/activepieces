@@ -3,6 +3,8 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { mcpService } from '../mcp-service'
+import { ProjectResourceType, projectAccess } from '@activepieces/server-shared'
+import { McpEntity } from './mcp-entity'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -70,8 +72,9 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 const CreateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -86,8 +89,9 @@ const CreateMcpRequest = {
 
 const GetMcpsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.READ_MCP],
+        security: projectAccess([PrincipalType.USER], Permission.READ_MCP, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -102,8 +106,10 @@ const GetMcpsRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -121,8 +127,10 @@ export const UpdateMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.WRITE_MCP],
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -139,8 +147,10 @@ const RotateTokenRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
-        permissions: [Permission.READ_MCP],
+        security: projectAccess([PrincipalType.USER], Permission.READ_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],
@@ -157,8 +167,10 @@ const GetMcpRequest = {
 
 const DeleteMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_MCP, {
+            type: ProjectResourceType.TABLE,
+            tableName: McpEntity,
+        }),
     },
     schema: {
         tags: ['mcp'],

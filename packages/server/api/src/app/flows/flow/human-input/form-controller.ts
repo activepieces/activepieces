@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { humanInputService } from './human-input.service'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const formController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/form/:flowId', GetFormRequest, async (request) => {
@@ -14,7 +15,7 @@ export const formController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetFormRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         description: 'Get a form by flow id',

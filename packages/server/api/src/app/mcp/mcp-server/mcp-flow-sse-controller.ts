@@ -1,9 +1,10 @@
-import { CreateMCPServerFromStepParams, flowStructureUtil, McpTool, PrincipalType } from '@activepieces/shared'
+import { CreateMCPServerFromStepParams, flowStructureUtil, McpTool } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
 import { flowService } from '../../flows/flow/flow.service'
 import { mcpServerHandler } from '../../mcp/mcp-server/mcp-server-handler'
+import { engineAccess } from '@activepieces/server-shared'
 
 export const mcpFlowSseControllerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:flowId/versions/:flowVersionId/steps/:stepName/mcp', CreateMCPServerFromStepRequest, async (request, reply) => {
@@ -33,7 +34,7 @@ export const mcpFlowSseControllerController: FastifyPluginAsyncTypebox = async (
 
 const CreateMCPServerFromStepRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
     schema: {
         params: CreateMCPServerFromStepParams,
