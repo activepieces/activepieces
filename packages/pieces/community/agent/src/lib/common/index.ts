@@ -1,11 +1,8 @@
 import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from "@activepieces/common-ai";
-import { AgentOutputFieldType, AgentOutputField, McpTool, ToolCallContentBlock, ToolCallBase, ToolCallType, McpToolType, assertNotNullOrUndefined } from "@activepieces/shared"
+import { McpTool, ToolCallContentBlock, ToolCallBase, ToolCallType, McpToolType, assertNotNullOrUndefined } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import { Output } from 'ai';
-import z, { ZodType } from "zod";
-import { ZodTypeDef } from "zod/v3";
 
 type AIModel = {
     id: string
@@ -24,13 +21,6 @@ export const AI_MODELS: AIModel[] = SUPPORTED_AI_PROVIDERS.flatMap(provider =>
 )
 
 export const agentCommon = {
-    async collectStream<T>(stream: AsyncIterable<T>): Promise<T> {
-        const chunks: T[] = []
-        for await (const chunk of stream) {
-            chunks.push(chunk)
-        }
-        return chunks[chunks.length - 1]
-    },
 
     getToolMetadata({ toolName, tools, baseTool }: GetToolMetadaParams ): ToolCallContentBlock {
         if (toolName === 'markAsFinish') {
@@ -67,31 +57,7 @@ export const agentCommon = {
             }
         }
     },
-    getStructuredOutputSchema(
-        outputFields: AgentOutputField[]
-    ): ReturnType<typeof Output.object> | undefined {
-        const shape: Record<string, z.ZodType> = {}
 
-        for (const field of outputFields) {
-            switch (field.type) {
-                case AgentOutputFieldType.TEXT:
-                    shape[field.displayName] = z.string()
-                    break
-                case AgentOutputFieldType.NUMBER:
-                    shape[field.displayName] = z.number()
-                    break
-                case AgentOutputFieldType.BOOLEAN:
-                    shape[field.displayName] = z.boolean()
-                    break
-                default:
-                    shape[field.displayName] = z.any()
-            }
-        }
-
-        return Object.keys.length > 0 ? Output.object({
-            schema: z.object(shape) as ZodType<Record<string, unknown>, ZodTypeDef, any>,
-        }) : undefined;
-    },
 
     getModelById(modelId: string): AIModel {
         const model = AI_MODELS.find(m => m.id === modelId);

@@ -1,4 +1,4 @@
-import { AgentResult, AgentStepBlock, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, MarkdownContentBlock, McpTool, ToolCallContentBlock, ToolCallStatus } from "@activepieces/shared"
+import { AgentResult, AgentStepBlock, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, MarkdownContentBlock, McpTool, ToolCallContentBlock, ToolCallStatus } from "@activepieces/shared"
 import { agentCommon } from "../common"
 
 export const agentOutputBuilder = (prompt: string) => {
@@ -7,9 +7,17 @@ export const agentOutputBuilder = (prompt: string) => {
     let structuredOutput: Record<string, unknown> | undefined = undefined
 
     return {
-        fail(message: string) {
-            this.addMarkdown(message)
+        fail({ message }: FinishParams) {
+            if (!isNil(message)) {
+                this.addMarkdown(message)
+            }
             status = AgentTaskStatus.FAILED
+        },
+        setStatus(_status: AgentTaskStatus) {
+            status = _status
+        },
+        setStructuredOutput(output: Record<string, unknown>) {
+            structuredOutput = output
         },
         addMarkdown(markdown: string) {
             if (steps.length === 0 || steps[steps.length - 1].type !== ContentBlockType.MARKDOWN) {
@@ -72,4 +80,8 @@ type StartToolCallParams = {
     toolCallId: string
     input: Record<string, unknown>
     agentTools: McpTool[]
+}
+
+type FinishParams = {
+    message?: string
 }

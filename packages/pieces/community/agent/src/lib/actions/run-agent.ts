@@ -1,10 +1,12 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon, AI_MODELS } from '../common';
-import { AgentOutputField, AgentPieceProps, AgentTaskStatus, isNil, McpTool, spreadIfDefined } from '@activepieces/shared';
-import { APICallError, hasToolCall, jsonSchema, stepCountIs, streamText, tool, zodSchema } from 'ai';
-import { AIErrorResponse } from '@activepieces/common-ai';
-import { agentOutputBuilder } from './agent-output';
-import { z4 } from 'zod';
+import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, McpTool } from '@activepieces/shared';
+import { hasToolCall, stepCountIs, streamText, tool } from 'ai';
+import { inspect } from 'util';
+import { z, ZodObject } from 'zod';
+import { agentOutputBuilder } from '../common/output-builder';
+
+const TASK_COMPLETION_TOOL_NAME = 'taskCompletion';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -87,14 +89,11 @@ export const runAgent = createAction({
   async run(context) {
     const { prompt, maxSteps, aiModel } = context.propsValue
     const agentTools = context.propsValue.agentTools as McpTool[]
-    const structuredOutput = context.propsValue.structuredOutput as AgentOutputField[]
-    const { server } = context
-
     const selectedModel = agentCommon.getModelById(aiModel as string)
     const model = agentCommon.createModel({
       model: selectedModel,
-      token: server.token,
-      baseURL: `${server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`,
+      token: context.server.token,
+      baseURL: `${context.server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`,
       flowId: context.flows.current.id,
     })
 
@@ -103,42 +102,22 @@ export const runAgent = createAction({
       model: model,
       prompt: prompt,
       system: `
-            You are a helpful, proactive AI assistant. Today's date is ${new Date().toISOString().split('T')[0]}.
+You are a helpful, proactive AI assistant.
+Today's date is ${new Date().toISOString().split('T')[0]}.
 
-            Help the user get things done quickly and accurately.
+Help the user finish their goal quickly and accurately.
 
-            CRITICAL FINAL STEP:
-            When the user's goal is complete (or clearly failed/abandoned), you MUST end your response by calling the tool exactly once:
-
-            - markAsFinished({ success: true })  → goal achieved or user is satisfied  
-            - markAsFinished({ success: false }) → goal failed, impossible, or user gave up
-
-            Decide based on context. When in doubt, default to true.
-            Never ask the user if it succeeded — just call the tool and stop.
+<important_note>
+You must call \`taskCompleted\` at the end wether you have achieved the goal or not.
+</important_note>
         `.trim(),
       stopWhen: [
         stepCountIs(maxSteps),
-        hasToolCall('taskCompletion'),
+        hasToolCall(TASK_COMPLETION_TOOL_NAME),
       ],
       tools: {
-        taskCompletion: tool({
-          description: 'This tool must be called when you have reached a conclusion or completed your assigned task.',
-          inputSchema: zodSchema(
-            z4.object({
-              success: z4.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
-              ...spreadIfDefined('output', isNil(structuredOutput) ? undefined : agentCommon.getStructuredOutputSchema(structuredOutput)),
-            })
-          ),
-          execute: async ({ success, output }) => {
-            outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
-            if (!isNil(output)) {
-              outputBuilder.setStructuredOutput(output)
-            }
-            return {
+        
 
-            }
-          },
-        }),
       }
     });
 
@@ -165,13 +144,7 @@ export const runAgent = createAction({
           break;
         }
         case 'error': {
-          if (APICallError.isInstance(chuck.error)) {
-            const errorResponse = (chuck.error as { data: AIErrorResponse })?.data
-            outputBuilder.fail({ message: "Error running agent: " + (errorResponse?.error?.message ?? JSON.stringify(chuck.error)) })
-          }
-          else {
-            outputBuilder.fail({ message: "Error running agent: " + JSON.stringify(chuck.error) })
-          }
+          outputBuilder.fail({ message: "Error running agent: " + inspect(chuck.error) })
           break;
         }
       }
@@ -185,3 +158,27 @@ export const runAgent = createAction({
     return outputBuilder.build()
   }
 });
+
+
+
+function structuredOutputSchema( outputFields: AgentOutputField[]): ZodObject | undefined {
+  const shape: Record<string, z.ZodType> = {}
+
+  for (const field of outputFields) {
+      switch (field.type) {
+          case AgentOutputFieldType.TEXT:
+              shape[field.displayName] = z.string()
+              break
+          case AgentOutputFieldType.NUMBER:
+              shape[field.displayName] = z.number()
+              break
+          case AgentOutputFieldType.BOOLEAN:
+              shape[field.displayName] = z.boolean()
+              break
+          default:
+              shape[field.displayName] = z.any()
+      }
+  }
+
+  return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
+}
