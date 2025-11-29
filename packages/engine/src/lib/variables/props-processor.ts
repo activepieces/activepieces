@@ -150,11 +150,15 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
                 },
             )
             break
-        case PropertyType.FILE:
-            schema = z.record(z.any(), z.any(), {
-                error: `Expected file url or base64 with mimeType, received: ${originalValue}`,
-            })
+        case PropertyType.FILE: {
+            schema = z.any().refine(
+                (val) => isObject(val),
+                {
+                    message: `Expected file url or base64 with mimeType, received: ${originalValue}`,
+                },
+            )
             break
+        }
         default:
             schema = z.any()
     }
