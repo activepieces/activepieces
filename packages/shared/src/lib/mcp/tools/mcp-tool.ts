@@ -3,12 +3,12 @@ import { BaseModelSchema, DiscriminatedUnion } from '../../common'
 import { ApId } from '../../common/id-generator'
 import { PopulatedFlow } from '../../flows'
 
-export enum McpToolType {
+export enum ToolType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
 }
 
-export const McpPieceToolData = Type.Object({
+export const PieceToolData = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     actionName: Type.String(),
@@ -16,36 +16,36 @@ export const McpPieceToolData = Type.Object({
     logoUrl: Type.String(),
     connectionExternalId: Type.Optional(Type.String()),
 })
-export type McpPieceToolData = Static<typeof McpPieceToolData>
+export type PieceToolData = Static<typeof PieceToolData>
 
-const McpToolBase = {
+const ToolBase = {
     ...BaseModelSchema,
     externalId: Type.String(),
     toolName: Type.String(),
     mcpId: Type.String(),
 }
-export const McpPieceTool = Type.Object({
-    type: Type.Literal(McpToolType.PIECE),
-    ...McpToolBase,
-    pieceMetadata: McpPieceToolData,
+export const PieceTool = Type.Object({
+    type: Type.Literal(ToolType.PIECE),
+    ...ToolBase,
+    pieceMetadata: PieceToolData,
 })
-export type McpPieceTool = Static<typeof McpPieceTool>
-export const McpFlowTool = Type.Object({
-    type: Type.Literal(McpToolType.FLOW),
-    ...McpToolBase,
+export type PieceTool = Static<typeof PieceTool>
+export const FlowTool = Type.Object({
+    type: Type.Literal(ToolType.FLOW),
+    ...ToolBase,
     flowId: ApId,
     flow: PopulatedFlow,
 })
-export type McpFlowTool = Static<typeof McpFlowTool>
+export type FlowTool = Static<typeof FlowTool>
 
-export const McpTool = DiscriminatedUnion('type', [
-    McpPieceTool,
-    McpFlowTool,
+export const Tool = DiscriminatedUnion('type', [
+    PieceTool,
+    FlowTool,
 ])
 
-export type McpTool = Static<typeof McpTool>
+export type Tool = Static<typeof Tool>
 
-export const  McpToolsListResult = Type.Object({
+export const  ToolsListResult = Type.Object({
     result: Type.Object({
         tools: Type.Array(Type.Object({
             name: Type.String(),
@@ -54,9 +54,9 @@ export const  McpToolsListResult = Type.Object({
         })),
     }),
 })
-export type McpToolsListResult = Static<typeof McpToolsListResult>
+export type ToolsListResult = Static<typeof ToolsListResult>
 
-export const McpToolCallResult = Type.Object({
+export const ToolCallResult = Type.Object({
     result: Type.Object({
         success: Type.Optional(Type.Boolean()),
         content: Type.Optional(Type.Array(Type.Object({
@@ -64,6 +64,6 @@ export const McpToolCallResult = Type.Object({
         }))),
     }),
 })
-export type McpToolCallResult = Static<typeof McpToolCallResult>
+export type ToolCallResult = Static<typeof ToolCallResult>
 
-export type McpResult = McpToolsListResult | McpToolCallResult
+export type McpResult = ToolsListResult | ToolCallResult

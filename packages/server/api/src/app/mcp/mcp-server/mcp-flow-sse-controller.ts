@@ -1,4 +1,4 @@
-import { CreateMCPServerFromStepParams, flowStructureUtil, McpTool, PrincipalType } from '@activepieces/shared'
+import { CreateMCPServerFromStepParams, flowStructureUtil, Tool, PrincipalType } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
@@ -15,7 +15,7 @@ export const mcpFlowSseControllerController: FastifyPluginAsyncTypebox = async (
 
         const step = flowStructureUtil.getStepOrThrow(request.params.stepName, flowVersion.version.trigger)
         const tools = step.settings?.input?.agentTools ?? []
-        const toolsWithMcpId = tools.map((tool: McpTool) => ({
+        const toolsWithMcpId = tools.map((tool: Tool) => ({
             ...tool,
             mcpId: tool.mcpId ?? `flow:${request.params.flowId}`,
         }))

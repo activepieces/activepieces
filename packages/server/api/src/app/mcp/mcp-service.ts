@@ -6,10 +6,10 @@ import {
     Cursor,
     ErrorCode,
     isNil,
-    McpTool,
+    Tool,
     mcpToolNaming,
     McpToolRequest,
-    McpToolType,
+    ToolType,
     McpWithTools,
     SeekPage, spreadIfDefined,
 } from '@activepieces/shared'
@@ -41,7 +41,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id, projectId })
     },
 
-    async getMcpTool(toolId: ApId): Promise<McpTool> {
+    async getMcpTool(toolId: ApId): Promise<Tool> {
         return mcpToolRepo().findOneOrFail({ where: { id: toolId } })
     },
 
@@ -161,9 +161,9 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
 })
 
-async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogger): Promise<EnrichedToolResult | null> {
+async function enrichTool(tool: Tool, projectId: ApId, _log: FastifyBaseLogger): Promise<EnrichedToolResult | null> {
     switch (tool.type) {
-        case McpToolType.PIECE: {
+        case ToolType.PIECE: {
             const toolName = mcpToolNaming.fixTool(tool.pieceMetadata?.actionName, tool.id, tool.type)
             return {
                 ...tool,
@@ -171,7 +171,7 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
                 toolName,
             }
         }
-        case McpToolType.FLOW: {
+        case ToolType.FLOW: {
             assertNotNullOrUndefined(tool.flowId, 'flowId is required')
             const flow = await flowService(_log).getOneOrThrow({
                 id: tool.flowId,
@@ -200,7 +200,7 @@ async function enrichTool(tool: McpTool, projectId: ApId, _log: FastifyBaseLogge
 
 async function findToolId(mcpId: ApId, tool: McpToolRequest): Promise<{ id: ApId, externalId: ApId } | undefined> {
     switch (tool.type) {
-        case McpToolType.PIECE: {
+        case ToolType.PIECE: {
             const result = await mcpToolRepo()
                 .createQueryBuilder('mcp_tool')
                 .where('mcp_tool.mcpId = :mcpId', { mcpId })
@@ -209,7 +209,7 @@ async function findToolId(mcpId: ApId, tool: McpToolRequest): Promise<{ id: ApId
                 .getOne()
             return result ? { id: result.id, externalId: result.externalId } : undefined
         }
-        case McpToolType.FLOW: {
+        case ToolType.FLOW: {
             return mcpToolRepo().findOne({ where: { mcpId, type: tool.type, flowId: tool.flowId } }).then(tool => tool ? { id: tool.id, externalId: tool.externalId } : undefined)
         }
     }
@@ -235,7 +235,7 @@ type UpdateParams = {
     tools?: McpToolRequest[]
 }
 
-type EnrichedToolResult = McpTool & {
+type EnrichedToolResult = Tool & {
     toolName: string
 }
 

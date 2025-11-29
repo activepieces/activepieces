@@ -13,13 +13,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { McpTool, McpToolType, Permission } from '@activepieces/shared';
+import { Tool, ToolType, Permission } from '@activepieces/shared';
 
 import { mcpConfigUtils } from './mcp-config-utils';
 
 type McpPieceToolProps = {
   disabled?: boolean;
-  tools: McpTool[];
+  tools: Tool[];
   pieces: PieceMetadataModelSummary[];
   removeTool: (toolIds: string[]) => Promise<void>;
 };
@@ -39,8 +39,8 @@ export const McpPieceTool = ({
   const { checkAccess } = useAuthorization();
   const hasPermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
 
-  const getPieceInfo = (mcpTool: McpTool) => {
-    if (mcpTool.type !== McpToolType.PIECE || !mcpTool.pieceMetadata) {
+  const getPieceInfo = (mcpTool: Tool) => {
+    if (mcpTool.type !== ToolType.PIECE || !mcpTool.pieceMetadata) {
       return { displayName: 'Unknown', logoUrl: undefined };
     }
 
@@ -55,13 +55,13 @@ export const McpPieceTool = ({
   };
 
   const pieceInfoMap: Record<string, PieceInfo> = {};
-  tools.forEach((mcpTool: McpTool) => {
+  tools.forEach((mcpTool: Tool) => {
     pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
   });
 
   const actionDisplayNames = tools
     .map((tool) => {
-      if (tool.type === McpToolType.PIECE) {
+      if (tool.type === ToolType.PIECE) {
         return tool.pieceMetadata?.actionDisplayName;
       }
       return undefined;
@@ -69,7 +69,7 @@ export const McpPieceTool = ({
     .filter((name) => name !== undefined);
 
   const toolName =
-    tools[0].type === McpToolType.PIECE
+    tools[0].type === ToolType.PIECE
       ? pieceInfoMap[tools[0].id]?.displayName
       : undefined;
 

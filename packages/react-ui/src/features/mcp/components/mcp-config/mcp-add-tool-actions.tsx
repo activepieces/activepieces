@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
-  McpTool,
-  McpToolType,
+  Tool,
+  ToolType,
   Permission,
   McpToolRequest,
 } from '@activepieces/shared';
@@ -23,7 +23,7 @@ import { McpPieceDialog } from '../mcp-piece-tool-dialog';
 
 type McpAddToolDropdownProps = {
   disabled?: boolean;
-  tools: McpTool[];
+  tools: Tool[];
   onToolsUpdate: (tools: McpToolRequest[]) => void;
 };
 
@@ -82,7 +82,7 @@ export const McpAddToolDropdown = ({
           <McpFlowDialog
             open={showAddFlowDialog}
             selectedFlows={tools
-              .filter((tool) => tool.type === McpToolType.FLOW)
+              .filter((tool) => tool.type === ToolType.FLOW)
               .map((tool) => tool.flowId!)}
             onToolsUpdate={(newTools) => {
               onToolsUpdate(newTools);

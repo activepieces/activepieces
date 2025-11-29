@@ -45,10 +45,6 @@ export const mcpHooks = {
       ],
       queryFn: async () => {
         switch (contentBlock.toolCallType) {
-          case ToolCallType.INTERNAL:
-            return {
-              displayName: contentBlock.displayName,
-            };
           case ToolCallType.PIECE: {
             const piece = await piecesApi.get({
               name: contentBlock.pieceName,

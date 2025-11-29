@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { ControllerRenderProps } from 'react-hook-form';
 
 import { McpToolsSection } from '@/features/mcp/components/mcp-config/mcp-tools-section';
-import { McpTool } from '@activepieces/shared';
+import { AgentTool, Tool } from '@activepieces/shared';
 
 type AgentToolsSettingsProps = {
   agentToolsField: ControllerRenderProps;
@@ -14,7 +14,7 @@ export const AgentTools = ({
   disabled,
 }: AgentToolsSettingsProps) => {
   const tools = Array.isArray(agentToolsField.value)
-    ? (agentToolsField.value as McpTool[])
+    ? (agentToolsField.value as Tool[])
     : [];
 
   return (

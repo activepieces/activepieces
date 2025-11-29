@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable, NullableEnum } from '../common'
 import { PopulatedFlow } from '../flows/flow'
-import { McpTool } from '../mcp'
+import { Tool } from '../mcp'
 import { TableAutomationStatus, TableAutomationTrigger } from '../tables'
 
 export enum FlowProjectOperationType {
@@ -56,7 +56,7 @@ export const McpState = Type.Object({
     name: Type.String(),
     externalId: Type.String(),
     token: Type.String(),
-    tools: Type.Array(McpTool),
+    tools: Type.Array(Tool),
 })
 export type McpState = Static<typeof McpState>
 

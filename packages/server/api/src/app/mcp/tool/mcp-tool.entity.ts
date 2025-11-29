@@ -1,8 +1,8 @@
-import { Flow, Mcp, McpTool, McpToolType } from '@activepieces/shared'
+import { Flow, Mcp, Tool, ToolType } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
-type McpToolSchema = McpTool & {
+type McpToolSchema = Tool & {
     mcp: Mcp
     flow: Flow
 }
@@ -17,7 +17,7 @@ export const McpToolEntity = new EntitySchema<McpToolSchema>({
         },
         type: {
             type: String,
-            enum: McpToolType,
+            enum: ToolType,
             nullable: false,
         },
         pieceMetadata: {

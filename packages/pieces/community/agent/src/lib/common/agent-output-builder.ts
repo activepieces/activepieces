@@ -1,4 +1,4 @@
-import { AgentResult, AgentStepBlock, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, MarkdownContentBlock, McpTool, ToolCallContentBlock, ToolCallStatus } from "@activepieces/shared"
+import { AgentResult, AgentStepBlock, AgentTaskStatus, AgentTool, assertNotNullOrUndefined, ContentBlockType, isNil, MarkdownContentBlock, ToolCallContentBlock, ToolCallStatus } from "@activepieces/shared"
 import { agentCommon } from "../common"
 
 export const agentOutputBuilder = (prompt: string) => {
@@ -79,7 +79,7 @@ type StartToolCallParams = {
     toolName: string
     toolCallId: string
     input: Record<string, unknown>
-    agentTools: McpTool[]
+    agentTools: AgentTool[]
 }
 
 type FinishParams = {

@@ -22,11 +22,11 @@ import {
 } from '@/components/ui/tooltip';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { isNil, McpToolType } from '@activepieces/shared';
+import { isNil, ToolType } from '@activepieces/shared';
 import type {
-  McpPieceTool,
+  PieceTool,
   McpToolRequest,
-  McpTool,
+  Tool,
 } from '@activepieces/shared';
 
 import { McpPieceActionsDialog } from './mcp-piece-actions';
@@ -35,7 +35,7 @@ import { McpPiecesContent } from './mcp-pieces-content';
 type McpPieceDialogProps = {
   children: React.ReactNode;
   mcpId?: string;
-  tools: McpTool[];
+  tools: Tool[];
   open: boolean;
   onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
@@ -80,8 +80,8 @@ export function McpPieceDialog({
 
   const handlePieceSelect = (piece: PieceStepMetadataWithSuggestions) => {
     const existingTools = tools?.filter(
-      (tool): tool is McpPieceTool =>
-        tool.type === McpToolType.PIECE &&
+      (tool): tool is PieceTool =>
+        tool.type === ToolType.PIECE &&
         tool.pieceMetadata?.pieceName === piece.pieceName,
     );
 
@@ -135,7 +135,7 @@ export function McpPieceDialog({
     if (!selectedPiece) return;
 
     const newTools: McpToolRequest[] = selectedActions.map((action) => ({
-      type: McpToolType.PIECE,
+      type: ToolType.PIECE,
       mcpId,
       pieceMetadata: {
         pieceName: selectedPiece.pieceName,

@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { McpToolType, McpWithTools } from '@activepieces/shared';
+import { ToolType, McpWithTools } from '@activepieces/shared';
 
 interface McpToolsIconProps {
   mcpTools: McpWithTools['tools'];
@@ -27,11 +27,11 @@ export const McpToolsIcon = ({
 
   const MAX_ICONS_TO_SHOW = 3;
   const uniqueMcpTools = mcpTools.filter((tool, index, self) => {
-    if (tool.type === McpToolType.PIECE && tool.pieceMetadata) {
+    if (tool.type === ToolType.PIECE && tool.pieceMetadata) {
       return (
         self.findIndex(
           (t) =>
-            t.type === McpToolType.PIECE &&
+            t.type === ToolType.PIECE &&
             t.pieceMetadata?.pieceName === tool.pieceMetadata.pieceName,
         ) === index
       );
@@ -43,7 +43,7 @@ export const McpToolsIcon = ({
   const extraToolsCount = uniqueMcpTools.length - visibleTools.length;
 
   const allDisplayNames = uniqueMcpTools.map((tool) => {
-    if (tool.type === McpToolType.PIECE && tool.pieceMetadata) {
+    if (tool.type === ToolType.PIECE && tool.pieceMetadata) {
       return (
         pieceMetadataMap.get(tool.pieceMetadata.pieceName)?.displayName ||
         tool.pieceMetadata.pieceName
@@ -69,7 +69,7 @@ export const McpToolsIcon = ({
           <div className="flex items-center gap-2">
             {visibleTools.map((tool) => {
               const metadata =
-                tool.type === McpToolType.PIECE && tool.pieceMetadata
+                tool.type === ToolType.PIECE && tool.pieceMetadata
                   ? pieceMetadataMap.get(tool.pieceMetadata.pieceName)
                   : undefined;
               if (metadata) {
@@ -79,7 +79,7 @@ export const McpToolsIcon = ({
                     logoUrl={metadata?.logoUrl}
                     displayName={
                       metadata?.displayName ||
-                      (tool.type === McpToolType.PIECE && tool.pieceMetadata
+                      (tool.type === ToolType.PIECE && tool.pieceMetadata
                         ? tool.pieceMetadata.pieceName
                         : 'Flow')
                     }

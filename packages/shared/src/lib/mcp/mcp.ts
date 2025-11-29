@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, isNil } from '../common'
 import { ApId } from '../common/id-generator'
-import { McpTool, McpToolType } from './tools/mcp-tool'
+import { Tool, ToolType } from './tools/mcp-tool'
 
 export type McpId = ApId
 
@@ -18,7 +18,7 @@ export type Mcp = Static<typeof Mcp>
 export const McpWithTools = Type.Composite([
     Mcp,
     Type.Object({
-        tools: Type.Array(McpTool),
+        tools: Type.Array(Tool),
     }),
 ])
 
@@ -34,7 +34,7 @@ export type McpToolMetadata = Static<typeof McpToolMetadata>
 
 
 export const mcpToolNaming = {
-    fixTool: (name: string, id: string | undefined, type: McpToolType) => {
+    fixTool: (name: string, id: string | undefined, type: ToolType) => {
         const baseName = name.replace(/[\s/@-]+/g, '_')
         if (isNil(id)) {
             return baseName
@@ -42,9 +42,9 @@ export const mcpToolNaming = {
         const prefixId = id.slice(0, 4)
         const spaceToReserve = prefixId.length + 1
         switch (type) {
-            case McpToolType.FLOW:
+            case ToolType.FLOW:
                 return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${prefixId}`
-            case McpToolType.PIECE:{
+            case ToolType.PIECE:{
                 return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${prefixId}` 
             }
         }

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
-  McpFlowTool as McpFlowToolType,
+  FlowTool as McpFlowToolType,
   Permission,
 } from '@activepieces/shared';
 

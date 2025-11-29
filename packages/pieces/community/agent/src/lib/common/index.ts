@@ -1,5 +1,5 @@
 import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from "@activepieces/common-ai";
-import { McpTool, ToolCallContentBlock, ToolCallBase, ToolCallType, McpToolType, assertNotNullOrUndefined } from "@activepieces/shared"
+import { AgentTool, ToolCallContentBlock, ToolCallBase, ToolCallType, assertNotNullOrUndefined, AgentToolType } from "@activepieces/shared"
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
@@ -21,13 +21,12 @@ export const AI_MODELS: AIModel[] = SUPPORTED_AI_PROVIDERS.flatMap(provider =>
 )
 
 export const agentCommon = {
-
     getToolMetadata({ toolName, tools, baseTool }: GetToolMetadaParams ): ToolCallContentBlock {
         const tool = tools.find((tool) => tool.toolName === toolName)
         assertNotNullOrUndefined(tool, `Tool ${toolName} not found`)
 
         switch (tool.type) {
-            case McpToolType.PIECE: {
+            case AgentToolType.PIECE: {
                 const pieceMetadata = tool.pieceMetadata
                 assertNotNullOrUndefined(pieceMetadata, 'Piece metadata is required')
                 return {
@@ -38,18 +37,17 @@ export const agentCommon = {
                     actionName: tool.pieceMetadata.actionName,
                 }
             }
-            case McpToolType.FLOW: {
+            case AgentToolType.FLOW: {
                 assertNotNullOrUndefined(tool.flowId, 'Flow ID is required')
                 return {
                     ...baseTool,
                     toolCallType: ToolCallType.FLOW,
-                    displayName: tool.flow?.version?.displayName ?? 'Unknown',
+                    displayName: 'Unknown',
                     flowId: tool.flowId,
                 }
             }
         }
     },
-
 
     getModelById(modelId: string): AIModel {
         const model = AI_MODELS.find(m => m.id === modelId);
@@ -90,6 +88,6 @@ type CreateAIModelParams = {
 
 type GetToolMetadaParams = {
     toolName: string;
-    tools: McpTool[];
+    tools: AgentTool[];
     baseTool: ToolCallBase;
 }

@@ -1,4 +1,4 @@
-import { McpTool } from '@activepieces/shared'
+import { Tool } from '@activepieces/shared'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
@@ -73,12 +73,12 @@ type HandleStreamableHttpRequestParams = {
     reply: FastifyReply
     projectId: string
     logger: FastifyBaseLogger
-    tools: McpTool[]
+    tools: Tool[]
 }
 
 type HandleSSERequestParams = {
     reply: FastifyReply
     projectId: string
     logger: FastifyBaseLogger
-    tools: McpTool[]
+    tools: Tool[]
 }

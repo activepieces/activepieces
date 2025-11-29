@@ -3,15 +3,15 @@ import { t } from 'i18next';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type { McpTool, McpToolRequest } from '@activepieces/shared';
-import { isNil, McpToolType } from '@activepieces/shared';
+import type { Tool, McpToolRequest, AgentTool } from '@activepieces/shared';
+import { isNil, ToolType } from '@activepieces/shared';
 
 import { McpAddToolDropdown } from './mcp-add-tool-actions';
 import { McpFlowTool } from './mcp-flow-tool';
 import { McpPieceTool } from './mcp-piece-tool';
 
 interface McpToolsSectionProps {
-  tools?: McpTool[];
+  tools?: Tool[];
   isLoading: boolean;
   description?: string;
   emptyState?: React.ReactNode;
@@ -50,21 +50,21 @@ export const McpToolsSection = ({
 
   const removeTool = async (toolIds: string[]): Promise<void> => {
     const newTools = tools.filter(
-      (tool: McpTool) => !toolIds.includes(tool.toolName),
+      (tool: Tool) => !toolIds.includes(tool.toolName),
     );
     onToolsUpdate(newTools);
   };
 
   const piecesCount =
-    tools.filter((tool: McpTool) => tool.type === McpToolType.PIECE).length ||
+    tools.filter((tool: Tool) => tool.type === ToolType.PIECE).length ||
     0;
   const flowsCount =
-    tools.filter((tool: McpTool) => tool.type === McpToolType.FLOW).length || 0;
+    tools.filter((tool: Tool) => tool.type === ToolType.FLOW).length || 0;
   const totalToolsCount = piecesCount + flowsCount;
   const hasTools = totalToolsCount > 0;
   const pieceToToolMap = tools.reduce((acc, tool) => {
     const key =
-      tool.type === McpToolType.PIECE
+      tool.type === ToolType.PIECE
         ? tool.pieceMetadata?.pieceName
         : tool.flowId;
 
@@ -74,7 +74,7 @@ export const McpToolsSection = ({
     }
 
     return acc;
-  }, {} as Record<string, McpTool[]>);
+  }, {} as Record<string, Tool[]>);
 
   return (
     <div>
@@ -104,7 +104,7 @@ export const McpToolsSection = ({
             <div className="space-y-2">
               {pieceToToolMap &&
                 Object.entries(pieceToToolMap).map(([toolKey, tools]) => {
-                  if (tools[0].type === McpToolType.PIECE) {
+                  if (tools[0].type === ToolType.PIECE) {
                     return (
                       <McpPieceTool
                         disabled={disabled}
@@ -114,7 +114,7 @@ export const McpToolsSection = ({
                         removeTool={removeTool}
                       />
                     );
-                  } else if (tools[0].type === McpToolType.FLOW) {
+                  } else if (tools[0].type === ToolType.FLOW) {
                     return (
                       <McpFlowTool
                         disabled={disabled}

@@ -1,7 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon, AI_MODELS } from '../common';
-import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, McpTool, McpToolType } from '@activepieces/shared';
-import { dynamicTool, hasToolCall, stepCountIs, streamText, tool } from 'ai';
+import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, AgentTool } from '@activepieces/shared';
+import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from '../common/agent-output-builder';
@@ -31,27 +31,19 @@ export const runAgent = createAction({
       },
     }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
-      displayName: 'MCP Tools',
+      displayName: 'Agent Tools',
       required: false,
       properties: {
         type: Property.ShortText({
-          displayName: 'Type',
+          displayName: 'Tool Type',
           required: true
         }),
         toolName: Property.ShortText({
           displayName: 'Tool Name',
           required: true
         }),
-        mcpId: Property.ShortText({
-          displayName: 'Mcp Id',
-          required: false
-        }),
         pieceMetadata: Property.Json({
           displayName: 'Piece Metadata',
-          required: false,
-        }),
-        flow: Property.Json({
-          displayName: 'Populated Flow',
           required: false,
         }),
         flowId: Property.ShortText({
@@ -88,7 +80,7 @@ export const runAgent = createAction({
   },
   async run(context) {
     const { prompt, maxSteps, aiModel } = context.propsValue
-    const agentTools = context.propsValue.agentTools as McpTool[]
+    const agentTools = context.propsValue.agentTools as AgentTool[]
     const selectedModel = agentCommon.getModelById(aiModel as string)
     const model = agentCommon.createModel({
       model: selectedModel,

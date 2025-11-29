@@ -5,15 +5,15 @@ import {
     ExecutionToolStatus,
     isNil,
     McpFlowRunMetadata,
-    McpFlowTool,
+    FlowTool,
     McpPieceRunMetadata,
-    McpPieceTool,
+    PieceTool,
     McpProperty,
     McpPropertyType,
     McpRunStatus,
-    McpTool,
+    Tool,
     mcpToolNaming,
-    McpToolType,
+    ToolType,
     McpTrigger,
     TelemetryEventName,
     WorkerJobType,
@@ -46,10 +46,10 @@ export async function createMcpServer({
     const platformId = await projectService.getPlatformId(projectId)
     const addedToolPromise = tools.map(tool => {
         switch (tool.type) {
-            case McpToolType.PIECE: {
+            case ToolType.PIECE: {
                 return addPieceToServer(server, tool, projectId, platformId, logger)
             }
-            case McpToolType.FLOW: {
+            case ToolType.FLOW: {
                 return addFlowToServer(server, tool, projectId, logger)
             }
         }
@@ -60,7 +60,7 @@ export async function createMcpServer({
 
 async function addPieceToServer(
     server: McpServer,
-    mcpTool: McpPieceTool,
+    mcpTool: PieceTool,
     projectId: string,
     platformId: string,
     logger: FastifyBaseLogger,
@@ -78,7 +78,7 @@ async function addPieceToServer(
     })
 
     const actionMetadata = pieceMetadata.actions[toolPieceMetadata.actionName]
-    const toolActionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, McpToolType.PIECE)
+    const toolActionName = mcpToolNaming.fixTool(actionMetadata.name, mcpTool.id, ToolType.PIECE)
     const toolSchema = {
         instructions: z.string().describe(
             'Provide clear instructions for what you want this tool to do. Include any specific parameters, values, or requirements needed.',
@@ -184,7 +184,7 @@ async function addPieceToServer(
 
 async function addFlowToServer(
     server: McpServer,
-    mcpTool: McpFlowTool,
+    mcpTool: FlowTool,
     projectId: string,
     logger: FastifyBaseLogger,
 ): Promise<void> {
@@ -198,7 +198,7 @@ async function addFlowToServer(
     }
 
     const triggerSettings = populatedFlow.version.trigger.settings as McpTrigger
-    const toolName = mcpToolNaming.fixTool(populatedFlow.version.displayName, mcpTool.id, McpToolType.FLOW)
+    const toolName = mcpToolNaming.fixTool(populatedFlow.version.displayName, mcpTool.id, ToolType.FLOW)
     const toolDescription = triggerSettings.input?.toolDescription
     const inputSchema = triggerSettings.input?.inputSchema
     const returnsResponse = triggerSettings.input?.returnsResponse
@@ -365,7 +365,7 @@ type SaveMcpRunParams = {
 
 type CreateMcpServerRequest = {
     projectId: string
-    tools: McpTool[]
+    tools: Tool[]
     logger: FastifyBaseLogger
 }
 

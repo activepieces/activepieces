@@ -1,10 +1,10 @@
-import { Mcp, McpRun, McpTool, Project } from '@activepieces/shared'
+import { Mcp, McpRun, Tool, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 type McpRunSchema = McpRun & {
     mcp: Mcp
-    tool: McpTool
+    tool: Tool
     project: Project
 }
 

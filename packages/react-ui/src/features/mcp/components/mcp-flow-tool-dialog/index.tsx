@@ -18,9 +18,9 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { McpToolType, FlowTriggerType } from '@activepieces/shared';
+import { ToolType, FlowTriggerType } from '@activepieces/shared';
 import type {
-  McpTool,
+  Tool,
   McpToolRequest,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -34,7 +34,7 @@ type McpFlowDialogProps = {
   open: boolean;
   onToolsUpdate: (tools: McpToolRequest[]) => void;
   onClose: () => void;
-  tools: McpTool[];
+  tools: Tool[];
 };
 
 export function McpFlowDialog({
@@ -75,13 +75,13 @@ export function McpFlowDialog({
 
   const handleSave = () => {
     const newTools: McpToolRequest[] = selectedFlows.map((flowId) => ({
-      type: McpToolType.FLOW,
+      type: ToolType.FLOW,
       flowId: flowId,
       toolName: flowId,
       mcpId,
     }));
     const nonFlowTools: McpToolRequest[] = tools.filter(
-      (tool) => tool.type !== McpToolType.FLOW,
+      (tool) => tool.type !== ToolType.FLOW,
     );
     const updatedTools = [...nonFlowTools, ...newTools];
     onToolsUpdate(updatedTools);
