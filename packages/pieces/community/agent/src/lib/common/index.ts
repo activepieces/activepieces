@@ -23,14 +23,6 @@ export const AI_MODELS: AIModel[] = SUPPORTED_AI_PROVIDERS.flatMap(provider =>
 export const agentCommon = {
 
     getToolMetadata({ toolName, tools, baseTool }: GetToolMetadaParams ): ToolCallContentBlock {
-        if (toolName === 'markAsFinish') {
-            return {
-                ...baseTool,
-                toolCallType: ToolCallType.INTERNAL,
-                displayName: 'Mark as Complete'
-            }
-        }
-
         const tool = tools.find((tool) => tool.toolName === toolName)
         assertNotNullOrUndefined(tool, `Tool ${toolName} not found`)
 

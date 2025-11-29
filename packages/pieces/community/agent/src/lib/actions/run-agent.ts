@@ -142,6 +142,9 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
           break
         }
         case 'tool-call': {
+          if (isTaskCompletionToolCall(chuck.toolName)) {
+            continue
+          }
           outputBuilder.startToolCall({
             toolName: chuck.toolName,
             toolCallId: chuck.toolCallId,
@@ -151,6 +154,9 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
           break
         }
         case 'tool-result': {
+          if (isTaskCompletionToolCall(chuck.toolName)) {
+            continue
+          }
           outputBuilder.finishToolCall({
             toolCallId: chuck.toolCallId,
             output: chuck.output as Record<string, unknown>,
@@ -174,6 +180,7 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
 });
 
 
+const isTaskCompletionToolCall = (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME
 
 function structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
   const shape: Record<string, z.ZodType> = {}
