@@ -98,13 +98,16 @@ export const runAgent = createAction({
     })
 
     const outputBuilder = agentOutputBuilder(prompt)
+    const hasStructuredOutput = !isNil(context.propsValue.structuredOutput) && context.propsValue.structuredOutput.length > 0
     const stream = streamText({
       model: model,
       prompt: `
 ${prompt}
 
 <important_note>
-You must call \`${TASK_COMPLETION_TOOL_NAME}\` at the end wether you have achieved the goal or not, otherwise your work will be marked as failed.
+As your FINAL ACTION, you must call the \`${TASK_COMPLETION_TOOL_NAME}\` tool to indicate if the task is complete or not. 
+Call this tool only once you have done everything you can to achieve the user's goal, or if you are unable to continue. 
+If you do not make this final call, your work will be considered unsuccessful.
 </important_note>
 `,
       system: `
@@ -119,17 +122,21 @@ Help the user finish their goal quickly and accurately.
       ],
       tools: {
         [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
-          description: 'You must call this tool as the final step to indicate whether you have achieved the assigned goal.',
+          description: 'This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user\'s task, or if you are unable to continue. Once you call this tool, you should not take any further actions.',
           inputSchema: z.object({
             success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
-            output: z.object({
-              ...(isNil(context.propsValue.structuredOutput) ? {} : structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}),
-            }),
+            ...(hasStructuredOutput ? {
+              output: z.object(
+                structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}
+              )
+                .nullable()
+                .describe('The structured output of your task. This is optional and can be omitted if you have not achieved the goal.')
+            } : {}),
           }),
           execute: async (params) => {
             const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
-            console.log("TASK TOOL IS CALLED " + JSON.stringify(params))
             outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
+
 
             if (!isNil(output)) {
               outputBuilder.setStructuredOutput(output)
@@ -174,8 +181,7 @@ Help the user finish their goal quickly and accurately.
           break;
         }
       }
-//      await context.output.update({ data: outputBuilder.build() })
-
+      // await context.output.update({ data: outputBuilder.build() })
     }
     const { status } = outputBuilder.build()
     if (status == AgentTaskStatus.IN_PROGRESS) {
