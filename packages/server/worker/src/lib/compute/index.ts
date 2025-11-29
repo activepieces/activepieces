@@ -164,44 +164,36 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
             const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
             const pieceSteps = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE)
             span.setAttribute('sandbox.pieceStepsCount', pieceSteps.length)
-            
-            const agentPieces: Promise<PiecePackage>[] = []
-            const flowPieces = pieceSteps.map(async (step) => {
+
+            const flowPieces = pieceSteps.map((step) => {
                 const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
-
+                const pieces = [ pieceWorkerCache(log).getPiece({
+                    engineToken,
+                    pieceName,
+                    pieceVersion,
+                    platformId,
+                })]
                 if (pieceName === AGENT_PIECE_NAME) {
-                    const agentTools = step.settings.input[
-                        AgentPieceProps.AGENT_TOOLS
-                    ] as AgentTool[]
-
-                    agentTools.forEach((tool) => {
+                    const agentTools = step.settings.input?.[AgentPieceProps.AGENT_TOOLS]
+                    for (const tool of agentTools ?? []) {
                         if (tool.type === AgentToolType.PIECE) {
-                            agentPieces.push(
-                                pieceWorkerCache(log).getPiece({
+                            pieces.push(pieceWorkerCache(log).getPiece({
                                     engineToken,
-                                    platformId,
+                                    platformId: tool.platformId,
                                     pieceName: tool.pieceMetadata.pieceName,
                                     pieceVersion: tool.pieceMetadata.pieceVersion,
                                 })
                             )
                         }
-                    })
+                    }
                 }
-
-                return pieceWorkerCache(log).getPiece({
-                    engineToken,
-                    pieceName,
-                    pieceVersion,
-                    platformId,
-                })
+                return pieces
             })
 
-            const pieces = [...flowPieces, ...agentPieces]
             const codeSteps = getCodePieces(flowVersion)
             span.setAttribute('sandbox.codeStepsCount', codeSteps.length)
-            
             await executionFiles(log).provision({
-                pieces: await Promise.all(pieces),
+                pieces: await Promise.all(flowPieces.flat()),
                 codeSteps,
             })
         }

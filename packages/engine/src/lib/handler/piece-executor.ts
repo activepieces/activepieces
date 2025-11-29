@@ -1,11 +1,11 @@
 import { URL } from 'url'
-import { ActionContext, ExecuteToolParams, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, ConstructToolParams, ExecuteToolParams, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
-import { mcpExecutor } from '../mcp'
+import { agentTools } from '../tools'
 import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
@@ -14,6 +14,7 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { ToolSet } from 'ai'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -117,25 +118,12 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
             },
-            tools: {
-                execute: async (params: ExecuteToolParams) => {
-                    return mcpExecutor.execute({
-                        projectId: constants.projectId,
-                        engineToken: constants.engineToken,
-                        internalApiUrl: constants.internalApiUrl,
-                        publicApiUrl: constants.publicApiUrl,
-                        timeoutInSeconds: constants.timeoutInSeconds,
-                        platformId: constants.platformId,
-
-                        model: params.model,
-
-                        actionName: action.name,
-                        pieceName: action.settings.pieceName,
-                        pieceVersion: action.settings.pieceVersion,
-                        predefinedInput: params.predefinedInput,
-                        instruction: params.instruction,
-                    })
-                },
+            agent: {
+                tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
+                    engineConstants: constants,
+                    tools: params.tools,
+                    model: params.model,
+                }),
             },
             propsValue: processedInput,
             tags: createTagsManager(params),
@@ -219,11 +207,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: utils.formatError(executionStateError),
-            } })
+            .setVerdict({
+                status: FlowRunStatus.FAILED, failedStep: {
+                    name: action.name,
+                    displayName: action.displayName,
+                    message: utils.formatError(executionStateError),
+                }
+            })
     }
 
     return executionStateResult

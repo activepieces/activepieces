@@ -1,6 +1,6 @@
 import {
+  AgentTool,
   AppConnectionValue,
-  ExecutionToolStatus,
   ExecutionType,
   FlowRunId,
   PopulatedFlow,
@@ -19,7 +19,7 @@ import {
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
-import { LanguageModel } from 'ai';
+import { LanguageModel, ToolSet } from 'ai';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
@@ -181,7 +181,7 @@ export type BaseActionContext<
   files: FilesService;
   output: OutputContext;
   serverUrl: string;
-  tools: ToolContext;
+  agent: AgentContext;
   run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>,
@@ -208,12 +208,6 @@ export type ActionContext<
   | BeginExecutionActionContext<PieceAuth, ActionProps>
   | ResumeExecutionActionContext<PieceAuth, ActionProps>;
 
-type ExecuteToolResponse = {
-  status: ExecutionToolStatus
-  output?: unknown
-  resolvedInput: Record<string, unknown>
-  errorMessage?: unknown
-}
 
 
 export type ExecuteToolParams = {
@@ -225,10 +219,14 @@ export type ExecuteToolParams = {
 }
 
 
-export interface ToolContext {
-  execute(params: ExecuteToolParams): Promise<ExecuteToolResponse>;
+export type ConstructToolParams = {
+  tools: AgentTool[]
+  model: LanguageModel,
 }
 
+export interface AgentContext {
+  tools: (params: ConstructToolParams) => Promise<ToolSet>;
+}
 
 export interface FilesService {
   write({

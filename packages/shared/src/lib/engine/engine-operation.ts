@@ -42,6 +42,7 @@ export const enum EngineSocketEvent {
     ENGINE_OPERATION = 'engine-operation',
     UPDATE_RUN_PROGRESS = 'update-run-progress',
     SEND_FLOW_RESPONSE = 'send-flow-response',
+    UPDATE_STEP_PROGRESS = 'update-step-progress',
 }
 
 

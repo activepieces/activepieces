@@ -1,6 +1,6 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateObject, LanguageModel } from 'ai'
+import { ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, AgentTool, PieceAction, PropertyExecutionType, StepOutputStatus, AgentToolType } from '@activepieces/shared'
+import { generateObject, LanguageModel, ToolSet } from 'ai'
 import { z } from 'zod/v4'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -9,7 +9,7 @@ import { pieceHelper } from '../helper/piece-helper'
 import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
 
-export const mcpExecutor = {
+export const agentTools = {
     execute: async (operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> => {
 
         const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
@@ -51,6 +51,40 @@ export const mcpExecutor = {
             errorMessage,
         }
     },
+    async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<ToolSet> {
+        const piecesTools = await Promise.all(tools
+            .filter((tool) => tool.type === AgentToolType.PIECE)
+            .map(async (tool) => {
+                const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
+                    pieceName: tool.pieceMetadata.pieceName,
+                    pieceVersion: tool.pieceMetadata.pieceVersion, 
+                    actionName: tool.pieceMetadata.actionName,
+                    devPieces: EngineConstants.DEV_PIECES,
+                })
+                return {
+                    name: tool.toolName,
+                    description: pieceAction.description,
+                    inputSchema: z.object({
+                        instruction: z.string().describe('The instruction to the tool'),
+                    }),
+                    execute: async ({ instruction }: { instruction: string }) =>
+                        agentTools.execute({
+                            ...engineConstants,
+                            instruction,
+                            pieceName: tool.pieceMetadata.pieceName,
+                            pieceVersion: tool.pieceMetadata.pieceVersion,
+                            actionName: tool.pieceMetadata.actionName,
+                            predefinedInput: {},
+                            model,
+                        }),
+                };
+            }));
+
+
+        return {
+            ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
+        }
+    },
 }
 
 async function resolveProperties(depthToPropertyMap: Record<number, string[]>, instruction: string, action: Action, model: LanguageModel, operation: ExecuteToolOperation): Promise<Record<string, unknown>> {
@@ -74,7 +108,7 @@ async function resolveProperties(depthToPropertyMap: Record<number, string[]>, i
         }
         const schemaObject = z.object(propertyToFill) as z.ZodTypeAny
         const extractionPrompt = constructExtractionPrompt(instruction, propertyToFill, propertyPrompts)
-   
+
         const { object } = await generateObject({
             model,
             schema: schemaObject,
@@ -211,4 +245,11 @@ async function loadOptions(propertyName: string, operation: ExecuteToolOperation
     }) as unknown as ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>
     const options = response.options
     return options.options
+}
+
+
+type ConstructToolParams = {
+    engineConstants: EngineConstants
+    tools: AgentTool[]
+    model: LanguageModel,
 }

@@ -1,6 +1,6 @@
 import { EngineResponse, EngineResponseStatus, ExecuteToolOperation, ExecuteToolResponse } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
-import { mcpExecutor } from '../mcp'
+import { agentTools } from '../tools'
 
 export const toolsOperation = {
     execute: async (operation: ExecuteToolOperation): Promise<EngineResponse<ExecuteToolResponse>> => {
@@ -13,7 +13,7 @@ export const toolsOperation = {
                 'ap-mcp-id': `tool:${operation.actionName}`,
             },
         })
-        const response = await mcpExecutor.execute({
+        const response = await agentTools.execute({
             ...operation,
             model: provider.chat('gpt-4.1'),
         })

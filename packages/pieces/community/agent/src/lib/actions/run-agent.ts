@@ -80,7 +80,6 @@ export const runAgent = createAction({
   },
   async run(context) {
     const { prompt, maxSteps, aiModel } = context.propsValue
-    const agentTools = context.propsValue.agentTools as AgentTool[]
     const selectedModel = agentCommon.getModelById(aiModel as string)
     const model = agentCommon.createModel({
       model: selectedModel,
@@ -91,6 +90,11 @@ export const runAgent = createAction({
 
     const outputBuilder = agentOutputBuilder(prompt)
     const hasStructuredOutput = !isNil(context.propsValue.structuredOutput) && context.propsValue.structuredOutput.length > 0
+    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[]
+    const agentTools = await context.agent.tools({
+      tools: agentToolsMetadata,
+      model: model,
+    })
     const stream = streamText({
       model: model,
       prompt: `
@@ -113,6 +117,7 @@ Help the user finish their goal quickly and accurately.
         hasToolCall(TASK_COMPLETION_TOOL_NAME),
       ],
       tools: {
+        ...agentTools,
         [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
           description: 'This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user\'s task, or if you are unable to continue. Once you call this tool, you should not take any further actions.',
           inputSchema: z.object({
@@ -128,8 +133,6 @@ Help the user finish their goal quickly and accurately.
           execute: async (params) => {
             const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
             outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
-
-
             if (!isNil(output)) {
               outputBuilder.setStructuredOutput(output)
             }
@@ -154,7 +157,7 @@ Help the user finish their goal quickly and accurately.
             toolName: chuck.toolName,
             toolCallId: chuck.toolCallId,
             input: chuck.input as Record<string, unknown>,
-            agentTools
+            agentTools: agentToolsMetadata,
           })
           break
         }
@@ -173,7 +176,7 @@ Help the user finish their goal quickly and accurately.
           break;
         }
       }
-      // await context.output.update({ data: outputBuilder.build() })
+     // await context.output.update({ data: outputBuilder.build() })
     }
     const { status } = outputBuilder.build()
     if (status == AgentTaskStatus.IN_PROGRESS) {
