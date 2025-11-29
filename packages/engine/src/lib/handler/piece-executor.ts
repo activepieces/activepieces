@@ -2,7 +2,6 @@ import { URL } from 'url'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { runAgent } from '../agent'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
@@ -116,11 +115,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 token: constants.engineToken,
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
-            },
-            agent: {
-                run: async (params) => {
-                    return runAgent(params)
-                },
             },
             propsValue: processedInput,
             tags: createTagsManager(params),

@@ -24,7 +24,6 @@ export type AgentResult = {
     prompt: string
     steps: AgentStepBlock[]
     status: AgentTaskStatus
-    message: string | null
     structuredOutput?: unknown
 }
 

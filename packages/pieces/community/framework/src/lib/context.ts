@@ -146,19 +146,6 @@ export type ServerContext = {
   token: string;
 };
 
-export type AgentRunParams = {
-  model: LanguageModelV2;
-  systemPrompt: string;
-  prompt: string;
-  maxSteps: number
-  experimental_output?: ReturnType<typeof Output.object>;
-}
-
-export type AgentContext = {
-  run: (params: AgentRunParams) => Promise<StreamTextResult<ToolSet, unknown>>
-}
-
-
 export type RunContext = {
   id: FlowRunId;
   stop: StopHook;
@@ -191,7 +178,6 @@ export type BaseActionContext<
   executionType: ET;
   tags: TagsManager;
   server: ServerContext;
-  agent: AgentContext;
   files: FilesService;
   output: OutputContext;
   serverUrl: string;
