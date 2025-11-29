@@ -7,6 +7,7 @@ import {
   CircleCheckBig,
   CheckCheck,
   SquareTerminal,
+  Braces,
 } from 'lucide-react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -27,6 +28,7 @@ import {
   ToolCallStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
+import { JsonViewer } from '@/components/json-viewer';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -219,6 +221,20 @@ export const MarkdownBlock = ({
           variant={MarkdownVariant.BORDERLESS}
         />
       </div>
+    </TimelineItem>
+  );
+};
+
+export const StructuredOutputBlock = ({
+  output
+}: {
+  output: any;
+}) => {
+  return (
+    <TimelineItem
+      icon={<Braces className="h-4 w-4 text-muted-foreground" />}
+    >
+      <JsonViewer json={output} title={t("output")} />
     </TimelineItem>
   );
 };

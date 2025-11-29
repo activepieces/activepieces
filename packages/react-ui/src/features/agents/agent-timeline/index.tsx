@@ -14,6 +14,7 @@ import {
   FailedBlock,
   MarkdownBlock,
   PromptBlock,
+  StructuredOutputBlock,
   ThinkingBlock,
 } from './timeline-blocks';
 
@@ -52,6 +53,8 @@ export const AgentTimeline = ({
                 return null;
             }
           })}
+
+          {!isNil(agentResult.structuredOutput) && <StructuredOutputBlock output={agentResult.structuredOutput} /> }
 
           {agentResult.status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
           {agentResult.status === AgentTaskStatus.COMPLETED && <DoneBlock />}
