@@ -1,6 +1,6 @@
 import { URL } from 'url'
-import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ActionContext, ExecuteToolParams, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionToolStatus, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -13,6 +13,7 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { mcpExecutor } from '../mcp'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -115,6 +116,26 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 token: constants.engineToken,
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
+            },
+            tools: {
+                execute: async (params: ExecuteToolParams) => {
+                    return mcpExecutor.execute({
+                        projectId: constants.projectId,
+                        engineToken: constants.engineToken,
+                        internalApiUrl: constants.internalApiUrl,
+                        publicApiUrl: constants.publicApiUrl,
+                        timeoutInSeconds: constants.timeoutInSeconds,
+                        platformId: constants.platformId,
+
+                        model: params.model,
+
+                        actionName: action.name,
+                        pieceName: action.settings.pieceName,
+                        pieceVersion: action.settings.pieceVersion,
+                        predefinedInput: params.predefinedInput,
+                        instruction: params.instruction,
+                    })
+                },
             },
             propsValue: processedInput,
             tags: createTagsManager(params),

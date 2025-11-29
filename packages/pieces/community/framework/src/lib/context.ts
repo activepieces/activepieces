@@ -1,5 +1,6 @@
 import {
   AppConnectionValue,
+  ExecutionToolStatus,
   ExecutionType,
   FlowRunId,
   PopulatedFlow,
@@ -10,8 +11,6 @@ import {
   TriggerPayload,
   TriggerStrategy,
 } from '@activepieces/shared';
-import { Output, StreamTextResult, ToolSet } from 'ai'
-import { LanguageModelV2 } from '@ai-sdk/provider'
 
 import {
   InputPropertyMap,
@@ -20,6 +19,7 @@ import {
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+import { LanguageModel } from 'ai';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
@@ -78,8 +78,8 @@ export type TriggerHookContext<
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
   ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
-      server: ServerContext;
-    }
+    server: ServerContext;
+  }
   : never;
 
 export type TestOrRunHookContext<
@@ -157,8 +157,8 @@ export type OnStartContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap
 > = Omit<BaseContext<PieceAuth, TriggerProps>, 'flows'> & {
-   run: Pick<RunContext, 'id'>;
-   payload: unknown;
+  run: Pick<RunContext, 'id'>;
+  payload: unknown;
 }
 
 
@@ -181,6 +181,7 @@ export type BaseActionContext<
   files: FilesService;
   output: OutputContext;
   serverUrl: string;
+  tools: ToolContext;
   run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>,
@@ -206,6 +207,28 @@ export type ActionContext<
 > =
   | BeginExecutionActionContext<PieceAuth, ActionProps>
   | ResumeExecutionActionContext<PieceAuth, ActionProps>;
+
+type ExecuteToolResponse = {
+  status: ExecutionToolStatus
+  output?: unknown
+  resolvedInput: Record<string, unknown>
+  errorMessage?: unknown
+}
+
+
+export type ExecuteToolParams = {
+  model: LanguageModel;
+  predefinedInput: Record<string, unknown>;
+  instruction: string;
+  pieceName: string;
+  pieceVersion: string;
+}
+
+
+export interface ToolContext {
+  execute(params: ExecuteToolParams): Promise<ExecuteToolResponse>;
+}
+
 
 export interface FilesService {
   write({

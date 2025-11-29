@@ -1,4 +1,4 @@
-import { EngineResponse, ExecuteToolOperation, ExecuteToolResponse } from '@activepieces/shared'
+import { EngineResponse, EngineResponseStatus, ExecuteToolOperation, ExecuteToolResponse } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { mcpExecutor } from '../mcp'
 
@@ -13,9 +13,13 @@ export const toolsOperation = {
                 'ap-mcp-id': `tool:${operation.actionName}`,
             },
         })
-        return mcpExecutor.execute({
+        const response = await mcpExecutor.execute({
             ...operation,
             model: provider.chat('gpt-4.1'),
         })
+        return {
+            status: EngineResponseStatus.OK,
+            response,
+        }
     },
 }

@@ -10,7 +10,7 @@ import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
 
 export const mcpExecutor = {
-    execute: async (operation: ExecuteToolOperationWithModel): Promise<EngineResponse<ExecuteToolResponse>> => {
+    execute: async (operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> => {
 
         const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: operation.pieceName,
@@ -45,13 +45,10 @@ export const mcpExecutor = {
         const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
 
         return {
-            status: EngineResponseStatus.OK,
-            response: {
-                status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
-                output: stepOutput,
-                resolvedInput,
-                errorMessage,
-            },
+            status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
+            output: stepOutput,
+            resolvedInput,
+            errorMessage,
         }
     },
 }
