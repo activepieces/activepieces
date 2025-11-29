@@ -6,7 +6,7 @@ import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from '../common/agent-output-builder';
 
-const TASK_COMPLETION_TOOL_NAME = 'taskCompletion';
+const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -100,16 +100,18 @@ export const runAgent = createAction({
     const outputBuilder = agentOutputBuilder(prompt)
     const stream = streamText({
       model: model,
-      prompt: prompt,
+      prompt: `
+${prompt}
+
+<important_note>
+You must call \`${TASK_COMPLETION_TOOL_NAME}\` at the end wether you have achieved the goal or not, otherwise your work will be marked as failed.
+</important_note>
+`,
       system: `
 You are a helpful, proactive AI assistant.
 Today's date is ${new Date().toISOString().split('T')[0]}.
 
 Help the user finish their goal quickly and accurately.
-
-<important_note>
-You must call \`taskCompleted\` at the end wether you have achieved the goal or not, otherwise this flow will be marked as failed.
-</important_note>
         `.trim(),
       stopWhen: [
         stepCountIs(maxSteps),
@@ -117,14 +119,16 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
       ],
       tools: {
         [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
-          description: 'Ask the user a question',
+          description: 'You must call this tool as the final step to indicate whether you have achieved the assigned goal.',
           inputSchema: z.object({
             success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
-            ...(isNil(context.propsValue.structuredOutput) ? {} : structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}),
+            output: z.object({
+              ...(isNil(context.propsValue.structuredOutput) ? {} : structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}),
+            }),
           }),
           execute: async (params) => {
             const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
-            console.log("TASK TOOL IS CALLED AND SUCCESS IS " + success)
+            console.log("TASK TOOL IS CALLED " + JSON.stringify(params))
             outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
 
             if (!isNil(output)) {
@@ -170,7 +174,7 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
           break;
         }
       }
-      await context.output.update({ data: outputBuilder.build() })
+//      await context.output.update({ data: outputBuilder.build() })
 
     }
     const { status } = outputBuilder.build()
