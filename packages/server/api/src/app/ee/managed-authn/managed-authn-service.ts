@@ -68,7 +68,6 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: project.id,
             platform: {
                 id: externalPrincipal.platformId,
             },

@@ -5,6 +5,7 @@ import { FlowRetryStrategy } from './flow-run'
 
 export const TestFlowRunRequestBody = Type.Object({
     flowVersionId: ApId,
+    projectId: ApId,
 })
 
 export type TestFlowRunRequestBody = Static<typeof TestFlowRunRequestBody>

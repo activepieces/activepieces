@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { apVersionUtil, platformAdminOnly } from '@activepieces/server-shared'
+import { apVersionUtil, AuthorizationType, platformAdminOnly, projectAccess, ProjectResourceType, RouteKind } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -11,6 +11,7 @@ import {
     ListVersionRequestQuery,
     ListVersionsResponse,
     LocalesEnum,
+    Permission,
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
@@ -165,7 +166,13 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
 const RegistryPiecesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.NONE,
+                reason: 'Pieces endpoint is public',
+            },
+        } as const,
     },
     schema: {
         querystring: RegistryPiecesRequestQuery,
@@ -174,8 +181,13 @@ const RegistryPiecesRequest = {
 
 const ListPiecesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        scope: EndpointScope.PLATFORM,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.NONE,
+                reason: 'Pieces endpoint is public',
+            },
+        } as const,
     },
     schema: {
         querystring: ListPiecesRequestQuery,
@@ -185,7 +197,13 @@ const ListPiecesRequest = {
 }
 const GetPieceParamsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.NONE,
+                reason: 'Pieces endpoint is public',
+            },
+        } as const,
     },
     schema: {
         params: GetPieceRequestParams,
@@ -197,7 +215,13 @@ const GetPieceParamsRequest = {
 
 const GetPieceParamsWithScopeRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.NONE,
+                reason: 'Pieces endpoint is public',
+            },
+        } as const,
     },
     schema: {
         params: GetPieceRequestWithScopeParams,
@@ -207,7 +231,13 @@ const GetPieceParamsWithScopeRequest = {
 
 const ListCategoriesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.NONE,
+                reason: 'Pieces endpoint is public',
+            },
+        } as const,
     },
     schema: {
         querystring: ListPiecesRequestQuery,
@@ -219,14 +249,22 @@ const OptionsPieceRequest = {
         body: PieceOptionRequest,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }
 
 
 const ListVersionsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPE
+        security: {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.NONE,
+                reason: 'Pieces endpoint is public',
+            },
+        } as const,
     },
     schema: {
         querystring: ListVersionRequestQuery,

@@ -1,6 +1,7 @@
 import { api } from '@/lib/api';
 import {
   CreateOtpRequestBody,
+  GetCurrentProjectMemberRoleRequestQuery,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
@@ -35,8 +36,8 @@ export const authenticationApi = {
       providerName,
     });
   },
-  getCurrentProjectRole() {
-    return api.get<ProjectRole | null>('/v1/project-members/role');
+  getCurrentProjectRole(request: GetCurrentProjectMemberRoleRequestQuery) {
+    return api.get<ProjectRole | null>('/v1/project-members/role', request);
   },
   claimThirdPartyRequest(request: ClaimTokenRequest) {
     return api.post<AuthenticationResponse>(

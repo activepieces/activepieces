@@ -1,6 +1,6 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, publicAccess, publicAccess } from '@activepieces/server-shared'
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { AppSystemProp, networkUtils, publicAccess } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { eventsHooks } from '../../../helper/application-events'

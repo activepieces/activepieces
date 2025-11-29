@@ -1,16 +1,15 @@
 import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/common-ai'
 import { CreateCheckoutSessionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, Permission, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformUsageService } from '../platform-usage-service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
+import { platformAdminOnly } from '@activepieces/server-shared'
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
     fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -36,7 +35,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.post('/portal', {
         config: {
-            allowedPrincipals: [PrincipalType.USER] as const,
+            security: platformAdminOnly([PrincipalType.USER]),
         },
     }, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
@@ -45,7 +44,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.post('/update-ai-overage-state', EnableAiCreditsOverageRequest, async (request) => {
         const platformId = request.principal.platform.id
         const { state } = request.body
-        
+
         const [usage, platformPlan] = await Promise.all([
             platformUsageService(request.log).getAllPlatformUsage(platformId),
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
@@ -59,11 +58,11 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 },
             })
         }
-        
+
         const totalCreditsUsed = usage.aiCredits
         const planIncludedCredits = platformPlan.includedAiCredits || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
-        
+
         if (state === AiOverageState.ALLOWED_BUT_OFF && overageCreditsUsed > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -72,7 +71,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 },
             })
         }
-        
+
         request.log.info({
             platformId,
             currentUsage: {
@@ -81,11 +80,11 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 overageCredits: overageCreditsUsed,
             },
         }, 'Updating AI credits overage state')
-        
-        const newOverageLimit = state === AiOverageState.ALLOWED_AND_ON 
+
+        const newOverageLimit = state === AiOverageState.ALLOWED_AND_ON
             ? (platformPlan.aiCreditsOverageLimit || 500)
             : platformPlan.aiCreditsOverageLimit
-        
+
         return platformPlanService(request.log).update({
             platformId,
             aiCreditsOverageState: state,
@@ -96,12 +95,12 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.post('/set-ai-credits-overage-limit', SetAiCreditsOverageLimitRequest, async (request) => {
         const platformId = request.principal.platform.id
         const { limit } = request.body
-        
+
         const [usage, platformPlan] = await Promise.all([
             platformUsageService(request.log).getAllPlatformUsage(platformId),
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
         ])
-        
+
         if (platformPlan.aiCreditsOverageState !== AiOverageState.ALLOWED_AND_ON) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -110,11 +109,11 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 },
             })
         }
-        
+
         const totalCreditsUsed = usage.aiCredits
         const planIncludedCredits = platformPlan.includedAiCredits || 0
         const overageCreditsUsed = Math.max(0, totalCreditsUsed - planIncludedCredits)
-        
+
         if (overageCreditsUsed > limit) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -123,7 +122,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 },
             })
         }
-        
+
         request.log.info({
             platformId,
             previousLimit: platformPlan.aiCreditsOverageLimit,
@@ -134,7 +133,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
                 overageCredits: overageCreditsUsed,
             },
         }, 'Updating AI credit usage limit')
-        
+
         return platformPlanService(request.log).update({
             platformId,
             aiCreditsOverageLimit: limit,
@@ -164,7 +163,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { newActiveFlowsLimit } = request.body
 
         const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
-        const currentActiveFlowsLimit =  platformPlan.activeFlowsLimit ?? 0
+        const currentActiveFlowsLimit = platformPlan.activeFlowsLimit ?? 0
         const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
         const isFreeDowngrade = newActiveFlowsLimit === baseActiveFlowsLimit
 
@@ -174,7 +173,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         return stripeHelper(request.log).handleSubscriptionUpdate({
             subscriptionId: platformPlan.stripeSubscriptionId,
             extraActiveFlows,
-            isUpgrade, 
+            isUpgrade,
             isFreeDowngrade,
         })
     })
@@ -182,7 +181,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.get('/ai-credits-usage', ListAIUsageRequest, async (request) => {
         const { limit, cursor } = request.query
         const platformId = request.principal.platform.id
-        
+
         return platformUsageService(request.log).listAICreditsUsage({
             platformId,
             cursor: cursor ?? null,
@@ -193,7 +192,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
 const InfoRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
@@ -205,7 +204,7 @@ const SetAiCreditsOverageLimitRequest = {
         body: SetAiCreditsOverageLimitParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -214,13 +213,13 @@ const EnableAiCreditsOverageRequest = {
         body: ToggleAiCreditsOverageEnabledParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }
 
 const ListAIUsageRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         querystring: ListAICreditsUsageRequest,
@@ -228,14 +227,14 @@ const ListAIUsageRequest = {
             [StatusCodes.OK]: ListAICreditsUsageResponse,
         },
     },
-} 
+}
 
 const UpdateActiveFlowsAddonRequest = {
     schema: {
         body: UpdateActiveFlowsAddonParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -244,6 +243,6 @@ const CreateCheckoutSessionRequest = {
         body: CreateCheckoutSessionParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }

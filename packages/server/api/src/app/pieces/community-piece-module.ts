@@ -3,6 +3,7 @@ import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { pieceInstallService } from './piece-install-service'
+import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
 
 export const communityPiecesModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(communityPiecesController, { prefix: '/v1/pieces' })
@@ -13,7 +14,14 @@ const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: [PrincipalType.USER],
+                security: {
+                    kind: RouteKind.AUTHENTICATED,
+                    authorization: {
+                        type: AuthorizationType.PLATFORM,
+                        allowedPrincipals: [PrincipalType.USER] as const,
+                        adminOnly: true,
+                    },
+                } as const,
             },
             schema: {
                 body: AddPieceRequestBody,

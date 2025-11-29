@@ -16,19 +16,50 @@ import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
+import { projectService } from '../../../project/project-service'
 
 export const rbacService = (log: FastifyBaseLogger) => ({
-    async assertRoleHasPermission({ principal, permission, projectId }: AssertRoleHasPermissionParams): Promise<void> {
-        if (principal.type !== PrincipalType.USER) { 
-            return
-        }
-        const principalRole = await getPrincipalRoleOrThrow({ principal, projectId, log })
-        const access = await grantAccess({
-            principalRoleId: principalRole.id,
-            routePermission: permission,
-        })
-        if (!access) {
-            throwPermissionDenied({ principal, projectId, projectRole: principalRole, permission })
+    async assertPrinicpalAccessToProject({ principal, permission, projectId }: AssertRoleHasPermissionParams): Promise<void> {
+
+        switch (principal.type) {
+            case PrincipalType.USER: {
+                const principalRole = await getPrincipalRoleOrThrow({ principal, projectId, log })
+                const access = await grantAccess({
+                    principalRoleId: principalRole.id,
+                    routePermission: permission,
+                })
+                if (!access) {
+                    throwPermissionDenied({ principal, projectId, projectRole: principalRole, permission })
+                }
+                break
+            }
+            case PrincipalType.ENGINE: {
+                if (principal.projectId !== projectId) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.AUTHORIZATION,
+                        params: {
+                            message: 'Engine is not allowed to access this project',
+                            projectId,
+                            engineProjectId: principal.projectId,
+                        },
+                    })
+                }
+                break
+            }
+            case PrincipalType.SERVICE: {
+                const project = await projectService.getOneOrThrow(projectId)
+                if (project.platformId !== principal.platform.id) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.AUTHORIZATION,
+                        params: {
+                            message: 'Service is not allowed to access this project',
+                            projectId,
+                            platformId: principal.platform.id,
+                        },
+                    })
+                }
+                break
+            }
         }
     },
     async assertUserHasPermissionToFlow({ principal, operationType, projectId }: AssertUserHasPermissionToFlowParams): Promise<void> {
@@ -40,10 +71,10 @@ export const rbacService = (log: FastifyBaseLogger) => ({
         switch (operationType) {
             case FlowOperationType.LOCK_AND_PUBLISH:
             case FlowOperationType.CHANGE_STATUS: {
-                await this.assertRoleHasPermission({ principal, permission: Permission.UPDATE_FLOW_STATUS, projectId })
+                await this.assertPrinicpalAccessToProject({ principal, permission: Permission.UPDATE_FLOW_STATUS, projectId })
                 break
             }
-            case FlowOperationType.SAVE_SAMPLE_DATA: 
+            case FlowOperationType.SAVE_SAMPLE_DATA:
             case FlowOperationType.ADD_ACTION:
             case FlowOperationType.UPDATE_ACTION:
             case FlowOperationType.DELETE_ACTION:
@@ -61,7 +92,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.UPDATE_METADATA:
             case FlowOperationType.SET_SKIP_ACTION:
             case FlowOperationType.MOVE_BRANCH: {
-                await this.assertRoleHasPermission({ principal, permission: Permission.WRITE_FLOW, projectId })
+                await this.assertPrinicpalAccessToProject({ principal, permission: Permission.WRITE_FLOW, projectId })
                 break
             }
         }
@@ -98,7 +129,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     const principalRole = await projectRoleService.getOneOrThrowById({
         id: principalRoleId,
     })
-    
+
     if (isNil(principalRole)) {
         return false
     }

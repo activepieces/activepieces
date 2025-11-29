@@ -29,11 +29,6 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const GetCurrentUserRequest = {
-    schema: {
-        response: {
-            [StatusCodes.OK]: UserWithMetaInformation,
-        },
-    },
     config: {
         security: {
             kind: RouteKind.AUTHENTICATED,
@@ -42,6 +37,11 @@ const GetCurrentUserRequest = {
                 reason: 'There is no need to authorize this route',
                 allowedPrincipals: [PrincipalType.USER],
             },
-        }
+        } as const,
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: UserWithMetaInformation,
+        },
     },
 }

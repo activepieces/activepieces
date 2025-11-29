@@ -2,14 +2,12 @@ import {
     AppCredential,
     AppCredentialType,
     ListAppCredentialsRequest,
-    UpsertAppCredentialRequest,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, PrincipalType, SeekPage } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { SeekPage } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import { appCredentialService } from './app-credentials.service'
-import { RouteKind } from '@activepieces/server-shared'
+import { publicAccess } from '@activepieces/server-shared'
 
 export const appCredentialModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appCredentialController, {
@@ -24,9 +22,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/',
         {
             config: {
-                security: {
-                    kind: RouteKind.PUBLIC,
-                },
+                security: publicAccess(),
             },
             schema: {
                 querystring: ListAppCredentialsRequest,

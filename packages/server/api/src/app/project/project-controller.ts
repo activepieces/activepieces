@@ -23,6 +23,7 @@ const GetUserProjectRequest = {
             authorization: {
                 type: AuthorizationType.PLATFORM,
                 allowedPrincipals: [PrincipalType.USER] as const,
+                adminOnly: false,
             },
         } as const,
     },
@@ -35,6 +36,7 @@ const ListUserProjectsRequest = {
             authorization: {
                 type: AuthorizationType.PLATFORM,
                 allowedPrincipals: [PrincipalType.USER] as const,
+                adminOnly: false,
             },
         } as const,
     },
@@ -57,6 +59,7 @@ const UpdateProjectRequest = {
             authorization: {
                 type: AuthorizationType.PLATFORM,
                 allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                adminOnly: false,
             },
         } as const,
     },

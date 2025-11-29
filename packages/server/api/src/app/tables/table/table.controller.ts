@@ -123,8 +123,9 @@ const CreateRequest = {
 
 const GetTablesRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.READ_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         tags: ['tables'],
@@ -251,8 +252,10 @@ const UpdateRequest = {
 
 const ClearTableRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+        }),
     },
     schema: {
         tags: ['tables'],

@@ -51,10 +51,6 @@ async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal): Pr
 
 
 async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, log: FastifyBaseLogger): Promise<void> {
-    const alwaysAccessProject = EDITION_IS_COMMUNITY || principal.type === PrincipalType.SERVICE || principal.type === PrincipalType.ENGINE
-    if (alwaysAccessProject) {
-        return
-    }
     if (isNil(projectSecurity.projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -63,7 +59,7 @@ async function assertAccessToProject(principal: Principal, projectSecurity: Proj
             },
         })
     }
-    await rbacService(log).assertRoleHasPermission({ principal, permission: projectSecurity.permission, projectId: projectSecurity.projectId })
+    await rbacService(log).assertPrinicpalAccessToProject({ principal, permission: projectSecurity.permission, projectId: projectSecurity.projectId })
 }
 
 

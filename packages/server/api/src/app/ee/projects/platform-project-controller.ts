@@ -6,9 +6,7 @@ import {
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
-    Permission,
     PiecesFilterType,
     PlatformRole,
     Principal,
@@ -29,6 +27,7 @@ import { userService } from '../../user/user-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformProjectService } from './platform-project-service'
 import { projectLimitsService } from './project-plan/project-plan.service'
+import { platformAdminOnly } from '@activepieces/server-shared'
 
 const DEFAULT_LIMIT_SIZE = 50
 
@@ -97,8 +96,6 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, res)
-        assertProjectToDeleteIsNotPrincipalProject(req.principal, req.params.id)
 
         await platformProjectService(req.log).hardDelete({
             id: req.params.id,
@@ -130,16 +127,6 @@ async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, plat
     return user.platformRole === PlatformRole.ADMIN
 }
 
-const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal | UserPrincipal, projectId: string): void => {
-    if (principal.projectId === projectId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'ACTIVE_PROJECT',
-            },
-        })
-    }
-}
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string): Promise<void> {
     const platform = await platformService.getOneWithPlanOrThrow(platformId)
@@ -173,9 +160,8 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string)
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
-        permission: Permission.WRITE_PROJECT,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
+
     },
     schema: {
         tags: ['projects'],
@@ -192,8 +178,8 @@ const UpdateProjectRequest = {
 
 const CreateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
+
     },
     schema: {
         tags: ['projects'],
@@ -206,9 +192,9 @@ const CreateProjectRequest = {
 }
 
 const ListProjectRequestForPlatform = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+    config: {        
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
+
     },
     schema: {
         response: {
@@ -222,8 +208,7 @@ const ListProjectRequestForPlatform = {
 
 const DeleteProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE] as const),
     },
     schema: {
         params: Type.Object({

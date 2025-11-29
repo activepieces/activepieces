@@ -156,7 +156,7 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
         })
     }
     await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
-    await rbacService(request.log).assertRoleHasPermission({ principal: request.principal, permission, projectId })
+    await rbacService(request.log).assertPrinicpalAccessToProject({ principal: request.principal, permission, projectId })
 }
 
 
@@ -167,6 +167,7 @@ const ListUserInvitationsRequestParams = {
             authorization: {
                 type: AuthorizationType.PLATFORM,
                 allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                adminOnly: false,
             },
         } as const,
     },
@@ -200,6 +201,7 @@ const DeleteInvitationRequestParams = {
             authorization: {
                 type: AuthorizationType.PLATFORM,
                 allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                adminOnly: false,
             },
         } as const,
     },
@@ -220,6 +222,7 @@ const UpsertUserInvitationRequestParams = {
         security: {
             kind: RouteKind.AUTHENTICATED,
             authorization: {
+                adminOnly: false,
                 type: AuthorizationType.PLATFORM,
                 allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
             },

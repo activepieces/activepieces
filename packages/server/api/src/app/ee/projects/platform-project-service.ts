@@ -5,7 +5,6 @@ import {
     ActivepiecesError,
     assertNotNullOrUndefined,
     Cursor,
-    EndpointScope,
     ErrorCode,
     FlowStatus,
     isNil,

@@ -85,8 +85,8 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
-import { authenticationMiddleware } from './core/security/authentication-middleware'
-import { authorizationMiddleware } from './core/security/authorization-middleware'
+import { authenticationMiddleware } from './core/security/authn/authentication-middleware'
+import { authorizationMiddleware } from './core/security/authz/authorization-middleware'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 

@@ -1,6 +1,6 @@
 import { ProjectResourceType, ProjectTableResource, ProjectBodyResource, ProjectQueryResource, RouteKind, AuthorizationType, AuthorizationRouteSecurity } from "@activepieces/server-shared"
 import { FastifyRequest } from "fastify"
-import { assertNotNullOrUndefined, isObject } from "@activepieces/shared"
+import { assertNotNullOrUndefined, isObject, Principal, PrincipalType } from "@activepieces/shared"
 import { authorizeOrThrow } from "./authorize"
 import { databaseConnection } from "../../../database/database-connection"
 
@@ -32,6 +32,7 @@ async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<
             return {
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
+                    adminOnly: security.authorization.adminOnly,
                     type: AuthorizationType.PLATFORM,
                     allowedPrincipals: security.authorization.allowedPrincipals,
                 },
@@ -62,6 +63,9 @@ async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<
 }
 
 async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
+    if (request.principal.type === PrincipalType.ENGINE) {
+        return request.principal.projectId
+    }
     const security = request.routeOptions.config?.security
     if (security.kind === RouteKind.PUBLIC) {
         return undefined

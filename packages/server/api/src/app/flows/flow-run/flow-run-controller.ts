@@ -220,8 +220,9 @@ const RetryFlowRequest = {
 
 const BulkCancelFlowRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_RUN,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -233,8 +234,9 @@ const BulkCancelFlowRequest = {
 
 const ArchiveFlowRunRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_RUN,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_RUN, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: BulkArchiveActionOnRunsRequestBody,

@@ -60,6 +60,7 @@ export type DiffReleaseRequest = Static<typeof DiffReleaseRequest>
 export const ListProjectReleasesRequest = Type.Object({
     cursor: Nullable(Type.String()),
     limit: Type.Optional(Type.Number({ default: 10 })),
+    projectId: Type.String(),
 })
 
 export type ListProjectReleasesRequest = Static<typeof ListProjectReleasesRequest>

@@ -40,6 +40,7 @@ export const ListTablesRequest = Type.Object({
     cursor: Type.Optional(Type.String({})),
     name: Type.Optional(Type.String({})),
     externalIds: Type.Optional(Type.Array(Type.String())),
+    projectId: Type.Union([Type.String(), Type.Null()]),
 })
 
 export type ListTablesRequest = Static<typeof ListTablesRequest>
