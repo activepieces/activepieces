@@ -39,6 +39,7 @@ export const AgentTimeline = ({
           {agentResult.prompt.length > 0 && (
             <PromptBlock prompt={agentResult.prompt} />
           )}
+
           {agentResult.steps.map((step, index) => {
             switch (step.type) {
               case ContentBlockType.MARKDOWN:
@@ -52,22 +53,8 @@ export const AgentTimeline = ({
             }
           })}
 
-          {!isNil(agentResult.message) && (
-            <MarkdownBlock
-              step={{
-                markdown: agentResult.message,
-                type: ContentBlockType.MARKDOWN,
-              }}
-              index={1}
-            />
-          )}
-
-          {agentResult.status === AgentTaskStatus.IN_PROGRESS && (
-            <ThinkingBlock />
-          )}
-
+          {agentResult.status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
           {agentResult.status === AgentTaskStatus.COMPLETED && <DoneBlock />}
-
           {agentResult.status === AgentTaskStatus.FAILED && <FailedBlock />}
         </div>
       </ScrollArea>
