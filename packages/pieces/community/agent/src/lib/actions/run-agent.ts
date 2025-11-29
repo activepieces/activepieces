@@ -1,10 +1,10 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon, AI_MODELS } from '../common';
-import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, McpTool } from '@activepieces/shared';
+import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, McpTool, McpToolType } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText, tool } from 'ai';
 import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
-import { agentOutputBuilder } from '../common/output-builder';
+import { agentOutputBuilder } from '../common/agent-output-builder';
 
 const TASK_COMPLETION_TOOL_NAME = 'taskCompletion';
 
@@ -108,7 +108,7 @@ Today's date is ${new Date().toISOString().split('T')[0]}.
 Help the user finish their goal quickly and accurately.
 
 <important_note>
-You must call \`taskCompleted\` at the end wether you have achieved the goal or not.
+You must call \`taskCompleted\` at the end wether you have achieved the goal or not, otherwise this flow will be marked as failed.
 </important_note>
         `.trim(),
       stopWhen: [
@@ -124,7 +124,9 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
           }),
           execute: async (params) => {
             const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
+            console.log("TASK TOOL IS CALLED AND SUCCESS IS " + success)
             outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
+
             if (!isNil(output)) {
               outputBuilder.setStructuredOutput(output)
             }
@@ -175,6 +177,7 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
     if (status == AgentTaskStatus.IN_PROGRESS) {
       outputBuilder.fail({})
     }
+
     return outputBuilder.build()
   }
 });
