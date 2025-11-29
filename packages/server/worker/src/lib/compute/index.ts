@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, AGENT_PIECE_NAME, AgentPieceProps, AgentTool, AgentToolType, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PiecePackage, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
@@ -165,8 +165,29 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
             const pieceSteps = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE)
             span.setAttribute('sandbox.pieceStepsCount', pieceSteps.length)
             
-            const pieces = pieceSteps.map(async (step) => {
+            const agentPieces: Promise<PiecePackage>[] = []
+            const flowPieces = pieceSteps.map(async (step) => {
                 const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
+
+                if (pieceName === AGENT_PIECE_NAME) {
+                    const agentTools = step.settings.input[
+                        AgentPieceProps.AGENT_TOOLS
+                    ] as AgentTool[]
+
+                    agentTools.forEach((tool) => {
+                        if (tool.type === AgentToolType.PIECE) {
+                            agentPieces.push(
+                                pieceWorkerCache(log).getPiece({
+                                    engineToken,
+                                    platformId,
+                                    pieceName: tool.pieceMetadata.pieceName,
+                                    pieceVersion: tool.pieceMetadata.pieceVersion,
+                                })
+                            )
+                        }
+                    })
+                }
+
                 return pieceWorkerCache(log).getPiece({
                     engineToken,
                     pieceName,
@@ -174,6 +195,8 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
                     platformId,
                 })
             })
+
+            const pieces = [...flowPieces, ...agentPieces]
             const codeSteps = getCodePieces(flowVersion)
             span.setAttribute('sandbox.codeStepsCount', codeSteps.length)
             
