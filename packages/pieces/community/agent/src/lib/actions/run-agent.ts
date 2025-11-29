@@ -1,7 +1,7 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon, AI_MODELS } from '../common';
 import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, McpTool } from '@activepieces/shared';
-import { hasToolCall, stepCountIs, streamText, tool } from 'ai';
+import { dynamicTool, hasToolCall, stepCountIs, streamText, tool } from 'ai';
 import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from '../common/output-builder';
@@ -116,7 +116,21 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
         hasToolCall(TASK_COMPLETION_TOOL_NAME),
       ],
       tools: {
-        
+        [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
+          description: 'Ask the user a question',
+          inputSchema: z.object({
+            success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
+            ...(isNil(context.propsValue.structuredOutput) ? {} : structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}),
+          }),
+          execute: async (params) => {
+            const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
+            outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
+            if (!isNil(output)) {
+              outputBuilder.setStructuredOutput(output)
+            }
+            return {}
+          },
+        }),
 
       }
     });
@@ -161,23 +175,23 @@ You must call \`taskCompleted\` at the end wether you have achieved the goal or 
 
 
 
-function structuredOutputSchema( outputFields: AgentOutputField[]): ZodObject | undefined {
+function structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
   const shape: Record<string, z.ZodType> = {}
 
   for (const field of outputFields) {
-      switch (field.type) {
-          case AgentOutputFieldType.TEXT:
-              shape[field.displayName] = z.string()
-              break
-          case AgentOutputFieldType.NUMBER:
-              shape[field.displayName] = z.number()
-              break
-          case AgentOutputFieldType.BOOLEAN:
-              shape[field.displayName] = z.boolean()
-              break
-          default:
-              shape[field.displayName] = z.any()
-      }
+    switch (field.type) {
+      case AgentOutputFieldType.TEXT:
+        shape[field.displayName] = z.string()
+        break
+      case AgentOutputFieldType.NUMBER:
+        shape[field.displayName] = z.number()
+        break
+      case AgentOutputFieldType.BOOLEAN:
+        shape[field.displayName] = z.boolean()
+        break
+      default:
+        shape[field.displayName] = z.any()
+    }
   }
 
   return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
