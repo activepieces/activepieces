@@ -1,4 +1,5 @@
-import { PlatformId, ProjectId } from '@activepieces/shared'
+import { Flow, PlatformId, ProjectId } from '@activepieces/shared'
+import { Job } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -9,6 +10,7 @@ export enum SystemJobName {
     ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
     AI_USAGE_REPORT = 'ai-usage-report',
+    DELETE_FLOW = 'delete-flow',
 }
 
 type IssuesSummarySystemJobData = {
@@ -23,6 +25,12 @@ type AiUsageReportSystemJobData = {
     idempotencyKey: string
 }
 
+type DeleteFlowDurableSystemJobData =  {
+    flow: Flow
+    preDeleteDone: boolean
+    dbDeleteDone: boolean
+}
+
 type SystemJobDataMap = {
     [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
     [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
@@ -31,6 +39,7 @@ type SystemJobDataMap = {
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
+    [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -63,5 +72,6 @@ type UpsertJobParams<T extends SystemJobName> = {
 export type SystemJobSchedule = {
     init(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
+    getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
     close(): Promise<void>
 }

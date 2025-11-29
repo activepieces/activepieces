@@ -32,6 +32,7 @@ import {
   ProjectWithLimits,
   ApErrorParams,
   ErrorCode,
+  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 interface EditProjectDialogProps {
@@ -43,6 +44,7 @@ interface EditProjectDialogProps {
     aiCredits?: string;
     externalId?: string;
   };
+  renameOnly?: boolean;
 }
 
 type FormValues = {
@@ -56,6 +58,7 @@ export function EditProjectDialog({
   onClose,
   projectId,
   initialValues,
+  renameOnly = false,
 }: EditProjectDialogProps) {
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
@@ -129,9 +132,13 @@ export function EditProjectDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full">
-        <DialogTitle>{t('Edit Project')}</DialogTitle>
+        <DialogTitle>
+          {renameOnly ? t('Rename Project') : t('Edit Project')}
+        </DialogTitle>
         <p className="text-sm text-muted-foreground mb-4 mt-1">
-          {t('Update your project settings and configuration.')}
+          {renameOnly
+            ? null
+            : t('Update your project settings and configuration.')}
         </p>
         <Form {...form}>
           <form
@@ -164,39 +171,41 @@ export function EditProjectDialog({
               )}
             />
 
-            {platform.plan.manageProjectsEnabled && (
-              <FormField
-                name="aiCredits"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        type="number"
-                        id="aiCredits"
-                        placeholder={t('AI Credits')}
-                        className="rounded-sm pr-16"
-                      />
-                      {!field.disabled && (
-                        <Button
-                          variant="link"
-                          type="button"
-                          tabIndex={-1}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                          onClick={() => form.setValue('aiCredits', '')}
-                        >
-                          {t('Clear')}
-                        </Button>
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            {!renameOnly &&
+              platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE && (
+                <FormField
+                  name="aiCredits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type="number"
+                          id="aiCredits"
+                          placeholder={t('AI Credits')}
+                          className="rounded-sm pr-16"
+                        />
+                        {!field.disabled && (
+                          <Button
+                            variant="link"
+                            type="button"
+                            tabIndex={-1}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                            onClick={() => form.setValue('aiCredits', '')}
+                          >
+                            {t('Clear')}
+                          </Button>
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
-            {platform.plan.embeddingEnabled &&
+            {!renameOnly &&
+              platform.plan.embeddingEnabled &&
               platformRole === PlatformRole.ADMIN && (
                 <FormField
                   name="externalId"

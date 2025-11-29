@@ -38,9 +38,15 @@ export const apiKeyService = {
     },
     async getByValue(key: string): Promise<ApiKey | null> {
         assertNotNullOrUndefined(key, 'key')
-        return repo().findOneBy({
+        const apiKey = await repo().findOneBy({
             hashedValue: cryptoUtils.hashSHA256(key),
         })
+        if (apiKey) {
+            await repo().update(apiKey.id, {
+                lastUsedAt: new Date().toISOString(),
+            })
+        }
+        return apiKey
     },
     async list({ platformId }: ListParams): Promise<SeekPage<ApiKey>> {
         const data = await repo().findBy({
