@@ -18,15 +18,11 @@ export function McpFlows({ mcpServer }: McpFlowsProps) {
             {flows.map((flow) => {
                 const isEnabled = flow.status === FlowStatus.ENABLED;
                 return (
-                    <div
-                        key={flow.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-accent/50 border"
-                    >
+                    <div key={flow.id}className="flex items-center justify-between">
                         <span className="text-sm font-medium">
                             {flow.version.displayName}
                         </span>
-                        <Badge
-                            variant={isEnabled ? 'success' : 'outline'}
+                        <Badge  variant={isEnabled ? 'success' : 'outline'}
                             className="flex items-center gap-1.5"
                         >
                             <div

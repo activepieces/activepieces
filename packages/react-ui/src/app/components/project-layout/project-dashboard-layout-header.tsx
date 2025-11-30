@@ -74,13 +74,6 @@ export const ProjectDashboardLayoutHeader = () => {
       show: true,
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/mcps'),
-      label: t('MCP'),
-      show: platform.plan.mcpsEnabled,
-      hasPermission: checkAccess(Permission.READ_MCP),
-      icon: McpSvg,
-    },
-    {
       to: authenticationSession.appendProjectRoutePrefix('/todos'),
       label: t('Todos'),
       show: platform.plan.todosEnabled,

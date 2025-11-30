@@ -45,7 +45,7 @@ export const cleanUpAgentTools: Migration = {
 
                 step.settings = {
                     ...step.settings,
-                    pieceVersion: '0.4.0',
+                    pieceVersion: '0.3.7',
                     input: {
                         ...step.settings.input,
                         [AgentPieceProps.AGENT_TOOLS]: newTools,

@@ -58,7 +58,8 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 const mcpTrigger = flow.version.trigger.settings as McpTrigger
                 const mcpInputs = mcpTrigger.input?.inputSchema ?? []
                 const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
-                const toolName = flow.version.displayName + '_' + flow.id.substring(0, 5)
+                
+                const toolName = (mcpTrigger.input?.toolName ?? flow.version.displayName).toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_')
                 const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
 
                 server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {

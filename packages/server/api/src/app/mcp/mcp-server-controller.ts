@@ -1,13 +1,11 @@
-import { ALL_PRINCIPAL_TYPES, ApId, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApId, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
-import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpServerService } from './mcp-service'
 
 
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.get('/', GetMcpRequest, async (req) => {
         return mcpServerService(req.log).getPopulatedByProjectId(req.principal.projectId)
@@ -29,10 +27,17 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
         const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
+        const authHeader = req.headers['authorization']
+        if (!validateAuthorizationHeader(authHeader, mcp)) {
+            return reply.status(401).send({
+                error: 'Unauthorized',
+            })
+        }
         const { server } = await mcpServerService(req.log).buildServer({
             mcp,
         })
 
+        
         const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
         })
@@ -48,10 +53,15 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
+    const [type, token] = authHeader?.split(' ') ?? []
+    return type === 'Bearer' && token === mcp.token
+}
 
 const StreamableHttpRequestRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        skipAuth: true,
     },
     schema: {
         params: Type.Object({

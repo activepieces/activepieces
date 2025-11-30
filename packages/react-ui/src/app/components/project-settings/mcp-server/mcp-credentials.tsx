@@ -1,10 +1,10 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
-import { useToast } from '@/components/ui/use-toast';
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { mcpHooks } from './utils/mcp-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -12,7 +12,6 @@ import { ApFlagId, Permission, PopulatedMcpServer } from '@activepieces/shared';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 export function McpCredentials({ mcpServer }: McpCredentialsProps) {
-    const { toast } = useToast();
     const [showToken, setShowToken] = useState(false);
     const toggleTokenVisibility = () => setShowToken(!showToken);
     const currentProjectId = authenticationSession.getProjectId();
@@ -21,19 +20,11 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
     const { mutate: rotateToken, isPending: isRotating } = mcpHooks.useRotateMcpToken(currentProjectId!);
 
     const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-    const serverUrl = `${publicUrl}v1/projects/${currentProjectId}/mcp-server/http`;
+    const serverUrl = `${publicUrl}api/v1/projects/${currentProjectId}/mcp-server/http`;
 
     const maskToken = (tokenValue: string) => {
         if (tokenValue.length <= 8) return '••••••••';
         return '••••••••' + tokenValue.slice(-4);
-    };
-
-    const handleCopy = (value: string, label: string) => {
-        navigator.clipboard.writeText(value);
-        toast({
-            description: t('{{label}} copied to clipboard', { label }),
-            duration: 3000,
-        });
     };
 
     return (
@@ -42,15 +33,10 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
             <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-muted-foreground">{t('Server URL')}</label>
                 <div className="flex items-center gap-2">
-                    <div className="bg-muted/50 border rounded-md px-3 py-1 text-sm flex-1 overflow-x-auto">
+                    <div className="bg-muted/50 rounded-md px-3 py-2 text-sm flex-1 overflow-x-auto">
                         {serverUrl}
                     </div>
-                    <ButtonWithTooltip
-                        tooltip={t('Copy')}
-                        onClick={() => handleCopy(serverUrl, t('Server URL'))}
-                        variant="outline"
-                        icon={<Copy className="h-4 w-4" />}
-                    />
+                    <CopyButton textToCopy={serverUrl} />
                 </div>
             </div>
 
@@ -58,10 +44,11 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
             <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-muted-foreground">{t('Token')}</label>
                 <div className="flex items-center gap-2">
-                    <div className="bg-muted/50 border rounded-md px-3 py-1 text-sm flex-1 overflow-x-auto">
+                    <div className="bg-muted/50 rounded-md px-3 py-2 text-sm flex-1 overflow-x-auto">
                         {showToken ? mcpServer?.token : maskToken(mcpServer?.token ?? '')}
                     </div>
                     <ButtonWithTooltip
+                        className='h-9 w-9'
                         tooltip={showToken ? t('Hide sensitive data') : t('Show sensitive data')}
                         onClick={toggleTokenVisibility}
                         variant="outline"
@@ -77,6 +64,7 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
                         tooltip={t('Create a new token. The current one will stop working.')}
                         onClick={() => rotateToken()}
                         variant="outline"
+                        className='h-9 w-9'
                         disabled={isRotating || !mcpServer?.status}
                         hasPermission={ checkAccess(Permission.WRITE_MCP) }
                         icon={
@@ -87,13 +75,11 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
                             )
                         }
                     />
-                    <ButtonWithTooltip
-                        tooltip={t('Copy')}
-                        onClick={() => handleCopy(mcpServer?.token ?? '', t('Token'))}
-                        variant="outline"
-                        icon={<Copy className="h-4 w-4" />}
-                    />
+                    <CopyButton textToCopy={mcpServer?.token ?? ''} />
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                    {t('Use this token with the Authorization header (Bearer) for requests to this server.')}
+                </p>
             </div>
         </div>
     );

@@ -7,11 +7,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { t } from "i18next";
 import { McpCredentials } from "./mcp-credentials";
-import { McpFlows } from "./mcp-flows";
 import { mcpHooks } from "./utils/mcp-hooks";
 import { authenticationSession } from "@/lib/authentication-session";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { McpServerStatus } from "@activepieces/shared";
+import { McpServerStatus, FlowStatus } from "@activepieces/shared";
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { CheckCircle, CircleDot } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 export const McpServerSettings = () => {
   const currentProjectId = authenticationSession.getProjectId();
@@ -38,9 +40,9 @@ export const McpServerSettings = () => {
     <div className="w-full mt-4">
       <Field orientation="horizontal">
         <FieldContent>
-          <FieldLabel htmlFor="mcp-access">Enable MCP Access</FieldLabel>
+          <FieldLabel htmlFor="mcp-access">{t('Enable MCP Access')}</FieldLabel>
           <FieldDescription>
-            {t('Enable Model Context Protocol (MCP) server access for this project.')}
+            {t('Allow external agents to read and trigger your project\'s flows securely.')}
           </FieldDescription>
         </FieldContent>
         <Switch 
@@ -50,15 +52,50 @@ export const McpServerSettings = () => {
           disabled={isUpdating}
         />
       </Field>
-    {mcpServer?.status === McpServerStatus.ENABLED && (
-      <div className="mt-8 space-y-8">
+      {mcpServer?.status === McpServerStatus.ENABLED && (
+        <div className="mt-8 space-y-8">
           <div>
-            <h3 className="font-semibold text-base mb-2">{t('How to Connect')}</h3>
+            <h3 className="font-semibold text-base mb-2">{t('Connection Details')}</h3>
             {mcpServer && <McpCredentials mcpServer={mcpServer} />}
           </div>
           <div>
             <h3 className="font-semibold text-base mb-2">{t('Available Flows')}</h3>
-            {mcpServer && <McpFlows mcpServer={mcpServer} />}
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('Any flow that has the "MCP Trigger" turned on will show up here and can be accessed from your MCP server.')}
+            </p>
+            <div className="space-y-2">
+              {(mcpServer?.flows?.length ?? 0) === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  {t('No MCP flows available')}
+                </div>
+              ) : (
+                mcpServer.flows.map((flow) => {
+                  const isEnabled = flow.status === FlowStatus.ENABLED;
+                  // Construct the URL to the flow
+                  const flowUrl = `/flow/${flow.id}`;
+                  return (
+                    <div key={flow.id} className="flex items-center gap-4">
+                      <Button
+                        variant="link"
+                        className="text-sm font-medium p-0 h-auto min-w-0 text-secondary"
+                        onClick={e => {
+                          e.preventDefault();
+                          window.open(flowUrl, "_blank", "noopener,noreferrer");
+                        }}
+                        tabIndex={-1}
+                      >
+                         {flow.version.displayName}
+                      </Button>
+                      <StatusIconWithText
+                        icon={isEnabled ? CheckCircle : CircleDot}
+                        text={isEnabled ? t('On') : t('Off')}
+                        variant={isEnabled ? 'success' : 'default'}
+                      />
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       )}

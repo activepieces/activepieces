@@ -30,6 +30,7 @@ import {
   ToolCallStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
+import { agentToolHooks } from '../agent-tool-hooks';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -75,14 +76,7 @@ const TimelineItem = ({
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   if ([TASK_COMPLETION_TOOL_NAME].includes(block.toolName ?? '')) return null;
 
-  // TODO(@abuaboud): fix that
-  const { data: metadata, isLoading } = {
-    data: {
-      logoUrl: null,
-      displayName: null,
-    },
-    isLoading: false,
-  }
+  const { data: metadata, isLoading } = agentToolHooks.useToolMetadata(block);
 
   const output = block.output as ToolCallOutput | null;
 
