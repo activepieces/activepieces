@@ -21,10 +21,11 @@ export const createOpportunityAction = createAction({
       displayName: 'Party',
       required: true,
       refreshers: [],
+      auth: capsuleCrmAuth,
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const contacts = await capsuleCrmClient.searchContacts(
-          auth as CapsuleCrmAuthType,
+          auth,
           ''
         );
         return {
@@ -49,13 +50,14 @@ export const createOpportunityAction = createAction({
       required: false,
     }),
     milestoneId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Milestone',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const milestones = await capsuleCrmClient.listMilestones(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: milestones.map((milestone) => ({
