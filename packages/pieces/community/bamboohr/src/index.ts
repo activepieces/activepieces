@@ -34,11 +34,11 @@ export const bambooHr = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://api.bamboohr.com/api/gateway.php/${
-          (auth as { companyDomain: string }).companyDomain
+          auth.props.companyDomain
         }/v1/`,
       auth: bambooHrAuth,
       authMapping: async (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth.props;
         return {
           Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString(
             'base64'

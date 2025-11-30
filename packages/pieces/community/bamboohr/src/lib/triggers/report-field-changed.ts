@@ -8,15 +8,15 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof bambooHrAuth>,
+  AppConnectionValueForAuthProperty<typeof bambooHrAuth>,
   {
     reportId: string;
     fieldToMonitor: string;
