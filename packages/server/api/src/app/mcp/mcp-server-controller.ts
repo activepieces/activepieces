@@ -2,7 +2,7 @@ import { ALL_PRINCIPAL_TYPES, apId, ApId, Permission, PrincipalType, SERVICE_KEY
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpServerService } from './mcp-service'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 
 
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
@@ -10,7 +10,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.get('/', GetMcpRequest, async (req) => {
-        return mcpServerService(req.log).getByProjectId(req.principal.projectId)
+        return mcpServerService(req.log).getPopulatedByProjectId(req.principal.projectId)
     })
 
     app.post('/', UpdateMcpRequest, async (req) => {

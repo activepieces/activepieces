@@ -20,7 +20,6 @@ import {
 import {
   FlowTrigger,
   McpPropertyType,
-  mcpToolNaming,
 } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
@@ -104,6 +103,10 @@ function McpToolTestingDialog({
     mode: 'onChange',
   });
 
+  function fixProperty(key: string): string {
+    return key.replace(/[\s/@-]+/g, '_')
+  }
+  
   const pieceProps = formProps.reduce((acc, field: McpFormField) => {
     const pieceProperty = {
       displayName: field.name,
@@ -137,7 +140,7 @@ function McpToolTestingDialog({
                 Object.entries(data)
                   .filter(([key, _]) => key.trim() !== '')
                   .map(([key, value]) => [
-                    mcpToolNaming.fixProperty(key),
+                    fixProperty(key),
                     value,
                   ]),
               );

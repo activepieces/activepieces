@@ -21,6 +21,8 @@ import {
   ProjectType,
 } from '@activepieces/shared';
 
+import { McpSvg } from '@/assets/img/custom/mcp';
+
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectAvatar } from '../project-avatar';
 
@@ -28,10 +30,11 @@ import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
 import { useGeneralSettingsMutation } from './general/hook';
+import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
 
-type TabId = 'general' | 'members' | 'alerts' | 'pieces' | 'environment';
+type TabId = 'general' | 'members' | 'alerts' | 'pieces' | 'environment' | 'mcp';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -138,6 +141,12 @@ export function ProjectSettingsDialog({
       icon: <GitBranch className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
+    {
+      id: 'mcp' as TabId,
+      label: t('MCP Server'),
+      icon: <McpSvg className="w-4 h-4" />,
+      disabled: false,
+    },
   ].filter((tab) => !tab.disabled);
 
   const renderTabContent = () => {
@@ -154,6 +163,8 @@ export function ProjectSettingsDialog({
         return <PiecesSettings />;
       case 'environment':
         return <EnvironmentSettings />;
+      case 'mcp':
+        return <McpServerSettings />;
       default:
         return null;
     }

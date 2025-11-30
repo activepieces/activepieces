@@ -20,7 +20,7 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+
 import {
   isNil,
   MarkdownContentBlock,
@@ -76,7 +76,15 @@ const TimelineItem = ({
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   if (INTERNAL_TOOLS.includes(block.toolName ?? '')) return null;
 
-  const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
+  // TODO(@abuaboud): fix that
+  const { data: metadata, isLoading } = {
+    data: {
+      logoUrl: null,
+      displayName: null,
+    },
+    isLoading: false,
+  }
+
   const output = block.output as ToolCallOutput | null;
 
   const isDone = block.status === ToolCallStatus.COMPLETED;
