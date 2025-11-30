@@ -38,9 +38,6 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { DatabaseType, system } from '../helper/system/system'
-import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
-import { McpEntity } from '../mcp/mcp-server/mcp-entity'
-import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -62,6 +59,7 @@ import { UserInvitationEntity } from '../user-invitations/user-invitation.entity
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { McpServerEntity } from '../mcp/mcp-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -97,10 +95,8 @@ function getEntities(): EntitySchema<unknown>[] {
         TableWebhookEntity,
         UserIdentityEntity,
         TodoEntity,
-        McpEntity,
+        McpServerEntity,
         TodoActivityEntity,
-        McpToolEntity,
-        McpRunEntity,
         AIUsageEntity,
         TriggerSourceEntity,
     ]
