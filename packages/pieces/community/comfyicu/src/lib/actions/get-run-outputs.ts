@@ -14,7 +14,7 @@ export const getRunOutputAction = createAction({
   async run(context) {
     const { workflow_id, run_id } = context.propsValue;
     const response = await comfyIcuApiCall({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       endpoint: `/workflows/${workflow_id}/runs/${run_id}`,
       method: HttpMethod.GET,
     });

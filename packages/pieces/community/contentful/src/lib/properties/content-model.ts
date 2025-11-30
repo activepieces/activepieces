@@ -2,7 +2,8 @@ import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { ContentfulAuth, makeClient } from '../common';
 import { isEmpty } from '@activepieces/shared';
 
-const ContentModel = Property.Dropdown<string>({
+const ContentModel = Property.Dropdown({
+  auth: ContentfulAuth,
   displayName: 'Content Model',
   required: true,
   refreshers: [],
@@ -14,7 +15,7 @@ const ContentModel = Property.Dropdown<string>({
         placeholder: 'Please connect your account',
       };
     }
-    const { client } = makeClient(auth as ContentfulAuth);
+    const { client } = makeClient(auth);
     try {
       const models: DropdownOption<string>[] = [];
       let contentModels = await client.contentType.getMany({

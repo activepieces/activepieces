@@ -14,6 +14,7 @@ export const refundPaymentAction = createAction({
       required: true,
     }),
     payment_id: Property.Dropdown({
+      auth: checkoutComAuth,
       displayName: 'Payment ID',
       description: 'Select the payment to refund',
       required: true,
@@ -28,7 +29,7 @@ export const refundPaymentAction = createAction({
         }
 
         try {
-          const { baseUrl } = getEnvironmentFromApiKey(auth as string);
+          const { baseUrl } = getEnvironmentFromApiKey(auth.secret_text);
           
           const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
@@ -38,7 +39,7 @@ export const refundPaymentAction = createAction({
               limit: '100',
             },
             headers: {
-              Authorization: `Bearer ${auth}`,
+              Authorization: `Bearer ${auth.secret_text}`,
               'Content-Type': 'application/json',
             },
           });
@@ -364,7 +365,7 @@ export const refundPaymentAction = createAction({
       metadata,
     } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     const body: Record<string, any> = {};
     

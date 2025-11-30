@@ -336,7 +336,7 @@ export const createPaymentLinkAction = createAction({
       metadata
     } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     const body: Record<string, any> = {
       amount,

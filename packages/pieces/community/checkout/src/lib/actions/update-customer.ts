@@ -47,7 +47,7 @@ export const updateCustomerAction = createAction({
   async run(context) {
     const { customerId, email, name, phone_country_code, phone_number, metadata, default: defaultInstrument } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     const body: Record<string, any> = {};
     

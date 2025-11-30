@@ -17,7 +17,7 @@ export const memberIdDropdown = Property.Dropdown({
     }
 
     try {
-      const authData = await getAuthToken(auth as CyberArkAuth);
+      const authData = await getAuthToken(auth);
 
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
