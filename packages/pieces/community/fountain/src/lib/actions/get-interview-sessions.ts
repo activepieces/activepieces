@@ -1,10 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
 import { getAuthHeaders } from '../common/auth';
-import { getFunnelsDropdown } from '../common/dropdowns';
 
-async function getApplicantsDropdown(auth: string): Promise<{ label: string; value: string }[]> {
+async function getApplicantsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<{ label: string; value: string }[]> {
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -34,9 +33,10 @@ export const fountainGetInterviewSessions = createAction({
       description: 'The applicant to get interview sessions for (shows 50 most recent applicants)',
       required: true,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getApplicantsDropdown(auth as string) };
+        return { disabled: false, options: await getApplicantsDropdown(auth) };
       },
     }),
   },

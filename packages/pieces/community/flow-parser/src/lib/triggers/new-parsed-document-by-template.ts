@@ -51,7 +51,7 @@ const polling: Polling<
         method: HttpMethod.GET,
         url: `${BASE_URL}/documents/status-changes`,
         headers: {
-          flow_api_key: auth as string,
+          flow_api_key: auth.secret_text,
         },
         queryParams,
       });

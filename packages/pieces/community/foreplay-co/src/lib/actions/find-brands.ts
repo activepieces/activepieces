@@ -27,7 +27,7 @@ export const findBrands = createAction({
     }
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: '/api/discovery/brands',
       queryParams,

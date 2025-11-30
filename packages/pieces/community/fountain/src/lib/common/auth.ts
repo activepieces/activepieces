@@ -1,9 +1,9 @@
 import { fountainAuth } from '../../';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema } from '@activepieces/pieces-framework';
 
-export function getAuthHeaders(auth: PiecePropValueSchema<typeof fountainAuth>) {
+export function getAuthHeaders(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>) {
   return {
-    'Authorization': `Bearer ${auth}`,
+    'Authorization': `Bearer ${auth.secret_text}`,
     'Content-Type': 'application/json',
   };
 }

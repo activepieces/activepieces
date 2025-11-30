@@ -9,6 +9,7 @@ export const findBoards = createAction({
   displayName: 'Find Boards',
   description: 'Get all boards for the authenticated user with pagination.',
   props: findBoardsProperties(),
+  auth: foreplayCoAuth,
   async run({ auth, propsValue }) {
     // Validate props using Zod schema
     const validation = findBoardsSchema.safeParse(propsValue);
@@ -28,7 +29,7 @@ export const findBoards = createAction({
     }
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: '/api/boards',
       queryParams,

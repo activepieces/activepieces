@@ -19,7 +19,7 @@ export const getAdById = createAction({
     const adId = propsValue.ad_id;
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: `/api/ad/${adId}`,
     });

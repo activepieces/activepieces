@@ -13,7 +13,7 @@ export const deleteLead = createAction({
     await propsValidation.validateZod(propsValue, famulorCommon.deleteLeadSchema);
 
     return await famulorCommon.deleteLead({
-      auth: auth as string,
+      auth: auth.secret_text,
       lead_id: propsValue.lead_id as number,
     });
   },

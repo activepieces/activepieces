@@ -42,7 +42,7 @@ export const fountainCreateApplicant = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.fountain.com/v2/applicants',
-      headers: getAuthHeaders(context.auth),
+      headers: getAuthHeaders(context.auth.props),
       body: requestBody,
     });
 
