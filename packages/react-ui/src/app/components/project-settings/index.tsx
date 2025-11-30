@@ -3,6 +3,7 @@ import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,8 +22,6 @@ import {
   ProjectType,
 } from '@activepieces/shared';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
-
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectAvatar } from '../project-avatar';
 
@@ -34,7 +33,13 @@ import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
 
-type TabId = 'general' | 'members' | 'alerts' | 'pieces' | 'environment' | 'mcp';
+type TabId =
+  | 'general'
+  | 'members'
+  | 'alerts'
+  | 'pieces'
+  | 'environment'
+  | 'mcp';
 
 interface ProjectSettingsDialogProps {
   open: boolean;

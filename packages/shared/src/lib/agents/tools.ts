@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion } from '../common'
 import { ApId } from '../common/id-generator'
 
-export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus';
+export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
 
 export enum AgentToolType {
     PIECE = 'PIECE',
@@ -17,7 +17,7 @@ export const AgentPieceToolMetadata = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     actionName: Type.String(),
-    predefinedInput: Type.Record(Type.String(), Type.Unknown())
+    predefinedInput: Type.Record(Type.String(), Type.Unknown()),
 })
 export type AgentPieceToolMetadata = Static<typeof AgentPieceToolMetadata>
 

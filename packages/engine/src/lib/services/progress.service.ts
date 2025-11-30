@@ -55,7 +55,7 @@ export const progressService = {
                 const stepResponse = extractStepResponse({
                     steps: trimmedSteps,
                     runId: engineConstants.flowRunId,
-                    stepName: stepName,
+                    stepName,
                 })
                 await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_STEP_PROGRESS, {
                     projectId: engineConstants.projectId,

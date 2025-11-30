@@ -5,7 +5,6 @@ import {
     ExecuteExtractPieceMetadataOperation,
     ExecuteFlowOperation,
     ExecutePropsOptions,
-    ExecuteToolOperation,
     ExecuteTriggerOperation,    
     ExecuteValidateAuthOperation,
     TriggerHookType,

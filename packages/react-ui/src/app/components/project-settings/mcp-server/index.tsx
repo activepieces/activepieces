@@ -1,24 +1,29 @@
+import { t } from 'i18next';
+import { CheckCircle, CircleDot } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldLabel,
-} from "@/components/ui/field";
-import { Switch } from "@/components/ui/switch";
-import { t } from "i18next";
-import { McpCredentials } from "./mcp-credentials";
-import { mcpHooks } from "./utils/mcp-hooks";
-import { authenticationSession } from "@/lib/authentication-session";
-import { LoadingSpinner } from "@/components/ui/spinner";
-import { McpServerStatus, FlowStatus } from "@activepieces/shared";
+} from '@/components/ui/field';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { CheckCircle, CircleDot } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Switch } from '@/components/ui/switch';
+import { authenticationSession } from '@/lib/authentication-session';
+import { McpServerStatus, FlowStatus } from '@activepieces/shared';
+
+import { McpCredentials } from './mcp-credentials';
+import { mcpHooks } from './utils/mcp-hooks';
 
 export const McpServerSettings = () => {
   const currentProjectId = authenticationSession.getProjectId();
-  const { data: mcpServer, isLoading } = mcpHooks.useMcpServer(currentProjectId!);
-  const { mutate: updateMcpServer, isPending: isUpdating } = mcpHooks.useUpdateMcpServer(currentProjectId!);
+  const { data: mcpServer, isLoading } = mcpHooks.useMcpServer(
+    currentProjectId!,
+  );
+  const { mutate: updateMcpServer, isPending: isUpdating } =
+    mcpHooks.useUpdateMcpServer(currentProjectId!);
 
   if (isLoading) {
     return (
@@ -42,11 +47,13 @@ export const McpServerSettings = () => {
         <FieldContent>
           <FieldLabel htmlFor="mcp-access">{t('Enable MCP Access')}</FieldLabel>
           <FieldDescription>
-            {t('Allow external agents to read and trigger your project\'s flows securely.')}
+            {t(
+              "Allow external agents to read and trigger your project's flows securely.",
+            )}
           </FieldDescription>
         </FieldContent>
-        <Switch 
-          id="mcp-access" 
+        <Switch
+          id="mcp-access"
           checked={isEnabled}
           onCheckedChange={handleStatusChange}
           disabled={isUpdating}
@@ -55,13 +62,19 @@ export const McpServerSettings = () => {
       {mcpServer?.status === McpServerStatus.ENABLED && (
         <div className="mt-8 space-y-8">
           <div>
-            <h3 className="font-semibold text-base mb-2">{t('Connection Details')}</h3>
+            <h3 className="font-semibold text-base mb-2">
+              {t('Connection Details')}
+            </h3>
             {mcpServer && <McpCredentials mcpServer={mcpServer} />}
           </div>
           <div>
-            <h3 className="font-semibold text-base mb-2">{t('Available Flows')}</h3>
+            <h3 className="font-semibold text-base mb-2">
+              {t('Available Flows')}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {t('Any flow that has the "MCP Trigger" turned on will show up here and can be accessed from your MCP server.')}
+              {t(
+                'Any flow that has the "MCP Trigger" turned on will show up here and can be accessed from your MCP server.',
+              )}
             </p>
             <div className="space-y-2">
               {(mcpServer?.flows?.length ?? 0) === 0 ? (
@@ -78,13 +91,13 @@ export const McpServerSettings = () => {
                       <Button
                         variant="link"
                         className="text-sm font-medium p-0 h-auto min-w-0 text-secondary"
-                        onClick={e => {
+                        onClick={(e) => {
                           e.preventDefault();
-                          window.open(flowUrl, "_blank", "noopener,noreferrer");
+                          window.open(flowUrl, '_blank', 'noopener,noreferrer');
                         }}
                         tabIndex={-1}
                       >
-                         {flow.version.displayName}
+                        {flow.version.displayName}
                       </Button>
                       <StatusIconWithText
                         icon={isEnabled ? CheckCircle : CircleDot}

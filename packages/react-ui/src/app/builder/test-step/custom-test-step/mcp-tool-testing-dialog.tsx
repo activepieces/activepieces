@@ -17,10 +17,7 @@ import {
   PiecePropertyMap,
   PieceProperty,
 } from '@activepieces/pieces-framework';
-import {
-  FlowTrigger,
-  McpPropertyType,
-} from '@activepieces/shared';
+import { FlowTrigger, McpPropertyType } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 import { testStepHooks } from '../test-step-hooks';
@@ -104,9 +101,9 @@ function McpToolTestingDialog({
   });
 
   function fixProperty(key: string): string {
-    return key.replace(/[\s/@-]+/g, '_')
+    return key.replace(/[\s/@-]+/g, '_');
   }
-  
+
   const pieceProps = formProps.reduce((acc, field: McpFormField) => {
     const pieceProperty = {
       displayName: field.name,
@@ -139,10 +136,7 @@ function McpToolTestingDialog({
               const cleanedData = Object.fromEntries(
                 Object.entries(data)
                   .filter(([key, _]) => key.trim() !== '')
-                  .map(([key, value]) => [
-                    fixProperty(key),
-                    value,
-                  ]),
+                  .map(([key, value]) => [fixProperty(key), value]),
               );
               saveMockAsSampleData(cleanedData);
             })}

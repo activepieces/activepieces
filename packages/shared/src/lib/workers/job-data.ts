@@ -6,7 +6,7 @@ import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
-import { PackageType, PiecePackage, PieceType } from '../pieces/piece'
+import { PiecePackage } from '../pieces/piece'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 

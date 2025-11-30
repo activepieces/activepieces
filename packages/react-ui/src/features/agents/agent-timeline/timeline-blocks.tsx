@@ -21,7 +21,6 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-
 import {
   isNil,
   MarkdownContentBlock,
@@ -30,6 +29,7 @@ import {
   ToolCallStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
+
 import { agentToolHooks } from '../agent-tool-hooks';
 
 interface AgentToolBlockProps {

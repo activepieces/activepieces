@@ -1,5 +1,5 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, AgentTool, PieceAction, PropertyExecutionType, StepOutputStatus, AgentToolType } from '@activepieces/shared'
+import { AgentTool, AgentToolType, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateObject, LanguageModel, ToolSet } from 'ai'
 import { z } from 'zod/v4'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -36,8 +36,8 @@ export const agentTools = {
                             predefinedInput: tool.pieceMetadata.predefinedInput,
                             model,
                         }),
-                };
-            }));
+                }
+            }))
   
         return {
             ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
@@ -256,5 +256,5 @@ async function loadOptions(propertyName: string, operation: ExecuteToolOperation
 type ConstructToolParams = {
     engineConstants: EngineConstants
     tools: AgentTool[]
-    model: LanguageModel,
+    model: LanguageModel
 }

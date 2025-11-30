@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, AGENT_PIECE_NAME, AgentPieceProps, AgentToolType, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PiecePackage, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, AGENT_PIECE_NAME, AgentPieceProps, AgentToolType, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
@@ -157,11 +157,11 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
                     for (const tool of agentTools ?? []) {
                         if (tool.type === AgentToolType.PIECE) {
                             pieces.push(pieceWorkerCache(log).getPiece({
-                                    engineToken,
-                                    platformId: tool.platformId,
-                                    pieceName: tool.pieceMetadata.pieceName,
-                                    pieceVersion: tool.pieceMetadata.pieceVersion,
-                                })
+                                engineToken,
+                                platformId: tool.platformId,
+                                pieceName: tool.pieceMetadata.pieceName,
+                                pieceVersion: tool.pieceMetadata.pieceVersion,
+                            }),
                             )
                         }
                     }

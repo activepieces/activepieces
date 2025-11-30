@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { mcpApi } from './mcp-api';
 
 export const MCP_SERVER_QUERY_KEY = ['mcp-server'];
@@ -16,7 +17,8 @@ export const mcpHooks = {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: (input: Parameters<typeof mcpApi.update>[1]) => mcpApi.update(projectId, input),
+      mutationFn: (input: Parameters<typeof mcpApi.update>[1]) =>
+        mcpApi.update(projectId, input),
       onSuccess: (data) => {
         queryClient.setQueryData([...MCP_SERVER_QUERY_KEY, projectId], data);
       },
@@ -33,4 +35,4 @@ export const mcpHooks = {
       },
     });
   },
-}
+};

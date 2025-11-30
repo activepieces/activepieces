@@ -58,14 +58,14 @@ export const MarkdownContentBlock = Type.Object({
 export type MarkdownContentBlock = Static<typeof MarkdownContentBlock>
 
 const ToolCallBaseSchema = Type.Object({
-  type: Type.Literal(ContentBlockType.TOOL_CALL),
-  input: Nullable(Type.Record(Type.String(), Type.Unknown())),
-  output: Type.Optional(Type.Unknown()),
-  toolName: Type.String(),
-  status: Type.Enum(ToolCallStatus),
-  toolCallId: Type.String(),
-  startTime: Type.String(),
-  endTime: Type.Optional(Type.String()),
+    type: Type.Literal(ContentBlockType.TOOL_CALL),
+    input: Nullable(Type.Record(Type.String(), Type.Unknown())),
+    output: Type.Optional(Type.Unknown()),
+    toolName: Type.String(),
+    status: Type.Enum(ToolCallStatus),
+    toolCallId: Type.String(),
+    startTime: Type.String(),
+    endTime: Type.Optional(Type.String()),
 })
 export type ToolCallBase = Static<typeof ToolCallBaseSchema>
 
