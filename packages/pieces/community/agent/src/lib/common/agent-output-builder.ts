@@ -3,7 +3,7 @@ import { agentCommon } from "../common"
 
 export const agentOutputBuilder = (prompt: string) => {
     let status: AgentTaskStatus = AgentTaskStatus.IN_PROGRESS
-    let steps: AgentStepBlock[] = []
+    const steps: AgentStepBlock[] = []
     let structuredOutput: Record<string, unknown> | undefined = undefined
 
     return {
