@@ -6,7 +6,7 @@ export const customApiCall = createCustomApiCallAction({
   baseUrl: () => 'https://api.assemblyai.com',
   authMapping: async (auth) => {
     return {
-      Authorization: `${auth}`,
+      Authorization: `${auth.secret_text}`,
     };
   },
 });
