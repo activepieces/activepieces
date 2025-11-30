@@ -16,7 +16,7 @@ To get your API Key:
   validate: async ({ auth }) => {
     if (auth) {
       try {
-        await makeRequest(auth, HttpMethod.GET, '/agent/all');
+        await makeRequest(auth.secret_text, HttpMethod.GET, '/agent/all');
         return {
           valid: true,
         };
