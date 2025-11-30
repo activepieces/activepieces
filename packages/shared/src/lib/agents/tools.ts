@@ -1,6 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, DiscriminatedUnion } from '../common'
+import { DiscriminatedUnion } from '../common'
 import { ApId } from '../common/id-generator'
+
+export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus';
 
 export enum AgentToolType {
     PIECE = 'PIECE',
@@ -8,7 +10,6 @@ export enum AgentToolType {
 }
 
 const AgentToolBase = {
-    ...BaseModelSchema,
     toolName: Type.String(),
 }
 

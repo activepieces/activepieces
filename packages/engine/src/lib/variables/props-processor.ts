@@ -4,8 +4,6 @@ import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
 
-
-
 type PropsValidationError = {
     [key: string]: string[] | PropsValidationError | PropsValidationError[]
 }
@@ -59,7 +57,7 @@ export const propsProcessor = {
                 }
             }
             if (property.type === PropertyType.ARRAY && property.properties) {
-                const arrayOfObjects = arrayZipperProcessor(property, value)
+                const arrayOfObjects = arrayZipperProcessor(property, value) ?? []
                 const processedArray = []
                 const processedErrors = []
                 for (const item of arrayOfObjects) {

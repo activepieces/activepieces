@@ -12,6 +12,7 @@ import {
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { DataList } from '@/components/data-list';
+import { JsonViewer } from '@/components/json-viewer';
 import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import {
   Accordion,
@@ -25,10 +26,10 @@ import {
   isNil,
   MarkdownContentBlock,
   MarkdownVariant,
+  TASK_COMPLETION_TOOL_NAME,
   ToolCallStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
-import { JsonViewer } from '@/components/json-viewer';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -37,11 +38,9 @@ interface AgentToolBlockProps {
 
 type ToolCallOutput = {
   success: boolean;
-  content: { type: string; text: string }[];
-  resolvedFields: Record<string, unknown>;
+  output: Record<string, unknown>;
+  resolvedInput: Record<string, unknown>;
 };
-
-const INTERNAL_TOOLS = ['markAsComplete'];
 
 const parseJsonOrReturnOriginal = (json: unknown) => {
   try {
@@ -74,7 +73,7 @@ const TimelineItem = ({
 };
 
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
-  if (INTERNAL_TOOLS.includes(block.toolName ?? '')) return null;
+  if ([TASK_COMPLETION_TOOL_NAME].includes(block.toolName ?? '')) return null;
 
   // TODO(@abuaboud): fix that
   const { data: metadata, isLoading } = {
@@ -89,10 +88,10 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
   const isDone = block.status === ToolCallStatus.COMPLETED;
   const isSuccess = output?.success ?? true;
-  const hasInstructions = !isNil(block.input?.instructions);
-  const resolvedFields = output?.resolvedFields ?? null;
-  const result = output?.content
-    ? parseJsonOrReturnOriginal(output.content[0].text)
+  const hasInstructions = !isNil(block.input?.instruction);
+  const resolvedFields = output?.resolvedInput ?? null;
+  const result = output?.output
+    ? parseJsonOrReturnOriginal(output.output)
     : null;
 
   const defaultTab = resolvedFields ? 'resolvedFields' : 'result';
@@ -152,7 +151,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
               {hasInstructions && (
                 <ApMarkdown
                   variant={MarkdownVariant.BORDERLESS}
-                  markdown={block.input?.instructions as string}
+                  markdown={block.input?.instruction as string}
                 />
               )}
 
@@ -233,16 +232,10 @@ export const MarkdownBlock = ({
   );
 };
 
-export const StructuredOutputBlock = ({
-  output
-}: {
-  output: any;
-}) => {
+export const StructuredOutputBlock = ({ output }: { output: any }) => {
   return (
-    <TimelineItem
-      icon={<Braces className="h-4 w-4 text-muted-foreground" />}
-    >
-      <JsonViewer json={output} title={t("output")} />
+    <TimelineItem icon={<Braces className="h-4 w-4 text-muted-foreground" />}>
+      <JsonViewer json={output} title={t('output')} />
     </TimelineItem>
   );
 };
