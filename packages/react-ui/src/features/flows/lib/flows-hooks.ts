@@ -2,6 +2,7 @@ import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
 import { useSocket } from '@/components/socket-provider';
 import { toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
@@ -22,6 +23,10 @@ import {
   PopulatedFlow,
   FlowTrigger,
   FlowTriggerType,
+  Flow,
+  ActivepiecesError,
+  WebsocketClientEvent,
+  FlowOperationStatus,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -60,6 +65,7 @@ export const flowsHooks = {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
       ApFlagId.ENABLE_FLOW_ON_PUBLISH,
     );
+    const updateStatusListener = flowsHooks.useOnFinishUpdateStatus();
 
     return useMutation({
       mutationFn: async () => {
@@ -81,6 +87,14 @@ export const flowsHooks = {
         setFlow(flow);
         setVersion(flow.version);
         setIsPublishing(false);
+
+        updateStatusListener((operationStatus, newStatus) => {
+          setFlow({
+            ...flow,
+            operationStatus,
+            status: newStatus ?? flow.status,
+          });
+        });
       },
       onError: (err: Error) => {
         toast({
@@ -88,7 +102,6 @@ export const flowsHooks = {
           description: t('Failed to publish flow, please contact support.'),
           variant: 'destructive',
         });
-        console.error('Failed to publish flow', err);
         setIsPublishing(false);
       },
     });
@@ -227,5 +240,44 @@ export const flowsHooks = {
           onUpdateRun,
         ),
     });
+  },
+  useOnFinishUpdateStatus: () => {
+    const socket = useSocket();
+
+    const updateStatusListener = (
+      callback: (
+        operationStatus: FlowOperationStatus,
+        newStatus?: FlowStatus,
+      ) => void,
+    ) => {
+      const onUpdateFinish = ({
+        flow: updatedFlow,
+        status,
+        error,
+      }: {
+        flow?: Flow;
+        status: 'success' | 'failed';
+        error?: unknown;
+      }) => {
+        if (status === 'failed') {
+          const err = error as ActivepiecesError;
+          toast({
+            title: t('Error'),
+            description: t('Failed to change flow status: {error}', {
+              error: err.message ?? JSON.stringify(err.message),
+            }),
+            variant: 'destructive',
+            showMore: err.error
+              ? () => useApErrorDialogStore.getState().openDialog(err.error)
+              : undefined,
+          });
+        }
+        callback(FlowOperationStatus.NONE, updatedFlow?.status);
+        socket.off(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
+      };
+      socket.on(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
+    };
+
+    return updateStatusListener;
   },
 };
