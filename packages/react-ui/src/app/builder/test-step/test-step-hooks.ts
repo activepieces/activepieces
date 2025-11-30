@@ -305,6 +305,7 @@ export const testStepHooks = {
             stepName: currentStep.name,
           },
           onProgress: params?.onProgress,
+          onFinsih: params?.type === 'agentAction' ? params.onFinish : undefined
         });
         return response;
       },
@@ -358,6 +359,7 @@ type TestActionMutationParams =
   | {
       type: 'todoAction' | 'agentAction';
       onProgress: (progress: StepRunResponse) => void;
+      onFinish?: () => void
     }
   | undefined;
 

@@ -176,7 +176,7 @@ Help the user finish their goal quickly and accurately.
           break;
         }
       }
-     // await context.output.update({ data: outputBuilder.build() })
+     await context.output.update({ data: outputBuilder.build() })
     }
     const { status } = outputBuilder.build()
     if (status == AgentTaskStatus.IN_PROGRESS) {

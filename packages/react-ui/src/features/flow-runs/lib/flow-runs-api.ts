@@ -21,6 +21,7 @@ type TestStepParams = {
   request: CreateStepRunRequestBody;
   // optional callback for steps like agent and todo
   onProgress?: (progress: StepRunResponse) => void;
+  onFinsih?: () => void;
 };
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
@@ -51,7 +52,7 @@ export const flowRunsApi = {
     onUpdate(initialRun);
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
-    const { socket, request, onProgress } = params;
+    const { socket, request, onProgress, onFinsih } = params;
     const stepRun = await api.post<FlowRun>(
       '/v1/sample-data/test-step',
       request,
@@ -60,23 +61,19 @@ export const flowRunsApi = {
     return new Promise<StepRunResponse>((resolve, reject) => {
       const handleStepFinished = (response: StepRunResponse) => {
         if (response.runId === stepRun.id) {
+          onFinsih?.()
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
             handleStepFinished,
           );
-          if (onProgress) {
-            socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, onProgress);
-          }
           socket.off('error', handleError);
           resolve(response);
         }
       };
 
       const handleError = (error: any) => {
+        onFinsih?.()
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        if (onProgress) {
-          socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, onProgress);
-        }
         socket.off('error', handleError);
         reject(error);
       };
