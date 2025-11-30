@@ -31,7 +31,7 @@ export const createEntryAction = createAction({
 		attributes: listFields(),
 	},
 	async run(context) {
-		const accessToken = context.auth;
+		const accessToken = context.auth.secret_text;
 		const { listId, parentObjectId, parentRecordId } = context.propsValue;
 		const inputFields = context.propsValue.attributes ?? {};
 
