@@ -78,10 +78,8 @@ export const createCashgram = createAction({
   async run(context) {
     // Get authentication values from piece-level auth
     const {
-
       clientId,
       clientSecret,
-      publicKey
     } = context.auth.props
 
     // const finalBearerToken: string;
@@ -90,7 +88,6 @@ export const createCashgram = createAction({
     const validation = validateAuthCredentials("client_credentials", {
       clientId,
       clientSecret,
-      publicKey,
     });
 
     if (!validation.isValid) {
@@ -106,8 +103,7 @@ export const createCashgram = createAction({
     const tokenResponse = await generateCashgramToken(
       {
         clientId: clientId!,
-        clientSecret: clientSecret!,
-        publicKey: publicKey!,
+        clientSecret: clientSecret!
       },
       environment as 'sandbox' | 'production'
     );
