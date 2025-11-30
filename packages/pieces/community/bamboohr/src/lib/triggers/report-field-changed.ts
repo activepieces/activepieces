@@ -24,10 +24,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, store }) => {
-    const { companyDomain, apiKey } = auth as {
-      companyDomain: string;
-      apiKey: string;
-    };
+    const { companyDomain, apiKey } = auth.props
 
     // Fetch the report from BambooHR
     const request: HttpRequest = {

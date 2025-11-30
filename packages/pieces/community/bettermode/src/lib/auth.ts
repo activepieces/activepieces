@@ -1,11 +1,19 @@
 import {
-  AppConnectionValueForAuthProperty,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { getAuthToken } from './api';
+
+export type BettermodeAuthType = {
+  region: string;
+  domain: string;
+  email: string;
+  password: string;
+  token?: string;
+  memberId?: string;
+};
 
 export const bettermodeAuth = PieceAuth.CustomAuth({
   description:
@@ -54,7 +62,7 @@ export const bettermodeAuth = PieceAuth.CustomAuth({
   required: true,
 });
 
-const validateAuth = async (auth: AppConnectionValueForAuthProperty<typeof bettermodeAuth>['props']) => {
+const validateAuth = async (auth: BettermodeAuthType) => {
   await propsValidation.validateZod(auth, {
     domain: z.string().url(),
     email: z.string().email(),
