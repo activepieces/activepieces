@@ -83,7 +83,7 @@ type WebhookTriggerHookContext<
   server: ServerContext;
 };
 export type TriggerHookContext<
-PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | undefined,
   TriggerProps extends InputPropertyMap,
   S extends TriggerStrategy,
 > = S extends TriggerStrategy.APP_WEBHOOK
