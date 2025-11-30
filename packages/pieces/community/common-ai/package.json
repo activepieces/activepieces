@@ -12,7 +12,7 @@
     "@ai-sdk/openai": "2.0.12",
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
-    "ai": "5.0.12",
+    "ai": "5.0.104",
     "@sinclair/typebox": "0.34.11"
   }
 }

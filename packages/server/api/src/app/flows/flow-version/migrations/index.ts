@@ -23,7 +23,7 @@ const migrations: Migration[] = [
     migrateHttpToWebhookV5,
     migratePropertySettingsV6,
     moveAgentsToFlowVerion,
-    cleanUpAgentTools
+    cleanUpAgentTools,
 ] as const
 
 export const flowMigrations = {

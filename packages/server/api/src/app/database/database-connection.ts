@@ -38,9 +38,7 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { DatabaseType, system } from '../helper/system/system'
-import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
-import { McpEntity } from '../mcp/mcp-server/mcp-entity'
-import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
+import { McpServerEntity } from '../mcp/mcp-entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -97,10 +95,8 @@ function getEntities(): EntitySchema<unknown>[] {
         TableWebhookEntity,
         UserIdentityEntity,
         TodoEntity,
-        McpEntity,
+        McpServerEntity,
         TodoActivityEntity,
-        McpToolEntity,
-        McpRunEntity,
         AIUsageEntity,
         TriggerSourceEntity,
     ]
@@ -227,4 +223,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

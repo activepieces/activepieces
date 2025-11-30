@@ -1,5 +1,5 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, AgentTool, PieceAction, PropertyExecutionType, StepOutputStatus, AgentToolType } from '@activepieces/shared'
+import { AgentTool, AgentToolType, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateObject, LanguageModel, ToolSet } from 'ai'
 import { z } from 'zod/v4'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -10,54 +10,13 @@ import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
 
 export const agentTools = {
-    execute: async (operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> => {
-
-        const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
-            pieceName: operation.pieceName,
-            pieceVersion: operation.pieceVersion, actionName: operation.actionName,
-            devPieces: EngineConstants.DEV_PIECES,
-        })
-        const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
-        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
-        const step: PieceAction = {
-            name: operation.actionName,
-            displayName: operation.actionName,
-            type: FlowActionType.PIECE,
-            settings: {
-                input: resolvedInput,
-                actionName: operation.actionName,
-                pieceName: operation.pieceName,
-                pieceVersion: operation.pieceVersion,
-                propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
-                    type: PropertyExecutionType.MANUAL,
-                    schema: undefined,
-                }])),
-            },
-            valid: true,
-        }
-
-        const output = await flowExecutor.getExecutorForAction(step.type).handle({
-            action: step,
-            executionState: FlowExecutorContext.empty(),
-            constants: EngineConstants.fromExecuteActionInput(operation),
-        })
-
-        const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
-
-        return {
-            status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
-            output: stepOutput,
-            resolvedInput,
-            errorMessage,
-        }
-    },
     async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<ToolSet> {
         const piecesTools = await Promise.all(tools
             .filter((tool) => tool.type === AgentToolType.PIECE)
             .map(async (tool) => {
                 const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
                     pieceName: tool.pieceMetadata.pieceName,
-                    pieceVersion: tool.pieceMetadata.pieceVersion, 
+                    pieceVersion: tool.pieceMetadata.pieceVersion,
                     actionName: tool.pieceMetadata.actionName,
                     devPieces: EngineConstants.DEV_PIECES,
                 })
@@ -68,7 +27,7 @@ export const agentTools = {
                         instruction: z.string().describe('The instruction to the tool'),
                     }),
                     execute: async ({ instruction }: { instruction: string }) =>
-                        agentTools.execute({
+                        execute({
                             ...engineConstants,
                             instruction,
                             pieceName: tool.pieceMetadata.pieceName,
@@ -77,11 +36,9 @@ export const agentTools = {
                             predefinedInput: tool.pieceMetadata.predefinedInput,
                             model,
                         }),
-                };
-                
-            }));
-
-
+                }
+            }))
+  
         return {
             ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
         }
@@ -122,6 +79,53 @@ async function resolveProperties(depthToPropertyMap: Record<number, string[]>, i
     }
     return result
 }
+
+
+async function execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
+    const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
+        pieceName: operation.pieceName,
+        pieceVersion: operation.pieceVersion,
+        actionName: operation.actionName,
+        devPieces: EngineConstants.DEV_PIECES,
+    })
+    const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
+    const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
+    const step: PieceAction = {
+        name: operation.actionName,
+        displayName: operation.actionName,
+        type: FlowActionType.PIECE,
+        settings: {
+            input: resolvedInput,
+            actionName: operation.actionName,
+            pieceName: operation.pieceName,
+            pieceVersion: operation.pieceVersion,
+            propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
+                type: PropertyExecutionType.MANUAL,
+                schema: undefined,
+            }])),
+        },
+        valid: true,
+    }
+
+    const output = await flowExecutor.getExecutorForAction(step.type).handle({
+        action: step,
+        executionState: FlowExecutorContext.empty(),
+        constants: EngineConstants.fromExecuteActionInput(operation),
+    })
+
+    const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
+
+    return {
+        status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
+        output: stepOutput,
+        resolvedInput: {
+            ...resolvedInput,
+            auth: 'Redacted',
+        },
+        errorMessage,
+    }
+}
+
 
 const constructExtractionPrompt = (instruction: string, propertyToFill: Record<string, z.ZodTypeAny>, propertyPrompts: string[]): string => {
     const propertyNames = Object.keys(propertyToFill).join('", "')
@@ -252,5 +256,5 @@ async function loadOptions(propertyName: string, operation: ExecuteToolOperation
 type ConstructToolParams = {
     engineConstants: EngineConstants
     tools: AgentTool[]
-    model: LanguageModel,
+    model: LanguageModel
 }

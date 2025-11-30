@@ -21,7 +21,6 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import {
   isNil,
   MarkdownContentBlock,
@@ -30,6 +29,8 @@ import {
   ToolCallStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
+
+import { agentToolHooks } from '../agent-tool-hooks';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -75,7 +76,8 @@ const TimelineItem = ({
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   if ([TASK_COMPLETION_TOOL_NAME].includes(block.toolName ?? '')) return null;
 
-  const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
+  const { data: metadata, isLoading } = agentToolHooks.useToolMetadata(block);
+
   const output = block.output as ToolCallOutput | null;
 
   const isDone = block.status === ToolCallStatus.COMPLETED;
