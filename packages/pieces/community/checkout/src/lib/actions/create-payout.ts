@@ -557,7 +557,7 @@ export const createPayoutAction = createAction({
         method: HttpMethod.POST,
         url: `${baseUrl}/payments`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

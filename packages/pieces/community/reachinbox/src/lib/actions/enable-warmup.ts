@@ -75,7 +75,7 @@ export const enableWarmup = createAction({
         method: HttpMethod.POST,
         url: `${reachinboxCommon.baseUrl}account/warmup/enable`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

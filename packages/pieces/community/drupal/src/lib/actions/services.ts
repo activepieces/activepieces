@@ -22,8 +22,9 @@ export const drupalCallServiceAction = createAction({
       description: 'The service to call.',
       required: true,
       refreshers: [],
+      auth: drupalAuth,
       options: async ({ auth }) => {
-        const { website_url, username, password } = (auth as DrupalAuthType);
+        const { website_url, username, password } = auth.props;
         if (!auth) {
           return {
             disabled: true,
@@ -68,10 +69,11 @@ export const drupalCallServiceAction = createAction({
       displayName: 'Service configuration',
       refreshers: ['service'],
       required: true,
+      auth: drupalAuth,
       props: async ({ service }) => {
         console.debug('Service config input', service);
         const fields: Record<string, any> = {};
-        const items = service['config'] as DrupalServiceConfig[];
+        const items = (service as {config: DrupalServiceConfig[]}).config;
         items.forEach((config: any) => {
           if (config.type === 'boolean') {
             fields[config.key] = Property.Checkbox({
@@ -122,7 +124,7 @@ export const drupalCallServiceAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { website_url, username, password } = (auth as DrupalAuthType);
+    const { website_url, username, password } = auth.props;
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: website_url + `/orchestration/service/execute`,

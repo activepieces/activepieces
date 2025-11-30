@@ -21,11 +21,12 @@ export const drupalUpdateEntityAction = createAction({
   description: 'Update an existing entity in Drupal with smart field discovery and validation',
   props: {
     entity_type: Property.Dropdown({
+      auth: drupalAuth,
       displayName: 'Entity Type',
       description: 'Select the entity type and bundle',
       required: true,
       refreshers: [],
-      options: async ({ auth }) => fetchEntityTypesForEditing(auth as DrupalAuthType),
+      options: async ({ auth }) => fetchEntityTypesForEditing(auth),
     }),
     entity_uuid: Property.ShortText({
       displayName: 'Entity UUID',
@@ -33,13 +34,14 @@ export const drupalUpdateEntityAction = createAction({
       required: true,
     }),
     entity_fields: Property.DynamicProperties({
+      auth: drupalAuth,
       displayName: 'Entity Fields',
       description: 'Update the values for the entity fields (only provide values for fields you want to change)',
       required: false,
       refreshers: ['entity_type'],
       props: async (propsValue) => {
         const { auth, entity_type } = propsValue;
-        return buildFieldProperties(auth as DrupalAuthType, entity_type, false);
+        return buildFieldProperties(auth, entity_type, false);
       }
     }),
   },
@@ -94,7 +96,7 @@ export const drupalUpdateEntityAction = createAction({
     }
     
     return await drupal.updateEntity(
-      auth as DrupalAuthType,
+      auth,
       entityInfo.entity_type,
       entityInfo.bundle,
       propsValue['entity_uuid'],

@@ -21,20 +21,22 @@ export const drupalCreateEntityAction = createAction({
   description: 'Create a new entity in Drupal with smart field discovery and validation',
   props: {
     entity_type: Property.Dropdown({
+      auth: drupalAuth,
       displayName: 'Entity Type',
       description: 'Choose the type of content to create.',
       required: true,
       refreshers: [],
-      options: async ({ auth }) => fetchEntityTypesForEditing(auth as DrupalAuthType),
+      options: async ({ auth }) => fetchEntityTypesForEditing(auth),
     }),
     entity_fields: Property.DynamicProperties({
+      auth: drupalAuth,
       displayName: 'Entity Fields',
       description: 'Fill in the content fields. Available fields depend on the entity type selected above.',
       required: false,
       refreshers: ['entity_type'],
       props: async (propsValue) => {
         const { auth, entity_type } = propsValue;
-        return buildFieldProperties(auth as DrupalAuthType, entity_type, true);
+        return buildFieldProperties(auth, entity_type, true);
       }
     }),
   },
@@ -88,7 +90,7 @@ export const drupalCreateEntityAction = createAction({
     }
     
     return await drupal.createEntity(
-      auth as DrupalAuthType,
+      auth,
       entityInfo.entity_type,
       entityInfo.bundle,
       fieldsToCreate

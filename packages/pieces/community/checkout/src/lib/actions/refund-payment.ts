@@ -496,7 +496,7 @@ export const refundPaymentAction = createAction({
         method: HttpMethod.POST,
         url: `${baseUrl}/payments/${payment_id}/refunds`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

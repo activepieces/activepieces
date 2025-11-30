@@ -149,7 +149,7 @@ export const disputeEventsTrigger = createTrigger({
           method: HttpMethod.DELETE,
           url: `${baseUrl}/workflows/${workflowData.workflowId}`,
           headers: {
-            Authorization: `Bearer ${context.auth}`,
+            Authorization: `Bearer ${context.auth.secret_text}`,
           },
         });
       }

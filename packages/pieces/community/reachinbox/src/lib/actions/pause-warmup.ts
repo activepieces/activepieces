@@ -70,7 +70,7 @@ export const pauseWarmup = createAction({
         method: HttpMethod.POST,
         url: `${reachinboxCommon.baseUrl}account/warmup/pause`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

@@ -11,6 +11,7 @@ import { createApiClient } from './lib/common';
 import { listEnvelopes } from './lib/actions/list-envelopes';
 import { getEnvelope } from './lib/actions/get-envelope';
 import { getDocument } from './lib/actions/get-document';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const docusignAuth = PieceAuth.CustomAuth({
   required: true,
@@ -53,7 +54,10 @@ export const docusignAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth, server }) => {
     try {
-      await createApiClient(auth as DocusignAuthType);
+      await createApiClient({
+         props: auth,
+        type: AppConnectionType.CUSTOM_AUTH,
+      });
       return {
         valid: true,
       };
@@ -122,12 +126,12 @@ export const docusign = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => {
         return `https://${
-          (auth as DocusignAuthType).environment
+          (auth).props.environment
         }.docusign.net/restapi`;
       },
       auth: docusignAuth,
-      authMapping: async (auth, propsValue) => {
-        const apiClient = await createApiClient(auth as DocusignAuthType);
+      authMapping: async (auth) => {
+        const apiClient = await createApiClient(auth);
         return (apiClient as any).defaultHeaders;
       },
     }),

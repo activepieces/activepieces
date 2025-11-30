@@ -59,7 +59,7 @@ export const removeEmail = createAction({
         method: HttpMethod.DELETE,
         url: `${reachinboxCommon.baseUrl}account/delete/${accountId}`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
 
