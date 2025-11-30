@@ -2,7 +2,6 @@ import { t } from 'i18next';
 import { EllipsisVertical, Puzzle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -11,15 +10,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { Tool, ToolType, Permission } from '@activepieces/shared';
+import { AgentTool, AgentToolType } from '@activepieces/shared';
 
-import { mcpConfigUtils } from './mcp-config-utils';
+import { agentConfigUtils } from './config-utils';
 
-type McpPieceToolProps = {
+type AgentPieceToolProps = {
   disabled?: boolean;
-  tools: Tool[];
+  tools: AgentTool[];
   pieces: PieceMetadataModelSummary[];
   removeTool: (toolIds: string[]) => Promise<void>;
 };
@@ -29,48 +27,45 @@ type PieceInfo = {
   logoUrl?: string;
 };
 
-export const McpPieceTool = ({
+export const AgentPieceTool = ({
   disabled,
   tools,
   pieces,
   removeTool,
-}: McpPieceToolProps) => {
+}: AgentPieceToolProps) => {
   const [open, setOpen] = useState(false);
-  const { checkAccess } = useAuthorization();
-  const hasPermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
 
-  const getPieceInfo = (mcpTool: Tool) => {
-    if (mcpTool.type !== ToolType.PIECE || !mcpTool.pieceMetadata) {
+  const getPieceInfo = (tool: AgentTool) => {
+    if (tool.type !== AgentToolType.PIECE || !tool.pieceMetadata) {
       return { displayName: 'Unknown', logoUrl: undefined };
     }
 
     const pieceMetadata = pieces?.find(
-      (p) => p.name === mcpTool.pieceMetadata?.pieceName,
+      (p) => p.name === tool.pieceMetadata?.pieceName,
     );
     return {
-      displayName:
-        pieceMetadata?.displayName || mcpTool.pieceMetadata.pieceName,
+      displayName: pieceMetadata?.displayName || tool.pieceMetadata.pieceName,
       logoUrl: pieceMetadata?.logoUrl,
     };
   };
 
   const pieceInfoMap: Record<string, PieceInfo> = {};
-  tools.forEach((mcpTool: Tool) => {
-    pieceInfoMap[mcpTool.id] = getPieceInfo(mcpTool);
+  tools.forEach((tool: AgentTool) => {
+    pieceInfoMap[tool.toolName] = getPieceInfo(tool);
   });
 
   const actionDisplayNames = tools
     .map((tool) => {
-      if (tool.type === ToolType.PIECE) {
-        return tool.pieceMetadata?.actionDisplayName;
+      if (tool.type === AgentToolType.PIECE) {
+        return tool.pieceMetadata?.actionName;
       }
       return undefined;
     })
     .filter((name) => name !== undefined);
 
   const toolName =
-    tools[0].type === ToolType.PIECE
-      ? pieceInfoMap[tools[0].id]?.displayName
+    tools[0].type === AgentToolType.PIECE
+      ? pieceInfoMap[tools[0].toolName]?.displayName
       : undefined;
 
   return (
@@ -78,10 +73,10 @@ export const McpPieceTool = ({
       <CardContent className="flex items-center justify-between p-3 min-h-[48px]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-            {pieceInfoMap[tools[0].id]?.logoUrl ? (
+            {pieceInfoMap[tools[0].toolName]?.logoUrl ? (
               <img
-                src={pieceInfoMap[tools[0].id].logoUrl}
-                alt={pieceInfoMap[tools[0].id].displayName}
+                src={pieceInfoMap[tools[0].toolName].logoUrl}
+                alt={pieceInfoMap[tools[0].toolName].displayName}
                 className="h-5 w-5 object-contain"
               />
             ) : (
@@ -90,10 +85,10 @@ export const McpPieceTool = ({
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">
-              {`${pieceInfoMap[tools[0].id]?.displayName}`}
+              {`${pieceInfoMap[tools[0].toolName]?.displayName}`}
             </h3>
             <span className="text-xs text-muted-foreground">
-              {mcpConfigUtils.formatNames(actionDisplayNames)}
+              {agentConfigUtils.formatNames(actionDisplayNames)}
             </span>
           </div>
         </div>
@@ -111,26 +106,21 @@ export const McpPieceTool = ({
               noAnimationOnOut={true}
               onCloseAutoFocus={(e) => e.preventDefault()}
             >
-              <PermissionNeededTooltip hasPermission={hasPermissionToWriteMcp}>
-                <ConfirmationDeleteDialog
-                  title={`${t('Delete')} ${toolName}`}
-                  message={t('Are you sure you want to delete this tool?')}
-                  mutationFn={async () =>
-                    await removeTool(tools.map((tool) => tool.toolName))
-                  }
-                  entityName={t('Tool')}
-                >
-                  <DropdownMenuItem
-                    disabled={!hasPermissionToWriteMcp}
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <div className="flex cursor-pointer flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">{t('Delete')}</span>
-                    </div>
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
-              </PermissionNeededTooltip>
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${toolName}`}
+                message={t('Are you sure you want to delete this tool?')}
+                mutationFn={async () =>
+                  await removeTool(tools.map((tool) => tool.toolName))
+                }
+                entityName={t('Tool')}
+              >
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">{t('Delete')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

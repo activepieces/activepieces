@@ -18,30 +18,32 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ToolType, FlowTriggerType } from '@activepieces/shared';
-import type { Tool, McpToolRequest, PopulatedFlow } from '@activepieces/shared';
+import {
+  PopulatedFlow,
+  AgentTool,
+  FlowTriggerType,
+  AgentToolType,
+} from '@activepieces/shared';
 
-import { McpFlowDialogContent } from './mcp-flow-dialog-content';
+import { FlowDialogContent } from './flow-dialog-content';
 
-type McpFlowDialogProps = {
+type AgentFlowToolDialogProps = {
   children: React.ReactNode;
   selectedFlows: string[];
-  mcpId?: string;
   open: boolean;
-  onToolsUpdate: (tools: McpToolRequest[]) => void;
+  onToolsUpdate: (tools: AgentTool[]) => void;
   onClose: () => void;
-  tools: Tool[];
+  tools: AgentTool[];
 };
 
-export function McpFlowDialog({
+export function AgentFlowToolDialog({
   open,
-  mcpId,
   selectedFlows: initialSelectedFlows,
   onToolsUpdate,
   children,
   onClose,
   tools,
-}: McpFlowDialogProps) {
+}: AgentFlowToolDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFlows, setSelectedFlows] =
     useState<string[]>(initialSelectedFlows);
@@ -49,7 +51,7 @@ export function McpFlowDialog({
   const projectId = authenticationSession.getProjectId();
 
   const { data: flows } = useQuery({
-    queryKey: ['flows', projectId, mcpId],
+    queryKey: ['flows', projectId],
     queryFn: async () => {
       const flows = await flowsApi
         .list({
@@ -70,15 +72,16 @@ export function McpFlowDialog({
   });
 
   const handleSave = () => {
-    const newTools: McpToolRequest[] = selectedFlows.map((flowId) => ({
-      type: ToolType.FLOW,
+    const newTools = selectedFlows.map((flowId) => ({
+      type: AgentToolType.FLOW,
       flowId: flowId,
       toolName: flowId,
-      mcpId,
-    }));
-    const nonFlowTools: McpToolRequest[] = tools.filter(
-      (tool) => tool.type !== ToolType.FLOW,
+    })) as AgentTool[];
+
+    const nonFlowTools: AgentTool[] = tools.filter(
+      (tool) => tool.type !== AgentToolType.FLOW,
     );
+
     const updatedTools = [...nonFlowTools, ...newTools];
     onToolsUpdate(updatedTools);
     handleClose();
@@ -103,7 +106,7 @@ export function McpFlowDialog({
         <DialogHeader>
           <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
           <DialogDescription>
-            {t('Select flows to add as MCP tools')}
+            {t('Select flows to add as agent tools')}
           </DialogDescription>
         </DialogHeader>
 
@@ -120,7 +123,7 @@ export function McpFlowDialog({
         </div>
 
         <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
-          <McpFlowDialogContent
+          <FlowDialogContent
             flows={flows || []}
             searchQuery={searchQuery}
             selectedFlows={selectedFlows}

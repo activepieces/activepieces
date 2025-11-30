@@ -8,7 +8,6 @@ export enum AgentToolType {
 }
 
 const AgentToolBase = {
-    ...BaseModelSchema,
     toolName: Type.String(),
 }
 

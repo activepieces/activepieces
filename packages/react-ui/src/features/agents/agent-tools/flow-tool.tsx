@@ -2,7 +2,6 @@ import { t } from 'i18next';
 import { Workflow, Trash2, EllipsisVertical } from 'lucide-react';
 import { useState } from 'react';
 
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -11,30 +10,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { FlowTool as McpFlowToolType, Permission } from '@activepieces/shared';
+import { AgentFlowTool as AgentFlowToolType } from '@activepieces/shared';
 
-type McpFlowToolProps = {
+type AgentFlowToolProps = {
   disabled?: boolean;
-  tool: McpFlowToolType;
+  tool: AgentFlowToolType;
   removeTool: (toolIds: string[]) => Promise<void>;
 };
 
-export const McpFlowTool = ({
+export const AgentFlowTool = ({
   disabled,
   tool,
   removeTool,
-}: McpFlowToolProps) => {
+}: AgentFlowToolProps) => {
   const [open, setOpen] = useState(false);
-  const { checkAccess } = useAuthorization();
-  const hasPermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
 
   const openFlow = () => {
-    window.open(`/flows/${tool.flow?.id}`, '_blank');
+    window.open(`/flows/${tool.flowId}`, '_blank');
   };
 
   return (
-    <Card key={`flow-${tool.id}`}>
+    <Card key={`flow-${tool.toolName}`}>
       <CardContent className="flex items-center justify-between p-3 min-h-[48px]">
         <div
           className="flex items-center gap-3 min-w-0 group cursor-pointer"
@@ -46,7 +42,7 @@ export const McpFlowTool = ({
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">
               <span className="group-hover:underline">
-                {tool.flow?.version?.displayName || t('Flow')}
+                {tool.flowId || t('Flow')}
               </span>
             </h3>
           </div>
@@ -65,24 +61,19 @@ export const McpFlowTool = ({
               noAnimationOnOut={true}
               onCloseAutoFocus={(e) => e.preventDefault()}
             >
-              <PermissionNeededTooltip hasPermission={hasPermissionToWriteMcp}>
-                <ConfirmationDeleteDialog
-                  title={`${t('Delete')} ${tool.flow?.version?.displayName}`}
-                  message={t('Are you sure you want to delete this tool?')}
-                  mutationFn={async () => await removeTool([tool.toolName])}
-                  entityName={t('Tool')}
-                >
-                  <DropdownMenuItem
-                    disabled={!hasPermissionToWriteMcp}
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <div className="flex cursor-pointer flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">{t('Delete')}</span>
-                    </div>
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
-              </PermissionNeededTooltip>
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${tool.flowId}`}
+                message={t('Are you sure you want to delete this tool?')}
+                mutationFn={async () => await removeTool([tool.toolName])}
+                entityName={t('Tool')}
+              >
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">{t('Delete')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

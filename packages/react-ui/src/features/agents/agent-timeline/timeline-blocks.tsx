@@ -12,6 +12,7 @@ import {
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { DataList } from '@/components/data-list';
+import { JsonViewer } from '@/components/json-viewer';
 import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import {
   Accordion,
@@ -28,7 +29,6 @@ import {
   ToolCallStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
-import { JsonViewer } from '@/components/json-viewer';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
@@ -225,16 +225,10 @@ export const MarkdownBlock = ({
   );
 };
 
-export const StructuredOutputBlock = ({
-  output
-}: {
-  output: any;
-}) => {
+export const StructuredOutputBlock = ({ output }: { output: any }) => {
   return (
-    <TimelineItem
-      icon={<Braces className="h-4 w-4 text-muted-foreground" />}
-    >
-      <JsonViewer json={output} title={t("output")} />
+    <TimelineItem icon={<Braces className="h-4 w-4 text-muted-foreground" />}>
+      <JsonViewer json={output} title={t('output')} />
     </TimelineItem>
   );
 };

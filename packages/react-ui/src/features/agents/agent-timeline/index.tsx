@@ -54,9 +54,13 @@ export const AgentTimeline = ({
             }
           })}
 
-          {!isNil(agentResult.structuredOutput) && <StructuredOutputBlock output={agentResult.structuredOutput} /> }
+          {!isNil(agentResult.structuredOutput) && (
+            <StructuredOutputBlock output={agentResult.structuredOutput} />
+          )}
 
-          {agentResult.status === AgentTaskStatus.IN_PROGRESS && <ThinkingBlock />}
+          {agentResult.status === AgentTaskStatus.IN_PROGRESS && (
+            <ThinkingBlock />
+          )}
           {agentResult.status === AgentTaskStatus.COMPLETED && <DoneBlock />}
           {agentResult.status === AgentTaskStatus.FAILED && <FailedBlock />}
         </div>

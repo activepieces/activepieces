@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type { Tool, McpToolRequest, AgentTool } from '@activepieces/shared';
+import type { Tool, McpToolRequest } from '@activepieces/shared';
 import { isNil, ToolType } from '@activepieces/shared';
 
 import { McpAddToolDropdown } from './mcp-add-tool-actions';
@@ -56,8 +56,7 @@ export const McpToolsSection = ({
   };
 
   const piecesCount =
-    tools.filter((tool: Tool) => tool.type === ToolType.PIECE).length ||
-    0;
+    tools.filter((tool: Tool) => tool.type === ToolType.PIECE).length || 0;
   const flowsCount =
     tools.filter((tool: Tool) => tool.type === ToolType.FLOW).length || 0;
   const totalToolsCount = piecesCount + flowsCount;

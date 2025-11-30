@@ -22,18 +22,21 @@ import {
 } from '@/components/ui/tooltip';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { isNil, ToolType } from '@activepieces/shared';
-import type { PieceTool, McpToolRequest, Tool } from '@activepieces/shared';
+import {
+  isNil,
+  AgentTool,
+  AgentPieceTool,
+  AgentToolType,
+} from '@activepieces/shared';
 
-import { McpPieceActionsDialog } from './mcp-piece-actions';
-import { McpPiecesContent } from './mcp-pieces-content';
+import { PieceActionsDialog } from './piece-actions';
+import { PiecesContent } from './pieces-content';
 
-type McpPieceDialogProps = {
+type AgentPieceDialogProps = {
   children: React.ReactNode;
-  mcpId?: string;
-  tools: Tool[];
+  tools: AgentTool[];
   open: boolean;
-  onToolsUpdate: (tools: McpToolRequest[]) => void;
+  onToolsUpdate: (tools: AgentTool[]) => void;
   onClose: () => void;
 };
 
@@ -42,17 +45,21 @@ export type ActionInfo = {
   actionDisplayName: string;
 };
 
-export function McpPieceDialog({
+export function AgentPieceDialog({
   tools,
-  mcpId,
   open,
   onToolsUpdate,
   children,
   onClose,
-}: McpPieceDialogProps) {
+}: AgentPieceDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
     useState<string | null>(null);
+
+  console.log('@@@@@@@@@@@@@@@@@@@@@222222222');
+  console.log(selectedConnectionExternalId);
+  console.log('@@@@@@@@@@@@@@@@@@@@@222222222');
+
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const { metadata, isLoading: isPiecesLoading } =
@@ -76,8 +83,8 @@ export function McpPieceDialog({
 
   const handlePieceSelect = (piece: PieceStepMetadataWithSuggestions) => {
     const existingTools = tools?.filter(
-      (tool): tool is PieceTool =>
-        tool.type === ToolType.PIECE &&
+      (tool): tool is AgentPieceTool =>
+        tool.type === AgentToolType.PIECE &&
         tool.pieceMetadata?.pieceName === piece.pieceName,
     );
 
@@ -85,11 +92,12 @@ export function McpPieceDialog({
       setSelectedActions(
         existingTools.map((tool) => ({
           actionName: tool.pieceMetadata?.actionName,
-          actionDisplayName: tool.pieceMetadata?.actionDisplayName,
+          actionDisplayName: tool.pieceMetadata?.actionName,
         })),
       );
       setSelectedConnectionExternalId(
-        existingTools[0].pieceMetadata?.connectionExternalId || null,
+        (existingTools[0].pieceMetadata?.predefinedInput?.auth as string) ||
+          null,
       );
     }
 
@@ -130,19 +138,21 @@ export function McpPieceDialog({
     setShowValidationErrors(false);
     if (!selectedPiece) return;
 
-    const newTools: McpToolRequest[] = selectedActions.map((action) => ({
-      type: ToolType.PIECE,
-      mcpId,
+    const newTools: AgentTool[] = selectedActions.map((action) => ({
+      type: AgentToolType.PIECE,
+      toolName: action.actionName,
       pieceMetadata: {
+        pieceVersion: selectedPiece.pieceVersion,
         pieceName: selectedPiece.pieceName,
         actionName: action.actionName,
-        actionDisplayName: action.actionDisplayName,
-        pieceVersion: selectedPiece.pieceVersion,
-        logoUrl: selectedPiece.logoUrl,
-        connectionExternalId: selectedConnectionExternalId ?? undefined,
+        predefinedInput: {
+          auth: !isNil(selectedConnectionExternalId)
+            ? `{{connections['${selectedConnectionExternalId}']}}`
+            : undefined,
+        },
       },
-      toolName: action.actionName,
     }));
+
     const oldTools = tools;
     onToolsUpdate([...oldTools, ...newTools]);
     handleClose();
@@ -194,7 +204,7 @@ export function McpPieceDialog({
           </DialogTitle>
         </DialogHeader>
         {selectedPiece ? (
-          <McpPieceActionsDialog
+          <PieceActionsDialog
             piece={selectedPiece}
             selectedActions={selectedActions}
             onSelectAction={handleActionSelect}
@@ -217,7 +227,7 @@ export function McpPieceDialog({
               </div>
             </div>
             <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
-              <McpPiecesContent
+              <PiecesContent
                 isPiecesLoading={isPiecesLoading}
                 pieceMetadata={pieceMetadata}
                 onPieceSelect={handlePieceSelect}

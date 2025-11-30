@@ -119,8 +119,8 @@ const TestStepSectionImplementation = React.memo(
           setLiveAgentResult(progress.output as AgentResult);
         },
         onFinish: () => {
-          setLiveAgentResult(undefined)
-        }
+          setLiveAgentResult(undefined);
+        },
       });
     };
 
