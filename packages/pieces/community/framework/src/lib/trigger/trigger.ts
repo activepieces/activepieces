@@ -37,7 +37,7 @@ export interface WebhookResponse {
 }
 
 type BaseTriggerParams<
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined,
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = {
@@ -57,7 +57,7 @@ type BaseTriggerParams<
 }
 
 type WebhookTriggerParams<
-PieceAuth extends PieceAuthProperty,
+PieceAuth extends PieceAuthProperty | undefined,
 TriggerProps extends InputPropertyMap,
 TS extends TriggerStrategy,
 > = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
@@ -68,7 +68,7 @@ TS extends TriggerStrategy,
 }
 
 type CreateTriggerParams<
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined,
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = TS extends TriggerStrategy.WEBHOOK
@@ -110,7 +110,7 @@ export type Trigger<
 // TODO refactor and extract common logic
 export const createTrigger = <
   TS extends TriggerStrategy,
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined,
   TriggerProps extends InputPropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
   switch (params.type) {
