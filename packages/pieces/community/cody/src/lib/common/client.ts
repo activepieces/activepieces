@@ -80,7 +80,7 @@ export const codyClient = {
     },
 
     async createDocument(
-        apiKey: string, 
+        {secret_text}: AppConnectionValueForAuthProperty<typeof codyAuth>, 
         name: string, 
         folderId: string, 
         content: string
@@ -90,7 +90,7 @@ export const codyClient = {
             url: `${CODY_BASE_URL}/documents`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: apiKey,
+                token: secret_text,
             },
             body: {
                 name,
