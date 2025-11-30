@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { generateCashgramToken, validateAuthCredentials } from '../auth/cashgram-auth';
+import { cashfreePaymentsAuth, generateCashgramToken, validateAuthCredentials } from '../auth/cashgram-auth';
 
 export const createCashgram = createAction({
+  auth: cashfreePaymentsAuth,
   name: 'create-cashgram',
   displayName: 'Create Cashgram',
   description: 'Create a Cashgram for instant money transfers using Cashfree',
@@ -81,12 +82,7 @@ export const createCashgram = createAction({
       clientId,
       clientSecret,
       publicKey
-    } = context.auth as {
-
-      clientId?: string;
-      clientSecret?: string;
-      publicKey?: string;
-    };
+    } = context.auth.props
 
     // const finalBearerToken: string;
 
