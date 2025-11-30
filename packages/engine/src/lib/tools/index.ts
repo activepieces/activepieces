@@ -74,10 +74,11 @@ export const agentTools = {
                             pieceName: tool.pieceMetadata.pieceName,
                             pieceVersion: tool.pieceMetadata.pieceVersion,
                             actionName: tool.pieceMetadata.actionName,
-                            predefinedInput: {},
+                            predefinedInput: tool.pieceMetadata.predefinedInput,
                             model,
                         }),
                 };
+                
             }));
 
 
