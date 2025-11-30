@@ -48,7 +48,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | undefined, ActionProp
 }
 
 export type Action<
-  PieceAuth extends PieceAuthProperty = any,
+  PieceAuth extends PieceAuthProperty | undefined,
   ActionProps extends InputPropertyMap = any,
 > = IAction<PieceAuth, ActionProps>
 

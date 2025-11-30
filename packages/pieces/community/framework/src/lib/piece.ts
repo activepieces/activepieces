@@ -10,11 +10,11 @@ import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
 import { ContextVersion, LATEST_CONTEXT_VERSION } from './context/versioning';
 
-export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
+export class Piece<PieceAuth extends PieceAuthProperty | undefined>
   implements Omit<PieceBase, 'version' | 'name'>
 {
-  private readonly _actions: Record<string, Action> = {};
-  private readonly _triggers: Record<string, Trigger> = {};
+  private readonly _actions: Record<string, Action<PieceAuth>> = {};
+  private readonly _triggers: Record<string, Trigger<PieceAuth>> = {};
   // this method didn't exist in older version
   public getContextInfo: (() => { version: ContextVersion } )| undefined = () => ({ version: LATEST_CONTEXT_VERSION }); 
   constructor(
@@ -51,11 +51,11 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     };
   }
 
-  getAction(actionName: string): Action | undefined {
+  getAction(actionName: string): Action<PieceAuth> | undefined {
     return this._actions[actionName];
   }
 
-  getTrigger(triggerName: string): Trigger | undefined {
+  getTrigger(triggerName: string): Trigger<PieceAuth> | undefined {
     return this._triggers[triggerName];
   }
 
@@ -68,7 +68,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   }
 }
 
-export const createPiece = <PieceAuth extends PieceAuthProperty>(
+export const createPiece = <PieceAuth extends PieceAuthProperty | undefined>(
   params: CreatePieceParams<PieceAuth>
 ) => {
   return new Piece(
@@ -87,7 +87,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
 };
 
 type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty
+  PieceAuth extends PieceAuthProperty | undefined
 > = {
   displayName: string;
   logoUrl: string;

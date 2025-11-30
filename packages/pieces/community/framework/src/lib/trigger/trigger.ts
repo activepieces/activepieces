@@ -15,7 +15,7 @@ export enum WebhookRenewStrategy {
   NONE = 'NONE',
 }
 
-type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
+type OnStartRunner<PieceAuth extends PieceAuthProperty | undefined, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
 
 
@@ -77,7 +77,7 @@ type CreateTriggerParams<
 
 export class ITrigger<
   TS extends TriggerStrategy,
-  PieceAuth extends PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | undefined,
   TriggerProps extends InputPropertyMap,
 > implements TriggerBase {
   constructor(
@@ -102,7 +102,7 @@ export class ITrigger<
 }
 
 export type Trigger<
-  PieceAuth extends PieceAuthProperty = any,
+  PieceAuth extends PieceAuthProperty | undefined,
   TriggerProps extends InputPropertyMap = any,
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>

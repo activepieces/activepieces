@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.72.3",
+  "version": "0.72.4",
   "rcVersion": "0.72.2-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -126,7 +126,7 @@
     "@xyflow/react": "12.3.5",
     "ai": "5.0.12",
     "async-mutex": "0.4.0",
-    "axios": "1.8.3",
+    "axios": "1.13.1",
     "axios-retry": "4.4.1",
     "bcrypt": "6.0.0",
     "boring-avatars": "1.11.2",
