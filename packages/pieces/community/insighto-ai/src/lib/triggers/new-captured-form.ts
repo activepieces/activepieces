@@ -29,7 +29,7 @@ export const newCapturedForm = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhookUrl = context.webhookUrl;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     try {
       const response = await httpClient.sendRequest({
@@ -55,7 +55,7 @@ export const newCapturedForm = createTrigger({
     const webhookId = await context.store.get('webhook_id');
     if (!webhookId) return;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     try {
       await httpClient.sendRequest({

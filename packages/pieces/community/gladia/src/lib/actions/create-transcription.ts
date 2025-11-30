@@ -122,7 +122,7 @@ export const createTranscription = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
     const {
       audio_url,
       languages,

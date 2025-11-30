@@ -36,7 +36,7 @@ export const upsertContactAction = createAction({
         throw new Error('Either email or phone number must be provided');
       }
 
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
       const url = `https://api.insighto.ai/api/v1/contact/upsert`;
 
       const queryParams: Record<string, string> = {

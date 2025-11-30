@@ -34,7 +34,7 @@ export const newContact = createTrigger({
   },
   async run(context) {
     try {
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
       const url = `https://api.insighto.ai/api/v1/contact`;
 
       const queryParams: Record<string, string> = {

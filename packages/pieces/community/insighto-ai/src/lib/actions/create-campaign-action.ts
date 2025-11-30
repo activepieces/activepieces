@@ -178,7 +178,7 @@ export const createCampaignAction = createAction({
         throw new Error('Interval must be a positive number');
       }
 
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
       const url = `https://api.insighto.ai/api/v1/campaign/create`;
 
       const queryParams: Record<string, string> = {

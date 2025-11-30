@@ -103,7 +103,7 @@ export const makeOutboundCallAction = createAction({
         throw new Error('Phone number is required.');
       }
 
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
       const url = `https://api.insighto.ai/api/v1/call/${widget_id}`;
 
       const queryParams: Record<string, string> = {

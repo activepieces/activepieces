@@ -107,7 +107,7 @@ export const addTextBlobAction = createAction({
       const org_id = context.propsValue['org_id'];
       const text_content = context.propsValue['text_content'];
 
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
 
       let datasource_id: string;
       let ds_type: string;
