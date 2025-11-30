@@ -3,6 +3,7 @@ import { foreplayCoApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { findAds as findAdsProperties } from '../properties';
 import { findAdsSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
 export const findAds = createAction({
   auth: foreplayCoAuth,

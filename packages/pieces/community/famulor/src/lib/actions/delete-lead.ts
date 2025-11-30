@@ -14,7 +14,7 @@ export const deleteLead = createAction({
 
     return await famulorCommon.deleteLead({
       auth: auth.secret_text,
-      lead_id: propsValue.lead_id as number,
+      lead_id: propsValue.lead_id,
     });
   },
 });

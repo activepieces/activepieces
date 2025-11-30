@@ -3,6 +3,7 @@ import { foreplayCoApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { findBoards as findBoardsProperties } from '../properties';
 import { findBoardsSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
 export const findBoards = createAction({
   name: 'findBoards',
