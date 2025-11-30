@@ -38,7 +38,8 @@ export const sendEmail = createAction({
       description: undefined,
       required: true,
     }),
-    content_type: Property.Dropdown<'text' | 'html'>({
+    content_type: Property.Dropdown<'text' | 'html', true, typeof azureCommunicationServiceAuth>({
+      auth: azureCommunicationServiceAuth,
       displayName: 'Content Type',
       refreshers: [],
       required: true,
