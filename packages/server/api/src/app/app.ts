@@ -66,6 +66,7 @@ import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { mcpServerModule } from './mcp/mcp-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
@@ -86,7 +87,6 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
-import { mcpServerModule } from './mcp/mcp-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 

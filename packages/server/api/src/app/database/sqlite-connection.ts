@@ -349,7 +349,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveFlowRunDurationSqlite1763417279729,
         AddProjectTypeSqlite1763896147042,
         AddFlowOperationStatusFieldSqlite1764239872251,
-        AddMcpServerSqlite1764524983756
+        AddMcpServerSqlite1764524983756,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

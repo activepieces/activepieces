@@ -5,8 +5,6 @@ import {
     flowStructureUtil,
     FlowVersion,
     isNil,
-    Tool,
-    ToolType,
 } from '@activepieces/shared'
 import { Migration } from '.'
 
@@ -15,10 +13,10 @@ export const cleanUpAgentTools: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type === FlowActionType.PIECE && step.settings.pieceName === AGENT_PIECE_NAME) {
-                const tools = step.settings.input['agentTools'] as Tool[]
+                const tools = step.settings.input['agentTools'] as { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[]
                 const newTools = tools.map(tool => {
                     switch (tool.type) {
-                        case ToolType.PIECE: {
+                        case 'PIECE': {
                             return {
                                 type: tool.type,
                                 toolName: tool.toolName,
@@ -29,19 +27,22 @@ export const cleanUpAgentTools: Migration = {
                                     predefinedInput: {
                                         auth: !isNil(tool.pieceMetadata.connectionExternalId) ? `{{connections['${tool.pieceMetadata.connectionExternalId}']}}` : undefined,
                                     },
-                                }
+                                },
                             }
                         }
-                        case ToolType.FLOW: {
+                        case 'FLOW': {
                             return {
                                 type: tool.type,
                                 toolName: tool.toolName,
-                                flowId: tool.flowId
+                                flowId: tool.flowId,
                             }
+                        }
+                        default: {
+                            throw new Error(`Unknown tool type: ${tool.type}`)
                         }
                     }
                 })
-                
+
                 step.settings = {
                     ...step.settings,
                     pieceVersion: '0.4.0',

@@ -1,14 +1,14 @@
-import { FastifyBaseLogger } from "fastify"
-import { repoFactory } from "../core/db/repo-factory"
-import { McpServerEntity } from "./mcp-entity"
-import { apId, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpServerStatus, McpServer as McpServerSchema, PopulatedFlow, PopulatedMcpServer, McpPropertyType, McpProperty, McpTrigger, TelemetryEventName } from "@activepieces/shared"
-import { flowService } from "../flows/flow/flow.service"
-import { z } from "zod"
-import { webhookService } from "../webhooks/webhook.service"
-import { WebhookFlowVersionToRun } from "../webhooks/webhook-handler"
-import { telemetry } from "../helper/telemetry.utils"
-import { rejectedPromiseHandler } from "@activepieces/server-shared"
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { apId, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
+import { repoFactory } from '../core/db/repo-factory'
+import { flowService } from '../flows/flow/flow.service'
+import { telemetry } from '../helper/telemetry.utils'
+import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
+import { webhookService } from '../webhooks/webhook.service'
+import { McpServerEntity } from './mcp-entity'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
@@ -31,7 +31,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                     projectId,
                     token: apId(72),
                 }, ['projectId'])
-                return await mcpServerRepository().findOneByOrFail({ projectId })
+                return mcpServerRepository().findOneByOrFail({ projectId })
             }
             return mcpServer
         },
@@ -58,10 +58,10 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 const mcpTrigger = flow.version.trigger.settings as McpTrigger
                 const mcpInputs = mcpTrigger.input?.inputSchema ?? []
                 const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
-                const toolName = flow.version.displayName + "_" + flow.id.substring(0, 5)
+                const toolName = flow.version.displayName + '_' + flow.id.substring(0, 5)
                 const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
 
-                server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args, extra) => {
+                server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {
 
                     const originalParams = Object.fromEntries(Object.entries(args).map(([key, value]) => [mcpInputs.find((property) => property.name === key)?.name || key, value]))
                     const returnsResponse = mcpTrigger.input?.returnsResponse
@@ -107,11 +107,11 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                     return {
                         content: [
                             {
-                                type: "text",
+                                type: 'text',
                                 text: `❌ Error executing flow ${flow.version.displayName}\n\n` +
                                     `Error details:\n\`\`\`json\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
-                            }
-                        ]
+                            },
+                        ],
                     }
                 })
             }
