@@ -2,10 +2,14 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
+import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
+import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
+import { useSocket } from '@/components/socket-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { toast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
+  ActivepiecesError,
   Flow,
   FlowOperationStatus,
   FlowOperationType,
@@ -24,7 +28,6 @@ import {
 } from '../../../components/ui/tooltip';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
-import { useSocket } from '@/components/socket-provider';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;
@@ -62,36 +65,50 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
     },
     onSuccess: (flow) => {
       setOperationStatus(flow.operationStatus);
-      const onFinish = ({ flow, status, error }: { flow?: Flow, status: "success" | "failed", error?: string }) => {
-          if (status === "failed") {
-            toast({
-              title: t('Error'),
-              description: t('Failed to change flow status: {error}', { error }),
-              variant: 'destructive',
-            });
-            setOperationStatus(FlowOperationStatus.NONE);
-            return;
-          }
-          if (flow) {
-            setIsChecked(flow.status === FlowStatus.ENABLED);
-            setOperationStatus(flow.operationStatus);
-          }
-          socket.off(WebsocketClientEvent.FLOW_STATUS_UPDATED, onFinish);
-      } 
+      const onFinish = ({
+        flow,
+        status,
+        error,
+      }: {
+        flow?: Flow;
+        status: 'success' | 'failed';
+        error?: unknown;
+      }) => {
+        if (status === 'failed') {
+          const err = error as ActivepiecesError;
+          toast({
+            title: t('Error'),
+            description: t('Failed to change flow status: {error}', {
+              error: err.message ?? JSON.stringify(err.message),
+            }),
+            variant: 'destructive',
+            showMore: err.error
+              ? () => useApErrorDialogStore.getState().openDialog(err.error)
+              : undefined,
+          });
+          setOperationStatus(FlowOperationStatus.NONE);
+          return;
+        }
+        if (flow) {
+          setIsChecked(flow.status === FlowStatus.ENABLED);
+          setOperationStatus(flow.operationStatus);
+        }
+        socket.off(WebsocketClientEvent.FLOW_STATUS_UPDATED, onFinish);
+      };
       socket.on(WebsocketClientEvent.FLOW_STATUS_UPDATED, onFinish);
     },
-    onError: (err: Error) => {
+    onError: () => {
       toast({
         title: t('Error'),
         description: t('Failed to change flow status, please contact support.'),
         variant: 'destructive',
       });
-      console.error('Failed to change flow status', err);
     },
   });
 
   return (
     <>
+      <ApErrorDialog />
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center">

@@ -1,9 +1,11 @@
 'use client';
 
 // Inspired by react-hot-toast library
+import { t } from 'i18next';
 import * as React from 'react';
 
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
+import { ToastAction } from '@/components/ui/toast';
 
 const TOAST_LIMIT = 3;
 const TOAST_REMOVE_DELAY = 5000;
@@ -41,6 +43,7 @@ type ToasterUserProps = {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  showMore?: () => void;
 };
 
 type ToasterToast = ToastProps & ToasterUserProps;
@@ -171,13 +174,27 @@ type Toast = Omit<ToasterToast, 'id'>;
 
 function toast({ ...props }: Toast) {
   const id = genId();
-
   const update = (props: ToasterToast) =>
     dispatch({
       type: 'UPDATE_TOAST',
       toast: { ...props, id },
     });
   const dismiss = () => dispatch({ type: 'DISMISS_TOAST', toastId: id });
+
+  if (props.showMore && !props.action) {
+    props.action = (
+      <ToastAction
+        altText={t('Show more')}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          props.showMore?.();
+        }}
+      >
+        <strong>{t('Show more')}</strong>
+      </ToastAction>
+    ) as ToastActionElement;
+  }
 
   dispatch({
     type: 'ADD_TOAST',

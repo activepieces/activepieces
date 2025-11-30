@@ -1,3 +1,4 @@
+import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -30,6 +31,8 @@ import { AddAPArrayContainsToQueryBuilder } from '../../database/database-connec
 import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
@@ -38,7 +41,6 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-import { flowBackgroundJobs } from './flow.jobs'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
@@ -284,7 +286,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                             projectId,
                             platformId,
                         })
-                        await flowBackgroundJobs(log).addUpdateStatusJob({
+                        await this.addUpdateStatusJob({
                             id,
                             projectId,
                             newStatus: operation.request.status ?? FlowStatus.ENABLED,
@@ -296,7 +298,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     }
 
                     case FlowOperationType.CHANGE_STATUS: {
-                        await flowBackgroundJobs(log).addUpdateStatusJob({
+                        await this.addUpdateStatusJob({
                             id,
                             projectId,
                             newStatus: operation.request.status,
@@ -428,7 +430,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await flowBackgroundJobs(log).addDeleteJob(flow)
+        await this.addDeleteJob(flow)
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
@@ -526,6 +528,54 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         flow.updated = dayjs().toISOString()
         await flowRepo().save(flow)
+    },
+
+    addDeleteJob: async (flow: Flow): Promise<void> => {
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.DELETE_FLOW,
+                data: {
+                    flow,
+                    preDeleteDone: false,
+                    dbDeleteDone: false,
+                },
+                jobId: `delete-flow-${flow.id}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs().add(1, 'second'),
+            },
+            customConfig: {
+                backoff: {
+                    type: 'exponential',
+                    delay: apDayjsDuration(5, 'second').asMilliseconds(),
+                },
+            },
+        })
+    },
+    
+    addUpdateStatusJob: async (data: Omit<SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>, 'preUpdateDone'>): Promise<void> => {
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.UPDATE_FLOW_STATUS,
+                data: {
+                    ...data,
+                    preUpdateDone: false,
+                },
+                jobId: `update-flow-status-${data.id}`,
+                
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs().add(1, 'second'),
+            },
+            customConfig: {
+                backoff: {
+                    type: 'exponential',
+                    delay: apDayjsDuration(5, 'second').asMilliseconds(),
+                },
+            },
+        })
     },
 })
 

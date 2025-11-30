@@ -1,51 +1,15 @@
-import { FastifyBaseLogger } from "fastify";
-import { SystemJobData, SystemJobName } from "../../helper/system-jobs/common";
-import { systemJobsSchedule } from "../../helper/system-jobs/system-job";
-import { assertNotNullOrUndefined, Flow, FlowOperationStatus, WebsocketClientEvent, tryCatch } from "@activepieces/shared";
-import { flowSideEffects } from "./flow-service-side-effects";
-import { flowRepo } from "./flow.repo";
-import { flowExecutionCache } from "./flow-execution-cache";
-import { flowService } from "./flow.service";
-import { flowVersionService } from "../flow-version/flow-version.service";
-import { apDayjs } from "@activepieces/server-shared";
-import { websocketService } from "../../core/websockets.service";
+import { assertNotNullOrUndefined, FlowOperationStatus, tryCatch, WebsocketClientEvent } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { websocketService } from '../../core/websockets.service'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowExecutionCache } from './flow-execution-cache'
+import { flowSideEffects } from './flow-service-side-effects'
+import { flowRepo } from './flow.repo'
+import { flowService } from './flow.service'
 
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
-
-    addDeleteJob: async (flow: Flow) => {
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.DELETE_FLOW,
-                data: {
-                    flow,
-                    preDeleteDone: false,
-                    dbDeleteDone: false,
-                },
-                jobId: `delete-flow-${flow.id}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: apDayjs().add(1, 'second'),
-            },
-        })
-    },
-
-    addUpdateStatusJob: async (data: Omit<SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>, 'preUpdateDone'>) => {
-      await systemJobsSchedule(log).upsertJob({
-          job: {
-              name: SystemJobName.UPDATE_FLOW_STATUS,
-              data: {
-                ...data,
-                preUpdateDone: false,
-              },
-              jobId: `update-flow-status-${data.id}`,
-          },
-          schedule: {
-              type: 'one-time',
-              date: apDayjs().add(1, 'second'),
-          },
-      })
-  },
 
     deleteHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
         const { flow, preDeleteDone, dbDeleteDone } = data
@@ -106,16 +70,16 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 flowToUpdate.operationStatus = FlowOperationStatus.NONE
                 await flowRepo().save(flowToUpdate)
                 await flowExecutionCache(log).delete(id)
-                await websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { flow: flowToUpdate, status: "success" })
+                websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { flow: flowToUpdate, status: 'success' })
             }
         })
 
         if (error) {
-            if (job.attemptsMade >= (job.opts.attempts ?? 0)){
+            if (job.attemptsStarted >= (job.opts.attempts ?? 0)) {
                 await flowRepo().update(id, {
                     operationStatus: FlowOperationStatus.NONE,
                 })
-                await websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { status: "failed", error: error.message })
+                websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { status: 'failed', error })
             }
             throw error
         }

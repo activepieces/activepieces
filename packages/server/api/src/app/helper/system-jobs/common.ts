@@ -1,5 +1,5 @@
-import { Flow, FlowId, FlowStatus, PlatformId, ProjectId, UserId } from '@activepieces/shared'
-import { Job } from 'bullmq'
+import { Flow, FlowId, FlowStatus, PlatformId, ProjectId } from '@activepieces/shared'
+import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -76,6 +76,7 @@ export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
 type UpsertJobParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
+    customConfig?: JobsOptions
 }
 
 export type SystemJobSchedule = {
