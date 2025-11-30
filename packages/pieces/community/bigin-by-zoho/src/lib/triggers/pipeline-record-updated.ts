@@ -16,7 +16,7 @@ export const pipelineRecordUpdated = createTrigger({
   async onEnable(context) {
     try {
       const channel_id = Date.now().toString();
-      const { api_domain } = context.auth as any;
+      const { api_domain } = context.auth.data;
 
       const webhookData = {
         watch: [
