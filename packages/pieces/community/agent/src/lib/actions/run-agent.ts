@@ -1,12 +1,11 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon, AI_MODELS } from '../common';
-import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, AgentTool } from '@activepieces/shared';
+import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, AgentTool, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from '../common/agent-output-builder';
 
-const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus';
 
 export const runAgent = createAction({
   name: 'run_agent',

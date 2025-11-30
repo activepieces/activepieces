@@ -26,6 +26,7 @@ import {
   isNil,
   MarkdownContentBlock,
   MarkdownVariant,
+  TASK_COMPLETION_TOOL_NAME,
   ToolCallStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
@@ -37,11 +38,9 @@ interface AgentToolBlockProps {
 
 type ToolCallOutput = {
   success: boolean;
-  content: { type: string; text: string }[];
-  resolvedFields: Record<string, unknown>;
+  output: Record<string, unknown>;
+  resolvedInput: Record<string, unknown>;
 };
-
-const INTERNAL_TOOLS = ['markAsComplete'];
 
 const parseJsonOrReturnOriginal = (json: unknown) => {
   try {
@@ -74,17 +73,17 @@ const TimelineItem = ({
 };
 
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
-  if (INTERNAL_TOOLS.includes(block.toolName ?? '')) return null;
+  if ([TASK_COMPLETION_TOOL_NAME].includes(block.toolName ?? '')) return null;
 
   const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
   const output = block.output as ToolCallOutput | null;
 
   const isDone = block.status === ToolCallStatus.COMPLETED;
   const isSuccess = output?.success ?? true;
-  const hasInstructions = !isNil(block.input?.instructions);
-  const resolvedFields = output?.resolvedFields ?? null;
-  const result = output?.content
-    ? parseJsonOrReturnOriginal(output.content[0].text)
+  const hasInstructions = !isNil(block.input?.instruction);
+  const resolvedFields = output?.resolvedInput ?? null;
+  const result = output?.output
+    ? parseJsonOrReturnOriginal(output.output)
     : null;
 
   const defaultTab = resolvedFields ? 'resolvedFields' : 'result';
@@ -144,7 +143,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
               {hasInstructions && (
                 <ApMarkdown
                   variant={MarkdownVariant.BORDERLESS}
-                  markdown={block.input?.instructions as string}
+                  markdown={block.input?.instruction as string}
                 />
               )}
 
