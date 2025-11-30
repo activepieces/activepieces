@@ -26,6 +26,7 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import {
@@ -53,11 +54,12 @@ export const ProjectDashboardPageHeader = ({
 }) => {
   const { project } = projectHooks.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
+  const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameProjectOpen, setRenameProjectOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'members'
+    'general' | 'members' | 'alerts' | 'pieces' | 'environment'
   >('general');
   const { embedState } = useEmbedding();
   const location = useLocation();
@@ -95,6 +97,27 @@ export const ProjectDashboardPageHeader = ({
   const showRenameProjectButton =
     project.type !== ProjectType.PERSONAL &&
     checkAccess(Permission.WRITE_PROJECT);
+
+  const hasGeneralSettings =
+    project.type === ProjectType.TEAM ||
+    (platform.plan.embeddingEnabled &&
+      user?.platformRole === PlatformRole.ADMIN);
+
+  const getFirstAvailableTab = ():
+    | 'general'
+    | 'members'
+    | 'alerts'
+    | 'pieces'
+    | 'environment' => {
+    if (hasGeneralSettings) return 'general';
+    if (
+      project.type === ProjectType.TEAM &&
+      showProjectMembersFlag &&
+      userHasPermissionToReadProjectMembers
+    )
+      return 'members';
+    return 'pieces';
+  };
 
   if (embedState.hidePageHeader) {
     return null;
@@ -204,7 +227,7 @@ export const ProjectDashboardPageHeader = ({
                   )}
                   <DropdownMenuItem
                     onClick={() => {
-                      setSettingsInitialTab('general');
+                      setSettingsInitialTab(getFirstAvailableTab());
                       setSettingsOpen(true);
                     }}
                   >

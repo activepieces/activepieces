@@ -48,13 +48,18 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const { project } = projectHooks.useCurrentProject();
-
+  const showGeneralSettings = project.type === ProjectType.TEAM;
+  const showAiCreditsSettings =
+    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    project.type === ProjectType.TEAM;
+  const showExternalIdSettings =
+    platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN;
   const colorOptions = Object.values(ColorName);
 
   return (
     <Form {...form}>
       <div className="space-y-6">
-        {project.type === ProjectType.TEAM && (
+        {showGeneralSettings && (
           <div>
             <Label htmlFor="projectName" className="text-sm font-medium">
               {t('Project Name')}
@@ -137,7 +142,7 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
             </div>
           </div>
         )}
-        {platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE && (
+        {showAiCreditsSettings && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               name="aiCredits"
@@ -179,31 +184,30 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
           </div>
         )}
 
-        {platform.plan.embeddingEnabled &&
-          platformRole === PlatformRole.ADMIN && (
-            <FormField
-              name="externalId"
-              render={({ field }) => (
-                <FormItem>
-                  <Label htmlFor="externalId" className="text-sm font-medium">
-                    {t('External ID')}
-                  </Label>
+        {showExternalIdSettings && (
+          <FormField
+            name="externalId"
+            render={({ field }) => (
+              <FormItem>
+                <Label htmlFor="externalId" className="text-sm font-medium">
+                  {t('External ID')}
+                </Label>
 
-                  <Input
-                    {...field}
-                    id="externalId"
-                    placeholder={t('org-3412321')}
-                    className="h-10 font-mono"
-                    disabled={isSaving}
-                  />
-                  <FormDescription className="text-xs text-muted-foreground">
-                    {t('Used to identify the project based on your SaaS ID')}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+                <Input
+                  {...field}
+                  id="externalId"
+                  placeholder={t('org-3412321')}
+                  className="h-10 font-mono"
+                  disabled={isSaving}
+                />
+                <FormDescription className="text-xs text-muted-foreground">
+                  {t('Used to identify the project based on your SaaS ID')}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </div>
     </Form>
   );
