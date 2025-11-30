@@ -17,7 +17,7 @@ export const magicalApiAuth = PieceAuth.SecretText({
     try {
 
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.POST,
         "/profile-data",
         { profile_name: "activepieces_validation" }

@@ -53,7 +53,7 @@ export const heartBeatCreateUser = createAction({
           },
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
           body: {},
         });
@@ -102,7 +102,7 @@ export const heartBeatCreateUser = createAction({
           },
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
           body: {},
         });
@@ -178,7 +178,7 @@ export const heartBeatCreateUser = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: {
         name: propsValue.name,

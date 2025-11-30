@@ -18,7 +18,7 @@ export const modelIdDropdown = Property.Dropdown({
 
     try {
       const models = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/models',
         {}
@@ -57,7 +57,7 @@ export const documentIdDropdown = Property.Dropdown({
 
     try {
       const documents = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/documents`,
         {}
@@ -96,7 +96,7 @@ export const scheduleIdDropdown = Property.Dropdown({
 
     try {
       const schedules = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/schedules`,
         {}

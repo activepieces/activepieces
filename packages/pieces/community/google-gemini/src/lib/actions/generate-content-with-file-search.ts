@@ -20,6 +20,7 @@ export const generateContentWithFileSearchAction = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      auth: googleGeminiAuth,
       required: true,
       description: 'The model which will generate the completion',
       refreshers: [],

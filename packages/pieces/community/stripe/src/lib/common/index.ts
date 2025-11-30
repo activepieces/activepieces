@@ -141,7 +141,7 @@ export const stripeCommon = {
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         url: searchValue
           ? `${baseUrl}/customers/search`
@@ -202,7 +202,7 @@ export const stripeCommon = {
         url: `${baseUrl}/products/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           query: query,
@@ -252,7 +252,7 @@ export const stripeCommon = {
         url: `${baseUrl}/prices/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           query: `active:'true' AND type:'recurring' AND (product.name~"${
@@ -349,7 +349,7 @@ export const stripeCommon = {
         url: `${baseUrl}/payouts`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           limit: '100',
@@ -406,7 +406,7 @@ export const stripeCommon = {
         url: `${baseUrl}/payment_intents/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           query: query,

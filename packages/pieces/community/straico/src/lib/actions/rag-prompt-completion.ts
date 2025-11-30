@@ -50,7 +50,7 @@ export const ragPromptCompletion = createAction({
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
+              token: auth.secret_text,
             },
           });
           
@@ -154,7 +154,7 @@ export const ragPromptCompletion = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: requestBody,
     });

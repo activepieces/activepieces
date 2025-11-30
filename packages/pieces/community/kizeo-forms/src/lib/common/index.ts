@@ -25,7 +25,7 @@ export const kizeoFormsCommon = {
 
       try {
         const forms: KizeoFormsForms[] = await kizeoFormsCommon.fetchForms({
-          token: auth as string,
+          token: auth.secret_text,
         });
 
         if (forms) {
@@ -69,7 +69,7 @@ export const kizeoFormsCommon = {
       try {
         const dataUsers: KizeoFormsDataUsers =
           await kizeoFormsCommon.fetchUsers({
-            token: auth as string,
+            token: auth.secret_text,
           });
         if (dataUsers) {
           return {
@@ -118,7 +118,7 @@ export const kizeoFormsCommon = {
       try {
         const exportList: KizeoFormsExports[] =
           await kizeoFormsCommon.fetchExports({
-            token: auth as string,
+            token: auth.secret_text,
             formId: formId as string,
           });
         if (exportList) {
@@ -197,7 +197,7 @@ export const kizeoFormsCommon = {
 
       try {
         const lists: KizeoFormsLists[] = await kizeoFormsCommon.fetchLists({
-          token: auth as string,
+          token: auth.secret_text,
         });
 
         if (lists) {

@@ -21,6 +21,7 @@ export const chatGemini = createAction({
       required: true,
       description: 'The model which will generate the completion',
       refreshers: [],
+      auth: googleGeminiAuth,
       defaultValue: defaultLLM,
       options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),

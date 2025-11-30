@@ -25,7 +25,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
     const { structure_id } = propsValue;
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/structures/${structure_id}/runs?status=SUCCEEDED,FAILED,ERROR,CANCELLED&page_size=100`
       );

@@ -27,7 +27,7 @@ export const agentIdDropdown =(displayName:string, desc:string)=> Property.Dropd
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
         });
 

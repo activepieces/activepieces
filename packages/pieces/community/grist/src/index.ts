@@ -32,7 +32,7 @@ export const gristAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
+      const authValue = auth  ;
 
       const client = new GristAPIClient({
         domainUrl: authValue.domain,
@@ -71,12 +71,12 @@ export const grist = createPiece({
       auth: gristAuth,
       baseUrl: (auth) => {
         return `${
-          (auth as PiecePropValueSchema<typeof gristAuth>).domain
+          auth.props.domain
         }/api/`;
       },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${
-          (auth as PiecePropValueSchema<typeof gristAuth>).apiKey
+          auth.props.apiKey
         }`,
       }),
     }),

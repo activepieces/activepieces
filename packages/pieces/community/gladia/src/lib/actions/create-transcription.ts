@@ -42,7 +42,8 @@ export const createTranscription = createAction({
     subtitles_format: Property.Dropdown({
       displayName: 'Subtitles Format',
       description: 'Select the subtitle format(s) for transcription output',
-      required: false,
+      required: false,  
+      auth: gladiaAuth,
       refreshers: ['subtitles'],
       options: async ({ subtitles }) => {
         if (!subtitles) {
@@ -84,6 +85,7 @@ export const createTranscription = createAction({
       displayName: 'Summarization Type',
       description: 'Choose the type of summarization to apply. ',
       required: false,
+      auth: gladiaAuth,
       refreshers: ['summarization'],
       options: async ({ summarization }) => {
         if (!summarization) {

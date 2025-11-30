@@ -18,7 +18,7 @@ export const chatbotIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/me/chatbots`
       );
@@ -94,7 +94,7 @@ export const finetuneIdDropdown = Property.Dropdown<string>({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/${chatbotId}/finetunes`
       );

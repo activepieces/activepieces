@@ -68,7 +68,7 @@ export const agentUpdate = createAction({
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
         });
 
@@ -132,7 +132,7 @@ export const agentUpdate = createAction({
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
+              token: auth.secret_text,
             },
           });
           return {
@@ -220,7 +220,7 @@ export const agentUpdate = createAction({
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

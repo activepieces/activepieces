@@ -19,10 +19,11 @@ export const renderTemplate = createAction({
   props: {
     template_id: Property.Dropdown({
       displayName: 'Template',
+      auth: generatebannersAuth,
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const authentication = auth as BasicAuthPropertyValue;
+        const authentication = auth;
         if (!auth) {
           return {
             disabled: true,
@@ -83,6 +84,7 @@ export const renderTemplate = createAction({
     }),
     variables: Property.DynamicProperties({
       displayName: 'Variables',
+      auth: generatebannersAuth,
       required: true,
       refreshers: ['template_id'],
       props: async ({ auth, template_id }) => {

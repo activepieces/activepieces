@@ -21,6 +21,7 @@ export const generateContentAction = createAction({
       description: 'The model which will generate the completion',
       refreshers: [],
       defaultValue: defaultLLM,
+      auth: googleGeminiAuth,
       options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
   },

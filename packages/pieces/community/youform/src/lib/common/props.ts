@@ -25,7 +25,7 @@ export const formIdDropdown = Property.Dropdown({
       url: BASE_URL + '/forms',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

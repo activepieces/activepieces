@@ -26,7 +26,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/assistants/${assistant_id}/runs?status=SUCCEEDED&page_size=100`
       );
