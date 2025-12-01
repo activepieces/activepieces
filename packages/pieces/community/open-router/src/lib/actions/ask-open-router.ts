@@ -20,6 +20,7 @@ export const askOpenRouterAction = createAction({
   auth: openRouterAuth,
   props: {
     model: Property.Dropdown({
+      auth: openRouterAuth,
       displayName: 'Model',
       description:
         'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
@@ -103,7 +104,7 @@ export const askOpenRouterAction = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'HTTP-Referer': 'https://openrouter.ai/playground',

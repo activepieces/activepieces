@@ -1,8 +1,11 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './client';
 import { Property } from '@activepieces/pieces-framework';
+import { omniAuth } from './auth';
 
-export const modelIdDropdown = Property.Dropdown({
+export const modelIdDropdown = Property.Dropdown({ 
+ auth: omniAuth,
+
   displayName: 'Model ID',
   description: 'Select the model containing the database',
   required: true,
@@ -41,7 +44,9 @@ export const modelIdDropdown = Property.Dropdown({
   },
 });
 
-export const documentIdDropdown = Property.Dropdown({
+export const documentIdDropdown = Property.Dropdown({ 
+ auth: omniAuth,
+
   displayName: 'Document',
   description: 'Select the document',
   required: true,
@@ -80,7 +85,9 @@ export const documentIdDropdown = Property.Dropdown({
   },
 });
 
-export const scheduleIdDropdown = Property.Dropdown({
+export const scheduleIdDropdown = Property.Dropdown({ 
+ auth: omniAuth,
+
   displayName: 'Schedule',
   description: 'Select the schedule',
   required: true,
