@@ -44,12 +44,12 @@ type ExtractCustomAuthProps<T> = T extends CustomAuthProperty<infer Props> ? Pro
 type ExtractOAuth2Props<T> = T extends OAuth2Property<infer Props> ? Props : never;
 
 
-export  type AppConnectionValueForAuthProperty<T extends PieceAuthProperty> = 
+export  type AppConnectionValueForAuthProperty<T extends PieceAuthProperty | undefined> = 
   T extends SecretTextProperty<boolean> ? AppConnectionValue<AppConnectionType.SECRET_TEXT> :
   T extends BasicAuthProperty ? AppConnectionValue<AppConnectionType.BASIC_AUTH> :
   T extends CustomAuthProperty<any> ? AppConnectionValue<AppConnectionType.CUSTOM_AUTH, StaticPropsValue<ExtractCustomAuthProps<T>>> :
   T extends OAuth2Property<any> ? AppConnectionValue<AppConnectionType.OAUTH2, StaticPropsValue<ExtractOAuth2Props<T>>> :
-  never;
+  T extends undefined ? undefined : never;
 type AppWebhookTriggerHookContext<
   PieceAuth extends PieceAuthProperty | undefined,
   TriggerProps extends InputPropertyMap
