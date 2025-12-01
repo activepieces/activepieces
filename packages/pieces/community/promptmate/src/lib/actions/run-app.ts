@@ -10,12 +10,13 @@ export const runApp = createAction({
   description: 'Runs a PromptMate app with the specified data',
   props: {
     appId: Property.Dropdown({
+      auth: promptmateAuth,
       displayName: 'App',
       description: 'Select the PromptMate app to run',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        return await getAppDropdownOptions(auth as string);
+        return await getAppDropdownOptions(auth.secret_text);
       },
     }),
     data: Property.Array({

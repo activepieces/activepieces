@@ -51,7 +51,7 @@ export const uploadFile = createAction({
 
     // Create form data for file upload
     const formData = new FormData();
-    const blob = new Blob([file.data], { type: 'application/octet-stream' });
+    const blob = new Blob([file.data as any], { type: 'application/octet-stream' });
     formData.append('file', blob, fileName);
     if (domainName) formData.append('DomainName', domainName);
     if (tags) formData.append('Tags', tags);

@@ -14,8 +14,9 @@ export const getLastResults = createAction({
       description: 'Select the app to get last results for',
       required: true,
       refreshers: [],
+      auth: promptmateAuth,
       options: async ({ auth }) => {
-        return await getAppDropdownOptions(auth as string);
+        return await getAppDropdownOptions(auth.secret_text);
       },
     }),
     onlyDefaultResultFields: Property.Checkbox({

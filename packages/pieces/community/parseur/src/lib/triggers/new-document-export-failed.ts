@@ -14,7 +14,7 @@ export const newDocumentExportFailed = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const response = await parseurCommon.createWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       event: 'document.export_failed',
       target: context.webhookUrl,
       category: 'CUSTOM',
@@ -36,7 +36,7 @@ export const newDocumentExportFailed = createTrigger({
       return;
     }
     await parseurCommon.deleteWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newDocumentExportFailed');

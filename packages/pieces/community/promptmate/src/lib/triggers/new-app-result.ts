@@ -19,8 +19,9 @@ export const newAppResult = createTrigger({
       description: 'Only trigger for results from these specific apps. Leave empty to trigger for all apps.',
       required: false,
       refreshers: [],
+      auth: promptmateAuth,
       options: async ({ auth }) => {
-        const options = await getAppDropdownOptions(auth as string);
+        const options = await getAppDropdownOptions(auth.secret_text);
         return {
           ...options,
           options: options.options || [],
@@ -86,7 +87,7 @@ export const newAppResult = createTrigger({
       method: HttpMethod.POST,
       url: 'https://api.promptmate.io/v1/webhooks',
       headers: {
-        'x-api-key': context.auth,
+        'x-api-key': context.auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,
@@ -109,7 +110,7 @@ export const newAppResult = createTrigger({
         method: HttpMethod.DELETE,
         url: 'https://api.promptmate.io/v1/webhooks',
         headers: {
-          'x-api-key': context.auth,
+          'x-api-key': context.auth.secret_text,
           'Content-Type': 'application/json',
         },
         body: {

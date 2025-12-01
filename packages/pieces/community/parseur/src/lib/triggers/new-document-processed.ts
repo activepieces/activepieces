@@ -16,7 +16,7 @@ export const newDocumentProcessed = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhookCreateResponse = await parseurCommon.createWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       event: 'document.processed',
       target: context.webhookUrl,
       category: 'CUSTOM',
@@ -38,7 +38,7 @@ export const newDocumentProcessed = createTrigger({
       return;
     }
     await parseurCommon.deleteWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newDocumentProcessed');

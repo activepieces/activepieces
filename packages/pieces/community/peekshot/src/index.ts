@@ -17,7 +17,7 @@ export const peekshotAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         url: 'https://api.peekshot.com/api/v1/projects',
         headers: {
-          'x-api-key': auth.secret_text,
+          'x-api-key': auth,
           'Content-Type': 'application/json',
         },
       });
