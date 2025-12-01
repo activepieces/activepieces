@@ -57,6 +57,8 @@ export const agentCreate = createAction({
       description: 'A model that the agent will use for processing prompts',
     }),
     default_llm: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Default LLM',
       required: true,
       description: 'The language model which the agent will use for processing prompts',

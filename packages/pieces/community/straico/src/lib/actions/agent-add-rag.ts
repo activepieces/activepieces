@@ -35,6 +35,7 @@ export const agentAddRag = createAction({
   props: {
     agent_id: agentIdDropdown('Agent','The agent to add the RAG to.'),
     rag_id: Property.Dropdown({
+  auth: straicoAuth,
       displayName: 'RAG ID',
       required: true,
       description: 'The ID of the RAG to add to the agent',

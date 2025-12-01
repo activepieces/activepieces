@@ -18,6 +18,8 @@ export const promptCompletion = createAction({
     'Enables users to generate prompt completion based on a specified model.',
   props: {
     model: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Model',
       required: true,
       description:

@@ -31,6 +31,8 @@ export const imageGeneration = createAction({
       },
     }),
     model: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Model',
       required: true,
       description: 'Select the image generation model.',

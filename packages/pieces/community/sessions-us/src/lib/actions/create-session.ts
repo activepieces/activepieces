@@ -31,6 +31,7 @@ export const createSession = createAction({
       defaultValue: new Date().toISOString(),
     }),
     timezone: Property.Dropdown({
+      auth: sessionAuth,
       displayName: 'Timezone',
       description: 'The timezone which the session will take place.',
       required: true,

@@ -24,6 +24,8 @@ export const ragPromptCompletion = createAction({
       description: 'A text prompt for the RAG model',
     }),
     model: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Model',
       required: true,
       description: 'The specific LLM to be used',

@@ -10,6 +10,7 @@ type SendpulseMailingList = {
 };
 
 export const mailingListDropdown = Property.Dropdown({
+  auth: sendpulseAuth,
   displayName: 'Mailing List',
   description: 'Select one of your SendPulse mailing lists',
   required: true,
@@ -26,7 +27,7 @@ export const mailingListDropdown = Property.Dropdown({
 
     try {
       const lists = await sendpulseApiCall<SendpulseMailingList[]>({
-        auth: auth as import('./client').SendPulseAuthProps,
+        auth: auth.props,
         method: HttpMethod.GET,
         resourceUri: '/addressbooks?limit=100&offset=0',
       });
