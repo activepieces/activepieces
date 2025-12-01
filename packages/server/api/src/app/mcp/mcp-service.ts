@@ -128,8 +128,8 @@ async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promi
         projectIds: [mcp.projectId],
         limit: 1000000,
         cursorRequest: null,
-        versionState: FlowVersionState.LOCKED,
-        includeTriggerSource: true,
+        versionState: FlowVersionState.DRAFT,
+        includeTriggerSource: false,
     })
     return flows.data.filter((flow) => flow.version.trigger.type === FlowTriggerType.PIECE && flow.version.trigger.settings.pieceName === MCP_TRIGGER_PIECE_NAME)
 }
