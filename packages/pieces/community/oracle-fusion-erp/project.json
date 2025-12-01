@@ -1,0 +1,32 @@
+{
+  "name": "pieces-oracle-fusion-erp",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/oracle-fusion-erp/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": ["dist/{projectRoot}"],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/oracle-fusion-erp",
+        "tsConfig": "packages/pieces/community/oracle-fusion-erp/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/oracle-fusion-erp/package.json",
+        "main": "packages/pieces/community/oracle-fusion-erp/src/index.ts",
+        "assets": ["packages/pieces/community/oracle-fusion-erp/*.md"]
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    }
+  }
+}
