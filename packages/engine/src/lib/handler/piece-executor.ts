@@ -15,6 +15,7 @@ import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { LanguageModelV2 } from '@ai-sdk/provider'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -122,7 +123,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
                     engineConstants: constants,
                     tools: params.tools,
-                    model: params.model,
+                    model: params.model as LanguageModelV2,
                 }),
             },
             propsValue: processedInput,

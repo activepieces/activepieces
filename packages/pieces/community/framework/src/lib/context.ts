@@ -19,7 +19,6 @@ import {
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
-import { LanguageModel, ToolSet } from 'ai';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
@@ -210,22 +209,14 @@ export type ActionContext<
 
 
 
-export type ExecuteToolParams = {
-  model: LanguageModel;
-  predefinedInput: Record<string, unknown>;
-  instruction: string;
-  pieceName: string;
-  pieceVersion: string;
-}
-
 
 export type ConstructToolParams = {
   tools: AgentTool[]
-  model: LanguageModel,
+  model: unknown,
 }
 
 export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<ToolSet>;
+  tools: (params: ConstructToolParams) => Promise<Record<string, unknown>>;
 }
 
 export interface FilesService {
