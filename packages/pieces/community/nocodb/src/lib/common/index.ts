@@ -1,7 +1,7 @@
 import { nocodbAuth } from '../../';
 import {
   DynamicPropsValue,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   Property,
 } from '@activepieces/pieces-framework';
 import { NocoDBClient } from './client';
@@ -12,12 +12,13 @@ import {
   GetTableV3Response,
 } from './types';
 
-export function makeClient(auth: PiecePropValueSchema<typeof nocodbAuth>) {
-  return new NocoDBClient(auth.baseUrl, auth.apiToken);
+export function makeClient(auth: AppConnectionValueForAuthProperty<typeof nocodbAuth>) {
+  return new NocoDBClient(auth.props.baseUrl, auth.props.apiToken);
 }
 
 export const nocodbCommon = {
   workspaceId: Property.Dropdown({
+ auth:nocodbAuth,
     displayName: 'Workspace ID',
     refreshers: [],
     required: false,
@@ -32,7 +33,7 @@ export const nocodbCommon = {
       }
 
       const client = makeClient(
-        auth as PiecePropValueSchema<typeof nocodbAuth>
+        auth 
       );
       try {
         const response = await client.listWorkspaces();
@@ -59,6 +60,7 @@ export const nocodbCommon = {
     },
   }),
   baseId: Property.Dropdown({
+ auth:nocodbAuth,
     displayName: 'Base ID',
     refreshers: ['workspaceId'],
     required: true,
@@ -73,11 +75,11 @@ export const nocodbCommon = {
 
       try {
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof nocodbAuth>
+          auth 
         );
         const response = await client.listBases(
           (workspaceId as string) || undefined,
-          (auth as PiecePropValueSchema<typeof nocodbAuth>).version || 3
+          (auth).props.version || 3
         );
 
         return {
@@ -101,6 +103,7 @@ export const nocodbCommon = {
     },
   }),
   tableId: Property.Dropdown({
+ auth:nocodbAuth,
     displayName: 'Table ID',
     refreshers: ['workspaceId', 'baseId'],
     required: true,
@@ -114,11 +117,11 @@ export const nocodbCommon = {
       }
 
       const client = makeClient(
-        auth as PiecePropValueSchema<typeof nocodbAuth>
+        auth 
       );
       const response = await client.listTables(
         baseId as string,
-        (auth as PiecePropValueSchema<typeof nocodbAuth>).version || 3
+        (auth ).props.version || 3
       );
 
       return {
@@ -133,6 +136,7 @@ export const nocodbCommon = {
     },
   }),
   columnId: Property.MultiSelectDropdown({
+    auth:nocodbAuth,
     displayName: 'Fields',
     description:
       'Allows you to specify the fields that you wish to include in your API response. By default, all the fields are included in the response.',
@@ -148,10 +152,10 @@ export const nocodbCommon = {
       }
 
       const client = makeClient(
-        auth as PiecePropValueSchema<typeof nocodbAuth>
+        auth 
       );
       const authVersion =
-        (auth as PiecePropValueSchema<typeof nocodbAuth>).version || 3;
+        (auth ).props.version || 3;
       const response =
         authVersion === 4
           ? await client.getTableV3(
@@ -185,6 +189,7 @@ export const nocodbCommon = {
     },
   }),
   tableColumns: Property.DynamicProperties({
+    auth:nocodbAuth,
     displayName: 'Table Columns',
     refreshers: ['baseId', 'tableId'],
     required: true,
@@ -196,10 +201,10 @@ export const nocodbCommon = {
       const fields: DynamicPropsValue = {};
 
       const client = makeClient(
-        auth as PiecePropValueSchema<typeof nocodbAuth>
+        auth 
       );
       const authVersion =
-        (auth as PiecePropValueSchema<typeof nocodbAuth>).version || 3;
+        (auth ).props.version || 3;
       const response =
         authVersion === 4
           ? await client.getTableV3(
