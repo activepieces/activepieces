@@ -7,7 +7,7 @@
   "implicitDependencies": ["engine"],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
@@ -17,9 +17,9 @@
         "tsConfig": "packages/server/api/tsconfig.app.json",
         "platform": "node",
         "format": ["cjs"],
-        "bundle": false,
+        "bundle": true,
         "sourcemap": true,
-        "generatePackageJson": true,
+        "generatePackageJson": false,
         "assets": [
           {
             "glob": "packages/server/api/README.md",
