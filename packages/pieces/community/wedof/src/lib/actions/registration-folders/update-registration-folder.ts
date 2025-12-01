@@ -234,7 +234,7 @@ export const updateRegistrationFolder = createAction({
           context.propsValue.externalId,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

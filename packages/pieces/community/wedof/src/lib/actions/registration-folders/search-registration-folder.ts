@@ -268,7 +268,7 @@ export const searchRegistrationFolder = createAction({
         url: wedofCommon.baseUrl + '/registrationFolders',
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

@@ -119,12 +119,12 @@ export const wordpress = createPiece({
     getWordPressPost,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
+        (auth.props.website_url).trim() + '/wp-json/wp/v2',
       auth: wordpressAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { username: string }).username}:${
-            (auth as { password: string }).password
+          `${auth.props.username}:${
+            auth.props.password
           }`
         ).toString('base64')}`,
       }),
