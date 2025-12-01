@@ -161,7 +161,7 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
 
             return {
                 google_search: googleProvider.tools.googleSearch({}),
-            } as ToolSet
+            } as any
         }
 
         default:
