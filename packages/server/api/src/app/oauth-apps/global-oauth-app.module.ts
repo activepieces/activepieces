@@ -1,6 +1,7 @@
 import {
     GlobalOAuthApp,
     ListOAuth2AppRequest,
+    PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -19,6 +20,9 @@ const readGlobalOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
         '/',
         {
+            config: {
+                allowedPrincipals: [PrincipalType.USER] as const,
+            },
             schema: {
                 querystring: ListOAuth2AppRequest,
                 response: {
