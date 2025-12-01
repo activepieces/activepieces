@@ -2,6 +2,7 @@ import {
   TriggerStrategy,
   createTrigger,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../index';
 import {
@@ -16,7 +17,7 @@ import { QuickbooksPurchase } from '../lib/types';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof quickbooksAuth>,
+ AppConnectionValueForAuthProperty<typeof quickbooksAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -24,7 +25,7 @@ const polling: Polling<
     const { access_token } = auth;
     const companyId = auth.props?.['companyId'];
 
-    const apiUrl = quickbooksCommon.getApiUrl(companyId);
+    const apiUrl = quickbooksCommon.getApiUrl(companyId!);
 
     const query =
       lastFetchEpochMS === 0

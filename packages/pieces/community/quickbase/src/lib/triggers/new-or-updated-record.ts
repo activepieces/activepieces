@@ -1,14 +1,10 @@
-import { createTrigger, StaticPropsValue, TriggerStrategy } from "@activepieces/pieces-framework";
+import { AppConnectionValueForAuthProperty, createTrigger, StaticPropsValue, TriggerStrategy } from "@activepieces/pieces-framework";
 import { quickbaseAuth } from "../..";
 import { DedupeStrategy, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { QuickbaseClient } from "../common/client";
 import { QuickbaseRecordResponse, QuickbaseField } from "../common/types";
 import { appIdProp, tableIdProp } from "../common/props";
-type QuickbaseAuth = {
-  userToken: string;
-  realmHostname: string;
-};
-
+type QuickbaseAuth = AppConnectionValueForAuthProperty<typeof quickbaseAuth>;
 const props = {
   appId: appIdProp,
   tableId: tableIdProp,
@@ -17,7 +13,7 @@ const polling: Polling<QuickbaseAuth, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { tableId, } = propsValue;
-    const client = new QuickbaseClient(auth.realmHostname, auth.userToken);
+    const client = new QuickbaseClient(auth.props.realmHostname, auth.props.userToken);
     
     const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
 
