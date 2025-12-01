@@ -127,13 +127,18 @@ Help the user finish their goal quickly and accurately.
               )
                 .nullable()
                 .describe('The structured output of your task. This is optional and can be omitted if you have not achieved the goal.')
-            } : {}),
+            } : {
+              output: z.string().nullable().describe('The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.')
+            }),
           }),
           execute: async (params) => {
             const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
             outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
-            if (!isNil(output)) {
+            if (hasStructuredOutput && !isNil(output)) {
               outputBuilder.setStructuredOutput(output)
+            }
+            if (!hasStructuredOutput && !isNil(output)) {
+              outputBuilder.addMarkdown(output as unknown as string)
             }
             return {}
           },
@@ -175,7 +180,7 @@ Help the user finish their goal quickly and accurately.
           break;
         }
       }
-     await context.output.update({ data: outputBuilder.build() })
+      await context.output.update({ data: outputBuilder.build() })
     }
     const { status } = outputBuilder.build()
     if (status == AgentTaskStatus.IN_PROGRESS) {
