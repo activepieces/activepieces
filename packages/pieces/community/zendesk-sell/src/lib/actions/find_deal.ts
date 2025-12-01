@@ -34,7 +34,7 @@ export const findDeal = createAction({
             const response = await callZendeskApi(
                 HttpMethod.GET,
                 `v2/deals/${deal_id}`,
-                auth as ZendeskSellAuth
+                auth
             );
             return response.body;
         }
@@ -62,7 +62,7 @@ export const findDeal = createAction({
             const response = await callZendeskApi(
                 HttpMethod.POST,
                 'v3/deals/search',
-                auth as ZendeskSellAuth,
+                auth,
                 requestBody
             );
 
