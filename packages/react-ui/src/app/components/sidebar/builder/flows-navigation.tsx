@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { EllipsisVertical, Folder, FolderOpen, Shapes } from 'lucide-react';
 import { useMemo, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { createSearchParams, useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -337,7 +337,19 @@ interface FlowItemProps {
 
 function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
   const { flowId } = useParams();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { data: folderData } = foldersHooks.useFolder(
+    flow.folderId ?? UncategorizedFolderId,
+  );
+
+  const goToFolder = () => {
+    navigate({
+      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      search: createSearchParams({
+        folderId: folderData?.id ?? UncategorizedFolderId,
+      }).toString(),
+    });
+  };
 
   return (
     <SidebarMenuSubItem
@@ -358,9 +370,8 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           onMoveTo={refetch}
           onDelete={() => {
             if (flowId === flow.id) {
-              flowsHooks.invalidateFlowsQuery(queryClient);
+              goToFolder();
             }
-            refetch();
           }}
           onDuplicate={refetch}
         >
