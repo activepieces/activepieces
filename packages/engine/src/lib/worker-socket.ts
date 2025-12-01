@@ -12,7 +12,7 @@ import {
     isNil,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
-import { EngineGenericError } from './helper/execution-errors'
+import { EngineGenericError } from '../../../shared/src/lib/engine/execution-errors'
 import { execute } from './operations'
 import { utils } from './utils'
 
@@ -75,9 +75,9 @@ export const workerSocket = {
                 const engineError: EngineResponse = {
                     response: undefined,
                     status: EngineResponseStatus.INTERNAL_ERROR,
-                    error: utils.formatError(resultError),
+                    error: utils.formatExecutionError(resultError),
                 }
-                console.error('Error handling operation:', utils.formatError(resultError))
+                console.error('Error handling operation:', utils.formatExecutionError(resultError))
                 await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, engineError)
             }
         })

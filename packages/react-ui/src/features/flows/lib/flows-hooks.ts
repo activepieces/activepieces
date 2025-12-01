@@ -24,7 +24,6 @@ import {
   FlowTrigger,
   FlowTriggerType,
   Flow,
-  ActivepiecesError,
   WebsocketClientEvent,
   FlowOperationStatus,
 } from '@activepieces/shared';
@@ -260,16 +259,13 @@ export const flowsHooks = {
         error?: unknown;
       }) => {
         if (status === 'failed') {
-          const err = error as ActivepiecesError;
+          const apError = flowsUtils.getApErrorParams(error);
+          const executionUserError = flowsUtils.getExecutionUserError(error);
           toast({
-            title: t('Error'),
-            description: t('Failed to change flow status: {error}', {
-              error: err.message ?? JSON.stringify(err.message),
-            }),
+            title: executionUserError?.name ?? t('Error'),
+            description: executionUserError?.message ?? t('Failed to change flow status'),
             variant: 'destructive',
-            showMore: err.error
-              ? () => useApErrorDialogStore.getState().openDialog(err.error)
-              : undefined,
+            showMore: apError ? () => useApErrorDialogStore.getState().openDialog(apError.error) : undefined,
           });
         }
         callback(FlowOperationStatus.NONE, updatedFlow?.status);

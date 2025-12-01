@@ -1,7 +1,5 @@
-import { ExecutionMode, isNil } from '@activepieces/shared'
+import { ExecutionMode, isNil, EngineGenericError } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
-import { EngineGenericError } from '../../helper/execution-errors'
-
 export const EXECUTION_MODE = (process.env.AP_EXECUTION_MODE as ExecutionMode)
 
 const loadNoOpCodeSandbox = async (): Promise<CodeSandbox> => {

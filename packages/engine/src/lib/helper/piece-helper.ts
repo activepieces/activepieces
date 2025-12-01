@@ -18,13 +18,13 @@ import {
     ExecuteValidateAuthResponse,
     OAuth2ConnectionValueWithApp,
     SecretTextConnectionValue,
+    EngineGenericError,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
-import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {

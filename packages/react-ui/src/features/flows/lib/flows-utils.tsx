@@ -4,7 +4,7 @@ import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 import { downloadFile } from '@/lib/utils';
-import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
+import { PopulatedFlow, FlowTriggerType, ActivepiecesError, parseToJsonIfPossible, ExecutionError, ExecutionErrorType } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 
@@ -29,9 +29,43 @@ const zipFlows = async (flows: PopulatedFlow[]) => {
   return zip;
 };
 
+const getApErrorParams = (error: unknown): ActivepiecesError | null => {
+  const err = error as ActivepiecesError;
+  if (!err.error || !(err.error.params)) return null;
+  return err
+};
+
+const getExecutionUserError = (error: unknown): ExecutionError | null => {
+  const apError = getApErrorParams(error);
+  const params = apError?.error.params;
+  if (!params || !("standardError" in params)) return null;
+
+  const standardError: unknown = params?.standardError;
+  if (typeof standardError !== 'string') return null;
+  const errorPrefix = 'Error handling operation:';
+  if (!standardError.startsWith(errorPrefix)) return null;
+
+  const executionError = parseToJsonIfPossible(standardError.slice(errorPrefix.length)) as ExecutionError;
+
+  if (
+    !executionError ||
+    typeof executionError !== 'object' ||
+    typeof executionError.type !== 'string' ||
+    typeof executionError.message !== 'string' ||
+    typeof executionError.name !== 'string'
+  ) {
+    return null;
+  }
+  if (executionError.type !== ExecutionErrorType.USER) return null;
+
+  return executionError;
+};
+
 export const flowsUtils = {
   downloadFlow,
   zipFlows,
+  getExecutionUserError,
+  getApErrorParams,
   flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
     const trigger = flow.version.trigger;
     switch (trigger?.type) {
