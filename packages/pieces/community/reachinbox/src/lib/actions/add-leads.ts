@@ -21,12 +21,13 @@ export const addLeads = createAction({
     'Add leads to campaigns dynamically by selecting a campaign, entering lead details, and including custom variables.',
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description: 'Choose a campaign from the list.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {
           options: campaigns.map((campaign) => ({

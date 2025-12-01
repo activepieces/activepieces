@@ -246,7 +246,7 @@ export const generateVideoFromImage = createAction({
 			imageUrl = propsValue.promptImageUrl as string;
 		}
 
-		const apiKey = auth as string;
+		const apiKey = auth.secret_text;
 		const client = new RunwayML({ apiKey });
 
 		// Build request body according to SDK specification

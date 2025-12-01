@@ -16,6 +16,7 @@ export const removeEmail = createAction({
   description: 'Remove an email account from the system.',
   props: {
     accountId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Email Account to Remove',
       description: 'Choose an email account to remove.',
       required: true,
