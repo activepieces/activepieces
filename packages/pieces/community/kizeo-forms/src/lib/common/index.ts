@@ -7,13 +7,15 @@ import {
   KizeoFormsList,
   KizeoFormsLists,
 } from './models';
+import { kizeoFormsAuth } from '../..';
 
 export const endpoint = 'https://forms.kizeo.com/rest/';
 export const kizeoFormsCommon = {
-  formId: Property.Dropdown<string>({
+  formId: Property.Dropdown<string,true,typeof kizeoFormsAuth>({
     displayName: 'Form',
     required: true,
     refreshers: [],
+    auth: kizeoFormsAuth,
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -53,10 +55,11 @@ export const kizeoFormsCommon = {
       };
     },
   }),
-  userId: Property.Dropdown<string>({
+  userId: Property.Dropdown<string,true,typeof kizeoFormsAuth>({
     displayName: 'User',
     required: true,
     refreshers: [],
+    auth: kizeoFormsAuth,
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -96,10 +99,11 @@ export const kizeoFormsCommon = {
       };
     },
   }),
-  exportId: Property.Dropdown<string>({
+  exportId: Property.Dropdown<string,true,typeof kizeoFormsAuth>({
     displayName: 'Export',
     required: true,
     refreshers: ['formId'],
+    auth: kizeoFormsAuth,
     options: async ({ auth, formId }) => {
       if (!auth) {
         return {
@@ -151,6 +155,7 @@ export const kizeoFormsCommon = {
     required: true,
     refreshers: ['formId'],
 
+    auth: kizeoFormsAuth,
     props: async ({ auth, formId }) => {
       if (!auth) return {};
       if (!formId) return {};
@@ -159,7 +164,7 @@ export const kizeoFormsCommon = {
 
       try {
         const form: KizeoFormsForms = await kizeoFormsCommon.fetchForm({
-          token: auth as unknown as string,
+          token: auth.secret_text,
           formId: formId as unknown as string,
         });
 
@@ -182,7 +187,8 @@ export const kizeoFormsCommon = {
       return fields;
     },
   }),
-  listId: Property.Dropdown<string>({
+  listId: Property.Dropdown<string,true,typeof kizeoFormsAuth>({
+    auth: kizeoFormsAuth,
     displayName: 'List',
     required: true,
     refreshers: [],
@@ -230,6 +236,7 @@ export const kizeoFormsCommon = {
     required: true,
     refreshers: ['listId'],
 
+    auth: kizeoFormsAuth,
     props: async ({ auth, listId }) => {
       if (!auth) return {};
       if (!listId) return {};
@@ -238,7 +245,7 @@ export const kizeoFormsCommon = {
 
       try {
         const list: KizeoFormsList = await kizeoFormsCommon.fetchList({
-          token: auth as unknown as string,
+          token: auth.secret_text,
           listId: listId as unknown as string,
         });
 

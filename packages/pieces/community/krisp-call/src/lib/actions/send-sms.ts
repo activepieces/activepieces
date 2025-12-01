@@ -66,7 +66,7 @@ export const sendSms = createAction({
       method: HttpMethod.POST,
       url: 'https://app.krispcall.com/api/v3/platform/activepiece/send-sms',
       headers: {
-        'X-API-KEY': auth.apiKey,
+        'X-API-KEY': auth.props.apiKey,
       },
 
       body: {

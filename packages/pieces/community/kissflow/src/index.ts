@@ -17,12 +17,12 @@ export const kissflow = createPiece({
     downloadAttachmentFromFormField,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const typedAuth = auth as KissflowAuth;
+        const typedAuth = auth.props;
         return `https://${typedAuth.accountName}.${typedAuth.domainName}/process/2/${typedAuth.accountId}/`;
       },
       auth: kissflowAuth,
       authMapping: async (auth) => {
-        const typedAuth = auth as KissflowAuth;
+        const typedAuth = auth.props;
         return {
           'X-Access-Key-Id': typedAuth.accessKeyId,
           'X-Access-Key-Secret': typedAuth.accessKeySecret,
