@@ -29,7 +29,7 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { AddAPArrayOverlapsToQueryBuilder } from '../../database/database-connection'
 import { distributedLock } from '../../database/redis-connections'
@@ -114,15 +114,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        const queryBuilder = flowRepo().createQueryBuilder('ff')
+        const queryBuilder = flowRepo().createQueryBuilder('ff').where({ operationStatus: Not(FlowOperationStatus.DELETING) })
 
         if (projectIds) {
-            queryBuilder.where({ projectId: In(projectIds) })
+            queryBuilder.andWhere({ projectId: In(projectIds) })
         }
         else {
             queryBuilder
                 .innerJoin('project', 'project', 'project.id = ff."projectId"')
-                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project."platformId" = :platformId', { platformId })
         }
 
         if (folderId !== undefined) {
