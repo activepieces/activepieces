@@ -30,6 +30,7 @@ const getLanguages = async (apiKey: string) => {
 
 export const murfCommon = {
     language: Property.Dropdown({
+  auth: murfAuth,
         displayName: "Language",
         description: "Select your preferred language for the translated output.",
         required: true,
@@ -52,6 +53,7 @@ export const murfCommon = {
     }),
 
     voiceId: Property.Dropdown({
+  auth: murfAuth,
         displayName: "Voice",
         description: "Choose a voice for converting text into speech",
         required: true,
@@ -80,6 +82,7 @@ export const murfCommon = {
         },
     }),
     sourceLocale: Property.Dropdown({
+  auth: murfAuth,
         displayName: "Source Locale",
         description: "Select the source locale for input text.",
         required: false,

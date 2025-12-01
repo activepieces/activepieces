@@ -87,7 +87,7 @@ export const microsoftDynamicsCrm = createPiece({
     createCustomApiCallAction({
       auth: dynamicsCRMAuth,
       baseUrl: (auth) => {
-        const props = (auth as OAuth2PropertyValue).props as {
+        const props = (auth ).props as {
           hostUrl: string;
           proxyUrl: string;
         };
@@ -97,7 +97,7 @@ export const microsoftDynamicsCrm = createPiece({
         )}/api/data/v9.2`;
       },
       authMapping: async (auth) => ({
-        Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer  ${(auth ).access_token}`,
       }),
     }),
   ],

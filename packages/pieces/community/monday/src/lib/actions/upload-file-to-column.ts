@@ -27,7 +27,7 @@ export const uploadFileToColumnAction = createAction({
             options: [],
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth);
         const res = await client.listBoardColumns({
           boardId: board_id as string,
         });

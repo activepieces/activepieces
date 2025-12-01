@@ -11,6 +11,7 @@ export const getTaskAction = createAction({
     description: 'Gets the details of a specific task.',
     props: {
         task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The list containing the task you want to retrieve.',
             required: true,
@@ -28,6 +29,7 @@ export const getTaskAction = createAction({
             },
         }),
         task_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task',
             description: 'The specific task to retrieve.',
             required: true,

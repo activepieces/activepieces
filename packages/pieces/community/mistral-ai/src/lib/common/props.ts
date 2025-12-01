@@ -1,11 +1,13 @@
 import { Property, DropdownOption } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { mistralAuth } from './auth';
 
 export const modelDropdown = Property.Dropdown({
 	displayName: 'Model',
 	description: 'Select a Mistral model. List is fetched live from your account.',
 	required: true,
 	refreshers: [],
+	auth: mistralAuth,
 	options: async ({ auth }) => {
 		if (!auth) {
 			return {

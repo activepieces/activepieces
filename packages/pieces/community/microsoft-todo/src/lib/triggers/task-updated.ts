@@ -60,6 +60,7 @@ export const newOrUpdatedTaskTrigger = createTrigger({
 	auth: microsoftToDoAuth,
 	props: {
 		task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
 			displayName: 'Task List',
 			required: true,
 			refreshers: [],
