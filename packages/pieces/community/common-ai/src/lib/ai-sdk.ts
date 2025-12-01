@@ -141,7 +141,7 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
                     ...spreadIfDefined('allowedDomains', allowedDomains),
                     ...spreadIfDefined('blockedDomains', blockedDomains),
                 }),
-            } as ToolSet
+            } as any
         }
 
         case 'openai': {
@@ -153,7 +153,7 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
                     ...spreadIfDefined('searchContextSize', openaiOptions.searchContextSize),
                     ...spreadIfDefined('userLocation', buildUserLocation(openaiOptions)),
                 }),
-            } as ToolSet
+            } as any
         }
 
         case 'google': {
