@@ -49,7 +49,7 @@ export const postStatus = createAction({
     const status = context.propsValue.status;
     const media = context.propsValue.media;
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
 
     let mediaId: string | undefined = undefined;
     if (media) {

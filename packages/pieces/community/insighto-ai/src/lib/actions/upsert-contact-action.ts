@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { insightoAuth } from '../..';
 
 export const upsertContactAction = createAction({
   name: 'upsert_contact',
   displayName: 'Upsert Contact',
   description: 'Create or update a contact using email or phone number',
+  auth: insightoAuth,
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

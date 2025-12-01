@@ -1,13 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { WidgetItemSchema, WidgetItem } from '../schemas';
+import { insightoAuth } from '../..';
 
 export const makeOutboundCallAction = createAction({
   name: 'make_outbound_call',
   displayName: 'Make Outbound Call',
   description: 'Initiate an outbound call to a phone number using a configured widget',
+  auth: insightoAuth,
   props: {
     widget_id: Property.Dropdown({
+      auth: insightoAuth,
       displayName: 'Widget',
       description: 'Widget connected to Twilio, Plivo, or Telnyx for making calls',
       required: true,
@@ -22,7 +25,7 @@ export const makeOutboundCallAction = createAction({
         }
 
         try {
-          const apiKey = auth as string;
+          const apiKey = auth.secret_text;
           const url = `https://api.insighto.ai/api/v1/widget`;
 
           const queryParams: Record<string, string> = {

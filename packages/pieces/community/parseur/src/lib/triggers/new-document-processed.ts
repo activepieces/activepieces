@@ -22,7 +22,7 @@ export const newDocumentProcessed = createTrigger({
       category: 'CUSTOM',
     });
     await parseurCommon.enableWebhook({
-      apiKey: context.auth as string,
+      apiKey: context.auth.secret_text,
       webhookId: webhookCreateResponse.id,
       mailboxId: context.propsValue.mailboxId as number,
     });

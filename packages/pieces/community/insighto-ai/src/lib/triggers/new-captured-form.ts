@@ -1,12 +1,14 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { CapturedFormWebhookSchema } from '../schemas';
+import { insightoAuth } from '../..';
 
 export const newCapturedForm = createTrigger({
   name: 'new_captured_form',
   displayName: 'New Captured Form',
   description: 'Fires when a new form submission is captured in Insighto.ai',
   props: {},
+  auth: insightoAuth,
   sampleData: {
     id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
     object: 'event',

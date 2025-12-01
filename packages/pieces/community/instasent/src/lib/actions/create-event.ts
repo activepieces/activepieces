@@ -26,6 +26,7 @@ export const createEvent = createAction({
             required: false
         }),
         event_type: Property.Dropdown({
+        auth: instasentAuth,
             displayName: 'Event Type',
             description: 'Select the type of event to create',
             required: true,
@@ -33,15 +34,15 @@ export const createEvent = createAction({
             options: async ({ auth }) => {
                 const authData = auth as InstasentAuthType;
                 const baseUrl = getBaseUrl({
-                    projectId: authData.projectId,
-                    datasourceId: authData.datasourceId
+                    projectId: authData.props.projectId,
+                    datasourceId: authData.props.datasourceId
                 });
 
                 const response = await httpClient.sendRequest<{ specs: EventSpec[] }>({
                     method: HttpMethod.GET,
                     url: `${baseUrl}/stream/specs/events`,
                     headers: {
-                        'Authorization': `Bearer ${authData.apiKey}`
+                        'Authorization': `Bearer ${authData.props.apiKey}`
                     }
                 });
 
@@ -54,23 +55,24 @@ export const createEvent = createAction({
             }
         }),
         event_parameters: Property.DynamicProperties({
+            auth: instasentAuth,
             displayName: 'Event Parameters',
             description: 'Parameters for the selected event type',
             required: true,
             refreshers: ['event_type'],
             props: async ({ auth, event_type }) => {
                 if (!auth || !event_type) return {};
-                const authData = auth as InstasentAuthType;
+                const authData = auth;
                 const baseUrl = getBaseUrl({
-                    projectId: authData.projectId,
-                    datasourceId: authData.datasourceId
+                    projectId: authData.props.projectId,
+                    datasourceId: authData.props.datasourceId
                 });
 
                 const response = await httpClient.sendRequest<{ specs: EventParameter[] }>({
                     method: HttpMethod.GET,
                     url: `${baseUrl}/stream/specs/event-parameters/${event_type}`,
                     headers: {
-                        'Authorization': `Bearer ${authData.apiKey}`
+                        'Authorization': `Bearer ${authData.props.apiKey}`
                     }
                 });
 
@@ -122,8 +124,8 @@ export const createEvent = createAction({
     async run({ auth, propsValue }) {
         const authData = auth as InstasentAuthType;
         const baseUrl = getBaseUrl({
-            projectId: authData.projectId,
-            datasourceId: authData.datasourceId
+            projectId: authData.props.projectId,
+            datasourceId: authData.props.datasourceId
         });
 
         const eventData = {
@@ -138,7 +140,7 @@ export const createEvent = createAction({
             method: HttpMethod.POST,
             url: `${baseUrl}/stream/events`,
             headers: {
-                'Authorization': `Bearer ${authData.apiKey}`,
+                'Authorization': `Bearer ${authData.props.apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: [eventData]

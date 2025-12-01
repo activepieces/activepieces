@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { instabaseAuth } from '../../index';
-import { makeInstabaseApiCall, InstabaseAuth } from '../common';
+import { makeInstabaseApiCall } from '../common';
 
 interface ConverseWithDocumentResponse {
   prompt_id: string | null;
@@ -15,6 +15,7 @@ export const converseWithDocumentAction = createAction({
   description: 'Ask a question about a document in a conversation',
   props: {
     conversation_id: Property.Dropdown({
+      auth: instabaseAuth,
       displayName: 'Conversation',
       description: 'Select the conversation',
       required: true,
@@ -22,7 +23,7 @@ export const converseWithDocumentAction = createAction({
       options: async ({ auth }) => {
         try {
           const response = await makeInstabaseApiCall<{ conversations: Array<{ id: string; name: string; description?: string }> }>(
-            auth as InstabaseAuth,
+            auth,
             '/v2/conversations',
             HttpMethod.GET
           );
@@ -50,6 +51,7 @@ export const converseWithDocumentAction = createAction({
       required: true,
     }),
     document_ids: Property.MultiSelectDropdown({
+      auth: instabaseAuth,
       displayName: 'Documents',
       description: 'Select the documents to query',
       required: true,
@@ -66,7 +68,7 @@ export const converseWithDocumentAction = createAction({
           const response = await makeInstabaseApiCall<{
             documents: Array<{ id: number; name: string; state: string; uploadTimestamp: string }>
           }>(
-            auth as InstabaseAuth,
+            auth,
             `/v2/conversations/${conversation_id}`,
             HttpMethod.GET
           );

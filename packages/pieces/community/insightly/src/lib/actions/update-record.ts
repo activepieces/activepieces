@@ -48,6 +48,7 @@ export const updateRecord = createAction({
             }
         }),
         recordId: Property.Dropdown({
+            auth: insightlyAuth,
             displayName: 'Record ID',
             description: 'Select the record to update',
             required: true,
@@ -62,7 +63,7 @@ export const updateRecord = createAction({
                 }
 
                 const response = await makeInsightlyRequest(
-                    auth as string,
+                    auth,
                     `/${objectName}?top=100&brief=true`,
                     pod as string
                 );
@@ -90,6 +91,7 @@ export const updateRecord = createAction({
             }
         }),
         fields: Property.DynamicProperties({
+            auth: insightlyAuth,
             displayName: 'Fields',
             description: 'The new field values to update.',
             required: true,
@@ -102,7 +104,7 @@ export const updateRecord = createAction({
                 const podName = pod as unknown as string;
 
                 const record = await makeInsightlyRequest(
-                    auth as unknown as string,
+                    auth,
                     `/${objName}/${recordId as unknown as string}`,
                     podName
                 );
