@@ -7,7 +7,7 @@
   "implicitDependencies": ["engine"],
   "targets": {
     "build": {
-      "executor": "@nx/esbuild:esbuild",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
@@ -17,7 +17,7 @@
         "tsConfig": "packages/server/api/tsconfig.app.json",
         "platform": "node",
         "format": ["cjs"],
-        "bundle": true,
+        "bundle": false,
         "sourcemap": true,
         "generatePackageJson": true,
         "assets": [
