@@ -19,7 +19,7 @@ export const projectId = Property.Dropdown({
         method: HttpMethod.GET,
         url: 'https://api.peekshot.com/api/v1/projects',
         headers: {
-          'x-api-key': auth as string,
+          'x-api-key': auth.secret_text,
           'Content-Type': 'application/json',
         },
       });

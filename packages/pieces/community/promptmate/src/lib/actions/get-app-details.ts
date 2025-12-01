@@ -26,7 +26,7 @@ export const getAppDetails = createAction({
       method: HttpMethod.GET,
       url: 'https://api.promptmate.io/v1/app',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
       queryParams: {
         appId,

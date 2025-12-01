@@ -46,7 +46,7 @@ export const getJobStatus = createAction({
       method: HttpMethod.GET,
       url: 'https://api.promptmate.io/v1/app-jobs',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
       queryParams,
     });

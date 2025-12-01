@@ -64,7 +64,7 @@ export const runApp = createAction({
       method: HttpMethod.POST,
       url: 'https://api.promptmate.io/v1/app-jobs',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,

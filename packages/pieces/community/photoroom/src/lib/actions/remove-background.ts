@@ -21,7 +21,7 @@ export const removeBackground = createAction({
       url: `https://sdk.photoroom.com/v1/segment`,
       method: HttpMethod.POST,
       headers: {
-        'x-api-key': auth.apiKey,
+        'x-api-key': auth.secret_text.apiKey,
         'Content-Type': 'multipart/form-data',
       },
       body: form,

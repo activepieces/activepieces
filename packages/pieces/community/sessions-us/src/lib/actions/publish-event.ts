@@ -40,7 +40,7 @@ export const publishEvent = createAction({
       method: HttpMethod.POST,
       url: `${baseUrl}/events/${propsValue.event}/publish`,
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
     });
     return response.body;

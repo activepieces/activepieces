@@ -63,7 +63,7 @@ export const uploadFile = createAction({
       method: HttpMethod.POST,
       url: `${BASE_URL}/upload-file`,
       headers: {
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text as string,
       },
       body: formData,
     });

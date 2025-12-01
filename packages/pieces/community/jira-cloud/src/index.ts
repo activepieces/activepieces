@@ -47,13 +47,13 @@ export const jiraCloud = createPiece({
 		markdownToJiraFormat,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
-				return `${(auth as JiraAuth).instanceUrl}/rest/api/3`;
+				return `${(auth).props.instanceUrl}/rest/api/3`;
 			},
 			auth: jiraCloudAuth,
 			authMapping: async (auth) => {
 				const typedAuth = auth as JiraAuth;
 				return {
-					Authorization: `Basic ${Buffer.from(`${typedAuth.email}:${typedAuth.apiToken}`).toString(
+					Authorization: `Basic ${Buffer.from(`${typedAuth.props.email}:${typedAuth.props.apiToken}`).toString(
 						'base64',
 					)}`,
 				};
