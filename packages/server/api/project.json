@@ -19,7 +19,7 @@
         "format": ["cjs"],
         "bundle": true,
         "sourcemap": true,
-        "generatePackageJson": true,
+        "generatePackageJson": false,
         "assets": [
           {
             "glob": "packages/server/api/README.md",
