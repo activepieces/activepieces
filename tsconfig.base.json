@@ -191,13 +191,16 @@
         "packages/pieces/community/flow-parser/src/index.ts"
       ],
       "@activepieces/piece-writesonic-bulk": [
-        "packages/pieces/community/writesonic-bulk/src/index.ts",
+        "packages/pieces/community/writesonic-bulk/src/index.ts"
       ],
       "@activepieces/piece-documentpro": [
         "packages/pieces/community/documentpro/src/index.ts"
       ],
       "@activepieces/piece-image-router": [
         "packages/pieces/community/image-router/src/index.ts"
+      ],
+      "@activepieces/piece-logrocket": [
+        "packages/pieces/community/logrocket/src/index.ts"
       ]
     },
     "resolveJsonModule": true
