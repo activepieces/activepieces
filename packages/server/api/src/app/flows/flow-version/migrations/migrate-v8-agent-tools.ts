@@ -13,7 +13,7 @@ export const cleanUpAgentTools: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type === FlowActionType.PIECE && step.settings.pieceName === AGENT_PIECE_NAME) {
-                const tools = step.settings.input['agentTools'] as { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[]
+                const tools = (step.settings.input['agentTools'] as { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[]) ?? []
                 const newTools = tools.map(tool => {
                     switch (tool.type) {
                         case 'PIECE': {
