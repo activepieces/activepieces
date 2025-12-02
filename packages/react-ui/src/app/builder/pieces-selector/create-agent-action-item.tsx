@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
@@ -9,7 +10,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import { handleAddingOrUpdatingCustomAgentPieceSelectorItem } from './custom-piece-selector-items-utils';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
-import { toast } from 'sonner';
 
 type CreateAgentActionItemProps = {
   pieceSelectorItem: PieceSelectorPieceItem;
@@ -50,7 +50,7 @@ const CreateAgentActionItem = ({
               "To create an agent, you'll first need to connect to OpenAI in platform settings.",
             ),
             action: {
-              label: "Set Up",
+              label: 'Set Up',
               onClick: () => {
                 navigate('/platform/setup/ai');
               },

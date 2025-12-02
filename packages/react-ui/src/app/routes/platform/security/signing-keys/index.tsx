@@ -11,7 +11,6 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog } from '@/features/platform-admin/components/new-signing-key-dialog';
 import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';

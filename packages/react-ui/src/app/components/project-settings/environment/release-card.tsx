@@ -1,10 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Package } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { cn } from '@/lib/utils';
@@ -29,7 +29,7 @@ const ReleaseCard = () => {
             ? t('You have successfully enabled releases')
             : t('You have successfully disabled releases'),
           duration: 3000,
-        }
+        },
       );
     },
   });

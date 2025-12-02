@@ -8,6 +8,7 @@ import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
 import { flowRepo } from './flow.repo'
 import { flowService } from './flow.service'
+import { system } from '../../helper/system/system'
 
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
@@ -68,6 +69,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
                 await flowRepo().save({
                     ...flowToUpdate,
+                    status: newStatus,
                     operationStatus: FlowOperationStatus.NONE,
                     publishedVersionId: publishedFlowVersion.id,
                 })

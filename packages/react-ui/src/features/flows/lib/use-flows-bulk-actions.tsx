@@ -24,8 +24,8 @@ import {
 import { MoveFlowDialog } from '../components/move-flow-dialog';
 
 import { CreateFlowDropdown } from './create-flow-dropdown';
+import { flowHooks } from './flow-hooks';
 import { flowsApi } from './flows-api';
-import { flowHooks } from './flows-hooks';
 
 export const useFlowsBulkActions = ({
   selectedRows,

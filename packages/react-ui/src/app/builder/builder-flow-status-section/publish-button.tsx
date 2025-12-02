@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -7,11 +8,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { FlowStatusUpdatedResponse, FlowVersionState, Permission } from '@activepieces/shared';
+import {
+  FlowStatusUpdatedResponse,
+  FlowVersionState,
+  Permission,
+} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
-import { flowHooks } from '@/features/flows/lib/flows-hooks';
 
 const PublishButton = () => {
   const { checkAccess } = useAuthorization();
@@ -22,8 +27,8 @@ const PublishButton = () => {
     setVersion,
     isSaving,
     readonly,
-    setIsPublishing,
     isPublishing,
+    setIsPublishing,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.flow,
@@ -31,8 +36,8 @@ const PublishButton = () => {
     state.setVersion,
     state.saving,
     state.readonly,
-    state.setIsPublishing,
     state.isPublishing,
+    state.setIsPublishing,
   ]);
   const isViewingDraft =
     flowVersion.state === FlowVersionState.DRAFT ||
@@ -45,8 +50,11 @@ const PublishButton = () => {
     onSuccess: (response: FlowStatusUpdatedResponse) => {
       setFlow(response.flow);
       setVersion(response.flow.version);
-      setIsPublishing(false);
+      toast.success(t('Your flow is now published.'), {
+        duration: 3000,
+      });
     },
+    setIsPublishing: setIsPublishing,
   });
   if (!permissionToEditFlow || !isViewingDraft || (readonly && !isPublishing)) {
     return null;

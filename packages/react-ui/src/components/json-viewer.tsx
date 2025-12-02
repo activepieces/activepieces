@@ -3,6 +3,7 @@ import { Copy, Download, Eye, EyeOff } from 'lucide-react';
 import React, { useLayoutEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import ReactJson from 'react-json-view';
+import { toast } from 'sonner';
 
 import { useTheme } from '@/components/theme-provider';
 import {
@@ -15,7 +16,6 @@ import { cn, isStepFileUrl } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { Button } from './ui/button';
-import { toast } from 'sonner';
 
 type JsonViewerProps = {
   json: any;

@@ -1,9 +1,8 @@
 import { t } from 'i18next';
+import { useState } from 'react';
 
 import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
-
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   FlowStatus,
@@ -19,31 +18,30 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
+import { flowHooks } from '../lib/flow-hooks';
 import { flowsUtils } from '../lib/flows-utils';
-import { useState } from 'react';
-import { flowHooks } from '../lib/flows-hooks';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;
 };
 
 const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
-
-  const [isFlowPublished, setIsFlowPublished] = useState(flow.status === FlowStatus.ENABLED);
+  const [isFlowPublished, setIsFlowPublished] = useState(
+    flow.status === FlowStatus.ENABLED,
+  );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToToggleFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,
   );
 
-
-  const { mutate: changeStatus, isPending: isLoading } = flowHooks.useChangeFlowStatus({
-    flowId: flow.id,
-    change: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
-    onSuccess: (response: FlowStatusUpdatedResponse) => {
-      setIsFlowPublished(response.flow.status === FlowStatus.ENABLED);
-    },
-  });
+  const { mutate: changeStatus, isPending: isLoading } =
+    flowHooks.useChangeFlowStatus({
+      flowId: flow.id,
+      change: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
+      onSuccess: (response: FlowStatusUpdatedResponse) => {
+        setIsFlowPublished(response.flow.status === FlowStatus.ENABLED);
+      },
+    });
 
   return (
     <>
@@ -67,8 +65,8 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
             ? isNil(flow.publishedVersionId)
               ? t('Please publish flow first')
               : isFlowPublished
-                ? t('Flow is on')
-                : t('Flow is off')
+              ? t('Flow is on')
+              : t('Flow is off')
             : t('Permission Needed')}
         </TooltipContent>
       </Tooltip>

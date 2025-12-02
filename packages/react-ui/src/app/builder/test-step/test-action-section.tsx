@@ -116,7 +116,7 @@ const TestStepSectionImplementation = React.memo(
       testAction({
         type: 'agentAction',
         onProgress: async (progress: StepRunResponse) => {
-          const outputProgress = progress.output
+          const outputProgress = progress.output;
           if (!isNil(outputProgress)) {
             setLiveAgentResult(outputProgress as AgentResult);
           }
@@ -131,7 +131,7 @@ const TestStepSectionImplementation = React.memo(
       if (isTodoCreateTask(currentStep)) {
         handleTodoTest();
       } else if (isRunAgent(currentStep)) {
-        setLiveAgentResult(defaultAgentOutput)
+        setLiveAgentResult(defaultAgentOutput);
         handleAgentTest();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);

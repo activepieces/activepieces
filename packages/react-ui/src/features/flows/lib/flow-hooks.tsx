@@ -1,9 +1,11 @@
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
-
-import { useSocket } from '@/components/socket-provider';
 import { toast } from 'sonner';
+
+import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
+import { useSocket } from '@/components/socket-provider';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
@@ -27,10 +29,8 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { flowsUtils } from './flows-utils';
-import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
 import { flowsApi } from './flows-api';
-import { internalErrorToast } from '@/components/ui/sonner';
+import { flowsUtils } from './flows-utils';
 
 const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
 export const flowHooks = {
@@ -55,6 +55,7 @@ export const flowHooks = {
     flowId,
     change,
     onSuccess,
+    setIsPublishing,
   }: UseChangeFlowStatusParams) => {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
       ApFlagId.ENABLE_FLOW_ON_PUBLISH,
@@ -63,36 +64,63 @@ export const flowHooks = {
     const { openDialog } = useApErrorDialogStore();
     return useMutation({
       mutationFn: async () => {
-        return await new Promise<FlowStatusUpdatedResponse>(async (resolve, reject) => {
-          await flowsApi.update(flowId, {
-            type: change === 'publish' ? FlowOperationType.LOCK_AND_PUBLISH : FlowOperationType.CHANGE_STATUS,
-            request: {
-              status: change === 'publish' ? (enableFlowOnPublish ? FlowStatus.ENABLED : FlowStatus.DISABLED) : change,
-            },
-          });
-
-          const onUpdateFinish = (response: FlowStatusUpdatedResponse) => {
-            if (response.flow.id !== flowId) {
-              return;
-            }
-            socket.off(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
-            resolve(response);
-          };
-          socket.on(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
-        });
+        if (change === 'publish') {
+          setIsPublishing?.(true);
+        }
+        return await new Promise<FlowStatusUpdatedResponse>(
+          (resolve, reject) => {
+            flowsApi
+              .update(flowId, {
+                type:
+                  change === 'publish'
+                    ? FlowOperationType.LOCK_AND_PUBLISH
+                    : FlowOperationType.CHANGE_STATUS,
+                request: {
+                  status:
+                    change === 'publish'
+                      ? enableFlowOnPublish
+                        ? FlowStatus.ENABLED
+                        : FlowStatus.DISABLED
+                      : change,
+                },
+              })
+              .then(() => {
+                const onUpdateFinish = (
+                  response: FlowStatusUpdatedResponse,
+                ) => {
+                  if (response.flow.id !== flowId) {
+                    return;
+                  }
+                  socket.off(
+                    WebsocketClientEvent.FLOW_STATUS_UPDATED,
+                    onUpdateFinish,
+                  );
+                  resolve(response);
+                };
+                socket.on(
+                  WebsocketClientEvent.FLOW_STATUS_UPDATED,
+                  onUpdateFinish,
+                );
+              })
+              .catch((error) => {
+                reject(error);
+              });
+          },
+        );
       },
       onSuccess: (response: FlowStatusUpdatedResponse) => {
+        if (change === 'publish') {
+          setIsPublishing?.(false);
+        }
         if (!isNil(response.error)) {
           openDialog({
             title: t('Issue details'),
             description: (
-              <>
-                <p>
-                  {t(
-                    'An error occurred while changing the flow status. This may be due to an issue in the piece or its settings.'
-                  )}
-                </p>
-              </>
+              <p>
+                {t(
+                  'An error occurred while changing the flow status. This may be due to an issue in the piece or its settings.',
+                )}
+              </p>
             ),
             error: response.error,
           });
@@ -101,7 +129,7 @@ export const flowHooks = {
         onSuccess?.(response);
       },
       onError: (_uncaughtError: unknown) => {
-         internalErrorToast();
+        internalErrorToast();
       },
     });
   },
@@ -124,9 +152,14 @@ export const flowHooks = {
       },
       onSuccess: (res) => {
         if (res.length > 0) {
-          toast.success(res.length === 1 ? t(`${res[0].version.displayName} has been exported.`) : t('Flows have been exported.'), {
-            duration: 3000,
-          });
+          toast.success(
+            res.length === 1
+              ? t(`${res[0].version.displayName} has been exported.`)
+              : t('Flows have been exported.'),
+            {
+              duration: 3000,
+            },
+          );
         }
       },
     });
@@ -237,9 +270,9 @@ export const flowHooks = {
   },
 };
 
-
 type UseChangeFlowStatusParams = {
   flowId: string;
-  change: 'publish' | FlowStatus
+  change: 'publish' | FlowStatus;
   onSuccess: (flow: FlowStatusUpdatedResponse) => void;
-}
+  setIsPublishing?: (isPublishing: boolean) => void;
+};

@@ -23,6 +23,7 @@ import {
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
 import { CreateFlowDropdown } from '@/features/flows/lib/create-flow-dropdown';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
@@ -35,7 +36,6 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../flow-actions-menu';
-import { flowHooks } from '@/features/flows/lib/flows-hooks';
 
 interface FlowsByFolder {
   [folderId: string]: PopulatedFlow[];

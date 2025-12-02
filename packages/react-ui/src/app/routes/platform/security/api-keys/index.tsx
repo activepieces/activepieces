@@ -10,7 +10,6 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';

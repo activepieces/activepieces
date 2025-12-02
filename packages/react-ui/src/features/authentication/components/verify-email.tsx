@@ -7,9 +7,8 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Card } from '@/components/ui/card';
 import { FullLogo } from '@/components/ui/full-logo';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';

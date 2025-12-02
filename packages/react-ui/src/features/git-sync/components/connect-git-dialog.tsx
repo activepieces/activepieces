@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
@@ -36,8 +38,6 @@ import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
-import { toast } from 'sonner';
 
 type ConnectGitProps = {
   open?: boolean;
