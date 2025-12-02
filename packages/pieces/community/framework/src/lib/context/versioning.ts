@@ -5,6 +5,8 @@ export enum ContextVersion {
     V1 = '1'
 }
 export const LATEST_CONTEXT_VERSION = ContextVersion.V1;
+// bump this version when we want to support context versioning for pieces
+export const MINIMUM_SUPPORTED_RELEASE_AFTER_CONTEXT_VERSIONING = '0.75.0';
 
 export const backwardCompatabilityContextUtils = {
     makeActionContextBackwardCompatible({ context, contextVersion }: MakeActionContextBackwardCompatibleParams): ActionContext<PieceAuthProperty,InputPropertyMap> {
