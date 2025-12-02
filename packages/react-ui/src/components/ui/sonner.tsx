@@ -7,9 +7,9 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from 'lucide-react';
-import { useTheme } from '@/components/theme-provider';
-
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
+
+import { useTheme } from '@/components/theme-provider';
 
 export const INTERNAL_ERROR_MESSAGE =
   'An unexpected error occurred. Please try again in a moment.';
@@ -31,7 +31,6 @@ export const UNSAVED_CHANGES_TOAST = {
 };
 
 const Toaster = ({ ...props }: ToasterProps) => {
-
   const { theme } = useTheme();
   return (
     <Sonner

@@ -1,11 +1,20 @@
 import { t } from 'i18next';
+import { AlertCircleIcon } from 'lucide-react';
+
+import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { Button } from '@/components/ui/button';
 import { isNil } from '@activepieces/shared';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../ui/dialog';
-import { Button } from '@/components/ui/button';
-import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../ui/dialog';
+
 import { useApErrorDialogStore } from './ap-error-dialog-store';
-import { AlertCircleIcon } from 'lucide-react';
 
 const ApErrorDialog = () => {
   const { params, closeDialog } = useApErrorDialogStore();

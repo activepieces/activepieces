@@ -114,9 +114,10 @@ export const flowHooks = {
         }
         if (!isNil(response.error)) {
           openDialog({
-            title: change === 'publish'
-              ? t('Publish failed')
-              : t('Status update failed'),
+            title:
+              change === 'publish'
+                ? t('Publish failed')
+                : t('Status update failed'),
             description: (
               <p>
                 {t(

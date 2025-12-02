@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
@@ -14,9 +13,8 @@ export function CollapsibleJson({
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const toggleVisibility = () => setIsOpen(!isOpen);
 
-  const jsonString = typeof json === 'string' 
-    ? json 
-    : JSON.stringify(json, null, 2);
+  const jsonString =
+    typeof json === 'string' ? json : JSON.stringify(json, null, 2);
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
@@ -43,9 +41,7 @@ export function CollapsibleJson({
             </div>
           </div>
           {description && (
-            <p className="text-xs text-muted-foreground">
-              {description}
-            </p>
+            <p className="text-xs text-muted-foreground">{description}</p>
           )}
         </div>
       )}
@@ -60,4 +56,3 @@ type CollapsibleJsonProps = {
   defaultOpen?: boolean;
   className?: string;
 };
-
