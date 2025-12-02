@@ -7,7 +7,6 @@ import { ImageModelV2 } from "@ai-sdk/provider";
 
 export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
-        auth: undefined,
         displayName: 'Provider',
         required: true,
         refreshers: [],
@@ -61,7 +60,6 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         },
     }),
     model: Property.Dropdown({
-        auth: undefined,
         displayName: 'Model',
         required: true,
         defaultValue: 'gpt-4o',
@@ -100,7 +98,6 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         },
     }),
     advancedOptions: Property.DynamicProperties({
-        auth: undefined,
         displayName: 'Advanced Options',
         required: false,
         refreshers: ['provider', 'model'],
@@ -243,7 +240,6 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         description: 'Whether to use web search to find information for the AI to use in its response.',
     }),
     webSearchOptions: Property.DynamicProperties({
-        auth: undefined,
         displayName: 'Web Search Options',
         required: false,
         refreshers: ['webSearch', 'provider', 'model'],

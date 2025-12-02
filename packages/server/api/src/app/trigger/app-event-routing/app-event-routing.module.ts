@@ -1,7 +1,7 @@
-// import { facebookLeads } from '@activepieces/piece-facebook-leads'
-// import { intercom } from '@activepieces/piece-intercom'
-// import { slack } from '@activepieces/piece-slack'
-// import { square } from '@activepieces/piece-square'
+import { facebookLeads } from '@activepieces/piece-facebook-leads'
+import { intercom } from '@activepieces/piece-intercom'
+import { slack } from '@activepieces/piece-slack'
+import { square } from '@activepieces/piece-square'
 import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
     rejectedPromiseHandler,
@@ -31,10 +31,10 @@ import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece<PieceAuthProperty| undefined>> = {
-    // slack,
-    // square,
-    // 'facebook-leads': facebookLeads,
-    // intercom,
+    slack,
+    square,
+    'facebook-leads': facebookLeads,
+    intercom,
 }
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',

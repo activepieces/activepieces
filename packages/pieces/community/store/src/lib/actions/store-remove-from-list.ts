@@ -11,7 +11,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 import deepEqual from 'deep-equal';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
 
-async function executeStorageRemoveFromList(context: ActionContext<undefined, {
+async function executeStorageRemoveFromList(context: ActionContext<PieceAuthProperty, {
   key: ShortTextProperty<true>;
   value: ShortTextProperty<true>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
