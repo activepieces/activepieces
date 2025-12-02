@@ -201,6 +201,9 @@
       ],
       "@activepieces/piece-gptzero-detect-ai": [
         "packages/pieces/community/gptzero-detect-ai/src/index.ts"
+      ],
+      "@activepieces/piece-hystruct": [
+        "packages/pieces/community/hystruct/src/index.ts"
       ]
     },
     "resolveJsonModule": true
