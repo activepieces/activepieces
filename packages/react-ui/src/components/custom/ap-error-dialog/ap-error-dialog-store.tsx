@@ -1,12 +1,18 @@
 import { create } from 'zustand';
+
+type ApErrorDialogParams = {
+  title: string;
+  description: React.ReactNode;
+  error: unknown;
+};
 interface ApErrorDialogStore {
-  error: unknown | null;
-  openDialog: (error: unknown) => void;
+  params: ApErrorDialogParams | null;
+  openDialog: (params: ApErrorDialogParams) => void;
   closeDialog: () => void;
 }
 
 export const useApErrorDialogStore = create<ApErrorDialogStore>((set) => ({
-  error: null,
-  openDialog: (error) => set({ error }),
-  closeDialog: () => set({ error: null }),
+  params: null,
+  openDialog: (params) => set({ params }),
+  closeDialog: () => set({ params: null }),
 }));

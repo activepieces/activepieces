@@ -5,20 +5,15 @@ import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 import { Socket } from 'socket.io-client';
 
 import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
-import { toast } from '@/components/ui/use-toast';
 import { downloadFile } from '@/lib/utils';
 import {
   PopulatedFlow,
   FlowTriggerType,
-  ExecutionError,
-  ExecutionErrorType,
   FlowStatus,
   FlowOperationStatus,
-  Flow,
   WebsocketClientEvent,
-  getApErrorParams,
-  ErrorCode,
-  getExecutionError,
+  TriggerSource,
+  getPieceNameFromAlias,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -44,15 +39,6 @@ const zipFlows = async (flows: PopulatedFlow[]) => {
   return zip;
 };
 
-const getExecutionUserError = (error: unknown): ExecutionError | null => {
-  const apError = getApErrorParams(error, ErrorCode.TRIGGER_UPDATE_STATUS);
-  if (!apError) return null;
-  const executionError = getExecutionError(apError.standardError);
-  if (!executionError) return null;
-  if (executionError.type !== ExecutionErrorType.USER) return null;
-  return executionError;
-};
-
 const updateStatusListener = (
   socket: Socket,
   callback: (
@@ -64,22 +50,29 @@ const updateStatusListener = (
     flow: updatedFlow,
     status,
     error,
+    flowTrigger,
   }: {
-    flow?: Flow;
+    flow?: PopulatedFlow;
+    flowTrigger?: TriggerSource;
     status: 'success' | 'failed';
     error?: unknown;
   }) => {
     if (status === 'failed') {
-      const apError = getApErrorParams(error, undefined);
-      const executionUserError = getExecutionUserError(error);
-      toast({
-        title: executionUserError?.name ?? t('Error'),
-        description:
-          executionUserError?.message ?? t('Failed to change flow status'),
-        variant: 'destructive',
-        showMore: apError
-          ? () => useApErrorDialogStore.getState().openDialog(error)
-          : undefined,
+      useApErrorDialogStore.getState().openDialog({
+        title: t('Flow activation failed!'),
+        description: (
+          <>
+            {t('There’s an issue with your')}{' '}
+            <b>{getPieceNameFromAlias(flowTrigger?.pieceName ?? '')}</b>{' '}
+            {t('trigger preventing activation.')}
+            <br />
+            {t('Please fix it in')}{' '}
+            <b>{getPieceNameFromAlias(flowTrigger?.pieceName ?? '')}</b>
+            {', '}
+            {t('then try again.')}
+          </>
+        ),
+        error,
       });
     }
     callback(FlowOperationStatus.NONE, updatedFlow?.status);

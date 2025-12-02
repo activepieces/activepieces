@@ -3,6 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -79,7 +80,12 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 await flowRepo().update(id, {
                     operationStatus: FlowOperationStatus.NONE,
                 })
-                websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { status: 'failed', error })
+                const flowTrigger = await triggerSourceService(log).getByFlowId({
+                    flowId: id,
+                    projectId,
+                    simulate: false,
+                })
+                websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { status: 'failed', error, flowTrigger })
             }
             throw error
         }
