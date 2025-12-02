@@ -17,6 +17,9 @@ export const kissflow = createPiece({
     downloadAttachmentFromFormField,
     createCustomApiCallAction({
       baseUrl: (auth) => {
+        if (!auth) {
+          return ''
+        }
         const typedAuth = auth.props;
         return `https://${typedAuth.accountName}.${typedAuth.domainName}/process/2/${typedAuth.accountId}/`;
       },

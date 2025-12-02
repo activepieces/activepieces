@@ -51,7 +51,7 @@ export const discourse = createPiece({
     addUsersToGroup,
     sendPrivateMessage,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth.props.website_url.trim()),
+      baseUrl: (auth) => auth ? (auth.props.website_url.trim()) : '',
       auth: discourseAuth,
       authMapping: async (auth) => ({
         'Api-Key': auth.props.api_key,

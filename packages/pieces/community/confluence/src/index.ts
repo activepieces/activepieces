@@ -36,7 +36,7 @@ export const confluence = createPiece({
   actions: [getPageContent,createPageFromTemplateAction,
     createCustomApiCallAction({
       baseUrl:(auth)=>{
-        return `${ auth.props.confluenceDomain}/wiki/api/v2`;
+        return `${ auth?.props.confluenceDomain?? ''}/wiki/api/v2`;
       },
       auth: confluenceAuth,
       authMapping: async (auth) => {

@@ -48,6 +48,9 @@ export const baserow = createPiece({
     updateRowAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
+        if (!auth) {
+          return '';
+        }
         return auth.props.apiUrl;
       },
       auth: baserowAuth,

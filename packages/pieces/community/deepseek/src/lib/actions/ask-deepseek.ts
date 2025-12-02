@@ -132,7 +132,7 @@ export const askDeepseek = createAction({
     });
     const openai = new OpenAI({
       baseURL: baseUrl,
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const {
       model,

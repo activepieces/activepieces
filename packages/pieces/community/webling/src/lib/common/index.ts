@@ -10,8 +10,14 @@ export const weblingCommon = {
       refreshers: [],
       required: true,
       options: async ({ auth }) => {
-        const authProp = auth;
-        const calendars = await getCalendars(authProp);
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        const calendars = await getCalendars(auth);
         return {
           disabled: false,
           options: calendars.map((calendar) => {

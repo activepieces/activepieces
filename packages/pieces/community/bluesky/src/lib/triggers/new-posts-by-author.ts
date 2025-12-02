@@ -135,6 +135,7 @@ export const newPostsByAuthor = createTrigger({
       refreshers: ['auth'],
       options: async ({ auth }) => {
         try {
+          if (!auth) return { options: [] };
           const agent = await createBlueskyAgent(auth.props);
           const session = agent.session;
           

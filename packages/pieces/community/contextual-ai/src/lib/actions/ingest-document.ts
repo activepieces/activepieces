@@ -17,6 +17,13 @@ export const ingestDocumentAction = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         try {
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your account first',
+            };
+          }
           const { apiKey, baseUrl } = auth.props;
           const client = new ContextualAI({
             apiKey: apiKey,

@@ -10,6 +10,7 @@ export const editContactListAction = createAction({
 
     props: {
         list_id: Property.Dropdown({
+            auth: kallabotAuth,
             displayName: 'Contact List',
             description: 'Select the contact list to edit.',
             required: true,
@@ -71,6 +72,7 @@ export const editContactListAction = createAction({
             }
         }),
         contacts: Property.DynamicProperties({
+            auth: kallabotAuth,
             displayName: 'Contacts',
             description: 'JSON array of contacts to replace the entire list',
             required: true,

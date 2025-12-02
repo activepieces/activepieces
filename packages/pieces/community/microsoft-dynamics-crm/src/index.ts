@@ -87,13 +87,13 @@ export const microsoftDynamicsCrm = createPiece({
     createCustomApiCallAction({
       auth: dynamicsCRMAuth,
       baseUrl: (auth) => {
-        const props = (auth ).props as {
-          hostUrl: string;
-          proxyUrl: string;
-        };
+        const props = auth?.props
+        if (!props) {
+          return '';
+        }
         return `${getBaseUrl(
-          props?.['hostUrl'],
-          props.proxyUrl
+          props['hostUrl'],
+          props['proxyUrl']
         )}/api/data/v9.2`;
       },
       authMapping: async (auth) => ({

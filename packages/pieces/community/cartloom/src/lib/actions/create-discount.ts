@@ -100,7 +100,15 @@ export const createDiscountAction = createAction({
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildProductsDropdown(auth.props),
+       { if(!auth)
+        {
+           return {
+             options: [],
+             disabled:true,
+             placeholder:"please authenticate"
+           }
+        }
+       return await buildProductsDropdown(auth.props)},
     }),
     targetAmount: Property.Number({
       displayName: 'Target Amount',

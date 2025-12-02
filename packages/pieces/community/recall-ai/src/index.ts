@@ -20,7 +20,7 @@ export const recallAi = createPiece({
     createCustomApiCallAction({
       auth: recallAiAuth,
       baseUrl: (auth) => {
-        return `${(auth).props.server as string}/api/v1`;
+        return `${(auth)?.props.server as string}/api/v1`;
       },
       authMapping: async (auth) => {
         return {

@@ -70,6 +70,9 @@ export const grist = createPiece({
     createCustomApiCallAction({
       auth: gristAuth,
       baseUrl: (auth) => {
+        if (!auth) {
+          return '';
+        }
         return `${
           auth.props.domain
         }/api/`;

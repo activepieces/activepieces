@@ -50,7 +50,7 @@ export const mastodon = createPiece({
     postStatus,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        (auth ).props .base_url.replace(/\/$/, '') + '/api/v1',
+        auth?.props?.base_url.replace(/\/$/, '') + '/api/v1',
       auth: mastodonAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${

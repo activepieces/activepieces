@@ -16,6 +16,12 @@ export const getLastResults = createAction({
       refreshers: [],
       auth: promptmateAuth,
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            options: [],
+            disabled: true,
+          };
+        }
         return await getAppDropdownOptions(auth.secret_text);
       },
     }),

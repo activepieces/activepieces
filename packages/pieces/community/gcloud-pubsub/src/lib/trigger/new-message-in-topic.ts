@@ -20,6 +20,13 @@ export const newMessageInTopic = createTrigger({
       auth: googlePubsubAuth, 
       refreshers: ['auth'],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
         const json = auth.props.json;
         return common.getTopics(json);
       },

@@ -20,7 +20,7 @@ export const sendSms = createAction({
           method: HttpMethod.GET,
           url: baseApiUrl + 'api/user/phone-numbers',
           headers: {
-            Authorization: "Bearer " + auth.secret_text,
+            Authorization: "Bearer " + auth?.secret_text,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },

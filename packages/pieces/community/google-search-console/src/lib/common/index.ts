@@ -10,6 +10,13 @@ export const commonProps = {
     refreshOnSearch: false,
     options: async ({ auth }) => {
       const authValue = auth
+      if (!authValue) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first',
+        };
+      }
       const webmasters = createAuthClient(authValue.access_token);
       const res = await webmasters.sites.list();
       const sites = res.data.siteEntry || [];

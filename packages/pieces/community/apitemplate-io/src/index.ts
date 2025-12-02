@@ -29,7 +29,10 @@ export const apitemplateIo = createPiece({
     createCustomApiCallAction({
       auth: ApitemplateAuth,
       baseUrl: (auth) => {
-        const authConfig = auth.props;
+        const authConfig = auth?.props;
+        if (!authConfig) {
+          return '';
+        }
         return getRegionalBaseUrl(authConfig.region as ApitemplateRegion);
       },
       authMapping: async (auth) => {

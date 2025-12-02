@@ -47,7 +47,7 @@ export const sendMessage = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const authToken = auth.secret_text;
+        const authToken = auth?.secret_text;
 
         if (!authToken) {
           return {

@@ -24,6 +24,13 @@ export const updateLead = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         const campaigns = await fetchCampaigns(auth.secret_text);
         return {
           options: campaigns.map((campaign) => ({
@@ -41,8 +48,12 @@ export const updateLead = createAction({
       required: true,
       refreshers: ['campaignId'],
       options: async ({ auth, campaignId }) => {
-        if (!campaignId) {
-          return { options: [], disabled: true };
+        if (!campaignId || !auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first and select a campaign',
+          };
         }
 
         const response = await httpClient.sendRequest({

@@ -125,6 +125,7 @@ export const docusign = createPiece({
     getDocument,
     createCustomApiCallAction({
       baseUrl: (auth) => {
+        if (!auth) return '';
         return `https://${auth.props.environment}.docusign.net/restapi`;
       },
       auth: docusignAuth,

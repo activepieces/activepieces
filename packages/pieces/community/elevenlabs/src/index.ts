@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { textToSpeech } from './lib/actions/text-to-speech-action';
 import {
   createClient,
@@ -48,7 +48,10 @@ export const elevenlabsAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const elevenlabs = createClient(auth);
+      const elevenlabs = createClient({
+        type: AppConnectionType.CUSTOM_AUTH,
+        props: auth,
+      });
       await elevenlabs.user.get();
 
       return {

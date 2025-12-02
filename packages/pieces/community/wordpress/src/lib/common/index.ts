@@ -26,6 +26,13 @@ export const wordpressCommon = {
     required: false,
     refreshers: [],
     options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first',
+        };
+      }
       const connection = auth.props;
       const websiteUrl = connection.website_url;
       if (!connection?.username || !connection?.password || !websiteUrl) {
@@ -61,14 +68,15 @@ export const wordpressCommon = {
     required: false,
     refreshers: [],
     options: async ({ auth }) => {
-      const connection = auth.props;
-      if (!connection) {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account first',
         };
       }
+      const connection = auth.props;
+
       if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
         return {
           disabled: true,
@@ -124,14 +132,14 @@ export const wordpressCommon = {
     required: false,
     refreshers: [],
     options: async ({ auth }) => {
-      const connection = auth.props;
-      if (!connection) {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account first',
         };
       }
+      const connection = auth.props;
       if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
         return {
           disabled: true,
@@ -188,14 +196,14 @@ export const wordpressCommon = {
     required: false,
     refreshers: [],
     options: async ({ auth }) => {
-      const connection = auth.props;
-      if (!connection) {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account first',
         };
       }
+      const connection = auth.props;
       if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
         return {
           disabled: true,
@@ -263,7 +271,14 @@ export const wordpressCommon = {
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
-      const connection = auth.props;
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account first',
+        };
+      }
+          const connection = auth.props;
       const websiteUrl = connection.website_url;
       if (!connection?.username || !connection?.password || !websiteUrl) {
         return {

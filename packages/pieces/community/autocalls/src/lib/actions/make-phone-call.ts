@@ -20,7 +20,7 @@ export const makePhoneCall = createAction({
           method: HttpMethod.GET,
           url: baseApiUrl + 'api/user/assistants/outbound',
           headers: {
-            Authorization: "Bearer " + auth.secret_text,
+            Authorization: "Bearer " + auth?.secret_text,
           },
         });
 

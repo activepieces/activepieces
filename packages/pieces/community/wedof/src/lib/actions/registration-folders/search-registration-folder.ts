@@ -25,7 +25,8 @@ export const searchRegistrationFolder = createAction({
       required: false,
     }),
     period: wedofCommon.period,
-    periodForm: Property.DynamicProperties({
+    periodForm: Property.DynamicProperties( {
+      auth: wedofAuth,
       description: '',
       displayName: 'ez',
       required: true,

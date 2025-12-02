@@ -43,7 +43,7 @@ export const freshdesk = createPiece({
     getContacts,
     getAllTicketsByStatus,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth.props.base_url),
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: freshdeskAuth,
       authMapping: async (auth) => ({
         Authorization: (auth.props.access_token),

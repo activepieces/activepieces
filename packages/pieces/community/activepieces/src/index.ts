@@ -45,7 +45,7 @@ export const activepieces = createPiece({
     listProject,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return `${auth.props.baseApiUrl}`;
+        return `${auth?.props.baseApiUrl}`;
       },
       auth: activePieceAuth,
       authMapping: async (auth) => ({

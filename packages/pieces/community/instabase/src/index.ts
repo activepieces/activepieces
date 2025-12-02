@@ -124,7 +124,7 @@ export const instabase = createPiece({
     createConversationAction,
     converseWithDocumentAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => auth.props.apiRoot,
+      baseUrl: (auth) => auth ? auth.props.apiRoot : '',
       auth: instabaseAuth,
       authMapping: async (auth) => {
         const headers: Record<string, string> = {

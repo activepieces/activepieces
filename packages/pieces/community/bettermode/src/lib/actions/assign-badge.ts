@@ -16,7 +16,7 @@ export const assignBadgeAction = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildBadgesDropdown(auth.props),
+        await buildBadgesDropdown(auth?.props),
     }),
     email: Property.ShortText({
       displayName: 'Email',

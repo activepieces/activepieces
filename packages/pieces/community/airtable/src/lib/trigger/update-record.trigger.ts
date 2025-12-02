@@ -70,7 +70,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof airtableAuth>, S
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     Airtable.configure({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const airtable = new Airtable();
 

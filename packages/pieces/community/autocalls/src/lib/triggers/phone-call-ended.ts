@@ -20,7 +20,7 @@ export const phoneCallEnded = createTrigger({
                     method: HttpMethod.GET,
                     url: baseApiUrl + 'api/user/assistants',
                     headers: {
-                        Authorization: "Bearer " + auth.secret_text,
+                        Authorization: "Bearer " + auth?.secret_text,
                     },
                 });
 

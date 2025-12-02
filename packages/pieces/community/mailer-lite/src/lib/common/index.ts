@@ -57,7 +57,7 @@ export const mailerLiteCommon = {
 					};
 				}
 
-				const client = new MailerLite({ api_key: auth });
+				const client = new MailerLite({ api_key: auth.secret_text });
 				const response = await client.groups.get({
 					page: 1,
 					limit: 100,

@@ -100,7 +100,7 @@ export const kimai = createPiece({
   actions: [
     kimaiCreateTimesheetAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth.props.base_url),
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: kimaiAuth,
       authMapping: async (auth) => ({
         'X-AUTH-USER': auth.props.user,

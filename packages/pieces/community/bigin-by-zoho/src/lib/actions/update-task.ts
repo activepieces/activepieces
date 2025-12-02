@@ -42,7 +42,7 @@ export const updateTask = createAction({
       refreshers: ['taskId', 'auth'],
       required: true,
       props: async ({ taskId, auth }): Promise<InputPropertyMap> => {
-        if (!taskId) return {};
+        if (!taskId || !auth) return {};
         const task = JSON.parse(taskId as string);
         const { access_token, data } = auth;
         const api_domain = data['api_domain'];

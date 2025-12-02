@@ -10,6 +10,12 @@ export const agentId = Property.Dropdown({
   refreshers: [],
   auth: bolnaaiAuth,
   options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+      };
+    }
     try {
       const response = await makeRequest(
         auth.secret_text,

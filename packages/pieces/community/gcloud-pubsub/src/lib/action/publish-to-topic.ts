@@ -18,6 +18,13 @@ export const publishToTopic = createAction({
       refreshers: ['auth'], 
       auth: googlePubsubAuth,
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
         const json = auth.props.json;
         return common.getTopics(json);
       },

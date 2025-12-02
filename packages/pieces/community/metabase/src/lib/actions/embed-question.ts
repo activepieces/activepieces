@@ -35,7 +35,7 @@ export const embedQuestion = createAction({
       required: false,
       refreshers: ['questionId', 'enableEmbedding'],
       props: async ({ auth, questionId, enableEmbedding }) => {
-        if (!questionId || !enableEmbedding) {
+        if (!questionId || !enableEmbedding || !auth) {
           return {};
         }
 

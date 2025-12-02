@@ -67,7 +67,8 @@ export const updateRegistrationFolder = createAction({
         ],
       },
     }),
-    dynamicFields: Property.DynamicProperties({
+    dynamicFields: Property.DynamicProperties(  {
+      auth: wedofAuth,
       displayName: 'Champs sélectionnés',
       refreshers: ['fieldsToUpdate'],
       required: false,

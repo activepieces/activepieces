@@ -40,7 +40,16 @@ export const addGreetAction = createAction({
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildUserDropdown(auth.props),
+        {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your Bonjoro account first',
+          };
+        }
+        return await buildUserDropdown(auth.props);
+        }
     }),
     campaign: Property.Dropdown({
       auth: bonjoroAuth,
@@ -49,7 +58,16 @@ export const addGreetAction = createAction({
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildCampaignDropdown(auth.props),
+        {
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your Bonjoro account first',
+            };
+          }
+          return await buildCampaignDropdown(auth.props);
+        }
     }),
     template: Property.Dropdown({
       auth: bonjoroAuth,
@@ -58,7 +76,16 @@ export const addGreetAction = createAction({
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildTemplateDropdown(auth.props),
+        {
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your Bonjoro account first',
+            };
+          }
+          return  await buildTemplateDropdown(auth.props);
+        }
     }),
     custom: Property.Json({
       displayName: 'Custom Attributes',

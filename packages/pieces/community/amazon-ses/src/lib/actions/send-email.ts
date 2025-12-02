@@ -29,6 +29,13 @@ export const sendEmail = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
         const verifiedIdentities = await getVerifiedIdentities(auth.props);
         return createIdentityDropdownOptions(verifiedIdentities);
       },
@@ -92,6 +99,13 @@ export const sendEmail = createAction({
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
         const configSets = await getConfigurationSets(auth.props);
         return createConfigSetDropdownOptions(configSets);
       },

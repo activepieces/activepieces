@@ -27,6 +27,13 @@ export const addLeads = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         const campaigns = await fetchCampaigns(auth.secret_text);
 
         return {

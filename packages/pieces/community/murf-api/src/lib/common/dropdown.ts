@@ -1,6 +1,7 @@
 import { Property } from "@activepieces/pieces-framework";
 import { HttpMethod } from "@activepieces/pieces-common";
 import { makeRequest } from "./client";
+import { murfAuth } from "./auth";
 
 // Helper to fetch voices
 const getVoices = async (apiKey: string) => {
@@ -44,7 +45,7 @@ export const murfCommon = {
                 };
             }
 
-            const langs = await getLanguages(auth as string);
+            const langs = await getLanguages(auth.secret_text);
             return {
                 disabled: false,
                 options: langs,
@@ -67,7 +68,7 @@ export const murfCommon = {
                 };
             }
 
-            const voices = await getVoices(auth as string);
+            const voices = await getVoices(auth.secret_text);
             const filtered = voices.filter((v: any) =>
                 Object.keys(v.supportedLocales || {}).includes(language as string)
             );
@@ -96,7 +97,7 @@ export const murfCommon = {
                 };
             }
 
-            const voices = await getVoices(auth as string);
+            const voices = await getVoices(auth.secret_text);
 
             const localeMap = new Map<string, string>();
             voices.forEach((voice: any) => {

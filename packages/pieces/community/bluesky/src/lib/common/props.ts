@@ -143,7 +143,7 @@ export const authorSelectionProperty = Property.Dropdown({
   options: async ({ auth }) => {
     try {
       const { createBlueskyAgent } = await import('./client');
-      
+      if (!auth) return { options: [] };
       const agent = await createBlueskyAgent(auth.props);
       const session = agent.session;
       

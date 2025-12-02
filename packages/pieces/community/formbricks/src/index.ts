@@ -85,7 +85,7 @@ export const formbricks = createPiece({
           'x-api-key': (auth.props).apiKey,
         };
       },
-      baseUrl: (auth) => `${(auth.props).appUrl}/api/v1`,
+      baseUrl: (auth) => `${(auth?.props?.appUrl ?? '')}/api/v1`,
     }),
   ],
   triggers,

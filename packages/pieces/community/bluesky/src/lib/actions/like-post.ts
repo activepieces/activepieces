@@ -31,6 +31,7 @@ export const likePost = createAction({
       refreshers: ['auth'],
       options: async ({ auth }) => {
         try {
+          if (!auth) return { options: [] };
             const agent = await createBlueskyAgent(auth.props);
           const timeline = await agent.getTimeline({ limit: 50 });
           

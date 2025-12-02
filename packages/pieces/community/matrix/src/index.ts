@@ -43,7 +43,7 @@ export const matrix = createPiece({
   actions: [
     sendMessage,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth ).props .base_url,
+      baseUrl: (auth) => auth?(auth ).props .base_url: '',
       auth: matrixAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${

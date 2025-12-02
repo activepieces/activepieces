@@ -33,7 +33,7 @@ export const bambooHr = createPiece({
   actions: [
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://api.bamboohr.com/api/gateway.php/${auth.props.companyDomain}/v1/`,
+        `https://api.bamboohr.com/api/gateway.php/${auth?.props?.companyDomain}/v1/`,
       auth: bambooHrAuth,
       authMapping: async (auth) => {
         const { apiKey } = auth.props;

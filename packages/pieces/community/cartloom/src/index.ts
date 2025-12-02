@@ -28,7 +28,7 @@ export const cartloom = createPiece({
     getOrderEmailAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://${auth.props.domain}.cartloom.com/api`, // Replace with the actual base URL
+        `https://${auth?.props.domain}.cartloom.com/api`, // Replace with the actual base URL
       auth: cartloomAuth,
       authMapping: async (auth) => ({
         'X-API-KEY': auth.props.apiKey,

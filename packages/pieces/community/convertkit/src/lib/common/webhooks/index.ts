@@ -28,7 +28,7 @@ export const eventParameter = Property.DynamicProperties({
   refreshers: ['auth', 'event'],
   auth: convertkitAuth,
   props: async ({ auth, event }) => {
-    if (!event) {
+    if (!event || !auth) {
       return {
         disabled: true,
         placeholder: 'Select event first',

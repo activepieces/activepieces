@@ -41,6 +41,13 @@ export const drupalUpdateEntityAction = createAction({
       refreshers: ['entity_type'],
       props: async (propsValue) => {
         const { auth, entity_type } = propsValue;
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please configure authentication first',
+          };
+        }
         return buildFieldProperties(auth, entity_type, false);
       }
     }),

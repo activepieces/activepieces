@@ -59,7 +59,7 @@ export const upsertDocument = createAction({
       )}`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${auth.apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       },
       body: JSON.stringify(
         {

@@ -32,6 +32,13 @@ export const updateCustomVerificationEmailTemplate = createAction({
       required: true,
       refreshers: ['loadCurrentContent'],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
         const templates = await getCustomVerificationTemplates(auth.props);
 
         if (templates.length === 0) {
@@ -65,6 +72,13 @@ export const updateCustomVerificationEmailTemplate = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
         const verifiedIdentities = await getVerifiedIdentities(auth.props);
         return createIdentityDropdownOptions(verifiedIdentities);
       },

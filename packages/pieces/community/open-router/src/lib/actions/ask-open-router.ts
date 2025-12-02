@@ -28,6 +28,13 @@ export const askOpenRouterAction = createAction({
       refreshers: [],
       defaultValue: 'pygmalionai/mythalion-13b',
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         const request: HttpRequest = {
           url: 'https://openrouter.ai/api/v1/models',
           method: HttpMethod.GET,

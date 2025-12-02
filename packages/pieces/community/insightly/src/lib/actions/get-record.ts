@@ -41,7 +41,7 @@ export const getRecord = createAction({
             required: true,
             refreshers: ['objectName', 'pod'],
             options: async ({ auth, objectName, pod }) => {
-                if (!objectName || !pod) {
+                if (!objectName || !pod || !auth) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an object type and pod first',

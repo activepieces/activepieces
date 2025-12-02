@@ -42,8 +42,8 @@ export const chatGemini = createAction({
       memoryKey: z.string().max(128).optional(),
     });
 
-    const { model, prompt, memoryKey } = propsValue;
-    const genAI = new GoogleGenerativeAI(auth);
+    const { model, prompt, memoryKey } = propsValue;  
+    const genAI = new GoogleGenerativeAI(auth.secret_text);
     const geminiModel = genAI.getGenerativeModel({ model });
     let history: Content[] = [];
 

@@ -24,7 +24,6 @@ export const drupalCallServiceAction = createAction({
       refreshers: [],
       auth: drupalAuth,
       options: async ({ auth }) => {
-        const { website_url, username, password } = auth.props;
         if (!auth) {
           return {
             disabled: true,
@@ -32,6 +31,8 @@ export const drupalCallServiceAction = createAction({
             placeholder: 'Please authenticate first.',
           };
         }
+        const { website_url, username, password } = auth.props;
+
 
         try {
           const response = await httpClient.sendRequest<DrupalService[]>({

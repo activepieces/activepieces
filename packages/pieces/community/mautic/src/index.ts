@@ -63,6 +63,9 @@ export const mautic = createPiece({
     createCustomApiCallAction({
       auth: mauticAuth,
       baseUrl: (auth) => {
+        if (!auth) {
+          return '';
+        }
         const { base_url } = auth.props;
         return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
       },

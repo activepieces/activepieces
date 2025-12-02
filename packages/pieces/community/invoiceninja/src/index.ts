@@ -54,7 +54,7 @@ export const invoiceninja = createPiece({
     actionRecurringInvoice,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `${(auth).props.base_url.replace(/\/$/, '')}/api/v1`,
+        auth ? `${(auth).props.base_url.replace(/\/$/, '')}/api/v1` : '',
       auth: invoiceninjaAuth,
       authMapping: async (auth) => ({
         'X-Api-Token': (auth).props.access_token,

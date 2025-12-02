@@ -24,6 +24,9 @@ export const addOrUpdateContact = createAction({
             required: true,
             refreshers: ['authentication'],
             props: async ({ auth }) => {
+                if (!auth) {
+                    return {};
+                }
                 const authData = auth;
                 const baseUrl = getBaseUrl({
                     projectId: authData.props.projectId,

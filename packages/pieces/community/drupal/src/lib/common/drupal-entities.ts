@@ -95,11 +95,25 @@ async function fetchEntityTypes(auth: DrupalAuthType, context: 'reading' | 'edit
   };
 }
 
-export async function fetchEntityTypesForReading(auth: DrupalAuthType) {
+export async function fetchEntityTypesForReading(auth?: DrupalAuthType) {
+  if (!auth) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Please configure authentication first',
+    };
+  }
   return await fetchEntityTypes(auth, 'reading');
 }
 
-export async function fetchEntityTypesForEditing(auth: DrupalAuthType) {
+export async function fetchEntityTypesForEditing(auth?: DrupalAuthType) {
+  if (!auth) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Please configure authentication first',
+    };
+  }
   return await fetchEntityTypes(auth, 'editing');
 }
 

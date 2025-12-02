@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
@@ -20,7 +21,7 @@ const props = {
 };
 
 const polling: Polling<
-  string,
+  AppConnectionValueForAuthProperty<typeof flowParserAuth>,
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

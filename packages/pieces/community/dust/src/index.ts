@@ -59,7 +59,11 @@ export const dust = createPiece({
     uploadFile,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `${DUST_BASE_URL[auth.props.region ?? 'us']}/${auth.props.workspaceId}`,
+        auth
+          ? `${DUST_BASE_URL[auth.props.region ?? 'us']}/${
+              auth.props.workspaceId
+            }`
+          : '',
       auth: dustAuth,
       authMapping: async (auth) => ({
         'Content-Type': 'application/json',

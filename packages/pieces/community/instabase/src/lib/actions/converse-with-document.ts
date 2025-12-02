@@ -21,6 +21,12 @@ export const converseWithDocumentAction = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            options: [],
+            disabled: true,
+          };
+        }
         try {
           const response = await makeInstabaseApiCall<{ conversations: Array<{ id: string; name: string; description?: string }> }>(
             auth,
@@ -57,7 +63,7 @@ export const converseWithDocumentAction = createAction({
       required: true,
       refreshers: ['conversation_id'],
       options: async ({ auth, conversation_id }) => {
-        if (!conversation_id) {
+        if (!conversation_id || !auth) {
           return {
             options: [],
             disabled: true,

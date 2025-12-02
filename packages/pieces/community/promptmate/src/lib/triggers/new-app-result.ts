@@ -21,6 +21,12 @@ export const newAppResult = createTrigger({
       refreshers: [],
       auth: promptmateAuth,
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            options: [],
+            disabled: true,
+          };
+        }
         const options = await getAppDropdownOptions(auth.secret_text);
         return {
           ...options,

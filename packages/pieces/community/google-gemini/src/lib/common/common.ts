@@ -14,7 +14,7 @@ export const allowedLLMs = [
   'gemini-3-pro'
 ];
 
-export const getGeminiModelOptions = async ({ auth}: { auth: AppConnectionValueForAuthProperty<typeof googleGeminiAuth> }) => {
+export const getGeminiModelOptions = async ({ auth}: { auth?: AppConnectionValueForAuthProperty<typeof googleGeminiAuth> }) => {
   if (!auth) {
     return {
       disabled: true,

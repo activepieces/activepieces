@@ -118,8 +118,8 @@ export const wordpress = createPiece({
     updateWordPressPost,
     getWordPressPost,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        (auth.props.website_url).trim() + '/wp-json/wp/v2',
+      baseUrl: (auth) =>auth ?
+        (auth.props.website_url).trim() + '/wp-json/wp/v2' : '',
       auth: wordpressAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(

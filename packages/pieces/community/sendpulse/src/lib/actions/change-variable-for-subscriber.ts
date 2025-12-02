@@ -10,6 +10,7 @@ type SendpulseVariable = {
 };
 
 const variableDropdown = Property.Dropdown({
+  auth: sendpulseAuth,
   displayName: 'Variable Name',
   description: 'Select variable to update',
   required: true,

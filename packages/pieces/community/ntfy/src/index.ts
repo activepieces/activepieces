@@ -44,7 +44,7 @@ export const ntfy = createPiece({
   actions: [
     sendNotification,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth.props.base_url),
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: ntfyAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.props.access_token}`,

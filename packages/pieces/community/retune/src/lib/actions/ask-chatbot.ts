@@ -15,6 +15,13 @@ export const askChatbot = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         const options = await httpClient.sendRequest({
           url: `https://retune.so/api/chat/${(auth).props.chatId}/threads`,
           method: HttpMethod.POST,

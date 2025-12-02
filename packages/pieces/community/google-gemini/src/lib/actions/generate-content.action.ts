@@ -26,7 +26,7 @@ export const generateContentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const genAI = new GoogleGenerativeAI(auth);
+    const genAI = new GoogleGenerativeAI(auth.secret_text);
     const model = genAI.getGenerativeModel({ model: propsValue.model });
     const result = await model.generateContent(propsValue.prompt);
     return result.response.text();

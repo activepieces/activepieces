@@ -54,6 +54,9 @@ export const netsuite = createPiece({
     runSuiteQL,
     createCustomApiCallAction({
       baseUrl: (auth) => {
+        if (!auth) {
+          return '';
+        }
         const authValue = auth.props;
         return `https://${authValue.accountId}.suitetalk.api.netsuite.com`;
       },

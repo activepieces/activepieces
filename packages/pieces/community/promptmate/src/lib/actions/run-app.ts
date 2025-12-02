@@ -16,6 +16,12 @@ export const runApp = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            options: [],
+            disabled: true,
+          };
+        }
         return await getAppDropdownOptions(auth.secret_text);
       },
     }),

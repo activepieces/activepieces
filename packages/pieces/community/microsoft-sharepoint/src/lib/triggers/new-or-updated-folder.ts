@@ -93,6 +93,7 @@ export const newOrUpdatedFolderTrigger = createTrigger({
 		siteId: microsoftSharePointCommon.siteId,
 		driveId: microsoftSharePointCommon.driveId,
 		parentFolderId: Property.Dropdown({
+			auth: microsoftSharePointAuth,
 			displayName: 'Parent Folder to Monitor',
 			description:
 				'The folder to watch for new or updated subfolders. Select "Root Folder" to monitor the top-level of the drive.',
@@ -106,7 +107,7 @@ export const newOrUpdatedFolderTrigger = createTrigger({
 						options: [],
 					};
 				}
-				const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>;
+				const authValue = auth
 				const client = Client.initWithMiddleware({
 					authProvider: {
 						getAccessToken: () => Promise.resolve(authValue.access_token),

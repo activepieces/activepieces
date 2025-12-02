@@ -17,7 +17,7 @@ const cartloomAPI = async (
     url: `https://${auth.domain}.cartloom.com/api${api}`,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'X-API-KEY': auth.props.apiKey,
+      'X-API-KEY': auth.apiKey,
     },
     body: body,
   };

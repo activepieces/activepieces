@@ -20,7 +20,7 @@ export const getPaymentDetailsAction = createAction({
       required: true,
       refreshers: ['reference'],
       options: async ({ auth, reference }) => {
-        if (!reference) {
+        if (!reference || !auth) {
           return {
             disabled: true,
             options: [],

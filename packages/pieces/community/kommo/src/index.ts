@@ -36,6 +36,9 @@ export const kommo = createPiece({
     createCustomApiCallAction({
       auth: kommoAuth,
       baseUrl: (auth) => {
+        if (!auth) {
+          return '';
+        }
         const authValue = auth.props;
         return `https://${authValue.subdomain}.kommo.com/api/v4`
       },

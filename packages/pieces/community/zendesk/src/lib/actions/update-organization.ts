@@ -55,6 +55,7 @@ export const updateOrganizationAction = createAction({
       required: false,
     }),
     organization_fields: Property.DynamicProperties({
+      auth: zendeskAuth,
       displayName: 'Organization Fields',
       description: 'Custom organization field values',
       required: false,

@@ -45,7 +45,7 @@ export const bigcommerce = createPiece({
     findOrCreateCustomersAddress,
     createCustomApiCallAction({
       auth: bigcommerceAuth,
-      baseUrl: (auth) => GET_BASE_URL(auth.props.storeHash),
+      baseUrl: (auth) => auth ? GET_BASE_URL(auth.props.storeHash) : '',
       authMapping: async (auth: any) => {
         return {
           'X-Auth-Token': auth.props.accessToken,

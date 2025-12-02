@@ -16,7 +16,7 @@ export const matomo = createPiece({
   actions: [
     addAnnotationAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth ).props .domain,
+      baseUrl: (auth) => (auth?.props .domain ?? ''),
       auth: matomoAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth ).props .tokenAuth}`,

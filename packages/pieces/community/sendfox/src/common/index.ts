@@ -65,6 +65,13 @@ export const sendfoxCommon = {
     required: false,
     refreshers: ['auth'],
     options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'connect your account first',
+          options: [],
+        };
+      }
       const authentication = auth.secret_text;
       if (!authentication) {
         return {

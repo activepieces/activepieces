@@ -18,7 +18,7 @@ export async function buildMemberSpacesDropdown(auth: BettermodeAuthType) {
   };
 }
 
-export async function buildBadgesDropdown(auth: BettermodeAuthType) {
+export async function buildBadgesDropdown(auth?: BettermodeAuthType) {
   if (!auth) {
     return {
       options: [],

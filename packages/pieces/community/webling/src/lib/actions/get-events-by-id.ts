@@ -24,6 +24,13 @@ export const eventsById = createAction({
       refreshers: [],
       required: false,
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
         const authProp = auth;
         const calendars = await getCalendars(authProp);
         return {

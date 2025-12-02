@@ -32,7 +32,14 @@ export const createEvent = createAction({
             required: true,
             refreshers: [],
             options: async ({ auth }) => {
-                const authData = auth as InstasentAuthType;
+                if (!auth) {
+                    return {
+                        disabled: true,
+                        options: [],
+                        placeholder: 'Please connect your account first',
+                    };
+                }
+                const authData = auth;
                 const baseUrl = getBaseUrl({
                     projectId: authData.props.projectId,
                     datasourceId: authData.props.datasourceId

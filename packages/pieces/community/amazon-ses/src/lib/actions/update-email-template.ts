@@ -26,6 +26,13 @@ export const updateEmailTemplate = createAction({
       required: true,
       refreshers: ['loadCurrentContent'],
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
         const templates = await getEmailTemplates(auth.props);
 
         if (templates.length === 0) {

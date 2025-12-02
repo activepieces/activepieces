@@ -24,7 +24,7 @@ export const renderTemplate = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         const authentication = auth;
-        if (!auth) {
+        if (!authentication) {
           return {
             disabled: true,
             options: [],

@@ -68,6 +68,10 @@ export const APITableCommon = {
 		required: true,
 		refreshers: ['auth', 'datasheet_id'],
 		props: async ({ auth, datasheet_id }) => {
+			if(!auth)
+			{
+				return {}
+			}
 			const client = makeClient(auth.props);
 			const res = await client.getDatasheetFields(datasheet_id as unknown as string);
 

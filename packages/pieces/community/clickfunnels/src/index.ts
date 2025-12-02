@@ -39,8 +39,8 @@ export const clickfunnels = createPiece({
     createCustomApiCallAction({
       auth: clickfunnelsAuth,
       baseUrl: (auth) => {
-        const authValue = auth.props;
-        return CLICKFUNNELS_BASE_URL(authValue.subdomain);
+        const authValue = auth?.props;
+        return CLICKFUNNELS_BASE_URL(authValue?.subdomain ?? '');
       },
       authMapping: async (auth) => {
         const authValue = auth.props;

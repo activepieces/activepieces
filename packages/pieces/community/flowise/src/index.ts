@@ -88,7 +88,7 @@ export const flowise = createPiece({
   actions: [
     flowisePredict,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth.props.base_url),
+     baseUrl: (auth) => (auth?.props.base_url ?? ''),
       auth: flowiseAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${

@@ -126,7 +126,7 @@ export const tableFields = Property.DynamicProperties({
 	refreshers: ['auth', 'databaseId', 'tableId'],
 	auth: SoftrAuth,
 	props: async ({ auth, databaseId, tableId }) => {
-		if (!databaseId || !tableId) {
+		if (!databaseId || !tableId||!auth) {
 			return {};
 		}
 

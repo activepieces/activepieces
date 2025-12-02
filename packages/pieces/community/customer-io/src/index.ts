@@ -75,7 +75,7 @@ export const customerIo: any = createPiece({
     createEvent,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        customerIOCommon[auth.props.region || 'us'].trackUrl,
+        auth ? customerIOCommon[auth.props.region || 'us'].trackUrl : '',
       auth: customerIOAuth,
       name: 'custom_track_api_call',
       description: 'CustomerIO Track Custom API Call (track.customer.io)',
@@ -91,7 +91,7 @@ export const customerIo: any = createPiece({
     }),
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        customerIOCommon[auth.props.region || 'us'].apiUrl,
+        auth ? customerIOCommon[auth.props.region || 'us'].apiUrl : '',
       auth: customerIOAuth,
       name: 'custom_app_api_call',
       description: 'CustomerIO App Custom API Call (api.customer.io)',

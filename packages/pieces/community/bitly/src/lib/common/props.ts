@@ -31,6 +31,9 @@ export const groupGuid = Property.Dropdown({
   refreshers: [],
   auth:bitlyAuth ,
   options: async ({ auth }) => {
+    if (!auth) {
+      return { disabled: true, options: [], placeholder: 'Please connect your Bitly account first.' };
+    }
     const { accessToken } = auth.props;
     if (!accessToken) {
       return { disabled: true, options: [], placeholder: 'Please connect your Bitly account first.' };
@@ -60,6 +63,9 @@ export const domain = Property.Dropdown({
     required: false,
     refreshers: ['group_guid'],
     options: async ({ auth, group_guid }) => {
+        if (!auth) {
+          return { disabled: true, options: [], placeholder: 'Please connect your Bitly account first.' };
+        }
         const { accessToken } = auth.props;
         if (!accessToken || !group_guid) {
             return { disabled: true, options: [], placeholder: 'Please select a group first.' };
@@ -90,6 +96,9 @@ export const bitlinkDropdown = Property.Dropdown({
     auth: bitlyAuth,
     options: async ({ auth, group_guid }) => {
 
+        if (!auth) {
+          return { disabled: true, options: [], placeholder: 'Please connect your Bitly account first.' };
+        }
         const { accessToken } = auth.props;
         if (!accessToken) return { disabled: true, options: [], placeholder: 'Please connect your Bitly account first.' };
         if (!group_guid) return { disabled: true, options: [], placeholder: 'Please select a group first.' };

@@ -71,7 +71,7 @@ export const datadog = createPiece({
     sendMultipleLogs,
     sendOneLog,
     createCustomApiCallAction({
-      baseUrl: (auth) => constructDatadogBaseUrl(auth),
+      baseUrl: (auth) =>auth ? constructDatadogBaseUrl(auth) : '',
       auth: datadogAuth,
       authMapping: async (auth) => constructDatadogBaseHeaders(auth),
       authLocation: 'headers',
