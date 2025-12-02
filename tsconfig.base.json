@@ -216,6 +216,9 @@
       ],
       "@activepieces/piece-bursty-ai": [
         "packages/pieces/community/bursty-ai/src/index.ts"
+      ],
+      "@activepieces/piece-document-pro": [
+        "packages/pieces/community/document-pro/src/index.ts"
       ]
     },
     "resolveJsonModule": true
