@@ -7,7 +7,8 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/theme-provider';
+
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 export const INTERNAL_ERROR_MESSAGE =
@@ -30,18 +31,26 @@ export const UNSAVED_CHANGES_TOAST = {
 };
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
 
+  const { theme } = useTheme();
   return (
     <Sonner
       theme={theme as ToasterProps['theme']}
       className="toaster group"
       toastOptions={{
         classNames: {
-          description: '!text-secondary',
-          error: '!text-destructive-300',
-          warning: '!text-warning-300',
+          toast: `
+            data-[type=error]:!text-destructive-300
+            data-[type=warning]:!text-warning-300
+            data-[type=success]:!text-success-300
+          `,
+          description: `
+            data-[type=error]:!text-destructive-300
+            data-[type=warning]:!text-warning-300
+            data-[type=success]:!text-success-300
+          `,
         },
+        descriptionClassName: '!text-inherit',
       }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
@@ -56,7 +65,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-bg': 'hsl(var(--background))',
           '--normal-border': 'hsl(var(--border))',
           '--border-radius': 'var(--radius)',
-          
         } as React.CSSProperties
       }
       {...props}
