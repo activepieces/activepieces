@@ -201,6 +201,9 @@
       ],
       "@activepieces/piece-documerge": [
         "packages/pieces/community/documerge/src/index.ts"
+      ],
+      "@activepieces/piece-gptzero-detect-ai": [
+        "packages/pieces/community/gptzero-detect-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
