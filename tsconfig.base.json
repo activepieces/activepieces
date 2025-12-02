@@ -202,6 +202,9 @@
       "@activepieces/piece-logrocket": [
         "packages/pieces/community/logrocket/src/index.ts"
       ],
+      "@activepieces/piece-cursor": [
+        "packages/pieces/community/cursor/src/index.ts"
+      ],
       "@activepieces/piece-gptzero-detect-ai": [
         "packages/pieces/community/gptzero-detect-ai/src/index.ts"
       ],
