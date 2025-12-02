@@ -23,7 +23,6 @@ import {
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
 import { flowsApi } from '../lib/flows-api';
-import { flowsHooks } from '../lib/flows-hooks';
 import { flowsUtils } from '../lib/flows-utils';
 
 type FlowStatusToggleProps = {
@@ -41,7 +40,6 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
   const userHasPermissionToToggleFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,
   );
-  const updateStatusListener = flowsHooks.useOnFinishUpdateStatus();
 
   useEffect(() => {
     setIsChecked(flow.status === FlowStatus.ENABLED);
@@ -63,7 +61,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
     },
     onSuccess: (flow) => {
       setOperationStatus(flow.operationStatus);
-      updateStatusListener((operationStatus, newStatus) => {
+      flowsUtils.updateStatusListener(socket, (operationStatus, newStatus) => {
         setIsChecked(newStatus === FlowStatus.ENABLED);
         setOperationStatus(operationStatus);
       });

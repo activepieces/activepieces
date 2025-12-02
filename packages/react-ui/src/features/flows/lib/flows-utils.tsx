@@ -2,9 +2,24 @@ import cronstrue from 'cronstrue/i18n';
 import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
+import { Socket } from 'socket.io-client';
 
+import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
+import { toast } from '@/components/ui/use-toast';
 import { downloadFile } from '@/lib/utils';
-import { PopulatedFlow, FlowTriggerType, ActivepiecesError, parseToJsonIfPossible, ExecutionError, ExecutionErrorType } from '@activepieces/shared';
+import {
+  PopulatedFlow,
+  FlowTriggerType,
+  ExecutionError,
+  ExecutionErrorType,
+  FlowStatus,
+  FlowOperationStatus,
+  Flow,
+  WebsocketClientEvent,
+  getApErrorParams,
+  ErrorCode,
+  getExecutionError,
+} from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 
@@ -29,43 +44,54 @@ const zipFlows = async (flows: PopulatedFlow[]) => {
   return zip;
 };
 
-const getApErrorParams = (error: unknown): ActivepiecesError | null => {
-  const err = error as ActivepiecesError;
-  if (!err.error || !(err.error.params)) return null;
-  return err
+const getExecutionUserError = (error: unknown): ExecutionError | null => {
+  const apError = getApErrorParams(error, ErrorCode.TRIGGER_UPDATE_STATUS);
+  if (!apError) return null;
+  const executionError = getExecutionError(apError.standardError);
+  if (!executionError) return null;
+  if (executionError.type !== ExecutionErrorType.USER) return null;
+  return executionError;
 };
 
-const getExecutionUserError = (error: unknown): ExecutionError | null => {
-  const apError = getApErrorParams(error);
-  const params = apError?.error.params;
-  if (!params || !("standardError" in params)) return null;
-
-  const standardError: unknown = params?.standardError;
-  if (typeof standardError !== 'string') return null;
-  const errorPrefix = 'Error handling operation:';
-  if (!standardError.startsWith(errorPrefix)) return null;
-
-  const executionError = parseToJsonIfPossible(standardError.slice(errorPrefix.length)) as ExecutionError;
-
-  if (
-    !executionError ||
-    typeof executionError !== 'object' ||
-    typeof executionError.type !== 'string' ||
-    typeof executionError.message !== 'string' ||
-    typeof executionError.name !== 'string'
-  ) {
-    return null;
-  }
-  if (executionError.type !== ExecutionErrorType.USER) return null;
-
-  return executionError;
+const updateStatusListener = (
+  socket: Socket,
+  callback: (
+    operationStatus: FlowOperationStatus,
+    newStatus?: FlowStatus,
+  ) => void,
+) => {
+  const onUpdateFinish = ({
+    flow: updatedFlow,
+    status,
+    error,
+  }: {
+    flow?: Flow;
+    status: 'success' | 'failed';
+    error?: unknown;
+  }) => {
+    if (status === 'failed') {
+      const apError = getApErrorParams(error, undefined);
+      const executionUserError = getExecutionUserError(error);
+      toast({
+        title: executionUserError?.name ?? t('Error'),
+        description:
+          executionUserError?.message ?? t('Failed to change flow status'),
+        variant: 'destructive',
+        showMore: apError
+          ? () => useApErrorDialogStore.getState().openDialog(error)
+          : undefined,
+      });
+    }
+    callback(FlowOperationStatus.NONE, updatedFlow?.status);
+    socket.off(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
+  };
+  socket.on(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
 };
 
 export const flowsUtils = {
   downloadFlow,
   zipFlows,
-  getExecutionUserError,
-  getApErrorParams,
+  updateStatusListener,
   flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
     const trigger = flow.version.trigger;
     switch (trigger?.type) {

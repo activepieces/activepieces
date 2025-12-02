@@ -286,13 +286,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                             projectId,
                             platformId,
                         })
+                        await flowRepo().update(id, {
+                            operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
+                        })
                         await this.addUpdateStatusJob({
                             id,
                             projectId,
                             newStatus: operation.request.status ?? FlowStatus.ENABLED,
-                        })
-                        await flowRepo().update(id, {
-                            operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
                         })
                         break
                     }
@@ -543,7 +543,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
             schedule: {
                 type: 'one-time',
-                date: apDayjs().add(1, 'second'),
+                date: apDayjs(),
             },
             customConfig: {
                 backoff: {
@@ -567,7 +567,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
             schedule: {
                 type: 'one-time',
-                date: apDayjs().add(1, 'second'),
+                date: apDayjs(),
             },
             customConfig: {
                 backoff: {

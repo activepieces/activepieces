@@ -1,4 +1,4 @@
-import { STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
+import { parseToJsonIfPossible, STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
 
 export enum ExecutionErrorType {
     ENGINE = 'ENGINE',
@@ -19,6 +19,20 @@ function formatMessage(message: string) {
     return JSON.stringify({
         message,
     }, null, 2)
+}
+
+export const getExecutionError = (error: unknown): ExecutionError | null => {
+    const executionError = parseToJsonIfPossible(error) as ExecutionError;
+    if (
+        !executionError ||
+        typeof executionError !== 'object' ||
+        typeof executionError.type !== 'string' ||
+        typeof executionError.message !== 'string' ||
+        typeof executionError.name !== 'string'
+    ) {
+        return null;
+    }
+    return executionError;
 }
 
 export class ConnectionNotFoundError extends ExecutionError {

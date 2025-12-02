@@ -556,3 +556,13 @@ export enum ErrorCode {
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
 }
+
+type ExtractErrorParams<T extends ErrorCode> = Extract<ApErrorParams, { code: T }>['params']
+
+export const getApErrorParams = <T extends ErrorCode>(error: unknown, code: T | undefined = undefined): ExtractErrorParams<T> | null => {
+    const err = error as ActivepiecesError;
+    if (!err.error || !err.error.params || !err.error.code) return null;
+    if (code && err.error.code !== code) return null;
+
+    return err.error.params as ExtractErrorParams<T> | null;
+}

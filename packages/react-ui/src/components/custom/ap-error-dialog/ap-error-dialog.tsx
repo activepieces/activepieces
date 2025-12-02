@@ -1,4 +1,6 @@
+import { DialogDescription } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
+
 import { JsonViewer } from '@/components/json-viewer';
 import { isNil } from '@activepieces/shared';
 
@@ -10,7 +12,6 @@ import {
 } from '../../ui/dialog';
 
 import { useApErrorDialogStore } from './ap-error-dialog-store';
-import { DialogDescription } from '@radix-ui/react-dialog';
 
 const ApErrorDialog = () => {
   const { error: dialogError, closeDialog } = useApErrorDialogStore();
@@ -22,15 +23,13 @@ const ApErrorDialog = () => {
         onClick={(e) => e.stopPropagation()}
       >
         <DialogHeader>
-          <DialogTitle>
-           {t('Error')}
-          </DialogTitle>
+          <DialogTitle>{t('Error')}</DialogTitle>
           <DialogDescription>
-          {t('Error details, please copy and send it to support.')}
+            {t('Error details, please copy and send it to support.')}
           </DialogDescription>
         </DialogHeader>
-        <div className='overflow-y-scroll'>
-          <JsonViewer json={dialogError} title={dialogError?.code ?? t('Error')} />
+        <div className="overflow-y-scroll">
+          <JsonViewer json={dialogError} title={t('details')} />
         </div>
       </DialogContent>
     </Dialog>

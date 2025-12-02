@@ -10,9 +10,9 @@ import {
     EngineStdout,
     ERROR_MESSAGES_TO_REDACT,
     isNil,
+    EngineGenericError,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
-import { EngineGenericError } from '../../../shared/src/lib/engine/execution-errors'
 import { execute } from './operations'
 import { utils } from './utils'
 
@@ -77,7 +77,7 @@ export const workerSocket = {
                     status: EngineResponseStatus.INTERNAL_ERROR,
                     error: utils.formatExecutionError(resultError),
                 }
-                console.error('Error handling operation:', utils.formatExecutionError(resultError))
+                console.error(utils.formatExecutionError(resultError))
                 await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, engineError)
             }
         })

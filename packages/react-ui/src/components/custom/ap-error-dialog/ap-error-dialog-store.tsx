@@ -1,10 +1,7 @@
 import { create } from 'zustand';
-
-import { ApErrorParams } from '@activepieces/shared';
-
 interface ApErrorDialogStore {
-  error: ApErrorParams | null;
-  openDialog: (error: ApErrorParams) => void;
+  error: unknown | null;
+  openDialog: (error: unknown) => void;
   closeDialog: () => void;
 }
 
