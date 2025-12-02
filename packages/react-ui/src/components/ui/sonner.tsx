@@ -38,6 +38,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       toastOptions={{
         classNames: {
+          description: '!text-secondary-foreground',
           error: '!text-destructive-300',
           warning: '!text-warning-300',
         },
@@ -55,6 +56,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-bg': 'hsl(var(--background))',
           '--normal-border': 'hsl(var(--border))',
           '--border-radius': 'var(--radius)',
+          
         } as React.CSSProperties
       }
       {...props}

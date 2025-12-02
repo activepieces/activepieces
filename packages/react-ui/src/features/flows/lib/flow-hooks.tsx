@@ -114,15 +114,20 @@ export const flowHooks = {
         }
         if (!isNil(response.error)) {
           openDialog({
-            title: t('Issue details'),
+            title: change === 'publish'
+              ? t('Publish failed')
+              : t('Status update failed'),
             description: (
               <p>
                 {t(
-                  'An error occurred while changing the flow status. This may be due to an issue in the piece or its settings.',
+                  'An error occurred while changing the flow status. This may be due to an issue in the trigger piece or its settings.',
                 )}
               </p>
             ),
-            error: response.error,
+            error: {
+              standardError: response.error.params.standardError,
+              standardOutput: response.error.params.standardOutput || '',
+            },
           });
           return;
         }
