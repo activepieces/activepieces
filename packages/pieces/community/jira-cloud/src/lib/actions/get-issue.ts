@@ -4,6 +4,25 @@ import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
 import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
 
+function mapFieldNames(
+  fields: Record<string, any>,
+  fieldNames: Record<string, string>
+) {
+  const mappedFields = {} as Record<string, any>;
+
+  for (const [fieldId, fieldValue] of Object.entries(fields)) {
+    const fieldName = fieldNames?.[fieldId];
+    if (fieldName) {
+      mappedFields[fieldName] = fieldValue;
+    } else {
+      // fallback in case field cannot be mapped (but this should not happen)
+      mappedFields[fieldId] = fieldValue;
+    }
+  }
+
+  return mappedFields;
+}
+
 export const getIssueAction = createAction({
   auth: jiraCloudAuth,
   name: 'get_issue',
@@ -46,13 +65,31 @@ export const getIssueAction = createAction({
         ],
       },
     }),
+    mapNames: Property.Checkbox({
+      displayName: 'Map Field Names',
+      description: `
+Map human readable names to Fields, Rendered Fields and Schema.
+Notes:
+- This would implicitly add "names" to the expand field
+- If there are fields with the same name, they may be overridden
+				`.trim(),
+      required: true,
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const { issueId, expand } = context.propsValue;
+    const { issueId, expand, mapNames } = context.propsValue;
 
     const queryParams = {} as QueryParams;
-    if (expand) {
-      queryParams['expand'] = (expand as string[]).join(',');
+    let expandParams = expand as string[];
+
+    // expand names which is needed for mapping
+    if (mapNames) {
+      expandParams = [...new Set(expandParams).add('names')];
+    }
+
+    if (expandParams) {
+      queryParams['expand'] = expandParams.join(',');
     }
 
     // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get
@@ -62,6 +99,29 @@ export const getIssueAction = createAction({
       auth: context.auth,
       queryParams: queryParams,
     });
-    return response.body;
+
+    const data = response.body;
+
+    if (mapNames) {
+      const fieldNames = data.names || {};
+
+      const mappedFields = mapFieldNames(data.fields, fieldNames);
+      data['fields'] = mappedFields;
+
+      if (data.renderedFields) {
+        const mappedRenderedFields = mapFieldNames(
+          data.renderedFields,
+          fieldNames
+        );
+        data['renderedFields'] = mappedRenderedFields;
+      }
+
+      if (data.schema) {
+        const mappedSchemaFields = mapFieldNames(data.schema, fieldNames);
+        data['schema'] = mappedSchemaFields;
+      }
+    }
+
+    return data;
   },
 });
