@@ -7,7 +7,7 @@ import { PieceAuthProperty } from "../../authentication";
 
 type DynamicDropdownOptions<T, PieceAuth extends PieceAuthProperty | undefined = undefined> = (
   propsValue: Record<string, unknown> & {
-    auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
+    auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
   },
   ctx: PropertyContext,
 ) => Promise<DropdownState<T>>;
